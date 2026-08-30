@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intranet Logos</title>
+<meta name="theme-color" content="#16233F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F3EC; --paper:#FFFFFF; --ink:#16233F; --ink-soft:#545F78; --line:#E1DFD3;
+    --navy:#16233F; --navy-dark:#0B1526; --gold:#C99A2E; --gold-soft:#FAF0D6;
+    --alert:#A8431F; --alert-soft:#FBE7DE;
+    --good:#2F6B27; --good-soft:#DDEFD9;
+    --font-display:'Fraunces',serif; --font-body:'Atkinson Hyperlegible',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);font-family:var(--font-body);color:var(--ink);}
+  #app{max-width:520px;margin:0 auto;min-height:100vh;background:var(--paper);display:flex;flex-direction:column;}
+
+  .hero{background:linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);color:#fff;padding:28px 22px 26px;position:relative;overflow:hidden;}
+  .hero::after{content:'λ';position:absolute;right:-14px;top:-30px;font-family:var(--font-display);font-weight:700;font-size:180px;color:rgba(201,154,46,.12);pointer-events:none;}
+  .hero-brand{font-family:var(--font-display);font-weight:600;font-size:15px;letter-spacing:.04em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;position:relative;}
+  .hero-title{font-family:var(--font-display);font-weight:600;font-size:24px;line-height:1.25;position:relative;}
+  .hero-sub{font-size:13px;color:rgba(255,255,255,.7);margin-top:6px;position:relative;}
+
+  .topbar{padding:16px 20px 8px;display:flex;align-items:center;justify-content:space-between;}
+  .brand{font-family:var(--font-display);font-weight:600;font-size:18px;color:var(--navy);}
+  .back-btn{border:none;background:none;cursor:pointer;font-weight:700;font-size:14px;color:var(--navy);}
+  .content{padding:0 20px 24px;flex:1;}
+  h2.screen-title{font-family:var(--font-display);font-weight:600;font-size:21px;margin:14px 0 4px;}
+  .subtle{color:var(--ink-soft);font-size:13.5px;line-height:1.45;margin:0 0 16px;}
+
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:4px;}
+  .field input,.field select,.field textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-family:var(--font-body);font-size:14px;color:var(--ink);background:var(--paper);}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--navy);}
+  .checkbox-row{display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:13px;cursor:pointer;}
+  .checkbox-row input{margin-top:3px;flex-shrink:0;}
+
+  .primary-btn{width:100%;background:var(--navy);color:#fff;border:none;border-radius:14px;padding:14px;font-family:var(--font-body);font-weight:700;font-size:14.5px;cursor:pointer;margin-top:4px;transition:transform .12s, box-shadow .12s;}
+  .primary-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(22,35,63,.18);}
+  .primary-btn:disabled{opacity:.6;cursor:default;transform:none;box-shadow:none;}
+  .gold-btn{background:var(--gold);}
+  .link-btn{background:none;border:none;color:var(--navy);font-family:var(--font-body);font-weight:700;font-size:13px;cursor:pointer;text-decoration:underline;padding:0;}
+  .auth-error{background:var(--alert-soft);border:1.5px solid var(--alert);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--alert);margin-bottom:12px;}
+  .auth-ok{background:var(--good-soft);border:1.5px solid var(--good);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--good);margin-bottom:12px;}
+
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:16px 0 20px;}
+  .stat-card{background:var(--paper);border:1.5px solid var(--line);border-top:3px solid var(--gold);border-radius:14px;padding:14px 8px;text-align:center;transition:transform .15s, box-shadow .15s;}
+  .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(22,35,63,.08);}
+  .stat-num{font-family:var(--font-display);font-size:26px;font-weight:600;color:var(--navy);line-height:1;}
+  .stat-label{font-size:10.5px;color:var(--ink-soft);margin-top:4px;text-transform:uppercase;letter-spacing:.03em;}
+
+  .panel-card{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px;}
+  .panel-card h3{margin:0 0 10px;font-size:13.5px;color:var(--navy);font-family:var(--font-body);}
+  .panel-stat-row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .panel-stat-row:last-child{border-bottom:none;}
+  .empty-note{font-size:12.5px;color:var(--ink-soft);padding:8px 2px;}
+
+  .bar-row{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:8px;}
+  .bar-label{width:38%;flex-shrink:0;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-track{flex:1;background:var(--bg);border-radius:6px;height:9px;overflow:hidden;}
+  .bar-fill{height:100%;background:linear-gradient(90deg, var(--gold), var(--navy));border-radius:6px;width:0;transition:width .8s ease;}
+  .bar-val{width:26px;text-align:right;font-weight:700;color:var(--navy);flex-shrink:0;}
+
+  .list-row{display:flex;align-items:center;justify-content:space-between;padding:11px 2px;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .list-row:last-child{border-bottom:none;}
+  .chip{font-size:10.5px;font-weight:700;border-radius:999px;padding:3px 9px;}
+  .chip.gold{background:var(--gold-soft);color:#7A5A16;}
+  .chip.good{background:var(--good-soft);color:var(--good);}
+  .chip.off{background:#EEE;color:#888;}
+
+  .navbar{display:flex;border-top:1.5px solid var(--line);background:var(--paper);padding:10px 6px 14px;position:sticky;bottom:0;}
+  .navbar button{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:var(--font-body);font-size:10.5px;font-weight:700;color:var(--ink-soft);padding:4px 0;}
+  .navbar button.active{color:var(--navy);}
+
+  .screen{display:none;}
+  .screen.active{display:block;}
+  .placeholder{padding:40px 10px;text-align:center;color:var(--ink-soft);font-size:13.5px;}
+  .section-label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:4px 0 8px;}
+  .doc-upload-row{border:1.5px dashed var(--line);border-radius:12px;padding:12px;text-align:center;margin-top:8px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="screen active" id="screen-login">
+    <div class="hero">
+      <div class="hero-brand">Logos · Transformem el discurs social</div>
+      <h1 class="hero-title">Intranet<br>de personal</h1>
+      <p class="hero-sub">Acceso exclusivo para técnicos y responsables de Logos</p>
+    </div>
+    <div class="content" id="login-content" style="margin-top:16px;"></div>
+  </div>
+
+  <div class="screen" id="screen-miespacio">
+    <div class="topbar"><span class="brand">Mi espacio</span></div>
+    <div class="content" id="miespacio-content">
+      <div class="placeholder">Cargando…</div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-atencion">
+    <div class="topbar"><button class="back-btn" onclick="showScreen('miespacio');renderMiEspacio()">← Mi espacio</button></div>
+    <div class="content" id="atencion-content"></div>
+  </div>
+
+  <div class="screen" id="screen-persona">
+    <div class="topbar"><button class="back-btn" id="btn-volver-persona" onclick="showScreen('panel');renderPanelGeneral()">← Volver</button></div>
+    <div class="content" id="persona-content"></div>
+  </div>
+
+  <div class="screen" id="screen-panel">
+    <div class="topbar"><span class="brand">Panel general</span></div>
+    <div class="content" id="panel-content">
+      <div class="placeholder">Cargando…</div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-admin">
+    <div class="topbar"><span class="brand">Administrador</span></div>
+    <div class="content" id="admin-content">
+      <div class="placeholder">Cargando…</div>
+    </div>
+  </div>
+
+  <div class="navbar">
+    <button class="active" data-target="miespacio" onclick="showScreen('miespacio');renderMiEspacio()">Mi espacio</button>
+    <button data-target="panel" onclick="showScreen('panel');renderPanelGeneral()">Panel general</button>
+    <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://foxtlpyfedwsvttzorql.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Ght82ml0pvg0_nQvunlXVA_u0WjRscq';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let CURRENT_USER = null;
+let IS_STAFF = false;
+let IS_ADMIN = false;
+let AUTH_MODE = 'login';
+
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.navbar button').forEach(b=>b.classList.remove('active'));
+  const group = { atencion:'miespacio', persona:'panel' };
+  const target = group[name] || name;
+  const btn = document.querySelector('.navbar button[data-target="'+target+'"]');
+  if(btn) btn.classList.add('active');
+}
+
+function animateNumber(el, target){
+  if(!el) return;
+  let cur = 0;
+  const step = Math.max(1, Math.ceil(target / 24));
+  const tick = () => {
+    cur = Math.min(target, cur + step);
+    el.textContent = cur;
+    if(cur < target) requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+function barRow(label, val, max){
+  const pct = max > 0 ? Math.round((val / max) * 100) : 0;
+  return `<div class="bar-row">
+    <span class="bar-label">${label}</span>
+    <span class="bar-track"><span class="bar-fill" data-w="${pct}" style="width:0;"></span></span>
+    <span class="bar-val">${val}</span>
+  </div>`;
+}
+function activarBarras(){
+  document.querySelectorAll('.bar-fill[data-w]').forEach(el => {
+    requestAnimationFrame(() => { el.style.width = el.dataset.w + '%'; });
+  });
+}
+
+// ================= AUTENTICACIÓN (solo personal) =================
+
+async function checkStaff(){
+  if(!CURRENT_USER){ IS_STAFF = false; IS_ADMIN = false; return; }
+  const { data } = await sb.from('staff').select('email, es_admin, activo').eq('email', CURRENT_USER.email).maybeSingle();
+  IS_STAFF = !!(data && data.activo !== false);
+  IS_ADMIN = !!(data && data.es_admin && data.activo !== false);
+  document.getElementById('nav-admin-btn').style.display = IS_ADMIN ? '' : 'none';
+}
+
+function renderLogin(errorMsg){
+  document.getElementById('login-content').innerHTML = `
+    ${errorMsg ? `<div class="auth-error">${errorMsg}</div>` : ''}
+    <div class="field">
+      <label>Correo electrónico</label>
+      <input type="email" id="login-email" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="login-password" autocomplete="current-password">
+    </div>
+    <button class="primary-btn" id="login-btn" onclick="submitLogin()">Entrar</button>
+  `;
+}
+
+async function submitLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn = document.getElementById('login-btn');
+  if(!email || !password){ renderLogin('Rellena el correo y la contraseña.'); return; }
+  btn.disabled = true;
+  btn.textContent = 'Entrando…';
+
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){ renderLogin(error.message); return; }
+  // onAuthStateChange se encarga de comprobar si es personal y llevar a Mi espacio
+}
+
+async function cerrarSesion(){
+  await sb.auth.signOut();
+  IS_STAFF = false; IS_ADMIN = false;
+  showScreen('login');
+  renderLogin();
+}
+
+async function initAuth(){
+  const { data } = await sb.auth.getSession();
+  CURRENT_USER = data.session ? data.session.user : null;
+  await checkStaff();
+
+  sb.auth.onAuthStateChange(async (_event, session) => {
+    CURRENT_USER = session ? session.user : null;
+    await checkStaff();
+    if(!CURRENT_USER){
+      showScreen('login'); renderLogin();
+      return;
+    }
+    if(!IS_STAFF){
+      renderLogin('Esta plataforma es solo para personal de Logos. Este correo no tiene acceso.');
+      await sb.auth.signOut();
+      return;
+    }
+    showScreen('miespacio');
+    renderMiEspacio();
+  });
+
+  if(!CURRENT_USER){
+    renderLogin();
+    return;
+  }
+  if(!IS_STAFF){
+    renderLogin('Esta plataforma es solo para personal de Logos. Este correo no tiene acceso.');
+    await sb.auth.signOut();
+    return;
+  }
+  showScreen('miespacio');
+  renderMiEspacio();
+}
+
+// ================= MI ESPACIO (personal por técnico) =================
+
+async function renderMiEspacio(){
+  const cont = document.getElementById('miespacio-content');
+  cont.innerHTML = `<div class="placeholder">Cargando…</div>`;
+
+  const email = CURRENT_USER.email;
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const inicioSemana = new Date(hoy); inicioSemana.setDate(hoy.getDate() - hoy.getDay());
+
+  const { data: mias } = await sb.from('atenciones').select('*').eq('creado_por_email', email).order('creado_en', { ascending:false }).limit(300);
+  const lista = mias || [];
+
+  const hoyCount = lista.filter(a => new Date(a.creado_en) >= hoy).length;
+  const semanaCount = lista.filter(a => new Date(a.creado_en) >= inicioSemana).length;
+  const totalCount = lista.length;
+
+  const conteoServicios = {};
+  lista.forEach(a => {
+    [...(a.prestaciones||[]), ...(a.tramites_bretxa||[]), ...(a.emprendeduria||[])].forEach(s => {
+      conteoServicios[s] = (conteoServicios[s]||0) + 1;
+    });
+  });
+  const topServicios = Object.entries(conteoServicios).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxServicio = topServicios.length ? topServicios[0][1] : 0;
+
+  const recientesHtml = lista.slice(0, 8).map(a => `
+    <div class="list-row">
+      <span>${a.nombre_referencia}${a.usuario_id ? ' <span class="chip good">con cuenta</span>' : ''}</span>
+      <span style="display:flex;align-items:center;gap:8px;">
+        ${a.duracion_minutos ? `<span class="chip gold">${a.duracion_minutos} min</span>` : ''}
+        <span class="subtle" style="margin:0;font-size:11px;">${new Date(a.creado_en).toLocaleDateString('es-ES')}</span>
+      </span>
+    </div>`).join('') || `<div class="empty-note">Todavía no has registrado ninguna atención.</div>`;
+
+  cont.innerHTML = `
+    <div class="hero" style="margin:-1px -20px 16px;border-radius:0;">
+      <div class="hero-brand">Hola</div>
+      <h1 class="hero-title" style="font-size:20px;">${email}</h1>
+      <p class="hero-sub">Este es tu espacio de trabajo personal</p>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num" id="num-hoy">0</div><div class="stat-label">Hoy</div></div>
+      <div class="stat-card"><div class="stat-num" id="num-semana">0</div><div class="stat-label">Esta semana</div></div>
+      <div class="stat-card"><div class="stat-num" id="num-total">0</div><div class="stat-label">Total</div></div>
+    </div>
+
+    <button class="primary-btn" onclick="showScreen('atencion');renderAtencionForm()" style="margin-bottom:18px;">➕ Registrar nueva atención</button>
+
+    ${topServicios.length ? `
+    <div class="panel-card">
+      <h3>Tus servicios más frecuentes</h3>
+      ${topServicios.map(([s,v]) => barRow(s, v, maxServicio)).join('')}
+    </div>` : ''}
+
+    <div class="section-label">Tus últimas atenciones</div>
+    ${recientesHtml}
+
+    <button class="primary-btn" style="background:none;border:1.5px solid var(--alert);color:var(--alert);margin-top:20px;" onclick="cerrarSesion()">Cerrar sesión</button>
+  `;
+
+  animateNumber(document.getElementById('num-hoy'), hoyCount);
+  animateNumber(document.getElementById('num-semana'), semanaCount);
+  animateNumber(document.getElementById('num-total'), totalCount);
+  activarBarras();
+}
+
+// ================= REGISTRAR ATENCIÓN =================
+
+const PRESTACIONES_OPTS = [
+  ['rgc','Renta Garantizada de Ciudadanía (RGC)'], ['rgc_no_activable','RGC no activable (+65 años o discapacidad +65%)'],
+  ['imv','Ingreso Mínimo Vital (IMV)'], ['pensiones_no_contributivas','Pensiones NO contributivas'],
+  ['prestacio_contributiva_sepe','Prestación contributiva (SEPE)'], ['treballador_actiu','Trabajador/a activo'],
+  ['fix_discontinu','Fijo discontinuo'], ['rai','RAI'], ['cap','Ninguna']
+];
+const TRAMITES_BRETXA_OPTS = [
+  ['cita_previa','Cita previa'], ['sollicitud_imv','Solicitud IMV'], ['aportar_accedir_tramits','Aportar/acceder a trámites'],
+  ['acces_recursos_socials','Acceso a recursos sociales'], ['assessorament_informacio','Asesoramiento e información'],
+  ['emprenedoria_tramit','Asesoramiento emprendeduría'], ['acompanyament_ocupacional','Acompañamiento ocupacional'],
+  ['acces_digital','Acceso digital'], ['dispositius_tic','Dispositivos TIC'], ['actic_examen','ACTIC / Examen']
+];
+const DERIVACION_OPTS = [
+  ['no_procedeix','No procede'], ['logos','Logos'], ['omac','OMAC'], ['imsst','IMSST'], ['siad','SIAD'], ['pass','PASS'], ['icat','ICAT']
+];
+const EMPRENDEDURIA_OPTS = [
+  ['cap','Ninguna'], ['capitalitzacio_atur','Capitalización paro'], ['alta_autonoms','Alta autónomo/a'],
+  ['emprenedoria_social','Emprendeduría social'], ['compatibilitzacio_atur_emprenedoria','Compatibilización paro/emprendeduría'],
+  ['constitucio_cooperatives','Constitución cooperativas'], ['microcredits','Microcréditos'], ['ajuts_soc','Ayudas SOC'],
+  ['preacceleracio','Preaceleración'], ['mentoria','Mentoría'], ['assessorament_pla_empresa','Plan de empresa'],
+  ['formacio_gestio','Formación gestión'], ['coworking','Coworking'], ['networking','Networking']
+];
+const COMO_CONOCIO_OPTS = [
+  ['vei_port','Vecino/a del Port'], ['imsst','IMSST'], ['sepe','SEPE'], ['usuari_logos','Usuario/a Logos'],
+  ['terceres_persones','Terceras personas'], ['pere_mata','Pere Mata'], ['actic','ACTIC'], ['siad','SIAD'], ['pass','PASS'],
+  ['xarxes_socials','Redes sociales'], ['escola_saavedra','Escuela Saavedra'], ['escola_pau_delclos','Escuela Pau Delclós']
+];
+
+function checkboxGroup(name, opts){
+  return opts.map(([v,l]) => `<label class="checkbox-row"><input type="checkbox" name="${name}" value="${v}">${l}</label>`).join('');
+}
+function radioGroup(name, opts){
+  return opts.map(([v,l]) => `<label class="checkbox-row"><input type="radio" name="${name}" value="${v}">${l}</label>`).join('');
+}
+
+function renderAtencionForm(){
+  window.__atencionUsuarioVinculado = null;
+  document.getElementById('atencion-content').innerHTML = `
+    <h2 class="screen-title">Registrar atención</h2>
+    <p class="subtle">Se guardará vinculada a tu correo (${CURRENT_USER.email}).</p>
+
+    <div class="field">
+      <label>Buscar la persona por cuenta (opcional)</label>
+      <input type="text" id="at-buscar-usuario" placeholder="Escribe el nombre para buscar su cuenta" oninput="buscarUsuarioAtencion(this.value)">
+      <div id="at-resultados-busqueda"></div>
+      <div id="at-usuario-vinculado" style="display:none;margin-top:8px;" class="chip good">
+        <span id="at-usuario-vinculado-texto"></span>
+        <button class="link-btn" style="margin-left:8px;font-size:11px;" onclick="desvincularUsuarioAtencion()">Quitar</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Nombre o referencia de la persona</label>
+      <input type="text" id="at-nombre" placeholder="Ej: María G., o iniciales">
+    </div>
+
+    <div class="field">
+      <label>Duración estimada (minutos)</label>
+      <input type="number" id="at-duracion" min="1" placeholder="Ej: 20">
+    </div>
+
+    <div class="panel-card"><h3>Prestaciones económicas básicas</h3>${checkboxGroup('at-prestaciones', PRESTACIONES_OPTS)}</div>
+    <div class="panel-card"><h3>Trámites dentro de Bretxa Digital</h3>${checkboxGroup('at-tramites', TRAMITES_BRETXA_OPTS)}</div>
+    <div class="panel-card"><h3>Derivación</h3>${radioGroup('at-derivacion', DERIVACION_OPTS)}</div>
+    <div class="panel-card"><h3>Emprendeduría</h3>${checkboxGroup('at-emprendeduria', EMPRENDEDURIA_OPTS)}</div>
+    <div class="panel-card"><h3>¿Cómo nos conoció / quién derivó?</h3>${radioGroup('at-conocio', COMO_CONOCIO_OPTS)}</div>
+
+    <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
+      <h3 style="color:#7A5A16;">Necesidades detectadas que no están en el catálogo</h3>
+      <textarea id="at-necesidades-nuevas" rows="2"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Notas (opcional)</label>
+      <textarea id="at-notas" rows="3"></textarea>
+    </div>
+
+    <button class="primary-btn" id="at-save-btn" onclick="guardarAtencion()" style="margin-bottom:24px;">Guardar atención</button>
+  `;
+}
+
+let __busquedaAtencionTimeout = null;
+function buscarUsuarioAtencion(texto){
+  clearTimeout(__busquedaAtencionTimeout);
+  const cont = document.getElementById('at-resultados-busqueda');
+  if(!texto || texto.trim().length < 2){ cont.innerHTML = ''; return; }
+  __busquedaAtencionTimeout = setTimeout(async () => {
+    const { data, error } = await sb.from('perfiles').select('id, nombre_completo, municipio').ilike('nombre_completo', `%${texto.trim()}%`).limit(5);
+    if(error || !data || !data.length){ cont.innerHTML = `<div class="empty-note">Sin resultados.</div>`; return; }
+    cont.innerHTML = data.map(p => `
+      <div class="list-row" style="cursor:pointer;" onclick="vincularUsuarioAtencion('${p.id}', ${JSON.stringify(p.nombre_completo || '')})">
+        <span>${p.nombre_completo}</span><span class="subtle" style="margin:0;">${p.municipio || ''}</span>
+      </div>`).join('');
+  }, 300);
+}
+function vincularUsuarioAtencion(usuarioId, nombre){
+  window.__atencionUsuarioVinculado = usuarioId;
+  document.getElementById('at-nombre').value = nombre;
+  document.getElementById('at-buscar-usuario').value = '';
+  document.getElementById('at-resultados-busqueda').innerHTML = '';
+  const chip = document.getElementById('at-usuario-vinculado');
+  chip.style.display = 'inline-flex';
+  document.getElementById('at-usuario-vinculado-texto').textContent = 'Vinculado a: ' + nombre;
+}
+function desvincularUsuarioAtencion(){
+  window.__atencionUsuarioVinculado = null;
+  document.getElementById('at-usuario-vinculado').style.display = 'none';
+}
+
+async function guardarAtencion(){
+  const btn = document.getElementById('at-save-btn');
+  const nombre = document.getElementById('at-nombre').value.trim();
+  if(!nombre){
+    document.getElementById('atencion-content').insertAdjacentHTML('afterbegin', `<div class="auth-error">Escribe un nombre o referencia para la persona.</div>`);
+    return;
+  }
+  btn.disabled = true; btn.textContent = 'Guardando…';
+
+  const getChecked = name => Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(el => el.value);
+  const getRadio = name => { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : null; };
+
+  const payload = {
+    nombre_referencia: nombre,
+    usuario_id: window.__atencionUsuarioVinculado || null,
+    creado_por_email: CURRENT_USER.email,
+    duracion_minutos: document.getElementById('at-duracion').value ? parseInt(document.getElementById('at-duracion').value, 10) : null,
+    prestaciones: getChecked('at-prestaciones'),
+    tramites_bretxa: getChecked('at-tramites'),
+    derivacion: getRadio('at-derivacion'),
+    emprendeduria: getChecked('at-emprendeduria'),
+    como_conocio: getRadio('at-conocio'),
+    necesidades_no_catalogadas: document.getElementById('at-necesidades-nuevas').value.trim() || null,
+    notas: document.getElementById('at-notas').value.trim() || null
+  };
+
+  const { error } = await sb.from('atenciones').insert(payload);
+  if(error){
+    document.getElementById('atencion-content').insertAdjacentHTML('afterbegin', `<div class="auth-error">${error.message}</div>`);
+    btn.disabled = false; btn.textContent = 'Guardar atención';
+    return;
+  }
+  showScreen('miespacio');
+  renderMiEspacio();
+}
+
+// ================= PANEL GENERAL =================
+
+async function marcarNotificacionLeida(id){
+  await sb.from('notificaciones').update({ leida: true }).eq('id', id);
+  renderPanelGeneral();
+}
+
+async function responderConsulta(id){
+  const texto = document.getElementById(`resp-${id}`).value.trim();
+  if(!texto){ alert('Escribe una respuesta antes de enviar.'); return; }
+  await sb.from('consultas_orientacion').update({
+    respuesta: texto, estado: 'respondida',
+    respondido_por_email: CURRENT_USER.email, respondido_en: new Date().toISOString()
+  }).eq('id', id);
+  renderPanelGeneral();
+}
+
+async function renderPanelGeneral(){
+  const cont = document.getElementById('panel-content');
+  cont.innerHTML = `<div class="placeholder">Cargando…</div>`;
+
+  const [total, porSexo, porNacionalidad, depDis, situFam, tramEstado, interesesForm, notifs, satisfaccion, consultasPend] = await Promise.all([
+    sb.from('stats_total_personas').select('*').maybeSingle(),
+    sb.from('stats_por_sexo').select('*'),
+    sb.from('stats_por_nacionalidad').select('*'),
+    sb.from('stats_dependencia_discapacidad').select('*').maybeSingle(),
+    sb.from('stats_situaciones_familiares').select('*').maybeSingle(),
+    sb.from('stats_tramites_por_estado').select('*'),
+    sb.from('stats_intereses_formativos').select('*'),
+    sb.from('notificaciones').select('*').eq('leida', false).order('creado_en', { ascending:false }),
+    sb.from('stats_satisfaccion').select('*').maybeSingle(),
+    sb.from('consultas_orientacion').select('*').eq('estado', 'pendiente').order('creado_en', { ascending:true })
+  ]);
+
+  const totalPersonas = total.data ? total.data.total_personas : 0;
+  const filaLista = (rows, labelKey, totalKey) => (rows && rows.length)
+    ? rows.map(r => `<div class="panel-stat-row"><span>${r[labelKey] || '—'}</span><span><strong>${r[totalKey]}</strong></span></div>`).join('')
+    : `<div class="empty-note">Sin datos todavía</div>`;
+
+  const dd = depDis.data || {}; const sf = situFam.data || {}; const sat = satisfaccion.data || {};
+
+  const notifsHtml = (notifs.data && notifs.data.length)
+    ? notifs.data.map(n => `
+        <div class="panel-stat-row" style="align-items:flex-start;flex-direction:column;gap:8px;">
+          <span>${n.mensaje}<br><span class="subtle" style="font-size:11px;margin:0;">${new Date(n.creado_en).toLocaleString('es-ES')}</span></span>
+          <span style="display:flex;gap:14px;">
+            ${n.usuario_id ? `<button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${n.usuario_id}','panel')">👤 Ver información</button>` : ''}
+            <button class="link-btn" style="font-size:12px;" onclick="marcarNotificacionLeida('${n.id}')">Marcar leída</button>
+          </span>
+        </div>`).join('')
+    : `<div class="empty-note">No hay alertas nuevas</div>`;
+
+  const consultasHtml = (consultasPend.data && consultasPend.data.length)
+    ? consultasPend.data.map(c => `
+        <div class="panel-card">
+          <p style="margin:0 0 8px;font-size:13.5px;"><em>${c.texto_consulta}</em></p>
+          <textarea id="resp-${c.id}" rows="2" placeholder="Escribe tu orientación..." style="width:100%;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;font-family:var(--font-body);font-size:13.5px;margin-bottom:8px;"></textarea>
+          <div style="display:flex;gap:14px;">
+            <button class="link-btn" style="font-size:12px;" onclick="responderConsulta('${c.id}')">Enviar respuesta</button>
+            ${c.usuario_id ? `<button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${c.usuario_id}','panel')">👤 Ver información</button>` : ''}
+          </div>
+        </div>`).join('')
+    : `<div class="empty-note">No hay consultas pendientes</div>`;
+
+  cont.innerHTML = `
+    <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
+      <h3 style="color:#7A5A16;">🔔 Alertas nuevas</h3>
+      ${notifsHtml}
+    </div>
+
+    <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
+      <h3 style="color:#7A5A16;">🔎 Consultas de orientación pendientes</h3>
+      ${consultasHtml}
+    </div>
+
+    <div class="stat-grid" style="grid-template-columns:1fr;">
+      <div class="stat-card"><div class="stat-num" id="num-total-personas">0</div><div class="stat-label">Personas atendidas en total</div></div>
+    </div>
+
+    <div class="panel-card"><h3>Por sexo</h3>${filaLista(porSexo.data, 'sexo', 'total')}</div>
+    <div class="panel-card"><h3>Por nacionalidad</h3>${filaLista(porNacionalidad.data, 'nacionalidad', 'total')}</div>
+    <div class="panel-card">
+      <h3>Dependencia y discapacidad</h3>
+      <div class="panel-stat-row"><span>Con dependencia reconocida</span><span><strong>${dd.con_dependencia_reconocida || 0}</strong></span></div>
+      <div class="panel-stat-row"><span>Con discapacidad reconocida</span><span><strong>${dd.con_discapacidad_reconocida || 0}</strong></span></div>
+    </div>
+    <div class="panel-card">
+      <h3>Situaciones familiares y vulnerabilidades</h3>
+      <div class="panel-stat-row"><span>Monoparentales</span><span><strong>${sf.monoparentales || 0}</strong></span></div>
+      <div class="panel-stat-row"><span>Familias numerosas</span><span><strong>${sf.numerosas || 0}</strong></span></div>
+      <div class="panel-stat-row"><span>Con hijos a cargo</span><span><strong>${sf.con_hijos_a_cargo || 0}</strong></span></div>
+      <div class="panel-stat-row"><span>En desempleo</span><span><strong>${sf.en_desempleo || 0}</strong></span></div>
+      <div class="panel-stat-row"><span>Violencia de género</span><span><strong>${sf.violencia_genero || 0}</strong></span></div>
+      <div class="panel-stat-row"><span>Dificultades emocionales</span><span><strong>${sf.dificultades_emocionales || 0}</strong></span></div>
+    </div>
+    <div class="panel-card">
+      <h3>Satisfacción</h3>
+      <div class="panel-stat-row"><span>Media global</span><span><strong>${sat.media_global || '—'} / 5</strong></span></div>
+      <div class="panel-stat-row"><span>Respuestas recibidas</span><span><strong>${sat.total_respuestas || 0}</strong></span></div>
+    </div>
+    <div class="panel-card"><h3>Trámites por estado</h3>${filaLista(tramEstado.data, 'estado', 'total')}</div>
+    <div class="panel-card" style="margin-bottom:24px;"><h3>Intereses formativos más demandados</h3>${filaLista(interesesForm.data, 'interes', 'total')}</div>
+  `;
+
+  animateNumber(document.getElementById('num-total-personas'), totalPersonas);
+}
+
+// ================= FICHA DE PERSONA =================
+
+async function verDocumentoStaff(rutaStorage){
+  const { data, error } = await sb.storage.from('documentos').createSignedUrl(rutaStorage, 60);
+  if(error){ alert(error.message); return; }
+  window.open(data.signedUrl, '_blank');
+}
+
+async function subirDocumentoStaff(){
+  const usuarioId = window.__usuarioIdVisto;
+  const input = document.getElementById('staff-doc-input');
+  if(!input.files.length) return;
+  const file = input.files[0];
+  const esCV = document.getElementById('staff-doc-es-cv').checked;
+  const path = `${usuarioId}/${Date.now()}_${file.name}`;
+
+  const { error: uploadError } = await sb.storage.from('documentos').upload(path, file);
+  if(uploadError){ alert(uploadError.message); return; }
+
+  await sb.from('documentos').insert({
+    usuario_id: usuarioId, nombre_archivo: file.name, ruta_storage: path,
+    tipo_documento: esCV ? 'curriculum' : null
+  });
+  verPersonaStaff(usuarioId, window.__origenPersonaVista);
+}
+
+async function verPersonaStaff(usuarioId, origen){
+  window.__usuarioIdVisto = usuarioId;
+  window.__origenPersonaVista = origen || 'panel';
+  const btnVolver = document.getElementById('btn-volver-persona');
+  btnVolver.setAttribute('onclick', origen === 'admin'
+    ? "showScreen('admin');renderAdministrador()"
+    : "showScreen('panel');renderPanelGeneral()");
+
+  const cont = document.getElementById('persona-content');
+  showScreen('persona');
+  cont.innerHTML = `<div class="placeholder">Cargando…</div>`;
+
+  const [perfilRes, docsRes, tramitesRes, atencionesRes] = await Promise.all([
+    sb.from('perfiles').select('*').eq('id', usuarioId).maybeSingle(),
+    sb.from('documentos').select('*').eq('usuario_id', usuarioId).order('subido_en', { ascending:false }),
+    sb.from('tramites').select('*').eq('usuario_id', usuarioId).order('creado_en', { ascending:false }),
+    sb.from('atenciones').select('*').eq('usuario_id', usuarioId).order('creado_en', { ascending:false })
+  ]);
+
+  const p = perfilRes.data;
+  if(!p){ cont.innerHTML = `<div class="empty-note">No se encontró el perfil de esta persona.</div>`; return; }
+
+  const campo = (label, valor) => valor ? `<div class="panel-stat-row"><span>${label}</span><span><strong>${valor}</strong></span></div>` : '';
+  const campoBool = (label, valor) => valor === true ? `<div class="panel-stat-row"><span>${label}</span><span><strong>Sí</strong></span></div>` : '';
+
+  const docsHtml = (docsRes.data && docsRes.data.length)
+    ? docsRes.data.map(d => `
+        <div class="panel-stat-row">
+          <span>${d.nombre_archivo}${d.tipo_documento==='curriculum' ? ' <span class="chip gold">CV</span>' : ''}${d.tipo_documento==='consentimiento' ? ' <span class="chip good">Consentimiento</span>' : ''}</span>
+          <button class="link-btn" style="font-size:12px;" onclick="verDocumentoStaff('${d.ruta_storage}')">Ver</button>
+        </div>`).join('')
+    : `<div class="empty-note">Sin documentos</div>`;
+
+  const tramitesHtml = (tramitesRes.data && tramitesRes.data.length)
+    ? tramitesRes.data.map(tr => `<div class="panel-stat-row"><span>${tr.nombre_servicio}</span><span class="chip ${tr.estado==='hecho'?'good':'gold'}">${tr.estado}</span></div>`).join('')
+    : `<div class="empty-note">Sin trámites</div>`;
+
+  const atencionesHtml = (atencionesRes.data && atencionesRes.data.length)
+    ? atencionesRes.data.map(a => `
+        <div class="panel-card">
+          <div class="panel-stat-row"><span>Técnico</span><span><strong>${a.creado_por_email}</strong></span></div>
+          <div class="panel-stat-row"><span>Fecha</span><span><strong>${new Date(a.creado_en).toLocaleString('es-ES')}</strong></span></div>
+          ${a.duracion_minutos ? `<div class="panel-stat-row"><span>Duración</span><span><strong>${a.duracion_minutos} min</strong></span></div>` : ''}
+          ${a.prestaciones && a.prestaciones.length ? `<div class="panel-stat-row"><span>Prestaciones</span><span>${a.prestaciones.join(', ')}</span></div>` : ''}
+          ${a.tramites_bretxa && a.tramites_bretxa.length ? `<div class="panel-stat-row"><span>Trámites</span><span>${a.tramites_bretxa.join(', ')}</span></div>` : ''}
+          ${a.notas ? `<div class="panel-stat-row"><span>Notas</span><span>${a.notas}</span></div>` : ''}
+        </div>`).join('')
+    : `<div class="empty-note">Nadie ha registrado todavía una atención a esta persona.</div>`;
+
+  cont.innerHTML = `
+    <h2 class="screen-title">${p.nombre_completo || 'Sin nombre'}</h2>
+    <div class="panel-card">
+      ${campo('Teléfono', p.telefono)} ${campo('Municipio', p.municipio)} ${campo('Con quién vive', p.convivencia)}
+      ${campo('Sexo', p.sexo)} ${campo('Situación laboral', p.situacion_laboral)} ${campo('Nivel de estudios', p.nivel_estudios)}
+      ${campo('Titulaciones/cursos', p.titulaciones_cursos)} ${campo('Experiencia laboral', p.experiencia_laboral)}
+      ${campo('Nivel de ingresos', p.nivel_ingresos)}
+      ${campoBool('Discapacidad reconocida', p.discapacidad_reconocida)} ${campoBool('Dependencia reconocida', p.dependencia_reconocida)}
+      ${campoBool('Familia monoparental', p.familia_monoparental)} ${campoBool('Familia numerosa', p.familia_numerosa)}
+      ${campoBool('Hijos a cargo', p.hijos_a_cargo)} ${campoBool('En desempleo', p.situacion_desempleo)}
+    </div>
+    <div class="panel-card">
+      <h3>Documentos</h3>
+      ${docsHtml}
+      <div class="doc-upload-row" style="margin-top:10px;">
+        <input type="file" id="staff-doc-input">
+        <label class="checkbox-row" style="justify-content:center;"><input type="checkbox" id="staff-doc-es-cv"> Es un currículum</label>
+        <button class="link-btn" style="margin-top:8px;" onclick="subirDocumentoStaff()">Subir documento a esta persona</button>
+      </div>
+    </div>
+    <div class="panel-card"><h3>Trámites</h3>${tramitesHtml}</div>
+    <div class="section-label" style="margin-top:14px;">Quién ha atendido a esta persona</div>
+    ${atencionesHtml}
+  `;
+}
+
+// ================= ADMINISTRADOR =================
+
+async function renderAdministrador(){
+  const cont = document.getElementById('admin-content');
+  if(!IS_ADMIN){ cont.innerHTML = `<div class="placeholder">Esta sección es solo para el responsable de Logos.</div>`; return; }
+  cont.innerHTML = `<div class="placeholder">Cargando…</div>`;
+
+  const [atencionesRes, staffRes] = await Promise.all([
+    sb.from('atenciones').select('*').order('creado_en', { ascending:false }).limit(200),
+    sb.from('staff').select('*').order('email', { ascending:true })
+  ]);
+
+  window.__staffLista = staffRes.data || [];
+
+  const atenciones = atencionesRes.data || [];
+  const filasHtml = atenciones.length
+    ? atenciones.map(a => {
+        const servicios = [...(a.prestaciones||[]), ...(a.tramites_bretxa||[]), ...(a.emprendeduria||[]), a.derivacion].filter(Boolean).join(', ') || '—';
+        return `
+          <div class="panel-card">
+            <div class="panel-stat-row"><span>Técnico</span><span><strong>${a.creado_por_email}</strong></span></div>
+            <div class="panel-stat-row"><span>Persona</span><span><strong>${a.nombre_referencia}${a.usuario_id ? ' <span class="chip good">con cuenta</span>' : ''}</strong></span></div>
+            <div class="panel-stat-row"><span>Fecha</span><span>${new Date(a.creado_en).toLocaleString('es-ES')}</span></div>
+            ${a.duracion_minutos ? `<div class="panel-stat-row"><span>Duración</span><span>${a.duracion_minutos} min</span></div>` : ''}
+            <div class="panel-stat-row"><span>Servicios</span><span>${servicios}</span></div>
+            ${a.usuario_id ? `<button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${a.usuario_id}','admin')">👤 Ver información completa</button>` : ''}
+          </div>`;
+      }).join('')
+    : `<div class="empty-note">Todavía no hay atenciones registradas.</div>`;
+
+  // Carga de trabajo por técnico
+  const cargaPorTecnico = {};
+  atenciones.forEach(a => { cargaPorTecnico[a.creado_por_email] = (cargaPorTecnico[a.creado_por_email]||0) + 1; });
+  const cargaOrdenada = Object.entries(cargaPorTecnico).sort((a,b)=>b[1]-a[1]);
+  const maxCarga = cargaOrdenada.length ? cargaOrdenada[0][1] : 0;
+
+  const staffHtml = window.__staffLista.map(s => `
+    <div class="panel-stat-row">
+      <span>${s.email}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}</span>
+      <span style="display:flex;align-items:center;gap:8px;">
+        <span class="chip ${s.activo === false ? 'off' : 'good'}">${s.activo === false ? 'Inactivo' : 'Activo'}</span>
+        <button class="link-btn" style="font-size:12px;" onclick="toggleActivoTecnico('${s.email}', ${s.activo === false})">${s.activo === false ? 'Reactivar' : 'Desactivar'}</button>
+      </span>
+    </div>`).join('');
+
+  cont.innerHTML = `
+    <div class="panel-card">
+      <h3>Carga de trabajo por técnico</h3>
+      ${cargaOrdenada.length ? cargaOrdenada.map(([email,v]) => barRow(email, v, maxCarga)).join('') : `<div class="empty-note">Sin datos todavía</div>`}
+    </div>
+
+    <div class="panel-card">
+      <h3>Gestión de personal</h3>
+      ${staffHtml}
+      <div class="field" style="margin-top:12px;">
+        <label>Añadir nuevo técnico (correo)</label>
+        <input type="email" id="admin-nuevo-email" placeholder="tcnlogos15@gmail.com">
+      </div>
+      <button class="link-btn" onclick="agregarTecnico()">➕ Añadir a la plataforma</button>
+    </div>
+
+    <p class="subtle" style="margin-top:18px;">Registro completo de qué técnico ha atendido a quién y con qué servicios (últimas 200 atenciones).</p>
+    ${filasHtml}
+  `;
+
+  activarBarras();
+}
+
+async function agregarTecnico(){
+  const input = document.getElementById('admin-nuevo-email');
+  const email = input.value.trim().toLowerCase();
+  if(!email){ alert('Escribe un correo.'); return; }
+  const { error } = await sb.from('staff').insert({ email, activo: true });
+  if(error){ alert(error.message); return; }
+  renderAdministrador();
+}
+
+async function toggleActivoTecnico(email, nuevoEstadoActivo){
+  await sb.from('staff').update({ activo: nuevoEstadoActivo }).eq('email', email);
+  renderAdministrador();
+}
+
+renderLogin();
+initAuth();
+
+</script>
+</body>
+</html>
