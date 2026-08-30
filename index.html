@@ -18,19 +18,38 @@
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);font-family:var(--font-body);color:var(--ink);}
-  #app{max-width:520px;margin:0 auto;min-height:100vh;background:var(--paper);display:flex;flex-direction:column;}
 
-  .hero{background:linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);color:#fff;padding:28px 22px 26px;position:relative;overflow:hidden;}
-  .hero::after{content:'λ';position:absolute;right:-14px;top:-30px;font-family:var(--font-display);font-weight:700;font-size:180px;color:rgba(201,154,46,.12);pointer-events:none;}
+  #app{min-height:100vh;display:flex;}
+
+  /* Menú lateral (escritorio) */
+  .sidebar{width:230px;flex-shrink:0;background:linear-gradient(180deg, var(--navy) 0%, var(--navy-dark) 100%);color:#fff;display:flex;flex-direction:column;padding:22px 16px;position:sticky;top:0;height:100vh;}
+  .logo-mark{font-family:var(--font-display);font-weight:700;font-size:42px;color:var(--gold);display:block;line-height:1;margin-bottom:8px;text-shadow:0 2px 10px rgba(201,154,46,.35);}
+  .sidebar-brand{font-family:var(--font-display);font-weight:600;font-size:17px;line-height:1.3;margin-bottom:2px;}
+  .sidebar-brand span{color:var(--gold);}
+  .sidebar-sub{font-size:11px;color:rgba(255,255,255,.55);margin-bottom:28px;}
+  .sidebar nav{display:flex;flex-direction:column;gap:4px;flex:1;}
+  .sidebar nav button{text-align:left;background:none;border:none;color:rgba(255,255,255,.75);font-family:var(--font-body);font-weight:700;font-size:13.5px;padding:11px 14px;border-radius:10px;cursor:pointer;transition:background .15s;}
+  .sidebar nav button:hover{background:rgba(255,255,255,.06);}
+  .sidebar nav button.active{background:var(--gold);color:var(--navy-dark);}
+  .sidebar-logout{background:none;border:1.5px solid rgba(255,255,255,.25);color:rgba(255,255,255,.8);border-radius:10px;padding:10px;font-family:var(--font-body);font-weight:700;font-size:12.5px;cursor:pointer;margin-top:auto;}
+  .sidebar-logout:hover{border-color:var(--alert);color:#fff;}
+
+  /* Área principal */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;min-height:100vh;}
+  .main-content{max-width:1080px;width:100%;margin:0 auto;padding:32px 40px 60px;flex:1;}
+  #screen-login .main-content{max-width:440px;padding-top:8vh;}
+
+  .hero{background:linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);color:#fff;padding:34px 34px 30px;position:relative;overflow:hidden;border-radius:18px;}
+  .hero::after{content:'λ';position:absolute;right:-10px;top:-36px;font-family:var(--font-display);font-weight:700;font-size:190px;color:rgba(201,154,46,.14);pointer-events:none;}
   .hero-brand{font-family:var(--font-display);font-weight:600;font-size:15px;letter-spacing:.04em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;position:relative;}
-  .hero-title{font-family:var(--font-display);font-weight:600;font-size:24px;line-height:1.25;position:relative;}
-  .hero-sub{font-size:13px;color:rgba(255,255,255,.7);margin-top:6px;position:relative;}
+  .hero-title{font-family:var(--font-display);font-weight:600;font-size:28px;line-height:1.25;position:relative;}
+  .hero-sub{font-size:13.5px;color:rgba(255,255,255,.7);margin-top:6px;position:relative;}
 
-  .topbar{padding:16px 20px 8px;display:flex;align-items:center;justify-content:space-between;}
-  .brand{font-family:var(--font-display);font-weight:600;font-size:18px;color:var(--navy);}
+  .topbar{padding:0 0 18px;display:flex;align-items:center;justify-content:space-between;}
+  .brand{font-family:var(--font-display);font-weight:600;font-size:22px;color:var(--navy);}
   .back-btn{border:none;background:none;cursor:pointer;font-weight:700;font-size:14px;color:var(--navy);}
-  .content{padding:0 20px 24px;flex:1;}
-  h2.screen-title{font-family:var(--font-display);font-weight:600;font-size:21px;margin:14px 0 4px;}
+  .content{flex:1;}
+  h2.screen-title{font-family:var(--font-display);font-weight:600;font-size:23px;margin:14px 0 4px;}
   .subtle{color:var(--ink-soft);font-size:13.5px;line-height:1.45;margin:0 0 16px;}
 
   .field{margin-bottom:12px;}
@@ -40,7 +59,8 @@
   .checkbox-row{display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:13px;cursor:pointer;}
   .checkbox-row input{margin-top:3px;flex-shrink:0;}
 
-  .primary-btn{width:100%;background:var(--navy);color:#fff;border:none;border-radius:14px;padding:14px;font-family:var(--font-body);font-weight:700;font-size:14.5px;cursor:pointer;margin-top:4px;transition:transform .12s, box-shadow .12s;}
+  .primary-btn{background:var(--navy);color:#fff;border:none;border-radius:14px;padding:14px 22px;font-family:var(--font-body);font-weight:700;font-size:14.5px;cursor:pointer;margin-top:4px;transition:transform .12s, box-shadow .12s;}
+  #screen-login .primary-btn{width:100%;}
   .primary-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(22,35,63,.18);}
   .primary-btn:disabled{opacity:.6;cursor:default;transform:none;box-shadow:none;}
   .gold-btn{background:var(--gold);}
@@ -48,13 +68,14 @@
   .auth-error{background:var(--alert-soft);border:1.5px solid var(--alert);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--alert);margin-bottom:12px;}
   .auth-ok{background:var(--good-soft);border:1.5px solid var(--good);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--good);margin-bottom:12px;}
 
-  .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:16px 0 20px;}
-  .stat-card{background:var(--paper);border:1.5px solid var(--line);border-top:3px solid var(--gold);border-radius:14px;padding:14px 8px;text-align:center;transition:transform .15s, box-shadow .15s;}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:14px;margin:16px 0 24px;}
+  .stat-card{background:var(--paper);border:1.5px solid var(--line);border-top:3px solid var(--gold);border-radius:14px;padding:18px 10px;text-align:center;transition:transform .15s, box-shadow .15s;}
   .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(22,35,63,.08);}
-  .stat-num{font-family:var(--font-display);font-size:26px;font-weight:600;color:var(--navy);line-height:1;}
-  .stat-label{font-size:10.5px;color:var(--ink-soft);margin-top:4px;text-transform:uppercase;letter-spacing:.03em;}
+  .stat-num{font-family:var(--font-display);font-size:30px;font-weight:600;color:var(--navy);line-height:1;}
+  .stat-label{font-size:11px;color:var(--ink-soft);margin-top:5px;text-transform:uppercase;letter-spacing:.03em;}
 
-  .panel-card{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px;}
+  .cards-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:16px;align-items:start;}
+  .panel-card{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:0;}
   .panel-card h3{margin:0 0 10px;font-size:13.5px;color:var(--navy);font-family:var(--font-body);}
   .panel-stat-row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
   .panel-stat-row:last-child{border-bottom:none;}
@@ -73,64 +94,95 @@
   .chip.good{background:var(--good-soft);color:var(--good);}
   .chip.off{background:#EEE;color:#888;}
 
-  .navbar{display:flex;border-top:1.5px solid var(--line);background:var(--paper);padding:10px 6px 14px;position:sticky;bottom:0;}
-  .navbar button{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:var(--font-body);font-size:10.5px;font-weight:700;color:var(--ink-soft);padding:4px 0;}
-  .navbar button.active{color:var(--navy);}
-
   .screen{display:none;}
   .screen.active{display:block;}
-  .placeholder{padding:40px 10px;text-align:center;color:var(--ink-soft);font-size:13.5px;}
+  .placeholder{padding:60px 10px;text-align:center;color:var(--ink-soft);font-size:13.5px;}
   .section-label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:4px 0 8px;}
   .doc-upload-row{border:1.5px dashed var(--line);border-radius:12px;padding:12px;text-align:center;margin-top:8px;}
+
+  /* Formularios más estrechos y legibles en pantallas anchas */
+  #screen-atencion .main-content, #screen-persona .main-content{max-width:760px;}
+
+  /* Adaptación a pantallas estrechas: el menú lateral pasa a barra inferior */
+  @media (max-width: 760px){
+    #app{flex-direction:column;}
+    .sidebar{width:100%;height:auto;position:sticky;bottom:0;top:auto;order:2;flex-direction:row;align-items:center;padding:8px 6px;border-top:1.5px solid rgba(255,255,255,.1);}
+    .logo-mark,.sidebar-brand,.sidebar-sub,.sidebar-logout{display:none;}
+    .sidebar nav{flex-direction:row;width:100%;}
+    .sidebar nav button{flex:1;text-align:center;font-size:11px;padding:8px 4px;}
+    .main{order:1;}
+    .main-content{padding:20px 18px 90px;}
+    #screen-login .main-content{padding-top:10vh;}
+  }
 </style>
 </head>
 <body>
 <div id="app">
 
+  <div class="sidebar">
+    <span class="logo-mark">λ</span>
+    <div class="sidebar-brand">Logos <span>Intranet</span></div>
+    <div class="sidebar-sub">Personal y administración</div>
+    <nav>
+      <button class="active" data-target="miespacio" onclick="showScreen('miespacio');renderMiEspacio()">Mi espacio</button>
+      <button data-target="panel" onclick="showScreen('panel');renderPanelGeneral()">Panel general</button>
+      <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
+    </nav>
+    <button class="sidebar-logout" onclick="cerrarSesion()" id="sidebar-logout-btn" style="display:none;">Cerrar sesión</button>
+  </div>
+
+  <div class="main">
   <div class="screen active" id="screen-login">
-    <div class="hero">
-      <div class="hero-brand">Logos · Transformem el discurs social</div>
-      <h1 class="hero-title">Intranet<br>de personal</h1>
-      <p class="hero-sub">Acceso exclusivo para técnicos y responsables de Logos</p>
+    <div class="main-content">
+      <div class="hero">
+        <div class="hero-brand">Logos · Transformem el discurs social</div>
+        <h1 class="hero-title">Intranet<br>de personal</h1>
+        <p class="hero-sub">Acceso exclusivo para técnicos y responsables de Logos</p>
+      </div>
+      <div class="content" id="login-content" style="margin-top:20px;"></div>
     </div>
-    <div class="content" id="login-content" style="margin-top:16px;"></div>
   </div>
 
   <div class="screen" id="screen-miespacio">
-    <div class="topbar"><span class="brand">Mi espacio</span></div>
-    <div class="content" id="miespacio-content">
-      <div class="placeholder">Cargando…</div>
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Mi espacio</span></div>
+      <div class="content" id="miespacio-content">
+        <div class="placeholder">Cargando…</div>
+      </div>
     </div>
   </div>
 
   <div class="screen" id="screen-atencion">
-    <div class="topbar"><button class="back-btn" onclick="showScreen('miespacio');renderMiEspacio()">← Mi espacio</button></div>
-    <div class="content" id="atencion-content"></div>
+    <div class="main-content">
+      <div class="topbar"><button class="back-btn" onclick="showScreen('miespacio');renderMiEspacio()">← Mi espacio</button></div>
+      <div class="content" id="atencion-content"></div>
+    </div>
   </div>
 
   <div class="screen" id="screen-persona">
-    <div class="topbar"><button class="back-btn" id="btn-volver-persona" onclick="showScreen('panel');renderPanelGeneral()">← Volver</button></div>
-    <div class="content" id="persona-content"></div>
+    <div class="main-content">
+      <div class="topbar"><button class="back-btn" id="btn-volver-persona" onclick="showScreen('panel');renderPanelGeneral()">← Volver</button></div>
+      <div class="content" id="persona-content"></div>
+    </div>
   </div>
 
   <div class="screen" id="screen-panel">
-    <div class="topbar"><span class="brand">Panel general</span></div>
-    <div class="content" id="panel-content">
-      <div class="placeholder">Cargando…</div>
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Panel general</span></div>
+      <div class="content" id="panel-content">
+        <div class="placeholder">Cargando…</div>
+      </div>
     </div>
   </div>
 
   <div class="screen" id="screen-admin">
-    <div class="topbar"><span class="brand">Administrador</span></div>
-    <div class="content" id="admin-content">
-      <div class="placeholder">Cargando…</div>
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Administrador</span></div>
+      <div class="content" id="admin-content">
+        <div class="placeholder">Cargando…</div>
+      </div>
     </div>
   </div>
-
-  <div class="navbar">
-    <button class="active" data-target="miespacio" onclick="showScreen('miespacio');renderMiEspacio()">Mi espacio</button>
-    <button data-target="panel" onclick="showScreen('panel');renderPanelGeneral()">Panel general</button>
-    <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
   </div>
 </div>
 
@@ -147,10 +199,10 @@ let IS_ADMIN = false;
 function showScreen(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
-  document.querySelectorAll('.navbar button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.sidebar nav button').forEach(b=>b.classList.remove('active'));
   const group = { atencion:'miespacio', persona:'panel' };
   const target = group[name] || name;
-  const btn = document.querySelector('.navbar button[data-target="'+target+'"]');
+  const btn = document.querySelector('.sidebar nav button[data-target="'+target+'"]');
   if(btn) btn.classList.add('active');
 }
 
@@ -244,14 +296,21 @@ async function submitAuth(){
   // si data.session sí existe, onAuthStateChange comprueba sola si es personal
 }
 
+function toggleSidebarVisible(visible){
+  document.querySelector('.sidebar nav').style.display = visible ? 'flex' : 'none';
+  document.getElementById('sidebar-logout-btn').style.display = visible ? '' : 'none';
+}
+
 async function cerrarSesion(){
   await sb.auth.signOut();
   IS_STAFF = false; IS_ADMIN = false;
+  toggleSidebarVisible(false);
   showScreen('login');
   renderLogin();
 }
 
 async function initAuth(){
+  toggleSidebarVisible(false);
   const { data } = await sb.auth.getSession();
   CURRENT_USER = data.session ? data.session.user : null;
   await checkStaff();
@@ -260,14 +319,17 @@ async function initAuth(){
     CURRENT_USER = session ? session.user : null;
     await checkStaff();
     if(!CURRENT_USER){
+      toggleSidebarVisible(false);
       showScreen('login'); renderLogin();
       return;
     }
     if(!IS_STAFF){
+      toggleSidebarVisible(false);
       renderLogin('Esta plataforma es solo para personal de Logos. Este correo no tiene acceso.');
       await sb.auth.signOut();
       return;
     }
+    toggleSidebarVisible(true);
     showScreen('miespacio');
     renderMiEspacio();
   });
@@ -281,6 +343,7 @@ async function initAuth(){
     await sb.auth.signOut();
     return;
   }
+  toggleSidebarVisible(true);
   showScreen('miespacio');
   renderMiEspacio();
 }
@@ -570,48 +633,52 @@ async function renderPanelGeneral(){
     : `<div class="empty-note">No hay consultas pendientes</div>`;
 
   cont.innerHTML = `
-    <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
-      <h3 style="color:#7A5A16;">🔔 Alertas nuevas</h3>
-      ${notifsHtml}
-    </div>
+    <div class="cards-grid" style="margin-bottom:16px;">
+      <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
+        <h3 style="color:#7A5A16;">🔔 Alertas nuevas</h3>
+        ${notifsHtml}
+      </div>
 
-    <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
-      <h3 style="color:#7A5A16;">🔎 Consultas de orientación pendientes</h3>
-      ${consultasHtml}
+      <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
+        <h3 style="color:#7A5A16;">🔎 Consultas de orientación pendientes</h3>
+        ${consultasHtml}
+      </div>
     </div>
 
     <div class="stat-grid" style="grid-template-columns:1fr;">
       <div class="stat-card"><div class="stat-num" id="num-total-personas">0</div><div class="stat-label">Personas atendidas en total</div></div>
     </div>
 
-    <div class="panel-card"><h3>Por sexo</h3>${filaLista(porSexo.data, 'sexo', 'total')}</div>
-    <div class="panel-card"><h3>Por nacionalidad</h3>${filaLista(porNacionalidad.data, 'nacionalidad', 'total')}</div>
-    <div class="panel-card">
-      <h3>Dependencia y discapacidad</h3>
-      <div class="panel-stat-row"><span>Con dependencia reconocida</span><span><strong>${dd.con_dependencia_reconocida || 0}</strong></span></div>
-      <div class="panel-stat-row"><span>Con discapacidad reconocida</span><span><strong>${dd.con_discapacidad_reconocida || 0}</strong></span></div>
+    <div class="cards-grid" style="margin-bottom:24px;">
+      <div class="panel-card"><h3>Por sexo</h3>${filaLista(porSexo.data, 'sexo', 'total')}</div>
+      <div class="panel-card"><h3>Por nacionalidad</h3>${filaLista(porNacionalidad.data, 'nacionalidad', 'total')}</div>
+      <div class="panel-card">
+        <h3>Dependencia y discapacidad</h3>
+        <div class="panel-stat-row"><span>Con dependencia reconocida</span><span><strong>${dd.con_dependencia_reconocida || 0}</strong></span></div>
+        <div class="panel-stat-row"><span>Con discapacidad reconocida</span><span><strong>${dd.con_discapacidad_reconocida || 0}</strong></span></div>
+      </div>
+      <div class="panel-card">
+        <h3>Situaciones familiares y vulnerabilidades</h3>
+        <div class="panel-stat-row"><span>Monoparentales</span><span><strong>${sf.monoparentales || 0}</strong></span></div>
+        <div class="panel-stat-row"><span>Familias numerosas</span><span><strong>${sf.numerosas || 0}</strong></span></div>
+        <div class="panel-stat-row"><span>Con hijos a cargo</span><span><strong>${sf.con_hijos_a_cargo || 0}</strong></span></div>
+        <div class="panel-stat-row"><span>En desempleo</span><span><strong>${sf.en_desempleo || 0}</strong></span></div>
+        <div class="panel-stat-row"><span>Violencia de género</span><span><strong>${sf.violencia_genero || 0}</strong></span></div>
+        <div class="panel-stat-row"><span>Dificultades emocionales</span><span><strong>${sf.dificultades_emocionales || 0}</strong></span></div>
+      </div>
+      <div class="panel-card">
+        <h3>Satisfacción</h3>
+        <div class="panel-stat-row"><span>Media global</span><span><strong>${sat.media_global || '—'} / 5</strong></span></div>
+        <div class="panel-stat-row"><span>Respuestas recibidas</span><span><strong>${sat.total_respuestas || 0}</strong></span></div>
+      </div>
+      <div class="panel-card"><h3>Trámites por estado</h3>${filaLista(tramEstado.data, 'estado', 'total')}</div>
+      <div class="panel-card"><h3>Intereses formativos más demandados</h3>${filaLista(interesesForm.data, 'interes', 'total')}</div>
+      <div class="panel-card"><h3>Prestaciones económicas</h3>${filaLista(prestaciones.data, 'prestacion', 'total')}</div>
+      <div class="panel-card"><h3>Trámites de Bretxa Digital</h3>${filaLista(tramitesBretxa.data, 'tramite', 'total')}</div>
+      <div class="panel-card"><h3>Derivación a recursos sociales</h3>${filaLista(derivacion.data, 'derivacion', 'total')}</div>
+      <div class="panel-card"><h3>Emprendeduría</h3>${filaLista(emprendeduria.data, 'accion', 'total')}</div>
+      <div class="panel-card"><h3>Cómo conoció Logos</h3>${filaLista(comoConocio.data, 'como_conocio', 'total')}</div>
     </div>
-    <div class="panel-card">
-      <h3>Situaciones familiares y vulnerabilidades</h3>
-      <div class="panel-stat-row"><span>Monoparentales</span><span><strong>${sf.monoparentales || 0}</strong></span></div>
-      <div class="panel-stat-row"><span>Familias numerosas</span><span><strong>${sf.numerosas || 0}</strong></span></div>
-      <div class="panel-stat-row"><span>Con hijos a cargo</span><span><strong>${sf.con_hijos_a_cargo || 0}</strong></span></div>
-      <div class="panel-stat-row"><span>En desempleo</span><span><strong>${sf.en_desempleo || 0}</strong></span></div>
-      <div class="panel-stat-row"><span>Violencia de género</span><span><strong>${sf.violencia_genero || 0}</strong></span></div>
-      <div class="panel-stat-row"><span>Dificultades emocionales</span><span><strong>${sf.dificultades_emocionales || 0}</strong></span></div>
-    </div>
-    <div class="panel-card">
-      <h3>Satisfacción</h3>
-      <div class="panel-stat-row"><span>Media global</span><span><strong>${sat.media_global || '—'} / 5</strong></span></div>
-      <div class="panel-stat-row"><span>Respuestas recibidas</span><span><strong>${sat.total_respuestas || 0}</strong></span></div>
-    </div>
-    <div class="panel-card"><h3>Trámites por estado</h3>${filaLista(tramEstado.data, 'estado', 'total')}</div>
-    <div class="panel-card"><h3>Intereses formativos más demandados</h3>${filaLista(interesesForm.data, 'interes', 'total')}</div>
-    <div class="panel-card"><h3>Prestaciones económicas</h3>${filaLista(prestaciones.data, 'prestacion', 'total')}</div>
-    <div class="panel-card"><h3>Trámites de Bretxa Digital</h3>${filaLista(tramitesBretxa.data, 'tramite', 'total')}</div>
-    <div class="panel-card"><h3>Derivación a recursos sociales</h3>${filaLista(derivacion.data, 'derivacion', 'total')}</div>
-    <div class="panel-card"><h3>Emprendeduría</h3>${filaLista(emprendeduria.data, 'accion', 'total')}</div>
-    <div class="panel-card" style="margin-bottom:24px;"><h3>Cómo conoció Logos</h3>${filaLista(comoConocio.data, 'como_conocio', 'total')}</div>
   `;
 
   animateNumber(document.getElementById('num-total-personas'), totalPersonas);
@@ -764,23 +831,25 @@ async function renderAdministrador(){
     </div>`).join('');
 
   cont.innerHTML = `
-    <div class="panel-card">
-      <h3>Carga de trabajo por técnico</h3>
-      ${cargaOrdenada.length ? cargaOrdenada.map(([email,v]) => barRow(email, v, maxCarga)).join('') : `<div class="empty-note">Sin datos todavía</div>`}
-    </div>
-
-    <div class="panel-card">
-      <h3>Gestión de personal</h3>
-      ${staffHtml}
-      <div class="field" style="margin-top:12px;">
-        <label>Añadir nuevo técnico (correo)</label>
-        <input type="email" id="admin-nuevo-email" placeholder="tcnlogos15@gmail.com">
+    <div class="cards-grid" style="margin-bottom:16px;">
+      <div class="panel-card">
+        <h3>Carga de trabajo por técnico</h3>
+        ${cargaOrdenada.length ? cargaOrdenada.map(([email,v]) => barRow(email, v, maxCarga)).join('') : `<div class="empty-note">Sin datos todavía</div>`}
       </div>
-      <button class="link-btn" onclick="agregarTecnico()">➕ Añadir a la plataforma</button>
+
+      <div class="panel-card">
+        <h3>Gestión de personal</h3>
+        ${staffHtml}
+        <div class="field" style="margin-top:12px;">
+          <label>Añadir nuevo técnico (correo)</label>
+          <input type="email" id="admin-nuevo-email" placeholder="tcnlogos15@gmail.com">
+        </div>
+        <button class="link-btn" onclick="agregarTecnico()">➕ Añadir a la plataforma</button>
+      </div>
     </div>
 
     <p class="subtle" style="margin-top:18px;">Registro completo de qué técnico ha atendido a quién y con qué servicios (últimas 200 atenciones).</p>
-    ${filasHtml}
+    <div class="cards-grid">${filasHtml}</div>
   `;
 
   activarBarras();
