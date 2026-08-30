@@ -143,7 +143,6 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let CURRENT_USER = null;
 let IS_STAFF = false;
 let IS_ADMIN = false;
-let AUTH_MODE = 'login';
 
 function showScreen(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -191,32 +190,58 @@ async function checkStaff(){
   document.getElementById('nav-admin-btn').style.display = IS_ADMIN ? '' : 'none';
 }
 
+let AUTH_MODE = 'login';
+
 function renderLogin(errorMsg){
   document.getElementById('login-content').innerHTML = `
     ${errorMsg ? `<div class="auth-error">${errorMsg}</div>` : ''}
+    ${AUTH_MODE === 'signup' ? `<p class="subtle">Solo puedes crear cuenta si el responsable ya ha añadido tu correo en "Gestión de personal".</p>` : ''}
     <div class="field">
       <label>Correo electrónico</label>
       <input type="email" id="login-email" autocomplete="email">
     </div>
     <div class="field">
       <label>Contraseña</label>
-      <input type="password" id="login-password" autocomplete="current-password">
+      <input type="password" id="login-password" autocomplete="${AUTH_MODE === 'login' ? 'current-password' : 'new-password'}">
     </div>
-    <button class="primary-btn" id="login-btn" onclick="submitLogin()">Entrar</button>
+    <button class="primary-btn" id="login-btn" onclick="submitAuth()">${AUTH_MODE === 'login' ? 'Entrar' : 'Crear cuenta'}</button>
+    <p style="text-align:center;margin-top:14px;">
+      <button class="link-btn" onclick="toggleAuthMode()">${AUTH_MODE === 'login' ? '¿Primera vez? Crear cuenta' : '¿Ya tienes cuenta? Entra'}</button>
+    </p>
   `;
 }
 
-async function submitLogin(){
+function toggleAuthMode(){
+  AUTH_MODE = AUTH_MODE === 'login' ? 'signup' : 'login';
+  renderLogin();
+}
+
+async function submitAuth(){
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   const btn = document.getElementById('login-btn');
   if(!email || !password){ renderLogin('Rellena el correo y la contraseña.'); return; }
   btn.disabled = true;
-  btn.textContent = 'Entrando…';
+  btn.textContent = AUTH_MODE === 'login' ? 'Entrando…' : 'Creando cuenta…';
 
-  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if(AUTH_MODE === 'login'){
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if(error){ renderLogin(error.message); return; }
+    // onAuthStateChange se encarga de comprobar si es personal y llevar a Mi espacio
+    return;
+  }
+
+  // Registro: solo funcionará de verdad si el correo ya está en la tabla staff
+  // (añadido antes por el Administrador). Si no lo está, se rechazará al comprobar.
+  const { data, error } = await sb.auth.signUp({ email, password });
   if(error){ renderLogin(error.message); return; }
-  // onAuthStateChange se encarga de comprobar si es personal y llevar a Mi espacio
+  if(!data.session){
+    const msg = 'Hemos enviado un correo de confirmación a ' + email + '. Ábrelo y toca el enlace para activar la cuenta, y luego vuelve aquí y entra.';
+    AUTH_MODE = 'login';
+    renderLogin();
+    document.getElementById('login-content').insertAdjacentHTML('afterbegin', `<div class="auth-ok">${msg}</div>`);
+  }
+  // si data.session sí existe, onAuthStateChange comprueba sola si es personal
 }
 
 async function cerrarSesion(){
