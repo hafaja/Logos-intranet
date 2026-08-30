@@ -31,6 +31,8 @@
   .sidebar nav button{text-align:left;background:none;border:none;color:rgba(255,255,255,.75);font-family:var(--font-body);font-weight:700;font-size:13.5px;padding:11px 14px;border-radius:10px;cursor:pointer;transition:background .15s;}
   .sidebar nav button:hover{background:rgba(255,255,255,.06);}
   .sidebar nav button.active{background:var(--gold);color:var(--navy-dark);}
+  .nav-badge{display:inline-block;background:var(--alert);color:#fff;font-size:10.5px;font-weight:700;border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:middle;}
+  .sidebar nav button.active .nav-badge{background:var(--navy-dark);color:#fff;}
   .sidebar-logout{background:none;border:1.5px solid rgba(255,255,255,.25);color:rgba(255,255,255,.8);border-radius:10px;padding:10px;font-family:var(--font-body);font-weight:700;font-size:12.5px;cursor:pointer;margin-top:auto;}
   .sidebar-logout:hover{border-color:var(--alert);color:#fff;}
 
@@ -125,7 +127,7 @@
     <div class="sidebar-sub">Personal y administración</div>
     <nav>
       <button class="active" data-target="miespacio" onclick="showScreen('miespacio');renderMiEspacio()">Mi espacio</button>
-      <button data-target="panel" onclick="showScreen('panel');renderPanelGeneral()">Panel general</button>
+      <button data-target="panel" onclick="showScreen('panel');renderPanelGeneral()">Panel general <span id="badge-panel" class="nav-badge" style="display:none;">0</span></button>
       <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
     </nav>
     <button class="sidebar-logout" onclick="cerrarSesion()" id="sidebar-logout-btn" style="display:none;">Cerrar sesión</button>
@@ -242,6 +244,35 @@ async function checkStaff(){
   document.getElementById('nav-admin-btn').style.display = IS_ADMIN ? '' : 'none';
 }
 
+let __intervaloBadge = null;
+
+async function actualizarBadgePanel(){
+  if(!IS_STAFF){ return; }
+  const [notifs, consultas] = await Promise.all([
+    sb.from('notificaciones').select('id', { count: 'exact', head: true }).eq('leida', false),
+    sb.from('consultas_orientacion').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente')
+  ]);
+  const total = (notifs.count || 0) + (consultas.count || 0);
+  const badge = document.getElementById('badge-panel');
+  if(!badge) return;
+  if(total > 0){
+    badge.textContent = total > 99 ? '99+' : total;
+    badge.style.display = 'inline-block';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function iniciarRefrescoBadge(){
+  actualizarBadgePanel();
+  clearInterval(__intervaloBadge);
+  __intervaloBadge = setInterval(actualizarBadgePanel, 60000); // cada 60 segundos
+}
+
+function detenerRefrescoBadge(){
+  clearInterval(__intervaloBadge);
+}
+
 let AUTH_MODE = 'login';
 
 function renderLogin(errorMsg){
@@ -305,6 +336,7 @@ async function cerrarSesion(){
   await sb.auth.signOut();
   IS_STAFF = false; IS_ADMIN = false;
   toggleSidebarVisible(false);
+  detenerRefrescoBadge();
   showScreen('login');
   renderLogin();
 }
@@ -320,6 +352,7 @@ async function initAuth(){
     await checkStaff();
     if(!CURRENT_USER){
       toggleSidebarVisible(false);
+      detenerRefrescoBadge();
       showScreen('login'); renderLogin();
       return;
     }
@@ -330,6 +363,7 @@ async function initAuth(){
       return;
     }
     toggleSidebarVisible(true);
+    iniciarRefrescoBadge();
     showScreen('miespacio');
     renderMiEspacio();
   });
@@ -344,6 +378,7 @@ async function initAuth(){
     return;
   }
   toggleSidebarVisible(true);
+  iniciarRefrescoBadge();
   showScreen('miespacio');
   renderMiEspacio();
 }
@@ -607,6 +642,12 @@ async function renderPanelGeneral(){
     ? rows.map(r => `<div class="panel-stat-row"><span>${r[labelKey] || '—'}</span><span><strong>${r[totalKey]}</strong></span></div>`).join('')
     : `<div class="empty-note">Sin datos todavía</div>`;
 
+  const graficoBarras = (rows, labelKey, totalKey) => {
+    if(!rows || !rows.length) return `<div class="empty-note">Sin datos todavía</div>`;
+    const max = Math.max(...rows.map(r => r[totalKey]));
+    return rows.map(r => barRow(r[labelKey] || '—', r[totalKey], max)).join('');
+  };
+
   const dd = depDis.data || {}; const sf = situFam.data || {}; const sat = satisfaccion.data || {};
 
   const notifsHtml = (notifs.data && notifs.data.length)
@@ -650,8 +691,8 @@ async function renderPanelGeneral(){
     </div>
 
     <div class="cards-grid" style="margin-bottom:24px;">
-      <div class="panel-card"><h3>Por sexo</h3>${filaLista(porSexo.data, 'sexo', 'total')}</div>
-      <div class="panel-card"><h3>Por nacionalidad</h3>${filaLista(porNacionalidad.data, 'nacionalidad', 'total')}</div>
+      <div class="panel-card"><h3>Por sexo</h3>${graficoBarras(porSexo.data, 'sexo', 'total')}</div>
+      <div class="panel-card"><h3>Por nacionalidad</h3>${graficoBarras(porNacionalidad.data, 'nacionalidad', 'total')}</div>
       <div class="panel-card">
         <h3>Dependencia y discapacidad</h3>
         <div class="panel-stat-row"><span>Con dependencia reconocida</span><span><strong>${dd.con_dependencia_reconocida || 0}</strong></span></div>
@@ -671,17 +712,19 @@ async function renderPanelGeneral(){
         <div class="panel-stat-row"><span>Media global</span><span><strong>${sat.media_global || '—'} / 5</strong></span></div>
         <div class="panel-stat-row"><span>Respuestas recibidas</span><span><strong>${sat.total_respuestas || 0}</strong></span></div>
       </div>
-      <div class="panel-card"><h3>Trámites por estado</h3>${filaLista(tramEstado.data, 'estado', 'total')}</div>
-      <div class="panel-card"><h3>Intereses formativos más demandados</h3>${filaLista(interesesForm.data, 'interes', 'total')}</div>
-      <div class="panel-card"><h3>Prestaciones económicas</h3>${filaLista(prestaciones.data, 'prestacion', 'total')}</div>
-      <div class="panel-card"><h3>Trámites de Bretxa Digital</h3>${filaLista(tramitesBretxa.data, 'tramite', 'total')}</div>
-      <div class="panel-card"><h3>Derivación a recursos sociales</h3>${filaLista(derivacion.data, 'derivacion', 'total')}</div>
-      <div class="panel-card"><h3>Emprendeduría</h3>${filaLista(emprendeduria.data, 'accion', 'total')}</div>
-      <div class="panel-card"><h3>Cómo conoció Logos</h3>${filaLista(comoConocio.data, 'como_conocio', 'total')}</div>
+      <div class="panel-card"><h3>Trámites por estado</h3>${graficoBarras(tramEstado.data, 'estado', 'total')}</div>
+      <div class="panel-card"><h3>Intereses formativos más demandados</h3>${graficoBarras(interesesForm.data, 'interes', 'total')}</div>
+      <div class="panel-card"><h3>Prestaciones económicas</h3>${graficoBarras(prestaciones.data, 'prestacion', 'total')}</div>
+      <div class="panel-card"><h3>Trámites de Bretxa Digital</h3>${graficoBarras(tramitesBretxa.data, 'tramite', 'total')}</div>
+      <div class="panel-card"><h3>Derivación a recursos sociales</h3>${graficoBarras(derivacion.data, 'derivacion', 'total')}</div>
+      <div class="panel-card"><h3>Emprendeduría</h3>${graficoBarras(emprendeduria.data, 'accion', 'total')}</div>
+      <div class="panel-card"><h3>Cómo conoció Logos</h3>${graficoBarras(comoConocio.data, 'como_conocio', 'total')}</div>
     </div>
   `;
 
   animateNumber(document.getElementById('num-total-personas'), totalPersonas);
+  actualizarBadgePanel();
+  activarBarras();
 }
 
 // ================= FICHA DE PERSONA =================
@@ -787,39 +830,34 @@ async function verPersonaStaff(usuarioId, origen){
 
 // ================= ADMINISTRADOR =================
 
+const ADMIN_PAGE_SIZE = 40;
+let __adminAtencionesOffset = 0;
+let __adminAtencionesTodas = [];
+
 async function renderAdministrador(){
   const cont = document.getElementById('admin-content');
   if(!IS_ADMIN){ cont.innerHTML = `<div class="placeholder">Esta sección es solo para el responsable de Logos.</div>`; return; }
   cont.innerHTML = `<div class="placeholder">Cargando…</div>`;
 
-  const [atencionesRes, staffRes] = await Promise.all([
-    sb.from('atenciones').select('*').order('creado_en', { ascending:false }).limit(200),
+  __adminAtencionesOffset = 0;
+  __adminAtencionesTodas = [];
+
+  const [primeraPagina, cargaRes, staffRes] = await Promise.all([
+    sb.from('atenciones').select('*').order('creado_en', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
+    sb.from('atenciones').select('creado_por_email'), // sin límite: solo para el conteo de carga de trabajo
     sb.from('staff').select('*').order('email', { ascending:true })
   ]);
 
   window.__staffLista = staffRes.data || [];
+  __adminAtencionesTodas = primeraPagina.data || [];
+  __adminAtencionesOffset = __adminAtencionesTodas.length;
 
-  const atenciones = atencionesRes.data || [];
-  const filasHtml = atenciones.length
-    ? atenciones.map(a => {
-        const servicios = [...(a.prestaciones||[]), ...(a.tramites_bretxa||[]), ...(a.emprendeduria||[]), a.derivacion].filter(Boolean).join(', ') || '—';
-        return `
-          <div class="panel-card">
-            <div class="panel-stat-row"><span>Técnico</span><span><strong>${a.creado_por_email}</strong></span></div>
-            <div class="panel-stat-row"><span>Persona</span><span><strong>${a.nombre_referencia}${a.usuario_id ? ' <span class="chip good">con cuenta</span>' : ''}</strong></span></div>
-            <div class="panel-stat-row"><span>Fecha</span><span>${new Date(a.creado_en).toLocaleString('es-ES')}</span></div>
-            ${a.duracion_minutos ? `<div class="panel-stat-row"><span>Duración</span><span>${a.duracion_minutos} min</span></div>` : ''}
-            <div class="panel-stat-row"><span>Servicios</span><span>${servicios}</span></div>
-            ${a.usuario_id ? `<button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${a.usuario_id}','admin')">👤 Ver información completa</button>` : ''}
-          </div>`;
-      }).join('')
-    : `<div class="empty-note">Todavía no hay atenciones registradas.</div>`;
-
-  // Carga de trabajo por técnico
+  // Carga de trabajo por técnico (sobre TODAS las atenciones, no solo la página cargada)
   const cargaPorTecnico = {};
-  atenciones.forEach(a => { cargaPorTecnico[a.creado_por_email] = (cargaPorTecnico[a.creado_por_email]||0) + 1; });
+  (cargaRes.data || []).forEach(a => { cargaPorTecnico[a.creado_por_email] = (cargaPorTecnico[a.creado_por_email]||0) + 1; });
   const cargaOrdenada = Object.entries(cargaPorTecnico).sort((a,b)=>b[1]-a[1]);
   const maxCarga = cargaOrdenada.length ? cargaOrdenada[0][1] : 0;
+  const totalAtenciones = (cargaRes.data || []).length;
 
   const staffHtml = window.__staffLista.map(s => `
     <div class="panel-stat-row">
@@ -834,6 +872,7 @@ async function renderAdministrador(){
     <div class="cards-grid" style="margin-bottom:16px;">
       <div class="panel-card">
         <h3>Carga de trabajo por técnico</h3>
+        <p class="subtle" style="margin:0 0 10px;">Sobre el total histórico: ${totalAtenciones} atenciones registradas.</p>
         ${cargaOrdenada.length ? cargaOrdenada.map(([email,v]) => barRow(email, v, maxCarga)).join('') : `<div class="empty-note">Sin datos todavía</div>`}
       </div>
 
@@ -848,11 +887,52 @@ async function renderAdministrador(){
       </div>
     </div>
 
-    <p class="subtle" style="margin-top:18px;">Registro completo de qué técnico ha atendido a quién y con qué servicios (últimas 200 atenciones).</p>
-    <div class="cards-grid">${filasHtml}</div>
+    <p class="subtle" style="margin-top:18px;">Registro completo de qué técnico ha atendido a quién y con qué servicios.</p>
+    <div class="cards-grid" id="admin-atenciones-grid">${renderFilasAtenciones(__adminAtencionesTodas)}</div>
+    <div style="text-align:center;margin-top:18px;margin-bottom:24px;" id="admin-cargar-mas-wrap">
+      ${totalAtenciones > __adminAtencionesTodas.length
+        ? `<button class="link-btn" onclick="cargarMasAtenciones()">Cargar ${Math.min(ADMIN_PAGE_SIZE, totalAtenciones - __adminAtencionesTodas.length)} más (de ${totalAtenciones} en total)</button>`
+        : ''}
+    </div>
   `;
 
   activarBarras();
+}
+
+function renderFilasAtenciones(atenciones){
+  return atenciones.length
+    ? atenciones.map(a => {
+        const servicios = [...(a.prestaciones||[]), ...(a.tramites_bretxa||[]), ...(a.emprendeduria||[]), a.derivacion].filter(Boolean).join(', ') || '—';
+        return `
+          <div class="panel-card">
+            <div class="panel-stat-row"><span>Técnico</span><span><strong>${a.creado_por_email}</strong></span></div>
+            <div class="panel-stat-row"><span>Persona</span><span><strong>${a.nombre_referencia}${a.usuario_id ? ' <span class="chip good">con cuenta</span>' : ''}</strong></span></div>
+            <div class="panel-stat-row"><span>Fecha</span><span>${new Date(a.creado_en).toLocaleString('es-ES')}</span></div>
+            ${a.duracion_minutos ? `<div class="panel-stat-row"><span>Duración</span><span>${a.duracion_minutos} min</span></div>` : ''}
+            <div class="panel-stat-row"><span>Servicios</span><span>${servicios}</span></div>
+            ${a.usuario_id ? `<button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${a.usuario_id}','admin')">👤 Ver información completa</button>` : ''}
+          </div>`;
+      }).join('')
+    : `<div class="empty-note">Todavía no hay atenciones registradas.</div>`;
+}
+
+async function cargarMasAtenciones(){
+  const wrap = document.getElementById('admin-cargar-mas-wrap');
+  wrap.innerHTML = `<span class="subtle">Cargando…</span>`;
+
+  const { data } = await sb.from('atenciones').select('*').order('creado_en', { ascending:false })
+    .range(__adminAtencionesOffset, __adminAtencionesOffset + ADMIN_PAGE_SIZE - 1);
+
+  const nuevas = data || [];
+  __adminAtencionesTodas = __adminAtencionesTodas.concat(nuevas);
+  __adminAtencionesOffset += nuevas.length;
+
+  document.getElementById('admin-atenciones-grid').innerHTML = renderFilasAtenciones(__adminAtencionesTodas);
+
+  const { count } = await sb.from('atenciones').select('id', { count: 'exact', head: true });
+  wrap.innerHTML = (count || 0) > __adminAtencionesTodas.length
+    ? `<button class="link-btn" onclick="cargarMasAtenciones()">Cargar ${Math.min(ADMIN_PAGE_SIZE, count - __adminAtencionesTodas.length)} más (de ${count} en total)</button>`
+    : '';
 }
 
 async function agregarTecnico(){
