@@ -385,6 +385,18 @@ async function initAuth(){
 
 // ================= MI ESPACIO (personal por técnico) =================
 
+async function ficharEntrada(){
+  const { error } = await sb.from('fichajes').insert({ tecnico_email: CURRENT_USER.email });
+  if(error){ alert(error.message); return; }
+  renderMiEspacio();
+}
+
+async function ficharSalida(id){
+  const { error } = await sb.from('fichajes').update({ salida: new Date().toISOString() }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderMiEspacio();
+}
+
 async function renderMiEspacio(){
   const cont = document.getElementById('miespacio-content');
   cont.innerHTML = `<div class="placeholder">Cargando…</div>`;
@@ -395,6 +407,9 @@ async function renderMiEspacio(){
 
   const { data: mias } = await sb.from('atenciones').select('*').eq('creado_por_email', email).order('creado_en', { ascending:false }).limit(300);
   const lista = mias || [];
+
+  const { data: fichajesHoy } = await sb.from('fichajes').select('*').eq('tecnico_email', email).gte('entrada', hoy.toISOString()).order('entrada', { ascending:true });
+  const fichajesDeHoy = fichajesHoy || [];
 
   const hoyCount = lista.filter(a => new Date(a.creado_en) >= hoy).length;
   const semanaCount = lista.filter(a => new Date(a.creado_en) >= inicioSemana).length;
@@ -418,12 +433,41 @@ async function renderMiEspacio(){
       </span>
     </div>`).join('') || `<div class="empty-note">Todavía no has registrado ninguna atención.</div>`;
 
+  const horaFmt = iso => new Date(iso).toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+  const duracionFmt = (ini, fin) => {
+    const min = Math.round((new Date(fin) - new Date(ini)) / 60000);
+    return `${Math.floor(min/60)}h ${min%60}min`;
+  };
+
+  const ultimoFichaje = fichajesDeHoy[fichajesDeHoy.length - 1];
+  const fichadoAhora = ultimoFichaje && !ultimoFichaje.salida;
+
+  const historialHoyHtml = fichajesDeHoy.map(f => `
+    <div class="panel-stat-row">
+      <span>Entrada ${horaFmt(f.entrada)}${f.salida ? ` · Salida ${horaFmt(f.salida)}` : ' · en curso'}</span>
+      <span>${f.salida ? `<strong>${duracionFmt(f.entrada, f.salida)}</strong>` : `<span class="chip gold">Fichado</span>`}</span>
+    </div>`).join('');
+
+  const fichajeCardHtml = `
+    <div class="panel-card" style="text-align:center;background:${fichadoAhora ? 'var(--good-soft)' : 'var(--gold-soft)'};border-color:${fichadoAhora ? 'var(--good)' : 'var(--gold)'};">
+      <h3 style="text-align:left;">Fichaje de hoy</h3>
+      ${fichadoAhora
+        ? `<p style="margin:0 0 12px;font-size:13.5px;">Fichado desde las <strong>${horaFmt(ultimoFichaje.entrada)}</strong></p>
+           <button class="primary-btn" style="background:var(--alert);" onclick="ficharSalida('${ultimoFichaje.id}')">⏹ Fichar salida</button>`
+        : `<p style="margin:0 0 12px;font-size:13.5px;">${fichajesDeHoy.length ? 'Has fichado salida. Puedes volver a fichar entrada si vuelves.' : 'Todavía no has fichado hoy.'}</p>
+           <button class="primary-btn" onclick="ficharEntrada()">🕐 Fichar entrada</button>`}
+      ${historialHoyHtml ? `<div style="text-align:left;margin-top:14px;">${historialHoyHtml}</div>` : ''}
+    </div>
+  `;
+
   cont.innerHTML = `
     <div class="hero" style="margin:-1px -20px 16px;border-radius:0;">
       <div class="hero-brand">Hola</div>
       <h1 class="hero-title" style="font-size:20px;">${email}</h1>
       <p class="hero-sub">Este es tu espacio de trabajo personal</p>
     </div>
+
+    ${fichajeCardHtml}
 
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-num" id="num-hoy">0</div><div class="stat-label">Hoy</div></div>
@@ -842,10 +886,11 @@ async function renderAdministrador(){
   __adminAtencionesOffset = 0;
   __adminAtencionesTodas = [];
 
-  const [primeraPagina, cargaRes, staffRes] = await Promise.all([
+  const [primeraPagina, cargaRes, staffRes, fichajesRes] = await Promise.all([
     sb.from('atenciones').select('*').order('creado_en', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
     sb.from('atenciones').select('creado_por_email'), // sin límite: solo para el conteo de carga de trabajo
-    sb.from('staff').select('*').order('email', { ascending:true })
+    sb.from('staff').select('*').order('email', { ascending:true }),
+    sb.from('fichajes').select('*').order('entrada', { ascending:false }).limit(100)
   ]);
 
   window.__staffLista = staffRes.data || [];
@@ -868,6 +913,20 @@ async function renderAdministrador(){
       </span>
     </div>`).join('');
 
+  const horaFmtAdmin = iso => new Date(iso).toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+  const fechaFmtAdmin = iso => new Date(iso).toLocaleDateString('es-ES', { weekday:'short', day:'numeric', month:'short' });
+  const duracionFmtAdmin = (ini, fin) => {
+    const min = Math.round((new Date(fin) - new Date(ini)) / 60000);
+    return `${Math.floor(min/60)}h ${min%60}min`;
+  };
+  const fichajesHtml = (fichajesRes.data && fichajesRes.data.length)
+    ? fichajesRes.data.map(f => `
+        <div class="panel-stat-row">
+          <span>${f.tecnico_email} · ${fechaFmtAdmin(f.entrada)}</span>
+          <span>${horaFmtAdmin(f.entrada)}${f.salida ? ` – ${horaFmtAdmin(f.salida)} (${duracionFmtAdmin(f.entrada, f.salida)})` : ' <span class="chip gold">en curso</span>'}</span>
+        </div>`).join('')
+    : `<div class="empty-note">Todavía no hay fichajes registrados.</div>`;
+
   cont.innerHTML = `
     <div class="cards-grid" style="margin-bottom:16px;">
       <div class="panel-card">
@@ -884,6 +943,11 @@ async function renderAdministrador(){
           <input type="email" id="admin-nuevo-email" placeholder="tcnlogos15@gmail.com">
         </div>
         <button class="link-btn" onclick="agregarTecnico()">➕ Añadir a la plataforma</button>
+      </div>
+
+      <div class="panel-card">
+        <h3>Fichajes (últimos 100)</h3>
+        ${fichajesHtml}
       </div>
     </div>
 
