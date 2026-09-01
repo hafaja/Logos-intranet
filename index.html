@@ -77,7 +77,27 @@
   .stat-label{font-size:11px;color:var(--ink-soft);margin-top:5px;text-transform:uppercase;letter-spacing:.03em;}
 
   .cards-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:16px;align-items:start;}
-  .panel-card{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:0;}
+  .panel-card{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:0;opacity:0;transform:translateY(10px);animation:fadeUp .5s ease forwards;}
+  @keyframes fadeUp{to{opacity:1;transform:translateY(0);}}
+
+  .info-box{position:relative;border-radius:14px;padding:22px 20px 18px;margin:18px 0;border:1.5px solid;}
+  .info-box::before{position:absolute;top:-14px;left:20px;font-size:19px;background:var(--bg);padding:0 8px;}
+  .info-box-title{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;font-weight:700;margin-bottom:8px;}
+  .info-box p{font-size:13.5px;line-height:1.6;margin:0 0 6px;}
+  .info-box .source{font-size:11px;font-style:italic;opacity:.75;margin-top:6px;}
+  .info-box-navy{background:linear-gradient(135deg, #EEF1F6, #E7EBF2);border-color:#C7D0DE;}
+  .info-box-navy::before{content:'🔎';}
+  .info-box-navy .info-box-title{color:var(--navy);}
+  .info-box-gold{background:var(--gold-soft);border-color:var(--gold);}
+  .info-box-gold::before{content:'💡';}
+  .info-box-gold .info-box-title{color:#7A5A16;}
+
+  .pull-quote{border-left:4px solid var(--gold);padding:16px 20px;margin:16px 0;background:var(--paper);border-radius:0 12px 12px 0;font-family:var(--font-display);font-size:15.5px;line-height:1.55;color:var(--navy);font-style:italic;}
+
+  .level-pill{display:inline-block;padding:5px 14px;border-radius:999px;font-size:11.5px;font-weight:700;letter-spacing:.3px;}
+  .lp-good{background:var(--good-soft);color:var(--good);}
+  .lp-gold{background:var(--gold-soft);color:#7A5A16;}
+  .lp-off{background:#EEE;color:#888;}
   .panel-card h3{margin:0 0 10px;font-size:13.5px;color:var(--navy);font-family:var(--font-body);}
   .panel-stat-row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
   .panel-stat-row:last-child{border-bottom:none;}
@@ -890,12 +910,13 @@ async function renderAdministrador(){
   __adminFichajesOffset = 0;
   __adminFichajesTodos = [];
 
-  const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes] = await Promise.all([
+  const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes] = await Promise.all([
     sb.from('atenciones').select('*').order('creado_en', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
     sb.from('atenciones').select('creado_por_email'), // sin límite: solo para el conteo de carga de trabajo
     sb.from('staff').select('*').order('email', { ascending:true }),
     sb.from('fichajes').select('*').order('entrada', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
-    sb.from('fichajes').select('id', { count: 'exact', head: true })
+    sb.from('fichajes').select('id', { count: 'exact', head: true }),
+    sb.from('atenciones').select('necesidades_no_catalogadas, creado_en, nombre_referencia').not('necesidades_no_catalogadas', 'is', null).order('creado_en', { ascending:false }).limit(50)
   ]);
 
   window.__staffLista = staffRes.data || [];
@@ -921,7 +942,18 @@ async function renderAdministrador(){
       </span>
     </div>`).join('');
 
+  const necesidadesHtml = (necesidadesRes.data && necesidadesRes.data.length)
+    ? necesidadesRes.data.map(n => `
+        <div class="pull-quote">"${n.necesidades_no_catalogadas}"<div style="font-family:var(--font-body);font-style:normal;font-size:11px;color:var(--ink-soft);margin-top:6px;">${n.nombre_referencia} · ${new Date(n.creado_en).toLocaleDateString('es-ES')}</div></div>`).join('')
+    : `<div class="empty-note">Nadie ha pedido todavía algo fuera del catálogo. Buena señal, o toca preguntar más 🙂</div>`;
+
   cont.innerHTML = `
+    <div class="info-box info-box-gold" style="margin-bottom:16px;">
+      <div class="info-box-title">Fuera del catálogo</div>
+      <p style="margin-bottom:12px;">Lo que la gente ha pedido y que los técnicos han marcado como "no está en el catálogo". Útil para decidir qué fichas nuevas escribir primero.</p>
+      ${necesidadesHtml}
+    </div>
+
     <div class="cards-grid" style="margin-bottom:16px;">
       <div class="panel-card">
         <h3>Carga de trabajo por técnico</h3>
