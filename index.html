@@ -440,6 +440,15 @@ async function renderMiEspacio(){
   const { data: fichajesHoy } = await sb.from('fichajes').select('*').eq('tecnico_email', email).gte('entrada', hoy.toISOString()).order('entrada', { ascending:true });
   const fichajesDeHoy = fichajesHoy || [];
 
+  const { data: misActuacionesRaw } = await sb.from('actuaciones').select('*').eq('tecnico_email', email).order('fecha', { ascending:false }).limit(300);
+  const misActuaciones = misActuacionesRaw || [];
+  let nombresActuacion = {};
+  if(misActuaciones.length){
+    const idsAct = [...new Set(misActuaciones.map(a => a.usuario_id))];
+    const { data: perfilesAct } = await sb.from('perfiles').select('id, nombre_completo').in('id', idsAct);
+    (perfilesAct || []).forEach(p => { nombresActuacion[p.id] = p.nombre_completo; });
+  }
+
   const { data: misRevisionesRaw } = await sb.from('actuaciones').select('*').eq('tecnico_email', email).not('fecha_proxima_revision', 'is', null).order('fecha_proxima_revision', { ascending:true });
   const misRevisiones = misRevisionesRaw || [];
   let nombresRevision = {};
@@ -470,6 +479,15 @@ async function renderMiEspacio(){
         <span class="subtle" style="margin:0;font-size:11px;">${new Date(a.creado_en).toLocaleDateString('es-ES')}</span>
       </span>
     </div>`).join('') || `<div class="empty-note">Todavía no has registrado ninguna atención.</div>`;
+
+  const actuacionesRecientesHtml = misActuaciones.slice(0, 8).map(ac => `
+    <div class="list-row">
+      <span>${nombresActuacion[ac.usuario_id] || 'Sin nombre'}${ac.categoria ? `<br><span class="subtle" style="font-size:11px;margin:0;">${ac.categoria}</span>` : ''}</span>
+      <span style="display:flex;align-items:center;gap:8px;">
+        ${ac.resultado ? `<span class="chip ${ac.resultado==='conseguido'?'good':(ac.resultado==='no_conseguido'?'':'gold')}" style="${ac.resultado==='no_conseguido'?'background:var(--alert-soft);color:var(--alert);':''}">${ac.resultado==='conseguido'?'Conseguido':(ac.resultado==='en_tramite'?'En trámite':'No conseguido')}</span>` : ''}
+        <span class="subtle" style="margin:0;font-size:11px;">${new Date(ac.fecha).toLocaleDateString('es-ES')}</span>
+      </span>
+    </div>`).join('') || `<div class="empty-note">Todavía no has registrado ninguna actuación.</div>`;
 
   const horaFmt = iso => new Date(iso).toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
   const duracionFmt = (ini, fin) => {
@@ -539,7 +557,10 @@ async function renderMiEspacio(){
       ${topServicios.map(([s,v]) => barRow(s, v, maxServicio)).join('')}
     </div>` : ''}
 
-    <div class="section-label">Tus últimas atenciones</div>
+    <div class="section-label">Tus últimas actuaciones</div>
+    ${actuacionesRecientesHtml}
+
+    <div class="section-label" style="margin-top:16px;">Tus últimas atenciones</div>
     ${recientesHtml}
 
     <button class="primary-btn" style="background:none;border:1.5px solid var(--alert);color:var(--alert);margin-top:20px;" onclick="cerrarSesion()">Cerrar sesión</button>
@@ -1200,7 +1221,7 @@ async function renderAdministrador(){
   __adminActuacionesOffset = 0;
   __adminActuacionesTodas = [];
 
-  const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes, revisionesRes, perfilesIncompletosRes, actuacionesPrimeraPagina, actuacionesCountRes] = await Promise.all([
+  const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes, revisionesRes, perfilesIncompletosRes, actuacionesPrimeraPagina, actuacionesCountRes, actuacionesLigeroRes] = await Promise.all([
     sb.from('atenciones').select('*').order('creado_en', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
     sb.from('atenciones').select('creado_por_email'), // sin límite: solo para el conteo de carga de trabajo
     sb.from('staff').select('*').order('email', { ascending:true }),
@@ -1210,7 +1231,8 @@ async function renderAdministrador(){
     sb.from('actuaciones').select('*').not('fecha_proxima_revision', 'is', null).order('fecha_proxima_revision', { ascending:true }).limit(100),
     sb.from('perfiles').select('id, nombre_completo, dni_nie, telefono, calle').not('nombre_completo', 'is', null),
     sb.from('actuaciones').select('*').order('fecha', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
-    sb.from('actuaciones').select('id', { count: 'exact', head: true })
+    sb.from('actuaciones').select('id', { count: 'exact', head: true }),
+    sb.from('actuaciones').select('usuario_id, fecha')
   ]);
 
   window.__staffLista = staffRes.data || [];
@@ -1274,6 +1296,25 @@ async function renderAdministrador(){
       }).join('')
     : `<div class="empty-note">Todo el mundo tiene sus datos básicos completos 🙌</div>`;
 
+  // Historial de personas: agrupar actuaciones por persona (nombre, nº de actuaciones, última fecha)
+  const porPersona = {};
+  (actuacionesLigeroRes.data || []).forEach(a => {
+    if(!a.usuario_id) return;
+    if(!porPersona[a.usuario_id]) porPersona[a.usuario_id] = { count: 0, ultima: a.fecha };
+    porPersona[a.usuario_id].count++;
+    if(new Date(a.fecha) > new Date(porPersona[a.usuario_id].ultima)) porPersona[a.usuario_id].ultima = a.fecha;
+  });
+  const historialPersonas = Object.entries(porPersona)
+    .map(([id, info]) => ({ id, ...info, nombre: nombresPersona[id] || 'Persona sin nombre' }))
+    .sort((a,b) => new Date(b.ultima) - new Date(a.ultima));
+  const historialPersonasHtml = historialPersonas.length
+    ? historialPersonas.map(p => `
+        <div class="panel-stat-row">
+          <span>${p.nombre}<br><span class="subtle" style="font-size:11px;margin:0;">${p.count} actuación${p.count===1?'':'es'} · última: ${new Date(p.ultima).toLocaleDateString('es-ES')}</span></span>
+          <button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${p.id}','admin')">Ver su espacio →</button>
+        </div>`).join('')
+    : `<div class="empty-note">Todavía no hay personas con actuaciones registradas.</div>`;
+
   cont.innerHTML = `
     <div class="cards-grid" style="margin-bottom:16px;">
       <div class="panel-card">
@@ -1286,6 +1327,12 @@ async function renderAdministrador(){
         <p class="subtle" style="margin:0 0 10px;">${perfilesIncompletos.length} de ${(perfilesIncompletosRes.data||[]).length} personas les falta DNI/NIE, teléfono o dirección.${perfilesIncompletos.length > 30 ? ' Mostrando las primeras 30.' : ''}</p>
         ${incompletosHtml}
       </div>
+    </div>
+
+    <div class="panel-card" style="margin-bottom:16px;">
+      <h3>👥 Historial de personas</h3>
+      <p class="subtle" style="margin:0 0 10px;">Todas las personas con al menos una actuación registrada, ordenadas por la más reciente. Toca "Ver su espacio" para entrar a su ficha completa (con su historial, trámites, documentos y citas).</p>
+      ${historialPersonasHtml}
     </div>
 
     <div class="info-box info-box-gold" style="margin-bottom:16px;">
