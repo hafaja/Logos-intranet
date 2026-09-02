@@ -440,6 +440,15 @@ async function renderMiEspacio(){
   const { data: fichajesHoy } = await sb.from('fichajes').select('*').eq('tecnico_email', email).gte('entrada', hoy.toISOString()).order('entrada', { ascending:true });
   const fichajesDeHoy = fichajesHoy || [];
 
+  const { data: misRevisionesRaw } = await sb.from('actuaciones').select('*').eq('tecnico_email', email).not('fecha_proxima_revision', 'is', null).order('fecha_proxima_revision', { ascending:true });
+  const misRevisiones = misRevisionesRaw || [];
+  let nombresRevision = {};
+  if(misRevisiones.length){
+    const ids = [...new Set(misRevisiones.map(r => r.usuario_id))];
+    const { data: perfilesRev } = await sb.from('perfiles').select('id, nombre_completo').in('id', ids);
+    (perfilesRev || []).forEach(p => { nombresRevision[p.id] = p.nombre_completo; });
+  }
+
   const hoyCount = lista.filter(a => new Date(a.creado_en) >= hoy).length;
   const semanaCount = lista.filter(a => new Date(a.creado_en) >= inicioSemana).length;
   const totalCount = lista.length;
@@ -489,6 +498,19 @@ async function renderMiEspacio(){
     </div>
   `;
 
+  const revisionesHtml = misRevisiones.length
+    ? misRevisiones.map(r => {
+        const vencida = new Date(r.fecha_proxima_revision) < hoy;
+        return `<div class="panel-stat-row">
+          <span>${nombresRevision[r.usuario_id] || 'Persona sin nombre'}${r.categoria ? `<br><span class="subtle" style="font-size:11px;margin:0;">${r.categoria}</span>` : ''}</span>
+          <span style="display:flex;align-items:center;gap:8px;">
+            <span class="chip ${vencida ? '' : 'gold'}" style="${vencida ? 'background:var(--alert-soft);color:var(--alert);' : ''}">${new Date(r.fecha_proxima_revision).toLocaleDateString('es-ES')}${vencida ? ' · vencida' : ''}</span>
+            ${r.usuario_id ? `<button class="link-btn" style="font-size:11px;" onclick="verPersonaStaff('${r.usuario_id}','miespacio')">Ver</button>` : ''}
+          </span>
+        </div>`;
+      }).join('')
+    : `<div class="empty-note">No tienes revisiones pendientes.</div>`;
+
   cont.innerHTML = `
     <div class="hero" style="margin:-1px -20px 16px;border-radius:0;">
       <div class="hero-brand">Hola</div>
@@ -505,6 +527,11 @@ async function renderMiEspacio(){
     </div>
 
     <button class="primary-btn" onclick="showScreen('atencion');renderAtencionForm()" style="margin-bottom:18px;">➕ Registrar nueva atención</button>
+
+    <div class="panel-card">
+      <h3>Tus próximas revisiones</h3>
+      ${revisionesHtml}
+    </div>
 
     ${topServicios.length ? `
     <div class="panel-card">
@@ -871,9 +898,11 @@ async function verPersonaStaff(usuarioId, origen){
   window.__usuarioIdVisto = usuarioId;
   window.__origenPersonaVista = origen || 'panel';
   const btnVolver = document.getElementById('btn-volver-persona');
-  btnVolver.setAttribute('onclick', origen === 'admin'
-    ? "showScreen('admin');renderAdministrador()"
-    : "showScreen('panel');renderPanelGeneral()");
+  const destinos = {
+    admin: "showScreen('admin');renderAdministrador()",
+    miespacio: "showScreen('miespacio');renderMiEspacio()"
+  };
+  btnVolver.setAttribute('onclick', destinos[origen] || "showScreen('panel');renderPanelGeneral()");
 
   const cont = document.getElementById('persona-content');
   showScreen('persona');
@@ -1166,13 +1195,15 @@ async function renderAdministrador(){
   __adminFichajesOffset = 0;
   __adminFichajesTodos = [];
 
-  const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes] = await Promise.all([
+  const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes, revisionesRes, perfilesIncompletosRes] = await Promise.all([
     sb.from('atenciones').select('*').order('creado_en', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
     sb.from('atenciones').select('creado_por_email'), // sin límite: solo para el conteo de carga de trabajo
     sb.from('staff').select('*').order('email', { ascending:true }),
     sb.from('fichajes').select('*').order('entrada', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
     sb.from('fichajes').select('id', { count: 'exact', head: true }),
-    sb.from('atenciones').select('necesidades_no_catalogadas, creado_en, nombre_referencia').not('necesidades_no_catalogadas', 'is', null).order('creado_en', { ascending:false }).limit(50)
+    sb.from('atenciones').select('necesidades_no_catalogadas, creado_en, nombre_referencia').not('necesidades_no_catalogadas', 'is', null).order('creado_en', { ascending:false }).limit(50),
+    sb.from('actuaciones').select('*').not('fecha_proxima_revision', 'is', null).order('fecha_proxima_revision', { ascending:true }).limit(100),
+    sb.from('perfiles').select('id, nombre_completo, dni_nie, telefono, calle').not('nombre_completo', 'is', null)
   ]);
 
   window.__staffLista = staffRes.data || [];
@@ -1203,7 +1234,49 @@ async function renderAdministrador(){
         <div class="pull-quote">"${n.necesidades_no_catalogadas}"<div style="font-family:var(--font-body);font-style:normal;font-size:11px;color:var(--ink-soft);margin-top:6px;">${n.nombre_referencia} · ${new Date(n.creado_en).toLocaleDateString('es-ES')}</div></div>`).join('')
     : `<div class="empty-note">Nadie ha pedido todavía algo fuera del catálogo. Buena señal, o toca preguntar más 🙂</div>`;
 
+  const nombresPersona = {};
+  (perfilesIncompletosRes.data || []).forEach(p => { nombresPersona[p.id] = p.nombre_completo; });
+
+  const hoyAdmin = new Date(); hoyAdmin.setHours(0,0,0,0);
+  const revisionesHtml = (revisionesRes.data && revisionesRes.data.length)
+    ? revisionesRes.data.map(r => {
+        const vencida = new Date(r.fecha_proxima_revision) < hoyAdmin;
+        return `<div class="panel-stat-row">
+          <span>${nombresPersona[r.usuario_id] || 'Persona sin nombre'}<br><span class="subtle" style="font-size:11px;margin:0;">${r.tecnico_email}${r.categoria ? ' · ' + r.categoria : ''}</span></span>
+          <span style="display:flex;align-items:center;gap:8px;">
+            <span class="chip ${vencida ? '' : 'gold'}" style="${vencida ? 'background:var(--alert-soft);color:var(--alert);' : ''}">${new Date(r.fecha_proxima_revision).toLocaleDateString('es-ES')}${vencida ? ' · vencida' : ''}</span>
+            ${r.usuario_id ? `<button class="link-btn" style="font-size:11px;" onclick="verPersonaStaff('${r.usuario_id}','admin')">Ver</button>` : ''}
+          </span>
+        </div>`;
+      }).join('')
+    : `<div class="empty-note">No hay revisiones pendientes de nadie.</div>`;
+
+  const camposClave = [['dni_nie','DNI/NIE'], ['telefono','Teléfono'], ['calle','Dirección']];
+  const perfilesIncompletos = (perfilesIncompletosRes.data || []).filter(p => camposClave.some(([campo]) => !p[campo]));
+  const incompletosHtml = perfilesIncompletos.length
+    ? perfilesIncompletos.slice(0, 30).map(p => {
+        const faltan = camposClave.filter(([campo]) => !p[campo]).map(([,label]) => label);
+        return `<div class="panel-stat-row">
+          <span>${p.nombre_completo}<br><span class="subtle" style="font-size:11px;margin:0;">Falta: ${faltan.join(', ')}</span></span>
+          <button class="link-btn" style="font-size:11px;" onclick="verPersonaStaff('${p.id}','admin')">Ver</button>
+        </div>`;
+      }).join('')
+    : `<div class="empty-note">Todo el mundo tiene sus datos básicos completos 🙌</div>`;
+
   cont.innerHTML = `
+    <div class="cards-grid" style="margin-bottom:16px;">
+      <div class="panel-card">
+        <h3>🔔 Próximas revisiones pendientes</h3>
+        <p class="subtle" style="margin:0 0 10px;">De todos los técnicos, ordenadas por fecha. Las vencidas aparecen en rojo.</p>
+        ${revisionesHtml}
+      </div>
+      <div class="panel-card">
+        <h3>📋 Perfiles con datos incompletos</h3>
+        <p class="subtle" style="margin:0 0 10px;">${perfilesIncompletos.length} de ${(perfilesIncompletosRes.data||[]).length} personas les falta DNI/NIE, teléfono o dirección.${perfilesIncompletos.length > 30 ? ' Mostrando las primeras 30.' : ''}</p>
+        ${incompletosHtml}
+      </div>
+    </div>
+
     <div class="info-box info-box-gold" style="margin-bottom:16px;">
       <div class="info-box-title">Fuera del catálogo</div>
       <p style="margin-bottom:12px;">Lo que la gente ha pedido y que los técnicos han marcado como "no está en el catálogo". Útil para decidir qué fichas nuevas escribir primero.</p>
