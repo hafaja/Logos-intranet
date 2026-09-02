@@ -798,7 +798,7 @@ async function renderPanelGeneral(){
   const cont = document.getElementById('panel-content');
   cont.innerHTML = `<div class="placeholder">Cargando…</div>`;
 
-  const [total, porSexo, porNacionalidad, depDis, situFam, tramEstado, interesesForm, notifs, satisfaccion, consultasPend, prestaciones, tramitesBretxa, derivacion, emprendeduria, comoConocio] = await Promise.all([
+  const [total, porSexo, porNacionalidad, depDis, situFam, tramEstado, interesesForm, notifs, satisfaccion, consultasPend, prestaciones, tramitesBretxa, derivacion, emprendeduria, comoConocio, actuacionesStats] = await Promise.all([
     sb.from('stats_total_personas').select('*').maybeSingle(),
     sb.from('stats_por_sexo').select('*'),
     sb.from('stats_por_nacionalidad').select('*'),
@@ -813,7 +813,8 @@ async function renderPanelGeneral(){
     sb.from('stats_tramites_bretxa').select('*'),
     sb.from('stats_derivacion').select('*'),
     sb.from('stats_emprendeduria').select('*'),
-    sb.from('stats_como_conocio').select('*')
+    sb.from('stats_como_conocio').select('*'),
+    sb.from('actuaciones').select('resultado, categoria, derivado_a')
   ]);
 
   const totalPersonas = total.data ? total.data.total_personas : 0;
@@ -828,6 +829,29 @@ async function renderPanelGeneral(){
   };
 
   const dd = depDis.data || {}; const sf = situFam.data || {}; const sat = satisfaccion.data || {};
+
+  // Estadísticas de ACTUACIONES (aparte de las de atenciones, de arriba)
+  const listaActStats = actuacionesStats.data || [];
+  const totalActStats = listaActStats.length;
+  const resultadoCount = { conseguido:0, en_tramite:0, no_conseguido:0 };
+  listaActStats.forEach(a => { if(a.resultado && resultadoCount.hasOwnProperty(a.resultado)) resultadoCount[a.resultado]++; });
+  const resultadosHtml = totalActStats
+    ? `<div class="panel-stat-row"><span>🟢 Conseguido</span><span><strong>${resultadoCount.conseguido}</strong></span></div>
+       <div class="panel-stat-row"><span>🟡 En trámite</span><span><strong>${resultadoCount.en_tramite}</strong></span></div>
+       <div class="panel-stat-row"><span>🔴 No conseguido</span><span><strong>${resultadoCount.no_conseguido}</strong></span></div>`
+    : `<div class="empty-note">Sin actuaciones todavía</div>`;
+
+  const categoriaCount = {};
+  listaActStats.forEach(a => { if(a.categoria) categoriaCount[a.categoria] = (categoriaCount[a.categoria]||0)+1; });
+  const categoriaOrdenada = Object.entries(categoriaCount).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const maxCategoria = categoriaOrdenada.length ? categoriaOrdenada[0][1] : 0;
+  const categoriaHtml = categoriaOrdenada.length ? categoriaOrdenada.map(([c,v]) => barRow(c, v, maxCategoria)).join('') : `<div class="empty-note">Sin datos todavía</div>`;
+
+  const derivadoCount = {};
+  listaActStats.forEach(a => { if(a.derivado_a) derivadoCount[a.derivado_a] = (derivadoCount[a.derivado_a]||0)+1; });
+  const derivadoOrdenada = Object.entries(derivadoCount).sort((a,b)=>b[1]-a[1]);
+  const maxDerivado = derivadoOrdenada.length ? derivadoOrdenada[0][1] : 0;
+  const derivadoHtml = derivadoOrdenada.length ? derivadoOrdenada.map(([d,v]) => barRow(d, v, maxDerivado)).join('') : `<div class="empty-note">Sin derivaciones todavía</div>`;
 
   const notifsHtml = (notifs.data && notifs.data.length)
     ? notifs.data.map(n => `
@@ -898,6 +922,9 @@ async function renderPanelGeneral(){
       <div class="panel-card"><h3>Derivación a recursos sociales</h3>${graficoBarras(derivacion.data, 'derivacion', 'total')}</div>
       <div class="panel-card"><h3>Emprendeduría</h3>${graficoBarras(emprendeduria.data, 'accion', 'total')}</div>
       <div class="panel-card"><h3>Cómo conoció Logos</h3>${graficoBarras(comoConocio.data, 'como_conocio', 'total')}</div>
+      <div class="panel-card"><h3>Resultados de las actuaciones</h3><p class="subtle" style="margin:0 0 8px;">${totalActStats} actuaciones registradas en total.</p>${resultadosHtml}</div>
+      <div class="panel-card"><h3>Actuaciones por proyecto/formación/categoría</h3>${categoriaHtml}</div>
+      <div class="panel-card"><h3>Derivaciones (de actuaciones)</h3>${derivadoHtml}</div>
     </div>
   `;
 
