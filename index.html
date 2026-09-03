@@ -1083,8 +1083,8 @@ async function renderPanelGeneral(){
        <div class="panel-stat-row"><span>🔴 ${t.noConseguido}</span><span><strong>${resultadoMap.no_conseguido || 0}</strong></span></div>`
     : `<div class="empty-note">${t.sinActuaciones}</div>`;
 
-  const categoriaHtml = graficoBarras(actCategoria.data, 'categoria', 'total');
-  const derivadoHtml = graficoBarras(actDerivado.data, 'derivado_a', 'total');
+  const categoriaHtml = filaLista(actCategoria.data, 'categoria', 'total');
+  const derivadoHtml = filaLista(actDerivado.data, 'derivado_a', 'total');
 
   const notifsHtml = (notifs.data && notifs.data.length)
     ? notifs.data.map(n => `
