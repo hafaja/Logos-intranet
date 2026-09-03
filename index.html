@@ -689,6 +689,10 @@ async function renderMiEspacio(){
   const semanaCount = lista.filter(a => new Date(a.creado_en) >= inicioSemana).length;
   const totalCount = lista.length;
 
+  const hoyCountAct = misActuaciones.filter(a => new Date(a.fecha) >= hoy).length;
+  const semanaCountAct = misActuaciones.filter(a => new Date(a.fecha) >= inicioSemana).length;
+  const totalCountAct = misActuaciones.length;
+
   const conteoServicios = {};
   lista.forEach(a => {
     [...(a.prestaciones||[]), ...(a.tramites_bretxa||[]), ...(a.emprendeduria||[])].forEach(s => {
@@ -779,13 +783,21 @@ async function renderMiEspacio(){
 
     ${fichajeCardHtml}
 
+    <div class="section-label" style="margin-bottom:6px;">${t.tusUltimasAtenciones}</div>
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-num" id="num-hoy">0</div><div class="stat-label">${t.hoyLbl}</div></div>
       <div class="stat-card"><div class="stat-num" id="num-semana">0</div><div class="stat-label">${t.estaSemana}</div></div>
       <div class="stat-card"><div class="stat-num" id="num-total">0</div><div class="stat-label">${t.totalLbl}</div></div>
     </div>
 
-    <button class="primary-btn" onclick="showScreen('atencion');renderAtencionForm()" style="margin-bottom:10px;">${t.registrarAtencion}</button>
+    <div class="section-label" style="margin-top:14px;margin-bottom:6px;">${t.tusUltimasActuaciones}</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num" id="num-hoy-act">0</div><div class="stat-label">${t.hoyLbl}</div></div>
+      <div class="stat-card"><div class="stat-num" id="num-semana-act">0</div><div class="stat-label">${t.estaSemana}</div></div>
+      <div class="stat-card"><div class="stat-num" id="num-total-act">0</div><div class="stat-label">${t.totalLbl}</div></div>
+    </div>
+
+    <button class="primary-btn" onclick="showScreen('atencion');renderAtencionForm()" style="margin-bottom:10px;margin-top:18px;">${t.registrarAtencion}</button>
     <button class="primary-btn" style="background:var(--gold);margin-bottom:18px;" onclick="showScreen('buscarpersona');renderBuscarPersonaActuacion()">${t.registrarActuacion}</button>
 
     <div class="panel-card">
@@ -811,6 +823,9 @@ async function renderMiEspacio(){
   animateNumber(document.getElementById('num-hoy'), hoyCount);
   animateNumber(document.getElementById('num-semana'), semanaCount);
   animateNumber(document.getElementById('num-total'), totalCount);
+  animateNumber(document.getElementById('num-hoy-act'), hoyCountAct);
+  animateNumber(document.getElementById('num-semana-act'), semanaCountAct);
+  animateNumber(document.getElementById('num-total-act'), totalCountAct);
   activarBarras();
 }
 
