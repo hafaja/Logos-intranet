@@ -165,6 +165,7 @@
     <nav>
       <button class="active" data-target="miespacio" onclick="showScreen('miespacio');renderMiEspacio()">Mi espacio</button>
       <button data-target="panel" onclick="showScreen('panel');renderPanelGeneral()">Panel general <span id="badge-panel" class="nav-badge" style="display:none;">0</span></button>
+      <button data-target="agenda" onclick="showScreen('agenda');renderAgendaCitas()">Agenda</button>
       <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
     </nav>
     <button class="sidebar-logout" onclick="cerrarSesion()" id="sidebar-logout-btn" style="display:none;">Cerrar sesión</button>
@@ -217,6 +218,15 @@
     <div class="main-content">
       <div class="topbar"><span class="brand">Panel general</span></div>
       <div class="content" id="panel-content">
+        <div class="placeholder">Cargando…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-agenda">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Agenda</span></div>
+      <div class="content" id="agenda-content">
         <div class="placeholder">Cargando…</div>
       </div>
     </div>
@@ -1048,12 +1058,72 @@ async function responderConsulta(id){
   renderPanelGeneral();
 }
 
+let __agendaFechaActual = new Date().toISOString().slice(0,10);
+
+async function renderAgendaCitas(fecha){
+  if(fecha) __agendaFechaActual = fecha;
+  const cont = document.getElementById('agenda-content');
+  const t = TI[LANG_I];
+  cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
+
+  const { data: citasDelDia } = await sb.from('citas').select('*').eq('fecha', __agendaFechaActual).order('hora', { ascending:true });
+
+  const ids = [...new Set((citasDelDia || []).map(c => c.usuario_id).filter(Boolean))];
+  let nombresAgenda = {};
+  if(ids.length){
+    const { data: perfilesAgenda } = await sb.from('perfiles').select('id, nombre_completo, telefono').in('id', ids);
+    (perfilesAgenda || []).forEach(p => { nombresAgenda[p.id] = p; });
+  }
+
+  const fechaObj = new Date(__agendaFechaActual + 'T00:00:00');
+  const fechaFormateada = fechaObj.toLocaleDateString(t.localeFecha, { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const esHoy = __agendaFechaActual === new Date().toISOString().slice(0,10);
+
+  const citasHtml = (citasDelDia && citasDelDia.length)
+    ? citasDelDia.map(c => {
+        const p = nombresAgenda[c.usuario_id] || {};
+        return `<div class="panel-card">
+          <div class="panel-stat-row"><span><strong>${c.hora || '—'}</strong></span><span class="chip ${c.estado==='confirmada'?'good':(c.estado==='cancelada'?'':'gold')}" style="${c.estado==='cancelada'?'background:#EEE;color:#888;':''}">${c.estado}</span></div>
+          <div class="panel-stat-row"><span>${LANG_I==='ca'?'Persona':'Persona'}</span><span><strong>${p.nombre_completo || (LANG_I==='ca'?'Sense nom':'Sin nombre')}</strong></span></div>
+          ${p.telefono ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Telèfon':'Teléfono'}</span><span>${p.telefono}</span></div>` : ''}
+          ${c.motivo ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Motiu':'Motivo'}</span><span>${c.motivo}</span></div>` : ''}
+          ${c.usuario_id ? `<button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${c.usuario_id}','agenda')">${t.verInfoCompleta}</button>` : ''}
+        </div>`;
+      }).join('')
+    : `<div class="empty-note">${LANG_I==='ca' ? 'Sense cites aquest dia.' : 'Sin citas este día.'}</div>`;
+
+  cont.innerHTML = `
+    <h2 class="screen-title">${LANG_I==='ca'?'Agenda de cites':'Agenda de citas'}</h2>
+    <div class="panel-card" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;">
+      <button class="link-btn" onclick="cambiarDiaAgenda(-1)">←</button>
+      <div style="text-align:center;">
+        <div style="font-weight:700;font-size:14px;text-transform:capitalize;">${fechaFormateada}</div>
+        ${esHoy ? `<span class="chip good" style="margin-top:4px;display:inline-block;">${LANG_I==='ca'?'Avui':'Hoy'}</span>` : `<button class="link-btn" style="font-size:11px;" onclick="irAHoyAgenda()">${LANG_I==='ca'?'Anar a avui':'Ir a hoy'}</button>`}
+      </div>
+      <button class="link-btn" onclick="cambiarDiaAgenda(1)">→</button>
+    </div>
+    <input type="date" id="agenda-selector-fecha" value="${__agendaFechaActual}" onchange="renderAgendaCitas(this.value)" style="width:100%;margin-bottom:16px;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-family:var(--font-body);font-size:14px;">
+    <div class="cards-grid">${citasHtml}</div>
+  `;
+}
+
+function cambiarDiaAgenda(delta){
+  const d = new Date(__agendaFechaActual + 'T00:00:00');
+  d.setDate(d.getDate() + delta);
+  renderAgendaCitas(d.toISOString().slice(0,10));
+}
+
+function irAHoyAgenda(){
+  renderAgendaCitas(new Date().toISOString().slice(0,10));
+}
+
 async function renderPanelGeneral(){
   const cont = document.getElementById('panel-content');
   const t = TI[LANG_I];
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
 
-  const [total, porSexo, porNacionalidad, depDis, situFam, tramEstado, interesesForm, notifs, satisfaccion, consultasPend, prestaciones, tramitesBretxa, derivacion, emprendeduria, comoConocio, actTotal, actResultado, actCategoria, actDerivado] = await Promise.all([
+  const hoyIso = new Date().toISOString().slice(0,10);
+  const [total, porSexo, porNacionalidad, depDis, situFam, tramEstado, interesesForm, notifs, satisfaccion, consultasPend, prestaciones, tramitesBretxa, derivacion, emprendeduria, comoConocio, actTotal, actResultado, actCategoria, actDerivado, citasHoyRes, docsRecientesRes, tramitesEnCursoRes, revisionesPendRes, actuacionesLigeroRes, avisosRes] = await Promise.all([
     sb.from('stats_total_personas').select('*').maybeSingle(),
     sb.from('stats_por_sexo').select('*'),
     sb.from('stats_por_nacionalidad').select('*'),
@@ -1072,10 +1142,65 @@ async function renderPanelGeneral(){
     sb.from('stats_actuaciones_total').select('*').maybeSingle(),
     sb.from('stats_actuaciones_resultado').select('*'),
     sb.from('stats_actuaciones_categoria').select('*'),
-    sb.from('stats_actuaciones_derivado').select('*')
+    sb.from('stats_actuaciones_derivado').select('*'),
+    sb.from('citas').select('*').eq('fecha', hoyIso).order('hora', { ascending:true }),
+    sb.from('documentos').select('*').order('subido_en', { ascending:false }).limit(6),
+    sb.from('tramites').select('id', { count:'exact', head:true }).eq('estado', 'en_curso'),
+    sb.from('actuaciones').select('*').not('fecha_proxima_revision', 'is', null).lte('fecha_proxima_revision', hoyIso),
+    sb.from('actuaciones').select('usuario_id, fecha').order('fecha', { ascending:false }).limit(30),
+    sb.from('avisos_intranet').select('*').eq('activo', true).order('creado_en', { ascending:false }).limit(6)
   ]);
 
   const totalPersonas = total.data ? total.data.total_personas : 0;
+
+  // Dashboard nuevo: nombres de personas para citas/documentos/revisiones/expedientes de hoy
+  const idsDashboard = [...new Set([
+    ...(citasHoyRes.data || []).map(c => c.usuario_id),
+    ...(docsRecientesRes.data || []).map(d => d.usuario_id),
+    ...(revisionesPendRes.data || []).map(r => r.usuario_id),
+    ...(actuacionesLigeroRes.data || []).map(a => a.usuario_id)
+  ])].filter(Boolean);
+  let nombresDashboard = {};
+  if(idsDashboard.length){
+    const { data: perfilesDash } = await sb.from('perfiles').select('id, nombre_completo').in('id', idsDashboard);
+    (perfilesDash || []).forEach(p => { nombresDashboard[p.id] = p.nombre_completo; });
+  }
+
+  const porPersonaDash = {};
+  (actuacionesLigeroRes.data || []).forEach(a => {
+    if(!a.usuario_id) return;
+    if(!porPersonaDash[a.usuario_id]) porPersonaDash[a.usuario_id] = a.fecha;
+  });
+  const expedientesHtml = Object.entries(porPersonaDash).slice(0, 6).map(([id, fecha]) => `
+    <div class="panel-stat-row"><span>${nombresDashboard[id] || (LANG_I==='ca'?'Sense nom':'Sin nombre')}</span><span style="display:flex;align-items:center;gap:8px;"><span class="subtle" style="margin:0;font-size:11px;">${new Date(fecha).toLocaleDateString(t.localeFecha)}</span><button class="link-btn" style="font-size:11px;" onclick="verPersonaStaff('${id}','panel')">${t.ver}</button></span></div>`).join('')
+    || `<div class="empty-note">${LANG_I==='ca' ? 'Sense activitat recent.' : 'Sin actividad reciente.'}</div>`;
+
+  const iconosAviso = { info:'ℹ️', convocatoria:'📣', curso:'🎓', recordatorio:'📌' };
+  const avisosHtml = (avisosRes.data && avisosRes.data.length)
+    ? avisosRes.data.map(a => `
+        <div class="panel-stat-row" style="align-items:flex-start;flex-direction:column;gap:2px;">
+          <span><strong>${iconosAviso[a.tipo] || 'ℹ️'} ${a.titulo}</strong></span>
+          ${a.descripcion ? `<span class="subtle" style="font-size:11.5px;margin:0;">${a.descripcion}</span>` : ''}
+          ${a.fecha_limite ? `<span class="subtle" style="font-size:11px;margin:0;">${LANG_I==='ca'?'Termini fins al':'Plazo hasta el'} ${new Date(a.fecha_limite).toLocaleDateString(t.localeFecha)}</span>` : ''}
+        </div>`).join('')
+    : `<div class="empty-note">${LANG_I==='ca' ? 'Sense avisos per ara.' : 'Sin avisos por ahora.'}</div>`;
+
+  const horaHoy = new Date().getHours();
+  const saludo = horaHoy < 13 ? (LANG_I==='ca' ? 'Bon dia' : 'Buenos días') : (horaHoy < 20 ? (LANG_I==='ca' ? 'Bona tarda' : 'Buenas tardes') : (LANG_I==='ca' ? 'Bona nit' : 'Buenas noches'));
+  const primerNombre = (CURRENT_USER_NOMBRE || '').split(' ')[0] || (LANG_I==='ca' ? 'tècnica' : 'técnica');
+
+  const agendaHoyHtml = (citasHoyRes.data && citasHoyRes.data.length)
+    ? citasHoyRes.data.map(c => `<div class="panel-stat-row"><span><strong>${c.hora || '—'}</strong> · ${nombresDashboard[c.usuario_id] || (LANG_I==='ca'?'Sense nom':'Sin nombre')}${c.motivo ? ` — ${c.motivo}` : ''}</span></div>`).join('')
+    : `<div class="empty-note">${LANG_I==='ca' ? 'Sense cites per avui.' : 'Sin citas para hoy.'}</div>`;
+
+  const docsRecientesHtml = (docsRecientesRes.data && docsRecientesRes.data.length)
+    ? docsRecientesRes.data.map(d => `<div class="panel-stat-row"><span>${d.nombre_archivo}<br><span class="subtle" style="font-size:11px;margin:0;">${nombresDashboard[d.usuario_id] || (LANG_I==='ca'?'Sense nom':'Sin nombre')}</span></span><span class="subtle" style="margin:0;font-size:11px;">${new Date(d.subido_en).toLocaleDateString(t.localeFecha)}</span></div>`).join('')
+    : `<div class="empty-note">${LANG_I==='ca' ? 'Sense documents recents.' : 'Sin documentos recientes.'}</div>`;
+
+  const tareasPendCount = (revisionesPendRes.data || []).length;
+  const citasHoyCount = (citasHoyRes.data || []).length;
+  const tramitesEnCursoCount = tramitesEnCursoRes.count || 0;
+
   const filaLista = (rows, labelKey, totalKey) => (rows && rows.length)
     ? rows.map(r => `<div class="panel-stat-row"><span>${r[labelKey] || '—'}</span><span><strong>${r[totalKey]}</strong></span></div>`).join('')
     : `<div class="empty-note">${t.sinDatos}</div>`;
@@ -1125,6 +1250,51 @@ async function renderPanelGeneral(){
     : `<div class="empty-note">${t.noHayConsultas}</div>`;
 
   cont.innerHTML = `
+    <div class="panel-card" style="margin-bottom:16px;background:linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);color:#fff;">
+      <h2 style="font-family:var(--font-display);font-weight:600;font-size:20px;margin:0 0 4px;color:#fff;">${saludo}, ${primerNombre}!</h2>
+      <p style="margin:0;font-size:13px;color:rgba(255,255,255,.75);">${LANG_I==='ca'
+        ? `Avui tens ${citasHoyCount} cites, ${tareasPendCount} tasques pendents.`
+        : `Hoy tienes ${citasHoyCount} citas, ${tareasPendCount} tareas pendientes.`}</p>
+    </div>
+
+    <div class="cards-grid" style="margin-bottom:16px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));">
+      <div class="panel-card" style="background:var(--good-soft);border-color:var(--good);text-align:center;">
+        <div style="font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--good);">${totalPersonas}</div>
+        <div style="font-size:11.5px;color:var(--ink-soft);">${t.personasAtendidasTotal}</div>
+      </div>
+      <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);text-align:center;">
+        <div style="font-family:var(--font-display);font-size:28px;font-weight:600;color:#7A5A16;">${tramitesEnCursoCount}</div>
+        <div style="font-size:11.5px;color:var(--ink-soft);">${LANG_I==='ca'?'Tràmits en curs':'Trámites en curso'}</div>
+      </div>
+      <div class="panel-card" style="text-align:center;">
+        <div style="font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--navy);">${citasHoyCount}</div>
+        <div style="font-size:11.5px;color:var(--ink-soft);">${LANG_I==='ca'?'Cites avui':'Citas hoy'}</div>
+      </div>
+      <div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);text-align:center;">
+        <div style="font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--alert);">${tareasPendCount}</div>
+        <div style="font-size:11.5px;color:var(--ink-soft);">${LANG_I==='ca'?'Tasques pendents':'Tareas pendientes'}</div>
+      </div>
+    </div>
+
+    <div class="cards-grid" style="margin-bottom:16px;">
+      <div class="panel-card">
+        <h3>${LANG_I==='ca'?"Agenda d'avui":'Agenda de hoy'}</h3>
+        ${agendaHoyHtml}
+      </div>
+      <div class="panel-card">
+        <h3>${LANG_I==='ca'?'Últims expedients actualitzats':'Últimos expedientes actualizados'}</h3>
+        ${expedientesHtml}
+      </div>
+      <div class="panel-card">
+        <h3>${LANG_I==='ca'?'Documents recents':'Documentos recientes'}</h3>
+        ${docsRecientesHtml}
+      </div>
+      <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
+        <h3 style="color:#7A5A16;">${LANG_I==='ca'?'Notícies i recordatoris':'Noticias y recordatorios'}</h3>
+        ${avisosHtml}
+      </div>
+    </div>
+
     <div class="cards-grid" style="margin-bottom:16px;">
       <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
         <h3 style="color:#7A5A16;">${t.alertasNuevas}</h3>
@@ -1173,6 +1343,25 @@ async function renderPanelGeneral(){
       <div class="panel-card"><h3>${t.resultadosActuaciones}</h3><p class="subtle" style="margin:0 0 8px;">${totalActStats} ${t.actuacionesRegistradasTotal}</p>${resultadosHtml}</div>
       <div class="panel-card"><h3>${t.actuacionesPorCategoria}</h3>${categoriaHtml}</div>
       <div class="panel-card"><h3>${t.derivacionesDeActuaciones}</h3>${derivadoHtml}</div>
+    </div>
+
+    <div class="cards-grid" style="margin-bottom:16px;">
+      <div class="panel-card">
+        <h3>${LANG_I==='ca' ? 'Administracions i recursos' : 'Administraciones y recursos'}</h3>
+        <div class="panel-stat-row"><span>Generalitat de Catalunya</span><a href="https://web.gencat.cat" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">gencat.cat</a></div>
+        <div class="panel-stat-row"><span>${LANG_I==='ca' ? "Govern d'Espanya" : 'Gobierno de España'}</span><a href="https://administracion.gob.es" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">administracion.gob.es</a></div>
+        <div class="panel-stat-row"><span>SOC — ${LANG_I==='ca' ? "Servei d'Ocupació de Catalunya" : 'Servicio de Ocupación de Cataluña'}</span><a href="https://serveiocupacio.gencat.cat" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">soc.gencat.cat</a></div>
+        <div class="panel-stat-row"><span>SEPE</span><a href="https://www.sepe.es" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">sepe.es</a></div>
+        <div class="panel-stat-row"><span>Ajuntament de Tarragona</span><a href="https://www.tarragona.cat" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">tarragona.cat</a></div>
+      </div>
+
+      <div class="panel-card">
+        <h3>${LANG_I==='ca' ? 'Suport intern' : 'Soporte interno'}</h3>
+        <div class="panel-stat-row"><span>📖 ${LANG_I==='ca' ? 'Manuals i guies' : 'Manuales y guías'}</span><span class="subtle" style="margin:0;font-size:11px;">${LANG_I==='ca' ? 'Properament' : 'Próximamente'}</span></div>
+        <div class="panel-stat-row"><span>📄 ${LANG_I==='ca' ? 'Model de documents' : 'Modelo de documentos'}</span><span class="subtle" style="margin:0;font-size:11px;">${LANG_I==='ca' ? 'Properament' : 'Próximamente'}</span></div>
+        <div class="panel-stat-row"><span>❓ ${LANG_I==='ca' ? 'Preguntes freqüents' : 'Preguntas frecuentes'}</span><span class="subtle" style="margin:0;font-size:11px;">${LANG_I==='ca' ? 'Properament' : 'Próximamente'}</span></div>
+        <div class="panel-stat-row"><span>🎧 ${LANG_I==='ca' ? 'Contacte equip TIC' : 'Contacto equipo TIC'}</span><a href="mailto:hafaja14@gmail.com" class="link-btn" style="font-size:12px;">${LANG_I==='ca' ? 'Escriure' : 'Escribir'}</a></div>
+      </div>
     </div>
   `;
 
@@ -1257,7 +1446,8 @@ async function verPersonaStaff(usuarioId, origen){
   const btnVolver = document.getElementById('btn-volver-persona');
   const destinos = {
     admin: "showScreen('admin');renderAdministrador()",
-    miespacio: "showScreen('miespacio');renderMiEspacio()"
+    miespacio: "showScreen('miespacio');renderMiEspacio()",
+    agenda: "showScreen('agenda');renderAgendaCitas()"
   };
   btnVolver.setAttribute('onclick', destinos[origen] || "showScreen('panel');renderPanelGeneral()");
 
@@ -1566,7 +1756,7 @@ async function renderAdministrador(){
   __adminActuacionesOffset = 0;
   __adminActuacionesTodas = [];
 
-  const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes, revisionesRes, perfilesIncompletosRes, actuacionesPrimeraPagina, actuacionesCountRes, actuacionesLigeroRes] = await Promise.all([
+  const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes, revisionesRes, perfilesIncompletosRes, actuacionesPrimeraPagina, actuacionesCountRes, actuacionesLigeroRes, avisosAdminRes] = await Promise.all([
     sb.from('atenciones').select('*').order('creado_en', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
     sb.from('atenciones').select('creado_por_email'), // sin límite: solo para el conteo de carga de trabajo
     sb.from('staff').select('*').order('email', { ascending:true }),
@@ -1577,7 +1767,8 @@ async function renderAdministrador(){
     sb.from('perfiles').select('id, nombre_completo, dni_nie, telefono, calle').not('nombre_completo', 'is', null),
     sb.from('actuaciones').select('*').order('fecha', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
     sb.from('actuaciones').select('id', { count: 'exact', head: true }),
-    sb.from('actuaciones').select('usuario_id, fecha')
+    sb.from('actuaciones').select('usuario_id, fecha'),
+    sb.from('avisos_intranet').select('*').order('creado_en', { ascending:false })
   ]);
 
   window.__staffLista = staffRes.data || [];
@@ -1680,6 +1871,37 @@ async function renderAdministrador(){
       <h3>${t.historialPersonasTitulo}</h3>
       <p class="subtle" style="margin:0 0 10px;">${t.historialPersonasDesc}</p>
       ${historialPersonasHtml}
+    </div>
+
+    <div class="panel-card" style="margin-bottom:16px;">
+      <h3>${LANG_I==='ca' ? 'Notícies i recordatoris (gestió)' : 'Noticias y recordatorios (gestión)'}</h3>
+      <p class="subtle" style="margin:0 0 10px;">${LANG_I==='ca' ? 'Els avisos actius es veuen al Panell general de tot el personal.' : 'Los avisos activos se ven en el Panel general de todo el personal.'}</p>
+      ${(avisosAdminRes.data && avisosAdminRes.data.length)
+        ? avisosAdminRes.data.map(a => `
+            <div class="panel-stat-row">
+              <span><strong>${a.titulo}</strong>${a.descripcion ? `<br><span class="subtle" style="font-size:11px;margin:0;">${a.descripcion}</span>` : ''}</span>
+              <span style="display:flex;align-items:center;gap:8px;">
+                <span class="chip ${a.activo ? 'good' : 'off'}">${a.activo ? (LANG_I==='ca'?'Actiu':'Activo') : (LANG_I==='ca'?'Ocult':'Oculto')}</span>
+                <button class="link-btn" style="font-size:11px;" onclick="toggleAvisoActivo('${a.id}', ${!a.activo})">${a.activo ? (LANG_I==='ca'?'Ocultar':'Ocultar') : (LANG_I==='ca'?'Mostrar':'Mostrar')}</button>
+                <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="borrarAviso('${a.id}')">${LANG_I==='ca'?'Esborrar':'Borrar'}</button>
+              </span>
+            </div>`).join('')
+        : `<div class="empty-note">${LANG_I==='ca' ? 'Encara no hi ha avisos.' : 'Todavía no hay avisos.'}</div>`}
+      <div class="doc-upload-row" style="margin-top:12px;">
+        <div class="field"><input type="text" id="aviso-titulo" placeholder="${LANG_I==='ca'?"Títol de l'avís":'Título del aviso'}"></div>
+        <div class="field"><textarea id="aviso-descripcion" rows="2" placeholder="${LANG_I==='ca'?'Descripció (opcional)':'Descripción (opcional)'}"></textarea></div>
+        <div class="field">
+          <label>${LANG_I==='ca'?'Tipus':'Tipo'}</label>
+          <select id="aviso-tipo">
+            <option value="info">${LANG_I==='ca'?'Informació':'Información'}</option>
+            <option value="convocatoria">${LANG_I==='ca'?'Convocatòria':'Convocatoria'}</option>
+            <option value="curso">${LANG_I==='ca'?'Curs':'Curso'}</option>
+            <option value="recordatorio">${LANG_I==='ca'?'Recordatori':'Recordatorio'}</option>
+          </select>
+        </div>
+        <div class="field"><label>${LANG_I==='ca'?'Data límit (opcional)':'Fecha límite (opcional)'}</label><input type="date" id="aviso-fecha-limite"></div>
+        <button class="primary-btn" onclick="crearAviso()">${LANG_I==='ca'?'➕ Publicar avís':'➕ Publicar aviso'}</button>
+      </div>
     </div>
 
     <div class="info-box info-box-gold" style="margin-bottom:16px;">
@@ -1842,6 +2064,33 @@ async function cargarMasFichajes(){
   wrap.innerHTML = (count || 0) > __adminFichajesTodos.length
     ? `<button class="link-btn" onclick="cargarMasFichajes()">${t.cargarTexto} ${Math.min(ADMIN_PAGE_SIZE, count - __adminFichajesTodos.length)} ${t.masDeTexto} ${count} ${t.enTotalTexto}</button>`
     : '';
+}
+
+async function crearAviso(){
+  const titulo = document.getElementById('aviso-titulo').value.trim();
+  if(!titulo){ alert(LANG_I==='ca' ? 'Escriu un títol.' : 'Escribe un título.'); return; }
+  const { error } = await sb.from('avisos_intranet').insert({
+    titulo,
+    descripcion: document.getElementById('aviso-descripcion').value.trim() || null,
+    tipo: document.getElementById('aviso-tipo').value,
+    fecha_limite: document.getElementById('aviso-fecha-limite').value || null,
+    creado_por_email: CURRENT_USER.email
+  });
+  if(error){ alert(error.message); return; }
+  renderAdministrador();
+}
+
+async function toggleAvisoActivo(id, nuevoEstado){
+  const { error } = await sb.from('avisos_intranet').update({ activo: nuevoEstado }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderAdministrador();
+}
+
+async function borrarAviso(id){
+  if(!confirm(LANG_I==='ca' ? 'Segur que vols esborrar aquest avís?' : '¿Seguro que quieres borrar este aviso?')) return;
+  const { error } = await sb.from('avisos_intranet').delete().eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderAdministrador();
 }
 
 async function agregarTecnico(){
