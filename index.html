@@ -22,7 +22,7 @@
   #app{min-height:100vh;display:flex;}
 
   /* Menú lateral (escritorio) */
-  .sidebar{width:230px;flex-shrink:0;background:linear-gradient(180deg, var(--navy) 0%, var(--navy-dark) 100%);color:#fff;display:flex;flex-direction:column;padding:22px 16px;position:sticky;top:0;height:100vh;}
+  .sidebar{width:230px;flex-shrink:0;background:linear-gradient(180deg, var(--navy) 0%, var(--navy-dark) 100%);color:#fff;display:flex;flex-direction:column;padding:22px 16px;position:sticky;top:0;height:100vh;overflow-y:auto;}
   .brand-logo-sidebar{width:100%;max-width:170px;margin-bottom:10px;display:block;}
   .sidebar-brand{font-family:var(--font-display);font-weight:600;font-size:17px;line-height:1.3;margin-bottom:2px;}
   .sidebar-brand span{color:var(--gold);}
@@ -30,8 +30,9 @@
   .ilang-toggle{display:flex;gap:4px;margin-bottom:20px;}
   .ilang-btn{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);border-radius:8px;padding:4px 10px;font-family:var(--font-body);font-weight:700;font-size:11px;cursor:pointer;}
   .ilang-btn.active{background:var(--gold);border-color:var(--gold);color:var(--navy-dark);}
-  .sidebar nav{display:flex;flex-direction:column;gap:4px;flex:1;}
-  .sidebar nav button{text-align:left;background:none;border:none;color:rgba(255,255,255,.75);font-family:var(--font-body);font-weight:700;font-size:13.5px;padding:11px 14px;border-radius:10px;cursor:pointer;transition:background .15s;}
+  .sidebar nav{display:flex;flex-direction:column;gap:2px;flex:1;font-size:12.5px;}
+  .sidebar-quote{font-family:var(--font-display);font-style:italic;font-size:13px;color:var(--gold);line-height:1.4;padding:14px 10px;border-top:1px solid rgba(255,255,255,.15);margin-top:10px;}
+  .sidebar nav button{text-align:left;background:none;border:none;color:rgba(255,255,255,.75);font-family:var(--font-body);font-weight:700;font-size:12px;padding:8px 12px;border-radius:8px;cursor:pointer;transition:background .15s;}
   .sidebar nav button:hover{background:rgba(255,255,255,.06);}
   .sidebar nav button.active{background:var(--gold);color:var(--navy-dark);}
   .nav-badge{display:inline-block;background:var(--alert);color:#fff;font-size:10.5px;font-weight:700;border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:middle;}
@@ -163,11 +164,22 @@
       <button id="ibtn-ca" class="ilang-btn" onclick="setLangI('ca')">CA</button>
     </div>
     <nav>
-      <button class="active" data-target="miespacio" onclick="showScreen('miespacio');renderMiEspacio()">Mi espacio</button>
-      <button data-target="panel" onclick="showScreen('panel');renderPanelGeneral()">Panel general <span id="badge-panel" class="nav-badge" style="display:none;">0</span></button>
-      <button data-target="agenda" onclick="showScreen('agenda');renderAgendaCitas()">Agenda</button>
+      <button class="active" data-target="panel" onclick="showScreen('panel');renderPanelGeneral()">Inicio</button>
+      <button data-target="miespacio" onclick="showScreen('miespacio');renderMiEspacio()">Mi espacio</button>
+      <button data-target="personas" onclick="showScreen('personas');renderPersonasScreen()">Personas usuarias</button>
+      <button data-target="expedientes" onclick="showScreen('seguimiento');renderSeguimientoScreen()">Expedientes</button>
+      <button data-target="tramitesglobal" onclick="showScreen('tramitesglobal');renderTramitesGlobalScreen()">Trámites y ayudas</button>
+      <button data-target="agenda" onclick="showScreen('agenda');renderAgendaCitas()">Citas y calendario</button>
+      <button data-target="docsglobal" onclick="showScreen('docsglobal');renderDocsGlobalScreen()">Gestión documental</button>
+      <button data-target="seguimiento" onclick="showScreen('seguimiento');renderSeguimientoScreen()">Seguimiento y actividades</button>
+      <button data-target="comunicacion" onclick="showScreen('comunicacion');renderComunicacionScreen()">Comunicación</button>
+      <button data-target="informes" onclick="showScreen('panel');renderPanelGeneral()">Informes y datos</button>
+      <button data-target="recursos" onclick="showScreen('recursos');renderRecursosScreen()">Recursos</button>
+      <button data-target="equipo" onclick="showScreen('equipo');renderEquipoScreen()">Trabajo en equipo</button>
       <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
+      <button data-target="config" onclick="showScreen('config');renderConfigScreen()">Configuración</button>
     </nav>
+    <div class="sidebar-quote">"Petites accions,<br>grans canvis."</div>
     <button class="sidebar-logout" onclick="cerrarSesion()" id="sidebar-logout-btn" style="display:none;">Cerrar sesión</button>
   </div>
 
@@ -229,6 +241,62 @@
       <div class="content" id="agenda-content">
         <div class="placeholder">Cargando…</div>
       </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-personas">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Personas usuarias</span></div>
+      <div class="content" id="personas-content"><div class="placeholder">Cargando…</div></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-seguimiento">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Seguimiento y actividades</span></div>
+      <div class="content" id="seguimiento-content"><div class="placeholder">Cargando…</div></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-tramitesglobal">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Trámites y ayudas</span></div>
+      <div class="content" id="tramitesglobal-content"><div class="placeholder">Cargando…</div></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-docsglobal">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Gestión documental</span></div>
+      <div class="content" id="docsglobal-content"><div class="placeholder">Cargando…</div></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-comunicacion">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Comunicación</span></div>
+      <div class="content" id="comunicacion-content"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-recursos">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Recursos</span></div>
+      <div class="content" id="recursos-content"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-equipo">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Trabajo en equipo</span></div>
+      <div class="content" id="equipo-content"><div class="placeholder">Cargando…</div></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-config">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Configuración</span></div>
+      <div class="content" id="config-content"></div>
     </div>
   </div>
 
@@ -648,6 +716,15 @@ async function guardarMiNombre(){
   if(error){ alert(error.message); return; }
   CURRENT_USER_NOMBRE = nombre;
   renderMiEspacio();
+}
+
+async function guardarMiNombreConfig(){
+  const nombre = document.getElementById('config-nombre-input').value.trim();
+  if(!nombre){ alert(LANG_I==='ca' ? 'Escriu el teu nom abans de desar.' : 'Escribe tu nombre antes de guardar.'); return; }
+  const { error } = await sb.rpc('actualizar_mi_nombre', { nuevo_nombre: nombre });
+  if(error){ alert(error.message); return; }
+  CURRENT_USER_NOMBRE = nombre;
+  renderConfigScreen();
 }
 
 async function ficharEntrada(){
@@ -1117,6 +1194,167 @@ function irAHoyAgenda(){
   renderAgendaCitas(new Date().toISOString().slice(0,10));
 }
 
+let __busquedaPersonasTimeout = null;
+async function renderPersonasScreen(texto){
+  const cont = document.getElementById('personas-content');
+  const t = TI[LANG_I];
+  const q = (sb.from('perfiles').select('id, nombre_completo, municipio, telefono').not('nombre_completo', 'is', null).order('nombre_completo', { ascending:true }));
+  const { data } = texto && texto.trim().length >= 2 ? await q.ilike('nombre_completo', `%${texto.trim()}%`).limit(50) : await q.limit(50);
+
+  const listaHtml = (data && data.length)
+    ? data.map(p => `<div class="panel-stat-row"><span>${p.nombre_completo}<br><span class="subtle" style="font-size:11px;margin:0;">${p.municipio || ''}${p.telefono ? ' · ' + p.telefono : ''}</span></span><button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${p.id}','personas')">${t.ver}</button></div>`).join('')
+    : `<div class="empty-note">${LANG_I==='ca' ? 'Sense resultats.' : 'Sin resultados.'}</div>`;
+
+  cont.innerHTML = `
+    <h2 class="screen-title">${LANG_I==='ca'?'Persones usuàries':'Personas usuarias'}</h2>
+    <div class="field"><input type="text" id="personas-buscar" placeholder="${LANG_I==='ca'?'Cerca per nom...':'Buscar por nombre...'}" value="${texto || ''}" oninput="renderPersonasScreen(this.value)"></div>
+    <div class="panel-card">${listaHtml}</div>
+  `;
+}
+
+async function renderSeguimientoScreen(){
+  const cont = document.getElementById('seguimiento-content');
+  const t = TI[LANG_I];
+  const { data } = await sb.from('actuaciones').select('*').order('fecha', { ascending:false }).limit(60);
+  const ids = [...new Set((data || []).map(a => a.usuario_id).filter(Boolean))];
+  let nombres = {};
+  if(ids.length){
+    const { data: perfiles } = await sb.from('perfiles').select('id, nombre_completo').in('id', ids);
+    (perfiles || []).forEach(p => { nombres[p.id] = p.nombre_completo; });
+  }
+  const listaHtml = (data && data.length)
+    ? data.map(ac => `
+        <div class="panel-card">
+          <div class="panel-stat-row"><span>${t.personaLbl}</span><span><strong>${nombres[ac.usuario_id] || t.sinNombre}</strong></span></div>
+          <div class="panel-stat-row"><span>${t.tecnicoLbl}</span><span>${nombreTecnico(ac.tecnico_email)}</span></div>
+          <div class="panel-stat-row"><span>${t.fechaLbl}</span><span>${new Date(ac.fecha).toLocaleDateString(t.localeFecha)}</span></div>
+          ${ac.categoria ? `<div class="panel-stat-row"><span>${t.proyectoTramiteFormacion}</span><span>${ac.categoria}</span></div>` : ''}
+          ${ac.resultado ? `<div class="panel-stat-row"><span>${t.resultadoLbl}</span><span class="chip ${ac.resultado==='conseguido'?'good':(ac.resultado==='no_conseguido'?'':'gold')}" style="${ac.resultado==='no_conseguido'?'background:var(--alert-soft);color:var(--alert);':''}">${ac.resultado==='conseguido'?t.conseguido:(ac.resultado==='en_tramite'?t.enTramite:t.noConseguido)}</span></div>` : ''}
+          ${ac.usuario_id ? `<button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${ac.usuario_id}','seguimiento')">${t.verInfoCompleta}</button>` : ''}
+        </div>`).join('')
+    : `<div class="empty-note">${t.sinActuacionesRegistradas}</div>`;
+
+  cont.innerHTML = `
+    <h2 class="screen-title">${LANG_I==='ca'?'Seguiment i activitats':'Seguimiento y actividades'}</h2>
+    <p class="subtle">${LANG_I==='ca' ? 'Les últimes 60 actuacions de tots els tècnics (això és el mateix concepte que "Expedients").' : 'Las últimas 60 actuaciones de todos los técnicos (esto es lo mismo que "Expedientes").'}</p>
+    <div class="cards-grid">${listaHtml}</div>
+  `;
+}
+
+async function renderTramitesGlobalScreen(){
+  const cont = document.getElementById('tramitesglobal-content');
+  const t = TI[LANG_I];
+  const { data } = await sb.from('tramites').select('*').order('creado_en', { ascending:false }).limit(60);
+  const ids = [...new Set((data || []).map(tr => tr.usuario_id).filter(Boolean))];
+  let nombres = {};
+  if(ids.length){
+    const { data: perfiles } = await sb.from('perfiles').select('id, nombre_completo').in('id', ids);
+    (perfiles || []).forEach(p => { nombres[p.id] = p.nombre_completo; });
+  }
+  const listaHtml = (data && data.length)
+    ? data.map(tr => `
+        <div class="panel-stat-row" style="align-items:flex-start;">
+          <span>${tr.nombre_servicio}<br><span class="subtle" style="font-size:11px;margin:0;">${nombres[tr.usuario_id] || t.sinNombre}</span></span>
+          <span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+            <span class="chip ${tr.estado==='hecho'?'good':'gold'}">${tr.estado}</span>
+            ${tr.usuario_id ? `<button class="link-btn" style="font-size:11px;" onclick="verPersonaStaff('${tr.usuario_id}','tramitesglobal')">${t.ver}</button>` : ''}
+          </span>
+        </div>`).join('')
+    : `<div class="empty-note">${LANG_I==='ca' ? 'Sense tràmits.' : 'Sin trámites.'}</div>`;
+
+  cont.innerHTML = `
+    <h2 class="screen-title">${LANG_I==='ca'?'Tràmits i ajudes':'Trámites y ayudas'}</h2>
+    <p class="subtle">${LANG_I==='ca' ? 'Els últims 60 tràmits de totes les persones.' : 'Los últimos 60 trámites de todas las personas.'}</p>
+    <div class="panel-card">${listaHtml}</div>
+  `;
+}
+
+async function renderDocsGlobalScreen(){
+  const cont = document.getElementById('docsglobal-content');
+  const t = TI[LANG_I];
+  const { data } = await sb.from('documentos').select('*').order('subido_en', { ascending:false }).limit(60);
+  const ids = [...new Set((data || []).map(d => d.usuario_id).filter(Boolean))];
+  let nombres = {};
+  if(ids.length){
+    const { data: perfiles } = await sb.from('perfiles').select('id, nombre_completo').in('id', ids);
+    (perfiles || []).forEach(p => { nombres[p.id] = p.nombre_completo; });
+  }
+  const listaHtml = (data && data.length)
+    ? data.map(d => `<div class="panel-stat-row"><span>${d.nombre_archivo}<br><span class="subtle" style="font-size:11px;margin:0;">${nombres[d.usuario_id] || t.sinNombre} · ${new Date(d.subido_en).toLocaleDateString(t.localeFecha)}</span></span><button class="link-btn" style="font-size:12px;" onclick="verDocumentoStaff('${d.ruta_storage}')">${t.ver}</button></div>`).join('')
+    : `<div class="empty-note">${LANG_I==='ca' ? 'Sense documents.' : 'Sin documentos.'}</div>`;
+
+  cont.innerHTML = `
+    <h2 class="screen-title">${LANG_I==='ca'?'Gestió documental':'Gestión documental'}</h2>
+    <p class="subtle">${LANG_I==='ca' ? 'Els últims 60 documents pujats de totes les persones.' : 'Los últimos 60 documentos subidos de todas las personas.'}</p>
+    <div class="panel-card">${listaHtml}</div>
+  `;
+}
+
+function renderComunicacionScreen(){
+  const cont = document.getElementById('comunicacion-content');
+  cont.innerHTML = `
+    <h2 class="screen-title">Comunicación</h2>
+    <div class="info-box" style="border-color:var(--line);background:var(--paper);">
+      <div class="info-box-title" style="color:var(--ink-soft);">${LANG_I==='ca'?'Properament':'Próximamente'}</div>
+      <p>${LANG_I==='ca'
+        ? 'Aquí es podran gestionar plantilles i historial de missatges de WhatsApp, SMS i correu amb les persones usuàries. Encara no està construït.'
+        : 'Aquí se podrán gestionar plantillas e historial de mensajes de WhatsApp, SMS y correo con las personas usuarias. Todavía no está construido.'}</p>
+    </div>
+  `;
+}
+
+function renderRecursosScreen(){
+  const cont = document.getElementById('recursos-content');
+  cont.innerHTML = `
+    <h2 class="screen-title">Recursos</h2>
+    <div class="cards-grid">
+      <div class="panel-card">
+        <h3>${LANG_I==='ca' ? 'Administracions i recursos' : 'Administraciones y recursos'}</h3>
+        <div class="panel-stat-row"><span>Generalitat de Catalunya</span><a href="https://web.gencat.cat" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">gencat.cat</a></div>
+        <div class="panel-stat-row"><span>${LANG_I==='ca' ? "Govern d'Espanya" : 'Gobierno de España'}</span><a href="https://administracion.gob.es" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">administracion.gob.es</a></div>
+        <div class="panel-stat-row"><span>SOC — ${LANG_I==='ca' ? "Servei d'Ocupació de Catalunya" : 'Servicio de Ocupación de Cataluña'}</span><a href="https://serveiocupacio.gencat.cat" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">soc.gencat.cat</a></div>
+        <div class="panel-stat-row"><span>SEPE</span><a href="https://www.sepe.es" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">sepe.es</a></div>
+        <div class="panel-stat-row"><span>Ajuntament de Tarragona</span><a href="https://www.tarragona.cat" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">tarragona.cat</a></div>
+      </div>
+      <div class="panel-card">
+        <h3>${LANG_I==='ca' ? 'Suport intern' : 'Soporte interno'}</h3>
+        <div class="panel-stat-row"><span>📖 ${LANG_I==='ca' ? 'Manuals i guies' : 'Manuales y guías'}</span><span class="subtle" style="margin:0;font-size:11px;">${LANG_I==='ca' ? 'Properament' : 'Próximamente'}</span></div>
+        <div class="panel-stat-row"><span>📄 ${LANG_I==='ca' ? 'Model de documents' : 'Modelo de documentos'}</span><span class="subtle" style="margin:0;font-size:11px;">${LANG_I==='ca' ? 'Properament' : 'Próximamente'}</span></div>
+        <div class="panel-stat-row"><span>❓ ${LANG_I==='ca' ? 'Preguntes freqüents' : 'Preguntas frecuentes'}</span><span class="subtle" style="margin:0;font-size:11px;">${LANG_I==='ca' ? 'Properament' : 'Próximamente'}</span></div>
+        <div class="panel-stat-row"><span>🎧 ${LANG_I==='ca' ? 'Contacte equip TIC' : 'Contacto equipo TIC'}</span><a href="mailto:hafaja14@gmail.com" class="link-btn" style="font-size:12px;">${LANG_I==='ca' ? 'Escriure' : 'Escribir'}</a></div>
+      </div>
+    </div>
+  `;
+}
+
+async function renderEquipoScreen(){
+  const cont = document.getElementById('equipo-content');
+  const { data } = await sb.from('staff').select('email, nombre, es_admin').eq('activo', true).order('email', { ascending:true });
+  const listaHtml = (data && data.length)
+    ? data.map(s => `<div class="panel-stat-row"><span>${s.nombre ? `<strong>${s.nombre}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${s.email}</span>` : s.email}</span>${s.es_admin ? '<span class="chip gold">admin</span>' : ''}</div>`).join('')
+    : `<div class="empty-note">—</div>`;
+  cont.innerHTML = `
+    <h2 class="screen-title">${LANG_I==='ca'?'Treball en equip':'Trabajo en equipo'}</h2>
+    <p class="subtle">${LANG_I==='ca' ? 'El teu equip de Logos.' : 'Tu equipo de Logos.'}</p>
+    <div class="panel-card">${listaHtml}</div>
+  `;
+}
+
+function renderConfigScreen(){
+  const cont = document.getElementById('config-content');
+  cont.innerHTML = `
+    <h2 class="screen-title">Configuración</h2>
+    <div class="panel-card">
+      <h3>${LANG_I==='ca'?'El teu nom':'Tu nombre'}</h3>
+      <p class="subtle" style="margin:0 0 10px;">${CURRENT_USER_NOMBRE ? `${LANG_I==='ca'?'Apareixes com':'Apareces como'} <strong>${CURRENT_USER_NOMBRE}</strong>.` : (LANG_I==='ca'?'Encara apareixes amb el teu correu.':'Todavía apareces con tu correo.')}</p>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="config-nombre-input" placeholder="${LANG_I==='ca'?'Ex: Irene M.':'Ej: Irene M.'}" value="${CURRENT_USER_NOMBRE || ''}" style="flex:1;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-family:var(--font-body);font-size:14px;">
+        <button class="link-btn" onclick="guardarMiNombreConfig()">${LANG_I==='ca'?'Desar':'Guardar'}</button>
+      </div>
+    </div>
+  `;
+}
+
 async function renderPanelGeneral(){
   const cont = document.getElementById('panel-content');
   const t = TI[LANG_I];
@@ -1447,7 +1685,10 @@ async function verPersonaStaff(usuarioId, origen){
   const destinos = {
     admin: "showScreen('admin');renderAdministrador()",
     miespacio: "showScreen('miespacio');renderMiEspacio()",
-    agenda: "showScreen('agenda');renderAgendaCitas()"
+    agenda: "showScreen('agenda');renderAgendaCitas()",
+    personas: "showScreen('personas');renderPersonasScreen()",
+    seguimiento: "showScreen('seguimiento');renderSeguimientoScreen()",
+    tramitesglobal: "showScreen('tramitesglobal');renderTramitesGlobalScreen()"
   };
   btnVolver.setAttribute('onclick', destinos[origen] || "showScreen('panel');renderPanelGeneral()");
 
