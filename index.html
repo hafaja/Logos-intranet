@@ -1294,14 +1294,25 @@ function renderComunicacionScreen(){
   const cont = document.getElementById('comunicacion-content');
   cont.innerHTML = `
     <h2 class="screen-title">Comunicación</h2>
+
+    <div class="panel-card" style="background:var(--good-soft);border-color:var(--good);margin-bottom:16px;">
+      <h3>📱 WhatsApp de Logos</h3>
+      <p class="subtle" style="margin:0 0 12px;">${LANG_I==='ca'
+        ? "Contacta directament amb el número oficial de Logos. S'obrirà WhatsApp amb la conversa ja preparada."
+        : 'Contacta directamente con el número oficial de Logos. Se abrirá WhatsApp con la conversación ya preparada.'}</p>
+      <p style="margin:0 0 12px;font-weight:700;font-size:14px;">+34 630 46 15 60</p>
+      <a href="https://wa.me/34630461560" target="_blank" rel="noopener" class="primary-btn" style="display:inline-block;background:#25D366;text-decoration:none;">💬 ${LANG_I==='ca'?'Obrir xat de WhatsApp':'Abrir chat de WhatsApp'}</a>
+    </div>
+
     <div class="info-box" style="border-color:var(--line);background:var(--paper);">
       <div class="info-box-title" style="color:var(--ink-soft);">${LANG_I==='ca'?'Properament':'Próximamente'}</div>
       <p>${LANG_I==='ca'
-        ? 'Aquí es podran gestionar plantilles i historial de missatges de WhatsApp, SMS i correu amb les persones usuàries. Encara no està construït.'
-        : 'Aquí se podrán gestionar plantillas e historial de mensajes de WhatsApp, SMS y correo con las personas usuarias. Todavía no está construido.'}</p>
+        ? "Gestió de plantilles, enviaments massius i historial de missatges de WhatsApp, SMS i correu amb les persones usuàries. Això requereix donar d'alta comptes externes (API de WhatsApp Business, un proveïdor d'SMS, i un servei de correu) que Logos encara ha de contractar."
+        : 'Gestión de plantillas, envíos masivos e historial de mensajes de WhatsApp, SMS y correo con las personas usuarias. Esto requiere dar de alta cuentas externas (API de WhatsApp Business, un proveedor de SMS, y un servicio de correo) que Logos todavía tiene que contratar.'}</p>
     </div>
   `;
 }
+
 
 function renderRecursosScreen(){
   const cont = document.getElementById('recursos-content');
@@ -1449,17 +1460,42 @@ async function renderPanelGeneral(){
     return rows.map(r => barRow(r[labelKey] || '—', r[totalKey], max)).join('');
   };
 
+  const graficoCircular = (datos, colores) => {
+    const total = datos.reduce((s,d) => s + d.value, 0);
+    if(!total) return `<div class="empty-note">${t.sinDatos}</div>`;
+    const radio = 48, circunferencia = 2 * Math.PI * radio;
+    let acumulado = 0;
+    const segmentos = datos.map((d, i) => {
+      const frac = d.value / total;
+      const dash = frac * circunferencia;
+      const offset = -acumulado * circunferencia;
+      acumulado += frac;
+      const color = colores[i % colores.length];
+      return `<circle cx="65" cy="65" r="${radio}" fill="none" stroke="${color}" stroke-width="20" stroke-dasharray="${dash} ${circunferencia - dash}" stroke-dashoffset="${offset}" transform="rotate(-90 65 65)"/>`;
+    }).join('');
+    const leyenda = datos.map((d, i) => `<span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink);"><span style="width:10px;height:10px;border-radius:3px;background:${colores[i % colores.length]};flex-shrink:0;"></span>${d.label} — ${d.value} (${Math.round(d.value/total*100)}%)</span>`).join('');
+    return `<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <svg width="120" height="120" viewBox="0 0 130 130" style="flex-shrink:0;">
+        <circle cx="65" cy="65" r="${radio}" fill="none" stroke="var(--line)" stroke-width="20"/>
+        ${segmentos}
+        <text x="65" y="61" text-anchor="middle" font-size="18" font-weight="700" fill="var(--navy-dark)" font-family="Georgia,serif">${total}</text>
+        <text x="65" y="76" text-anchor="middle" font-size="9" fill="var(--ink-soft)">total</text>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:8px;">${leyenda}</div>
+    </div>`;
+  };
+
   const dd = depDis.data || {}; const sf = situFam.data || {}; const sat = satisfaccion.data || {};
 
   // Estadísticas de ACTUACIONES (aparte de las de atenciones, de arriba) — ahora desde vistas de BD
   const totalActStats = actTotal.data ? actTotal.data.total_actuaciones : 0;
   const resultadoMap = {};
   (actResultado.data || []).forEach(r => { resultadoMap[r.resultado] = r.total; });
-  const resultadosHtml = totalActStats
-    ? `<div class="panel-stat-row"><span>🟢 ${t.conseguido}</span><span><strong>${resultadoMap.conseguido || 0}</strong></span></div>
-       <div class="panel-stat-row"><span>🟡 ${t.enTramite}</span><span><strong>${resultadoMap.en_tramite || 0}</strong></span></div>
-       <div class="panel-stat-row"><span>🔴 ${t.noConseguido}</span><span><strong>${resultadoMap.no_conseguido || 0}</strong></span></div>`
-    : `<div class="empty-note">${t.sinActuaciones}</div>`;
+  const resultadosHtml = graficoCircular([
+    { label: t.conseguido, value: resultadoMap.conseguido || 0 },
+    { label: t.enTramite, value: resultadoMap.en_tramite || 0 },
+    { label: t.noConseguido, value: resultadoMap.no_conseguido || 0 }
+  ].filter(d => d.value > 0), ['var(--good)', 'var(--gold)', 'var(--alert)']);
 
   const categoriaHtml = filaLista(actCategoria.data, 'categoria', 'total');
   const derivadoHtml = filaLista(actDerivado.data, 'derivado_a', 'total');
@@ -1550,7 +1586,7 @@ async function renderPanelGeneral(){
     </div>
 
     <div class="cards-grid" style="margin-bottom:24px;">
-      <div class="panel-card"><h3>${t.porSexo}</h3>${graficoBarras(porSexo.data, 'sexo', 'total')}</div>
+      <div class="panel-card"><h3>${t.porSexo}</h3>${graficoCircular((porSexo.data||[]).map(r => ({label: r.sexo || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780'])}</div>
       <div class="panel-card"><h3>${t.porNacionalidad}</h3>${graficoBarras(porNacionalidad.data, 'nacionalidad', 'total')}</div>
       <div class="panel-card">
         <h3>${t.dependenciaDiscapacidad}</h3>
@@ -1571,7 +1607,7 @@ async function renderPanelGeneral(){
         <div class="panel-stat-row"><span>${t.mediaGlobal}</span><span><strong>${sat.media_global || '—'} / 5</strong></span></div>
         <div class="panel-stat-row"><span>${t.respuestasRecibidas}</span><span><strong>${sat.total_respuestas || 0}</strong></span></div>
       </div>
-      <div class="panel-card"><h3>${t.tramitesPorEstado}</h3>${graficoBarras(tramEstado.data, 'estado', 'total')}</div>
+      <div class="panel-card"><h3>${t.tramitesPorEstado}</h3>${graficoCircular((tramEstado.data||[]).map(r => ({label: r.estado || '—', value: r.total})), ['var(--gold)', 'var(--navy)', 'var(--good)'])}</div>
       <div class="panel-card"><h3>${t.interesesFormativos}</h3>${graficoBarras(interesesForm.data, 'interes', 'total')}</div>
       <div class="panel-card"><h3>${t.prestacionesEconomicas}</h3>${graficoBarras(prestaciones.data, 'prestacion', 'total')}</div>
       <div class="panel-card"><h3>${t.tramitesBretxaTitulo}</h3>${graficoBarras(tramitesBretxa.data, 'tramite', 'total')}</div>
@@ -1675,6 +1711,14 @@ function construirHistorial(actuaciones, tramites, documentos, citas){
   return eventos.length
     ? eventos.map(e => `<div class="panel-stat-row"><span>${e.tipo}<br><span class="subtle" style="font-size:11px;margin:0;">${e.desc || ''}</span></span><span class="subtle" style="margin:0;font-size:11px;white-space:nowrap;">${e.fecha ? new Date(e.fecha).toLocaleDateString(t.localeFecha) : ''}</span></div>`).join('')
     : `<div class="empty-note">${t.sinActividad}</div>`;
+}
+
+function enlaceWhatsApp(telefono, nombre){
+  if(!telefono) return '';
+  let limpio = telefono.replace(/[^\d+]/g, '').replace(/^\+/, '');
+  if(limpio.length === 9) limpio = '34' + limpio; // número español sin prefijo
+  const mensaje = encodeURIComponent(`Hola${nombre ? ' ' + nombre.split(' ')[0] : ''}, te escribimos desde Logos. `);
+  return `https://wa.me/${limpio}?text=${mensaje}`;
 }
 
 async function verPersonaStaff(usuarioId, origen){
@@ -1786,7 +1830,9 @@ async function verPersonaStaff(usuarioId, origen){
         </span>
       </div>
       ${campo('DNI/NIE', p.dni_nie)} ${campo(t.fechaNacimientoLbl, p.fecha_nacimiento)}
-      ${campo(t.telefonoLbl, p.telefono)} ${campo(t.calleLbl, p.calle)}
+      ${campo(t.telefonoLbl, p.telefono)}
+      ${p.telefono ? `<div class="panel-stat-row"><span></span><a href="${enlaceWhatsApp(p.telefono, p.nombre_completo)}" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;color:#25D366;">💬 ${LANG_I==='ca'?'Escriure per WhatsApp':'Escribir por WhatsApp'}</a></div>` : ''}
+      ${campo(t.calleLbl, p.calle)}
       ${campo(t.municipioLbl, p.municipio)} ${campo(t.codigoPostalLbl, p.codigo_postal)} ${campo(t.provinciaLbl, p.provincia)}
       ${campo(t.conQuienViveLbl, p.convivencia)} ${campo(t.personasHogarLbl, p.personas_hogar)} ${campo(t.numeroHijosLbl, p.numero_hijos)}
       ${campo(t.sexoLbl, p.sexo)} ${campo(t.nacionalidadLbl, p.nacionalidad)} ${campo(t.situacionRegularizacionLbl, p.situacion_regularizacion)} ${campo(t.situacionLaboralLbl, p.situacion_laboral)} ${campo(t.nivelEstudiosLbl, p.nivel_estudios)}
