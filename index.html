@@ -688,8 +688,8 @@ async function initAuth(){
     }
     toggleSidebarVisible(true);
     iniciarRefrescoBadge();
-    showScreen('miespacio');
-    renderMiEspacio();
+    showScreen('panel');
+    renderPanelGeneral();
   });
 
   if(!CURRENT_USER){
@@ -703,8 +703,8 @@ async function initAuth(){
   }
   toggleSidebarVisible(true);
   iniciarRefrescoBadge();
-  showScreen('miespacio');
-  renderMiEspacio();
+  showScreen('panel');
+  renderPanelGeneral();
 }
 
 // ================= MI ESPACIO (personal por técnico) =================
@@ -1580,35 +1580,48 @@ async function renderPanelGeneral(){
     </div>
 
     <div class="cards-grid" style="margin-bottom:16px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));">
-      <div class="panel-card" style="background:var(--good-soft);border-color:var(--good);text-align:center;">
+      <div class="panel-card" style="background:var(--good-soft);border-color:var(--good);text-align:center;cursor:pointer;" onclick="showScreen('personas');renderPersonasScreen()">
         <div style="font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--good);">${totalPersonas}</div>
-        <div style="font-size:11.5px;color:var(--ink-soft);">${t.personasAtendidasTotal}</div>
+        <div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:6px;">${t.personasAtendidasTotal}</div>
+        <span class="link-btn" style="font-size:11px;">${LANG_I==='ca'?'Veure llistat →':'Ver listado →'}</span>
       </div>
-      <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);text-align:center;">
+      <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);text-align:center;cursor:pointer;" onclick="showScreen('tramitesglobal');renderTramitesGlobalScreen()">
         <div style="font-family:var(--font-display);font-size:28px;font-weight:600;color:#7A5A16;">${tramitesEnCursoCount}</div>
-        <div style="font-size:11.5px;color:var(--ink-soft);">${LANG_I==='ca'?'Tràmits en curs':'Trámites en curso'}</div>
+        <div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:6px;">${LANG_I==='ca'?'Tràmits en curs':'Trámites en curso'}</div>
+        <span class="link-btn" style="font-size:11px;">${LANG_I==='ca'?'Veure tràmits →':'Ver trámites →'}</span>
       </div>
-      <div class="panel-card" style="text-align:center;">
+      <div class="panel-card" style="text-align:center;cursor:pointer;" onclick="showScreen('agenda');renderAgendaCitas()">
         <div style="font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--navy);">${citasHoyCount}</div>
-        <div style="font-size:11.5px;color:var(--ink-soft);">${LANG_I==='ca'?'Cites avui':'Citas hoy'}</div>
+        <div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:6px;">${LANG_I==='ca'?'Cites avui':'Citas hoy'}</div>
+        <span class="link-btn" style="font-size:11px;">${LANG_I==='ca'?'Veure calendari →':'Ver calendario →'}</span>
       </div>
-      <div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);text-align:center;">
+      <div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);text-align:center;cursor:pointer;" onclick="showScreen('seguimiento');renderSeguimientoScreen()">
         <div style="font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--alert);">${tareasPendCount}</div>
-        <div style="font-size:11.5px;color:var(--ink-soft);">${LANG_I==='ca'?'Tasques pendents':'Tareas pendientes'}</div>
+        <div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:6px;">${LANG_I==='ca'?'Tasques pendents':'Tareas pendientes'}</div>
+        <span class="link-btn" style="font-size:11px;">${LANG_I==='ca'?'Veure tasques →':'Ver tareas →'}</span>
       </div>
     </div>
 
     <div class="cards-grid" style="margin-bottom:16px;">
       <div class="panel-card">
-        <h3>${LANG_I==='ca'?"Agenda d'avui":'Agenda de hoy'}</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <h3 style="margin:0;">${LANG_I==='ca'?"Agenda d'avui":'Agenda de hoy'}</h3>
+          <span class="link-btn" style="font-size:11px;" onclick="showScreen('agenda');renderAgendaCitas()">${LANG_I==='ca'?'Veure tot →':'Ver todo →'}</span>
+        </div>
         ${agendaHoyHtml}
       </div>
       <div class="panel-card">
-        <h3>${LANG_I==='ca'?'Últims expedients actualitzats':'Últimos expedientes actualizados'}</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <h3 style="margin:0;">${LANG_I==='ca'?'Últims expedients actualitzats':'Últimos expedientes actualizados'}</h3>
+          <span class="link-btn" style="font-size:11px;" onclick="showScreen('seguimiento');renderSeguimientoScreen()">${LANG_I==='ca'?'Veure tots →':'Ver todos →'}</span>
+        </div>
         ${expedientesHtml}
       </div>
       <div class="panel-card">
-        <h3>${LANG_I==='ca'?'Documents recents':'Documentos recientes'}</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <h3 style="margin:0;">${LANG_I==='ca'?'Documents recents':'Documentos recientes'}</h3>
+          <span class="link-btn" style="font-size:11px;" onclick="showScreen('docsglobal');renderDocsGlobalScreen()">${LANG_I==='ca'?'Veure tots →':'Ver todos →'}</span>
+        </div>
         ${docsRecientesHtml}
       </div>
       <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
@@ -1665,25 +1678,6 @@ async function renderPanelGeneral(){
       <div class="panel-card"><h3>${t.resultadosActuaciones}</h3><p class="subtle" style="margin:0 0 8px;">${totalActStats} ${t.actuacionesRegistradasTotal}</p>${resultadosHtml}</div>
       <div class="panel-card"><h3>${t.actuacionesPorCategoria}</h3>${categoriaHtml}</div>
       <div class="panel-card"><h3>${t.derivacionesDeActuaciones}</h3>${derivadoHtml}</div>
-    </div>
-
-    <div class="cards-grid" style="margin-bottom:16px;">
-      <div class="panel-card">
-        <h3>${LANG_I==='ca' ? 'Administracions i recursos' : 'Administraciones y recursos'}</h3>
-        <div class="panel-stat-row"><span>Generalitat de Catalunya</span><a href="https://web.gencat.cat" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">gencat.cat</a></div>
-        <div class="panel-stat-row"><span>${LANG_I==='ca' ? "Govern d'Espanya" : 'Gobierno de España'}</span><a href="https://administracion.gob.es" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">administracion.gob.es</a></div>
-        <div class="panel-stat-row"><span>SOC — ${LANG_I==='ca' ? "Servei d'Ocupació de Catalunya" : 'Servicio de Ocupación de Cataluña'}</span><a href="https://serveiocupacio.gencat.cat" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">soc.gencat.cat</a></div>
-        <div class="panel-stat-row"><span>SEPE</span><a href="https://www.sepe.es" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">sepe.es</a></div>
-        <div class="panel-stat-row"><span>Ajuntament de Tarragona</span><a href="https://www.tarragona.cat" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">tarragona.cat</a></div>
-      </div>
-
-      <div class="panel-card">
-        <h3>${LANG_I==='ca' ? 'Suport intern' : 'Soporte interno'}</h3>
-        <div class="panel-stat-row"><span>📖 ${LANG_I==='ca' ? 'Manuals i guies' : 'Manuales y guías'}</span><span class="subtle" style="margin:0;font-size:11px;">${LANG_I==='ca' ? 'Properament' : 'Próximamente'}</span></div>
-        <div class="panel-stat-row"><span>📄 ${LANG_I==='ca' ? 'Model de documents' : 'Modelo de documentos'}</span><span class="subtle" style="margin:0;font-size:11px;">${LANG_I==='ca' ? 'Properament' : 'Próximamente'}</span></div>
-        <div class="panel-stat-row"><span>❓ ${LANG_I==='ca' ? 'Preguntes freqüents' : 'Preguntas frecuentes'}</span><span class="subtle" style="margin:0;font-size:11px;">${LANG_I==='ca' ? 'Properament' : 'Próximamente'}</span></div>
-        <div class="panel-stat-row"><span>🎧 ${LANG_I==='ca' ? 'Contacte equip TIC' : 'Contacto equipo TIC'}</span><a href="mailto:hafaja14@gmail.com" class="link-btn" style="font-size:12px;">${LANG_I==='ca' ? 'Escriure' : 'Escribir'}</a></div>
-      </div>
     </div>
   `;
 
