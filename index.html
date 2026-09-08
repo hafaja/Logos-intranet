@@ -180,7 +180,7 @@
       <button data-target="docsglobal" onclick="showScreen('docsglobal');renderDocsGlobalScreen()">Gestión documental</button>
       <button data-target="seguimiento" onclick="showScreen('seguimiento');renderSeguimientoScreen()">Seguimiento y actividades</button>
       <button data-target="comunicacion" onclick="showScreen('comunicacion');renderComunicacionScreen()">Comunicación</button>
-      <button data-target="informes" onclick="showScreen('panel');renderPanelGeneral()">Informes y datos</button>
+      <button data-target="informes" onclick="showScreen('informes');renderInformesScreen()">Informes y datos</button>
       <button data-target="aulavirtual" onclick="showScreen('aulavirtual');renderAulaVirtualScreen()">🎥 Aula Virtual · Hub Logos</button>
       <button data-target="equipo" onclick="showScreen('equipo');renderEquipoScreen()">Trabajo en equipo</button>
       <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
@@ -237,6 +237,15 @@
     <div class="main-content">
       <div class="topbar"><span class="brand">Panel general</span></div>
       <div class="content" id="panel-content">
+        <div class="placeholder">Cargando…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-informes">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Informes y datos</span></div>
+      <div class="content" id="informes-content">
         <div class="placeholder">Cargando…</div>
       </div>
     </div>
@@ -1611,7 +1620,7 @@ async function renderAulaVirtualScreen(){
       <td style="padding:8px 6px;">${c.docente_nombre || c.docente_email || '—'}</td>
       <td style="padding:8px 6px;">${iconoEstado[c.estado] || '🟢'} ${textoEstado[c.estado] || c.estado}</td>
       <td style="padding:8px 6px;display:flex;gap:8px;flex-wrap:wrap;">
-        ${c.enlace_meet ? `<a href="${c.enlace_meet}" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">🎥 ${LANG_I==='ca'?'Unir-se':'Unirse'}</a>` : ''}
+        ${c.enlace_meet ? `<a href="${c.enlace_meet}" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">${({meet:'🎥 Meet', zoom:'📹 Zoom', teams:'💻 Teams', otro:'🔗'}[c.plataforma] || '🎥')} ${LANG_I==='ca'?'Unir-se':'Unirse'}</a>` : ''}
         <button class="link-btn" style="font-size:12px;" onclick="verParticipantesClase('${c.id}','${(c.titulo||'').replace(/'/g,"\\'")}')">${LANG_I==='ca'?'Participants':'Participantes'}</button>
         ${c.curso_id ? `<button class="link-btn" style="font-size:12px;" onclick="pasarAsistencia('${c.id}','${c.curso_id}','${(c.titulo||'').replace(/'/g,"\\'")}')">✅ ${LANG_I==='ca'?'Passar assistència':'Pasar asistencia'}</button>` : ''}
         <select style="font-size:11px;padding:2px 4px;" onchange="cambiarEstadoClase('${c.id}', this.value)">
@@ -1739,7 +1748,16 @@ async function renderAulaVirtualScreen(){
         <div class="field" style="flex:1;"><label>${LANG_I==='ca'?'Data':'Fecha'}</label><input type="date" id="clase-fecha" value="${hoyIso}"></div>
         <div class="field" style="flex:1;"><label>Hora</label><input type="time" id="clase-hora"></div>
       </div>
-      <div class="field"><label>${LANG_I==='ca'?'Enllaç de Google Meet':'Enlace de Google Meet'}</label><input type="text" id="clase-meet" placeholder="https://meet.google.com/xxx-xxxx-xxx"></div>
+      <div class="field">
+        <label>${LANG_I==='ca'?'Plataforma de videotrucada':'Plataforma de videollamada'}</label>
+        <select id="clase-plataforma">
+          <option value="meet">Google Meet</option>
+          <option value="zoom">Zoom</option>
+          <option value="teams">Microsoft Teams</option>
+          <option value="otro">${LANG_I==='ca'?'Altra':'Otra'}</option>
+        </select>
+      </div>
+      <div class="field"><label>${LANG_I==='ca'?'Enllaç de la videotrucada':'Enlace de la videollamada'}</label><input type="text" id="clase-meet" placeholder="https://..."></div>
       <button class="primary-btn" onclick="crearClaseAula()">➕ ${LANG_I==='ca'?'Crear classe':'Crear clase'}</button>
     </div>
 
@@ -1889,6 +1907,14 @@ async function verContenidoCurso(cursoId, nombreCurso){
     </div>
     <div id="actividad-detalle-wrap"></div>
   `;
+  // Reabre los módulos que ya tenías abiertos, para no perder tu sitio al añadir contenido
+  if(window.__modulosAbiertos){
+    window.__modulosAbiertos.forEach(idMod => {
+      const cuerpo = document.getElementById(idMod);
+      const flecha = document.getElementById(idMod + '-flecha');
+      if(cuerpo){ cuerpo.style.display = 'block'; if(flecha) flecha.textContent = '▴'; }
+    });
+  }
   wrap.scrollIntoView({ behavior:'smooth' });
 }
 
@@ -1898,6 +1924,8 @@ function toggleModuloCurso(id){
   const abierto = cuerpo.style.display !== 'none';
   cuerpo.style.display = abierto ? 'none' : 'block';
   flecha.textContent = abierto ? '▾' : '▴';
+  if(!window.__modulosAbiertos) window.__modulosAbiertos = new Set();
+  if(abierto) window.__modulosAbiertos.delete(id); else window.__modulosAbiertos.add(id);
 }
 
 async function anadirModulo(){
@@ -2275,11 +2303,12 @@ async function crearClaseAula(){
   const cursoId = document.getElementById('clase-curso').value || null;
   const fecha = document.getElementById('clase-fecha').value;
   const hora = document.getElementById('clase-hora').value;
+  const plataforma = document.getElementById('clase-plataforma').value;
   const enlace = document.getElementById('clase-meet').value.trim();
   if(!titulo || !fecha || !hora){ alert(LANG_I==='ca' ? 'Omple el curs, la data i l\'hora.' : 'Rellena el curso, la fecha y la hora.'); return; }
   const { error } = await sb.from('aula_virtual_clases').insert({
     titulo, docente_nombre: docente || null, docente_email: CURRENT_USER.email,
-    curso_id: cursoId, fecha, hora, enlace_meet: enlace || null, creado_por_email: CURRENT_USER.email
+    curso_id: cursoId, fecha, hora, plataforma, enlace_meet: enlace || null, creado_por_email: CURRENT_USER.email
   });
   if(error){ alert(error.message); return; }
   renderAulaVirtualScreen();
@@ -2451,6 +2480,120 @@ function renderConfigScreen(){
       </div>
     </div>
   `;
+}
+
+async function renderInformesScreen(){
+  const cont = document.getElementById('informes-content');
+  const t = TI[LANG_I];
+  cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
+
+  const [porSexo, porNacionalidad, depDis, situFam, tramEstado, interesesForm, satisfaccion, prestaciones, tramitesBretxa, derivacion, emprendeduria, comoConocio, actTotal, actResultado, actCategoria, actDerivado] = await Promise.all([
+    sb.from('stats_por_sexo').select('*'),
+    sb.from('stats_por_nacionalidad').select('*'),
+    sb.from('stats_dependencia_discapacidad').select('*').maybeSingle(),
+    sb.from('stats_situaciones_familiares').select('*').maybeSingle(),
+    sb.from('stats_tramites_por_estado').select('*'),
+    sb.from('stats_intereses_formativos').select('*'),
+    sb.from('stats_satisfaccion').select('*').maybeSingle(),
+    sb.from('stats_prestaciones').select('*'),
+    sb.from('stats_tramites_bretxa').select('*'),
+    sb.from('stats_derivacion').select('*'),
+    sb.from('stats_emprendeduria').select('*'),
+    sb.from('stats_como_conocio').select('*'),
+    sb.from('stats_actuaciones_total').select('*').maybeSingle(),
+    sb.from('stats_actuaciones_resultado').select('*'),
+    sb.from('stats_actuaciones_categoria').select('*'),
+    sb.from('stats_actuaciones_derivado').select('*')
+  ]);
+
+  const dd = depDis.data || {}; const sf = situFam.data || {}; const sat = satisfaccion.data || {};
+
+  const filaLista = (rows, labelKey, totalKey) => (rows && rows.length)
+    ? rows.map(r => `<div class="panel-stat-row"><span>${r[labelKey] || '—'}</span><span><strong>${r[totalKey]}</strong></span></div>`).join('')
+    : `<div class="empty-note">${t.sinDatos}</div>`;
+
+  const graficoBarras = (rows, labelKey, totalKey) => {
+    if(!rows || !rows.length) return `<div class="empty-note">${t.sinDatos}</div>`;
+    const max = Math.max(...rows.map(r => r[totalKey]));
+    return rows.map(r => barRow(r[labelKey] || '—', r[totalKey], max)).join('');
+  };
+
+  const graficoCircular = (datos, colores) => {
+    const total = datos.reduce((s,d) => s + d.value, 0);
+    if(!total) return `<div class="empty-note">${t.sinDatos}</div>`;
+    const radio = 48, circunferencia = 2 * Math.PI * radio;
+    let acumulado = 0;
+    const segmentos = datos.map((d, i) => {
+      const frac = d.value / total;
+      const dash = frac * circunferencia;
+      const offset = -acumulado * circunferencia;
+      acumulado += frac;
+      const color = colores[i % colores.length];
+      return `<circle cx="65" cy="65" r="${radio}" fill="none" stroke="${color}" stroke-width="20" stroke-dasharray="${dash} ${circunferencia - dash}" stroke-dashoffset="${offset}" transform="rotate(-90 65 65)"/>`;
+    }).join('');
+    const leyenda = datos.map((d, i) => `<span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink);"><span style="width:10px;height:10px;border-radius:3px;background:${colores[i % colores.length]};flex-shrink:0;"></span>${d.label} — ${d.value} (${Math.round(d.value/total*100)}%)</span>`).join('');
+    return `<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <svg width="120" height="120" viewBox="0 0 130 130" style="flex-shrink:0;">
+        <circle cx="65" cy="65" r="${radio}" fill="none" stroke="var(--line)" stroke-width="20"/>
+        ${segmentos}
+        <text x="65" y="61" text-anchor="middle" font-size="18" font-weight="700" fill="var(--navy-dark)" font-family="Georgia,serif">${total}</text>
+        <text x="65" y="76" text-anchor="middle" font-size="9" fill="var(--ink-soft)">total</text>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:8px;">${leyenda}</div>
+    </div>`;
+  };
+
+  const totalActStats = actTotal.data ? actTotal.data.total_actuaciones : 0;
+  const resultadoMap = {};
+  (actResultado.data || []).forEach(r => { resultadoMap[r.resultado] = r.total; });
+  const resultadosHtml = graficoCircular([
+    { label: t.conseguido, value: resultadoMap.conseguido || 0 },
+    { label: t.enTramite, value: resultadoMap.en_tramite || 0 },
+    { label: t.noConseguido, value: resultadoMap.no_conseguido || 0 }
+  ].filter(d => d.value > 0), ['var(--good)', 'var(--gold)', 'var(--alert)']);
+  const categoriaHtml = filaLista(actCategoria.data, 'categoria', 'total');
+  const derivadoHtml = filaLista(actDerivado.data, 'derivado_a', 'total');
+
+  cont.innerHTML = `
+    <h2 class="screen-title">${LANG_I==='ca' ? 'Informes i dades' : 'Informes y datos'}</h2>
+    <p class="subtle">${LANG_I==='ca'
+      ? 'Estadístiques completes de totes les persones ateses per Logos.'
+      : 'Estadísticas completas de todas las personas atendidas por Logos.'}</p>
+    <div class="cards-grid" style="margin-bottom:24px;">
+      <div class="panel-card"><h3>${t.porSexo}</h3>${graficoCircular((porSexo.data||[]).map(r => ({label: r.sexo || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780'])}</div>
+      <div class="panel-card"><h3>${t.porNacionalidad}</h3>${graficoBarras(porNacionalidad.data, 'nacionalidad', 'total')}</div>
+      <div class="panel-card">
+        <h3>${t.dependenciaDiscapacidad}</h3>
+        <div class="panel-stat-row"><span>${t.conDependencia}</span><span><strong>${dd.con_dependencia_reconocida || 0}</strong></span></div>
+        <div class="panel-stat-row"><span>${t.conDiscapacidad}</span><span><strong>${dd.con_discapacidad_reconocida || 0}</strong></span></div>
+      </div>
+      <div class="panel-card">
+        <h3>${t.situFamiliares}</h3>
+        <div class="panel-stat-row"><span>${t.monoparentales}</span><span><strong>${sf.monoparentales || 0}</strong></span></div>
+        <div class="panel-stat-row"><span>${t.familiasNumerosas}</span><span><strong>${sf.numerosas || 0}</strong></span></div>
+        <div class="panel-stat-row"><span>${t.conHijosCargo}</span><span><strong>${sf.con_hijos_a_cargo || 0}</strong></span></div>
+        <div class="panel-stat-row"><span>${t.enDesempleo}</span><span><strong>${sf.en_desempleo || 0}</strong></span></div>
+        <div class="panel-stat-row"><span>${t.violenciaGenero}</span><span><strong>${sf.violencia_genero || 0}</strong></span></div>
+        <div class="panel-stat-row"><span>${t.dificultadesEmocionales}</span><span><strong>${sf.dificultades_emocionales || 0}</strong></span></div>
+      </div>
+      <div class="panel-card">
+        <h3>${t.satisfaccionTitulo}</h3>
+        <div class="panel-stat-row"><span>${t.mediaGlobal}</span><span><strong>${sat.media_global || '—'} / 5</strong></span></div>
+        <div class="panel-stat-row"><span>${t.respuestasRecibidas}</span><span><strong>${sat.total_respuestas || 0}</strong></span></div>
+      </div>
+      <div class="panel-card"><h3>${t.tramitesPorEstado}</h3>${graficoCircular((tramEstado.data||[]).map(r => ({label: r.estado || '—', value: r.total})), ['var(--gold)', 'var(--navy)', 'var(--good)'])}</div>
+      <div class="panel-card"><h3>${t.interesesFormativos}</h3>${graficoBarras(interesesForm.data, 'interes', 'total')}</div>
+      <div class="panel-card"><h3>${t.prestacionesEconomicas}</h3>${graficoBarras(prestaciones.data, 'prestacion', 'total')}</div>
+      <div class="panel-card"><h3>${t.tramitesBretxaTitulo}</h3>${graficoBarras(tramitesBretxa.data, 'tramite', 'total')}</div>
+      <div class="panel-card"><h3>${t.derivacionRecursos}</h3>${graficoBarras(derivacion.data, 'derivacion', 'total')}</div>
+      <div class="panel-card"><h3>${t.emprendeduriaTitulo}</h3>${graficoBarras(emprendeduria.data, 'accion', 'total')}</div>
+      <div class="panel-card"><h3>${t.comoConocioTitulo}</h3>${graficoBarras(comoConocio.data, 'como_conocio', 'total')}</div>
+      <div class="panel-card"><h3>${t.resultadosActuaciones}</h3><p class="subtle" style="margin:0 0 8px;">${totalActStats} ${t.actuacionesRegistradasTotal}</p>${resultadosHtml}</div>
+      <div class="panel-card"><h3>${t.actuacionesPorCategoria}</h3>${categoriaHtml}</div>
+      <div class="panel-card"><h3>${t.derivacionesDeActuaciones}</h3>${derivadoHtml}</div>
+    </div>
+  `;
+  activarBarras();
 }
 
 async function renderPanelGeneral(){
