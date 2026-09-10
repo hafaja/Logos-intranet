@@ -1354,6 +1354,12 @@ function renderComunicacionScreen(){
 async function renderComunicacionScreenAsync(){
   const cont = document.getElementById('comunicacion-content');
   cont.innerHTML = `<div class="placeholder">Cargando…</div>`;
+  if(!window.__plantillaDraft){
+    try {
+      const guardado = localStorage.getItem('logos_plantilla_borrador');
+      if(guardado) window.__plantillaDraft = JSON.parse(guardado);
+    } catch(e){}
+  }
   const { data: plantillas } = await sb.from('plantillas_mensajes').select('*').eq('activo', true).order('creado_en', { ascending:true });
 
   const plantillasHtml = (plantillas && plantillas.length)
@@ -1406,6 +1412,7 @@ function guardarBorradorPlantilla(){
     titulo: document.getElementById('plantilla-titulo').value,
     contenido: document.getElementById('plantilla-contenido').value
   };
+  try { localStorage.setItem('logos_plantilla_borrador', JSON.stringify(window.__plantillaDraft)); } catch(e){}
 }
 
 async function crearPlantilla(){
@@ -1415,6 +1422,7 @@ async function crearPlantilla(){
   const { error } = await sb.from('plantillas_mensajes').insert({ titulo, contenido, creado_por_email: CURRENT_USER.email });
   if(error){ alert(error.message); return; }
   window.__plantillaDraft = null;
+  try { localStorage.removeItem('logos_plantilla_borrador'); } catch(e){}
   renderComunicacionScreenAsync();
 }
 
@@ -1817,7 +1825,13 @@ async function renderAulaVirtualScreen(){
   `;
 
   // Si estabas trabajando en el contenido de un curso, lo volvemos a abrir automáticamente
-  // (para no perder tu sitio si navegas a otra pantalla y vuelves)
+  // (para no perder tu sitio si navegas a otra pantalla, o si el móvil recarga la pestaña en segundo plano)
+  if(!window.__cursoContenidoActual){
+    try {
+      const guardado = localStorage.getItem('logos_curso_actual');
+      if(guardado) window.__cursoContenidoActual = JSON.parse(guardado);
+    } catch(e){}
+  }
   if(window.__cursoContenidoActual){
     verContenidoCurso(window.__cursoContenidoActual.id, window.__cursoContenidoActual.nombre);
   }
@@ -1860,11 +1874,13 @@ const ICONO_TIPO_CONTENIDO = { video:'🎬', pdf:'📄', presentacion:'📊', do
 
 function cerrarContenidoCurso(){
   window.__cursoContenidoActual = null;
+  try { localStorage.removeItem('logos_curso_actual'); } catch(e){}
   document.getElementById('contenido-curso-wrap').innerHTML = '';
 }
 
 async function verContenidoCurso(cursoId, nombreCurso){
   window.__cursoContenidoActual = { id: cursoId, nombre: nombreCurso };
+  try { localStorage.setItem('logos_curso_actual', JSON.stringify(window.__cursoContenidoActual)); } catch(e){}
   const wrap = document.getElementById('contenido-curso-wrap');
   wrap.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
 
@@ -1906,12 +1922,14 @@ async function verContenidoCurso(cursoId, nombreCurso){
                     <p style="margin:6px 0 0;font-size:12.5px;white-space:pre-wrap;">${c.contenido_texto || ''}</p>
                   </div>`;
               }
-              const enlace = c.url_externa ? c.url_externa : (c.ruta_storage ? `javascript:abrirArchivoContenido('${c.ruta_storage}')` : null);
+              const abrirBtnHtml = c.url_externa
+                ? `<a href="${c.url_externa}" target="_blank" rel="noopener" class="link-btn" style="font-size:11px;">${LANG_I==='ca'?'Obrir':'Abrir'}</a>`
+                : (c.ruta_storage ? `<button class="link-btn" style="font-size:11px;" onclick="abrirArchivoContenido('${c.ruta_storage}')">${LANG_I==='ca'?'Obrir':'Abrir'}</button>` : '');
               return `
                 <div class="contenido-row">
                   <span>${ICONO_TIPO_CONTENIDO[c.tipo] || '📎'}</span>
                   <span style="flex:1;">${c.titulo}</span>
-                  ${enlace ? `<a href="${enlace}" ${c.url_externa ? 'target="_blank" rel="noopener"' : ''} class="link-btn" style="font-size:11px;">${LANG_I==='ca'?'Obrir':'Abrir'}</a>` : ''}
+                  ${abrirBtnHtml}
                   <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="borrarContenido('${c.id}')">${LANG_I==='ca'?'Esborrar':'Borrar'}</button>
                 </div>`;
             }).join('')
