@@ -743,14 +743,54 @@ async function guardarMiNombreConfig(){
   renderConfigScreen();
 }
 
-async function ficharEntrada(){
-  const { error } = await sb.from('fichajes').insert({ tecnico_email: CURRENT_USER.email });
+function obtenerUbicacionActual(){
+  return new Promise((resolve) => {
+    if(!navigator.geolocation){ resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { timeout: 8000, enableHighAccuracy: true }
+    );
+  });
+}
+
+async function guardarUbicacionOficina(){
+  const esCA = LANG_I === 'ca';
+  const ubicacion = await obtenerUbicacionActual();
+  if(!ubicacion){
+    alert(esCA ? "No s'ha pogut obtenir la ubicació. Revisa els permisos de localització del navegador." : 'No se ha podido obtener la ubicación. Revisa los permisos de localización del navegador.');
+    return;
+  }
+  if(!confirm(esCA ? "Vols guardar la teva ubicació actual com la de l'oficina?" : '¿Quieres guardar tu ubicación actual como la de la oficina?')) return;
+
+  const { error } = await sb.from('configuracion_oficina').upsert({
+    id: 1, lat: ubicacion.lat, lng: ubicacion.lng, actualizado_por_email: CURRENT_USER.email, actualizado_en: new Date().toISOString()
+  });
   if(error){ alert(error.message); return; }
+  alert(esCA ? 'Ubicació guardada correctament.' : 'Ubicación guardada correctamente.');
+  renderAdministrador();
+}
+
+async function ficharEntrada(){
+  const t = TI[LANG_I];
+  const ubicacion = await obtenerUbicacionActual();
+  const payload = { tecnico_email: CURRENT_USER.email };
+  if(ubicacion){ payload.entrada_lat = ubicacion.lat; payload.entrada_lng = ubicacion.lng; }
+  const { error } = await sb.from('fichajes').insert(payload);
+  if(error){ alert(error.message); return; }
+  if(!ubicacion){
+    alert(LANG_I==='ca'
+      ? "S'ha fitxat, però no s'ha pogut registrar la ubicació (revisa els permisos de localització del navegador)."
+      : 'Se ha fichado, pero no se ha podido registrar la ubicación (revisa los permisos de localización del navegador).');
+  }
   renderMiEspacio();
 }
 
 async function ficharSalida(id){
-  const { error } = await sb.from('fichajes').update({ salida: new Date().toISOString() }).eq('id', id);
+  const ubicacion = await obtenerUbicacionActual();
+  const payload = { salida: new Date().toISOString() };
+  if(ubicacion){ payload.salida_lat = ubicacion.lat; payload.salida_lng = ubicacion.lng; }
+  const { error } = await sb.from('fichajes').update(payload).eq('id', id);
   if(error){ alert(error.message); return; }
   renderMiEspacio();
 }
@@ -3464,7 +3504,7 @@ async function renderAdministrador(){
   __adminActuacionesOffset = 0;
   __adminActuacionesTodas = [];
 
-  const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes, revisionesRes, perfilesIncompletosRes, actuacionesPrimeraPagina, actuacionesCountRes, actuacionesLigeroRes, avisosAdminRes] = await Promise.all([
+  const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes, revisionesRes, perfilesIncompletosRes, actuacionesPrimeraPagina, actuacionesCountRes, actuacionesLigeroRes, avisosAdminRes, oficinaRes] = await Promise.all([
     sb.from('atenciones').select('*').order('creado_en', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
     sb.from('atenciones').select('creado_por_email'), // sin límite: solo para el conteo de carga de trabajo
     sb.from('staff').select('*').order('email', { ascending:true }),
@@ -3476,9 +3516,11 @@ async function renderAdministrador(){
     sb.from('actuaciones').select('*').order('fecha', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
     sb.from('actuaciones').select('id', { count: 'exact', head: true }),
     sb.from('actuaciones').select('usuario_id, fecha'),
-    sb.from('avisos_intranet').select('*').order('creado_en', { ascending:false })
+    sb.from('avisos_intranet').select('*').order('creado_en', { ascending:false }),
+    sb.from('configuracion_oficina').select('*').eq('id', 1).maybeSingle()
   ]);
 
+  window.__configOficina = oficinaRes.data || null;
   window.__staffLista = staffRes.data || [];
   __mapaNombresTecnicos = {};
   (staffRes.data || []).forEach(s => { if(s.nombre) __mapaNombresTecnicos[s.email] = s.nombre; });
@@ -3636,6 +3678,16 @@ async function renderAdministrador(){
       </div>
     </div>
 
+    <div class="panel-card" style="margin-bottom:16px;background:var(--ochre-soft);border-color:var(--ochre);">
+      <h3>📍 ${LANG_I==='ca' ? 'Ubicació de la oficina' : 'Ubicación de la oficina'}</h3>
+      <p class="subtle" style="margin:0 0 8px;">${window.__configOficina?.direccion || ''}</p>
+      ${window.__configOficina?.lat != null
+        ? `<p style="margin:0 0 10px;font-size:12.5px;">✅ ${LANG_I==='ca' ? 'Ubicació guardada' : 'Ubicación guardada'} (<a href="https://www.google.com/maps?q=${window.__configOficina.lat},${window.__configOficina.lng}" target="_blank" rel="noopener">${LANG_I==='ca'?'veure al mapa':'ver en el mapa'}</a>). ${LANG_I==='ca' ? 'Els fitxatges es compararan amb aquest punt.' : 'Los fichajes se compararán con este punto.'}</p>`
+        : `<p style="margin:0 0 10px;font-size:12.5px;color:var(--alert);">⚠️ ${LANG_I==='ca' ? 'Encara no s\'ha guardat cap ubicació. Sense això, els fitxatges no es podran comparar amb la oficina.' : 'Todavía no se ha guardado ninguna ubicación. Sin esto, los fichajes no se podrán comparar con la oficina.'}</p>`}
+      <button class="primary-btn" style="background:var(--ochre);" onclick="guardarUbicacionOficina()">${LANG_I==='ca' ? '📍 Guardar la meva ubicació actual com a oficina' : '📍 Guardar mi ubicación actual como oficina'}</button>
+      <p class="subtle" style="margin:8px 0 0;font-size:11px;">${LANG_I==='ca' ? "Toca aquest botó estant físicament dins l'oficina, des del mòbil, per capturar la ubicació exacta." : 'Toca este botón estando físicamente dentro de la oficina, desde el móvil, para capturar la ubicación exacta.'}</p>
+    </div>
+
     <p class="subtle" style="margin-top:18px;">${t.fichajesPersonal}</p>
     <div class="panel-card" id="admin-fichajes-lista">${renderFilasFichajes(__adminFichajesTodos)}</div>
     <div style="text-align:center;margin-top:8px;margin-bottom:18px;" id="admin-fichajes-cargar-mas-wrap">
@@ -3737,6 +3789,16 @@ async function cargarMasAtenciones(){
     : '';
 }
 
+function calcularDistanciaMetros(lat1, lng1, lat2, lng2){
+  const R = 6371000;
+  const rad = x => x * Math.PI / 180;
+  const dLat = rad(lat2 - lat1);
+  const dLng = rad(lng2 - lng1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLng/2)**2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return Math.round(R * c);
+}
+
 function renderFilasFichajes(fichajes){
   const t = TI[LANG_I];
   const horaFmt = iso => new Date(iso).toLocaleTimeString(t.localeFecha, { hour:'2-digit', minute:'2-digit' });
@@ -3745,11 +3807,25 @@ function renderFilasFichajes(fichajes){
     const min = Math.round((new Date(fin) - new Date(ini)) / 60000);
     return `${Math.floor(min/60)}h ${min%60}min`;
   };
+  const oficina = window.__configOficina;
+  const ubicacionHtml = (lat, lng) => {
+    if(lat == null || lng == null) return '';
+    const mapaUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+    if(oficina && oficina.lat != null){
+      const dist = calcularDistanciaMetros(lat, lng, oficina.lat, oficina.lng);
+      const lejos = dist > 150;
+      return `<a href="${mapaUrl}" target="_blank" rel="noopener" class="chip ${lejos?'alert':'good'}" style="font-size:10px;text-decoration:none;">${lejos?'⚠️ ':'📍 '}${dist} m</a>`;
+    }
+    return `<a href="${mapaUrl}" target="_blank" rel="noopener" class="chip" style="font-size:10px;text-decoration:none;">📍 ${LANG_I==='ca'?'Veure mapa':'Ver mapa'}</a>`;
+  };
   return fichajes.length
     ? fichajes.map(f => `
         <div class="panel-stat-row">
           <span>${f.tecnico_email} · ${fechaFmt(f.entrada)}</span>
-          <span>${horaFmt(f.entrada)}${f.salida ? ` – ${horaFmt(f.salida)} (${duracionFmt(f.entrada, f.salida)})` : ` <span class="chip gold">${t.enCurso}</span>`}</span>
+          <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+            ${horaFmt(f.entrada)} ${ubicacionHtml(f.entrada_lat, f.entrada_lng)}
+            ${f.salida ? `– ${horaFmt(f.salida)} ${ubicacionHtml(f.salida_lat, f.salida_lng)} (${duracionFmt(f.entrada, f.salida)})` : `<span class="chip gold">${t.enCurso}</span>`}
+          </span>
         </div>`).join('')
     : `<div class="empty-note">${t.sinFichajes}</div>`;
 }
