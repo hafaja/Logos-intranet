@@ -2596,7 +2596,9 @@ async function renderProyectosScreen(){
 
     <div class="cards-grid" style="margin-bottom:16px;">${proyectosHtml}</div>
 
-    <div class="panel-card" style="margin-bottom:16px;">
+    <button class="primary-btn" style="margin-bottom:16px;" onclick="document.getElementById('form-nuevo-proyecto').style.display = document.getElementById('form-nuevo-proyecto').style.display==='none' ? 'block' : 'none';">➕ ${esCA?'Afegir projecte nou':'Añadir proyecto nuevo'}</button>
+
+    <div class="panel-card" style="margin-bottom:16px;display:none;" id="form-nuevo-proyecto">
       <h3>➕ ${esCA?'Crear projecte':'Crear proyecto'}</h3>
       <div class="field"><input type="text" id="proyecto-nombre" placeholder="${esCA?'Nom del projecte':'Nombre del proyecto'}"></div>
       <div class="field"><textarea id="proyecto-descripcion" rows="2" placeholder="${esCA?'Descripció (opcional)':'Descripción (opcional)'}"></textarea></div>
@@ -3336,8 +3338,19 @@ function enlaceWhatsApp(telefono, nombre){
 }
 
 async function anadirPersonaAProyecto(usuarioId, nombrePersona){
-  const proyectoId = document.getElementById('select-anadir-proyecto').value;
+  let proyectoId = document.getElementById('select-anadir-proyecto').value;
   if(!proyectoId){ return; }
+
+  if(proyectoId === '__nuevo__'){
+    const nombreNuevoProyecto = document.getElementById('nuevo-proyecto-nombre-ficha').value.trim();
+    if(!nombreNuevoProyecto){ alert(LANG_I==='ca' ? 'Escriu el nom del projecte nou.' : 'Escribe el nombre del proyecto nuevo.'); return; }
+    const { data: nuevoProyecto, error: errorProyecto } = await sb.from('proyectos')
+      .insert({ nombre: nombreNuevoProyecto, creado_por_email: CURRENT_USER.email })
+      .select('id').single();
+    if(errorProyecto){ alert(errorProyecto.message); return; }
+    proyectoId = nuevoProyecto.id;
+  }
+
   const { error } = await sb.from('proyecto_participantes').insert({
     proyecto_id: proyectoId, rol: 'beneficiario', usuario_id: usuarioId, anadido_por_email: CURRENT_USER.email
   });
@@ -3525,14 +3538,15 @@ async function verPersonaStaff(usuarioId, origen){
       <div class="panel-card">
         <h3>📁 ${LANG_I==='ca' ? 'Projectes en els quals participa' : 'Proyectos en los que participa'}</h3>
         ${misProyectosHtml}
-        ${proyectosDisponibles.length ? `
         <div style="display:flex;gap:8px;margin-top:10px;">
-          <select id="select-anadir-proyecto" style="flex:1;">
+          <select id="select-anadir-proyecto" style="flex:1;" onchange="document.getElementById('nuevo-proyecto-nombre-ficha').style.display = this.value==='__nuevo__' ? 'block' : 'none';">
             <option value="">${LANG_I==='ca'?'— Afegir a un projecte —':'— Añadir a un proyecto —'}</option>
             ${proyectosDisponibles.map(pr => `<option value="${pr.id}">${pr.nombre}</option>`).join('')}
+            <option value="__nuevo__">➕ ${LANG_I==='ca'?'Projecte nou…':'Proyecto nuevo…'}</option>
           </select>
           <button class="link-btn" onclick="anadirPersonaAProyecto('${p.id}','${(p.nombre_completo||'').replace(/'/g,"\\'")}')">➕</button>
-        </div>` : ''}
+        </div>
+        <input type="text" id="nuevo-proyecto-nombre-ficha" placeholder="${LANG_I==='ca'?'Nom del projecte nou':'Nombre del proyecto nuevo'}" style="display:none;margin-top:6px;width:100%;">
       </div>
       <div class="panel-card"><h3>${t.actuacionesVinculadasProyectos}</h3>${proyectosHtml}</div>
     </div>
@@ -3559,10 +3573,12 @@ async function verPersonaStaff(usuarioId, origen){
           </div>
           <div class="field">
             <label>${LANG_I==='ca'?'Vincular a un projecte (opcional)':'Vincular a un proyecto (opcional)'}</label>
-            <select id="act-proyecto">
+            <select id="act-proyecto" onchange="document.getElementById('act-proyecto-nuevo').style.display = this.value==='__nuevo__' ? 'block' : 'none';">
               <option value="">—</option>
               ${(todosProyectosRes.data||[]).map(pr => `<option value="${pr.id}">${pr.nombre}</option>`).join('')}
+              <option value="__nuevo__">➕ ${LANG_I==='ca'?'Projecte nou…':'Proyecto nuevo…'}</option>
             </select>
+            <input type="text" id="act-proyecto-nuevo" placeholder="${LANG_I==='ca'?'Nom del projecte nou':'Nombre del proyecto nuevo'}" style="display:none;margin-top:6px;">
           </div>
           <div class="field"><label>${t.objetivoLbl}</label><input type="text" id="act-objetivo" placeholder="${t.objetivoPlaceholder}"></div>
           <div class="field"><label>${t.actuacionRealizada}</label><textarea id="act-descripcion" rows="2" placeholder="${t.actuacionPlaceholder}"></textarea></div>
@@ -3837,6 +3853,18 @@ async function crearActuacion(){
   const val = id => document.getElementById(id).value.trim();
   const categoriaVal = val('act-categoria');
   const categoriaFinal = categoriaVal === '__otro__' ? (val('act-categoria-otro') || null) : (categoriaVal || null);
+
+  let proyectoIdFinal = val('act-proyecto') || null;
+  if(proyectoIdFinal === '__nuevo__'){
+    const nombreNuevoProyecto = val('act-proyecto-nuevo');
+    if(!nombreNuevoProyecto){ alert(LANG_I==='ca' ? 'Escriu el nom del projecte nou.' : 'Escribe el nombre del proyecto nuevo.'); return; }
+    const { data: nuevoProyecto, error: errorProyecto } = await sb.from('proyectos')
+      .insert({ nombre: nombreNuevoProyecto, creado_por_email: CURRENT_USER.email })
+      .select('id').single();
+    if(errorProyecto){ alert(errorProyecto.message); return; }
+    proyectoIdFinal = nuevoProyecto.id;
+  }
+
   const { error } = await sb.from('actuaciones').insert({
     usuario_id: window.__usuarioIdVisto,
     tecnico_email: CURRENT_USER.email,
@@ -3848,9 +3876,21 @@ async function crearActuacion(){
     derivado_a: val('act-derivado-a') || null,
     proximo_paso: val('act-proximo-paso') || null,
     fecha_proxima_revision: val('act-fecha-revision') || null,
-    proyecto_id: val('act-proyecto') || null
+    proyecto_id: proyectoIdFinal
   });
   if(error){ alert(error.message); return; }
+
+  // Como se está registrando la actuación desde la ficha de esta persona,
+  // si se creó (o vinculó) un proyecto, la añadimos también como beneficiaria automáticamente.
+  if(proyectoIdFinal){
+    const { data: yaParticipa } = await sb.from('proyecto_participantes').select('id').eq('proyecto_id', proyectoIdFinal).eq('usuario_id', window.__usuarioIdVisto).maybeSingle();
+    if(!yaParticipa){
+      await sb.from('proyecto_participantes').insert({
+        proyecto_id: proyectoIdFinal, rol: 'beneficiario', usuario_id: window.__usuarioIdVisto, anadido_por_email: CURRENT_USER.email
+      });
+    }
+  }
+
   verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
 }
 
