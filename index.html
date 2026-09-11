@@ -182,6 +182,7 @@
       <button data-target="comunicacion" onclick="showScreen('comunicacion');renderComunicacionScreen()">Comunicación</button>
       <button data-target="informes" onclick="showScreen('informes');renderInformesScreen()">Informes y datos</button>
       <button data-target="aulavirtual" onclick="showScreen('aulavirtual');renderAulaVirtualScreen()">🎥 Aula Virtual · Hub Logos</button>
+      <button data-target="proyectos" onclick="showScreen('proyectos');renderProyectosScreen()">📁 Proyectos</button>
       <button data-target="equipo" onclick="showScreen('equipo');renderEquipoScreen()">Trabajo en equipo</button>
       <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
       <button data-target="config" onclick="showScreen('config');renderConfigScreen()">Configuración</button>
@@ -298,6 +299,13 @@
     <div class="main-content">
       <div class="topbar"><span class="brand">Aula Virtual · Hub Logos</span></div>
       <div class="content" id="aulavirtual-content"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-proyectos">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Proyectos</span></div>
+      <div class="content" id="proyectos-content"></div>
     </div>
   </div>
 
@@ -705,13 +713,8 @@ async function initAuth(){
     }
     toggleSidebarVisible(true);
     iniciarRefrescoBadge();
-    // Solo saltamos a "Inicio" en un login real. Eventos como TOKEN_REFRESHED
-    // (refresco silencioso de sesión al recuperar foco/pestaña) no deben
-    // sacar al usuario de donde estaba (p. ej. dentro del Aula Virtual).
-    if(_event === 'SIGNED_IN'){
-      showScreen('panel');
-      renderPanelGeneral();
-    }
+    showScreen('panel');
+    renderPanelGeneral();
   });
 
   if(!CURRENT_USER){
@@ -1928,9 +1931,6 @@ async function verContenidoCurso(cursoId, nombreCurso){
             <span class="modulo-flecha" id="${idMod}-flecha">▾</span>
           </button>
           <div class="modulo-cuerpo" id="${idMod}" style="display:none;">
-            <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
-              <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="borrarModulo('${m.id}')">🗑️ ${LANG_I==='ca'?'Esborrar mòdul':'Borrar módulo'}</button>
-            </div>
             ${m.descripcion ? `<p class="subtle" style="margin:0 0 10px;">${m.descripcion}</p>` : ''}
             <div class="subtle" style="font-weight:700;margin-bottom:4px;">${LANG_I==='ca'?'Continguts':'Contenidos'}</div>
             ${contenidosHtml}
@@ -2015,20 +2015,6 @@ async function anadirModulo(){
     descripcion: document.getElementById('nuevo-modulo-descripcion').value.trim() || null,
     orden: (existentes && existentes.length) || 0
   });
-  if(error){ alert(error.message); return; }
-  verContenidoCurso(curso.id, curso.nombre);
-}
-
-async function borrarModulo(id){
-  if(!confirm(LANG_I==='ca'
-    ? 'Segur que vols esborrar aquest mòdul? S\'esborraran també els seus continguts i activitats.'
-    : '¿Seguro que quieres borrar este módulo? También se borrarán sus contenidos y actividades.')) return;
-  const curso = window.__cursoContenidoActual;
-  // Borramos primero contenidos/actividades del módulo por si la base de datos
-  // no tiene configurado el borrado en cascada (evita un error de clave foránea).
-  await sb.from('curso_contenidos').delete().eq('modulo_id', id);
-  await sb.from('curso_actividades').delete().eq('modulo_id', id);
-  const { error } = await sb.from('curso_modulos').delete().eq('id', id);
   if(error){ alert(error.message); return; }
   verContenidoCurso(curso.id, curso.nombre);
 }
@@ -2544,6 +2530,282 @@ async function verParticipantesClase(claseId, titulo){
     </div>
   `;
   wrap.scrollIntoView({ behavior:'smooth' });
+}
+
+async function renderProyectosScreen(){
+  const cont = document.getElementById('proyectos-content');
+  cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const esCA = LANG_I === 'ca';
+
+  const { data: proyectos } = await sb.from('proyectos').select('*').order('creado_en', { ascending:false });
+  const proyectoIds = (proyectos || []).map(p => p.id);
+  let conteos = {};
+  if(proyectoIds.length){
+    const { data: participantes } = await sb.from('proyecto_participantes').select('proyecto_id, rol').in('proyecto_id', proyectoIds);
+    (participantes || []).forEach(pp => {
+      if(!conteos[pp.proyecto_id]) conteos[pp.proyecto_id] = { beneficiarios: 0, profesionales: 0 };
+      conteos[pp.proyecto_id][pp.rol === 'profesional' ? 'profesionales' : 'beneficiarios']++;
+    });
+  }
+
+  const estadoColor = { activo: 'good', finalizado: '', pausado: 'gold' };
+  const estadoTexto = { activo: esCA?'Actiu':'Activo', finalizado: esCA?'Finalitzat':'Finalizado', pausado: esCA?'Pausat':'Pausado' };
+
+  const proyectosHtml = (proyectos && proyectos.length)
+    ? proyectos.map(pr => {
+        const c = conteos[pr.id] || { beneficiarios: 0, profesionales: 0 };
+        return `
+        <div class="panel-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <h3 style="margin:0;">📁 ${pr.nombre}</h3>
+            <span class="chip ${estadoColor[pr.estado]||''}" style="flex-shrink:0;">${estadoTexto[pr.estado]||pr.estado}</span>
+          </div>
+          ${pr.descripcion ? `<p class="subtle" style="margin:4px 0 8px;">${pr.descripcion}</p>` : ''}
+          ${(pr.fecha_inicio||pr.fecha_final) ? `<div class="panel-stat-row"><span>${esCA?'Dates':'Fechas'}</span><span>${pr.fecha_inicio?new Date(pr.fecha_inicio+'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha):'—'} – ${pr.fecha_final?new Date(pr.fecha_final+'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha):'—'}</span></div>` : ''}
+          <div class="panel-stat-row"><span>${esCA?'Beneficiaris':'Beneficiarios'}</span><span><strong>${c.beneficiarios}</strong></span></div>
+          <div class="panel-stat-row"><span>${esCA?'Professionals':'Profesionales'}</span><span><strong>${c.profesionales}</strong></span></div>
+          <button class="primary-btn" style="margin-top:10px;" onclick="verProyecto('${pr.id}')">${esCA?'Obrir projecte':'Abrir proyecto'}</button>
+        </div>`;
+      }).join('')
+    : `<div class="empty-note">${esCA ? 'Encara no hi ha projectes.' : 'Todavía no hay proyectos.'}</div>`;
+
+  cont.innerHTML = `
+    <div class="panel-card" style="margin-bottom:16px;background:var(--bg);">
+      <button onclick="document.getElementById('guia-crear-proyecto').style.display = document.getElementById('guia-crear-proyecto').style.display==='none' ? 'block' : 'none';" class="link-btn" style="font-weight:700;">📖 ${esCA ? 'Guia: com crear i gestionar un projecte' : 'Guía: cómo crear y gestionar un proyecto'}</button>
+      <div id="guia-crear-proyecto" style="display:none;margin-top:10px;font-size:13px;line-height:1.6;">
+        <p><strong>1. ${esCA?'Crea el projecte':'Crea el proyecto'}</strong><br>${esCA
+          ? 'Emplena el nom (obligatori), una descripció breu i les dates si les coneixes, i prem \"Crear projecte\". Apareixerà a la llista de sobre.'
+          : 'Rellena el nombre (obligatorio), una descripción breve y las fechas si las conoces, y pulsa \"Crear proyecto\". Aparecerá en la lista de arriba.'}</p>
+        <p><strong>2. ${esCA?'Afegeix beneficiaris':'Añade beneficiarios'}</strong><br>${esCA
+          ? 'Els beneficiaris NO s\'afegeixen des d\'aquí. Ves a \"Personas usuarias\", obre la fitxa de la persona, pestanya \"Proyectos\", i afegeix-la des d\'allà al projecte que acabes de crear.'
+          : 'Los beneficiarios NO se añaden desde aquí. Ve a \"Personas usuarias\", abre la ficha de la persona, pestaña \"Proyectos\", y añádela desde ahí al proyecto que acabas de crear.'}</p>
+        <p><strong>3. ${esCA?'Afegeix professionals':'Añade profesionales'}</strong><br>${esCA
+          ? 'Obre el projecte (\"Abrir proyecto\") i, a l\'apartat \"Professionals\", tria un company de la llista desplegable i prem \"➕\".'
+          : 'Abre el proyecto (\"Abrir proyecto\") y, en el apartado \"Profesionales\", elige un compañero de la lista desplegable y pulsa \"➕\".'}</p>
+        <p><strong>4. ${esCA?'Vincula seguiments':'Vincula seguimientos'}</strong><br>${esCA
+          ? 'Els seguiments són les actuacions que ja registres normalment. Quan en registris una nova des de la fitxa d\'una persona, tria el projecte al desplegable \"Vincular a un projecte\" — així quedarà comptabilitzada aquí.'
+          : 'Los seguimientos son las actuaciones que ya registras normalmente. Cuando registres una nueva desde la ficha de una persona, elige el proyecto en el desplegable \"Vincular a un proyecto\" — así quedará contabilizada aquí.'}</p>
+        <p><strong>5. ${esCA?'Registra activitats':'Registra actividades'}</strong><br>${esCA
+          ? 'Dins del projecte, apartat \"Activitats\": títol, descripció opcional i data. Queden llistades per ordre cronològic.'
+          : 'Dentro del proyecto, apartado \"Actividades\": título, descripción opcional y fecha. Quedan listadas por orden cronológico.'}</p>
+        <p><strong>6. ${esCA?'Envia avisos':'Envía avisos'}</strong><br>${esCA
+          ? 'Un avís enviat des d\'un projecte apareix automàticament a \"Mi espacio\" de cada beneficiari a Logos Acompanya. Per avisar als professionals del projecte, fes-ho directament (WhatsApp, correu, etc.).'
+          : 'Un aviso enviado desde un proyecto aparece automáticamente en \"Mi espacio\" de cada beneficiario en Logos Acompanya. Para avisar a los profesionales del proyecto, hazlo directamente (WhatsApp, correo, etc.).'}</p>
+      </div>
+    </div>
+
+    <div class="cards-grid" style="margin-bottom:16px;">${proyectosHtml}</div>
+
+    <div class="panel-card" style="margin-bottom:16px;">
+      <h3>➕ ${esCA?'Crear projecte':'Crear proyecto'}</h3>
+      <div class="field"><input type="text" id="proyecto-nombre" placeholder="${esCA?'Nom del projecte':'Nombre del proyecto'}"></div>
+      <div class="field"><textarea id="proyecto-descripcion" rows="2" placeholder="${esCA?'Descripció (opcional)':'Descripción (opcional)'}"></textarea></div>
+      <div style="display:flex;gap:8px;">
+        <div class="field" style="flex:1;"><label>${esCA?'Data inici':'Fecha inicio'}</label><input type="date" id="proyecto-fecha-inicio"></div>
+        <div class="field" style="flex:1;"><label>${esCA?'Data final':'Fecha final'}</label><input type="date" id="proyecto-fecha-final"></div>
+      </div>
+      <button class="primary-btn" onclick="crearProyecto()">➕ ${esCA?'Crear projecte':'Crear proyecto'}</button>
+    </div>
+
+    <div id="proyecto-detalle-wrap"></div>
+  `;
+}
+
+async function crearProyecto(){
+  const esCA = LANG_I === 'ca';
+  const nombre = document.getElementById('proyecto-nombre').value.trim();
+  if(!nombre){ alert(esCA ? 'Escriu el nom del projecte.' : 'Escribe el nombre del proyecto.'); return; }
+  const { error } = await sb.from('proyectos').insert({
+    nombre,
+    descripcion: document.getElementById('proyecto-descripcion').value.trim() || null,
+    fecha_inicio: document.getElementById('proyecto-fecha-inicio').value || null,
+    fecha_final: document.getElementById('proyecto-fecha-final').value || null,
+    creado_por_email: CURRENT_USER.email
+  });
+  if(error){ alert(error.message); return; }
+  renderProyectosScreen();
+}
+
+async function cambiarEstadoProyecto(proyectoId, estado){
+  await sb.from('proyectos').update({ estado }).eq('id', proyectoId);
+}
+
+async function borrarProyecto(proyectoId){
+  const esCA = LANG_I === 'ca';
+  if(!confirm(esCA ? 'Segur que vols esborrar aquest projecte? Es perdrà tota la seva informació.' : '¿Seguro que quieres borrar este proyecto? Se perderá toda su información.')) return;
+  const { error } = await sb.from('proyectos').delete().eq('id', proyectoId);
+  if(error){ alert(error.message); return; }
+  renderProyectosScreen();
+}
+
+window.__proyectoActual = null;
+
+async function verProyecto(proyectoId){
+  window.__proyectoActual = proyectoId;
+  const esCA = LANG_I === 'ca';
+  const wrap = document.getElementById('proyecto-detalle-wrap');
+  wrap.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+
+  const [{ data: proyecto }, { data: participantes }, { data: actividades }, { data: avisos }, { data: seguimientos }, { data: staffLista }] = await Promise.all([
+    sb.from('proyectos').select('*').eq('id', proyectoId).maybeSingle(),
+    sb.from('proyecto_participantes').select('*').eq('proyecto_id', proyectoId),
+    sb.from('proyecto_actividades').select('*').eq('proyecto_id', proyectoId).order('fecha', { ascending:false }),
+    sb.from('proyecto_avisos').select('*').eq('proyecto_id', proyectoId).order('creado_en', { ascending:false }),
+    sb.from('actuaciones').select('*').eq('proyecto_id', proyectoId).order('fecha', { ascending:false }),
+    sb.from('staff').select('email, nombre').eq('activo', true)
+  ]);
+
+  const beneficiarios = (participantes||[]).filter(pp => pp.rol === 'beneficiario');
+  const profesionales = (participantes||[]).filter(pp => pp.rol === 'profesional');
+
+  let nombresBeneficiarios = {};
+  const idsBeneficiarios = beneficiarios.map(b => b.usuario_id).filter(Boolean);
+  if(idsBeneficiarios.length){
+    const { data: perfilesRes } = await sb.from('perfiles').select('id, nombre_completo').in('id', idsBeneficiarios);
+    (perfilesRes || []).forEach(pf => { nombresBeneficiarios[pf.id] = pf.nombre_completo; });
+  }
+
+  const beneficiariosHtml = beneficiarios.length
+    ? beneficiarios.map(b => `
+        <div class="panel-stat-row">
+          <span>${nombresBeneficiarios[b.usuario_id] || (esCA?'Sense nom':'Sin nombre')}</span>
+          <span style="display:flex;gap:8px;">
+            ${b.usuario_id ? `<button class="link-btn" style="font-size:11px;" onclick="verPersonaStaff('${b.usuario_id}','personas')">${esCA?'Veure':'Ver'}</button>` : ''}
+            <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="quitarPersonaDeProyecto('${b.id}');setTimeout(()=>verProyecto('${proyectoId}'),300)">${esCA?'Treure':'Quitar'}</button>
+          </span>
+        </div>`).join('')
+    : `<div class="empty-note">${esCA?'Encara no hi ha beneficiaris.':'Todavía no hay beneficiarios.'}</div>`;
+
+  const profesionalesHtml = profesionales.length
+    ? profesionales.map(pf => `
+        <div class="panel-stat-row">
+          <span>${(staffLista||[]).find(s=>s.email===pf.tecnico_email)?.nombre || pf.tecnico_email}</span>
+          <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="quitarPersonaDeProyecto('${pf.id}');setTimeout(()=>verProyecto('${proyectoId}'),300)">${esCA?'Treure':'Quitar'}</button>
+        </div>`).join('')
+    : `<div class="empty-note">${esCA?'Encara no hi ha professionals assignats.':'Todavía no hay profesionales asignados.'}</div>`;
+
+  const actividadesHtml = (actividades && actividades.length)
+    ? actividades.map(a => `
+        <div class="panel-stat-row" style="align-items:flex-start;">
+          <span>${a.titulo}${a.descripcion ? `<br><span class="subtle" style="font-size:11px;">${a.descripcion}</span>` : ''}</span>
+          <span class="subtle">${a.fecha ? new Date(a.fecha+'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha) : ''}</span>
+        </div>`).join('')
+    : `<div class="empty-note">${esCA?'Encara no hi ha activitats.':'Todavía no hay actividades.'}</div>`;
+
+  const avisosHtml = (avisos && avisos.length)
+    ? avisos.map(av => `
+        <div class="panel-stat-row" style="align-items:flex-start;">
+          <span><strong>${av.titulo}</strong><br><span style="font-size:12.5px;">${av.mensaje}</span></span>
+          <span class="subtle" style="font-size:11px;">${new Date(av.creado_en).toLocaleDateString(TI[LANG_I].localeFecha)}</span>
+        </div>`).join('')
+    : `<div class="empty-note">${esCA?'Encara no s\'ha enviat cap avís.':'Todavía no se ha enviado ningún aviso.'}</div>`;
+
+  const seguimientosHtml = (seguimientos && seguimientos.length)
+    ? seguimientos.map(renderActuacionCard).join('')
+    : `<div class="empty-note">${esCA?'Encara no hi ha seguiments vinculats a aquest projecte.':'Todavía no hay seguimientos vinculados a este proyecto.'}</div>`;
+
+  wrap.innerHTML = `
+    <div class="panel-card" style="margin-top:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <h2 style="margin:0;">📁 ${proyecto.nombre}</h2>
+        <button class="link-btn" onclick="document.getElementById('proyecto-detalle-wrap').innerHTML='';window.__proyectoActual=null;">✕ ${esCA?'Tancar':'Cerrar'}</button>
+      </div>
+      ${proyecto.descripcion ? `<p class="subtle">${proyecto.descripcion}</p>` : ''}
+      <select onchange="cambiarEstadoProyecto('${proyectoId}', this.value)">
+        <option value="activo" ${proyecto.estado==='activo'?'selected':''}>${esCA?'Actiu':'Activo'}</option>
+        <option value="pausado" ${proyecto.estado==='pausado'?'selected':''}>${esCA?'Pausat':'Pausado'}</option>
+        <option value="finalizado" ${proyecto.estado==='finalizado'?'selected':''}>${esCA?'Finalitzat':'Finalizado'}</option>
+      </select>
+      <button class="link-btn" style="color:var(--alert);margin-left:8px;" onclick="borrarProyecto('${proyectoId}')">${esCA?'Esborrar projecte':'Borrar proyecto'}</button>
+    </div>
+
+    <div class="panel-card">
+      <h3>👥 ${esCA?'Beneficiaris':'Beneficiarios'}</h3>
+      ${beneficiariosHtml}
+      <p class="subtle" style="margin:10px 0 4px;">${esCA?'Per afegir un beneficiari, ves a la seva fitxa (Persones usuàries) i afegeix-lo des de la pestanya \"Projectes\".':'Para añadir un beneficiario, ve a su ficha (Personas usuarias) y añádelo desde la pestaña \"Proyectos\".'}</p>
+    </div>
+
+    <div class="panel-card">
+      <h3>👨‍💼 ${esCA?'Professionals':'Profesionales'}</h3>
+      ${profesionalesHtml}
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <select id="select-anadir-profesional" style="flex:1;">
+          <option value="">${esCA?'— Afegir professional —':'— Añadir profesional —'}</option>
+          ${(staffLista||[]).filter(s => !profesionales.some(pf=>pf.tecnico_email===s.email)).map(s => `<option value="${s.email}">${s.nombre||s.email}</option>`).join('')}
+        </select>
+        <button class="link-btn" onclick="anadirProfesionalAProyecto('${proyectoId}')">➕</button>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <h3>📌 ${esCA?'Seguiments (actuacions vinculades)':'Seguimientos (actuaciones vinculadas)'}</h3>
+      ${seguimientosHtml}
+      <p class="subtle" style="margin-top:8px;">${esCA?'Vincula una actuació a aquest projecte des de \"Seguiment i activitats\", triant aquest projecte en registrar-la.':'Vincula una actuación a este proyecto desde \"Seguimiento y actividades\", eligiendo este proyecto al registrarla.'}</p>
+    </div>
+
+    <div class="panel-card">
+      <h3>📋 ${esCA?'Activitats':'Actividades'}</h3>
+      ${actividadesHtml}
+      <div class="doc-upload-row" style="margin-top:10px;">
+        <input type="text" id="actividad-proyecto-titulo" placeholder="${esCA?'Títol':'Título'}" style="margin-bottom:6px;">
+        <textarea id="actividad-proyecto-descripcion" rows="2" placeholder="${esCA?'Descripció (opcional)':'Descripción (opcional)'}" style="margin-bottom:6px;"></textarea>
+        <input type="date" id="actividad-proyecto-fecha" style="margin-bottom:6px;">
+        <button class="link-btn" onclick="anadirActividadProyecto('${proyectoId}')">➕ ${esCA?'Afegir activitat':'Añadir actividad'}</button>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <h3>📢 ${esCA?'Avisos a tots els participants':'Avisos a todos los participantes'}</h3>
+      <p class="subtle" style="margin:0 0 8px;">${esCA
+        ? 'Es guarda com a av\u00eds i apareix a "Mi espacio" de cada beneficiari a Logos Acompanya. Per als professionals, avisa\'ls directament.'
+        : 'Se guarda como aviso y aparece en "Mi espacio" de cada beneficiario en Logos Acompanya. Para los profesionales, avísales directamente.'}</p>
+      ${avisosHtml}
+      <div class="doc-upload-row" style="margin-top:10px;">
+        <input type="text" id="aviso-proyecto-titulo" placeholder="${esCA?"Títol de l'avís":'Título del aviso'}" style="margin-bottom:6px;">
+        <textarea id="aviso-proyecto-mensaje" rows="2" placeholder="${esCA?'Missatge':'Mensaje'}" style="margin-bottom:6px;"></textarea>
+        <button class="primary-btn" onclick="enviarAvisoProyecto('${proyectoId}')">📢 ${esCA?'Enviar av\u00eds':'Enviar aviso'}</button>
+      </div>
+      ${beneficiarios.filter(b=>b.usuario_id).length ? `
+      <p class="subtle" style="margin-top:14px;font-weight:700;">${esCA?'O enviar per WhatsApp, un a un:':'O enviar por WhatsApp, uno a uno:'}</p>
+      ` : ''}
+    </div>
+  `;
+}
+
+async function anadirProfesionalAProyecto(proyectoId){
+  const email = document.getElementById('select-anadir-profesional').value;
+  if(!email) return;
+  const { error } = await sb.from('proyecto_participantes').insert({
+    proyecto_id: proyectoId, rol: 'profesional', tecnico_email: email, anadido_por_email: CURRENT_USER.email
+  });
+  if(error){ alert(error.message); return; }
+  verProyecto(proyectoId);
+}
+
+async function anadirActividadProyecto(proyectoId){
+  const esCA = LANG_I === 'ca';
+  const titulo = document.getElementById('actividad-proyecto-titulo').value.trim();
+  if(!titulo){ alert(esCA ? 'Escriu el títol.' : 'Escribe el título.'); return; }
+  const { error } = await sb.from('proyecto_actividades').insert({
+    proyecto_id: proyectoId, titulo,
+    descripcion: document.getElementById('actividad-proyecto-descripcion').value.trim() || null,
+    fecha: document.getElementById('actividad-proyecto-fecha').value || null,
+    creado_por_email: CURRENT_USER.email
+  });
+  if(error){ alert(error.message); return; }
+  verProyecto(proyectoId);
+}
+
+async function enviarAvisoProyecto(proyectoId){
+  const esCA = LANG_I === 'ca';
+  const titulo = document.getElementById('aviso-proyecto-titulo').value.trim();
+  const mensaje = document.getElementById('aviso-proyecto-mensaje').value.trim();
+  if(!titulo || !mensaje){ alert(esCA ? 'Omple el títol i el missatge.' : 'Rellena el título y el mensaje.'); return; }
+  const { error } = await sb.from('proyecto_avisos').insert({
+    proyecto_id: proyectoId, titulo, mensaje, creado_por_email: CURRENT_USER.email
+  });
+  if(error){ alert(error.message); return; }
+  verProyecto(proyectoId);
 }
 
 async function renderEquipoScreen(){
@@ -3073,6 +3335,23 @@ function enlaceWhatsApp(telefono, nombre){
   return `https://wa.me/${limpio}?text=${mensaje}`;
 }
 
+async function anadirPersonaAProyecto(usuarioId, nombrePersona){
+  const proyectoId = document.getElementById('select-anadir-proyecto').value;
+  if(!proyectoId){ return; }
+  const { error } = await sb.from('proyecto_participantes').insert({
+    proyecto_id: proyectoId, rol: 'beneficiario', usuario_id: usuarioId, anadido_por_email: CURRENT_USER.email
+  });
+  if(error){ alert(error.message); return; }
+  verPersonaStaff(usuarioId, window.__origenPersonaVista);
+}
+
+async function quitarPersonaDeProyecto(participacionId){
+  if(!confirm(LANG_I==='ca' ? 'Segur que vols treure aquesta persona del projecte?' : '¿Seguro que quieres quitar a esta persona del proyecto?')) return;
+  const { error } = await sb.from('proyecto_participantes').delete().eq('id', participacionId);
+  if(error){ alert(error.message); return; }
+  verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
+}
+
 async function verPersonaStaff(usuarioId, origen){
   window.__usuarioIdVisto = usuarioId;
   window.__origenPersonaVista = origen || 'panel';
@@ -3092,7 +3371,7 @@ async function verPersonaStaff(usuarioId, origen){
   showScreen('persona');
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
 
-  const [perfilRes, docsRes, tramitesRes, atencionesRes, actuacionesRes, staffListRes, citasRes, mensajesRes] = await Promise.all([
+  const [perfilRes, docsRes, tramitesRes, atencionesRes, actuacionesRes, staffListRes, citasRes, mensajesRes, misProyectosRes, todosProyectosRes] = await Promise.all([
     sb.from('perfiles').select('*').eq('id', usuarioId).maybeSingle(),
     sb.from('documentos').select('*').eq('usuario_id', usuarioId).order('subido_en', { ascending:false }),
     sb.from('tramites').select('*').eq('usuario_id', usuarioId).order('creado_en', { ascending:false }),
@@ -3100,7 +3379,9 @@ async function verPersonaStaff(usuarioId, origen){
     sb.from('actuaciones').select('*').eq('usuario_id', usuarioId).order('fecha', { ascending:false }),
     sb.from('staff').select('email, nombre, activo').order('email', { ascending:true }),
     sb.from('citas').select('*').eq('usuario_id', usuarioId).order('fecha', { ascending:false }),
-    sb.from('mensajes_enviados').select('*').eq('usuario_id', usuarioId).order('fecha', { ascending:false })
+    sb.from('mensajes_enviados').select('*').eq('usuario_id', usuarioId).order('fecha', { ascending:false }),
+    sb.from('proyecto_participantes').select('*, proyectos(id, nombre, estado)').eq('usuario_id', usuarioId).eq('rol', 'beneficiario'),
+    sb.from('proyectos').select('id, nombre').order('nombre', { ascending:true })
   ]);
 
   (staffListRes.data || []).forEach(s => { if(s.nombre) __mapaNombresTecnicos[s.email] = s.nombre; });
@@ -3149,6 +3430,16 @@ async function verPersonaStaff(usuarioId, origen){
 
   const proyectosLista = actuacionesLista.filter(ac => PROYECTOS_LOGOS.includes(ac.categoria));
   const proyectosHtml = proyectosLista.length ? proyectosLista.map(renderActuacionCard).join('') : `<div class="empty-note">${t.sinProyectosVinculados}</div>`;
+
+  const misProyectosLista = misProyectosRes.data || [];
+  const misProyectosHtml = misProyectosLista.length
+    ? misProyectosLista.map(pp => `
+        <div class="panel-stat-row">
+          <span>${pp.proyectos ? pp.proyectos.nombre : '—'} ${pp.proyectos && pp.proyectos.estado ? `<span class="chip ${pp.proyectos.estado==='activo'?'good':''}" style="font-size:10px;">${pp.proyectos.estado}</span>` : ''}</span>
+          <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="quitarPersonaDeProyecto('${pp.id}')">${LANG_I==='ca'?'Treure':'Quitar'}</button>
+        </div>`).join('')
+    : `<div class="empty-note">${LANG_I==='ca' ? 'Encara no participa en cap projecte.' : 'Todavía no participa en ningún proyecto.'}</div>`;
+  const proyectosDisponibles = (todosProyectosRes.data || []).filter(pr => !misProyectosLista.some(mp => mp.proyecto_id === pr.id));
 
   const formacionesLista = actuacionesLista.filter(ac => FORMACIONES_LOGOS.includes(ac.categoria));
   const formacionesHtml = formacionesLista.length ? formacionesLista.map(renderActuacionCard).join('') : `<div class="empty-note">${t.sinFormacionesVinculadas}</div>`;
@@ -3231,6 +3522,18 @@ async function verPersonaStaff(usuarioId, origen){
     </div>
 
     <div class="ptab-content" id="ptab-proyectos">
+      <div class="panel-card">
+        <h3>📁 ${LANG_I==='ca' ? 'Projectes en els quals participa' : 'Proyectos en los que participa'}</h3>
+        ${misProyectosHtml}
+        ${proyectosDisponibles.length ? `
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <select id="select-anadir-proyecto" style="flex:1;">
+            <option value="">${LANG_I==='ca'?'— Afegir a un projecte —':'— Añadir a un proyecto —'}</option>
+            ${proyectosDisponibles.map(pr => `<option value="${pr.id}">${pr.nombre}</option>`).join('')}
+          </select>
+          <button class="link-btn" onclick="anadirPersonaAProyecto('${p.id}','${(p.nombre_completo||'').replace(/'/g,"\\'")}')">➕</button>
+        </div>` : ''}
+      </div>
       <div class="panel-card"><h3>${t.actuacionesVinculadasProyectos}</h3>${proyectosHtml}</div>
     </div>
 
@@ -3253,6 +3556,13 @@ async function verPersonaStaff(usuarioId, origen){
               <option value="__otro__">${t.otroEspecificar}</option>
             </select>
             <input type="text" id="act-categoria-otro" placeholder="${t.especificarPlaceholder}" style="display:none;margin-top:6px;">
+          </div>
+          <div class="field">
+            <label>${LANG_I==='ca'?'Vincular a un projecte (opcional)':'Vincular a un proyecto (opcional)'}</label>
+            <select id="act-proyecto">
+              <option value="">—</option>
+              ${(todosProyectosRes.data||[]).map(pr => `<option value="${pr.id}">${pr.nombre}</option>`).join('')}
+            </select>
           </div>
           <div class="field"><label>${t.objetivoLbl}</label><input type="text" id="act-objetivo" placeholder="${t.objetivoPlaceholder}"></div>
           <div class="field"><label>${t.actuacionRealizada}</label><textarea id="act-descripcion" rows="2" placeholder="${t.actuacionPlaceholder}"></textarea></div>
@@ -3373,10 +3683,90 @@ async function enviarMensajePlantilla(usuarioId, nombrePersona, telefono){
   verPersonaStaff(usuarioId, window.__origenPersonaVista);
 }
 
+function textoLegalConsentimientoHtml(esCA){
+  return `
+    <h3 style="font-size:13.5px;margin:16px 0 4px;">${esCA ? '1. Responsable del tractament' : '1. Responsable del tratamiento'}</h3>
+    <p style="font-size:12px;line-height:1.6;margin:0;">Associació Logos Projectes Socials · NIF: G55725436<br>
+    ${esCA ? 'Carrer de la Pau del Protectorat, 14, 43004 Tarragona' : 'Calle de la Pau del Protectorat, 14, 43004 Tarragona'}<br>
+    ${esCA ? 'Correu electrònic' : 'Correo electrónico'}: info@logostgn.cat</p>
+
+    <h3 style="font-size:13.5px;margin:16px 0 4px;">${esCA ? '2. Finalitat del tractament' : '2. Finalidad del tratamiento'}</h3>
+    <p style="font-size:12px;line-height:1.6;margin:0 0 4px;">${esCA ? 'Les dades personals facilitades seran tractades per:' : 'Los datos personales facilitados serán tratados para:'}</p>
+    <ul style="font-size:12px;line-height:1.6;margin:0;padding-left:16px;">
+      <li>${esCA ? 'La gestió administrativa, operativa i funcional de la participació en programes i serveis.' : 'La gestión administrativa, operativa y funcional de la participación en programas y servicios.'}</li>
+      <li>${esCA ? 'El compliment d\'obligacions legals derivades de subvencions i convenis.' : 'El cumplimiento de obligaciones legales derivadas de subvenciones y convenios.'}</li>
+      <li>${esCA ? 'Comunicacions informatives relacionades amb els serveis de l\'entitat.' : 'Comunicaciones informativas relacionadas con los servicios de la entidad.'}</li>
+      <li>${esCA ? 'Elaboració d\'estadístiques i memòries amb dades anonimitzades.' : 'Elaboración de estadísticas y memorias con datos anonimizados.'}</li>
+      <li>${esCA ? 'Justificació de les subvencions rebudes.' : 'Justificación de las subvenciones recibidas.'}</li>
+      <li>${esCA ? 'Conservació de les dades durant els terminis legals establerts.' : 'Conservación de los datos durante los plazos legales establecidos.'}</li>
+    </ul>
+
+    <h3 style="font-size:13.5px;margin:16px 0 4px;">${esCA ? '3. Legitimació' : '3. Legitimación'}</h3>
+    <p style="font-size:12px;line-height:1.6;margin:0 0 4px;">${esCA ? 'El tractament es basa en la Llei orgànica 3/2018 (LOPDGDD) i el Reglament (UE) 2016/679 (RGPD):' : 'El tratamiento se basa en la Ley orgánica 3/2018 (LOPDGDD) y el Reglamento (UE) 2016/679 (RGPD):'}</p>
+    <ul style="font-size:12px;line-height:1.6;margin:0;padding-left:16px;">
+      <li>${esCA ? 'El consentiment exprés de la persona interessada (Art. 6.1.a RGPD).' : 'El consentimiento expreso de la persona interesada (Art. 6.1.a RGPD).'}</li>
+      <li>${esCA ? 'El compliment d\'obligacions legals (Art. 6.1.c RGPD).' : 'El cumplimiento de obligaciones legales (Art. 6.1.c RGPD).'}</li>
+      <li>${esCA ? 'El compliment d\'una missió d\'interès públic vinculada als programes socials (Art. 6.1.e RGPD).' : 'El cumplimiento de una misión de interés público vinculada a los programas sociales (Art. 6.1.e RGPD).'}</li>
+      <li>${esCA ? 'Per a dades especialment sensibles, el tractament es realitza conforme a l\'Art. 9.2 del RGPD.' : 'Para datos especialmente sensibles, el tratamiento se realiza conforme al Art. 9.2 del RGPD.'}</li>
+    </ul>
+
+    <h3 style="font-size:13.5px;margin:16px 0 4px;">${esCA ? '4. Destinataris' : '4. Destinatarios'}</h3>
+    <p style="font-size:12px;line-height:1.6;margin:0 0 4px;">${esCA ? 'Les dades no seran cedides a tercers excepte:' : 'Los datos no serán cedidos a terceros excepto:'}</p>
+    <ul style="font-size:12px;line-height:1.6;margin:0;padding-left:16px;">
+      <li>${esCA ? 'Administracions públiques que ho requereixin per obligació legal.' : 'Administraciones públicas que lo requieran por obligación legal.'}</li>
+      <li>${esCA ? 'Entitats col·laboradores o finançadores quan sigui necessari.' : 'Entidades colaboradoras o financiadoras cuando sea necesario.'}</li>
+      <li>${esCA ? 'Proveïdors amb contracte d\'encarregat del tractament (Art. 28 RGPD).' : 'Proveedores con contrato de encargado del tratamiento (Art. 28 RGPD).'}</li>
+    </ul>
+
+    <h3 style="font-size:13.5px;margin:16px 0 4px;">${esCA ? '5. Drets de la persona interessada' : '5. Derechos de la persona interesada'}</h3>
+    <p style="font-size:12px;line-height:1.6;margin:0;">${esCA
+      ? 'Pots exercir els drets d\'accés, rectificació, supressió, oposició, limitació i portabilitat escrivint a info@logostgn.cat amb un document identificatiu adjunt. En cas de desacord, pots presentar una reclamació a l\'Agència Espanyola de Protecció de Dades (www.aepd.es).'
+      : 'Puedes ejercer los derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad escribiendo a info@logostgn.cat con un documento identificativo adjunto. En caso de desacuerdo, puedes presentar una reclamación ante la Agencia Española de Protección de Datos (www.aepd.es).'}</p>
+
+    <h3 style="font-size:13.5px;margin:16px 0 4px;">${esCA ? '6. Conservació de les dades' : '6. Conservación de los datos'}</h3>
+    <p style="font-size:12px;line-height:1.6;margin:0;">${esCA
+      ? 'Les dades es conservaran mentre existeixi relació amb l\'entitat i durant els terminis legals exigits. Posteriorment, es suprimiran o anonimitzaran.'
+      : 'Los datos se conservarán mientras exista relación con la entidad y durante los plazos legales exigidos. Posteriormente, se suprimirán o anonimizarán.'}</p>
+
+    <h3 style="font-size:13.5px;margin:16px 0 4px;color:#7A4A1F;">${esCA ? 'Clàusula sobre responsabilitat en tràmits' : 'Cláusula sobre responsabilidad en trámites'}</h3>
+    <p style="font-size:12px;line-height:1.6;margin:0;">${esCA
+      ? "L'Associació Logos Projectes Socials presta un servei d'acompanyament, suport i orientació en la realització de tràmits administratius i gestions digitals. L'entitat no és responsable del resultat final dels tràmits, ni de la seva resolució, terminis de resposta, incidències tècniques o eventual denegació, ja que aquests depenen exclusivament dels organismes i administracions competents."
+      : "La Associació Logos Projectes Socials presta un servicio de acompañamiento, apoyo y orientación en la realización de trámites administrativos y gestiones digitales. La entidad no es responsable del resultado final de los trámites, ni de su resolución, plazos de respuesta, incidencias técnicas o eventual denegación, ya que estos dependen exclusivamente de los organismos y administraciones competentes."}</p>
+  `;
+}
+
+async function generarPdfMultipagina(contenedor, nombreArchivo){
+  const canvas = await html2canvas(contenedor, { scale: 2, backgroundColor: '#ffffff' });
+  const imgData = canvas.toDataURL('image/png');
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const anchoPagina = pdf.internal.pageSize.getWidth();
+  const altoPagina = pdf.internal.pageSize.getHeight();
+  const margen = 10;
+  const anchoImg = anchoPagina - margen * 2;
+  const altoImgTotal = (canvas.height * anchoImg) / canvas.width;
+  const altoUtilPagina = altoPagina - margen * 2;
+
+  let alturaRestante = altoImgTotal;
+  let posicionY = margen;
+  pdf.addImage(imgData, 'PNG', margen, posicionY, anchoImg, altoImgTotal);
+  alturaRestante -= altoUtilPagina;
+
+  while(alturaRestante > 0){
+    posicionY = margen - (altoImgTotal - alturaRestante);
+    pdf.addPage();
+    pdf.addImage(imgData, 'PNG', margen, posicionY, anchoImg, altoImgTotal);
+    alturaRestante -= altoUtilPagina;
+  }
+
+  pdf.save(nombreArchivo);
+}
+
 async function descargarConsentimientoPDF(usuarioId, nombre, dni, fechaFirma){
+  const esCA = LANG_I === 'ca';
   const boton = document.getElementById('btn-descargar-consent');
   const textoOriginal = boton.textContent;
-  boton.textContent = LANG_I==='ca' ? 'Generant PDF…' : 'Generando PDF…';
+  boton.textContent = esCA ? 'Generant PDF…' : 'Generando PDF…';
   boton.disabled = true;
 
   const fechaFmt = fechaFirma ? new Date(fechaFirma).toLocaleDateString(TI[LANG_I].localeFecha) : '—';
@@ -3387,34 +3777,33 @@ async function descargarConsentimientoPDF(usuarioId, nombre, dni, fechaFirma){
       <h1 style="font-size:20px;margin:0 0 4px;">Associació Logos — Projectes Socials</h1>
       <p style="font-size:12px;color:#666;margin:0;">G55725436 · Tarragona</p>
     </div>
-    <h2 style="font-size:16px;text-align:center;border-bottom:2px solid #C99A2E;padding-bottom:10px;">Consentimiento de tratamiento de datos personales</h2>
-    <p style="font-size:13px;line-height:1.6;"><strong>Nombre:</strong> ${nombre || '—'}<br><strong>DNI/NIE:</strong> ${dni || '—'}<br><strong>Fecha de firma:</strong> ${fechaFmt}</p>
-    <p style="font-size:12.5px;line-height:1.7;margin-top:16px;">La persona arriba identificada AUTORIZA el tratamiento de sus datos personales por parte de la Associació Logos - Projectes Socials, de acuerdo con la Ley Orgánica 3/2018 (LOPDGDD) y el Reglamento (UE) 2016/679 (RGPD), con la finalidad de gestionar su atención social, orientación y seguimiento de trámites y recursos, así como la posible cesión a organismos públicos cuando sea necesario para la tramitación de ayudas o prestaciones.</p>
-    <p style="font-size:12.5px;line-height:1.7;">La persona interesada puede ejercer en cualquier momento sus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad, dirigiéndose a Logos - Projectes Socials, Tarragona.</p>
-    <div style="margin-top:50px;display:flex;justify-content:space-between;">
-      <div style="text-align:center;width:45%;">
-        <img src="${FIRMA_DAVID_B64}" alt="Firma" style="max-width:140px;max-height:60px;display:block;margin:0 auto 4px;">
-        <div style="border-top:1px solid #333;padding-top:6px;font-size:11px;">Firma — David Domènech V.</div>
-      </div>
-      <div style="text-align:center;width:45%;">
-        <img src="${SELLO_LOGOS_B64}" alt="Sello" style="max-width:170px;max-height:60px;display:block;margin:0 auto 4px;">
-        <div style="border-top:1px solid #333;padding-top:6px;font-size:11px;">Sello</div>
+    <h2 style="font-size:16px;text-align:center;border-bottom:2px solid #C99A2E;padding-bottom:10px;">${esCA ? 'Document de consentiment per al tractament de dades personals' : 'Documento de consentimiento para el tratamiento de datos personales'}</h2>
+
+    ${textoLegalConsentimientoHtml(esCA)}
+
+    <div style="margin-top:30px;padding-top:20px;border-top:2px solid #C99A2E;">
+      <h3 style="font-size:14px;margin:0 0 10px;">${esCA ? 'Consentiment de la persona interessada' : 'Consentimiento de la persona interesada'}</h3>
+      <p style="font-size:13px;line-height:1.6;"><strong>${esCA?'Nom':'Nombre'}:</strong> ${nombre || '—'}<br><strong>DNI/NIE:</strong> ${dni || '—'}<br><strong>${esCA?'Data de signatura':'Fecha de firma'}:</strong> ${fechaFmt}</p>
+      <p style="font-size:12.5px;line-height:1.7;margin-top:16px;">${esCA
+        ? 'La persona identificada anteriorment AUTORITZA el tractament de les seves dades personals per part de la Associació Logos - Projectes Socials, d\'acord amb la normativa detallada anteriorment.'
+        : 'La persona identificada anteriormente AUTORIZA el tratamiento de sus datos personales por parte de la Associació Logos - Projectes Socials, de acuerdo con la normativa detallada anteriormente.'}</p>
+      <div style="margin-top:50px;display:flex;justify-content:space-between;">
+        <div style="text-align:center;width:45%;">
+          <img src="${FIRMA_DAVID_B64}" alt="Firma" style="max-width:140px;max-height:60px;display:block;margin:0 auto 4px;">
+          <div style="border-top:1px solid #333;padding-top:6px;font-size:11px;">Firma — David Domènech V.</div>
+        </div>
+        <div style="text-align:center;width:45%;">
+          <img src="${SELLO_LOGOS_B64}" alt="Sello" style="max-width:170px;max-height:60px;display:block;margin:0 auto 4px;">
+          <div style="border-top:1px solid #333;padding-top:6px;font-size:11px;">Sello</div>
+        </div>
       </div>
     </div>
   `;
   document.body.appendChild(contenedor);
 
   try {
-    const canvas = await html2canvas(contenedor, { scale: 2, backgroundColor: '#ffffff' });
-    const imgData = canvas.toDataURL('image/png');
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const anchoPagina = pdf.internal.pageSize.getWidth();
-    const anchoImg = anchoPagina - 20;
-    const altoImg = (canvas.height * anchoImg) / canvas.width;
-    pdf.addImage(imgData, 'PNG', 10, 10, anchoImg, altoImg);
     const nombreArchivo = 'consentimiento-' + (nombre || 'persona').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.pdf';
-    pdf.save(nombreArchivo);
+    await generarPdfMultipagina(contenedor, nombreArchivo);
   } catch(e) {
     alert('No se pudo generar el PDF: ' + e.message);
   } finally {
@@ -3458,7 +3847,8 @@ async function crearActuacion(){
     resultado: val('act-resultado') || null,
     derivado_a: val('act-derivado-a') || null,
     proximo_paso: val('act-proximo-paso') || null,
-    fecha_proxima_revision: val('act-fecha-revision') || null
+    fecha_proxima_revision: val('act-fecha-revision') || null,
+    proyecto_id: val('act-proyecto') || null
   });
   if(error){ alert(error.message); return; }
   verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
