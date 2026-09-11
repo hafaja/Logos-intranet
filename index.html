@@ -705,8 +705,13 @@ async function initAuth(){
     }
     toggleSidebarVisible(true);
     iniciarRefrescoBadge();
-    showScreen('panel');
-    renderPanelGeneral();
+    // Solo saltamos a "Inicio" en un login real. Eventos como TOKEN_REFRESHED
+    // (refresco silencioso de sesión al recuperar foco/pestaña) no deben
+    // sacar al usuario de donde estaba (p. ej. dentro del Aula Virtual).
+    if(_event === 'SIGNED_IN'){
+      showScreen('panel');
+      renderPanelGeneral();
+    }
   });
 
   if(!CURRENT_USER){
@@ -1923,6 +1928,9 @@ async function verContenidoCurso(cursoId, nombreCurso){
             <span class="modulo-flecha" id="${idMod}-flecha">▾</span>
           </button>
           <div class="modulo-cuerpo" id="${idMod}" style="display:none;">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
+              <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="borrarModulo('${m.id}')">🗑️ ${LANG_I==='ca'?'Esborrar mòdul':'Borrar módulo'}</button>
+            </div>
             ${m.descripcion ? `<p class="subtle" style="margin:0 0 10px;">${m.descripcion}</p>` : ''}
             <div class="subtle" style="font-weight:700;margin-bottom:4px;">${LANG_I==='ca'?'Continguts':'Contenidos'}</div>
             ${contenidosHtml}
@@ -2007,6 +2015,20 @@ async function anadirModulo(){
     descripcion: document.getElementById('nuevo-modulo-descripcion').value.trim() || null,
     orden: (existentes && existentes.length) || 0
   });
+  if(error){ alert(error.message); return; }
+  verContenidoCurso(curso.id, curso.nombre);
+}
+
+async function borrarModulo(id){
+  if(!confirm(LANG_I==='ca'
+    ? 'Segur que vols esborrar aquest mòdul? S\'esborraran també els seus continguts i activitats.'
+    : '¿Seguro que quieres borrar este módulo? También se borrarán sus contenidos y actividades.')) return;
+  const curso = window.__cursoContenidoActual;
+  // Borramos primero contenidos/actividades del módulo por si la base de datos
+  // no tiene configurado el borrado en cascada (evita un error de clave foránea).
+  await sb.from('curso_contenidos').delete().eq('modulo_id', id);
+  await sb.from('curso_actividades').delete().eq('modulo_id', id);
+  const { error } = await sb.from('curso_modulos').delete().eq('id', id);
   if(error){ alert(error.message); return; }
   verContenidoCurso(curso.id, curso.nombre);
 }
