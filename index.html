@@ -1560,7 +1560,7 @@ async function renderAulaVirtualScreen(){
 
   // Panel del docente: solo los cursos donde el técnico actual es el docente
   const misCursos = (cursos || []).filter(c => c.docente_email === CURRENT_USER.email);
-  let misCursosHtml = '';
+  let misCursosStats = {};
   if(misCursos.length){
     const misCursosIds = misCursos.map(c => c.id);
     const { data: misModulos } = await sb.from('curso_modulos').select('*').in('curso_id', misCursosIds);
@@ -1596,7 +1596,8 @@ async function renderAulaVirtualScreen(){
       misAsistencias = data || [];
     }
 
-    misCursosHtml = misCursos.map(c => {
+    misCursosStats = {};
+    misCursos.forEach(c => {
       const inscripcionesCurso = (misInscripciones || []).filter(i => i.curso_id === c.id);
       const participantes = inscripcionesCurso.length;
       const contenidosCurso = misContenidos.filter(mc => (misModulos||[]).some(m => m.id === mc.modulo_id && m.curso_id === c.id));
@@ -1636,22 +1637,8 @@ async function renderAulaVirtualScreen(){
         asistenciaMedia = personasConRegistro > 0 ? Math.round(sumaAsistencia / personasConRegistro) : null;
       }
 
-      return `
-        <div class="panel-card">
-          <h3 style="margin-bottom:6px;">${c.nombre}</h3>
-          <div class="panel-stat-row"><span>${LANG_I==='ca'?'Participants':'Participantes'}</span><span><strong>${participantes}</strong></span></div>
-          <div class="panel-stat-row"><span>${LANG_I==='ca'?'Assistència mitjana':'Asistencia media'}</span><span><strong>${asistenciaMedia !== null ? asistenciaMedia+'%' : '—'}</strong></span></div>
-          <div class="panel-stat-row"><span>${LANG_I==='ca'?'Progrés':'Progreso'}</span><span><strong>${progresoMedio}%</strong></span></div>
-          <div class="panel-stat-row"><span>${LANG_I==='ca'?'Propera classe':'Próxima clase'}</span><span style="text-transform:capitalize;">${proximaClaseTexto}</span></div>
-          <div class="subtle" style="font-weight:700;margin:10px 0 6px;">${LANG_I==='ca'?'Accions':'Acciones'}</div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;">
-            <button class="link-btn" style="font-size:12px;" onclick="verContenidoCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">📚 ${LANG_I==='ca'?'Contingut':'Contenido'}</button>
-            <button class="link-btn" style="font-size:12px;" onclick="verProgresoCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">📊 ${LANG_I==='ca'?'Resultats':'Resultados'}</button>
-            <button class="link-btn" style="font-size:12px;" onclick="verInscritosCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">👥 ${LANG_I==='ca'?'Inscrits':'Inscritos'}</button>
-            <button class="link-btn" style="font-size:12px;" onclick="showScreen('comunicacion');renderComunicacionScreen()">📩 ${LANG_I==='ca'?'Enviar avís':'Enviar aviso'}</button>
-          </div>
-        </div>`;
-    }).join('');
+      misCursosStats[c.id] = { participantes, asistenciaMedia, progresoMedio, proximaClaseTexto };
+    });
   }
 
   const iconoEstado = { programada:'🟢', en_curso:'🟡', finalizada:'⚪', cancelada:'🔴' };
@@ -1664,6 +1651,7 @@ async function renderAulaVirtualScreen(){
 
   const filaClase = (c) => `
     <tr>
+      <td style="padding:8px 6px;white-space:nowrap;">${c.fecha === hoyIso ? `<strong style="color:var(--good);">${LANG_I==='ca'?'Avui':'Hoy'}</strong>` : new Date(c.fecha+'T00:00:00').toLocaleDateString(t.localeFecha, {day:'numeric',month:'short'})}</td>
       <td style="padding:8px 6px;font-weight:700;">${c.hora.slice(0,5)}</td>
       <td style="padding:8px 6px;">${c.titulo}</td>
       <td style="padding:8px 6px;">${c.docente_nombre || c.docente_email || '—'}</td>
@@ -1682,23 +1670,9 @@ async function renderAulaVirtualScreen(){
       </td>
     </tr>`;
 
-  const tablaHoyHtml = clasesHoy.length
-    ? `<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="text-align:left;border-bottom:1.5px solid var(--line);"><th style="padding:8px 6px;">${LANG_I==='ca'?'Hora':'Hora'}</th><th style="padding:8px 6px;">${LANG_I==='ca'?'Curs':'Curso'}</th><th style="padding:8px 6px;">${LANG_I==='ca'?'Docent':'Docente'}</th><th style="padding:8px 6px;">${LANG_I==='ca'?'Estat':'Estado'}</th><th></th></tr></thead><tbody>${clasesHoy.map(filaClase).join('')}</tbody></table>`
-    : `<div class="empty-note">${LANG_I==='ca' ? 'Sense classes programades per avui.' : 'Sin clases programadas para hoy.'}</div>`;
-
-  const tablaProximasHtml = clasesProximas.length
-    ? `<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="text-align:left;border-bottom:1.5px solid var(--line);"><th style="padding:8px 6px;">${LANG_I==='ca'?'Data':'Fecha'}</th><th style="padding:8px 6px;">${LANG_I==='ca'?'Hora':'Hora'}</th><th style="padding:8px 6px;">${LANG_I==='ca'?'Curs':'Curso'}</th><th style="padding:8px 6px;">${LANG_I==='ca'?'Docent':'Docente'}</th><th></th></tr></thead><tbody>${clasesProximas.map(c => `
-        <tr>
-          <td style="padding:8px 6px;">${new Date(c.fecha+'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, {day:'numeric',month:'short'})}</td>
-          <td style="padding:8px 6px;font-weight:700;">${c.hora.slice(0,5)}</td>
-          <td style="padding:8px 6px;">${c.titulo}</td>
-          <td style="padding:8px 6px;">${c.docente_nombre || c.docente_email || '—'}</td>
-          <td style="padding:8px 6px;display:flex;gap:8px;">
-            <button class="link-btn" style="font-size:12px;" onclick="verParticipantesClase('${c.id}','${(c.titulo||'').replace(/'/g,"\\'")}')">${LANG_I==='ca'?'Participants':'Participantes'}</button>
-            <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="borrarClaseAula('${c.id}')">${LANG_I==='ca'?'Esborrar':'Borrar'}</button>
-          </td>
-        </tr>`).join('')}</tbody></table>`
-    : `<div class="empty-note">${LANG_I==='ca' ? 'Sense properes classes.' : 'Sin próximas clases.'}</div>`;
+  const tablaCalendarioHtml = (clases && clases.length)
+    ? `<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="text-align:left;border-bottom:1.5px solid var(--line);"><th style="padding:8px 6px;">${LANG_I==='ca'?'Data':'Fecha'}</th><th style="padding:8px 6px;">Hora</th><th style="padding:8px 6px;">${LANG_I==='ca'?'Curs':'Curso'}</th><th style="padding:8px 6px;">${LANG_I==='ca'?'Docent':'Docente'}</th><th style="padding:8px 6px;">${LANG_I==='ca'?'Estat':'Estado'}</th><th></th></tr></thead><tbody>${clases.map(filaClase).join('')}</tbody></table>`
+    : `<div class="empty-note">${LANG_I==='ca' ? 'Sense classes programades.' : 'Sin clases programadas.'}</div>`;
 
   const iconoModalidad = { presencial:'🏫', online:'💻', mixta:'🔀' };
   const estadoCursoColor = { preparacion:'#94A3B8', inscripcion:'var(--gold)', activo:'var(--good)', finalizado:'var(--navy)', cerrado:'#555' };
@@ -1711,26 +1685,36 @@ async function renderAulaVirtualScreen(){
   };
 
   const cursosHtml = (cursos && cursos.length)
-    ? cursos.map(c => `
+    ? cursos.map(c => {
+        const misStats = misCursosStats[c.id];
+        return `
         <div class="panel-card">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
             <h3 style="margin:0;">${iconoModalidad[c.modalidad] || '🏫'} ${c.nombre}</h3>
             <span class="chip" style="background:${estadoCursoColor[c.estado] || '#999'};color:#fff;flex-shrink:0;">${textoEstadoCurso[c.estado] || c.estado}</span>
           </div>
+          ${misStats ? `<span class="chip" style="background:var(--gold);color:#fff;font-size:10px;margin-top:4px;display:inline-block;">👨‍🏫 ${LANG_I==='ca'?'El teu curs':'Tu curso'}</span>` : ''}
           ${c.proyecto ? `<p class="subtle" style="margin:4px 0 8px;">${c.proyecto}</p>` : ''}
           <div class="panel-stat-row"><span>${LANG_I==='ca'?'Docent':'Docente'}</span><span>${c.docente_nombre || c.docente_email || '—'}</span></div>
           ${(c.fecha_inicio || c.fecha_final) ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Dates':'Fechas'}</span><span>${c.fecha_inicio ? new Date(c.fecha_inicio+'T00:00:00').toLocaleDateString(t.localeFecha) : '—'} – ${c.fecha_final ? new Date(c.fecha_final+'T00:00:00').toLocaleDateString(t.localeFecha) : '—'}</span></div>` : ''}
           ${c.horas_totales ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Hores':'Horas'}</span><span>${c.horas_totales} h</span></div>` : ''}
           <div class="panel-stat-row"><span>${LANG_I==='ca'?'Places':'Plazas'}</span><span>${inscritosPorCurso[c.id] || 0}${c.plazas ? ' / ' + c.plazas : ''}</span></div>
+          ${misStats ? `
+          <div class="panel-stat-row"><span>${LANG_I==='ca'?'Assistència mitjana':'Asistencia media'}</span><span><strong>${misStats.asistenciaMedia !== null ? misStats.asistenciaMedia+'%' : '—'}</strong></span></div>
+          <div class="panel-stat-row"><span>${LANG_I==='ca'?'Progrés':'Progreso'}</span><span><strong>${misStats.progresoMedio}%</strong></span></div>
+          <div class="panel-stat-row"><span>${LANG_I==='ca'?'Propera classe':'Próxima clase'}</span><span style="text-transform:capitalize;">${misStats.proximaClaseTexto}</span></div>` : ''}
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
             <select style="font-size:11px;padding:2px 4px;" onchange="cambiarEstadoCurso('${c.id}', this.value)">
               ${Object.keys(textoEstadoCurso).map(k => `<option value="${k}" ${c.estado===k?'selected':''}>${textoEstadoCurso[k]}</option>`).join('')}
             </select>
             <button class="link-btn" style="font-size:12px;" onclick="verContenidoCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">📚 ${LANG_I==='ca'?'Contingut':'Contenido'}</button>
-            <button class="link-btn" style="font-size:12px;" onclick="verInscritosCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">${LANG_I==='ca'?'Inscrits':'Inscritos'}</button>
+            <button class="link-btn" style="font-size:12px;" onclick="verProgresoCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">📊 ${LANG_I==='ca'?'Progrés':'Progreso'}</button>
+            <button class="link-btn" style="font-size:12px;" onclick="verInscritosCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">👥 ${LANG_I==='ca'?'Inscrits':'Inscritos'}</button>
+            ${misStats ? `<button class="link-btn" style="font-size:12px;" onclick="showScreen('comunicacion');renderComunicacionScreen()">📩 ${LANG_I==='ca'?'Enviar avís':'Enviar aviso'}</button>` : ''}
             <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="borrarCurso('${c.id}')">${LANG_I==='ca'?'Esborrar':'Borrar'}</button>
           </div>
-        </div>`).join('')
+        </div>`;
+      }).join('')
     : `<div class="empty-note">${LANG_I==='ca' ? 'Encara no hi ha cursos.' : 'Todavía no hay cursos.'}</div>`;
 
   cont.innerHTML = `
@@ -1741,10 +1725,7 @@ async function renderAulaVirtualScreen(){
     <button class="link-btn" style="margin-bottom:16px;" onclick="renderIndicadoresProyecto()">📈 ${LANG_I==='ca'?'Indicadors per projecte':'Indicadores por proyecto'}</button>
     <div id="indicadores-proyecto-wrap"></div>
 
-    ${misCursos.length ? `
-    <div class="section-label" style="margin-bottom:8px;">👨‍🏫 ${LANG_I==='ca'?'Els meus cursos':'Mis cursos'} <span class="subtle" style="font-weight:400;">(${misCursos.length} ${LANG_I==='ca'?(misCursos.length===1?'curs actiu':'cursos actius'):(misCursos.length===1?'curso activo':'cursos activos')})</span></div>
-    <div class="cards-grid" style="margin-bottom:20px;">${misCursosHtml}</div>` : ''}
-
+    ${misCursos.length ? `<p class="subtle" style="margin-bottom:12px;">👨‍🏫 ${LANG_I==='ca'?'Els cursos marcats amb':'Los cursos marcados con'} <span class="chip" style="background:var(--gold);color:#fff;font-size:10px;">${LANG_I==='ca'?'El teu curs':'Tu curso'}</span> ${LANG_I==='ca'?'són els que imparteixes tu.':'son los que impartes tú.'}</p>` : ''}
     <div class="section-label" style="margin-bottom:8px;">${LANG_I==='ca'?'Cursos':'Cursos'}</div>
     <div class="cards-grid" style="margin-bottom:16px;">${cursosHtml}</div>
 
@@ -1777,8 +1758,8 @@ async function renderAulaVirtualScreen(){
     <div id="inscritos-curso-wrap"></div>
 
     <div class="panel-card" style="margin-bottom:16px;">
-      <h3>${LANG_I==='ca' ? "Calendari d'avui" : 'Calendario de hoy'}</h3>
-      ${tablaHoyHtml}
+      <h3>📅 ${LANG_I==='ca' ? 'Calendari de classes' : 'Calendario de clases'}</h3>
+      ${tablaCalendarioHtml}
     </div>
 
     <div class="panel-card" style="margin-bottom:16px;">
@@ -1807,11 +1788,6 @@ async function renderAulaVirtualScreen(){
       </div>
       <div class="field"><label>${LANG_I==='ca'?'Enllaç de la videotrucada':'Enlace de la videollamada'}</label><input type="text" id="clase-meet" placeholder="https://..."></div>
       <button class="primary-btn" onclick="crearClaseAula()">➕ ${LANG_I==='ca'?'Crear classe':'Crear clase'}</button>
-    </div>
-
-    <div class="panel-card">
-      <h3>${LANG_I==='ca' ? 'Properes classes' : 'Próximas clases'}</h3>
-      ${tablaProximasHtml}
     </div>
 
     <div id="participantes-clase-wrap"></div>
