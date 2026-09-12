@@ -7,14 +7,16 @@
 <meta name="theme-color" content="#16233F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Mulish:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#F5F3EC; --paper:#FFFFFF; --ink:#16233F; --ink-soft:#545F78; --line:#E1DFD3;
     --navy:#16233F; --navy-dark:#0B1526; --gold:#C99A2E; --gold-soft:#FAF0D6;
     --alert:#A8431F; --alert-soft:#FBE7DE;
     --good:#2F6B27; --good-soft:#DDEFD9;
-    --font-display:'Fraunces',serif; --font-body:'Atkinson Hyperlegible',sans-serif;
+    --shadow:0 1px 2px rgba(22,35,63,.05), 0 12px 26px -12px rgba(22,35,63,.16);
+    --shadow-lg:0 2px 4px rgba(22,35,63,.06), 0 26px 50px -18px rgba(22,35,63,.24);
+    --font-display:'Fraunces',serif; --font-body:'Mulish',sans-serif;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);font-family:var(--font-body);color:var(--ink);}
@@ -68,16 +70,18 @@
   .field{margin-bottom:12px;}
   .field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:4px;}
   .field input,.field select,.field textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-family:var(--font-body);font-size:14px;color:var(--ink);background:var(--paper);}
-  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--navy);}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft);}
   .checkbox-row{display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:13px;cursor:pointer;}
   .checkbox-row input{margin-top:3px;flex-shrink:0;}
 
-  .primary-btn{background:var(--navy);color:#fff;border:none;border-radius:14px;padding:14px 22px;font-family:var(--font-body);font-weight:700;font-size:14.5px;cursor:pointer;margin-top:4px;transition:transform .12s, box-shadow .12s;}
+  .primary-btn{background:var(--navy);color:#fff;border:none;border-radius:999px;padding:14px 24px;font-family:var(--font-body);font-weight:800;font-size:14.5px;cursor:pointer;margin-top:4px;transition:transform .15s ease, box-shadow .2s ease, background .2s ease;}
+  .primary-btn:hover{background:var(--navy-dark);transform:translateY(-2px);box-shadow:0 12px 24px -10px rgba(11,21,38,.5);}
   #screen-login .primary-btn{width:100%;}
   .primary-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(22,35,63,.18);}
   .primary-btn:disabled{opacity:.6;cursor:default;transform:none;box-shadow:none;}
   .gold-btn{background:var(--gold);}
-  .link-btn{background:none;border:none;color:var(--navy);font-family:var(--font-body);font-weight:700;font-size:13px;cursor:pointer;text-decoration:underline;padding:0;}
+  .link-btn{background:none;border:none;color:var(--navy);font-family:var(--font-body);font-weight:800;font-size:13px;cursor:pointer;text-decoration:none;padding:5px 10px;border-radius:8px;transition:background .15s,color .15s;}
+  .link-btn:hover{background:var(--gold-soft);color:#7A4A1F;}
   .auth-error{background:var(--alert-soft);border:1.5px solid var(--alert);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--alert);margin-bottom:12px;}
   .auth-ok{background:var(--good-soft);border:1.5px solid var(--good);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--good);margin-bottom:12px;}
 
@@ -88,7 +92,8 @@
   .stat-label{font-size:11px;color:var(--ink-soft);margin-top:5px;text-transform:uppercase;letter-spacing:.03em;}
 
   .cards-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:16px;align-items:start;}
-  .panel-card{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:20px 24px;margin-bottom:0;opacity:0;transform:translateY(10px);animation:fadeUp .5s ease forwards;}
+  .panel-card{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:20px 24px;margin-bottom:0;opacity:0;transform:translateY(10px);animation:fadeUp .5s ease forwards;box-shadow:var(--shadow);transition:transform .2s ease, box-shadow .2s ease;}
+  .panel-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);}
   @keyframes fadeUp{to{opacity:1;transform:translateY(0);}}
 
   .info-box{position:relative;border-radius:14px;padding:22px 20px 18px;margin:18px 0;border:1.5px solid;}
@@ -139,7 +144,8 @@
   .screen{display:none;}
   .screen.active{display:block;}
   .placeholder{padding:60px 10px;text-align:center;color:var(--ink-soft);font-size:13.5px;}
-  .section-label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:4px 0 8px;}
+  .section-label{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--navy);margin:4px 0 10px;display:inline-flex;align-items:center;gap:8px;}
+  .section-label::before{content:"";width:18px;height:2px;background:var(--gold);border-radius:2px;flex-shrink:0;}
   .doc-upload-row{border:1.5px dashed var(--line);border-radius:12px;padding:12px;text-align:center;margin-top:8px;}
 
   /* Formularios más estrechos y legibles en pantallas anchas */
@@ -183,6 +189,7 @@
       <button data-target="informes" onclick="showScreen('informes');renderInformesScreen()">Informes y datos</button>
       <button data-target="aulavirtual" onclick="showScreen('aulavirtual');renderAulaVirtualScreen()">🎥 Aula Virtual · Hub Logos</button>
       <button data-target="proyectos" onclick="showScreen('proyectos');renderProyectosScreen()">📁 Proyectos</button>
+      <button data-target="noticias" onclick="showScreen('noticias');renderNoticiasScreen()">📰 Portales del día</button>
       <button data-target="equipo" onclick="showScreen('equipo');renderEquipoScreen()">Trabajo en equipo</button>
       <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
       <button data-target="config" onclick="showScreen('config');renderConfigScreen()">Configuración</button>
@@ -306,6 +313,13 @@
     <div class="main-content">
       <div class="topbar"><span class="brand">Proyectos</span></div>
       <div class="content" id="proyectos-content"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-noticias">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Portales del día</span></div>
+      <div class="content" id="noticias-content"></div>
     </div>
   </div>
 
@@ -2532,6 +2546,89 @@ async function verParticipantesClase(claseId, titulo){
   wrap.scrollIntoView({ behavior:'smooth' });
 }
 
+async function renderNoticiasScreen(){
+  const cont = document.getElementById('noticias-content');
+  cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const esCA = LANG_I === 'ca';
+
+  const { data: fuentes } = await sb.from('fuentes_noticias').select('*').eq('activo', true).order('categoria', { ascending:true }).order('orden', { ascending:true });
+
+  const categorias = {
+    empleo: { icono: '💼', titulo: esCA?'Empleo':'Empleo' },
+    tramites: { icono: '📋', titulo: esCA?'Tràmits i legislació':'Trámites y legislación' },
+    actualidad: { icono: '📰', titulo: esCA?'Actualitat i premsa':'Actualidad y prensa' },
+    logos: { icono: '🏛️', titulo: esCA?'Notícies de Logos':'Noticias de Logos' }
+  };
+
+  const porCategoria = {};
+  (fuentes||[]).forEach(f => {
+    if(!porCategoria[f.categoria]) porCategoria[f.categoria] = [];
+    porCategoria[f.categoria].push(f);
+  });
+
+  const bloquesHtml = Object.keys(categorias).map(cat => {
+    const items = porCategoria[cat] || [];
+    if(!items.length) return '';
+    return `
+      <div class="panel-card" style="margin-bottom:16px;">
+        <h3>${categorias[cat].icono} ${categorias[cat].titulo}</h3>
+        ${items.map(f => `
+          <div class="panel-stat-row">
+            <a href="${f.url}" target="_blank" rel="noopener" class="link-btn" style="font-size:13.5px;padding:8px 0;">${f.nombre}</a>
+            <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="borrarFuenteNoticia('${f.id}')">${esCA?'Treure':'Quitar'}</button>
+          </div>`).join('')}
+      </div>`;
+  }).join('');
+
+  cont.innerHTML = `
+    <p class="subtle" style="margin-bottom:16px;">${esCA
+      ? "Enllaços d'interès sobre ocupació, tràmits, projectes i actualitat, per consultar-los d'un cop d'ull cada dia. Qualsevol tècnic pot afegir-ne de nous."
+      : 'Enlaces de interés sobre empleo, trámites, proyectos y actualidad, para consultarlos de un vistazo cada día. Cualquier técnico puede añadir nuevos.'}</p>
+
+    ${bloquesHtml || `<div class="empty-note">${esCA?'Encara no hi ha cap font afegida.':'Todavía no hay ninguna fuente añadida.'}</div>`}
+
+    <button class="primary-btn" style="margin-bottom:16px;" onclick="document.getElementById('form-nueva-fuente').style.display = document.getElementById('form-nueva-fuente').style.display==='none' ? 'block' : 'none';">➕ ${esCA?'Afegir font nova':'Añadir fuente nueva'}</button>
+
+    <div class="panel-card" style="display:none;" id="form-nueva-fuente">
+      <h3>➕ ${esCA?'Font nova':'Fuente nueva'}</h3>
+      <div class="field"><input type="text" id="fuente-nombre" placeholder="${esCA?'Nom (ex: La Vanguardia — Ocupació)':'Nombre (ej: La Vanguardia — Empleo)'}"></div>
+      <div class="field"><input type="text" id="fuente-url" placeholder="https://..."></div>
+      <div class="field">
+        <label>${esCA?'Categoria':'Categoría'}</label>
+        <select id="fuente-categoria">
+          <option value="empleo">💼 Empleo</option>
+          <option value="tramites">📋 ${esCA?'Tràmits i legislació':'Trámites y legislación'}</option>
+          <option value="actualidad">📰 ${esCA?'Actualitat i premsa':'Actualidad y prensa'}</option>
+          <option value="logos">🏛️ ${esCA?'Notícies de Logos':'Noticias de Logos'}</option>
+        </select>
+      </div>
+      <button class="primary-btn" onclick="crearFuenteNoticia()">➕ ${esCA?'Afegir':'Añadir'}</button>
+    </div>
+  `;
+}
+
+async function crearFuenteNoticia(){
+  const esCA = LANG_I === 'ca';
+  const nombre = document.getElementById('fuente-nombre').value.trim();
+  const url = document.getElementById('fuente-url').value.trim();
+  if(!nombre || !url){ alert(esCA ? 'Escriu el nom i l\'enllaç.' : 'Escribe el nombre y el enlace.'); return; }
+  const { error } = await sb.from('fuentes_noticias').insert({
+    nombre, url,
+    categoria: document.getElementById('fuente-categoria').value,
+    creado_por_email: CURRENT_USER.email
+  });
+  if(error){ alert(error.message); return; }
+  renderNoticiasScreen();
+}
+
+async function borrarFuenteNoticia(id){
+  const esCA = LANG_I === 'ca';
+  if(!confirm(esCA ? 'Segur que vols treure aquesta font?' : '¿Seguro que quieres quitar esta fuente?')) return;
+  const { error } = await sb.from('fuentes_noticias').delete().eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderNoticiasScreen();
+}
+
 async function renderProyectosScreen(){
   const cont = document.getElementById('proyectos-content');
   cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
@@ -2647,8 +2744,11 @@ async function verProyecto(proyectoId){
   const esCA = LANG_I === 'ca';
   const wrap = document.getElementById('proyecto-detalle-wrap');
   wrap.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  wrap.scrollIntoView({ behavior:'smooth' });
 
-  const [{ data: proyecto }, { data: participantes }, { data: actividades }, { data: avisos }, { data: seguimientos }, { data: staffLista }] = await Promise.all([
+  try {
+
+  const [{ data: proyecto, error: errorProyecto }, { data: participantes }, { data: actividades }, { data: avisos }, { data: seguimientos }, { data: staffLista }] = await Promise.all([
     sb.from('proyectos').select('*').eq('id', proyectoId).maybeSingle(),
     sb.from('proyecto_participantes').select('*').eq('proyecto_id', proyectoId),
     sb.from('proyecto_actividades').select('*').eq('proyecto_id', proyectoId).order('fecha', { ascending:false }),
@@ -2656,6 +2756,15 @@ async function verProyecto(proyectoId){
     sb.from('actuaciones').select('*').eq('proyecto_id', proyectoId).order('fecha', { ascending:false }),
     sb.from('staff').select('email, nombre').eq('activo', true)
   ]);
+
+  if(errorProyecto){
+    wrap.innerHTML = `<div class="panel-card"><div class="empty-note">${esCA?'Error carregant el projecte':'Error cargando el proyecto'}: ${errorProyecto.message}</div></div>`;
+    return;
+  }
+  if(!proyecto){
+    wrap.innerHTML = `<div class="panel-card"><div class="empty-note">${esCA?'No s\'ha trobat aquest projecte.':'No se ha encontrado este proyecto.'}</div></div>`;
+    return;
+  }
 
   const beneficiarios = (participantes||[]).filter(pp => pp.rol === 'beneficiario');
   const profesionales = (participantes||[]).filter(pp => pp.rol === 'profesional');
@@ -2772,6 +2881,9 @@ async function verProyecto(proyectoId){
       ` : ''}
     </div>
   `;
+  } catch(e) {
+    wrap.innerHTML = `<div class="panel-card"><div class="empty-note">${esCA?'Hi ha hagut un error inesperat':'Ha habido un error inesperado'}: ${e.message}</div></div>`;
+  }
 }
 
 async function anadirProfesionalAProyecto(proyectoId){
@@ -2879,7 +2991,7 @@ async function renderInformesScreen(){
   const t = TI[LANG_I];
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
 
-  const [porSexo, porNacionalidad, depDis, situFam, tramEstado, interesesForm, satisfaccion, prestaciones, tramitesBretxa, derivacion, emprendeduria, comoConocio, actTotal, actResultado, actCategoria, actDerivado] = await Promise.all([
+  const [porSexo, porNacionalidad, depDis, situFam, tramEstado, interesesForm, satisfaccion, prestaciones, tramitesBretxa, derivacion, emprendeduria, comoConocio, actTotal, actResultado, actCategoria, actDerivado, proyectosRes, proyectoParticipantesRes] = await Promise.all([
     sb.from('stats_por_sexo').select('*'),
     sb.from('stats_por_nacionalidad').select('*'),
     sb.from('stats_dependencia_discapacidad').select('*').maybeSingle(),
@@ -2895,7 +3007,9 @@ async function renderInformesScreen(){
     sb.from('stats_actuaciones_total').select('*').maybeSingle(),
     sb.from('stats_actuaciones_resultado').select('*'),
     sb.from('stats_actuaciones_categoria').select('*'),
-    sb.from('stats_actuaciones_derivado').select('*')
+    sb.from('stats_actuaciones_derivado').select('*'),
+    sb.from('proyectos').select('id, nombre, estado'),
+    sb.from('proyecto_participantes').select('proyecto_id, rol')
   ]);
 
   const dd = depDis.data || {}; const sf = situFam.data || {}; const sat = satisfaccion.data || {};
@@ -2946,7 +3060,25 @@ async function renderInformesScreen(){
   const categoriaHtml = filaLista(actCategoria.data, 'categoria', 'total');
   const derivadoHtml = filaLista(actDerivado.data, 'derivado_a', 'total');
 
+  const proyectosLista = proyectosRes.data || [];
+  const conteoPorProyecto = {};
+  (proyectoParticipantesRes.data || []).forEach(pp => {
+    if(!conteoPorProyecto[pp.proyecto_id]) conteoPorProyecto[pp.proyecto_id] = { beneficiarios: 0, profesionales: 0 };
+    conteoPorProyecto[pp.proyecto_id][pp.rol === 'profesional' ? 'profesionales' : 'beneficiarios']++;
+  });
+  const proyectosActivos = proyectosLista.filter(pr => pr.estado === 'activo').length;
+  const totalBeneficiariosProyectos = Object.values(conteoPorProyecto).reduce((s,c) => s + c.beneficiarios, 0);
+  const proyectosResumenHtml = proyectosLista.length
+    ? proyectosLista.map(pr => `<div class="panel-stat-row"><span>${pr.nombre}${pr.estado!=='activo' ? ` <span class="chip off" style="font-size:9px;">${pr.estado}</span>` : ''}</span><span><strong>${(conteoPorProyecto[pr.id]||{}).beneficiarios||0}</strong> ${LANG_I==='ca'?'beneficiaris':'beneficiarios'}</span></div>`).join('')
+    : `<div class="empty-note">${LANG_I==='ca'?'Encara no hi ha projectes.':'Todavía no hay proyectos.'}</div>`;
+
   cont.innerHTML = `
+    <div class="panel-card" style="margin-bottom:16px;">
+      <h3>📁 ${LANG_I==='ca'?'Projectes':'Proyectos'}</h3>
+      <div class="panel-stat-row"><span>${LANG_I==='ca'?'Projectes actius':'Proyectos activos'}</span><span><strong>${proyectosActivos}</strong> / ${proyectosLista.length}</span></div>
+      <div class="panel-stat-row"><span>${LANG_I==='ca'?'Total beneficiaris en projectes':'Total beneficiarios en proyectos'}</span><span><strong>${totalBeneficiariosProyectos}</strong></span></div>
+      ${proyectosResumenHtml}
+    </div>
     <p class="subtle">${LANG_I==='ca'
       ? 'Estadístiques completes de totes les persones ateses per Logos.'
       : 'Estadísticas completas de todas las personas atendidas por Logos.'}</p>
@@ -3947,7 +4079,7 @@ async function renderAdministrador(){
   __adminActuacionesOffset = 0;
   __adminActuacionesTodas = [];
 
-  const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes, revisionesRes, perfilesIncompletosRes, actuacionesPrimeraPagina, actuacionesCountRes, actuacionesLigeroRes, avisosAdminRes, oficinaRes] = await Promise.all([
+  const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes, revisionesRes, perfilesIncompletosRes, actuacionesPrimeraPagina, actuacionesCountRes, actuacionesLigeroRes, avisosAdminRes, oficinaRes, proyectosAdminRes, proyectoParticipantesAdminRes] = await Promise.all([
     sb.from('atenciones').select('*').order('creado_en', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
     sb.from('atenciones').select('creado_por_email'), // sin límite: solo para el conteo de carga de trabajo
     sb.from('staff').select('*').order('email', { ascending:true }),
@@ -3960,7 +4092,9 @@ async function renderAdministrador(){
     sb.from('actuaciones').select('id', { count: 'exact', head: true }),
     sb.from('actuaciones').select('usuario_id, fecha'),
     sb.from('avisos_intranet').select('*').order('creado_en', { ascending:false }),
-    sb.from('configuracion_oficina').select('*').eq('id', 1).maybeSingle()
+    sb.from('configuracion_oficina').select('*').eq('id', 1).maybeSingle(),
+    sb.from('proyectos').select('id, nombre, estado'),
+    sb.from('proyecto_participantes').select('proyecto_id, rol')
   ]);
 
   window.__configOficina = oficinaRes.data || null;
@@ -4046,7 +4180,24 @@ async function renderAdministrador(){
         </div>`).join('')
     : `<div class="empty-note">${t.sinPersonasActuaciones}</div>`;
 
+  const proyectosAdminLista = proyectosAdminRes.data || [];
+  const conteoPorProyectoAdmin = {};
+  (proyectoParticipantesAdminRes.data || []).forEach(pp => {
+    if(!conteoPorProyectoAdmin[pp.proyecto_id]) conteoPorProyectoAdmin[pp.proyecto_id] = { beneficiarios: 0, profesionales: 0 };
+    conteoPorProyectoAdmin[pp.proyecto_id][pp.rol === 'profesional' ? 'profesionales' : 'beneficiarios']++;
+  });
+  const proyectosActivosAdmin = proyectosAdminLista.filter(pr => pr.estado === 'activo').length;
+
   cont.innerHTML = `
+    <div class="panel-card" style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;">📁 ${LANG_I==='ca'?'Projectes':'Proyectos'}</h3>
+        <button class="link-btn" style="font-size:12px;" onclick="showScreen('proyectos');renderProyectosScreen()">${LANG_I==='ca'?'Veure tots':'Ver todos'} →</button>
+      </div>
+      <div class="panel-stat-row"><span>${LANG_I==='ca'?'Projectes actius':'Proyectos activos'}</span><span><strong>${proyectosActivosAdmin}</strong> / ${proyectosAdminLista.length}</span></div>
+      ${proyectosAdminLista.slice(0,5).map(pr => `<div class="panel-stat-row"><span>${pr.nombre}</span><span>${(conteoPorProyectoAdmin[pr.id]||{}).beneficiarios||0} ${LANG_I==='ca'?'benef.':'benef.'} · ${(conteoPorProyectoAdmin[pr.id]||{}).profesionales||0} ${LANG_I==='ca'?'prof.':'prof.'}</span></div>`).join('')}
+    </div>
+
     <div class="cards-grid" style="margin-bottom:16px;">
       <div class="panel-card">
         <h3>${t.proximasRevisionesPendientes}</h3>
@@ -4268,9 +4419,19 @@ function renderFilasFichajes(fichajes){
           <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             ${horaFmt(f.entrada)} ${ubicacionHtml(f.entrada_lat, f.entrada_lng)}
             ${f.salida ? `– ${horaFmt(f.salida)} ${ubicacionHtml(f.salida_lat, f.salida_lng)} (${duracionFmt(f.entrada, f.salida)})` : `<span class="chip gold">${t.enCurso}</span>`}
+            <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="borrarFichaje('${f.id}')">${LANG_I==='ca'?'Esborrar':'Borrar'}</button>
           </span>
         </div>`).join('')
     : `<div class="empty-note">${t.sinFichajes}</div>`;
+}
+
+async function borrarFichaje(fichajeId){
+  const esCA = LANG_I === 'ca';
+  if(!confirm(esCA ? 'Segur que vols esborrar aquest fitxatge?' : '¿Seguro que quieres borrar este fichaje?')) return;
+  const { error } = await sb.from('fichajes').delete().eq('id', fichajeId);
+  if(error){ alert(error.message); return; }
+  __adminFichajesTodos = __adminFichajesTodos.filter(f => f.id !== fichajeId);
+  document.getElementById('admin-fichajes-lista').innerHTML = renderFilasFichajes(__adminFichajesTodos);
 }
 
 async function cargarMasFichajes(){
