@@ -4,18 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Intranet Logos</title>
-<meta name="theme-color" content="#16233F">
+<meta name="theme-color" content="#17181C">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Mulish:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#F5F3EC; --paper:#FFFFFF; --ink:#16233F; --ink-soft:#545F78; --line:#E1DFD3;
-    --navy:#16233F; --navy-dark:#0B1526; --gold:#C99A2E; --gold-soft:#FAF0D6;
-    --alert:#A8431F; --alert-soft:#FBE7DE;
-    --good:#2F6B27; --good-soft:#DDEFD9;
-    --shadow:0 1px 2px rgba(22,35,63,.05), 0 12px 26px -12px rgba(22,35,63,.16);
-    --shadow-lg:0 2px 4px rgba(22,35,63,.06), 0 26px 50px -18px rgba(22,35,63,.24);
+    --bg:#F7F7F5; --paper:#FFFFFF; --ink:#17181C; --ink-soft:#6B6E76; --line:#E7E7E3;
+    --navy:#17181C; --navy-dark:#000000; --gold:#F4B400; --gold-soft:#FDF0CC;
+    --alert:#C0392B; --alert-soft:#FBE4E1;
+    --good:#2E8B47; --good-soft:#DFF3E3;
+    --shadow:0 1px 2px rgba(0,0,0,.04), 0 12px 26px -12px rgba(0,0,0,.14);
+    --shadow-lg:0 2px 4px rgba(0,0,0,.05), 0 26px 50px -18px rgba(0,0,0,.22);
     --font-display:'Fraunces',serif; --font-body:'Mulish',sans-serif;
   }
   *{box-sizing:border-box;}
@@ -55,7 +55,7 @@
   #screen-login .main-content{max-width:440px;padding-top:8vh;}
 
   .hero{background:linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);color:#fff;padding:34px 34px 30px;position:relative;overflow:hidden;border-radius:18px;}
-  .hero::after{content:'λ';position:absolute;right:-10px;top:-36px;font-family:var(--font-display);font-weight:700;font-size:190px;color:rgba(201,154,46,.14);pointer-events:none;}
+  .hero::after{content:'λ';position:absolute;right:-10px;top:-36px;font-family:var(--font-display);font-weight:700;font-size:190px;color:rgba(244,180,0,.14);pointer-events:none;}
   .hero-brand{font-family:var(--font-display);font-weight:600;font-size:15px;letter-spacing:.04em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;position:relative;}
   .hero-title{font-family:var(--font-display);font-weight:600;font-size:28px;line-height:1.25;position:relative;}
   .hero-sub{font-size:13.5px;color:rgba(255,255,255,.7);margin-top:6px;position:relative;}
@@ -101,7 +101,7 @@
   .info-box-title{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;font-weight:700;margin-bottom:8px;}
   .info-box p{font-size:13.5px;line-height:1.6;margin:0 0 6px;}
   .info-box .source{font-size:11px;font-style:italic;opacity:.75;margin-top:6px;}
-  .info-box-navy{background:linear-gradient(135deg, #EEF1F6, #E7EBF2);border-color:#C7D0DE;}
+  .info-box-navy{background:linear-gradient(135deg, #F3F3F1, #ECECE8);border-color:#D8D8D3;}
   .info-box-navy::before{content:'🔎';}
   .info-box-navy .info-box-title{color:var(--navy);}
   .info-box-gold{background:var(--gold-soft);border-color:var(--gold);}
@@ -140,6 +140,55 @@
   .ptab-btn.active{color:var(--navy);border-bottom-color:var(--gold);}
   .ptab-content{display:none;}
   .ptab-content.active{display:block;}
+
+  /* Dashboard "Inicio" — barra superior, accesos rápidos, actividad y eventos */
+  .topbar-pro{display:flex;align-items:center;gap:14px;padding:0 0 22px;flex-wrap:wrap;}
+  .topbar-search{flex:1;min-width:180px;position:relative;}
+  .topbar-search input{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px 14px 11px 36px;font-family:var(--font-body);font-size:13.5px;background:var(--paper);color:var(--ink);}
+  .topbar-search input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft);}
+  .topbar-search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.5;pointer-events:none;}
+  .search-results{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);max-height:360px;overflow-y:auto;z-index:80;}
+  .search-result-cat{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);font-weight:800;padding:10px 14px 3px;}
+  .search-result-item{display:flex;gap:10px;align-items:center;padding:9px 14px;cursor:pointer;font-size:13px;color:var(--ink);}
+  .search-result-item:hover{background:var(--bg);}
+  .topbar-icon-btn{position:relative;background:var(--paper);border:1.5px solid var(--line);width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0;font-family:var(--font-body);}
+  .topbar-icon-btn .badge-dot{position:absolute;top:-3px;right:-3px;background:var(--alert);color:#fff;font-size:10px;font-weight:800;border-radius:999px;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+  .topbar-user{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .avatar-circle{width:38px;height:38px;border-radius:50%;background:var(--navy);color:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;}
+  .topbar-user-name{font-weight:800;font-size:12.5px;color:var(--ink);line-height:1.25;}
+  .topbar-user-role{font-size:11px;color:var(--ink-soft);}
+
+  .stat-icon-card{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:18px 18px;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease;}
+  .stat-icon-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);}
+  .icon-badge{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:12px;}
+  .stat-icon-num{font-family:var(--font-display);font-size:26px;font-weight:600;color:var(--ink);line-height:1;}
+  .stat-icon-label{font-size:12px;color:var(--ink-soft);margin-top:4px;}
+
+  .quick-card{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:18px 20px;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease;display:flex;flex-direction:column;}
+  .quick-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--gold);}
+  .quick-card h4{margin:0 0 3px;font-size:14px;color:var(--ink);}
+  .quick-card p{margin:0;font-size:11.5px;color:var(--ink-soft);line-height:1.4;}
+
+  .dash-grid{display:grid;grid-template-columns:2fr 1fr;gap:18px;align-items:start;}
+
+  .activity-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .activity-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);padding:0 8px 8px;font-weight:800;}
+  .activity-table td{padding:9px 8px;border-top:1px solid var(--line);vertical-align:middle;}
+  .activity-table tr:hover td{background:var(--bg);}
+
+  .event-row{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);}
+  .event-row:first-child{border-top:none;}
+  .date-box{background:var(--gold-soft);color:#7A5A16;border-radius:10px;padding:5px 4px;text-align:center;width:42px;flex-shrink:0;}
+  .date-box .d{font-family:var(--font-display);font-weight:700;font-size:15px;line-height:1;}
+  .date-box .m{font-size:8.5px;text-transform:uppercase;font-weight:800;letter-spacing:.03em;}
+
+  .banner-card{border-radius:16px;overflow:hidden;position:relative;color:#fff;background:linear-gradient(160deg,var(--navy) 10%, var(--navy-dark) 100%);margin-bottom:18px;}
+  .banner-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 85% 15%, rgba(244,180,0,.25), transparent 55%);}
+  .banner-card-body{padding:20px 22px;position:relative;}
+  .banner-card-body h4{margin:0 0 6px;font-family:var(--font-display);font-size:16px;color:var(--gold);}
+  .banner-card-body p{margin:0;font-size:12.5px;color:rgba(255,255,255,.82);line-height:1.55;}
+
+  @media (max-width: 900px){ .dash-grid{grid-template-columns:1fr;} }
 
   .screen{display:none;}
   .screen.active{display:block;}
@@ -244,7 +293,6 @@
 
   <div class="screen" id="screen-panel">
     <div class="main-content">
-      <div class="topbar"><span class="brand">Panel general</span></div>
       <div class="content" id="panel-content">
         <div class="placeholder">Cargando…</div>
       </div>
@@ -3737,57 +3785,177 @@ async function renderPanelGeneral(){
         </div>`).join('')
     : `<div class="empty-note">${t.noHayConsultas}</div>`;
 
+  const rolLabel = IS_ADMIN ? (LANG_I==='ca'?'Administrador/a':'Administrador/a') : (LANG_I==='ca'?'Tècnic/a':'Técnico/a');
+  const nombreTopbar = CURRENT_USER_NOMBRE || (CURRENT_USER && CURRENT_USER.email) || '';
+  const inicialesTopbar = nombreTopbar.trim().split(/\s+/).map(p=>p[0]).filter(Boolean).slice(0,2).join('').toUpperCase() || '?';
+  const notifsCount = (notifs.data || []).length;
+
+  const actividadCombinada = [
+    ...(docsRecientesRes.data || []).map(d => ({
+      ts: d.subido_en, icono: '📄',
+      accion: LANG_I==='ca' ? 'Document' : 'Documento',
+      usuario: nombresDashboard[d.usuario_id] || (LANG_I==='ca'?'Sense nom':'Sin nombre'),
+      detalle: LANG_I==='ca' ? `Va pujar l'arxiu "${d.nombre_archivo}"` : `Subió el archivo "${d.nombre_archivo}"`
+    })),
+    ...Object.entries(porPersonaDash).map(([id, fecha]) => ({
+      ts: fecha, icono: '📋',
+      accion: LANG_I==='ca' ? 'Expedient' : 'Expediente',
+      usuario: nombresDashboard[id] || (LANG_I==='ca'?'Sense nom':'Sin nombre'),
+      detalle: LANG_I==='ca' ? 'Actuació registrada' : 'Actuación registrada'
+    })),
+    ...(citasHoyRes.data || []).map(c => ({
+      ts: `${hoyIso}T${(c.hora || '00:00')}`, icono: '📅',
+      accion: 'Cita',
+      usuario: nombresDashboard[c.usuario_id] || (LANG_I==='ca'?'Sense nom':'Sin nombre'),
+      detalle: c.motivo || (LANG_I==='ca' ? 'Cita concertada' : 'Cita concertada')
+    }))
+  ].sort((a,b) => new Date(b.ts) - new Date(a.ts)).slice(0, 7);
+
+  const actividadTableHtml = actividadCombinada.length ? `
+    <table class="activity-table">
+      <thead><tr>
+        <th>${LANG_I==='ca'?'Data':'Fecha'}</th><th>${LANG_I==='ca'?'Usuari':'Usuario'}</th><th>${LANG_I==='ca'?'Acció':'Acción'}</th><th>${LANG_I==='ca'?'Detall':'Detalle'}</th>
+      </tr></thead>
+      <tbody>
+        ${actividadCombinada.map(a => `<tr>
+          <td class="subtle" style="margin:0;">${new Date(a.ts).toLocaleDateString(t.localeFecha)}</td>
+          <td><strong>${a.usuario}</strong></td>
+          <td>${a.icono} ${a.accion}</td>
+          <td class="subtle" style="margin:0;">${a.detalle}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>` : `<div class="empty-note">${LANG_I==='ca' ? 'Sense activitat recent.' : 'Sin actividad reciente.'}</div>`;
+
+  const eventosCombinados = [
+    ...(citasHoyRes.data || []).map(c => ({
+      fecha: hoyIso, titulo: (nombresDashboard[c.usuario_id] || (LANG_I==='ca'?'Sense nom':'Sin nombre')) + (c.motivo ? ` — ${c.motivo}` : ''), sub: c.hora || ''
+    })),
+    ...(avisosRes.data || []).filter(a => a.fecha_limite).map(a => ({
+      fecha: a.fecha_limite, titulo: a.titulo, sub: LANG_I==='ca'?'Termini':'Plazo'
+    }))
+  ].sort((a,b) => new Date(a.fecha) - new Date(b.fecha)).slice(0, 5);
+
+  const mesesCorto = LANG_I==='ca'
+    ? ['GEN','FEB','MAR','ABR','MAI','JUN','JUL','AGO','SET','OCT','NOV','DES']
+    : ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+  const eventosHtml = eventosCombinados.length ? eventosCombinados.map(e => {
+    const f = new Date(e.fecha);
+    return `<div class="event-row">
+      <div class="date-box"><div class="d">${f.getDate()}</div><div class="m">${mesesCorto[f.getMonth()]}</div></div>
+      <div><div style="font-size:12.5px;font-weight:700;color:var(--ink);">${e.titulo}</div>${e.sub ? `<div class="subtle" style="font-size:11px;margin:2px 0 0;">${e.sub}</div>` : ''}</div>
+    </div>`;
+  }).join('') : `<div class="empty-note">${LANG_I==='ca' ? 'Sense esdeveniments propers.' : 'Sin eventos próximos.'}</div>`;
+
+  const fraseInspiradora = LANG_I==='ca'
+    ? 'Cada gest de cura suma. Petites accions, grans canvis.'
+    : 'Cada gesto de cuidado suma. Pequeñas acciones, grandes cambios.';
+
+  const accesos = [
+    { icon:'👥', bg:'var(--good-soft)', color:'var(--good)', titulo: LANG_I==='ca'?'Persones usuàries':'Personas usuarias', sub: LANG_I==='ca'?'Veure i gestionar expedients.':'Ver y gestionar expedientes.', onclick:"showScreen('personas');renderPersonasScreen()" },
+    { icon:'📁', bg:'var(--gold-soft)', color:'#7A5A16', titulo: LANG_I==='ca'?'Projectes':'Proyectos', sub: LANG_I==='ca'?'Seguiment dels projectes actius.':'Seguimiento de proyectos activos.', onclick:"showScreen('proyectos');renderProyectosScreen()" },
+    { icon:'🎥', bg:'#E7ECFF', color:'#33449E', titulo:'Aula Virtual', sub: LANG_I==='ca'?'Cursos, materials i activitats.':'Cursos, materiales y actividades.', onclick:"showScreen('aulavirtual');renderAulaVirtualScreen()" },
+    { icon:'🗂️', bg:'var(--bg)', color:'var(--ink)', titulo: LANG_I==='ca'?'Gestió documental':'Gestión documental', sub: LANG_I==='ca'?'Accedir a arxius i plantilles.':'Acceder a archivos y plantillas.', onclick:"showScreen('docsglobal');renderDocsGlobalScreen()" },
+    { icon:'💬', bg:'var(--alert-soft)', color:'var(--alert)', titulo: LANG_I==='ca'?'Comunicació':'Comunicación', sub: LANG_I==='ca'?"Comunicació interna de l'equip.":'Comunicación interna del equipo.', onclick:"showScreen('comunicacion');renderComunicacionScreen()" },
+    { icon:'⚙️', bg:'#EFEFEF', color:'var(--ink)', titulo: LANG_I==='ca'?'Configuració':'Configuración', sub: LANG_I==='ca'?'Ajustos de la plataforma i el teu perfil.':'Ajustes de la plataforma y tu perfil.', onclick:"showScreen('config');renderConfigScreen()" }
+  ];
+  const accesosHtml = accesos.map(a => `
+    <div class="quick-card" onclick="${a.onclick}">
+      <div class="icon-badge" style="background:${a.bg};color:${a.color};">${a.icon}</div>
+      <h4>${a.titulo}</h4>
+      <p>${a.sub}</p>
+    </div>`).join('');
+
+  const statsIconos = [
+    { icon:'👥', bg:'var(--good-soft)', color:'var(--good)', num:totalPersonas, label:t.personasAtendidasTotal, cta: LANG_I==='ca'?'Veure llistat →':'Ver listado →', onclick:"showScreen('personas');renderPersonasScreen()" },
+    { icon:'📁', bg:'var(--gold-soft)', color:'#7A5A16', num:tramitesEnCursoCount, label: LANG_I==='ca'?'Tràmits en curs':'Trámites en curso', cta: LANG_I==='ca'?'Veure tràmits →':'Ver trámites →', onclick:"showScreen('tramitesglobal');renderTramitesGlobalScreen()" },
+    { icon:'📅', bg:'#E7ECFF', color:'#33449E', num:citasHoyCount, label: LANG_I==='ca'?'Cites avui':'Citas hoy', cta: LANG_I==='ca'?'Veure calendari →':'Ver calendario →', onclick:"showScreen('agenda');renderAgendaCitas()" },
+    { icon:'📋', bg:'var(--alert-soft)', color:'var(--alert)', num:tareasPendCount, label: LANG_I==='ca'?'Tasques pendents':'Tareas pendientes', cta: LANG_I==='ca'?'Veure tasques →':'Ver tareas →', onclick:"showScreen('seguimiento');renderSeguimientoScreen()" }
+  ];
+  const statsIconosHtml = statsIconos.map(s => `
+    <div class="stat-icon-card" onclick="${s.onclick}">
+      <div class="icon-badge" style="background:${s.bg};color:${s.color};">${s.icon}</div>
+      <div class="stat-icon-num">${s.num}</div>
+      <div class="stat-icon-label">${s.label}</div>
+      <div class="link-btn" style="font-size:11px;padding:6px 0 0;">${s.cta}</div>
+    </div>`).join('');
+
   cont.innerHTML = `
-    <div class="panel-card" style="margin-bottom:16px;background:linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);color:#fff;">
+    <div class="topbar-pro">
+      <div class="topbar-search">
+        <span class="topbar-search-icon">🔎</span>
+        <input type="text" id="topbar-search-input" placeholder="${LANG_I==='ca' ? 'Cercar persones, projectes, documents…' : 'Buscar personas, proyectos, documentos…'}" oninput="buscarGlobalInput(this.value)" onblur="setTimeout(cerrarBusquedaGlobal,150)">
+        <div id="topbar-search-results" class="search-results" style="display:none;"></div>
+      </div>
+      <button class="topbar-icon-btn" title="${t.alertasNuevas}" onclick="document.getElementById('panel-alertas-anchor').scrollIntoView({behavior:'smooth'})">
+        🔔${notifsCount ? `<span class="badge-dot">${notifsCount}</span>` : ''}
+      </button>
+      <div class="topbar-user">
+        <div class="avatar-circle">${inicialesTopbar}</div>
+        <div>
+          <div class="topbar-user-name">${nombreTopbar}</div>
+          <div class="topbar-user-role">${rolLabel}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-card" style="margin-bottom:20px;background:linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);color:#fff;">
       <h2 style="font-family:var(--font-display);font-weight:600;font-size:20px;margin:0 0 4px;color:#fff;">${saludo}, ${primerNombre}!</h2>
       <p style="margin:0;font-size:13px;color:rgba(255,255,255,.75);">${LANG_I==='ca'
         ? `Avui tens ${citasHoyCount} cites, ${tareasPendCount} tasques pendents.`
         : `Hoy tienes ${citasHoyCount} citas, ${tareasPendCount} tareas pendientes.`}</p>
     </div>
 
-    <div class="cards-grid" style="margin-bottom:16px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));">
-      <div class="panel-card" style="background:var(--good-soft);border-color:var(--good);text-align:center;cursor:pointer;" onclick="showScreen('personas');renderPersonasScreen()">
-        <div style="font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--good);">${totalPersonas}</div>
-        <div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:6px;">${t.personasAtendidasTotal}</div>
-        <span class="link-btn" style="font-size:11px;">${LANG_I==='ca'?'Veure llistat →':'Ver listado →'}</span>
+    <div class="cards-grid" style="margin-bottom:22px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">
+      ${statsIconosHtml}
+    </div>
+
+    <div class="section-label">${LANG_I==='ca' ? 'Accessos ràpids' : 'Accesos rápidos'}</div>
+    <div class="cards-grid" style="margin-bottom:24px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));">
+      ${accesosHtml}
+    </div>
+
+    <div class="dash-grid" style="margin-bottom:20px;">
+      <div>
+        <div class="panel-card" style="margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <h3 style="margin:0;">${LANG_I==='ca'?'Activitat recent':'Actividad reciente'}</h3>
+            <span class="link-btn" style="font-size:11px;" onclick="showScreen('seguimiento');renderSeguimientoScreen()">${LANG_I==='ca'?'Veure tot →':'Ver todo →'}</span>
+          </div>
+          ${actividadTableHtml}
+        </div>
+
+        <div id="panel-alertas-anchor" class="cards-grid" style="margin-bottom:0;">
+          <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
+            <h3 style="color:#7A5A16;">${t.alertasNuevas}</h3>
+            ${notifsHtml}
+          </div>
+          <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
+            <h3 style="color:#7A5A16;">${t.consultasPendientesTitulo}</h3>
+            ${consultasHtml}
+          </div>
+        </div>
       </div>
-      <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);text-align:center;cursor:pointer;" onclick="showScreen('tramitesglobal');renderTramitesGlobalScreen()">
-        <div style="font-family:var(--font-display);font-size:28px;font-weight:600;color:#7A5A16;">${tramitesEnCursoCount}</div>
-        <div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:6px;">${LANG_I==='ca'?'Tràmits en curs':'Trámites en curso'}</div>
-        <span class="link-btn" style="font-size:11px;">${LANG_I==='ca'?'Veure tràmits →':'Ver trámites →'}</span>
-      </div>
-      <div class="panel-card" style="text-align:center;cursor:pointer;" onclick="showScreen('agenda');renderAgendaCitas()">
-        <div style="font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--navy);">${citasHoyCount}</div>
-        <div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:6px;">${LANG_I==='ca'?'Cites avui':'Citas hoy'}</div>
-        <span class="link-btn" style="font-size:11px;">${LANG_I==='ca'?'Veure calendari →':'Ver calendario →'}</span>
-      </div>
-      <div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);text-align:center;cursor:pointer;" onclick="showScreen('seguimiento');renderSeguimientoScreen()">
-        <div style="font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--alert);">${tareasPendCount}</div>
-        <div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:6px;">${LANG_I==='ca'?'Tasques pendents':'Tareas pendientes'}</div>
-        <span class="link-btn" style="font-size:11px;">${LANG_I==='ca'?'Veure tasques →':'Ver tareas →'}</span>
+
+      <div>
+        <div class="banner-card">
+          <div class="banner-card-body">
+            <h4>${LANG_I==='ca' ? "La força d'un equip fa la diferència" : 'La fuerza de un equipo hace la diferencia'}</h4>
+            <p>${fraseInspiradora}</p>
+          </div>
+        </div>
+        <div class="panel-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <h3 style="margin:0;">${LANG_I==='ca'?'Propers esdeveniments':'Próximos eventos'}</h3>
+            <span class="link-btn" style="font-size:11px;" onclick="showScreen('agenda');renderAgendaCitas()">${LANG_I==='ca'?'Veure calendari →':'Ver calendario →'}</span>
+          </div>
+          ${eventosHtml}
+        </div>
       </div>
     </div>
 
-    <div class="cards-grid" style="margin-bottom:16px;">
+    <div class="section-label">${LANG_I==='ca' ? 'Documents recents' : 'Documentos recientes'}</div>
+    <div class="cards-grid" style="margin-bottom:24px;">
       <div class="panel-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <h3 style="margin:0;">${LANG_I==='ca'?"Agenda d'avui":'Agenda de hoy'}</h3>
-          <span class="link-btn" style="font-size:11px;" onclick="showScreen('agenda');renderAgendaCitas()">${LANG_I==='ca'?'Veure tot →':'Ver todo →'}</span>
-        </div>
-        ${agendaHoyHtml}
-      </div>
-      <div class="panel-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <h3 style="margin:0;">${LANG_I==='ca'?'Últims expedients actualitzats':'Últimos expedientes actualizados'}</h3>
-          <span class="link-btn" style="font-size:11px;" onclick="showScreen('seguimiento');renderSeguimientoScreen()">${LANG_I==='ca'?'Veure tots →':'Ver todos →'}</span>
-        </div>
-        ${expedientesHtml}
-      </div>
-      <div class="panel-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <h3 style="margin:0;">${LANG_I==='ca'?'Documents recents':'Documentos recientes'}</h3>
-          <span class="link-btn" style="font-size:11px;" onclick="showScreen('docsglobal');renderDocsGlobalScreen()">${LANG_I==='ca'?'Veure tots →':'Ver todos →'}</span>
-        </div>
         ${docsRecientesHtml}
       </div>
       <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
@@ -3796,18 +3964,7 @@ async function renderPanelGeneral(){
       </div>
     </div>
 
-    <div class="cards-grid" style="margin-bottom:16px;">
-      <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
-        <h3 style="color:#7A5A16;">${t.alertasNuevas}</h3>
-        ${notifsHtml}
-      </div>
-
-      <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
-        <h3 style="color:#7A5A16;">${t.consultasPendientesTitulo}</h3>
-        ${consultasHtml}
-      </div>
-    </div>
-
+    <div class="section-label">${LANG_I==='ca' ? 'Estadístiques generals' : 'Estadísticas generales'}</div>
     <div class="stat-grid" style="grid-template-columns:1fr;">
       <div class="stat-card"><div class="stat-num" id="num-total-personas">0</div><div class="stat-label">${t.personasAtendidasTotal}</div></div>
     </div>
@@ -3956,6 +4113,56 @@ async function quitarPersonaDeProyecto(participacionId){
   const { error } = await sb.from('proyecto_participantes').delete().eq('id', participacionId);
   if(error){ alert(error.message); return; }
   verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
+}
+
+let __searchDebounce = null;
+function buscarGlobalInput(valor){
+  clearTimeout(__searchDebounce);
+  const box = document.getElementById('topbar-search-results');
+  if(!box) return;
+  const q = valor.trim();
+  if(q.length < 2){ box.style.display = 'none'; box.innerHTML = ''; return; }
+  __searchDebounce = setTimeout(() => ejecutarBusquedaGlobal(q), 300);
+}
+
+async function ejecutarBusquedaGlobal(q){
+  const box = document.getElementById('topbar-search-results');
+  if(!box) return;
+  const esCA = LANG_I === 'ca';
+  box.style.display = 'block';
+  box.innerHTML = `<div class="empty-note" style="padding:12px;">${esCA?'Cercant…':'Buscando…'}</div>`;
+
+  const [personasR, proyectosR, docsR] = await Promise.all([
+    sb.from('perfiles').select('id, nombre_completo, municipio').ilike('nombre_completo', `%${q}%`).limit(5),
+    sb.from('proyectos').select('id, nombre').ilike('nombre', `%${q}%`).limit(5),
+    sb.from('documentos').select('id, nombre_archivo, ruta_storage').ilike('nombre_archivo', `%${q}%`).limit(5)
+  ]);
+
+  const secciones = [];
+  if(personasR.data && personasR.data.length){
+    secciones.push(`<div class="search-result-cat">${esCA?'Persones':'Personas'}</div>` + personasR.data.map(p => `
+      <div class="search-result-item" onmousedown="cerrarBusquedaGlobal();verPersonaStaff('${p.id}','panel')">
+        <span>👤</span><span>${p.nombre_completo}${p.municipio ? ` <span class="subtle" style="margin:0;font-size:11px;">· ${p.municipio}</span>` : ''}</span>
+      </div>`).join(''));
+  }
+  if(proyectosR.data && proyectosR.data.length){
+    secciones.push(`<div class="search-result-cat">${esCA?'Projectes':'Proyectos'}</div>` + proyectosR.data.map(p => `
+      <div class="search-result-item" onmousedown="cerrarBusquedaGlobal();showScreen('proyectos');renderProyectosScreen();setTimeout(()=>verProyecto('${p.id}'),400)">
+        <span>📁</span><span>${p.nombre}</span>
+      </div>`).join(''));
+  }
+  if(docsR.data && docsR.data.length){
+    secciones.push(`<div class="search-result-cat">${esCA?'Documents':'Documentos'}</div>` + docsR.data.map(d => `
+      <div class="search-result-item" onmousedown="cerrarBusquedaGlobal();verDocumentoStaff('${d.ruta_storage}')">
+        <span>📄</span><span>${d.nombre_archivo}</span>
+      </div>`).join(''));
+  }
+  box.innerHTML = secciones.length ? secciones.join('') : `<div class="empty-note" style="padding:12px;">${esCA?'Sense resultats.':'Sin resultados.'}</div>`;
+}
+
+function cerrarBusquedaGlobal(){
+  const box = document.getElementById('topbar-search-results');
+  if(box){ box.style.display = 'none'; box.innerHTML = ''; }
 }
 
 async function verPersonaStaff(usuarioId, origen){
