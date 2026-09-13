@@ -190,6 +190,7 @@
       <button data-target="aulavirtual" onclick="showScreen('aulavirtual');renderAulaVirtualScreen()">🎥 Aula Virtual · Hub Logos</button>
       <button data-target="proyectos" onclick="showScreen('proyectos');renderProyectosScreen()">📁 Proyectos</button>
       <button data-target="ideasproyecto" onclick="showScreen('ideasproyecto');renderIdeasProyectoScreen()">💡 Crea tu proyecto</button>
+      <button data-target="mipropioproyecto" onclick="showScreen('mipropioproyecto');renderMiPropioProyectoEntrada()">🏛️ Crea un proyecto de Logos</button>
       <button data-target="noticias" onclick="showScreen('noticias');renderNoticiasScreen()">📰 Portales del día</button>
       <button data-target="equipo" onclick="showScreen('equipo');renderEquipoScreen()">Trabajo en equipo</button>
       <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
@@ -321,6 +322,13 @@
     <div class="main-content">
       <div class="topbar"><span class="brand">Crea tu proyecto</span></div>
       <div class="content" id="ideasproyecto-content"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-mipropioproyecto">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Crea un proyecto de Logos</span></div>
+      <div class="content" id="mipropioproyecto-content"></div>
     </div>
   </div>
 
@@ -2642,7 +2650,7 @@ async function renderIdeasProyectoScreen(){
   cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
   const esCA = LANG_I === 'ca';
 
-  const { data: itinerarios } = await sb.from('itinerario_proyectos').select('*').order('actualizado_en', { ascending:false });
+  const { data: itinerarios } = await sb.from('itinerario_proyectos').select('*').eq('origen', 'ciudadano').order('actualizado_en', { ascending:false });
   const idsUsuarios = [...new Set((itinerarios||[]).map(it => it.usuario_id).filter(Boolean))];
   let nombresUsuarios = {};
   if(idsUsuarios.length){
@@ -2768,6 +2776,318 @@ async function guardarRecursosOportunidades(itinerarioId){
   const { error } = await sb.from('itinerario_proyectos').update({ recursos_oportunidades: texto || null }).eq('id', itinerarioId);
   if(error){ alert(error.message); return; }
   alert(LANG_I==='ca' ? 'Guardat.' : 'Guardado.');
+}
+
+// =========================================================
+// "Crea un proyecto de Logos" — herramienta real (no una práctica) para que el
+// propio técnico dé de alta proyectos nuevos de Logos con el mismo método guiado,
+// sin mezclarse con las ideas que manda la ciudadanía (se distingue por "origen").
+// =========================================================
+
+const ETAPAS_ITINERARIO_STAFF = [
+  { num: 1, icono: '💡', titulo: 'Mi idea',
+    campos: [
+      { id: 'idea_que', label: '¿Qué quiero hacer?', tipo: 'textarea' },
+      { id: 'idea_porque', label: '¿Por qué quiero hacerlo?', tipo: 'textarea' },
+      { id: 'idea_problema', label: '¿Qué problema quiero solucionar?', tipo: 'textarea' },
+      { id: 'idea_a_quien', label: '¿A quién quiero ayudar?', tipo: 'textarea' },
+      { id: 'idea_descripcion', label: 'Descripción breve de la idea', tipo: 'textarea' },
+    ]},
+  { num: 2, icono: '🎯', titulo: 'Definir el proyecto',
+    campos: [
+      { id: 'nombre_proyecto', label: 'Nombre del proyecto', tipo: 'input' },
+      { id: 'objetivo_general', label: 'Objetivo general', tipo: 'textarea' },
+      { id: 'objetivos_especificos', label: 'Objetivos específicos', tipo: 'textarea' },
+      { id: 'beneficiarios', label: 'Personas beneficiarias', tipo: 'textarea' },
+      { id: 'necesidades_atender', label: 'Necesidades que queremos atender', tipo: 'textarea' },
+      { id: 'lugar_desarrollo', label: 'Lugar donde se desarrollará', tipo: 'input' },
+    ]},
+  { num: 3, icono: '🔎', titulo: 'Analizar la necesidad',
+    campos: [
+      { id: 'necesidad_existe', label: '¿Existe realmente esta necesidad?', tipo: 'textarea' },
+      { id: 'personas_afectadas', label: '¿A cuántas personas afecta?', tipo: 'input' },
+      { id: 'recursos_actuales', label: '¿Qué recursos existen actualmente?', tipo: 'textarea' },
+      { id: 'otras_entidades', label: '¿Qué hacen otras entidades?', tipo: 'textarea' },
+      { id: 'aporte_diferente', label: '¿Qué aportará nuestro proyecto de diferente?', tipo: 'textarea' },
+    ]},
+  { num: 4, icono: '🛠️', titulo: 'Diseñar las actividades',
+    campos: [
+      { id: 'actividades_que', label: '¿Qué vamos a hacer?', tipo: 'textarea' },
+      { id: 'actividades_como', label: '¿Cómo lo vamos a hacer?', tipo: 'textarea' },
+      { id: 'actividades_cuando', label: '¿Cuándo?', tipo: 'input' },
+      { id: 'actividades_donde', label: '¿Dónde?', tipo: 'input' },
+      { id: 'actividades_quien', label: '¿Quién participará?', tipo: 'textarea' },
+      { id: 'actividades_materiales', label: '¿Qué materiales necesitamos?', tipo: 'textarea' },
+    ]},
+  { num: 5, icono: '👥', titulo: 'Organizar el equipo',
+    campos: [
+      { id: 'equipo_responsable', label: 'Responsable del proyecto', tipo: 'input' },
+      { id: 'equipo_colaboradores', label: 'Colaboradores', tipo: 'textarea' },
+      { id: 'equipo_voluntarios', label: 'Voluntarios', tipo: 'textarea' },
+      { id: 'equipo_entidades_asociadas', label: 'Entidades asociadas', tipo: 'textarea' },
+      { id: 'equipo_funciones', label: 'Funciones de cada persona', tipo: 'textarea' },
+    ]},
+  { num: 6, icono: '💰', titulo: 'Preparar el presupuesto',
+    campos: [
+      { id: 'presupuesto_recursos_necesarios', label: 'Recursos necesarios', tipo: 'textarea' },
+      { id: 'presupuesto_gastos', label: 'Gastos', tipo: 'textarea' },
+      { id: 'presupuesto_recursos_propios', label: 'Recursos propios', tipo: 'textarea' },
+      { id: 'presupuesto_subvenciones', label: 'Subvenciones posibles', tipo: 'textarea' },
+      { id: 'presupuesto_donaciones', label: 'Donaciones', tipo: 'textarea' },
+      { id: 'presupuesto_colaboraciones', label: 'Colaboraciones', tipo: 'textarea' },
+      { id: 'presupuesto_otras_fuentes', label: 'Otras fuentes de financiación', tipo: 'textarea' },
+    ]},
+  { num: 7, icono: '📅', titulo: 'Crear el calendario',
+    campos: [
+      { id: 'calendario_inicio', label: 'Inicio', tipo: 'date' },
+      { id: 'calendario_preparacion', label: 'Preparación', tipo: 'input' },
+      { id: 'calendario_actividades', label: 'Actividades', tipo: 'input' },
+      { id: 'calendario_seguimiento', label: 'Seguimiento', tipo: 'input' },
+      { id: 'calendario_evaluacion', label: 'Evaluación', tipo: 'input' },
+      { id: 'calendario_finalizacion', label: 'Finalización', tipo: 'date' },
+    ]},
+];
+
+async function renderMiPropioProyectoEntrada(){
+  const cont = document.getElementById('mipropioproyecto-content');
+  cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+
+  const { data: itinerarios } = await sb.from('itinerario_proyectos').select('*').eq('usuario_id', CURRENT_USER.id).eq('origen', 'tecnico').order('creado_en', { ascending:false });
+  const enCurso = (itinerarios||[]).filter(it => it.estado === 'en_curso');
+
+  const continuarHtml = enCurso.length ? enCurso.map(it => `
+    <div class="panel-card" style="margin-bottom:12px;">
+      <h3 style="margin:0 0 4px;">${it.nombre_proyecto || 'Idea sin nombre todavía'}</h3>
+      <p class="subtle" style="margin:0 0 10px;">Vas por la etapa ${it.etapa_actual > 11 ? 11 : it.etapa_actual} de 11</p>
+      <button class="primary-btn" onclick="renderEtapaProyectoStaff('${it.id}', ${it.etapa_actual > 7 ? 8 : it.etapa_actual})">Continuar</button>
+    </div>`).join('') : '';
+
+  cont.innerHTML = `
+    <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);margin-bottom:16px;">
+      <p style="margin:0;font-size:14px;">El mismo método guiado que usa la ciudadanía en Logos Acompanya, pero para dar de alta proyectos reales de la propia Logos: de la idea al proyecto en marcha, paso a paso.</p>
+    </div>
+
+    ${continuarHtml}
+
+    <button class="primary-btn" style="background:var(--good);margin-bottom:10px;" onclick="iniciarItinerarioStaff('idea')">🟢 Tengo una idea</button>
+    <button class="primary-btn" style="background:var(--gold);margin-bottom:10px;" onclick="iniciarItinerarioStaff('existente')">🟡 Ya tengo un proyecto</button>
+    <button class="primary-btn" style="background:var(--navy);margin-bottom:10px;" onclick="iniciarItinerarioStaff('mejorar')">🔵 Quiero mejorar un proyecto existente</button>
+  `;
+}
+
+async function iniciarItinerarioStaff(modo){
+  const { data, error } = await sb.from('itinerario_proyectos').insert({ usuario_id: CURRENT_USER.id, modo, origen: 'tecnico' }).select('id').single();
+  if(error){ alert(error.message); return; }
+  renderEtapaProyectoStaff(data.id, 1);
+}
+
+async function renderEtapaProyectoStaff(itinerarioId, etapaNum){
+  window.__itinerarioStaffActual = itinerarioId;
+  const cont = document.getElementById('mipropioproyecto-content');
+  cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+
+  if(etapaNum > 7){ renderResumenProyectoStaff(itinerarioId); return; }
+
+  const { data: it } = await sb.from('itinerario_proyectos').select('*').eq('id', itinerarioId).maybeSingle();
+  const etapa = ETAPAS_ITINERARIO_STAFF[etapaNum - 1];
+
+  const camposHtml = etapa.campos.map(c => {
+    const valorActual = it ? (it[c.id] || '') : '';
+    if(c.tipo === 'textarea') return `<div class="field"><label>${c.label}</label><textarea id="campo-staff-${c.id}" rows="2">${valorActual}</textarea></div>`;
+    if(c.tipo === 'date') return `<div class="field"><label>${c.label}</label><input type="date" id="campo-staff-${c.id}" value="${valorActual}"></div>`;
+    return `<div class="field"><label>${c.label}</label><input type="text" id="campo-staff-${c.id}" value="${valorActual}"></div>`;
+  }).join('');
+
+  cont.innerHTML = `
+    <div class="panel-card" style="margin-bottom:16px;background:var(--good-soft, #DDEFD9);">
+      <p style="margin:0;font-size:12px;font-weight:700;">ETAPA ${etapaNum} DE 7</p>
+    </div>
+    <h2 class="screen-title">${etapa.icono} ${etapa.titulo}</h2>
+    ${camposHtml}
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      ${etapaNum > 1 ? `<button class="link-btn" onclick="renderEtapaProyectoStaff('${itinerarioId}', ${etapaNum - 1})">← Atrás</button>` : ''}
+      <button class="primary-btn" style="flex:1;" onclick="guardarEtapaProyectoStaff('${itinerarioId}', ${etapaNum})">${etapaNum === 7 ? 'Ver mi proyecto' : 'Guardar y continuar'} →</button>
+    </div>
+  `;
+}
+
+async function guardarEtapaProyectoStaff(itinerarioId, etapaNum){
+  const etapa = ETAPAS_ITINERARIO_STAFF[etapaNum - 1];
+  const payload = { etapa_actual: etapaNum + 1, actualizado_en: new Date().toISOString() };
+  etapa.campos.forEach(c => { payload[c.id] = document.getElementById(`campo-staff-${c.id}`).value.trim() || null; });
+  const { error } = await sb.from('itinerario_proyectos').update(payload).eq('id', itinerarioId);
+  if(error){ alert(error.message); return; }
+  renderEtapaProyectoStaff(itinerarioId, etapaNum + 1);
+}
+
+async function renderResumenProyectoStaff(itinerarioId){
+  const cont = document.getElementById('mipropioproyecto-content');
+  const { data: it } = await sb.from('itinerario_proyectos').select('*').eq('id', itinerarioId).maybeSingle();
+  if(!it){ cont.innerHTML = `<div class="empty-note">No se ha encontrado.</div>`; return; }
+
+  const punto = (num, titulo, contenido) => `
+    <div class="panel-card" style="margin-bottom:10px;">
+      <p class="subtle" style="margin:0 0 4px;font-weight:700;">${num}. ${titulo}</p>
+      <p style="margin:0;font-size:13.5px;white-space:pre-wrap;">${contenido || '— (todavía sin rellenar) —'}</p>
+    </div>`;
+
+  cont.innerHTML = `
+    <h2 class="screen-title">📄 ${it.nombre_proyecto || 'Tu proyecto'}</h2>
+    <p class="subtle" style="margin-bottom:16px;">Resumen generado a partir de lo que has ido rellenando.</p>
+
+    ${punto(1, 'Nombre', it.nombre_proyecto)}
+    ${punto(2, 'Resumen', it.idea_descripcion)}
+    ${punto(3, 'Justificación', it.idea_porque)}
+    ${punto(4, 'Diagnóstico', [it.necesidad_existe, it.personas_afectadas, it.recursos_actuales, it.otras_entidades, it.aporte_diferente].filter(Boolean).join('\n'))}
+    ${punto(5, 'Objetivos', [it.objetivo_general, it.objetivos_especificos].filter(Boolean).join('\n'))}
+    ${punto(6, 'Beneficiarios', it.beneficiarios)}
+    ${punto(7, 'Actividades', [it.actividades_que, it.actividades_cuando, it.actividades_donde].filter(Boolean).join('\n'))}
+    ${punto(8, 'Metodología', it.actividades_como)}
+    ${punto(9, 'Equipo', [it.equipo_responsable, it.equipo_colaboradores, it.equipo_voluntarios].filter(Boolean).join('\n'))}
+    ${punto(10, 'Calendario', [it.calendario_inicio, it.calendario_actividades, it.calendario_finalizacion].filter(Boolean).join(' · '))}
+    ${punto(11, 'Recursos', it.actividades_materiales)}
+    ${punto(12, 'Presupuesto', [it.presupuesto_gastos, it.presupuesto_subvenciones, it.presupuesto_donaciones].filter(Boolean).join('\n'))}
+    ${punto(13, 'Evaluación', it.calendario_evaluacion)}
+    ${punto(14, 'Continuidad del proyecto', it.calendario_seguimiento)}
+
+    <button class="primary-btn" style="background:var(--gold);margin-bottom:10px;" onclick="renderEtapa9ProyectoStaff('${itinerarioId}')">🔗 Continuar: recursos y oportunidades →</button>
+    <button class="link-btn" onclick="renderEtapaProyectoStaff('${itinerarioId}', 1)">← Volver a editar las etapas</button>
+  `;
+}
+
+async function renderEtapa9ProyectoStaff(itinerarioId){
+  const cont = document.getElementById('mipropioproyecto-content');
+  const { data: it } = await sb.from('itinerario_proyectos').select('*').eq('id', itinerarioId).maybeSingle();
+
+  cont.innerHTML = `
+    <div class="panel-card" style="margin-bottom:16px;background:var(--good-soft, #DDEFD9);">
+      <p style="margin:0;font-size:12px;font-weight:700;">ETAPA 9 DE 11</p>
+    </div>
+    <h2 class="screen-title">🔗 Recursos y oportunidades</h2>
+    <p class="subtle" style="margin-bottom:16px;">Anota las subvenciones, convocatorias, ayuntamientos, Generalitat, Diputación, fundaciones, entidades colaboradoras, espacios, formación o voluntariado que puedan encajar con este proyecto.</p>
+
+    <div class="panel-card" style="margin-bottom:16px;">
+      <div class="field"><textarea id="recursos-oportunidades-staff-texto" rows="6">${it.recursos_oportunidades || ''}</textarea></div>
+      <button class="primary-btn" onclick="guardarRecursosOportunidadesStaff('${itinerarioId}')">💾 Guardar</button>
+    </div>
+
+    <button class="primary-btn" style="background:var(--gold);margin-bottom:10px;" onclick="renderEtapa10ProyectoStaff('${itinerarioId}')">🚀 Continuar: poner en marcha →</button>
+    <button class="link-btn" onclick="renderResumenProyectoStaff('${itinerarioId}')">← Volver al resumen</button>
+  `;
+}
+
+async function guardarRecursosOportunidadesStaff(itinerarioId){
+  const texto = document.getElementById('recursos-oportunidades-staff-texto').value.trim();
+  const { error } = await sb.from('itinerario_proyectos').update({ recursos_oportunidades: texto || null }).eq('id', itinerarioId);
+  if(error){ alert(error.message); return; }
+  alert('Guardado.');
+}
+
+async function renderEtapa10ProyectoStaff(itinerarioId){
+  const cont = document.getElementById('mipropioproyecto-content');
+  const { data: it } = await sb.from('itinerario_proyectos').select('*').eq('id', itinerarioId).maybeSingle();
+
+  const items = [
+    { campo: 'marcha_documentacion', label: 'Preparar la documentación' },
+    { campo: 'marcha_presentado', label: 'Presentar el proyecto' },
+    { campo: 'marcha_financiacion', label: 'Buscar financiación' },
+    { campo: 'marcha_equipo', label: 'Crear el equipo' },
+    { campo: 'marcha_actividades_iniciadas', label: 'Comenzar las actividades' },
+  ];
+  const todoMarcado = items.every(i => it[i.campo]);
+
+  cont.innerHTML = `
+    <div class="panel-card" style="margin-bottom:16px;background:var(--good-soft, #DDEFD9);">
+      <p style="margin:0;font-size:12px;font-weight:700;">ETAPA 10 DE 11</p>
+    </div>
+    <h2 class="screen-title">🚀 Presentar y poner en marcha</h2>
+    <div class="panel-card" style="margin-bottom:16px;">
+      ${items.map(i => `
+        <label class="checkbox-row" style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);">
+          <input type="checkbox" id="check-staff-${i.campo}" ${it[i.campo] ? 'checked' : ''} onchange="guardarChecklistEtapa10Staff('${itinerarioId}','${i.campo}', this.checked)">
+          <span>${i.label}</span>
+        </label>`).join('')}
+    </div>
+
+    ${it.proyecto_id
+      ? `<div class="panel-card" style="background:var(--good-soft, #DDEFD9);margin-bottom:16px;"><p style="margin:0;">✅ Este proyecto ya está registrado en "📁 Proyectos", como proyecto en marcha.</p><button class="link-btn" style="margin-top:8px;" onclick="showScreen('proyectos');renderProyectosScreen();setTimeout(()=>verProyecto('${it.proyecto_id}'),400)">Ver el proyecto →</button></div>`
+      : `<button class="primary-btn" style="background:var(--good);margin-bottom:10px;" ${todoMarcado ? '' : 'disabled'} onclick="marcarProyectoEnMarchaStaff('${itinerarioId}')">🚀 Marcar como proyecto en marcha</button>
+         ${!todoMarcado ? `<p class="subtle" style="margin:0 0 10px;">Marca todos los pasos para poder activarlo.</p>` : ''}`}
+
+    <button class="primary-btn" style="background:var(--gold);margin-bottom:10px;" onclick="renderEtapa11ProyectoStaff('${itinerarioId}')">📊 Continuar: seguimiento →</button>
+    <button class="link-btn" onclick="renderEtapa9ProyectoStaff('${itinerarioId}')">← Atrás</button>
+  `;
+}
+
+async function guardarChecklistEtapa10Staff(itinerarioId, campo, valor){
+  await sb.from('itinerario_proyectos').update({ [campo]: valor }).eq('id', itinerarioId);
+}
+
+async function marcarProyectoEnMarchaStaff(itinerarioId){
+  const { data: it } = await sb.from('itinerario_proyectos').select('*').eq('id', itinerarioId).maybeSingle();
+  const { data: nuevoProyecto, error: errorProyecto } = await sb.from('proyectos')
+    .insert({ nombre: it.nombre_proyecto || 'Proyecto nuevo', descripcion: it.idea_descripcion, creado_por_email: CURRENT_USER.email })
+    .select('id').single();
+  if(errorProyecto){ alert(errorProyecto.message); return; }
+
+  await sb.from('proyecto_participantes').insert({ proyecto_id: nuevoProyecto.id, rol: 'profesional', tecnico_email: CURRENT_USER.email, anadido_por_email: CURRENT_USER.email });
+  const { error } = await sb.from('itinerario_proyectos').update({ proyecto_id: nuevoProyecto.id, estado: 'en_marcha' }).eq('id', itinerarioId);
+  if(error){ alert(error.message); return; }
+  alert('¡Hecho! El proyecto ya está en marcha, dentro de "📁 Proyectos".');
+  renderEtapa10ProyectoStaff(itinerarioId);
+}
+
+async function renderEtapa11ProyectoStaff(itinerarioId){
+  const cont = document.getElementById('mipropioproyecto-content');
+  const { data: seguimientos } = await sb.from('itinerario_seguimientos').select('*').eq('itinerario_id', itinerarioId).order('fecha', { ascending:false });
+
+  const seguimientosHtml = (seguimientos && seguimientos.length)
+    ? seguimientos.map(s => `
+        <div class="panel-card" style="margin-bottom:10px;">
+          <p class="subtle" style="margin:0 0 6px;font-weight:700;">${new Date(s.fecha+'T00:00:00').toLocaleDateString('es-ES')}</p>
+          ${s.actividades_realizadas ? `<p style="margin:0 0 4px;font-size:13px;"><strong>Actividades:</strong> ${s.actividades_realizadas}</p>` : ''}
+          ${s.personas_atendidas ? `<p style="margin:0 0 4px;font-size:13px;"><strong>Personas atendidas:</strong> ${s.personas_atendidas}</p>` : ''}
+          ${s.resultados ? `<p style="margin:0 0 4px;font-size:13px;"><strong>Resultados:</strong> ${s.resultados}</p>` : ''}
+          ${s.dificultades ? `<p style="margin:0;font-size:13px;"><strong>Dificultades:</strong> ${s.dificultades}</p>` : ''}
+        </div>`).join('')
+    : `<div class="empty-note">Todavía no hay ningún seguimiento registrado.</div>`;
+
+  cont.innerHTML = `
+    <div class="panel-card" style="margin-bottom:16px;background:var(--good-soft, #DDEFD9);">
+      <p style="margin:0;font-size:12px;font-weight:700;">ETAPA 11 DE 11</p>
+    </div>
+    <h2 class="screen-title">📊 Seguimiento y evaluación</h2>
+    <p class="subtle" style="margin-bottom:16px;">Ve registrando cómo avanza el proyecto, de vez en cuando.</p>
+
+    ${seguimientosHtml}
+
+    <div class="panel-card" style="margin-bottom:16px;">
+      <h3>➕ Nuevo registro</h3>
+      <div class="field"><label>Actividades realizadas</label><textarea id="seg-staff-actividades" rows="2"></textarea></div>
+      <div class="field"><label>Personas atendidas</label><input type="text" id="seg-staff-personas"></div>
+      <div class="field"><label>Resultados</label><textarea id="seg-staff-resultados" rows="2"></textarea></div>
+      <div class="field"><label>Dificultades</label><textarea id="seg-staff-dificultades" rows="2"></textarea></div>
+      <div class="field"><label>Mejoras necesarias</label><textarea id="seg-staff-mejoras" rows="2"></textarea></div>
+      <button class="primary-btn" onclick="agregarSeguimientoItinerarioStaff('${itinerarioId}')">➕ Guardar registro</button>
+    </div>
+
+    <button class="link-btn" onclick="renderEtapa10ProyectoStaff('${itinerarioId}')">← Atrás</button>
+  `;
+}
+
+async function agregarSeguimientoItinerarioStaff(itinerarioId){
+  const payload = {
+    itinerario_id: itinerarioId,
+    actividades_realizadas: document.getElementById('seg-staff-actividades').value.trim() || null,
+    personas_atendidas: document.getElementById('seg-staff-personas').value.trim() || null,
+    resultados: document.getElementById('seg-staff-resultados').value.trim() || null,
+    dificultades: document.getElementById('seg-staff-dificultades').value.trim() || null,
+    mejoras_necesarias: document.getElementById('seg-staff-mejoras').value.trim() || null,
+    creado_por_email: CURRENT_USER.email
+  };
+  const { error } = await sb.from('itinerario_seguimientos').insert(payload);
+  if(error){ alert(error.message); return; }
+  renderEtapa11ProyectoStaff(itinerarioId);
 }
 
 async function renderProyectosScreen(){
