@@ -189,6 +189,7 @@
       <button data-target="informes" onclick="showScreen('informes');renderInformesScreen()">Informes y datos</button>
       <button data-target="aulavirtual" onclick="showScreen('aulavirtual');renderAulaVirtualScreen()">🎥 Aula Virtual · Hub Logos</button>
       <button data-target="proyectos" onclick="showScreen('proyectos');renderProyectosScreen()">📁 Proyectos</button>
+      <button data-target="ideasproyecto" onclick="showScreen('ideasproyecto');renderIdeasProyectoScreen()">💡 Crea tu proyecto</button>
       <button data-target="noticias" onclick="showScreen('noticias');renderNoticiasScreen()">📰 Portales del día</button>
       <button data-target="equipo" onclick="showScreen('equipo');renderEquipoScreen()">Trabajo en equipo</button>
       <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
@@ -313,6 +314,13 @@
     <div class="main-content">
       <div class="topbar"><span class="brand">Proyectos</span></div>
       <div class="content" id="proyectos-content"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-ideasproyecto">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Crea tu proyecto</span></div>
+      <div class="content" id="ideasproyecto-content"></div>
     </div>
   </div>
 
@@ -2627,6 +2635,139 @@ async function borrarFuenteNoticia(id){
   const { error } = await sb.from('fuentes_noticias').delete().eq('id', id);
   if(error){ alert(error.message); return; }
   renderNoticiasScreen();
+}
+
+async function renderIdeasProyectoScreen(){
+  const cont = document.getElementById('ideasproyecto-content');
+  cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const esCA = LANG_I === 'ca';
+
+  const { data: itinerarios } = await sb.from('itinerario_proyectos').select('*').order('actualizado_en', { ascending:false });
+  const idsUsuarios = [...new Set((itinerarios||[]).map(it => it.usuario_id).filter(Boolean))];
+  let nombresUsuarios = {};
+  if(idsUsuarios.length){
+    const { data: perfiles } = await sb.from('perfiles').select('id, nombre_completo').in('id', idsUsuarios);
+    (perfiles||[]).forEach(p => { nombresUsuarios[p.id] = p.nombre_completo; });
+  }
+
+  const estadoTexto = { en_curso: esCA?'En curs':'En curso', completado: esCA?'Completat':'Completado', en_marcha: esCA?'En marxa':'En marcha', archivado: esCA?'Arxivat':'Archivado' };
+  const estadoColor = { en_curso: 'gold', completado: '', en_marcha: 'good', archivado: 'off' };
+  const modoTexto = { idea: '🟢', existente: '🟡', mejorar: '🔵' };
+
+  const itemsHtml = (itinerarios && itinerarios.length)
+    ? itinerarios.map(it => `
+        <div class="panel-card" style="margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <h3 style="margin:0;">${modoTexto[it.modo]||'💡'} ${it.nombre_proyecto || (esCA?'Idea sense nom':'Idea sin nombre')}</h3>
+            <span class="chip ${estadoColor[it.estado]||''}" style="flex-shrink:0;">${estadoTexto[it.estado]||it.estado}</span>
+          </div>
+          <p class="subtle" style="margin:4px 0 8px;">${nombresUsuarios[it.usuario_id] || (esCA?'Sense nom':'Sin nombre')} · ${esCA?'etapa':'etapa'} ${it.etapa_actual > 11 ? 11 : it.etapa_actual}/11</p>
+          ${it.idea_descripcion ? `<p style="font-size:13px;margin:0 0 8px;">${it.idea_descripcion}</p>` : ''}
+          <button class="link-btn" onclick="verIdeaProyecto('${it.id}')">${esCA?'Obrir':'Abrir'}</button>
+        </div>`).join('')
+    : `<div class="empty-note">${esCA?'Encara ningú ha començat cap idea.':'Todavía nadie ha empezado ninguna idea.'}</div>`;
+
+  cont.innerHTML = `
+    <p class="subtle" style="margin-bottom:16px;">${esCA
+      ? 'Aquí veus totes les idees de projecte que la ciutadania va omplint des de "Crea tu proyecto" a Logos Acompanya, des de la primera etapa fins al seguiment.'
+      : 'Aquí ves todas las ideas de proyecto que la ciudadanía va rellenando desde "Crea tu proyecto" en Logos Acompanya, desde la primera etapa hasta el seguimiento.'}</p>
+    <div class="cards-grid">${itemsHtml}</div>
+    <div id="idea-proyecto-detalle-wrap"></div>
+  `;
+}
+
+async function verIdeaProyecto(itinerarioId){
+  const esCA = LANG_I === 'ca';
+  const wrap = document.getElementById('idea-proyecto-detalle-wrap');
+  wrap.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  wrap.scrollIntoView({ behavior:'smooth' });
+
+  const [{ data: it }, { data: seguimientos }] = await Promise.all([
+    sb.from('itinerario_proyectos').select('*').eq('id', itinerarioId).maybeSingle(),
+    sb.from('itinerario_seguimientos').select('*').eq('itinerario_id', itinerarioId).order('fecha', { ascending:false })
+  ]);
+  if(!it){ wrap.innerHTML = `<div class="panel-card"><div class="empty-note">${esCA?'No trobat.':'No encontrado.'}</div></div>`; return; }
+
+  let nombrePersona = esCA?'Sense nom':'Sin nombre';
+  if(it.usuario_id){
+    const { data: perfil } = await sb.from('perfiles').select('nombre_completo').eq('id', it.usuario_id).maybeSingle();
+    if(perfil) nombrePersona = perfil.nombre_completo;
+  }
+
+  const bloque = (titulo, campos) => {
+    const contenido = campos.map(c => it[c]).filter(Boolean).join(' · ');
+    if(!contenido) return '';
+    return `<div class="panel-stat-row" style="align-items:flex-start;"><span style="font-weight:700;">${titulo}</span><span style="text-align:right;max-width:65%;">${contenido}</span></div>`;
+  };
+
+  const checklist = [
+    { campo: 'marcha_documentacion', label: esCA?'Documentació':'Documentación' },
+    { campo: 'marcha_presentado', label: esCA?'Presentat':'Presentado' },
+    { campo: 'marcha_financiacion', label: esCA?'Finançament':'Financiación' },
+    { campo: 'marcha_equipo', label: esCA?'Equip':'Equipo' },
+    { campo: 'marcha_actividades_iniciadas', label: esCA?'Activitats iniciades':'Actividades iniciadas' },
+  ];
+
+  const seguimientosHtml = (seguimientos && seguimientos.length)
+    ? seguimientos.map(s => `<div class="panel-stat-row" style="align-items:flex-start;"><span>${s.actividades_realizadas || s.resultados || '—'}</span><span class="subtle">${new Date(s.fecha+'T00:00:00').toLocaleDateString(esCA?'ca-ES':'es-ES')}</span></div>`).join('')
+    : `<div class="empty-note">${esCA?'Encara sense seguiments.':'Todavía sin seguimientos.'}</div>`;
+
+  wrap.innerHTML = `
+    <div class="panel-card" style="margin-top:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <h2 style="margin:0;">💡 ${it.nombre_proyecto || (esCA?'Idea sense nom':'Idea sin nombre')}</h2>
+        <button class="link-btn" onclick="document.getElementById('idea-proyecto-detalle-wrap').innerHTML='';">✕ ${esCA?'Tancar':'Cerrar'}</button>
+      </div>
+      <p class="subtle">${nombrePersona}</p>
+    </div>
+
+    <div class="panel-card">
+      <h3>💡 ${esCA?'Idea i definició':'Idea y definición'}</h3>
+      ${bloque(esCA?'Què':'Qué', ['idea_que'])}
+      ${bloque(esCA?'Per què':'Por qué', ['idea_porque'])}
+      ${bloque(esCA?'Problema':'Problema', ['idea_problema'])}
+      ${bloque(esCA?'A qui':'A quién', ['idea_a_quien'])}
+      ${bloque(esCA?'Objectiu':'Objetivo', ['objetivo_general'])}
+      ${bloque(esCA?'Beneficiaris':'Beneficiarios', ['beneficiarios'])}
+      ${bloque(esCA?'Lloc':'Lugar', ['lugar_desarrollo'])}
+    </div>
+
+    <div class="panel-card">
+      <h3>🛠️ ${esCA?'Activitats i equip':'Actividades y equipo'}</h3>
+      ${bloque(esCA?'Activitats':'Actividades', ['actividades_que','actividades_cuando','actividades_donde'])}
+      ${bloque(esCA?'Responsable':'Responsable', ['equipo_responsable'])}
+      ${bloque(esCA?'Col·laboradors':'Colaboradores', ['equipo_colaboradores'])}
+      ${bloque(esCA?'Pressupost':'Presupuesto', ['presupuesto_gastos','presupuesto_subvenciones'])}
+      ${bloque(esCA?'Calendari':'Calendario', ['calendario_inicio','calendario_finalizacion'])}
+    </div>
+
+    <div class="panel-card">
+      <h3>🔗 ${esCA?'Recursos i oportunitats (notes per a la persona)':'Recursos y oportunidades (notas para la persona)'}</h3>
+      <p class="subtle" style="margin:0 0 8px;">${esCA
+        ? "El que escriguis aquí ho veurà la persona a l'etapa 9 del seu itinerari a Logos Acompanya."
+        : 'Lo que escribas aquí lo verá la persona en la etapa 9 de su itinerario en Logos Acompanya.'}</p>
+      <div class="field"><textarea id="recursos-oportunidades-texto" rows="4">${it.recursos_oportunidades || ''}</textarea></div>
+      <button class="primary-btn" onclick="guardarRecursosOportunidades('${itinerarioId}')">💾 ${esCA?'Guardar':'Guardar'}</button>
+    </div>
+
+    <div class="panel-card">
+      <h3>🚀 ${esCA?'Posada en marxa':'Puesta en marcha'}</h3>
+      ${checklist.map(c => `<div class="panel-stat-row"><span>${c.label}</span><span>${it[c.campo] ? '✅' : '⬜'}</span></div>`).join('')}
+      ${it.proyecto_id ? `<button class="link-btn" style="margin-top:8px;" onclick="showScreen('proyectos');renderProyectosScreen();setTimeout(()=>verProyecto('${it.proyecto_id}'),400)">${esCA?'Veure el projecte real':'Ver el proyecto real'} →</button>` : ''}
+    </div>
+
+    <div class="panel-card">
+      <h3>📊 ${esCA?'Seguiment':'Seguimiento'}</h3>
+      ${seguimientosHtml}
+    </div>
+  `;
+}
+
+async function guardarRecursosOportunidades(itinerarioId){
+  const texto = document.getElementById('recursos-oportunidades-texto').value.trim();
+  const { error } = await sb.from('itinerario_proyectos').update({ recursos_oportunidades: texto || null }).eq('id', itinerarioId);
+  if(error){ alert(error.message); return; }
+  alert(LANG_I==='ca' ? 'Guardat.' : 'Guardado.');
 }
 
 async function renderProyectosScreen(){
