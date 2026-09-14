@@ -212,9 +212,37 @@
     .main-content{padding:28px 22px 90px;}
     #screen-login .main-content{padding-top:10vh;}
   }
+
+  /* Asistente de orientación (chat con Claude) */
+  .asistente-btn{position:fixed;bottom:22px;right:22px;width:56px;height:56px;border-radius:50%;background:var(--navy);color:var(--gold);border:none;font-size:23px;cursor:pointer;box-shadow:var(--shadow-lg);z-index:200;display:flex;align-items:center;justify-content:center;}
+  .asistente-panel{position:fixed;bottom:90px;right:22px;width:340px;max-width:calc(100vw - 32px);height:460px;max-height:calc(100vh - 120px);background:var(--paper);border:1.5px solid var(--line);border-radius:16px;box-shadow:var(--shadow-lg);display:none;flex-direction:column;overflow:hidden;z-index:200;}
+  .asistente-panel.open{display:flex;}
+  .asistente-header{background:var(--navy);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:13.5px;font-family:var(--font-body);}
+  .asistente-header button{background:none;border:none;color:#fff;font-size:16px;cursor:pointer;}
+  .asistente-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13px;}
+  .asistente-msg{max-width:85%;padding:8px 12px;border-radius:12px;line-height:1.4;white-space:pre-wrap;}
+  .asistente-msg.user{align-self:flex-end;background:var(--gold-soft);color:var(--ink);}
+  .asistente-msg.bot{align-self:flex-start;background:var(--bg);color:var(--ink);}
+  .asistente-input-row{display:flex;gap:6px;padding:10px;border-top:1px solid var(--line);}
+  .asistente-input-row input{flex:1;border:1.5px solid var(--line);border-radius:20px;padding:8px 14px;font-family:var(--font-body);font-size:13px;}
+  .asistente-input-row button{background:var(--navy);color:var(--gold);border:none;border-radius:20px;padding:8px 16px;font-weight:800;cursor:pointer;font-size:13px;}
 </style>
 </head>
 <body>
+<button class="asistente-btn" onclick="toggleAsistenteChat()" title="Asistente interno">💬</button>
+<div class="asistente-panel" id="asistente-panel">
+  <div class="asistente-header">
+    <span>💬 Asistente Logos</span>
+    <button onclick="toggleAsistenteChat()">✕</button>
+  </div>
+  <div class="asistente-msgs" id="asistente-msgs">
+    <div class="asistente-msg bot">Hola 👋 ¿En qué módulo o trámite necesitas orientación?</div>
+  </div>
+  <div class="asistente-input-row">
+    <input type="text" id="asistente-input" placeholder="Escribe tu pregunta…" onkeydown="enviarMensajeAsistenteEnter(event)">
+    <button onclick="enviarMensajeAsistente()">Enviar</button>
+  </div>
+</div>
 <div id="app">
 
   <div class="sidebar">
@@ -2004,10 +2032,13 @@ async function verContenidoCurso(cursoId, nombreCurso){
 
         return `
         <div class="modulo-acordeon">
-          <button class="modulo-cabecera" onclick="toggleModuloCurso('${idMod}')">
-            <span class="modulo-titulo">${LANG_I==='ca'?'Mòdul':'Módulo'} ${i+1}. ${m.titulo}</span>
-            <span class="modulo-flecha" id="${idMod}-flecha">▾</span>
-          </button>
+          <div class="modulo-cabecera">
+            <span style="flex:1;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleModuloCurso('${idMod}')">
+              <span class="modulo-titulo">${LANG_I==='ca'?'Mòdul':'Módulo'} ${i+1}. ${m.titulo}</span>
+              <span class="modulo-flecha" id="${idMod}-flecha">▾</span>
+            </span>
+            <button class="link-btn" style="font-size:11px;color:var(--alert);flex-shrink:0;" onclick="borrarModulo('${m.id}')">${LANG_I==='ca'?'Esborrar mòdul':'Borrar módulo'}</button>
+          </div>
           <div class="modulo-cuerpo" id="${idMod}" style="display:none;">
             ${m.descripcion ? `<p class="subtle" style="margin:0 0 10px;">${m.descripcion}</p>` : ''}
             <div class="subtle" style="font-weight:700;margin-bottom:4px;">${LANG_I==='ca'?'Continguts':'Contenidos'}</div>
@@ -2146,6 +2177,16 @@ async function anadirContenido(moduloId){
   }
 
   const { error } = await sb.from('curso_contenidos').insert(payload);
+  if(error){ alert(error.message); return; }
+  verContenidoCurso(curso.id, curso.nombre);
+}
+
+async function borrarModulo(id){
+  if(!confirm(LANG_I==='ca' ? 'Segur que vols esborrar aquest mòdul? També s\'esborraran tots els seus continguts i activitats.' : '¿Seguro que quieres borrar este módulo? También se borrarán todos sus contenidos y actividades.')) return;
+  const curso = window.__cursoContenidoActual;
+  await sb.from('curso_contenidos').delete().eq('modulo_id', id);
+  await sb.from('curso_actividades').delete().eq('modulo_id', id);
+  const { error } = await sb.from('curso_modulos').delete().eq('id', id);
   if(error){ alert(error.message); return; }
   verContenidoCurso(curso.id, curso.nombre);
 }
@@ -3500,7 +3541,7 @@ async function renderInformesScreen(){
   const t = TI[LANG_I];
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
 
-  const [porSexo, porNacionalidad, depDis, situFam, tramEstado, interesesForm, satisfaccion, prestaciones, tramitesBretxa, derivacion, emprendeduria, comoConocio, actTotal, actResultado, actCategoria, actDerivado, proyectosRes, proyectoParticipantesRes] = await Promise.all([
+  const [porSexo, porNacionalidad, depDis, situFam, tramEstado, interesesForm, satisfaccion, prestaciones, tramitesBretxa, derivacion, emprendeduria, comoConocio, actTotal, actResultado, actCategoria, actDerivado, proyectosRes, proyectoParticipantesRes, cursosStatsRes, inscripcionesCountRes, entregasEstadoRes] = await Promise.all([
     sb.from('stats_por_sexo').select('*'),
     sb.from('stats_por_nacionalidad').select('*'),
     sb.from('stats_dependencia_discapacidad').select('*').maybeSingle(),
@@ -3518,7 +3559,10 @@ async function renderInformesScreen(){
     sb.from('stats_actuaciones_categoria').select('*'),
     sb.from('stats_actuaciones_derivado').select('*'),
     sb.from('proyectos').select('id, nombre, estado'),
-    sb.from('proyecto_participantes').select('proyecto_id, rol')
+    sb.from('proyecto_participantes').select('proyecto_id, rol'),
+    sb.from('cursos').select('id, estado'),
+    sb.from('cursos_inscripciones').select('id', { count:'exact', head:true }).eq('estado', 'inscrito'),
+    sb.from('curso_actividad_entregas').select('estado')
   ]);
 
   const dd = depDis.data || {}; const sf = situFam.data || {}; const sat = satisfaccion.data || {};
@@ -3581,13 +3625,54 @@ async function renderInformesScreen(){
     ? proyectosLista.map(pr => `<div class="panel-stat-row"><span>${pr.nombre}${pr.estado!=='activo' ? ` <span class="chip off" style="font-size:9px;">${pr.estado}</span>` : ''}</span><span><strong>${(conteoPorProyecto[pr.id]||{}).beneficiarios||0}</strong> ${LANG_I==='ca'?'beneficiaris':'beneficiarios'}</span></div>`).join('')
     : `<div class="empty-note">${LANG_I==='ca'?'Encara no hi ha projectes.':'Todavía no hay proyectos.'}</div>`;
 
+  // Formación (Aula Virtual): estadísticas propias, separadas de Proyectos
+  const cursosLista = cursosStatsRes.data || [];
+  const totalCursos = cursosLista.length;
+  const cursosPorEstadoCount = {};
+  cursosLista.forEach(c => { cursosPorEstadoCount[c.estado] = (cursosPorEstadoCount[c.estado] || 0) + 1; });
+  const totalInscripciones = inscripcionesCountRes.count || 0;
+  const entregasLista = entregasEstadoRes.data || [];
+  const entregasAprobadas = entregasLista.filter(e => e.estado === 'aprobado').length;
+  const entregasCorreccion = entregasLista.filter(e => e.estado === 'necesita_correccion').length;
+  const entregasPendientes = entregasLista.length - entregasAprobadas - entregasCorreccion;
+  const textoEstadoCursoInf = {
+    preparacion: LANG_I==='ca' ? 'Preparació' : 'Preparación',
+    inscripcion: LANG_I==='ca' ? 'Inscripció' : 'Inscripción',
+    activo: LANG_I==='ca' ? 'Actiu' : 'Activo',
+    finalizado: LANG_I==='ca' ? 'Finalitzat' : 'Finalizado',
+    cerrado: LANG_I==='ca' ? 'Tancat' : 'Cerrado'
+  };
+  const cursosPorEstadoHtml = Object.keys(textoEstadoCursoInf)
+    .filter(k => cursosPorEstadoCount[k])
+    .map(k => `<div class="panel-stat-row"><span>${textoEstadoCursoInf[k]}</span><span><strong>${cursosPorEstadoCount[k]}</strong></span></div>`).join('')
+    || `<div class="empty-note">${t.sinDatos}</div>`;
+
   cont.innerHTML = `
-    <div class="panel-card" style="margin-bottom:16px;">
-      <h3>📁 ${LANG_I==='ca'?'Projectes':'Proyectos'}</h3>
+    <div class="section-label">📁 ${LANG_I==='ca'?'Projectes':'Proyectos'}</div>
+    <div class="panel-card" style="margin-bottom:20px;">
       <div class="panel-stat-row"><span>${LANG_I==='ca'?'Projectes actius':'Proyectos activos'}</span><span><strong>${proyectosActivos}</strong> / ${proyectosLista.length}</span></div>
       <div class="panel-stat-row"><span>${LANG_I==='ca'?'Total beneficiaris en projectes':'Total beneficiarios en proyectos'}</span><span><strong>${totalBeneficiariosProyectos}</strong></span></div>
       ${proyectosResumenHtml}
     </div>
+
+    <div class="section-label">🎓 ${LANG_I==='ca'?'Formació (Aula Virtual)':'Formación (Aula Virtual)'}</div>
+    <div class="cards-grid" style="margin-bottom:20px;">
+      <div class="panel-card">
+        <div class="panel-stat-row"><span>${LANG_I==='ca'?'Cursos totals':'Cursos totales'}</span><span><strong>${totalCursos}</strong></span></div>
+        <div class="panel-stat-row"><span>${LANG_I==='ca'?'Inscripcions actives':'Inscripciones activas'}</span><span><strong>${totalInscripciones}</strong></span></div>
+        ${cursosPorEstadoHtml}
+      </div>
+      <div class="panel-card">
+        <h3>${LANG_I==='ca'?"Entregues d'activitats":'Entregas de actividades'}</h3>
+        <div class="panel-stat-row"><span>${LANG_I==='ca'?'Total entregues':'Total entregas'}</span><span><strong>${entregasLista.length}</strong></span></div>
+        <div class="panel-stat-row"><span>${LANG_I==='ca'?'Aprovades':'Aprobadas'}</span><span><strong style="color:var(--good);">${entregasAprobadas}</strong></span></div>
+        <div class="panel-stat-row"><span>${LANG_I==='ca'?'Necessiten correcció':'Necesitan corrección'}</span><span><strong style="color:var(--alert);">${entregasCorreccion}</strong></span></div>
+        <div class="panel-stat-row"><span>${LANG_I==='ca'?'Pendents de revisar':'Pendientes de revisar'}</span><span><strong>${entregasPendientes}</strong></span></div>
+      </div>
+      <div class="panel-card"><h3>${t.interesesFormativos}</h3>${graficoBarras(interesesForm.data, 'interes', 'total')}</div>
+    </div>
+
+    <div class="section-label">👥 ${LANG_I==='ca'?'Persones ateses':'Personas atendidas'}</div>
     <p class="subtle">${LANG_I==='ca'
       ? 'Estadístiques completes de totes les persones ateses per Logos.'
       : 'Estadísticas completas de todas las personas atendidas por Logos.'}</p>
@@ -3614,7 +3699,6 @@ async function renderInformesScreen(){
         <div class="panel-stat-row"><span>${t.respuestasRecibidas}</span><span><strong>${sat.total_respuestas || 0}</strong></span></div>
       </div>
       <div class="panel-card"><h3>${t.tramitesPorEstado}</h3>${graficoCircular((tramEstado.data||[]).map(r => ({label: r.estado || '—', value: r.total})), ['var(--gold)', 'var(--navy)', 'var(--good)'])}</div>
-      <div class="panel-card"><h3>${t.interesesFormativos}</h3>${graficoBarras(interesesForm.data, 'interes', 'total')}</div>
       <div class="panel-card"><h3>${t.prestacionesEconomicas}</h3>${graficoBarras(prestaciones.data, 'prestacion', 'total')}</div>
       <div class="panel-card"><h3>${t.tramitesBretxaTitulo}</h3>${graficoBarras(tramitesBretxa.data, 'tramite', 'total')}</div>
       <div class="panel-card"><h3>${t.derivacionRecursos}</h3>${graficoBarras(derivacion.data, 'derivacion', 'total')}</div>
@@ -5166,6 +5250,54 @@ async function toggleActivoTecnico(email, nuevoEstadoActivo){
 
 renderLogin();
 initAuth();
+
+// Asistente de orientación (llama a una Edge Function de Supabase que a su vez llama a la API de Claude)
+window.__asistenteHistorial = [];
+function toggleAsistenteChat(){
+  const panel = document.getElementById('asistente-panel');
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open')) document.getElementById('asistente-input').focus();
+}
+function agregarMensajeAsistente(texto, quien){
+  const msgs = document.getElementById('asistente-msgs');
+  const div = document.createElement('div');
+  div.className = 'asistente-msg ' + quien;
+  div.textContent = texto;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+async function enviarMensajeAsistente(){
+  const input = document.getElementById('asistente-input');
+  const mensaje = input.value.trim();
+  if(!mensaje) return;
+  input.value = '';
+  agregarMensajeAsistente(mensaje, 'user');
+  const historialPrevio = window.__asistenteHistorial.slice();
+  window.__asistenteHistorial.push({ role:'user', content: mensaje });
+  const pensando = agregarMensajeAsistente('…', 'bot');
+  try {
+    const res = await fetch('https://foxtlpyfedwsvttzorql.supabase.co/functions/v1/asistente', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
+      body: JSON.stringify({
+        mensaje,
+        historial: historialPrevio,
+        ambito: 'personal',
+        tecnico_email: CURRENT_USER ? CURRENT_USER.email : null
+      })
+    });
+    const data = await res.json();
+    const texto = data.respuesta || (LANG_I==='ca' ? 'No he pogut respondre ara mateix. Torna-ho a provar en un moment.' : 'No he podido responder ahora mismo. Inténtalo de nuevo en un momento.');
+    pensando.textContent = texto;
+    window.__asistenteHistorial.push({ role:'assistant', content: texto });
+  } catch(e){
+    pensando.textContent = LANG_I==='ca' ? 'Error de connexió. Torna-ho a provar en un moment.' : 'Error de conexión. Inténtalo de nuevo en un momento.';
+  }
+}
+function enviarMensajeAsistenteEnter(ev){
+  if(ev.key === 'Enter') enviarMensajeAsistente();
+}
 
 </script>
 </body>
