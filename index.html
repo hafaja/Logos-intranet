@@ -266,7 +266,7 @@
       <button data-target="informes" onclick="showScreen('informes');renderInformesScreen()">Informes y datos</button>
       <button data-target="aulavirtual" onclick="showScreen('aulavirtual');renderAulaVirtualScreen()">🎥 Aula Virtual · Hub Logos</button>
       <button data-target="proyectos" onclick="showScreen('proyectos');renderProyectosScreen()">📁 Proyectos</button>
-      <button data-target="ideasproyecto" onclick="showScreen('ideasproyecto');renderIdeasProyectoScreen()">💡 Crea tu proyecto</button>
+      <button data-target="ideasproyecto" onclick="showScreen('ideasproyecto');renderEmprendimientoListaStaff()">🚀 Emprendimiento</button>
       <button data-target="mipropioproyecto" onclick="showScreen('mipropioproyecto');renderMiPropioProyectoEntrada()">🏛️ Crea un proyecto de Logos</button>
       <button data-target="noticias" onclick="showScreen('noticias');renderNoticiasScreen()">📰 Portales del día</button>
       <button data-target="equipo" onclick="showScreen('equipo');renderEquipoScreen()">Trabajo en equipo</button>
@@ -396,7 +396,7 @@
 
   <div class="screen" id="screen-ideasproyecto">
     <div class="main-content">
-      <div class="topbar"><span class="brand">Crea tu proyecto</span></div>
+      <div class="topbar"><span class="brand">🚀 Emprendimiento</span></div>
       <div class="content" id="ideasproyecto-content"></div>
     </div>
   </div>
@@ -1469,7 +1469,11 @@ async function renderComunicacionScreenAsync(){
       if(guardado) window.__plantillaDraft = JSON.parse(guardado);
     } catch(e){}
   }
-  const { data: plantillas } = await sb.from('plantillas_mensajes').select('*').eq('activo', true).order('creado_en', { ascending:true });
+  const [{ data: plantillas }, { data: staffLista }, { data: misMensajes }] = await Promise.all([
+    sb.from('plantillas_mensajes').select('*').eq('activo', true).order('creado_en', { ascending:true }),
+    IS_ADMIN ? sb.from('staff').select('email, nombre').eq('activo', true).order('email', { ascending:true }) : Promise.resolve({ data: [] }),
+    sb.from('mensajes_internos').select('*').or(`destinatario_email.eq.${CURRENT_USER.email},destinatario_email.is.null`).order('creado_en', { ascending:false }).limit(30)
+  ]);
 
   const plantillasHtml = (plantillas && plantillas.length)
     ? plantillas.map(p => `
@@ -1479,6 +1483,18 @@ async function renderComunicacionScreenAsync(){
           ${IS_ADMIN ? `<button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="borrarPlantilla('${p.id}')">${LANG_I==='ca'?'Esborrar':'Borrar'}</button>` : ''}
         </div>`).join('')
     : `<div class="empty-note">${LANG_I==='ca' ? 'Encara no hi ha plantilles.' : 'Todavía no hay plantillas.'}</div>`;
+
+  const opcionesStaffHtml = (staffLista || []).map(s => `<option value="${s.email}">${s.nombre || s.email}</option>`).join('');
+
+  const mensajesHtml = (misMensajes && misMensajes.length) ? misMensajes.map(m => `
+    <div class="panel-card" style="${m.leido ? '' : 'border-color:var(--gold);background:var(--gold-soft);'}cursor:pointer;" onclick="marcarMensajeInternoLeido('${m.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <strong style="font-size:13.5px;">${m.destinatario_email ? '👤' : '📢'} ${m.asunto || (LANG_I==='ca'?'(sense assumpte)':'(sin asunto)')}</strong>
+        ${!m.leido ? `<span class="chip" style="background:var(--gold);color:var(--navy-dark);font-size:10px;">${LANG_I==='ca'?'Nou':'Nuevo'}</span>` : ''}
+      </div>
+      <p style="margin:0 0 4px;font-size:13px;">${m.mensaje}</p>
+      <p class="subtle" style="margin:0;font-size:11px;">${nombreTecnico(m.remitente_email)} · ${new Date(m.creado_en).toLocaleString(LANG_I==='ca'?'ca-ES':'es-ES')}</p>
+    </div>`).join('') : `<div class="empty-note">${LANG_I==='ca' ? 'Encara no tens missatges.' : 'Todavía no tienes mensajes.'}</div>`;
 
   cont.innerHTML = `
 
@@ -1490,6 +1506,26 @@ async function renderComunicacionScreenAsync(){
       <p style="margin:0 0 12px;font-weight:700;font-size:14px;">+34 630 46 15 60</p>
       <a href="https://wa.me/34630461560" target="_blank" rel="noopener" class="primary-btn" style="display:inline-block;background:#25D366;text-decoration:none;">💬 ${LANG_I==='ca'?'Obrir xat de WhatsApp':'Abrir chat de WhatsApp'}</a>
     </div>
+
+    ${IS_ADMIN ? `
+    <div class="panel-card" style="margin-bottom:16px;">
+      <h3>✉️ ${LANG_I==='ca' ? 'Enviar missatge intern' : 'Enviar mensaje interno'}</h3>
+      <p class="subtle" style="margin:0 0 10px;">${LANG_I==='ca'
+        ? "Envia un avís personalitzat a un tècnic/a concret, o un missatge general a tot l'equip."
+        : 'Envía un aviso personalizado a un técnico/a concreto, o un mensaje general a todo el equipo.'}</p>
+      <div class="field">
+        <select id="msg-interno-destinatario">
+          <option value="">📢 ${LANG_I==='ca' ? 'General (tot l\'equip)' : 'General (todo el equipo)'}</option>
+          ${opcionesStaffHtml}
+        </select>
+      </div>
+      <div class="field"><input type="text" id="msg-interno-asunto" placeholder="${LANG_I==='ca'?'Assumpte':'Asunto'}"></div>
+      <div class="field"><textarea id="msg-interno-contenido" rows="3" placeholder="${LANG_I==='ca'?'Escriu el missatge…':'Escribe el mensaje…'}"></textarea></div>
+      <button class="primary-btn" onclick="enviarMensajeInterno()">✉️ ${LANG_I==='ca' ? 'Enviar' : 'Enviar'}</button>
+    </div>` : ''}
+
+    <div class="section-label" style="margin-bottom:8px;">📥 ${LANG_I==='ca' ? 'Els meus missatges' : 'Mis mensajes'}</div>
+    <div class="cards-grid" style="margin-bottom:16px;">${mensajesHtml}</div>
 
     <div class="section-label" style="margin-bottom:8px;">${LANG_I==='ca' ? 'Plantilles de missatges' : 'Plantillas de mensajes'}</div>
     <p class="subtle">${LANG_I==='ca'
@@ -1513,6 +1549,27 @@ async function renderComunicacionScreenAsync(){
         : 'Envíos masivos e historial de mensajes de SMS y correo. El envío automático por WhatsApp requiere dar de alta la API de WhatsApp Business, que Logos todavía tiene que contratar.'}</p>
     </div>
   `;
+}
+
+async function enviarMensajeInterno(){
+  const destinatario = document.getElementById('msg-interno-destinatario').value || null;
+  const asunto = document.getElementById('msg-interno-asunto').value.trim();
+  const mensaje = document.getElementById('msg-interno-contenido').value.trim();
+  if(!mensaje){ alert(LANG_I==='ca' ? 'Escriu el missatge.' : 'Escribe el mensaje.'); return; }
+  const { error } = await sb.from('mensajes_internos').insert({
+    destinatario_email: destinatario,
+    remitente_email: CURRENT_USER.email,
+    asunto: asunto || null,
+    mensaje,
+    leido: false
+  });
+  if(error){ alert(error.message); return; }
+  renderComunicacionScreenAsync();
+}
+
+async function marcarMensajeInternoLeido(id){
+  await sb.from('mensajes_internos').update({ leido: true }).eq('id', id);
+  renderComunicacionScreenAsync();
 }
 
 function guardarBorradorPlantilla(){
@@ -2732,6 +2789,53 @@ async function borrarFuenteNoticia(id){
   const { error } = await sb.from('fuentes_noticias').delete().eq('id', id);
   if(error){ alert(error.message); return; }
   renderNoticiasScreen();
+}
+
+async function renderEmprendimientoListaStaff(){
+  const cont = document.getElementById('ideasproyecto-content');
+  cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const esCA = LANG_I === 'ca';
+
+  const { data: registros } = await sb.from('emprendimiento').select('*').order('actualizado_en', { ascending:false });
+  const idsUsuarios = [...new Set((registros||[]).map(r => r.usuario_id).filter(Boolean))];
+  let nombresUsuarios = {};
+  if(idsUsuarios.length){
+    const { data: perfiles } = await sb.from('perfiles').select('id, nombre_completo').in('id', idsUsuarios);
+    (perfiles||[]).forEach(p => { nombresUsuarios[p.id] = p.nombre_completo; });
+  }
+
+  const etapas = [
+    { key:'acogida', es:'Acogida', ca:'Acollida' },
+    { key:'diagnostico', es:'Diagnóstico', ca:'Diagnòstic' },
+    { key:'idea', es:'Idea', ca:'Idea' },
+    { key:'plan', es:'Plan de empresa', ca:'Pla d\'empresa' },
+    { key:'financiacion', es:'Financiación', ca:'Finançament' },
+    { key:'alta', es:'Alta', ca:'Alta' },
+    { key:'consolidacion', es:'Consolidación', ca:'Consolidació' }
+  ];
+
+  const itemsHtml = (registros && registros.length)
+    ? registros.map(r => {
+        const etapaInfo = etapas.find(e => e.key === (r.etapa_actual || 'acogida')) || etapas[0];
+        const idxEtapa = etapas.findIndex(e => e.key === etapaInfo.key);
+        return `
+        <div class="panel-card" style="margin-bottom:12px;cursor:pointer;" onclick="showScreen('personas');verPersonaStaff('${r.usuario_id}','personas')">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <h3 style="margin:0;">🚀 ${nombresUsuarios[r.usuario_id] || (esCA?'Sense nom':'Sin nombre')}</h3>
+            <span class="chip gold" style="flex-shrink:0;">${esCA ? etapaInfo.ca : etapaInfo.es} (${idxEtapa+1}/7)</span>
+          </div>
+          ${r.idea_negocio ? `<p style="font-size:13px;margin:4px 0 4px;">${r.idea_negocio}</p>` : ''}
+          ${r.sector ? `<p class="subtle" style="margin:0;font-size:11px;">Sector: ${r.sector}</p>` : ''}
+        </div>`;
+      }).join('')
+    : `<div class="empty-note">${esCA?'Encara ningú ha començat el seu itinerari d\'emprenedoria.':'Todavía nadie ha empezado su itinerario de emprendimiento.'}</div>`;
+
+  cont.innerHTML = `
+    <p class="subtle" style="margin-bottom:16px;">${esCA
+      ? 'Aquí veus totes les persones que estan seguint el seu itinerari d\'emprenedoria des de "Mi emprendimiento" a Logos Acompanya. Toca una targeta per obrir la seva fitxa completa.'
+      : 'Aquí ves a todas las personas que están siguiendo su itinerario de emprendimiento desde "Mi emprendimiento" en Logos Acompanya. Toca una tarjeta para abrir su ficha completa.'}</p>
+    <div class="cards-grid">${itemsHtml}</div>
+  `;
 }
 
 async function renderIdeasProyectoScreen(){
@@ -4268,7 +4372,7 @@ async function verPersonaStaff(usuarioId, origen){
   showScreen('persona');
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
 
-  const [perfilRes, docsRes, tramitesRes, atencionesRes, actuacionesRes, staffListRes, citasRes, mensajesRes, misProyectosRes, todosProyectosRes] = await Promise.all([
+  const [perfilRes, docsRes, tramitesRes, atencionesRes, actuacionesRes, staffListRes, citasRes, mensajesRes, misProyectosRes, todosProyectosRes, emprendimientoRes] = await Promise.all([
     sb.from('perfiles').select('*').eq('id', usuarioId).maybeSingle(),
     sb.from('documentos').select('*').eq('usuario_id', usuarioId).order('subido_en', { ascending:false }),
     sb.from('tramites').select('*').eq('usuario_id', usuarioId).order('creado_en', { ascending:false }),
@@ -4278,7 +4382,8 @@ async function verPersonaStaff(usuarioId, origen){
     sb.from('citas').select('*').eq('usuario_id', usuarioId).order('fecha', { ascending:false }),
     sb.from('mensajes_enviados').select('*').eq('usuario_id', usuarioId).order('fecha', { ascending:false }),
     sb.from('proyecto_participantes').select('*, proyectos(id, nombre, estado)').eq('usuario_id', usuarioId).eq('rol', 'beneficiario'),
-    sb.from('proyectos').select('id, nombre').order('nombre', { ascending:true })
+    sb.from('proyectos').select('id, nombre').order('nombre', { ascending:true }),
+    sb.from('emprendimiento').select('*').eq('usuario_id', usuarioId).maybeSingle()
   ]);
 
   (staffListRes.data || []).forEach(s => { if(s.nombre) __mapaNombresTecnicos[s.email] = s.nombre; });
@@ -4337,6 +4442,38 @@ async function verPersonaStaff(usuarioId, origen){
         </div>`).join('')
     : `<div class="empty-note">${LANG_I==='ca' ? 'Encara no participa en cap projecte.' : 'Todavía no participa en ningún proyecto.'}</div>`;
   const proyectosDisponibles = (todosProyectosRes.data || []).filter(pr => !misProyectosLista.some(mp => mp.proyecto_id === pr.id));
+
+  const emp = emprendimientoRes.data;
+  const emprendimientoHtml = emp ? (() => {
+    const etapas = [
+      { key:'acogida', es:'Acogida', ca:'Acollida' },
+      { key:'diagnostico', es:'Diagnóstico', ca:'Diagnòstic' },
+      { key:'idea', es:'Idea', ca:'Idea' },
+      { key:'plan', es:'Plan de empresa', ca:'Pla d\'empresa' },
+      { key:'financiacion', es:'Financiación', ca:'Finançament' },
+      { key:'alta', es:'Alta', ca:'Alta' },
+      { key:'consolidacion', es:'Consolidación', ca:'Consolidació' }
+    ];
+    const completadas = emp.etapas_completadas || [];
+    const stepperHtml = etapas.map((e, i) => {
+      const completada = completadas.includes(e.key);
+      const esActual = e.key === (emp.etapa_actual || 'acogida');
+      const color = completada ? 'var(--good)' : esActual ? 'var(--gold)' : 'var(--line)';
+      const bg = completada ? 'var(--good-soft)' : esActual ? 'var(--gold-soft)' : 'var(--paper)';
+      return `<div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;padding:0 6px;">
+        <div style="width:28px;height:28px;border-radius:50%;background:${bg};border:2px solid ${color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:${color};">${completada ? '✓' : i+1}</div>
+        <span style="font-size:9.5px;font-weight:${esActual?'800':'600'};color:${esActual?'var(--ink)':'var(--ink-soft)'};white-space:nowrap;">${LANG_I==='ca' ? e.ca : e.es}</span>
+      </div>`;
+    }).join('<div style="flex:1;height:2px;background:var(--line);margin-top:13px;min-width:10px;"></div>');
+    return `
+      <div class="panel-card" style="margin-bottom:16px;background:var(--gold-soft);border-color:var(--gold);">
+        <h3 style="color:#7A5A16;">🚀 ${LANG_I==='ca' ? 'Itinerari d\'emprenedoria' : 'Itinerario de emprendimiento'}</h3>
+        ${emp.idea_negocio ? `<p style="margin:0 0 4px;"><strong>${LANG_I==='ca'?'Idea':'Idea'}:</strong> ${emp.idea_negocio}</p>` : ''}
+        ${emp.sector ? `<p style="margin:0 0 10px;"><strong>Sector:</strong> ${emp.sector}</p>` : ''}
+        <div style="display:flex;align-items:flex-start;overflow-x:auto;padding:4px 0 8px;">${stepperHtml}</div>
+        ${emp.notas ? `<p class="subtle" style="margin:0;font-size:12px;"><strong>${LANG_I==='ca'?'Notes':'Notas'}:</strong> ${emp.notas}</p>` : ''}
+      </div>`;
+  })() : '';
 
   const formacionesLista = actuacionesLista.filter(ac => FORMACIONES_LOGOS.includes(ac.categoria));
   const formacionesHtml = formacionesLista.length ? formacionesLista.map(renderActuacionCard).join('') : `<div class="empty-note">${t.sinFormacionesVinculadas}</div>`;
@@ -4419,6 +4556,7 @@ async function verPersonaStaff(usuarioId, origen){
     </div>
 
     <div class="ptab-content" id="ptab-proyectos">
+      ${emprendimientoHtml}
       <div class="panel-card">
         <h3>📁 ${LANG_I==='ca' ? 'Projectes en els quals participa' : 'Proyectos en los que participa'}</h3>
         ${misProyectosHtml}
