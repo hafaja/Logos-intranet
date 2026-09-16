@@ -201,6 +201,8 @@
   #screen-atencion .main-content, #screen-persona .main-content{max-width:760px;}
 
   /* Adaptación a pantallas estrechas: el menú lateral pasa a barra inferior */
+  .mobile-menu-toggle{display:none;}
+  .mobile-menu-header{display:none;}
   @media (max-width: 760px){
     #app{flex-direction:column;}
     .sidebar{width:100%;height:56px;position:sticky;bottom:0;top:auto;order:2;flex-direction:row;align-items:center;justify-content:center;padding:0;border-top:1.5px solid rgba(255,255,255,.1);z-index:150;}
@@ -216,7 +218,6 @@
     .main-content{padding:28px 22px 90px;}
     #screen-login .main-content{padding-top:10vh;}
   }
-  .mobile-menu-toggle{display:none;}
 
   /* Asistente de orientación (chat con Claude) */
   .asistente-btn{position:fixed;bottom:22px;right:22px;width:56px;height:56px;border-radius:50%;background:var(--navy);color:var(--gold);border:none;font-size:23px;cursor:pointer;box-shadow:var(--shadow-lg);z-index:200;display:flex;align-items:center;justify-content:center;}
@@ -1521,6 +1522,21 @@ async function renderComunicacionScreenAsync(){
       <a href="https://wa.me/34630461560" target="_blank" rel="noopener" class="primary-btn" style="display:inline-block;background:#25D366;text-decoration:none;">💬 ${LANG_I==='ca'?'Obrir xat de WhatsApp':'Abrir chat de WhatsApp'}</a>
     </div>
 
+    <div class="panel-card" style="margin-bottom:16px;">
+      <h3>💬 ${LANG_I==='ca' ? 'Enviar una plantilla per WhatsApp' : 'Enviar una plantilla por WhatsApp'}</h3>
+      <p class="subtle" style="margin:0 0 10px;">${LANG_I==='ca'
+        ? 'Tria una plantilla, revisa el text i obre WhatsApp per triar a qui enviar-la.'
+        : 'Elige una plantilla, revisa el texto y abre WhatsApp para elegir a quién enviársela.'}</p>
+      <div class="field">
+        <select id="wa-plantilla-select" onchange="cargarPlantillaEnWhatsapp()">
+          <option value="">${LANG_I==='ca' ? '— Missatge lliure —' : '— Mensaje libre —'}</option>
+          ${(plantillas||[]).map(p => `<option value="${p.id}">${p.titulo}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><textarea id="wa-plantilla-texto" rows="3" placeholder="${LANG_I==='ca'?'Escriu o edita el missatge…':'Escribe o edita el mensaje…'}"></textarea></div>
+      <button class="primary-btn" style="background:#25D366;" onclick="abrirWhatsappConTexto()">💬 ${LANG_I==='ca' ? 'Obrir WhatsApp amb aquest missatge' : 'Abrir WhatsApp con este mensaje'}</button>
+    </div>
+
     ${IS_ADMIN ? `
     <div class="panel-card" style="margin-bottom:16px;">
       <h3>✉️ ${LANG_I==='ca' ? 'Enviar missatge intern' : 'Enviar mensaje interno'}</h3>
@@ -1563,6 +1579,23 @@ async function renderComunicacionScreenAsync(){
         : 'Envíos masivos e historial de mensajes de SMS y correo. El envío automático por WhatsApp requiere dar de alta la API de WhatsApp Business, que Logos todavía tiene que contratar.'}</p>
     </div>
   `;
+}
+
+function cargarPlantillaEnWhatsapp(){
+  const id = document.getElementById('wa-plantilla-select').value;
+  const texto = document.getElementById('wa-plantilla-texto');
+  if(!id){ return; }
+  const opt = document.getElementById('wa-plantilla-select').selectedOptions[0];
+  const titulo = opt ? opt.textContent : '';
+  sb.from('plantillas_mensajes').select('contenido').eq('id', id).maybeSingle().then(({ data }) => {
+    if(data) texto.value = data.contenido;
+  });
+}
+
+function abrirWhatsappConTexto(){
+  const texto = document.getElementById('wa-plantilla-texto').value.trim();
+  if(!texto){ alert(LANG_I==='ca' ? 'Escriu o tria un missatge primer.' : 'Escribe o elige un mensaje primero.'); return; }
+  window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
 }
 
 async function enviarMensajeInterno(){
