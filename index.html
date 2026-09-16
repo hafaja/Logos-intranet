@@ -3061,30 +3061,46 @@ function stepperItinerarioStaffHtml(etapaActualNum){
 async function renderMiPropioProyectoEntrada(){
   const cont = document.getElementById('mipropioproyecto-content');
   cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const esCA = LANG_I === 'ca';
 
   const { data: itinerarios } = await sb.from('itinerario_proyectos').select('*').eq('usuario_id', CURRENT_USER.id).eq('origen', 'tecnico').order('creado_en', { ascending:false });
   const enCurso = (itinerarios||[]).filter(it => it.estado === 'en_curso');
 
-  const continuarHtml = enCurso.length ? enCurso.map(it => {
+  const continuarHtml = enCurso.length ? enCurso.map((it, i) => {
     const etapaNum = it.etapa_actual > 7 ? 7 : (it.etapa_actual || 1);
+    const idAcordeon = 'proyecto-staff-' + it.id;
     return `
-    <div class="panel-card" style="margin-bottom:12px;">
-      <h3 style="margin:0 0 4px;">${it.nombre_proyecto || 'Idea sin nombre todavía'}</h3>
-      ${stepperItinerarioStaffHtml(etapaNum)}
-      <button class="primary-btn" style="margin:6px 0 0;" onclick="renderEtapaProyectoStaff('${it.id}', ${it.etapa_actual > 7 ? 8 : it.etapa_actual})">Continuar</button>
+    <div class="modulo-acordeon">
+      <button class="modulo-cabecera" onclick="toggleModuloCurso('${idAcordeon}')">
+        <span class="modulo-titulo">${it.nombre_proyecto || (esCA?'Idea sense nom encara':'Idea sin nombre todavía')}</span>
+        <span class="chip gold" style="flex-shrink:0;">${esCA?'Etapa':'Etapa'} ${etapaNum}/7</span>
+        <span class="modulo-flecha" id="${idAcordeon}-flecha">▾</span>
+      </button>
+      <div class="modulo-cuerpo" id="${idAcordeon}" style="display:none;">
+        ${stepperItinerarioStaffHtml(etapaNum)}
+        <button class="primary-btn" style="margin:6px 0 0;" onclick="renderEtapaProyectoStaff('${it.id}', ${it.etapa_actual > 7 ? 8 : it.etapa_actual})">${esCA?'Continuar':'Continuar'}</button>
+      </div>
     </div>`;
   }).join('') : '';
 
+  const iniciarBtnsHtml = `
+    <button class="primary-btn" style="background:var(--good);margin-bottom:10px;" onclick="iniciarItinerarioStaff('idea')">🟢 ${esCA?'Tinc una idea':'Tengo una idea'}</button>
+    <button class="primary-btn" style="background:var(--gold);margin-bottom:10px;" onclick="iniciarItinerarioStaff('existente')">🟡 ${esCA?'Ja tinc un projecte':'Ya tengo un proyecto'}</button>
+    <button class="primary-btn" style="background:var(--navy);margin-bottom:10px;" onclick="iniciarItinerarioStaff('mejorar')">🔵 ${esCA?'Vull millorar un projecte existent':'Quiero mejorar un proyecto existente'}</button>`;
+
   cont.innerHTML = `
     <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);margin-bottom:16px;">
-      <p style="margin:0;font-size:14px;">Método guiado, paso a paso, para dar de alta proyectos reales de Logos: de la idea al proyecto en marcha.</p>
+      <p style="margin:0;font-size:14px;">${esCA
+        ? 'Mètode guiat, pas a pas, per donar d\'alta projectes reals de Logos: de la idea al projecte en marxa.'
+        : 'Método guiado, paso a paso, para dar de alta proyectos reales de Logos: de la idea al proyecto en marcha.'}</p>
     </div>
 
     ${continuarHtml}
 
-    <button class="primary-btn" style="background:var(--good);margin-bottom:10px;" onclick="iniciarItinerarioStaff('idea')">🟢 Tengo una idea</button>
-    <button class="primary-btn" style="background:var(--gold);margin-bottom:10px;" onclick="iniciarItinerarioStaff('existente')">🟡 Ya tengo un proyecto</button>
-    <button class="primary-btn" style="background:var(--navy);margin-bottom:10px;" onclick="iniciarItinerarioStaff('mejorar')">🔵 Quiero mejorar un proyecto existente</button>
+    ${enCurso.length ? `
+      <button class="link-btn" onclick="document.getElementById('iniciar-otro-proyecto').style.display = document.getElementById('iniciar-otro-proyecto').style.display==='none' ? 'block' : 'none';">➕ ${esCA?'Començar un altre projecte nou':'Empezar otro proyecto nuevo'}</button>
+      <div id="iniciar-otro-proyecto" style="display:none;margin-top:10px;">${iniciarBtnsHtml}</div>
+    ` : iniciarBtnsHtml}
   `;
 }
 
