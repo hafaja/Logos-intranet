@@ -3041,6 +3041,20 @@ const ETAPAS_ITINERARIO_STAFF = [
     ]},
 ];
 
+function stepperItinerarioStaffHtml(etapaActualNum){
+  return `<div style="display:flex;align-items:flex-start;overflow-x:auto;padding:4px 0 8px;">${ETAPAS_ITINERARIO_STAFF.map((e, i) => {
+    const num = i + 1;
+    const completada = num < etapaActualNum;
+    const esActual = num === etapaActualNum;
+    const color = completada ? 'var(--good)' : esActual ? 'var(--gold)' : 'var(--line)';
+    const bg = completada ? 'var(--good-soft)' : esActual ? 'var(--gold-soft)' : 'var(--paper)';
+    return `<div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;padding:0 6px;">
+      <div style="width:32px;height:32px;border-radius:50%;background:${bg};border:2px solid ${color};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:${color};">${completada ? '✓' : e.icono}</div>
+      <span style="font-size:9.5px;font-weight:${esActual?'800':'600'};color:${esActual?'var(--ink)':'var(--ink-soft)'};white-space:nowrap;">${e.titulo}</span>
+    </div>`;
+  }).join('<div style="flex:1;height:2px;background:var(--line);margin-top:15px;min-width:10px;"></div>')}</div>`;
+}
+
 async function renderMiPropioProyectoEntrada(){
   const cont = document.getElementById('mipropioproyecto-content');
   cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
@@ -3048,16 +3062,19 @@ async function renderMiPropioProyectoEntrada(){
   const { data: itinerarios } = await sb.from('itinerario_proyectos').select('*').eq('usuario_id', CURRENT_USER.id).eq('origen', 'tecnico').order('creado_en', { ascending:false });
   const enCurso = (itinerarios||[]).filter(it => it.estado === 'en_curso');
 
-  const continuarHtml = enCurso.length ? enCurso.map(it => `
+  const continuarHtml = enCurso.length ? enCurso.map(it => {
+    const etapaNum = it.etapa_actual > 7 ? 7 : (it.etapa_actual || 1);
+    return `
     <div class="panel-card" style="margin-bottom:12px;">
       <h3 style="margin:0 0 4px;">${it.nombre_proyecto || 'Idea sin nombre todavía'}</h3>
-      <p class="subtle" style="margin:0 0 10px;">Vas por la etapa ${it.etapa_actual > 11 ? 11 : it.etapa_actual} de 11</p>
-      <button class="primary-btn" onclick="renderEtapaProyectoStaff('${it.id}', ${it.etapa_actual > 7 ? 8 : it.etapa_actual})">Continuar</button>
-    </div>`).join('') : '';
+      ${stepperItinerarioStaffHtml(etapaNum)}
+      <button class="primary-btn" style="margin:6px 0 0;" onclick="renderEtapaProyectoStaff('${it.id}', ${it.etapa_actual > 7 ? 8 : it.etapa_actual})">Continuar</button>
+    </div>`;
+  }).join('') : '';
 
   cont.innerHTML = `
     <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);margin-bottom:16px;">
-      <p style="margin:0;font-size:14px;">El mismo método guiado que usa la ciudadanía en Logos Acompanya, pero para dar de alta proyectos reales de la propia Logos: de la idea al proyecto en marcha, paso a paso.</p>
+      <p style="margin:0;font-size:14px;">Método guiado, paso a paso, para dar de alta proyectos reales de Logos: de la idea al proyecto en marcha.</p>
     </div>
 
     ${continuarHtml}
@@ -3092,9 +3109,7 @@ async function renderEtapaProyectoStaff(itinerarioId, etapaNum){
   }).join('');
 
   cont.innerHTML = `
-    <div class="panel-card" style="margin-bottom:16px;background:var(--good-soft, #DDEFD9);">
-      <p style="margin:0;font-size:12px;font-weight:700;">ETAPA ${etapaNum} DE 7</p>
-    </div>
+    ${stepperItinerarioStaffHtml(etapaNum)}
     <h2 class="screen-title">${etapa.icono} ${etapa.titulo}</h2>
     ${camposHtml}
     <div style="display:flex;gap:10px;margin-top:10px;">
