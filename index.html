@@ -283,6 +283,7 @@
       <button data-target="aulavirtual" onclick="showScreen('aulavirtual');renderAulaVirtualScreen()">🎥 Aula Virtual · Hub Logos</button>
       <button data-target="proyectos" onclick="showScreen('proyectos');renderProyectosScreen()">📁 Proyectos</button>
       <button data-target="ideasproyecto" onclick="showScreen('ideasproyecto');renderEmprendimientoListaStaff()">🚀 Emprendimiento</button>
+      <button data-target="innovacion" onclick="showScreen('innovacion');renderInnovacionScreen()">🔬 Asociación · Innovación y Programa</button>
       <button data-target="mipropioproyecto" onclick="showScreen('mipropioproyecto');renderMiPropioProyectoEntrada()">🏛️ Crea un proyecto de Logos</button>
       <button data-target="noticias" onclick="showScreen('noticias');renderNoticiasScreen()">📰 Portales del día</button>
       <button data-target="equipo" onclick="showScreen('equipo');renderEquipoScreen()">Trabajo en equipo</button>
@@ -416,6 +417,13 @@
     <div class="main-content">
       <div class="topbar"><span class="brand">🚀 Emprendimiento</span></div>
       <div class="content" id="ideasproyecto-content"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-innovacion">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">🔬 Associació · Innovació i Programa</span></div>
+      <div class="content" id="innovacion-content"></div>
     </div>
   </div>
 
@@ -2841,6 +2849,38 @@ async function borrarFuenteNoticia(id){
   renderNoticiasScreen();
 }
 
+function renderInnovacionScreen(){
+  const cont = document.getElementById('innovacion-content');
+  const esCA = LANG_I === 'ca';
+
+  const programas = [
+    { icono:'💡', es:'Ideas y proyectos piloto', ca:'Idees i projectes pilot', descEs:'Espacio para proponer y probar nuevas formas de trabajar o nuevos servicios antes de llevarlos a todo el equipo.', descCa:'Espai per proposar i provar noves formes de treballar o nous serveis abans de portar-los a tot l\'equip.' },
+    { icono:'🤝', es:'Alianzas y colaboraciones', ca:'Aliances i col·laboracions', descEs:'Relación con otras entidades, administraciones y empresas para ampliar lo que Logos puede ofrecer.', descCa:'Relació amb altres entitats, administracions i empreses per ampliar el que Logos pot oferir.' },
+    { icono:'📊', es:'Evaluación y mejora continua', ca:'Avaluació i millora contínua', descEs:'Revisión periódica de cómo funcionan los programas de Logos, para ajustarlos con datos reales.', descCa:'Revisió periòdica de com funcionen els programes de Logos, per ajustar-los amb dades reals.' },
+    { icono:'🌱', es:'Nuevos programas', ca:'Nous programes', descEs:'Seguimiento de programas en fase de diseño, todavía no lanzados de forma oficial.', descCa:'Seguiment de programes en fase de disseny, encara no llançats de forma oficial.' }
+  ];
+
+  cont.innerHTML = `
+    <p class="subtle" style="margin-bottom:16px;">${esCA
+      ? 'Espai de l\'associació per fer seguiment de la innovació i els programes en marxa o en preparació.'
+      : 'Espacio de la asociación para hacer seguimiento de la innovación y los programas en marcha o en preparación.'}</p>
+    <div class="cards-grid" style="margin-bottom:16px;">
+      ${programas.map(p => `
+        <div class="panel-card">
+          <div class="icon-badge" style="background:var(--gold-soft);color:#7A5A16;margin:0 0 8px;">${p.icono}</div>
+          <h3 style="margin:0 0 4px;">${esCA ? p.ca : p.es}</h3>
+          <p style="margin:0;font-size:13px;color:var(--ink-soft);">${esCA ? p.descCa : p.descEs}</p>
+        </div>`).join('')}
+    </div>
+    <div class="info-box" style="border-color:var(--line);background:var(--paper);">
+      <div class="info-box-title" style="color:var(--ink-soft);">${esCA?'Properament':'Próximamente'}</div>
+      <p>${esCA
+        ? 'Registre de propostes d\'innovació i seguiment del seu estat (en estudi, en prova, aprovat). De moment, aquesta pàgina és informativa.'
+        : 'Registro de propuestas de innovación y seguimiento de su estado (en estudio, en prueba, aprobado). Por ahora, esta página es informativa.'}</p>
+    </div>
+  `;
+}
+
 async function renderEmprendimientoListaStaff(){
   const cont = document.getElementById('ideasproyecto-content');
   cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
@@ -4625,15 +4665,66 @@ async function verPersonaStaff(usuarioId, origen){
     </div>
 
     <div class="persona-tabs">
+      <button class="ptab-btn active" data-tab="datos" onclick="mostrarTabPersona('datos')">📋 ${LANG_I==='ca'?'Dades personals':'Datos personales'}</button>
       <button class="ptab-btn" data-tab="proyectos" onclick="mostrarTabPersona('proyectos')">${t.tabProyectos}</button>
       <button class="ptab-btn" data-tab="formaciones" onclick="mostrarTabPersona('formaciones')">${t.tabFormaciones}</button>
       <button class="ptab-btn" data-tab="tramites" onclick="mostrarTabPersona('tramites')">${t.tabTramites}</button>
-      <button class="ptab-btn active" data-tab="actuaciones" onclick="mostrarTabPersona('actuaciones')">${t.tabActuaciones}</button>
+      <button class="ptab-btn" data-tab="actuaciones" onclick="mostrarTabPersona('actuaciones')">${t.tabActuaciones}</button>
       <button class="ptab-btn" data-tab="documentos" onclick="mostrarTabPersona('documentos')">${t.tabDocumentos}</button>
       <button class="ptab-btn" data-tab="citas" onclick="mostrarTabPersona('citas')">${t.tabCitas}</button>
       <button class="ptab-btn" data-tab="derivaciones" onclick="mostrarTabPersona('derivaciones')">${t.tabDerivaciones}</button>
       <button class="ptab-btn" data-tab="historial" onclick="mostrarTabPersona('historial')">${t.tabHistorial}</button>
       <button class="ptab-btn" data-tab="quienatendio" onclick="mostrarTabPersona('quienatendio')">${t.tabQuienAtendio}</button>
+    </div>
+
+    <div class="ptab-content active" id="ptab-datos">
+      <div class="panel-card">
+        <h3>📋 ${LANG_I==='ca'?'Dades personals':'Datos personales'}</h3>
+        <p class="subtle" style="margin:0 0 14px;">${LANG_I==='ca'
+          ? 'Completa aquí les dades que falten quan ajudis la persona per telèfon, WhatsApp o presencialment.'
+          : 'Completa aquí los datos que falten cuando ayudes a la persona por teléfono, WhatsApp o presencialmente.'}</p>
+        <div class="field"><label>${LANG_I==='ca'?'Nom i cognoms':'Nombre y apellidos'}</label><input type="text" id="pds-nombre" value="${p.nombre_completo||''}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Telèfon':'Teléfono'}</label><input type="tel" id="pds-telefono" value="${p.telefono||''}"></div>
+        <div class="field"><label>DNI/NIE</label><input type="text" id="pds-dni" value="${p.dni_nie||''}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Data de naixement':'Fecha de nacimiento'}</label><input type="date" id="pds-nacimiento" value="${p.fecha_nacimiento||''}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Carrer':'Calle'}</label><input type="text" id="pds-calle" value="${p.calle||''}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Municipi':'Municipio'}</label><input type="text" id="pds-municipio" value="${p.municipio||''}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Codi postal':'Código postal'}</label><input type="text" id="pds-cp" value="${p.codigo_postal||''}"></div>
+        <div class="field"><label>Provincia</label><input type="text" id="pds-provincia" value="${p.provincia||''}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Convivència':'Convivencia'}</label><input type="text" id="pds-convivencia" value="${p.convivencia||''}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Persones a la llar':'Personas en el hogar'}</label><input type="number" min="1" id="pds-personas-hogar" value="${p.personas_hogar||''}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Nombre de fills':'Número de hijos'}</label><input type="number" min="0" id="pds-num-hijos" value="${p.numero_hijos||''}"></div>
+        <div class="field">
+          <label>${LANG_I==='ca'?'Sexe':'Sexo'}</label>
+          <select id="pds-sexo">
+            <option value="">—</option>
+            <option value="mujer" ${p.sexo==='mujer'?'selected':''}>${LANG_I==='ca'?'Dona':'Mujer'}</option>
+            <option value="hombre" ${p.sexo==='hombre'?'selected':''}>${LANG_I==='ca'?'Home':'Hombre'}</option>
+            <option value="otro" ${p.sexo==='otro'?'selected':''}>${LANG_I==='ca'?'Altre':'Otro'}</option>
+            <option value="prefiero_no_decir" ${p.sexo==='prefiero_no_decir'?'selected':''}>${LANG_I==='ca'?'Prefereixo no dir-ho':'Prefiero no decirlo'}</option>
+          </select>
+        </div>
+        <div class="field"><label>${LANG_I==='ca'?'Situació laboral':'Situación laboral'}</label><input type="text" id="pds-laboral" value="${p.situacion_laboral||''}"></div>
+        <div class="field">
+          <label>${LANG_I==='ca'?'Discapacitat reconeguda':'Discapacidad reconocida'}</label>
+          <select id="pds-discapacidad">
+            <option value="">—</option>
+            <option value="true" ${p.discapacidad_reconocida===true?'selected':''}>${LANG_I==='ca'?'Sí':'Sí'}</option>
+            <option value="false" ${p.discapacidad_reconocida===false?'selected':''}>${LANG_I==='ca'?'No':'No'}</option>
+          </select>
+        </div>
+        <div class="field"><label>% ${LANG_I==='ca'?'de discapacitat':'de discapacidad'}</label><input type="number" min="0" max="100" id="pds-pct-discapacidad" value="${p.porcentaje_discapacidad||''}"></div>
+        <div class="field">
+          <label>${LANG_I==='ca'?'Dependència reconeguda':'Dependencia reconocida'}</label>
+          <select id="pds-dependencia">
+            <option value="">—</option>
+            <option value="true" ${p.dependencia_reconocida===true?'selected':''}>${LANG_I==='ca'?'Sí':'Sí'}</option>
+            <option value="false" ${p.dependencia_reconocida===false?'selected':''}>${LANG_I==='ca'?'No':'No'}</option>
+          </select>
+        </div>
+        <div class="field"><label>${LANG_I==='ca'?'Nivell d\'ingressos':'Nivel de ingresos'}</label><input type="text" id="pds-ingresos" value="${p.nivel_ingresos||''}"></div>
+        <button class="primary-btn" onclick="guardarDatosPersonaStaff('${p.id}')">💾 ${LANG_I==='ca'?'Desar dades':'Guardar datos'}</button>
+      </div>
     </div>
 
     <div class="ptab-content" id="ptab-proyectos">
@@ -4658,7 +4749,7 @@ async function verPersonaStaff(usuarioId, origen){
       <div class="panel-card"><h3>${t.actuacionesVinculadasFormaciones}</h3>${formacionesHtml}</div>
     </div>
 
-    <div class="ptab-content active" id="ptab-actuaciones">
+    <div class="ptab-content" id="ptab-actuaciones">
       <div class="panel-card">
         ${actuacionesHtml}
         <div class="doc-upload-row" style="margin-top:10px;text-align:left;">
@@ -4930,6 +5021,34 @@ async function descargarConsentimientoPDF(usuarioId, nombre, dni, fechaFirma){
     boton.textContent = textoOriginal;
     boton.disabled = false;
   }
+}
+
+async function guardarDatosPersonaStaff(usuarioId){
+  const val = id => document.getElementById(id).value.trim();
+  const boolOrNull = v => v === '' ? null : v === 'true';
+  const payload = {
+    nombre_completo: val('pds-nombre') || null,
+    telefono: val('pds-telefono') || null,
+    dni_nie: val('pds-dni') || null,
+    fecha_nacimiento: val('pds-nacimiento') || null,
+    calle: val('pds-calle') || null,
+    municipio: val('pds-municipio') || null,
+    codigo_postal: val('pds-cp') || null,
+    provincia: val('pds-provincia') || null,
+    convivencia: val('pds-convivencia') || null,
+    personas_hogar: val('pds-personas-hogar') ? parseInt(val('pds-personas-hogar')) : null,
+    numero_hijos: val('pds-num-hijos') ? parseInt(val('pds-num-hijos')) : null,
+    sexo: val('pds-sexo') || null,
+    situacion_laboral: val('pds-laboral') || null,
+    discapacidad_reconocida: boolOrNull(document.getElementById('pds-discapacidad').value),
+    porcentaje_discapacidad: val('pds-pct-discapacidad') ? parseInt(val('pds-pct-discapacidad')) : null,
+    dependencia_reconocida: boolOrNull(document.getElementById('pds-dependencia').value),
+    nivel_ingresos: val('pds-ingresos') || null
+  };
+  const { error } = await sb.from('perfiles').update(payload).eq('id', usuarioId);
+  if(error){ alert(error.message); return; }
+  alert(LANG_I==='ca' ? 'Dades desades correctament.' : 'Datos guardados correctamente.');
+  verPersonaStaff(usuarioId, 'panel');
 }
 
 function mostrarTabPersona(nombre){
