@@ -4740,6 +4740,7 @@ async function verPersonaStaff(usuarioId, origen){
       { key:'consolidacion', es:'Consolidación', ca:'Consolidació' }
     ];
     const completadas = emp.etapas_completadas || [];
+    const respuestas = emp.respuestas_etapas || {};
     const stepperHtml = etapas.map((e, i) => {
       const completada = completadas.includes(e.key);
       const esActual = e.key === (emp.etapa_actual || 'acogida');
@@ -4750,13 +4751,17 @@ async function verPersonaStaff(usuarioId, origen){
         <span style="font-size:9.5px;font-weight:${esActual?'800':'600'};color:${esActual?'var(--ink)':'var(--ink-soft)'};white-space:nowrap;">${LANG_I==='ca' ? e.ca : e.es}</span>
       </div>`;
     }).join('<div style="flex:1;height:2px;background:var(--line);margin-top:13px;min-width:10px;"></div>');
+    const respuestasHtml = etapas
+      .filter(e => respuestas[e.key])
+      .map(e => `<div style="margin-bottom:6px;"><strong style="font-size:12px;">${LANG_I==='ca'?e.ca:e.es}:</strong> <span style="font-size:12.5px;">${respuestas[e.key]}</span></div>`)
+      .join('');
     return `
       <div class="panel-card" style="margin-bottom:16px;background:var(--gold-soft);border-color:var(--gold);">
         <h3 style="color:#7A5A16;">🚀 ${LANG_I==='ca' ? 'Itinerari d\'emprenedoria' : 'Itinerario de emprendimiento'}</h3>
         ${emp.idea_negocio ? `<p style="margin:0 0 4px;"><strong>${LANG_I==='ca'?'Idea':'Idea'}:</strong> ${emp.idea_negocio}</p>` : ''}
         ${emp.sector ? `<p style="margin:0 0 10px;"><strong>Sector:</strong> ${emp.sector}</p>` : ''}
         <div style="display:flex;align-items:flex-start;overflow-x:auto;padding:4px 0 8px;">${stepperHtml}</div>
-        ${emp.notas ? `<p class="subtle" style="margin:0;font-size:12px;"><strong>${LANG_I==='ca'?'Notes':'Notas'}:</strong> ${emp.notas}</p>` : ''}
+        ${respuestasHtml ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--gold);">${respuestasHtml}</div>` : ''}
       </div>`;
   })() : '';
 
