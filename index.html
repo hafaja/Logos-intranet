@@ -392,6 +392,13 @@
     </div>
   </div>
 
+  <div class="screen" id="screen-altapresencial">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">🖊️ Alta presencial</span></div>
+      <div class="content" id="altapresencial-content"></div>
+    </div>
+  </div>
+
   <div class="screen" id="screen-comunicacion">
     <div class="main-content">
       <div class="topbar"><span class="brand">Comunicación</span></div>
@@ -1082,7 +1089,8 @@ async function renderMiEspacio(){
     </div>
 
     <button class="primary-btn" onclick="showScreen('atencion');renderAtencionForm()" style="margin-bottom:10px;margin-top:18px;">${t.registrarAtencion}</button>
-    <button class="primary-btn" style="background:var(--gold);margin-bottom:18px;" onclick="showScreen('buscarpersona');renderBuscarPersonaActuacion()">${t.registrarActuacion}</button>
+    <button class="primary-btn" style="background:var(--gold);margin-bottom:10px;" onclick="showScreen('buscarpersona');renderBuscarPersonaActuacion()">${t.registrarActuacion}</button>
+    <button class="primary-btn" style="background:var(--good);margin-bottom:18px;" onclick="showScreen('altapresencial');renderAltaPresencial()">🖊️ ${LANG_I==='ca'?'Alta presencial':'Alta presencial'}</button>
 
     <div class="panel-card">
       <h3>${t.tusProximasRevisiones}</h3>
@@ -1150,6 +1158,159 @@ function radioGroup(name, opts){
   return opts.map(([v,l]) => `<label class="checkbox-row"><input type="radio" name="${name}" value="${v}">${l}</label>`).join('');
 }
 
+function renderAltaPresencial(){
+  const esCA = LANG_I === 'ca';
+  document.getElementById('altapresencial-content').innerHTML = `
+    <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);margin-bottom:16px;">
+      <p style="margin:0;font-size:13.5px;">💡 ${esCA
+        ? 'Sempre que sigui possible, és preferible que la persona es registri ella mateixa des de <strong>Logos Acompanya</strong>, al seu propi ritme. Fes servir aquesta opció només quan la persona ho necessiti fer presencialment amb tu (no té dispositiu, necessita ajuda, etc.).'
+        : 'Siempre que sea posible, es preferible que la persona se registre ella misma desde <strong>Logos Acompanya</strong>, a su propio ritmo. Usa esta opción solo cuando la persona lo necesite hacer presencialmente contigo (no tiene dispositivo, necesita ayuda, etc.).'}</p>
+    </div>
+
+    <div class="panel-card">
+      <h3>${esCA ? 'Dades de la persona' : 'Datos de la persona'}</h3>
+      <div class="field"><label>${esCA ? 'Nom i cognoms' : 'Nombre y apellidos'} *</label><input type="text" id="ap-nombre"></div>
+      <div class="field"><label>${esCA ? 'Telèfon' : 'Teléfono'} *</label><input type="tel" id="ap-telefono"></div>
+      <div class="field"><label>DNI/NIE *</label><input type="text" id="ap-dni"></div>
+      <div class="field">
+        <label>${esCA ? 'Correu electrònic (opcional)' : 'Correo electrónico (opcional)'}</label>
+        <input type="email" id="ap-email">
+        <p class="subtle" style="margin-top:4px;">${esCA
+          ? 'Si no en té, es crearà un accés provisional. Podrà afegir el seu correu més endavant.'
+          : 'Si no tiene, se creará un acceso provisional. Podrá añadir su correo más adelante.'}</p>
+      </div>
+      <div class="field"><label>${esCA ? 'Municipi' : 'Municipio'}</label><input type="text" id="ap-municipio" value="Tarragona"></div>
+    </div>
+
+    <div class="panel-card">
+      <h3>${esCA ? 'Consentiment' : 'Consentimiento'}</h3>
+      <p class="subtle" style="margin:0 0 8px;">${esCA
+        ? 'Llegeix-li (o deixa-li llegir) el document de consentiment de Logos Acompanya abans de marcar les caselles.'
+        : 'Léele (o déjale leer) el documento de consentimiento de Logos Acompanya antes de marcar las casillas.'}</p>
+      <label class="checkbox-row"><input type="checkbox" id="ap-cons-tratamiento">${esCA ? 'AUTORITZA el tractament de les seves dades personals (RGPD i LOPDGDD).' : 'AUTORIZA el tratamiento de sus datos personales (RGPD y LOPDGDD).'} <span style="color:var(--alert);">*</span></label>
+      <label class="checkbox-row"><input type="checkbox" id="ap-cons-cesion">${esCA ? 'AUTORITZA la cessió de les seves dades als organismes públics que ho requereixin.' : 'AUTORIZA la cesión de sus datos a los organismos públicos que lo requieran.'}</label>
+      <label class="checkbox-row"><input type="checkbox" id="ap-cons-contacto">${esCA ? 'AUTORITZA el contacte per vies electròniques o telefòniques.' : 'AUTORIZA el contacto por vías electrónicas o telefónicas.'}</label>
+      <label class="checkbox-row"><input type="checkbox" id="ap-cons-imagen">${esCA ? 'AUTORITZA l\'ús de la seva imatge i/o veu amb finalitats informatives.' : 'AUTORIZA el uso de su imagen y/o voz con finalidades informativas.'}</label>
+    </div>
+
+    <div class="panel-card">
+      <h3>${esCA ? 'Signatura de la persona' : 'Firma de la persona'}</h3>
+      <p class="subtle" style="margin:0 0 8px;">${esCA ? 'Passa-li la tablet o el ratolí perquè firmi ella mateixa.' : 'Pásale la tablet o el ratón para que firme ella misma.'}</p>
+      <canvas id="ap-firma-canvas" width="500" height="150" style="border:1.5px dashed var(--line);border-radius:8px;width:100%;max-width:500px;display:block;touch-action:none;background:#fff;"></canvas>
+      <button class="link-btn" type="button" style="margin-top:6px;" onclick="limpiarFirmaCanvasAP()">🗑️ ${esCA ? 'Esborrar' : 'Borrar'}</button>
+    </div>
+
+    <button class="primary-btn" id="ap-btn-guardar" style="background:var(--good);" onclick="guardarAltaPresencial()">✅ ${esCA ? 'Crear compte i fitxa' : 'Crear cuenta y ficha'}</button>
+  `;
+  iniciarFirmaCanvasAP();
+}
+
+let __firmaCtxAP = null;
+let __firmaDrawingAP = false;
+function iniciarFirmaCanvasAP(){
+  const canvas = document.getElementById('ap-firma-canvas');
+  if(!canvas) return;
+  __firmaCtxAP = canvas.getContext('2d');
+  __firmaCtxAP.lineWidth = 2.2;
+  __firmaCtxAP.lineCap = 'round';
+  __firmaCtxAP.strokeStyle = '#17181C';
+  const getPos = (ev) => {
+    const rect = canvas.getBoundingClientRect();
+    const escalaX = canvas.width / rect.width;
+    const escalaY = canvas.height / rect.height;
+    const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+    const clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
+    return { x: (clientX - rect.left) * escalaX, y: (clientY - rect.top) * escalaY };
+  };
+  const empezar = (ev) => { ev.preventDefault(); __firmaDrawingAP = true; const p = getPos(ev); __firmaCtxAP.beginPath(); __firmaCtxAP.moveTo(p.x, p.y); };
+  const mover = (ev) => { if(!__firmaDrawingAP) return; ev.preventDefault(); const p = getPos(ev); __firmaCtxAP.lineTo(p.x, p.y); __firmaCtxAP.stroke(); };
+  const terminar = () => { __firmaDrawingAP = false; };
+  canvas.addEventListener('mousedown', empezar);
+  canvas.addEventListener('mousemove', mover);
+  canvas.addEventListener('mouseup', terminar);
+  canvas.addEventListener('mouseleave', terminar);
+  canvas.addEventListener('touchstart', empezar, { passive:false });
+  canvas.addEventListener('touchmove', mover, { passive:false });
+  canvas.addEventListener('touchend', terminar);
+}
+function limpiarFirmaCanvasAP(){
+  const canvas = document.getElementById('ap-firma-canvas');
+  if(canvas && __firmaCtxAP) __firmaCtxAP.clearRect(0, 0, canvas.width, canvas.height);
+}
+function firmaCanvasEstaVaciaAP(){
+  const canvas = document.getElementById('ap-firma-canvas');
+  if(!canvas) return true;
+  const ctx = canvas.getContext('2d');
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  for(let i = 3; i < data.length; i += 4){ if(data[i] !== 0) return false; }
+  return true;
+}
+
+async function guardarAltaPresencial(){
+  const esCA = LANG_I === 'ca';
+  const nombre = document.getElementById('ap-nombre').value.trim();
+  const telefono = document.getElementById('ap-telefono').value.trim();
+  const dni = document.getElementById('ap-dni').value.trim();
+  const email = document.getElementById('ap-email').value.trim();
+  const municipio = document.getElementById('ap-municipio').value.trim();
+
+  if(!nombre || !telefono || !dni){
+    alert(esCA ? 'Falten dades obligatòries (nom, telèfon o DNI/NIE).' : 'Faltan datos obligatorios (nombre, teléfono o DNI/NIE).');
+    return;
+  }
+  if(!document.getElementById('ap-cons-tratamiento').checked){
+    alert(esCA ? 'Cal marcar l\'autorització de tractament de dades.' : 'Debes marcar la autorización de tratamiento de datos.');
+    return;
+  }
+  if(firmaCanvasEstaVaciaAP()){
+    alert(esCA ? 'Falta la signatura de la persona.' : 'Falta la firma de la persona.');
+    return;
+  }
+
+  const btn = document.getElementById('ap-btn-guardar');
+  btn.disabled = true;
+  btn.textContent = esCA ? 'Creant…' : 'Creando…';
+
+  const firma = document.getElementById('ap-firma-canvas').toDataURL('image/png');
+
+  try {
+    const res = await fetch('https://foxtlpyfedwsvttzorql.supabase.co/functions/v1/alta-presencial', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
+      body: JSON.stringify({
+        nombre_completo: nombre, telefono, dni_nie: dni, email, municipio,
+        firma_base64: firma,
+        cons_cesion: document.getElementById('ap-cons-cesion').checked,
+        cons_contacto: document.getElementById('ap-cons-contacto').checked,
+        cons_imagen: document.getElementById('ap-cons-imagen').checked,
+        creado_por_email: CURRENT_USER.email,
+      }),
+    });
+    const data = await res.json();
+    if(!res.ok || data.error){
+      alert((esCA ? 'Error: ' : 'Error: ') + (data.error || 'desconocido'));
+      btn.disabled = false; btn.textContent = '✅ ' + (esCA ? 'Crear compte i fitxa' : 'Crear cuenta y ficha');
+      return;
+    }
+
+    let mensajeFinal = esCA ? '✅ Compte creat correctament.' : '✅ Cuenta creada correctamente.';
+    if(data.email_era_provisional){
+      mensajeFinal += esCA
+        ? `\n\nNo tenia correu, així que s'ha creat un accés provisional (${data.email_usado}). Quan tingui correu propi, podrà actualitzar-lo des de "Mi espacio".`
+        : `\n\nNo tenía correo, así que se ha creado un acceso provisional (${data.email_usado}). Cuando tenga correo propio, podrá actualizarlo desde "Mi espacio".`;
+    } else if(data.enlace_para_elegir_contrasena){
+      mensajeFinal += esCA
+        ? `\n\nEnllaç perquè triï la seva contrasenya quan vulgui:\n${data.enlace_para_elegir_contrasena}`
+        : `\n\nEnlace para que elija su contraseña cuando quiera:\n${data.enlace_para_elegir_contrasena}`;
+    }
+    alert(mensajeFinal);
+    showScreen('personas'); verPersonaStaff(data.usuario_id, 'personas');
+  } catch(e){
+    alert(esCA ? 'Error de connexió. Torna-ho a provar.' : 'Error de conexión. Inténtalo de nuevo.');
+    btn.disabled = false; btn.textContent = '✅ ' + (esCA ? 'Crear compte i fitxa' : 'Crear cuenta y ficha');
+  }
+}
+
 function renderAtencionForm(){
   window.__atencionUsuarioVinculado = null;
   document.getElementById('atencion-content').innerHTML = `
@@ -1164,6 +1325,7 @@ function renderAtencionForm(){
         <span id="at-usuario-vinculado-texto"></span>
         <button class="link-btn" style="margin-left:8px;font-size:11px;" onclick="desvincularUsuarioAtencion()">Quitar</button>
       </div>
+      <button class="link-btn" id="at-ver-ficha-btn" style="display:none;margin-top:6px;" onclick="showScreen('personas');verPersonaStaff(window.__atencionUsuarioVinculado,'personas')">📋 Ver/completar su ficha completa</button>
     </div>
 
     <div class="field">
@@ -1273,10 +1435,12 @@ function vincularUsuarioAtencion(usuarioId, nombre){
   const chip = document.getElementById('at-usuario-vinculado');
   chip.style.display = 'inline-flex';
   document.getElementById('at-usuario-vinculado-texto').textContent = 'Vinculado a: ' + nombre;
+  document.getElementById('at-ver-ficha-btn').style.display = 'inline-block';
 }
 function desvincularUsuarioAtencion(){
   window.__atencionUsuarioVinculado = null;
   document.getElementById('at-usuario-vinculado').style.display = 'none';
+  document.getElementById('at-ver-ficha-btn').style.display = 'none';
 }
 
 async function guardarAtencion(){
