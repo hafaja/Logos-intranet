@@ -3050,7 +3050,11 @@ async function renderEmprendimientoListaStaff(){
   cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
   const esCA = LANG_I === 'ca';
 
-  const { data: registros } = await sb.from('emprendimiento').select('*').order('actualizado_en', { ascending:false });
+  const { data: registros, error } = await sb.from('emprendimiento').select('*').order('actualizado_en', { ascending:false });
+  if(error){
+    cont.innerHTML = `<div class="empty-note">Error al cargar: ${error.message}</div>`;
+    return;
+  }
   const idsUsuarios = [...new Set((registros||[]).map(r => r.usuario_id).filter(Boolean))];
   let nombresUsuarios = {};
   if(idsUsuarios.length){
