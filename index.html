@@ -4142,8 +4142,8 @@ async function renderEquipoScreen(){
     if(trabajandoAhora){
       const ocup = ocupacionPorEmail[email];
       if(ocup){
-        if(ocup.sala === 0) return { color:'var(--gold)', texto: LANG_I==='ca' ? '📅 En reunió' : '📅 En reunión' };
-        return { color:'#33449E', texto: (LANG_I==='ca' ? '🚪 A la sala ' : '🚪 En sala ') + ocup.sala };
+        if(ocup.sala === 0) return { color:'#7A3FA0', texto: LANG_I==='ca' ? '📅 En reunió' : '📅 En reunión' };
+        return { color:'var(--gold)', texto: (LANG_I==='ca' ? '🟡 Atenent (sala ' : '🟡 Atendiendo (sala ') + ocup.sala + ')' };
       }
       return { color:'var(--good)', texto: LANG_I==='ca' ? '🟢 Disponible' : '🟢 Disponible' };
     }
