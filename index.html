@@ -272,6 +272,7 @@
     <nav>
       <button class="active" data-target="panel" onclick="showScreen('panel');renderPanelGeneral()">Inicio</button>
       <button data-target="miespacio" onclick="showScreen('miespacio');renderMiEspacio()">Mi espacio</button>
+      <button data-target="salas" onclick="showScreen('salas');renderSalasAtencion()" id="nav-salas-btn">🚪 Salas de atención</button>
       <button data-target="personas" onclick="showScreen('personas');renderPersonasScreen()">Personas usuarias</button>
       <button data-target="expedientes" onclick="showScreen('seguimiento');renderSeguimientoScreen()">Expedientes</button>
       <button data-target="tramitesglobal" onclick="showScreen('tramitesglobal');renderTramitesGlobalScreen()">Trámites y ayudas</button>
@@ -312,6 +313,15 @@
     <div class="main-content">
       <div class="topbar"><span class="brand">Mi espacio</span></div>
       <div class="content" id="miespacio-content">
+        <div class="placeholder">Cargando…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-salas">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">🚪 Salas de atención</span></div>
+      <div class="content" id="salas-content">
         <div class="placeholder">Cargando…</div>
       </div>
     </div>
@@ -941,6 +951,66 @@ async function ficharSalida(id){
   const { error } = await sb.from('fichajes').update(payload).eq('id', id);
   if(error){ alert(error.message); return; }
   renderMiEspacio();
+}
+
+const NUM_SALAS_ATENCION = 3;
+
+async function renderSalasAtencion(){
+  const cont = document.getElementById('salas-content');
+  const esCA = LANG_I === 'ca';
+  cont.innerHTML = `<div class="placeholder">${esCA?'Carregant…':'Cargando…'}</div>`;
+
+  const [{ data: ocupaciones }, { data: staffList }] = await Promise.all([
+    sb.from('fichajes_sala').select('*').is('fin', null).order('inicio', { ascending:true }),
+    sb.from('staff').select('email, nombre')
+  ]);
+  (staffList || []).forEach(s => { if(s.nombre) __mapaNombresTecnicos[s.email] = s.nombre; });
+
+  const ocupacionPorSala = {};
+  (ocupaciones || []).forEach(o => { ocupacionPorSala[o.sala] = o; });
+
+  const horaFmt = iso => new Date(iso).toLocaleTimeString(esCA?'ca-ES':'es-ES', { hour:'2-digit', minute:'2-digit' });
+
+  const salasHtml = Array.from({ length: NUM_SALAS_ATENCION }, (_, i) => i + 1).map(sala => {
+    const ocup = ocupacionPorSala[sala];
+    if(!ocup){
+      return `
+      <div class="panel-card" style="text-align:center;background:var(--good-soft);border-color:var(--good);">
+        <h3 style="text-align:center;">${esCA?'Sala':'Sala'} ${sala}</h3>
+        <p style="margin:0 0 12px;font-size:13.5px;">🟢 ${esCA?'Lliure':'Libre'}</p>
+        <button class="primary-btn" onclick="iniciarAtencionSala(${sala})">${esCA?'Començar atenció aquí':'Empezar atención aquí'}</button>
+      </div>`;
+    }
+    const esMia = ocup.tecnico_email === CURRENT_USER.email;
+    return `
+      <div class="panel-card" style="text-align:center;background:${esMia?'var(--gold-soft)':'var(--alert-soft)'};border-color:${esMia?'var(--gold)':'var(--alert)'};">
+        <h3 style="text-align:center;">${esCA?'Sala':'Sala'} ${sala}</h3>
+        <p style="margin:0 0 4px;font-size:13.5px;">🔴 ${esCA?'Ocupada':'Ocupada'}</p>
+        <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-soft);">${nombreTecnico(ocup.tecnico_email)}${esCA?' · des de les ':' · desde las '}${horaFmt(ocup.inicio)}</p>
+        ${esMia
+          ? `<button class="primary-btn" style="background:var(--alert);" onclick="finalizarAtencionSala('${ocup.id}')">${esCA?'Finalitzar atenció':'Finalizar atención'}</button>`
+          : `<p class="subtle" style="margin:0;">${esCA?'En ús per un altre tècnic':'En uso por otro técnico'}</p>`}
+      </div>`;
+  }).join('');
+
+  cont.innerHTML = `
+    <p class="subtle" style="margin-bottom:16px;">${esCA
+      ? 'Marca aquí quan comences i acabes una atenció presencial en una sala, perquè la resta de l\'equip sàpiga quines estan lliures.'
+      : 'Marca aquí cuando empiezas y terminas una atención presencial en una sala, para que el resto del equipo sepa cuáles están libres.'}</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;">${salasHtml}</div>
+  `;
+}
+
+async function iniciarAtencionSala(sala){
+  const { error } = await sb.from('fichajes_sala').insert({ sala, tecnico_email: CURRENT_USER.email });
+  if(error){ alert(error.message); return; }
+  renderSalasAtencion();
+}
+
+async function finalizarAtencionSala(id){
+  const { error } = await sb.from('fichajes_sala').update({ fin: new Date().toISOString() }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderSalasAtencion();
 }
 
 async function renderMiEspacio(){
@@ -3598,13 +3668,17 @@ async function renderProyectosScreen(){
         <div class="panel-card">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
             <h3 style="margin:0;">📁 ${pr.nombre}</h3>
-            <span class="chip ${estadoColor[pr.estado]||''}" style="flex-shrink:0;">${estadoTexto[pr.estado]||pr.estado}</span>
+            <span style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+              <span class="chip ${estadoColor[pr.estado]||''}">${estadoTexto[pr.estado]||pr.estado}</span>
+              <button onclick="borrarProyecto('${pr.id}')" title="${esCA?'Esborrar projecte':'Borrar proyecto'}" style="background:none;border:none;color:var(--alert);font-size:16px;font-weight:800;cursor:pointer;padding:2px 4px;line-height:1;">✕</button>
+            </span>
           </div>
           ${pr.descripcion ? `<p class="subtle" style="margin:4px 0 8px;">${pr.descripcion}</p>` : ''}
           ${(pr.fecha_inicio||pr.fecha_final) ? `<div class="panel-stat-row"><span>${esCA?'Dates':'Fechas'}</span><span>${pr.fecha_inicio?new Date(pr.fecha_inicio+'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha):'—'} – ${pr.fecha_final?new Date(pr.fecha_final+'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha):'—'}</span></div>` : ''}
           <div class="panel-stat-row"><span>${esCA?'Beneficiaris':'Beneficiarios'}</span><span><strong>${c.beneficiarios}</strong></span></div>
           <div class="panel-stat-row"><span>${esCA?'Professionals':'Profesionales'}</span><span><strong>${c.profesionales}</strong></span></div>
           <button class="primary-btn" style="margin-top:10px;" onclick="verProyecto('${pr.id}')">${esCA?'Obrir projecte':'Abrir proyecto'}</button>
+          <button class="link-btn" style="margin-top:8px;display:block;text-align:center;" onclick="exportarProyectoExcel('${pr.id}','${pr.nombre.replace(/'/g,"\\'")}')">⬇️ ${esCA?'Exportar llistat (Excel)':'Exportar listado (Excel)'}</button>
         </div>`;
       }).join('')
     : `<div class="empty-note">${esCA ? 'Encara no hi ha projectes.' : 'Todavía no hay proyectos.'}</div>`;
@@ -3672,6 +3746,47 @@ async function cambiarEstadoProyecto(proyectoId, estado){
   await sb.from('proyectos').update({ estado }).eq('id', proyectoId);
 }
 
+function celdaCSV(valor){
+  const texto = (valor === null || valor === undefined) ? '' : String(valor);
+  return `"${texto.replace(/"/g, '""')}"`;
+}
+
+async function exportarProyectoExcel(proyectoId, nombreProyecto){
+  const esCA = LANG_I === 'ca';
+  const { data: participantes, error } = await sb.from('proyecto_participantes').select('*, perfiles(nombre_completo, telefono, municipio, dni_nie)').eq('proyecto_id', proyectoId);
+  if(error){ alert(error.message); return; }
+  if(!participantes || !participantes.length){
+    alert(esCA ? 'Aquest projecte encara no té ningú afegit.' : 'Este proyecto todavía no tiene a nadie añadido.');
+    return;
+  }
+
+  const cabecera = ['Nombre', 'Rol', 'DNI/NIE', 'Teléfono', 'Municipio', 'Fecha de alta'];
+  const filas = participantes.map(pp => {
+    const p = pp.perfiles || {};
+    return [
+      p.nombre_completo || '—',
+      pp.rol === 'profesional' ? 'Profesional' : 'Beneficiario',
+      p.dni_nie || '',
+      p.telefono || '',
+      p.municipio || '',
+      pp.creado_en ? new Date(pp.creado_en).toLocaleDateString('es-ES') : ''
+    ];
+  });
+
+  const filasCSV = [cabecera, ...filas].map(fila => fila.map(celdaCSV).join(';')).join('\r\n');
+  const csvConBOM = '\uFEFF' + filasCSV; // BOM para que Excel detecte bien los acentos
+
+  const blob = new Blob([csvConBOM], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = `${nombreProyecto.replace(/[^a-zA-Z0-9]+/g, '-')}.csv`;
+  document.body.appendChild(enlace);
+  enlace.click();
+  document.body.removeChild(enlace);
+  URL.revokeObjectURL(url);
+}
+
 async function borrarProyecto(proyectoId){
   const esCA = LANG_I === 'ca';
   if(!confirm(esCA ? 'Segur que vols esborrar aquest projecte? Es perdrà tota la seva informació.' : '¿Seguro que quieres borrar este proyecto? Se perderá toda su información.')) return;
@@ -3681,6 +3796,35 @@ async function borrarProyecto(proyectoId){
 }
 
 window.__proyectoActual = null;
+window.__fechaAsistenciaProyecto = null;
+
+function cambiarFechaAsistencia(proyectoId, fecha){
+  window.__fechaAsistenciaProyecto = fecha;
+  verProyecto(proyectoId);
+}
+
+async function guardarAsistenciaProyecto(proyectoId){
+  const esCA = LANG_I === 'ca';
+  const fecha = document.getElementById('asistencia-fecha-input').value;
+  if(!fecha){ alert(esCA ? 'Tria un dia.' : 'Elige un día.'); return; }
+
+  const { data: participantes } = await sb.from('proyecto_participantes').select('usuario_id').eq('proyecto_id', proyectoId).eq('rol', 'beneficiario');
+  const beneficiarioIds = (participantes || []).map(p => p.usuario_id).filter(Boolean);
+
+  const marcados = beneficiarioIds.filter(id => document.getElementById(`asis-${id}`) && document.getElementById(`asis-${id}`).checked);
+  const noMarcados = beneficiarioIds.filter(id => !marcados.includes(id));
+
+  if(marcados.length){
+    const filas = marcados.map(usuario_id => ({ proyecto_id: proyectoId, usuario_id, fecha, registrado_por_email: CURRENT_USER.email }));
+    const { error } = await sb.from('proyecto_asistencias').upsert(filas, { onConflict: 'proyecto_id,usuario_id,fecha' });
+    if(error){ alert(error.message); return; }
+  }
+  if(noMarcados.length){
+    await sb.from('proyecto_asistencias').delete().eq('proyecto_id', proyectoId).eq('fecha', fecha).in('usuario_id', noMarcados);
+  }
+  window.__fechaAsistenciaProyecto = fecha;
+  verProyecto(proyectoId);
+}
 
 async function verProyecto(proyectoId){
   window.__proyectoActual = proyectoId;
@@ -3691,13 +3835,14 @@ async function verProyecto(proyectoId){
 
   try {
 
-  const [{ data: proyecto, error: errorProyecto }, { data: participantes }, { data: actividades }, { data: avisos }, { data: seguimientos }, { data: staffLista }] = await Promise.all([
+  const [{ data: proyecto, error: errorProyecto }, { data: participantes }, { data: actividades }, { data: avisos }, { data: seguimientos }, { data: staffLista }, { data: asistencias }] = await Promise.all([
     sb.from('proyectos').select('*').eq('id', proyectoId).maybeSingle(),
     sb.from('proyecto_participantes').select('*').eq('proyecto_id', proyectoId),
     sb.from('proyecto_actividades').select('*').eq('proyecto_id', proyectoId).order('fecha', { ascending:false }),
     sb.from('proyecto_avisos').select('*').eq('proyecto_id', proyectoId).order('creado_en', { ascending:false }),
     sb.from('actuaciones').select('*').eq('proyecto_id', proyectoId).order('fecha', { ascending:false }),
-    sb.from('staff').select('email, nombre').eq('activo', true)
+    sb.from('staff').select('email, nombre').eq('activo', true),
+    sb.from('proyecto_asistencias').select('*').eq('proyecto_id', proyectoId)
   ]);
 
   if(errorProyecto){
@@ -3758,6 +3903,21 @@ async function verProyecto(proyectoId){
     ? seguimientos.map(renderActuacionCard).join('')
     : `<div class="empty-note">${esCA?'Encara no hi ha seguiments vinculats a aquest projecte.':'Todavía no hay seguimientos vinculados a este proyecto.'}</div>`;
 
+  const fechaAsistenciaSel = window.__fechaAsistenciaProyecto || new Date().toISOString().slice(0,10);
+  const asistenciasFecha = (asistencias || []).filter(a => a.fecha === fechaAsistenciaSel);
+  const asistioHoy = new Set(asistenciasFecha.map(a => a.usuario_id));
+  const conteoAsistencias = {};
+  (asistencias || []).forEach(a => { conteoAsistencias[a.usuario_id] = (conteoAsistencias[a.usuario_id] || 0) + 1; });
+
+  const asistenciaHtml = beneficiarios.length
+    ? beneficiarios.map(b => `
+        <label class="checkbox-row">
+          <input type="checkbox" id="asis-${b.usuario_id}" ${asistioHoy.has(b.usuario_id) ? 'checked' : ''}>
+          ${nombresBeneficiarios[b.usuario_id] || (esCA?'Sense nom':'Sin nombre')}
+          <span class="subtle" style="margin-left:auto;font-size:11px;">${esCA?'total':'total'}: ${conteoAsistencias[b.usuario_id] || 0}</span>
+        </label>`).join('')
+    : `<div class="empty-note">${esCA?'Encara no hi ha beneficiaris.':'Todavía no hay beneficiarios.'}</div>`;
+
   wrap.innerHTML = `
     <div class="panel-card" style="margin-top:16px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
@@ -3777,6 +3937,16 @@ async function verProyecto(proyectoId){
       <h3>👥 ${esCA?'Beneficiaris':'Beneficiarios'}</h3>
       ${beneficiariosHtml}
       <p class="subtle" style="margin:10px 0 4px;">${esCA?'Per afegir un beneficiari, ves a la seva fitxa (Persones usuàries) i afegeix-lo des de la pestanya \"Projectes\".':'Para añadir un beneficiario, ve a su ficha (Personas usuarias) y añádelo desde la pestaña \"Proyectos\".'}</p>
+    </div>
+
+    <div class="panel-card">
+      <h3>📆 ${esCA?'Assistència':'Asistencia'}</h3>
+      <div class="field">
+        <label>${esCA?'Dia':'Día'}</label>
+        <input type="date" id="asistencia-fecha-input" value="${fechaAsistenciaSel}" onchange="cambiarFechaAsistencia('${proyectoId}', this.value)">
+      </div>
+      ${asistenciaHtml}
+      ${beneficiarios.length ? `<button class="primary-btn" style="margin-top:10px;" onclick="guardarAsistenciaProyecto('${proyectoId}')">💾 ${esCA?'Desar assistència del dia':'Guardar asistencia del día'}</button>` : ''}
     </div>
 
     <div class="panel-card">
@@ -4732,6 +4902,7 @@ async function verPersonaStaff(usuarioId, origen){
     : `<div class="empty-note">${LANG_I==='ca' ? 'Encara no participa en cap projecte.' : 'Todavía no participa en ningún proyecto.'}</div>`;
   const proyectosDisponibles = (todosProyectosRes.data || []).filter(pr => !misProyectosLista.some(mp => mp.proyecto_id === pr.id));
 
+  if(emprendimientoRes.error) console.error('Error cargando emprendimiento en ficha:', emprendimientoRes.error.message);
   const emp = emprendimientoRes.data;
   const emprendimientoHtml = emp ? (() => {
     const etapas = [
@@ -5755,6 +5926,12 @@ async function agregarTecnico(){
 }
 
 async function toggleActivoTecnico(email, nuevoEstadoActivo){
+  if(!nuevoEstadoActivo && email === CURRENT_USER.email){
+    alert(LANG_I==='ca'
+      ? 'No et pots desactivar a tu mateix/a. Demana a un altre administrador que ho faci si cal.'
+      : 'No puedes desactivarte a ti mismo/a. Pide a otro administrador que lo haga si hace falta.');
+    return;
+  }
   await sb.from('staff').update({ activo: nuevoEstadoActivo }).eq('email', email);
   renderAdministrador();
 }
