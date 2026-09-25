@@ -4135,22 +4135,27 @@ async function renderEquipoScreen(){
   const ocupacionPorEmail = {};
   (ocupacionesRes.data || []).forEach(o => { ocupacionPorEmail[o.tecnico_email] = o; });
 
+  const horaFmtEquipo = iso => new Date(iso).toLocaleTimeString(LANG_I==='ca'?'ca-ES':'es-ES', { hour:'2-digit', minute:'2-digit' });
+
   const estadoDe = (email, esAdmin) => {
     // El fichaje real manda siempre: si ha fichado hoy, está disponible, esté o no en periodo de vacaciones.
     const fichajes = fichajesPorEmail[email] || [];
-    const trabajandoAhora = fichajes.some(f => !f.salida);
-    if(trabajandoAhora){
+    const fichajeAbierto = fichajes.find(f => !f.salida);
+    if(fichajeAbierto){
+      const base = { color:'var(--good)', texto: (LANG_I==='ca' ? '🟢 Fitxat des de les ' : '🟢 Fichado desde las ') + horaFmtEquipo(fichajeAbierto.entrada) };
       const ocup = ocupacionPorEmail[email];
+      let actividad = null;
       if(ocup){
-        if(ocup.sala === 0) return { color:'#7A3FA0', texto: LANG_I==='ca' ? '📅 En reunió' : '📅 En reunión' };
-        return { color:'var(--gold)', texto: (LANG_I==='ca' ? '🟡 Atenent (sala ' : '🟡 Atendiendo (sala ') + ocup.sala + ')' };
+        actividad = ocup.sala === 0
+          ? { color:'#7A3FA0', texto: LANG_I==='ca' ? '📅 En reunió' : '📅 En reunión' }
+          : { color:'var(--gold)', texto: (LANG_I==='ca' ? '🟡 Atenent (sala ' : '🟡 Atendiendo (sala ') + ocup.sala + ')' };
       }
-      return { color:'var(--good)', texto: LANG_I==='ca' ? '🟢 Disponible' : '🟢 Disponible' };
+      return { base, actividad };
     }
     if(enPeriodoVacaciones && !esAdmin){
-      return { color:'#94A3B8', texto: LANG_I==='ca' ? '🏖️ Vacances' : '🏖️ Vacaciones' };
+      return { base: { color:'#94A3B8', texto: LANG_I==='ca' ? '🏖️ Vacances' : '🏖️ Vacaciones' }, actividad: null };
     }
-    return { color:'var(--alert)', texto: LANG_I==='ca' ? '🔴 No disponible' : '🔴 No disponible' };
+    return { base: { color:'var(--alert)', texto: LANG_I==='ca' ? '🔴 No disponible' : '🔴 No disponible' }, actividad: null };
   };
 
   const data = staffRes.data;
@@ -4159,7 +4164,10 @@ async function renderEquipoScreen(){
         const estado = estadoDe(s.email, s.es_admin);
         return `<div class="panel-stat-row">
           <span>${s.nombre ? `<strong>${s.nombre}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${s.email}</span>` : s.email}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}</span>
-          <span class="chip" style="background:${estado.color};color:#fff;">${estado.texto}</span>
+          <span style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+            <span class="chip" style="background:${estado.base.color};color:#fff;">${estado.base.texto}</span>
+            ${estado.actividad ? `<span class="chip" style="background:${estado.actividad.color};color:#fff;">${estado.actividad.texto}</span>` : ''}
+          </span>
         </div>`;
       }).join('')
     : `<div class="empty-note">—</div>`;
