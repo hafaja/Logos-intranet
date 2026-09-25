@@ -952,11 +952,17 @@ async function ficharSalida(id){
   renderMiEspacio();
 }
 
-const NUM_SALAS_ATENCION = 3;
+const PLAZAS_ATENCION = [
+  { id:'1A', label:'1A' }, { id:'1B', label:'1B' }, { id:'1C', label:'1C' }, { id:'1D', label:'1D' },
+  { id:'2A', label:'2A' }, { id:'2B', label:'2B' }, { id:'2C', label:'2C' }, { id:'2D', label:'2D' },
+  { id:'3', label:'3' }
+];
 
 async function construirSalasAtencionHtml(){
   const esCA = LANG_I === 'ca';
-  const hoyIso = new Date().toISOString().slice(0,10);
+  const ahora = new Date();
+  const ahoraIso = ahora.toISOString();
+  const hoyIso = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 0, 0, 0).toISOString();
   const [{ data: ocupaciones }, { data: staffList }, { data: miHistorialHoy }] = await Promise.all([
     sb.from('fichajes_sala').select('*').is('fin', null).order('inicio', { ascending:true }),
     sb.from('staff').select('email, nombre'),
@@ -964,41 +970,59 @@ async function construirSalasAtencionHtml(){
   ]);
   (staffList || []).forEach(s => { if(s.nombre) __mapaNombresTecnicos[s.email] = s.nombre; });
 
-  const ocupacionPorSala = {};
+  const ocupacionPorPlaza = {};
   let reunionMia = null;
-  let ocupacionMiaActual = null;
+  let ocupacionMiaActual = null; // algo que YA está en curso ahora mismo (bloquea empezar otra cosa AHORA)
   (ocupaciones || []).forEach(o => {
-    if(o.sala === 0){
-      if(o.tecnico_email === CURRENT_USER.email) reunionMia = o;
+    const enCursoYa = o.inicio <= ahoraIso;
+    if(o.sala === 'reunion'){
+      if(o.tecnico_email === CURRENT_USER.email && enCursoYa) reunionMia = o;
     } else {
-      ocupacionPorSala[o.sala] = o;
+      // Si hay más de una fila para la misma plaza (no debería), nos quedamos con la que ya está en curso.
+      if(!ocupacionPorPlaza[o.sala] || enCursoYa) ocupacionPorPlaza[o.sala] = o;
     }
-    if(o.tecnico_email === CURRENT_USER.email) ocupacionMiaActual = o;
+    if(o.tecnico_email === CURRENT_USER.email && enCursoYa) ocupacionMiaActual = o;
   });
 
   const horaFmt = iso => new Date(iso).toLocaleTimeString(esCA?'ca-ES':'es-ES', { hour:'2-digit', minute:'2-digit' });
+  const fechaHoraFmt = iso => new Date(iso).toLocaleString(esCA?'ca-ES':'es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
 
-  const salasHtml = Array.from({ length: NUM_SALAS_ATENCION }, (_, i) => i + 1).map(sala => {
-    const ocup = ocupacionPorSala[sala];
+  const tarjetaPlaza = (plazaId) => {
+    const ocup = ocupacionPorPlaza[plazaId];
     if(!ocup){
       return `
       <div class="panel-card" style="text-align:center;background:var(--good-soft);border-color:var(--good);">
-        <h3 style="text-align:center;">${esCA?'Sala':'Sala'} ${sala}</h3>
+        <h3 style="text-align:center;">${plazaId}</h3>
         <p style="margin:0 0 12px;font-size:13.5px;">🟢 ${esCA?'Lliure':'Libre'}</p>
-        <button class="primary-btn" ${ocupacionMiaActual ? 'disabled' : ''} onclick="iniciarAtencionSala(${sala})">${esCA?'Començar atenció aquí':'Empezar atención aquí'}</button>
+        <button class="primary-btn" style="margin-bottom:6px;" ${ocupacionMiaActual ? 'disabled' : ''} onclick="iniciarAtencionSala('${plazaId}')">${esCA?'Començar ara':'Empezar ahora'}</button>
+        <button class="link-btn" onclick="abrirReservaPlaza('${plazaId}')">📅 ${esCA?'Reservar per a més tard':'Reservar para más tarde'}</button>
       </div>`;
     }
     const esMia = ocup.tecnico_email === CURRENT_USER.email;
+    const esReserva = ocup.inicio > ahoraIso;
+    if(esReserva){
+      return `
+      <div class="panel-card" style="text-align:center;background:#EAF1F8;border-color:#2E5A8F;">
+        <h3 style="text-align:center;">${plazaId}</h3>
+        <p style="margin:0 0 4px;font-size:13.5px;">🔵 ${esCA?'Reservada':'Reservada'}</p>
+        <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-soft);">${nombreTecnico(ocup.tecnico_email)}${esCA?' · per a ':' · para '}${fechaHoraFmt(ocup.inicio)}</p>
+        ${esMia ? `<button class="link-btn" style="color:var(--alert);" onclick="finalizarAtencionSala('${ocup.id}')">${esCA?'Cancel·lar reserva':'Cancelar reserva'}</button>` : ''}
+      </div>`;
+    }
     return `
       <div class="panel-card" style="text-align:center;background:${esMia?'var(--gold-soft)':'var(--alert-soft)'};border-color:${esMia?'var(--gold)':'var(--alert)'};">
-        <h3 style="text-align:center;">${esCA?'Sala':'Sala'} ${sala}</h3>
+        <h3 style="text-align:center;">${plazaId}</h3>
         <p style="margin:0 0 4px;font-size:13.5px;">🔴 ${esCA?'Ocupada':'Ocupada'}</p>
         <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-soft);">${nombreTecnico(ocup.tecnico_email)}${esCA?' · des de les ':' · desde las '}${horaFmt(ocup.inicio)}</p>
         ${esMia
           ? `<button class="primary-btn" style="background:var(--alert);" onclick="finalizarAtencionSala('${ocup.id}')">${esCA?'Finalitzar atenció':'Finalizar atención'}</button>`
           : `<p class="subtle" style="margin:0;">${esCA?'En ús per un altre tècnic':'En uso por otro técnico'}</p>`}
       </div>`;
-  }).join('');
+  };
+
+  const sala1Html = PLAZAS_ATENCION.filter(p => p.id.startsWith('1')).map(p => tarjetaPlaza(p.id)).join('');
+  const sala2Html = PLAZAS_ATENCION.filter(p => p.id.startsWith('2')).map(p => tarjetaPlaza(p.id)).join('');
+  const sala3Html = tarjetaPlaza('3');
 
   const reunionHtml = reunionMia
     ? `<div class="panel-card" style="text-align:center;background:var(--gold-soft);border-color:var(--gold);">
@@ -1020,7 +1044,7 @@ async function construirSalasAtencionHtml(){
   const historialHoySalaHtml = (miHistorialHoy && miHistorialHoy.length)
     ? miHistorialHoy.map(h => `
         <div class="panel-stat-row">
-          <span>${h.sala === 0 ? (esCA?'📅 Reunió':'📅 Reunión') : (esCA?'🚪 Sala ':'🚪 Sala ') + h.sala} · ${horaFmt(h.inicio)} – ${horaFmt(h.fin)}</span>
+          <span>${h.sala === 'reunion' ? (esCA?'📅 Reunió':'📅 Reunión') : (esCA?'🚪 Plaça ':'🚪 Plaza ') + h.sala} · ${horaFmt(h.inicio)} – ${horaFmt(h.fin)}</span>
           <span><strong>${duracionFmtSala(h.inicio, h.fin)}</strong></span>
         </div>`).join('')
     : '';
@@ -1028,21 +1052,58 @@ async function construirSalasAtencionHtml(){
   return `
     <div class="section-label" style="margin-bottom:6px;">🚪 ${esCA?'Sales d\'atenció i disponibilitat':'Salas de atención y disponibilidad'}</div>
     <p class="subtle" style="margin-top:0;">${esCA
-      ? 'Marca on ets ara mateix perquè la resta de l\'equip ho vegi a "Treball en equip".'
-      : 'Marca dónde estás ahora mismo para que el resto del equipo lo vea en "Trabajo en equipo".'}</p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:14px;">${salasHtml}${reunionHtml}</div>
+      ? 'Marca on ets ara mateix, o reserva una plaça per a més tard, perquè la resta de l\'equip ho vegi a "Treball en equip".'
+      : 'Marca dónde estás ahora mismo, o reserva una plaza para más tarde, para que el resto del equipo lo vea en "Trabajo en equipo".'}</p>
+
+    <p style="font-weight:700;font-size:13px;margin:14px 0 6px;">${esCA?'Sala 1':'Sala 1'}</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:14px;">${sala1Html}</div>
+
+    <p style="font-weight:700;font-size:13px;margin:14px 0 6px;">${esCA?'Sala 2':'Sala 2'}</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:14px;">${sala2Html}</div>
+
+    <p style="font-weight:700;font-size:13px;margin:14px 0 6px;">${esCA?'Sala 3 i reunió':'Sala 3 y reunión'}</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:14px;">${sala3Html}${reunionHtml}</div>
+
+    <div id="reserva-plaza-form-wrap"></div>
     ${historialHoySalaHtml ? `<div class="panel-card" style="margin-bottom:20px;"><h3>${esCA?'El teu historial d\'avui':'Tu historial de hoy'}</h3>${historialHoySalaHtml}</div>` : ''}
   `;
 }
 
-async function iniciarAtencionSala(sala){
-  const { error } = await sb.from('fichajes_sala').insert({ sala, tecnico_email: CURRENT_USER.email });
+function abrirReservaPlaza(plazaId){
+  const esCA = LANG_I === 'ca';
+  const manana = new Date(); manana.setDate(manana.getDate() + 1);
+  const fechaDefecto = manana.toISOString().slice(0,10);
+  document.getElementById('reserva-plaza-form-wrap').innerHTML = `
+    <div class="panel-card" style="background:#EAF1F8;border-color:#2E5A8F;">
+      <h3>📅 ${esCA?'Reservar':'Reservar'} ${plazaId}</h3>
+      <div class="field"><label>${esCA?'Dia':'Día'}</label><input type="date" id="reserva-fecha" value="${fechaDefecto}"></div>
+      <div class="field"><label>${esCA?'Hora':'Hora'}</label><input type="time" id="reserva-hora" value="09:00"></div>
+      <button class="primary-btn" onclick="confirmarReservaPlaza('${plazaId}')">${esCA?'Confirmar reserva':'Confirmar reserva'}</button>
+      <button class="link-btn" style="display:block;margin-top:8px;" onclick="document.getElementById('reserva-plaza-form-wrap').innerHTML='';">${esCA?'Cancel·lar':'Cancelar'}</button>
+    </div>`;
+  document.getElementById('reserva-plaza-form-wrap').scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+async function confirmarReservaPlaza(plazaId){
+  const esCA = LANG_I === 'ca';
+  const fecha = document.getElementById('reserva-fecha').value;
+  const hora = document.getElementById('reserva-hora').value;
+  if(!fecha || !hora){ alert(esCA?'Tria dia i hora.':'Elige día y hora.'); return; }
+  const inicio = new Date(`${fecha}T${hora}:00`);
+  if(inicio <= new Date()){ alert(esCA?'Tria un moment futur.':'Elige un momento futuro.'); return; }
+  const { error } = await sb.from('fichajes_sala').insert({ sala: plazaId, tecnico_email: CURRENT_USER.email, inicio: inicio.toISOString() });
+  if(error){ alert(error.message); return; }
+  renderMiEspacio();
+}
+
+async function iniciarAtencionSala(plazaId){
+  const { error } = await sb.from('fichajes_sala').insert({ sala: plazaId, tecnico_email: CURRENT_USER.email });
   if(error){ alert(error.message); return; }
   renderMiEspacio();
 }
 
 async function iniciarReunion(){
-  const { error } = await sb.from('fichajes_sala').insert({ sala: 0, tecnico_email: CURRENT_USER.email });
+  const { error } = await sb.from('fichajes_sala').insert({ sala: 'reunion', tecnico_email: CURRENT_USER.email });
   if(error){ alert(error.message); return; }
   renderMiEspacio();
 }
@@ -4132,7 +4193,7 @@ async function renderEquipoScreen(){
   cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
 
   const hoy = new Date();
-  const hoyIso = hoy.toISOString().slice(0,10);
+  const hoyIso = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 0, 0, 0).toISOString();
   // Vacaciones de Logos: 15 días en agosto (del 1 al 15). Si hace falta otro rango, se ajusta aquí.
   const enPeriodoVacaciones = hoy.getMonth() === 7 && hoy.getDate() <= 15;
 
@@ -4149,7 +4210,8 @@ async function renderEquipoScreen(){
   });
 
   const ocupacionPorEmail = {};
-  (ocupacionesRes.data || []).forEach(o => { ocupacionPorEmail[o.tecnico_email] = o; });
+  const ahoraIsoEquipo = new Date().toISOString();
+  (ocupacionesRes.data || []).forEach(o => { if(o.inicio <= ahoraIsoEquipo) ocupacionPorEmail[o.tecnico_email] = o; });
 
   const horaFmtEquipo = iso => new Date(iso).toLocaleTimeString(LANG_I==='ca'?'ca-ES':'es-ES', { hour:'2-digit', minute:'2-digit' });
 
@@ -4171,9 +4233,9 @@ async function renderEquipoScreen(){
       if(fichajeAbierto){
         const ocup = ocupacionPorEmail[email];
         if(ocup){
-          actividad = ocup.sala === 0
+          actividad = ocup.sala === 'reunion'
             ? { color:'#7A3FA0', texto: LANG_I==='ca' ? '📅 En reunió' : '📅 En reunión' }
-            : { color:'var(--gold)', texto: (LANG_I==='ca' ? '🟡 Atenent (sala ' : '🟡 Atendiendo (sala ') + ocup.sala + ')' };
+            : { color:'var(--gold)', texto: (LANG_I==='ca' ? '🟡 Atenent (' : '🟡 Atendiendo (') + ocup.sala + ')' };
         }
       }
       return { base, actividad };
@@ -5974,7 +6036,7 @@ function renderFilasSalas(lista){
   return lista.length
     ? lista.map(f => `
         <div class="panel-stat-row">
-          <span>${nombreTecnico(f.tecnico_email)} · ${f.sala === 0 ? (esCA?'📅 Reunió':'📅 Reunión') : (esCA?'🚪 Sala ':'🚪 Sala ') + f.sala} · ${fechaFmt(f.inicio)}</span>
+          <span>${nombreTecnico(f.tecnico_email)} · ${f.sala === 'reunion' ? (esCA?'📅 Reunió':'📅 Reunión') : (esCA?'🚪 Plaça ':'🚪 Plaza ') + f.sala}${f.inicio > new Date().toISOString() ? ` <span class="chip" style="background:#2E5A8F;color:#fff;">${esCA?'reserva':'reserva'}</span>` : ''} · ${fechaFmt(f.inicio)}</span>
           <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             ${horaFmt(f.inicio)}
             ${f.fin ? `– ${horaFmt(f.fin)} (${duracionFmt(f.inicio, f.fin)})` : `<span class="chip gold">${LANG_I==='ca'?'En curs':'En curso'}</span>`}
