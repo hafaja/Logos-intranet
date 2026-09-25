@@ -4211,7 +4211,11 @@ async function renderEquipoScreen(){
 
   const ocupacionPorEmail = {};
   const ahoraIsoEquipo = new Date().toISOString();
-  (ocupacionesRes.data || []).forEach(o => { if(o.inicio <= ahoraIsoEquipo) ocupacionPorEmail[o.tecnico_email] = o; });
+  (ocupacionesRes.data || []).forEach(o => {
+    // Si hay dos filas para el mismo técnico (raro, pero posible), priorizamos la que ya está en curso.
+    const existente = ocupacionPorEmail[o.tecnico_email];
+    if(!existente || (o.inicio <= ahoraIsoEquipo && existente.inicio > ahoraIsoEquipo)) ocupacionPorEmail[o.tecnico_email] = o;
+  });
 
   const horaFmtEquipo = iso => new Date(iso).toLocaleTimeString(LANG_I==='ca'?'ca-ES':'es-ES', { hour:'2-digit', minute:'2-digit' });
 
@@ -4219,6 +4223,18 @@ async function renderEquipoScreen(){
     // El fichaje real manda siempre: si ha fichado hoy, está disponible, esté o no en periodo de vacaciones.
     const fichajes = (fichajesPorEmail[email] || []).slice().sort((a,b) => new Date(a.entrada) - new Date(b.entrada));
     const fichajeAbierto = fichajes.find(f => !f.salida);
+
+    // La ocupación/reserva se calcula aparte y siempre se muestra si existe, tenga o no fichado hoy
+    // (una reserva para mañana es útil verla aunque hoy todavía no haya fichado nadie).
+    let actividad = null;
+    const ocup = ocupacionPorEmail[email];
+    if(ocup){
+      actividad = ocup.sala === 'reunion'
+        ? { color:'#7A3FA0', texto: LANG_I==='ca' ? '📅 En reunió' : '📅 En reunión' }
+        : (ocup.inicio > ahoraIsoEquipo
+            ? { color:'#2E5A8F', texto: (LANG_I==='ca' ? '🔵 Reserva (' : '🔵 Reserva (') + ocup.sala + ') ' + new Date(ocup.inicio).toLocaleString(LANG_I==='ca'?'ca-ES':'es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) }
+            : { color:'var(--gold)', texto: (LANG_I==='ca' ? '🟡 Atenent (' : '🟡 Atendiendo (') + ocup.sala + ')' });
+    }
 
     if(fichajes.length){
       const sesionesTexto = fichajes.map(f => f.salida
@@ -4229,21 +4245,12 @@ async function renderEquipoScreen(){
         color: fichajeAbierto ? 'var(--good)' : '#94A3B8',
         texto: (fichajeAbierto ? '🟢 ' : '⏸️ ') + sesionesTexto
       };
-      let actividad = null;
-      if(fichajeAbierto){
-        const ocup = ocupacionPorEmail[email];
-        if(ocup){
-          actividad = ocup.sala === 'reunion'
-            ? { color:'#7A3FA0', texto: LANG_I==='ca' ? '📅 En reunió' : '📅 En reunión' }
-            : { color:'var(--gold)', texto: (LANG_I==='ca' ? '🟡 Atenent (' : '🟡 Atendiendo (') + ocup.sala + ')' };
-        }
-      }
       return { base, actividad };
     }
     if(enPeriodoVacaciones && !esAdmin){
-      return { base: { color:'#94A3B8', texto: LANG_I==='ca' ? '🏖️ Vacances' : '🏖️ Vacaciones' }, actividad: null };
+      return { base: { color:'#94A3B8', texto: LANG_I==='ca' ? '🏖️ Vacances' : '🏖️ Vacaciones' }, actividad };
     }
-    return { base: { color:'var(--alert)', texto: LANG_I==='ca' ? '🔴 No disponible' : '🔴 No disponible' }, actividad: null };
+    return { base: { color:'var(--alert)', texto: LANG_I==='ca' ? '🔴 No disponible' : '🔴 No disponible' }, actividad };
   };
 
   const data = staffRes.data;
