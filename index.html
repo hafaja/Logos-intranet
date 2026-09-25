@@ -485,6 +485,7 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 const SUPABASE_URL = 'https://foxtlpyfedwsvttzorql.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Ght82ml0pvg0_nQvunlXVA_u0WjRscq';
@@ -1006,7 +1007,7 @@ async function construirSalasAtencionHtml(){
         <h3 style="text-align:center;">${plazaId}</h3>
         <p style="margin:0 0 4px;font-size:13.5px;">🔵 ${esCA?'Reservada':'Reservada'}</p>
         <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-soft);">${nombreTecnico(ocup.tecnico_email)}${esCA?' · per a ':' · para '}${fechaHoraFmt(ocup.inicio)}</p>
-        ${esMia ? `<button class="link-btn" style="color:var(--alert);" onclick="finalizarAtencionSala('${ocup.id}')">${esCA?'Cancel·lar reserva':'Cancelar reserva'}</button>` : ''}
+        ${esMia ? `<button class="link-btn" style="color:var(--alert);" onclick="cancelarReservaPlaza('${ocup.id}')">${esCA?'Cancel·lar reserva':'Cancelar reserva'}</button>` : ''}
       </div>`;
     }
     return `
@@ -1015,7 +1016,7 @@ async function construirSalasAtencionHtml(){
         <p style="margin:0 0 4px;font-size:13.5px;">🔴 ${esCA?'Ocupada':'Ocupada'}</p>
         <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-soft);">${nombreTecnico(ocup.tecnico_email)}${esCA?' · des de les ':' · desde las '}${horaFmt(ocup.inicio)}</p>
         ${esMia
-          ? `<button class="primary-btn" style="background:var(--alert);" onclick="finalizarAtencionSala('${ocup.id}')">${esCA?'Finalitzar atenció':'Finalizar atención'}</button>`
+          ? `<button class="primary-btn" style="background:var(--alert);" onclick="abrirNotaAtencion('${ocup.id}','${plazaId}')">${esCA?'Finalitzar atenció':'Finalizar atención'}</button>`
           : `<p class="subtle" style="margin:0;">${esCA?'En ús per un altre tècnic':'En uso por otro técnico'}</p>`}
       </div>`;
   };
@@ -1028,7 +1029,7 @@ async function construirSalasAtencionHtml(){
     ? `<div class="panel-card" style="text-align:center;background:var(--gold-soft);border-color:var(--gold);">
         <h3 style="text-align:center;">📅 ${esCA?'Reunió':'Reunión'}</h3>
         <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-soft);">${esCA?'Estàs en reunió des de les ':'Estás en reunión desde las '}${horaFmt(reunionMia.inicio)}</p>
-        <button class="primary-btn" style="background:var(--alert);" onclick="finalizarAtencionSala('${reunionMia.id}')">${esCA?'Finalitzar reunió':'Finalizar reunión'}</button>
+        <button class="primary-btn" style="background:var(--alert);" onclick="finalizarReunion('${reunionMia.id}')">${esCA?'Finalitzar reunió':'Finalizar reunión'}</button>
       </div>`
     : `<div class="panel-card" style="text-align:center;">
         <h3 style="text-align:center;">📅 ${esCA?'Reunió':'Reunión'}</h3>
@@ -1108,8 +1109,107 @@ async function iniciarReunion(){
   renderMiEspacio();
 }
 
-async function finalizarAtencionSala(id){
+async function cancelarReservaPlaza(id){
+  const esCA = LANG_I === 'ca';
+  if(!confirm(esCA ? 'Segur que vols cancel·lar aquesta reserva?' : '¿Seguro que quieres cancelar esta reserva?')) return;
+  const { error } = await sb.from('fichajes_sala').delete().eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderMiEspacio();
+}
+
+async function finalizarReunion(id){
   const { error } = await sb.from('fichajes_sala').update({ fin: new Date().toISOString() }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderMiEspacio();
+}
+
+let __notaAtencionPersonaId = null;
+
+function abrirNotaAtencion(fichajeSalaId, plazaId){
+  const esCA = LANG_I === 'ca';
+  __notaAtencionPersonaId = null;
+  document.getElementById('reserva-plaza-form-wrap').innerHTML = `
+    <div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);">
+      <h3>✍️ ${esCA?'Finalitzar atenció a':'Finalizar atención en'} ${plazaId}</h3>
+      <p class="subtle" style="margin:0 0 10px;">${esCA
+        ? 'Abans de tancar, digues què has fet — queda desat a la fitxa de la persona, a "Actuacions".'
+        : 'Antes de cerrar, cuenta qué has hecho — queda guardado en la ficha de la persona, en "Actuaciones".'}</p>
+
+      <div class="field">
+        <label>${esCA?'Persona atesa (opcional)':'Persona atendida (opcional)'}</label>
+        <input type="text" id="nota-buscar-usuario" placeholder="${esCA?'Escriu el nom per buscar el seu compte':'Escribe el nombre para buscar su cuenta'}" oninput="buscarUsuarioNotaAtencion(this.value)">
+        <div id="nota-resultados-busqueda"></div>
+        <div id="nota-usuario-vinculado" style="display:none;margin-top:6px;" class="chip hecho">
+          <span id="nota-usuario-vinculado-texto"></span>
+          <button class="link-btn" style="margin-left:8px;font-size:11px;" onclick="__notaAtencionPersonaId=null;document.getElementById('nota-usuario-vinculado').style.display='none';">${esCA?'Treure':'Quitar'}</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>${esCA?'Tipus d\'actuació':'Tipo de actuación'}</label>
+        <select id="nota-categoria">
+          <option value="">—</option>
+          <optgroup label="${esCA?'Projectes':'Proyectos'}">${PROYECTOS_LOGOS.map(p => `<option value="${p}">${p}</option>`).join('')}</optgroup>
+          <optgroup label="${esCA?'Formacions':'Formaciones'}">${FORMACIONES_LOGOS.map(f => `<option value="${f}">${f}</option>`).join('')}</optgroup>
+          <option value="Trámite administrativo">${esCA?'Tràmit administratiu':'Trámite administrativo'}</option>
+          <option value="Atención general">${esCA?'Atenció general':'Atención general'}</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>${esCA?'Què has fet en aquesta atenció?':'¿Qué has hecho en esta atención?'}</label>
+        <textarea id="nota-descripcion" rows="3"></textarea>
+      </div>
+
+      <button class="primary-btn" style="background:var(--alert);" onclick="guardarNotaYFinalizarAtencion('${fichajeSalaId}')">${esCA?'Desar i finalitzar':'Guardar y finalizar'}</button>
+    </div>`;
+  document.getElementById('reserva-plaza-form-wrap').scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+let __busquedaNotaAtencionTimeout = null;
+function buscarUsuarioNotaAtencion(texto){
+  clearTimeout(__busquedaNotaAtencionTimeout);
+  const cont = document.getElementById('nota-resultados-busqueda');
+  if(!texto || texto.trim().length < 2){ cont.innerHTML = ''; return; }
+  __busquedaNotaAtencionTimeout = setTimeout(async () => {
+    const esCA = LANG_I === 'ca';
+    const { data, error } = await sb.from('perfiles').select('id, nombre_completo, municipio').ilike('nombre_completo', `%${texto.trim()}%`).limit(5);
+    if(error || !data || !data.length){ cont.innerHTML = `<div class="empty-note">${esCA?'Cap resultat.':'Sin resultados.'}</div>`; return; }
+    cont.innerHTML = data.map(p => `
+      <div class="list-row" style="cursor:pointer;" onclick="vincularUsuarioNotaAtencion('${p.id}', ${JSON.stringify(p.nombre_completo || '')})">
+        <span>${p.nombre_completo}</span><span class="subtle">${p.municipio || ''}</span>
+      </div>`).join('');
+  }, 300);
+}
+
+function vincularUsuarioNotaAtencion(usuarioId, nombre){
+  __notaAtencionPersonaId = usuarioId;
+  document.getElementById('nota-buscar-usuario').value = '';
+  document.getElementById('nota-resultados-busqueda').innerHTML = '';
+  const chip = document.getElementById('nota-usuario-vinculado');
+  chip.style.display = 'inline-flex';
+  document.getElementById('nota-usuario-vinculado-texto').textContent = (LANG_I==='ca' ? 'Vinculat a: ' : 'Vinculado a: ') + nombre;
+}
+
+async function guardarNotaYFinalizarAtencion(fichajeSalaId){
+  const esCA = LANG_I === 'ca';
+  const ahora = new Date();
+  const categoria = document.getElementById('nota-categoria').value || null;
+  const descripcion = document.getElementById('nota-descripcion').value.trim() || null;
+
+  if(descripcion || categoria || __notaAtencionPersonaId){
+    const { error: errorAct } = await sb.from('actuaciones').insert({
+      usuario_id: __notaAtencionPersonaId,
+      tecnico_email: CURRENT_USER.email,
+      fecha: ahora.toISOString().slice(0,10),
+      hora: ahora.toTimeString().slice(0,8),
+      categoria,
+      descripcion
+    });
+    if(errorAct){ alert(errorAct.message); return; }
+  }
+
+  const { error } = await sb.from('fichajes_sala').update({ fin: ahora.toISOString() }).eq('id', fichajeSalaId);
   if(error){ alert(error.message); return; }
   renderMiEspacio();
 }
@@ -3782,7 +3882,10 @@ async function renderProyectosScreen(){
           <div class="panel-stat-row"><span>${esCA?'Beneficiaris':'Beneficiarios'}</span><span><strong>${c.beneficiarios}</strong></span></div>
           <div class="panel-stat-row"><span>${esCA?'Professionals':'Profesionales'}</span><span><strong>${c.profesionales}</strong></span></div>
           <button class="primary-btn" style="margin-top:10px;" onclick="verProyecto('${pr.id}')">${esCA?'Obrir projecte':'Abrir proyecto'}</button>
-          <button class="link-btn" style="margin-top:8px;display:block;text-align:center;" onclick="exportarProyectoExcel('${pr.id}','${pr.nombre.replace(/'/g,"\\'")}')">⬇️ ${esCA?'Exportar llistat (Excel)':'Exportar listado (Excel)'}</button>
+          <div style="display:flex;gap:10px;justify-content:center;margin-top:8px;">
+            <button class="link-btn" onclick="exportarProyectoExcel('${pr.id}','${pr.nombre.replace(/'/g,"\\'")}')">⬇️ Excel</button>
+            <button class="link-btn" onclick="exportarProyectoPDF('${pr.id}','${pr.nombre.replace(/'/g,"\\'")}')">⬇️ PDF</button>
+          </div>
         </div>`;
       }).join('')
     : `<div class="empty-note">${esCA ? 'Encara no hi ha projectes.' : 'Todavía no hay proyectos.'}</div>`;
@@ -3855,17 +3958,13 @@ function celdaCSV(valor){
   return `"${texto.replace(/"/g, '""')}"`;
 }
 
-async function exportarProyectoExcel(proyectoId, nombreProyecto){
-  const esCA = LANG_I === 'ca';
+async function obtenerDatosExportProyecto(proyectoId, nombreProyecto){
   const [{ data: participantes, error }, { data: asistencias }] = await Promise.all([
     sb.from('proyecto_participantes').select('*').eq('proyecto_id', proyectoId),
     sb.from('proyecto_asistencias').select('usuario_id').eq('proyecto_id', proyectoId)
   ]);
-  if(error){ alert(error.message); return; }
-  if(!participantes || !participantes.length){
-    alert(esCA ? 'Aquest projecte encara no té ningú afegit.' : 'Este proyecto todavía no tiene a nadie añadido.');
-    return;
-  }
+  if(error) throw error;
+  if(!participantes || !participantes.length) return null;
 
   const conteoAsistencias = {};
   (asistencias || []).forEach(a => { conteoAsistencias[a.usuario_id] = (conteoAsistencias[a.usuario_id] || 0) + 1; });
@@ -3891,16 +3990,12 @@ async function exportarProyectoExcel(proyectoId, nombreProyecto){
       pp.rol === 'beneficiario' ? (conteoAsistencias[pp.usuario_id] || 0) : ''
     ];
   });
+  return { cabecera, filas };
+}
 
-  const filasCSV = [cabecera, ...filas].map(fila => fila.map(celdaCSV).join(';')).join('\r\n');
-  const csvConBOM = '\uFEFF' + filasCSV; // BOM para que Excel detecte bien los acentos
-  const nombreArchivo = `${nombreProyecto.replace(/[^a-zA-Z0-9]+/g, '-')}.csv`;
-
-  const blob = new Blob([csvConBOM], { type: 'text/csv;charset=utf-8;' });
-
-  // Se guarda también una copia en Supabase, para tener historial de exportaciones.
+async function guardarCopiaExportacion(proyectoId, nombreArchivo, blob, contentType){
   const rutaStorage = `proyectos/${proyectoId}/${Date.now()}_${nombreArchivo}`;
-  const { error: errorSubida } = await sb.storage.from('documentos').upload(rutaStorage, blob, { contentType: 'text/csv' });
+  const { error: errorSubida } = await sb.storage.from('documentos').upload(rutaStorage, blob, { contentType });
   if(!errorSubida){
     await sb.from('proyecto_exportaciones').insert({
       proyecto_id: proyectoId,
@@ -3909,7 +4004,9 @@ async function exportarProyectoExcel(proyectoId, nombreProyecto){
       generado_por_email: CURRENT_USER.email
     });
   }
+}
 
+function descargarBlob(blob, nombreArchivo){
   const url = URL.createObjectURL(blob);
   const enlace = document.createElement('a');
   enlace.href = url;
@@ -3918,8 +4015,74 @@ async function exportarProyectoExcel(proyectoId, nombreProyecto){
   enlace.click();
   document.body.removeChild(enlace);
   URL.revokeObjectURL(url);
+}
 
+async function exportarProyectoExcel(proyectoId, nombreProyecto){
+  const esCA = LANG_I === 'ca';
+  let datos;
+  try { datos = await obtenerDatosExportProyecto(proyectoId, nombreProyecto); }
+  catch(e){ alert(e.message); return; }
+  if(!datos){ alert(esCA ? 'Aquest projecte encara no té ningú afegit.' : 'Este proyecto todavía no tiene a nadie añadido.'); return; }
+
+  const nombreArchivo = `${nombreProyecto.replace(/[^a-zA-Z0-9]+/g, '-')}.xlsx`;
+  const hoja = XLSX.utils.aoa_to_sheet([datos.cabecera, ...datos.filas]);
+  hoja['!cols'] = [{wch:24},{wch:22},{wch:12},{wch:12},{wch:14},{wch:16},{wch:14},{wch:16}];
+  const libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(libro, hoja, esCA ? 'Llistat' : 'Listado');
+  const arrayBuffer = XLSX.write(libro, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([arrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+  await guardarCopiaExportacion(proyectoId, nombreArchivo, blob, blob.type);
+  descargarBlob(blob, nombreArchivo);
   if(window.__proyectoActual === proyectoId) verProyecto(proyectoId);
+}
+
+async function exportarProyectoPDF(proyectoId, nombreProyecto){
+  const esCA = LANG_I === 'ca';
+  let datos;
+  try { datos = await obtenerDatosExportProyecto(proyectoId, nombreProyecto); }
+  catch(e){ alert(e.message); return; }
+  if(!datos){ alert(esCA ? 'Aquest projecte encara no té ningú afegit.' : 'Este proyecto todavía no tiene a nadie añadido.'); return; }
+
+  const logoSrc = document.querySelector('.sidebar-logo-img') ? document.querySelector('.sidebar-logo-img').src : '';
+  const filasHtml = datos.filas.map(f => `<tr>${f.map(c => `<td style="border:1px solid #ccc;padding:6px 8px;font-size:11px;">${c ?? ''}</td>`).join('')}</tr>`).join('');
+  const contenedor = document.createElement('div');
+  contenedor.style.cssText = 'position:absolute;left:0;top:-10000px;width:900px;background:#fff;padding:36px;font-family:Georgia,serif;color:#16233F;';
+  contenedor.innerHTML = `
+    <div style="text-align:center;margin-bottom:20px;">
+      ${logoSrc ? `<img src="${logoSrc}" style="max-width:140px;margin-bottom:8px;">` : ''}
+      <h1 style="font-size:20px;margin:0 0 4px;">${nombreProyecto}</h1>
+      <p style="font-size:12px;color:#666;margin:0;">${esCA?'Informe de participants':'Informe de participantes'} · ${new Date().toLocaleDateString(esCA?'ca-ES':'es-ES')}</p>
+    </div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr>${datos.cabecera.map(c => `<th style="border:1px solid #ccc;padding:6px 8px;font-size:11px;background:#F5F3EC;text-align:left;">${c}</th>`).join('')}</tr></thead>
+      <tbody>${filasHtml}</tbody>
+    </table>
+    <p style="font-size:10.5px;color:#888;margin-top:16px;">${esCA?'Total de persones':'Total de personas'}: ${datos.filas.length}</p>
+  `;
+  document.body.appendChild(contenedor);
+
+  try {
+    const nombreArchivo = `${nombreProyecto.replace(/[^a-zA-Z0-9]+/g, '-')}.pdf`;
+    const canvas = await html2canvas(contenedor, { scale: 2, backgroundColor: '#ffffff' });
+    const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const anchoPagina = pdf.internal.pageSize.getWidth();
+    const margen = 10;
+    const anchoImg = anchoPagina - margen * 2;
+    const altoImg = (canvas.height * anchoImg) / canvas.width;
+    pdf.addImage(imgData, 'PNG', margen, margen, anchoImg, altoImg);
+    const blob = pdf.output('blob');
+
+    await guardarCopiaExportacion(proyectoId, nombreArchivo, blob, 'application/pdf');
+    pdf.save(nombreArchivo);
+    if(window.__proyectoActual === proyectoId) verProyecto(proyectoId);
+  } catch(e){
+    alert((esCA?'No s\'ha pogut generar el PDF: ':'No se pudo generar el PDF: ') + e.message);
+  } finally {
+    document.body.removeChild(contenedor);
+  }
 }
 
 async function descargarExportacionProyecto(rutaStorage){
@@ -4884,7 +5047,7 @@ const FORMACIONES_LOGOS = [
 function renderActuacionCard(ac){
   const t = TI[LANG_I];
   return `<div class="panel-card">
-    <div class="panel-stat-row"><span>${t.fechaLbl}</span><span><strong>${new Date(ac.fecha).toLocaleDateString(t.localeFecha)}</strong></span></div>
+    <div class="panel-stat-row"><span>${t.fechaLbl}</span><span><strong>${new Date(ac.fecha).toLocaleDateString(t.localeFecha)}${ac.hora ? ' · ' + ac.hora.slice(0,5) : ''}</strong></span></div>
     <div class="panel-stat-row"><span>${t.tecnicoLbl}</span><span><strong>${nombreTecnico(ac.tecnico_email)}</strong></span></div>
     ${ac.categoria ? `<div class="panel-stat-row"><span>${t.proyectoTramiteFormacion}</span><span>${ac.categoria}</span></div>` : ''}
     ${ac.objetivo ? `<div class="panel-stat-row"><span>${t.objetivoLbl}</span><span>${ac.objetivo}</span></div>` : ''}
