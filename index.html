@@ -4209,12 +4209,11 @@ async function renderEquipoScreen(){
     fichajesPorEmail[f.tecnico_email].push(f);
   });
 
-  const ocupacionPorEmail = {};
+  const ocupacionesPorEmail = {};
   const ahoraIsoEquipo = new Date().toISOString();
   (ocupacionesRes.data || []).forEach(o => {
-    // Si hay dos filas para el mismo técnico (raro, pero posible), priorizamos la que ya está en curso.
-    const existente = ocupacionPorEmail[o.tecnico_email];
-    if(!existente || (o.inicio <= ahoraIsoEquipo && existente.inicio > ahoraIsoEquipo)) ocupacionPorEmail[o.tecnico_email] = o;
+    if(!ocupacionesPorEmail[o.tecnico_email]) ocupacionesPorEmail[o.tecnico_email] = [];
+    ocupacionesPorEmail[o.tecnico_email].push(o);
   });
 
   const horaFmtEquipo = iso => new Date(iso).toLocaleTimeString(LANG_I==='ca'?'ca-ES':'es-ES', { hour:'2-digit', minute:'2-digit' });
@@ -4224,17 +4223,17 @@ async function renderEquipoScreen(){
     const fichajes = (fichajesPorEmail[email] || []).slice().sort((a,b) => new Date(a.entrada) - new Date(b.entrada));
     const fichajeAbierto = fichajes.find(f => !f.salida);
 
-    // La ocupación/reserva se calcula aparte y siempre se muestra si existe, tenga o no fichado hoy
-    // (una reserva para mañana es útil verla aunque hoy todavía no haya fichado nadie).
-    let actividad = null;
-    const ocup = ocupacionPorEmail[email];
-    if(ocup){
-      actividad = ocup.sala === 'reunion'
-        ? { color:'#7A3FA0', texto: LANG_I==='ca' ? '📅 En reunió' : '📅 En reunión' }
-        : (ocup.inicio > ahoraIsoEquipo
-            ? { color:'#2E5A8F', texto: (LANG_I==='ca' ? '🔵 Reserva (' : '🔵 Reserva (') + ocup.sala + ') ' + new Date(ocup.inicio).toLocaleString(LANG_I==='ca'?'ca-ES':'es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) }
-            : { color:'var(--gold)', texto: (LANG_I==='ca' ? '🟡 Atenent (' : '🟡 Atendiendo (') + ocup.sala + ')' });
-    }
+    // Puede haber varias cosas a la vez: lo que está en curso ahora, y una o varias reservas futuras.
+    // Se muestran todas, no solo una.
+    const actividades = (ocupacionesPorEmail[email] || []).map(ocup => {
+      if(ocup.sala === 'reunion'){
+        return { color:'#7A3FA0', texto: LANG_I==='ca' ? '📅 En reunió' : '📅 En reunión' };
+      }
+      if(ocup.inicio > ahoraIsoEquipo){
+        return { color:'#2E5A8F', texto: (LANG_I==='ca' ? '🔵 Reserva (' : '🔵 Reserva (') + ocup.sala + ') ' + new Date(ocup.inicio).toLocaleString(LANG_I==='ca'?'ca-ES':'es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) };
+      }
+      return { color:'var(--gold)', texto: (LANG_I==='ca' ? '🟡 Atenent (' : '🟡 Atendiendo (') + ocup.sala + ')' };
+    });
 
     if(fichajes.length){
       const sesionesTexto = fichajes.map(f => f.salida
@@ -4245,12 +4244,12 @@ async function renderEquipoScreen(){
         color: fichajeAbierto ? 'var(--good)' : '#94A3B8',
         texto: (fichajeAbierto ? '🟢 ' : '⏸️ ') + sesionesTexto
       };
-      return { base, actividad };
+      return { base, actividades };
     }
     if(enPeriodoVacaciones && !esAdmin){
-      return { base: { color:'#94A3B8', texto: LANG_I==='ca' ? '🏖️ Vacances' : '🏖️ Vacaciones' }, actividad };
+      return { base: { color:'#94A3B8', texto: LANG_I==='ca' ? '🏖️ Vacances' : '🏖️ Vacaciones' }, actividades };
     }
-    return { base: { color:'var(--alert)', texto: LANG_I==='ca' ? '🔴 No disponible' : '🔴 No disponible' }, actividad };
+    return { base: { color:'var(--alert)', texto: LANG_I==='ca' ? '🔴 No disponible' : '🔴 No disponible' }, actividades };
   };
 
   const data = staffRes.data;
@@ -4261,7 +4260,7 @@ async function renderEquipoScreen(){
           <span>${s.nombre ? `<strong>${s.nombre}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${s.email}</span>` : s.email}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}</span>
           <span style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
             <span class="chip" style="background:${estado.base.color};color:#fff;">${estado.base.texto}</span>
-            ${estado.actividad ? `<span class="chip" style="background:${estado.actividad.color};color:#fff;">${estado.actividad.texto}</span>` : ''}
+            ${estado.actividades.map(a => `<span class="chip" style="background:${a.color};color:#fff;">${a.texto}</span>`).join('')}
           </span>
         </div>`;
       }).join('')
