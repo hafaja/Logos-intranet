@@ -956,9 +956,11 @@ const NUM_SALAS_ATENCION = 3;
 
 async function construirSalasAtencionHtml(){
   const esCA = LANG_I === 'ca';
-  const [{ data: ocupaciones }, { data: staffList }] = await Promise.all([
+  const hoyIso = new Date().toISOString().slice(0,10);
+  const [{ data: ocupaciones }, { data: staffList }, { data: miHistorialHoy }] = await Promise.all([
     sb.from('fichajes_sala').select('*').is('fin', null).order('inicio', { ascending:true }),
-    sb.from('staff').select('email, nombre')
+    sb.from('staff').select('email, nombre'),
+    sb.from('fichajes_sala').select('*').eq('tecnico_email', CURRENT_USER.email).not('fin', 'is', null).gte('inicio', hoyIso).order('inicio', { ascending:true })
   ]);
   (staffList || []).forEach(s => { if(s.nombre) __mapaNombresTecnicos[s.email] = s.nombre; });
 
@@ -1010,12 +1012,26 @@ async function construirSalasAtencionHtml(){
         <button class="primary-btn" ${ocupacionMiaActual ? 'disabled' : ''} onclick="iniciarReunion()">${esCA?'Estic en una reunió':'Estoy en una reunión'}</button>
       </div>`;
 
+  const duracionFmtSala = (ini, fin) => {
+    const min = Math.round((new Date(fin) - new Date(ini)) / 60000);
+    return min < 60 ? `${min} min` : `${Math.floor(min/60)}h ${min%60}min`;
+  };
+
+  const historialHoySalaHtml = (miHistorialHoy && miHistorialHoy.length)
+    ? miHistorialHoy.map(h => `
+        <div class="panel-stat-row">
+          <span>${h.sala === 0 ? (esCA?'📅 Reunió':'📅 Reunión') : (esCA?'🚪 Sala ':'🚪 Sala ') + h.sala} · ${horaFmt(h.inicio)} – ${horaFmt(h.fin)}</span>
+          <span><strong>${duracionFmtSala(h.inicio, h.fin)}</strong></span>
+        </div>`).join('')
+    : '';
+
   return `
     <div class="section-label" style="margin-bottom:6px;">🚪 ${esCA?'Sales d\'atenció i disponibilitat':'Salas de atención y disponibilidad'}</div>
     <p class="subtle" style="margin-top:0;">${esCA
       ? 'Marca on ets ara mateix perquè la resta de l\'equip ho vegi a "Treball en equip".'
       : 'Marca dónde estás ahora mismo para que el resto del equipo lo vea en "Trabajo en equipo".'}</p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:20px;">${salasHtml}${reunionHtml}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:14px;">${salasHtml}${reunionHtml}</div>
+    ${historialHoySalaHtml ? `<div class="panel-card" style="margin-bottom:20px;"><h3>${esCA?'El teu historial d\'avui':'Tu historial de hoy'}</h3>${historialHoySalaHtml}</div>` : ''}
   `;
 }
 
@@ -4139,16 +4155,26 @@ async function renderEquipoScreen(){
 
   const estadoDe = (email, esAdmin) => {
     // El fichaje real manda siempre: si ha fichado hoy, está disponible, esté o no en periodo de vacaciones.
-    const fichajes = fichajesPorEmail[email] || [];
+    const fichajes = (fichajesPorEmail[email] || []).slice().sort((a,b) => new Date(a.entrada) - new Date(b.entrada));
     const fichajeAbierto = fichajes.find(f => !f.salida);
-    if(fichajeAbierto){
-      const base = { color:'var(--good)', texto: (LANG_I==='ca' ? '🟢 Fitxat des de les ' : '🟢 Fichado desde las ') + horaFmtEquipo(fichajeAbierto.entrada) };
-      const ocup = ocupacionPorEmail[email];
+
+    if(fichajes.length){
+      const sesionesTexto = fichajes.map(f => f.salida
+        ? `${horaFmtEquipo(f.entrada)}–${horaFmtEquipo(f.salida)}`
+        : `${horaFmtEquipo(f.entrada)}–${LANG_I==='ca'?'ara':'ahora'}`
+      ).join(' · ');
+      const base = {
+        color: fichajeAbierto ? 'var(--good)' : '#94A3B8',
+        texto: (fichajeAbierto ? '🟢 ' : '⏸️ ') + sesionesTexto
+      };
       let actividad = null;
-      if(ocup){
-        actividad = ocup.sala === 0
-          ? { color:'#7A3FA0', texto: LANG_I==='ca' ? '📅 En reunió' : '📅 En reunión' }
-          : { color:'var(--gold)', texto: (LANG_I==='ca' ? '🟡 Atenent (sala ' : '🟡 Atendiendo (sala ') + ocup.sala + ')' };
+      if(fichajeAbierto){
+        const ocup = ocupacionPorEmail[email];
+        if(ocup){
+          actividad = ocup.sala === 0
+            ? { color:'#7A3FA0', texto: LANG_I==='ca' ? '📅 En reunió' : '📅 En reunión' }
+            : { color:'var(--gold)', texto: (LANG_I==='ca' ? '🟡 Atenent (sala ' : '🟡 Atendiendo (sala ') + ocup.sala + ')' };
+        }
       }
       return { base, actividad };
     }
@@ -5586,6 +5612,8 @@ let __adminFichajesOffset = 0;
 let __adminFichajesTodos = [];
 let __adminActuacionesOffset = 0;
 let __adminActuacionesTodas = [];
+let __adminSalasOffset = 0;
+let __adminSalasTodos = [];
 let __adminNombresPersona = {};
 
 let __mapaNombresTecnicos = {};
@@ -5605,8 +5633,10 @@ async function renderAdministrador(){
   __adminFichajesTodos = [];
   __adminActuacionesOffset = 0;
   __adminActuacionesTodas = [];
+  __adminSalasOffset = 0;
+  __adminSalasTodos = [];
 
-  const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes, revisionesRes, perfilesIncompletosRes, actuacionesPrimeraPagina, actuacionesCountRes, actuacionesLigeroRes, avisosAdminRes, oficinaRes, proyectosAdminRes, proyectoParticipantesAdminRes] = await Promise.all([
+  const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes, revisionesRes, perfilesIncompletosRes, actuacionesPrimeraPagina, actuacionesCountRes, actuacionesLigeroRes, avisosAdminRes, oficinaRes, proyectosAdminRes, proyectoParticipantesAdminRes, salasPrimeraPagina, salasCountRes] = await Promise.all([
     sb.from('atenciones').select('*').order('creado_en', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
     sb.from('atenciones').select('creado_por_email'), // sin límite: solo para el conteo de carga de trabajo
     sb.from('staff').select('*').order('email', { ascending:true }),
@@ -5621,7 +5651,9 @@ async function renderAdministrador(){
     sb.from('avisos_intranet').select('*').order('creado_en', { ascending:false }),
     sb.from('configuracion_oficina').select('*').eq('id', 1).maybeSingle(),
     sb.from('proyectos').select('id, nombre, estado'),
-    sb.from('proyecto_participantes').select('proyecto_id, rol')
+    sb.from('proyecto_participantes').select('proyecto_id, rol'),
+    sb.from('fichajes_sala').select('*').order('inicio', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
+    sb.from('fichajes_sala').select('id', { count: 'exact', head: true })
   ]);
 
   window.__configOficina = oficinaRes.data || null;
@@ -5636,6 +5668,9 @@ async function renderAdministrador(){
   __adminActuacionesTodas = actuacionesPrimeraPagina.data || [];
   __adminActuacionesOffset = __adminActuacionesTodas.length;
   const totalActuaciones = actuacionesCountRes.count || 0;
+  __adminSalasTodos = salasPrimeraPagina.data || [];
+  __adminSalasOffset = __adminSalasTodos.length;
+  const totalSalas = salasCountRes.count || 0;
 
   // Carga de trabajo por técnico (sobre TODAS las atenciones, no solo la página cargada)
   const cargaPorTecnico = {};
@@ -5817,6 +5852,14 @@ async function renderAdministrador(){
         : ''}
     </div>
 
+    <p class="subtle" style="margin-top:18px;">${LANG_I==='ca' ? 'Sales i reunions' : 'Salas y reuniones'}</p>
+    <div class="panel-card" id="admin-salas-lista">${renderFilasSalas(__adminSalasTodos)}</div>
+    <div style="text-align:center;margin-top:8px;margin-bottom:18px;" id="admin-salas-cargar-mas-wrap">
+      ${totalSalas > __adminSalasTodos.length
+        ? `<button class="link-btn" onclick="cargarMasSalas()">${t.cargarTexto} ${Math.min(ADMIN_PAGE_SIZE, totalSalas - __adminSalasTodos.length)} ${t.masDeTexto} ${totalSalas} ${t.enTotalTexto}</button>`
+        : ''}
+    </div>
+
     <p class="subtle" style="margin-top:18px;">${t.registroAtencionesDesc}</p>
     <div class="cards-grid" id="admin-atenciones-grid">${renderFilasAtenciones(__adminAtencionesTodas)}</div>
     <div style="text-align:center;margin-top:18px;margin-bottom:24px;" id="admin-cargar-mas-wrap">
@@ -5918,6 +5961,46 @@ function calcularDistanciaMetros(lat1, lng1, lat2, lng2){
   const a = Math.sin(dLat/2)**2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLng/2)**2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   return Math.round(R * c);
+}
+
+function renderFilasSalas(lista){
+  const esCA = LANG_I === 'ca';
+  const horaFmt = iso => new Date(iso).toLocaleTimeString(esCA?'ca-ES':'es-ES', { hour:'2-digit', minute:'2-digit' });
+  const fechaFmt = iso => new Date(iso).toLocaleDateString(esCA?'ca-ES':'es-ES', { weekday:'short', day:'numeric', month:'short' });
+  const duracionFmt = (ini, fin) => {
+    const min = Math.round((new Date(fin) - new Date(ini)) / 60000);
+    return `${Math.floor(min/60)}h ${min%60}min`;
+  };
+  return lista.length
+    ? lista.map(f => `
+        <div class="panel-stat-row">
+          <span>${nombreTecnico(f.tecnico_email)} · ${f.sala === 0 ? (esCA?'📅 Reunió':'📅 Reunión') : (esCA?'🚪 Sala ':'🚪 Sala ') + f.sala} · ${fechaFmt(f.inicio)}</span>
+          <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+            ${horaFmt(f.inicio)}
+            ${f.fin ? `– ${horaFmt(f.fin)} (${duracionFmt(f.inicio, f.fin)})` : `<span class="chip gold">${LANG_I==='ca'?'En curs':'En curso'}</span>`}
+            <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="borrarFichajeSala('${f.id}')">${esCA?'Esborrar':'Borrar'}</button>
+          </span>
+        </div>`).join('')
+    : `<div class="empty-note">—</div>`;
+}
+
+async function borrarFichajeSala(id){
+  const esCA = LANG_I === 'ca';
+  if(!confirm(esCA ? 'Segur que vols esborrar aquest registre?' : '¿Seguro que quieres borrar este registro?')) return;
+  const { error } = await sb.from('fichajes_sala').delete().eq('id', id);
+  if(error){ alert(error.message); return; }
+  __adminSalasTodos = __adminSalasTodos.filter(f => f.id !== id);
+  document.getElementById('admin-salas-lista').innerHTML = renderFilasSalas(__adminSalasTodos);
+}
+
+async function cargarMasSalas(){
+  const { data, count } = await sb.from('fichajes_sala').select('*', { count: 'exact' }).order('inicio', { ascending:false }).range(__adminSalasOffset, __adminSalasOffset + ADMIN_PAGE_SIZE - 1);
+  __adminSalasTodos = __adminSalasTodos.concat(data || []);
+  __adminSalasOffset = __adminSalasTodos.length;
+  document.getElementById('admin-salas-lista').innerHTML = renderFilasSalas(__adminSalasTodos);
+  document.getElementById('admin-salas-cargar-mas-wrap').innerHTML = (count || 0) > __adminSalasTodos.length
+    ? `<button class="link-btn" onclick="cargarMasSalas()">${TI[LANG_I].cargarTexto} ${Math.min(ADMIN_PAGE_SIZE, count - __adminSalasTodos.length)} ${TI[LANG_I].masDeTexto} ${count} ${TI[LANG_I].enTotalTexto}</button>`
+    : '';
 }
 
 function renderFilasFichajes(fichajes){
