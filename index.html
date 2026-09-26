@@ -4773,6 +4773,13 @@ async function renderPanelGeneral(){
   const consultasHtml = (consultasPend.data && consultasPend.data.length)
     ? consultasPend.data.map(c => `
         <div class="panel-card">
+          ${!c.usuario_id && (c.nombre_contacto || c.correo_contacto || c.telefono_contacto) ? `
+          <div class="panel-card" style="background:var(--ochre-soft);border-color:var(--ochre);margin-bottom:8px;">
+            <p style="margin:0;font-size:12.5px;"><strong>${LANG_I==='ca'?'Sense compte encara — contacte directe':'Sin cuenta todavía — contacto directo'}</strong></p>
+            ${c.nombre_contacto ? `<p style="margin:2px 0 0;font-size:13px;">👤 ${c.nombre_contacto}</p>` : ''}
+            ${c.telefono_contacto ? `<p style="margin:2px 0 0;font-size:13px;">📞 ${c.telefono_contacto}</p>` : ''}
+            ${c.correo_contacto ? `<p style="margin:2px 0 0;font-size:13px;">✉️ ${c.correo_contacto}</p>` : ''}
+          </div>` : ''}
           <p style="margin:0 0 8px;font-size:13.5px;"><em>${c.texto_consulta}</em></p>
           <textarea id="resp-${c.id}" rows="2" placeholder="${t.placeholderOrientacion}" style="width:100%;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;font-family:var(--font-body);font-size:13.5px;margin-bottom:8px;"></textarea>
           <div style="display:flex;gap:14px;">
