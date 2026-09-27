@@ -287,6 +287,7 @@
       <button data-target="mipropioproyecto" onclick="showScreen('mipropioproyecto');renderMiPropioProyectoEntrada()">🏛️ Crea un proyecto de Logos</button>
       <button data-target="noticias" onclick="showScreen('noticias');renderNoticiasScreen()">📰 Portales del día</button>
       <button data-target="equipo" onclick="showScreen('equipo');renderEquipoScreen()">Trabajo en equipo</button>
+      <button data-target="documentosgenerales" onclick="showScreen('documentosgenerales');renderDocumentosGenerales()">📁 Documentos generales</button>
       <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
       <button data-target="config" onclick="showScreen('config');renderConfigScreen()">Configuración</button>
     </nav>
@@ -461,6 +462,13 @@
     <div class="main-content">
       <div class="topbar"><span class="brand">Trabajo en equipo</span></div>
       <div class="content" id="equipo-content"><div class="placeholder">Cargando…</div></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-documentosgenerales">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">📁 Documentos generales</span></div>
+      <div class="content" id="documentosgenerales-content"><div class="placeholder">Cargando…</div></div>
     </div>
   </div>
 
@@ -955,7 +963,7 @@ async function ficharSalida(id){
 
 const PLAZAS_ATENCION = [
   { id:'1A', label:'1A' }, { id:'1B', label:'1B' }, { id:'1C', label:'1C' }, { id:'1D', label:'1D' },
-  { id:'2A', label:'2A' }, { id:'2B', label:'2B' }, { id:'2C', label:'2C' }, { id:'2D', label:'2D' },
+  { id:'2', label:'2' },
   { id:'3', label:'3' }
 ];
 
@@ -987,6 +995,16 @@ async function construirSalasAtencionHtml(){
 
   const horaFmt = iso => new Date(iso).toLocaleTimeString(esCA?'ca-ES':'es-ES', { hour:'2-digit', minute:'2-digit' });
   const fechaHoraFmt = iso => new Date(iso).toLocaleString(esCA?'ca-ES':'es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+
+  // Sala 1 se puede bloquear entera (reunión/evento) en vez de plaza por plaza: si las 4 plazas
+  // pertenecen al mismo bloqueo (mismo técnico, mismo inicio, mismo motivo), se muestra como una sola tarjeta.
+  const plazasSala1 = ['1A','1B','1C','1D'];
+  const ocupacionesSala1 = plazasSala1.map(id => ocupacionPorPlaza[id]).filter(Boolean);
+  const bloqueSala1Completo = ocupacionesSala1.length === 4 && ocupacionesSala1.every(o =>
+    o.motivo && o.motivo === ocupacionesSala1[0].motivo &&
+    o.tecnico_email === ocupacionesSala1[0].tecnico_email &&
+    o.inicio === ocupacionesSala1[0].inicio
+  );
 
   const tarjetaPlaza = (plazaId) => {
     const ocup = ocupacionPorPlaza[plazaId];
@@ -1021,8 +1039,26 @@ async function construirSalasAtencionHtml(){
       </div>`;
   };
 
-  const sala1Html = PLAZAS_ATENCION.filter(p => p.id.startsWith('1')).map(p => tarjetaPlaza(p.id)).join('');
-  const sala2Html = PLAZAS_ATENCION.filter(p => p.id.startsWith('2')).map(p => tarjetaPlaza(p.id)).join('');
+  const sala1Html = bloqueSala1Completo
+    ? (() => {
+        const o = ocupacionesSala1[0];
+        const esMio = o.tecnico_email === CURRENT_USER.email;
+        const esFuturo = o.inicio > ahoraIso;
+        return `
+        <div class="panel-card" style="grid-column:1/-1;text-align:center;background:${esFuturo?'#EAF1F8':'var(--alert-soft)'};border-color:${esFuturo?'#2E5A8F':'var(--alert)'};">
+          <h3 style="text-align:center;">${esCA?'Sala 1 completa':'Sala 1 completa'}</h3>
+          <p style="margin:0 0 4px;font-size:13.5px;">${esFuturo ? '🔵 '+(esCA?'Reservada':'Reservada') : '🔴 '+(esCA?'Ocupada':'Ocupada')} — ${o.motivo}</p>
+          <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-soft);">${nombreTecnico(o.tecnico_email)} · ${esFuturo ? fechaHoraFmt(o.inicio) : horaFmt(o.inicio)}</p>
+          ${esMio
+            ? `<button class="primary-btn" style="background:var(--alert);" onclick="finalizarBloqueoSala1()">${esCA?'Finalitzar bloqueig':'Finalizar bloqueo'}</button>`
+            : `<p class="subtle" style="margin:0;">${esCA?'Bloquejada per un altre tècnic':'Bloqueada por otro técnico'}</p>`}
+        </div>`;
+      })()
+    : PLAZAS_ATENCION.filter(p => p.id.startsWith('1')).map(p => tarjetaPlaza(p.id)).join('') +
+      `<div class="panel-card" style="grid-column:1/-1;text-align:center;">
+        <button class="link-btn" ${ocupacionMiaActual ? 'disabled' : ''} onclick="abrirBloqueoSala1()">🔒 ${esCA?'Bloquejar tota la Sala 1 (reunió / esdeveniment)':'Bloquear toda la Sala 1 (reunión / evento)'}</button>
+      </div>`;
+  const sala2Html = tarjetaPlaza('2');
   const sala3Html = tarjetaPlaza('3');
 
   const reunionHtml = reunionMia
@@ -1093,6 +1129,53 @@ async function confirmarReservaPlaza(plazaId){
   const inicio = new Date(`${fecha}T${hora}:00`);
   if(inicio <= new Date()){ alert(esCA?'Tria un moment futur.':'Elige un momento futuro.'); return; }
   const { error } = await sb.from('fichajes_sala').insert({ sala: plazaId, tecnico_email: CURRENT_USER.email, inicio: inicio.toISOString() });
+  if(error){ alert(error.message); return; }
+  renderMiEspacio();
+}
+
+function abrirBloqueoSala1(){
+  const esCA = LANG_I === 'ca';
+  const manana = new Date(); manana.setDate(manana.getDate() + 1);
+  document.getElementById('reserva-plaza-form-wrap').innerHTML = `
+    <div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);">
+      <h3>🔒 ${esCA?'Bloquejar tota la Sala 1':'Bloquear toda la Sala 1'}</h3>
+      <p class="subtle" style="margin:0 0 8px;">${esCA?'Les 4 places quedaran ocupades a la vegada.':'Las 4 plazas quedarán ocupadas a la vez.'}</p>
+      <div class="field"><label>${esCA?'Motiu':'Motivo'}</label><input type="text" id="bloqueo-motivo" placeholder="${esCA?"Ex: Reunió d'equip":'Ej: Reunión de equipo'}"></div>
+      <label class="checkbox-row"><input type="checkbox" id="bloqueo-es-ahora" checked onchange="document.getElementById('bloqueo-fecha-hora-wrap').style.display=this.checked?'none':'block';">${esCA?'Ara mateix':'Ahora mismo'}</label>
+      <div id="bloqueo-fecha-hora-wrap" style="display:none;">
+        <div class="field"><label>${esCA?'Dia':'Día'}</label><input type="date" id="bloqueo-fecha" value="${manana.toISOString().slice(0,10)}"></div>
+        <div class="field"><label>${esCA?'Hora':'Hora'}</label><input type="time" id="bloqueo-hora" value="09:00"></div>
+      </div>
+      <button class="primary-btn" style="background:var(--alert);" onclick="confirmarBloqueoSala1()">${esCA?'Confirmar':'Confirmar'}</button>
+      <button class="link-btn" style="display:block;margin-top:8px;" onclick="document.getElementById('reserva-plaza-form-wrap').innerHTML='';">${esCA?'Cancel·lar':'Cancelar'}</button>
+    </div>`;
+  document.getElementById('reserva-plaza-form-wrap').scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+async function confirmarBloqueoSala1(){
+  const esCA = LANG_I === 'ca';
+  const motivo = document.getElementById('bloqueo-motivo').value.trim() || (esCA?'Reunió / esdeveniment':'Reunión / evento');
+  const esAhora = document.getElementById('bloqueo-es-ahora').checked;
+  let inicio;
+  if(esAhora){
+    inicio = new Date();
+  } else {
+    const fecha = document.getElementById('bloqueo-fecha').value;
+    const hora = document.getElementById('bloqueo-hora').value;
+    if(!fecha || !hora){ alert(esCA?'Tria dia i hora.':'Elige día y hora.'); return; }
+    inicio = new Date(`${fecha}T${hora}:00`);
+    if(inicio <= new Date()){ alert(esCA?'Tria un moment futur.':'Elige un momento futuro.'); return; }
+  }
+  const inicioIso = inicio.toISOString();
+  const filas = ['1A','1B','1C','1D'].map(sala => ({ sala, tecnico_email: CURRENT_USER.email, inicio: inicioIso, motivo }));
+  const { error } = await sb.from('fichajes_sala').insert(filas);
+  if(error){ alert(error.message); return; }
+  renderMiEspacio();
+}
+
+async function finalizarBloqueoSala1(){
+  const { error } = await sb.from('fichajes_sala').update({ fin: new Date().toISOString() })
+    .eq('tecnico_email', CURRENT_USER.email).is('fin', null).in('sala', ['1A','1B','1C','1D']);
   if(error){ alert(error.message); return; }
   renderMiEspacio();
 }
@@ -1296,7 +1379,7 @@ async function renderMiEspacio(){
 
   const historialHoyHtml = fichajesDeHoy.map(f => `
     <div class="panel-stat-row">
-      <span>${t.entradaLbl} ${horaFmt(f.entrada)}${f.salida ? ` · ${t.salidaLbl} ${horaFmt(f.salida)}` : ` · ${t.enCurso}`}</span>
+      <span>${t.entradaLbl} ${horaFmt(f.entrada)}${f.salida ? ` · ${t.salidaLbl} ${horaFmt(f.salida)}` : ` · ${t.enCurso}`}${f.cerrado_automaticamente ? ` · <span class="chip alert" title="${f.nota||''}">⚠️ ${LANG_I==='ca'?'Tancat automàticament, revisa-ho':'Cerrado automático, revísalo'}</span>` : ''}</span>
       <span>${f.salida ? `<strong>${duracionFmt(f.entrada, f.salida)}</strong>` : `<span class="chip gold">${t.fichado}</span>`}</span>
     </div>`).join('');
 
@@ -4091,6 +4174,40 @@ async function descargarExportacionProyecto(rutaStorage){
   window.open(data.signedUrl, '_blank');
 }
 
+async function subirDocumentoProyecto(proyectoId){
+  const esCA = LANG_I === 'ca';
+  const input = document.getElementById('proyecto-doc-input');
+  if(!input.files.length){ alert(esCA?'Tria un fitxer.':'Elige un archivo.'); return; }
+  const file = input.files[0];
+  const path = `proyectos/${proyectoId}/documentos/${Date.now()}_${file.name}`;
+
+  const { error: errorSubida } = await sb.storage.from('documentos').upload(path, file);
+  if(errorSubida){ alert(errorSubida.message); return; }
+
+  const { error } = await sb.from('proyecto_documentos').insert({
+    proyecto_id: proyectoId,
+    nombre_archivo: file.name,
+    ruta_storage: path,
+    subido_por_email: CURRENT_USER.email
+  });
+  if(error){ alert(error.message); return; }
+  verProyecto(proyectoId);
+}
+
+async function descargarDocumentoProyecto(rutaStorage){
+  const { data, error } = await sb.storage.from('documentos').createSignedUrl(rutaStorage, 60);
+  if(error){ alert(error.message); return; }
+  window.open(data.signedUrl, '_blank');
+}
+
+async function borrarDocumentoProyecto(id, proyectoId){
+  const esCA = LANG_I === 'ca';
+  if(!confirm(esCA?'Segur que vols esborrar aquest document?':'¿Seguro que quieres borrar este documento?')) return;
+  const { error } = await sb.from('proyecto_documentos').delete().eq('id', id);
+  if(error){ alert(error.message); return; }
+  verProyecto(proyectoId);
+}
+
 async function borrarProyecto(proyectoId){
   const esCA = LANG_I === 'ca';
   if(!confirm(esCA ? 'Segur que vols esborrar aquest projecte? Es perdrà tota la seva informació.' : '¿Seguro que quieres borrar este proyecto? Se perderá toda su información.')) return;
@@ -4139,7 +4256,7 @@ async function verProyecto(proyectoId){
 
   try {
 
-  const [{ data: proyecto, error: errorProyecto }, { data: participantes }, { data: actividades }, { data: avisos }, { data: seguimientos }, { data: staffLista }, { data: asistencias }, { data: exportaciones }] = await Promise.all([
+  const [{ data: proyecto, error: errorProyecto }, { data: participantes }, { data: actividades }, { data: avisos }, { data: seguimientos }, { data: staffLista }, { data: asistencias }, { data: exportaciones }, { data: documentosProyecto }] = await Promise.all([
     sb.from('proyectos').select('*').eq('id', proyectoId).maybeSingle(),
     sb.from('proyecto_participantes').select('*').eq('proyecto_id', proyectoId),
     sb.from('proyecto_actividades').select('*').eq('proyecto_id', proyectoId).order('fecha', { ascending:false }),
@@ -4147,7 +4264,8 @@ async function verProyecto(proyectoId){
     sb.from('actuaciones').select('*').eq('proyecto_id', proyectoId).order('fecha', { ascending:false }),
     sb.from('staff').select('email, nombre').eq('activo', true),
     sb.from('proyecto_asistencias').select('*').eq('proyecto_id', proyectoId),
-    sb.from('proyecto_exportaciones').select('*').eq('proyecto_id', proyectoId).order('creado_en', { ascending:false })
+    sb.from('proyecto_exportaciones').select('*').eq('proyecto_id', proyectoId).order('creado_en', { ascending:false }),
+    sb.from('proyecto_documentos').select('*').eq('proyecto_id', proyectoId).order('creado_en', { ascending:false })
   ]);
 
   if(errorProyecto){
@@ -4266,6 +4384,24 @@ async function verProyecto(proyectoId){
     </div>
 
     <div class="panel-card">
+      <h3>📎 ${esCA?'Documents del projecte':'Documentos del proyecto'}</h3>
+      ${(documentosProyecto && documentosProyecto.length)
+        ? documentosProyecto.map(d => `
+            <div class="panel-stat-row">
+              <span>${d.nombre_archivo}<br><span class="subtle" style="font-size:11px;margin:0;">${nombreTecnico(d.subido_por_email)} · ${new Date(d.creado_en).toLocaleDateString(esCA?'ca-ES':'es-ES')}</span></span>
+              <span style="display:flex;gap:10px;align-items:center;">
+                <button class="link-btn" style="font-size:12px;" onclick="descargarDocumentoProyecto('${d.ruta_storage}')">${esCA?'Veure':'Ver'}</button>
+                <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="borrarDocumentoProyecto('${d.id}','${proyectoId}')">${esCA?'Esborrar':'Borrar'}</button>
+              </span>
+            </div>`).join('')
+        : `<div class="empty-note">${esCA?'Encara no hi ha documents en aquest projecte.':'Todavía no hay documentos en este proyecto.'}</div>`}
+      <div class="doc-upload-row" style="margin-top:10px;">
+        <input type="file" id="proyecto-doc-input">
+        <button class="link-btn" style="margin-top:8px;" onclick="subirDocumentoProyecto('${proyectoId}')">${esCA?'Pujar document':'Subir documento'}</button>
+      </div>
+    </div>
+
+    <div class="panel-card">
       <h3>👨‍💼 ${esCA?'Professionals':'Profesionales'}</h3>
       ${profesionalesHtml}
       <div style="display:flex;gap:8px;margin-top:8px;">
@@ -4349,6 +4485,98 @@ async function enviarAvisoProyecto(proyectoId){
   });
   if(error){ alert(error.message); return; }
   verProyecto(proyectoId);
+}
+
+const CATEGORIAS_DOC_GENERAL = ['Plantillas', 'Formularios', 'Protocolos', 'Manuales', 'Otros'];
+
+async function renderDocumentosGenerales(){
+  const esCA = LANG_I === 'ca';
+  const cont = document.getElementById('documentosgenerales-content');
+  cont.innerHTML = `<div class="placeholder">${esCA?'Carregant…':'Cargando…'}</div>`;
+
+  const [{ data: docs, error }, { data: staffList }] = await Promise.all([
+    sb.from('documentos_generales').select('*').order('creado_en', { ascending:false }),
+    sb.from('staff').select('email, nombre')
+  ]);
+  if(error){ cont.innerHTML = `<div class="empty-note">Error al cargar: ${error.message}</div>`; return; }
+  (staffList || []).forEach(s => { if(s.nombre) __mapaNombresTecnicos[s.email] = s.nombre; });
+
+  const porCategoria = {};
+  (docs || []).forEach(d => {
+    const cat = d.categoria || 'Otros';
+    if(!porCategoria[cat]) porCategoria[cat] = [];
+    porCategoria[cat].push(d);
+  });
+
+  const listaHtml = CATEGORIAS_DOC_GENERAL.map(cat => {
+    const items = porCategoria[cat] || [];
+    if(!items.length) return '';
+    return `
+      <div class="panel-card">
+        <h3>${cat}</h3>
+        ${items.map(d => `
+          <div class="panel-stat-row">
+            <span>${d.nombre_archivo}<br><span class="subtle" style="font-size:11px;margin:0;">${nombreTecnico(d.subido_por_email)} · ${new Date(d.creado_en).toLocaleDateString(esCA?'ca-ES':'es-ES')}</span></span>
+            <span style="display:flex;gap:10px;align-items:center;">
+              <button class="link-btn" style="font-size:12px;" onclick="descargarDocumentoGeneral('${d.ruta_storage}')">${esCA?'Veure':'Ver'}</button>
+              <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="borrarDocumentoGeneral('${d.id}')">${esCA?'Esborrar':'Borrar'}</button>
+            </span>
+          </div>`).join('')}
+      </div>`;
+  }).join('');
+
+  cont.innerHTML = `
+    <p class="subtle">${esCA
+      ? "Documents de tota l'entitat: plantilles, formularis, protocols... Visibles per a tot l'equip."
+      : 'Documentos de toda la entidad: plantillas, formularios, protocolos... Visibles para todo el equipo.'}</p>
+
+    <div class="panel-card" style="background:var(--ochre-soft);border-color:var(--ochre);">
+      <h3 style="color:#7A4A1F;">⬆️ ${esCA?'Pujar un document':'Subir un documento'}</h3>
+      <div class="field">
+        <label>${esCA?'Categoria':'Categoría'}</label>
+        <select id="docgen-categoria">${CATEGORIAS_DOC_GENERAL.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
+      </div>
+      <div class="field"><input type="file" id="docgen-file-input"></div>
+      <button class="primary-btn" onclick="subirDocumentoGeneral()">${esCA?'Pujar':'Subir'}</button>
+    </div>
+
+    ${listaHtml || `<div class="empty-note">${esCA?'Encara no hi ha documents.':'Todavía no hay documentos.'}</div>`}
+  `;
+}
+
+async function subirDocumentoGeneral(){
+  const esCA = LANG_I === 'ca';
+  const input = document.getElementById('docgen-file-input');
+  if(!input.files.length){ alert(esCA?'Tria un fitxer.':'Elige un archivo.'); return; }
+  const file = input.files[0];
+  const categoria = document.getElementById('docgen-categoria').value;
+  const path = `generales/${Date.now()}_${file.name}`;
+
+  const { error: errorSubida } = await sb.storage.from('documentos').upload(path, file);
+  if(errorSubida){ alert(errorSubida.message); return; }
+
+  const { error } = await sb.from('documentos_generales').insert({
+    nombre_archivo: file.name,
+    ruta_storage: path,
+    categoria,
+    subido_por_email: CURRENT_USER.email
+  });
+  if(error){ alert(error.message); return; }
+  renderDocumentosGenerales();
+}
+
+async function descargarDocumentoGeneral(rutaStorage){
+  const { data, error } = await sb.storage.from('documentos').createSignedUrl(rutaStorage, 60);
+  if(error){ alert(error.message); return; }
+  window.open(data.signedUrl, '_blank');
+}
+
+async function borrarDocumentoGeneral(id){
+  const esCA = LANG_I === 'ca';
+  if(!confirm(esCA?'Segur que vols esborrar aquest document?':'¿Seguro que quieres borrar este documento?')) return;
+  const { error } = await sb.from('documentos_generales').delete().eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderDocumentosGenerales();
 }
 
 async function renderEquipoScreen(){
@@ -5852,6 +6080,8 @@ let __adminActuacionesOffset = 0;
 let __adminActuacionesTodas = [];
 let __adminSalasOffset = 0;
 let __adminSalasTodos = [];
+let __adminTraductorOffset = 0;
+let __adminTraductorTodos = [];
 let __adminNombresPersona = {};
 
 let __mapaNombresTecnicos = {};
@@ -5873,8 +6103,10 @@ async function renderAdministrador(){
   __adminActuacionesTodas = [];
   __adminSalasOffset = 0;
   __adminSalasTodos = [];
+  __adminTraductorOffset = 0;
+  __adminTraductorTodos = [];
 
-  const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes, revisionesRes, perfilesIncompletosRes, actuacionesPrimeraPagina, actuacionesCountRes, actuacionesLigeroRes, avisosAdminRes, oficinaRes, proyectosAdminRes, proyectoParticipantesAdminRes, salasPrimeraPagina, salasCountRes] = await Promise.all([
+  const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes, revisionesRes, perfilesIncompletosRes, actuacionesPrimeraPagina, actuacionesCountRes, actuacionesLigeroRes, avisosAdminRes, oficinaRes, proyectosAdminRes, proyectoParticipantesAdminRes, salasPrimeraPagina, salasCountRes, traductorPrimeraPagina, traductorCountRes] = await Promise.all([
     sb.from('atenciones').select('*').order('creado_en', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
     sb.from('atenciones').select('creado_por_email'), // sin límite: solo para el conteo de carga de trabajo
     sb.from('staff').select('*').order('email', { ascending:true }),
@@ -5891,7 +6123,9 @@ async function renderAdministrador(){
     sb.from('proyectos').select('id, nombre, estado'),
     sb.from('proyecto_participantes').select('proyecto_id, rol'),
     sb.from('fichajes_sala').select('*').order('inicio', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
-    sb.from('fichajes_sala').select('id', { count: 'exact', head: true })
+    sb.from('fichajes_sala').select('id', { count: 'exact', head: true }),
+    sb.from('traductor_historial').select('*').order('creado_en', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
+    sb.from('traductor_historial').select('id', { count: 'exact', head: true })
   ]);
 
   window.__configOficina = oficinaRes.data || null;
@@ -5909,6 +6143,9 @@ async function renderAdministrador(){
   __adminSalasTodos = salasPrimeraPagina.data || [];
   __adminSalasOffset = __adminSalasTodos.length;
   const totalSalas = salasCountRes.count || 0;
+  __adminTraductorTodos = traductorPrimeraPagina.data || [];
+  __adminTraductorOffset = __adminTraductorTodos.length;
+  const totalTraductor = traductorCountRes.count || 0;
 
   // Carga de trabajo por técnico (sobre TODAS las atenciones, no solo la página cargada)
   const cargaPorTecnico = {};
@@ -6082,7 +6319,13 @@ async function renderAdministrador(){
       <p class="subtle" style="margin:8px 0 0;font-size:11px;">${LANG_I==='ca' ? "Toca aquest botó estant físicament dins l'oficina, des del mòbil, per capturar la ubicació exacta." : 'Toca este botón estando físicamente dentro de la oficina, desde el móvil, para capturar la ubicación exacta.'}</p>
     </div>
 
-    <p class="subtle" style="margin-top:18px;">${t.fichajesPersonal}</p>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:18px;">
+      <p class="subtle" style="margin:0;">${t.fichajesPersonal}</p>
+      <div style="display:flex;gap:10px;">
+        <button class="link-btn" onclick="exportarFichajesExcel()">⬇️ Excel</button>
+        <button class="link-btn" onclick="exportarFichajesPDF()">⬇️ PDF</button>
+      </div>
+    </div>
     <div class="panel-card" id="admin-fichajes-lista">${renderFilasFichajes(__adminFichajesTodos)}</div>
     <div style="text-align:center;margin-top:8px;margin-bottom:18px;" id="admin-fichajes-cargar-mas-wrap">
       ${totalFichajes > __adminFichajesTodos.length
@@ -6090,11 +6333,31 @@ async function renderAdministrador(){
         : ''}
     </div>
 
-    <p class="subtle" style="margin-top:18px;">${LANG_I==='ca' ? 'Sales i reunions' : 'Salas y reuniones'}</p>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:18px;">
+      <p class="subtle" style="margin:0;">${LANG_I==='ca' ? 'Sales i reunions' : 'Salas y reuniones'}</p>
+      <div style="display:flex;gap:10px;">
+        <button class="link-btn" onclick="exportarFichajesSalaExcel()">⬇️ Excel</button>
+        <button class="link-btn" onclick="exportarFichajesSalaPDF()">⬇️ PDF</button>
+      </div>
+    </div>
     <div class="panel-card" id="admin-salas-lista">${renderFilasSalas(__adminSalasTodos)}</div>
     <div style="text-align:center;margin-top:8px;margin-bottom:18px;" id="admin-salas-cargar-mas-wrap">
       ${totalSalas > __adminSalasTodos.length
         ? `<button class="link-btn" onclick="cargarMasSalas()">${t.cargarTexto} ${Math.min(ADMIN_PAGE_SIZE, totalSalas - __adminSalasTodos.length)} ${t.masDeTexto} ${totalSalas} ${t.enTotalTexto}</button>`
+        : ''}
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:18px;">
+      <p class="subtle" style="margin:0;">${LANG_I==='ca' ? 'Traductor en directe' : 'Traductor en directo'}</p>
+      <div style="display:flex;gap:10px;">
+        <button class="link-btn" onclick="exportarTraductorExcel()">⬇️ Excel</button>
+        <button class="link-btn" onclick="exportarTraductorPDF()">⬇️ PDF</button>
+      </div>
+    </div>
+    <div class="panel-card" id="admin-traductor-lista">${renderFilasTraductor(__adminTraductorTodos)}</div>
+    <div style="text-align:center;margin-top:8px;margin-bottom:18px;" id="admin-traductor-cargar-mas-wrap">
+      ${totalTraductor > __adminTraductorTodos.length
+        ? `<button class="link-btn" onclick="cargarMasTraductor()">${t.cargarTexto} ${Math.min(ADMIN_PAGE_SIZE, totalTraductor - __adminTraductorTodos.length)} ${t.masDeTexto} ${totalTraductor} ${t.enTotalTexto}</button>`
         : ''}
     </div>
 
@@ -6241,6 +6504,141 @@ async function cargarMasSalas(){
     : '';
 }
 
+function renderFilasTraductor(lista){
+  const esCA = LANG_I === 'ca';
+  const fechaHoraFmt = iso => new Date(iso).toLocaleString(esCA?'ca-ES':'es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+  return lista.length
+    ? lista.map(f => `
+        <div class="panel-stat-row" style="align-items:flex-start;">
+          <span>${nombreTecnico(f.tecnico_email)} ↔ ${f.nombre_persona || (esCA?'(sense nom)':'(sin nombre)')}<br>
+            <span class="subtle" style="font-size:11px;margin:0;">${f.idioma_tecnico} → ${f.idioma_persona} · ${fechaHoraFmt(f.creado_en)}</span></span>
+          <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="borrarTraductorHistorial('${f.id}')">${esCA?'Esborrar':'Borrar'}</button>
+        </div>`).join('')
+    : `<div class="empty-note">—</div>`;
+}
+
+async function borrarTraductorHistorial(id){
+  const esCA = LANG_I === 'ca';
+  if(!confirm(esCA ? 'Segur que vols esborrar aquest registre?' : '¿Seguro que quieres borrar este registro?')) return;
+  const { error } = await sb.from('traductor_historial').delete().eq('id', id);
+  if(error){ alert(error.message); return; }
+  __adminTraductorTodos = __adminTraductorTodos.filter(f => f.id !== id);
+  document.getElementById('admin-traductor-lista').innerHTML = renderFilasTraductor(__adminTraductorTodos);
+}
+
+async function cargarMasTraductor(){
+  const { data, count } = await sb.from('traductor_historial').select('*', { count: 'exact' }).order('creado_en', { ascending:false }).range(__adminTraductorOffset, __adminTraductorOffset + ADMIN_PAGE_SIZE - 1);
+  __adminTraductorTodos = __adminTraductorTodos.concat(data || []);
+  __adminTraductorOffset = __adminTraductorTodos.length;
+  document.getElementById('admin-traductor-lista').innerHTML = renderFilasTraductor(__adminTraductorTodos);
+  document.getElementById('admin-traductor-cargar-mas-wrap').innerHTML = (count || 0) > __adminTraductorTodos.length
+    ? `<button class="link-btn" onclick="cargarMasTraductor()">${TI[LANG_I].cargarTexto} ${Math.min(ADMIN_PAGE_SIZE, count - __adminTraductorTodos.length)} ${TI[LANG_I].masDeTexto} ${count} ${TI[LANG_I].enTotalTexto}</button>`
+    : '';
+}
+
+// ---------- Exportaciones (Excel / PDF) ----------
+
+async function descargarXLSX(cabecera, filas, nombreArchivo, nombreHoja){
+  const hoja = XLSX.utils.aoa_to_sheet([cabecera, ...filas]);
+  const libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(libro, hoja, nombreHoja);
+  const buf = XLSX.write(libro, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement('a');
+  enlace.href = url; enlace.download = nombreArchivo;
+  document.body.appendChild(enlace); enlace.click(); document.body.removeChild(enlace);
+  URL.revokeObjectURL(url);
+}
+
+async function descargarPDFTabla(titulo, cabecera, filas, nombreArchivo){
+  const filasHtml = filas.map(f => `<tr>${f.map(c => `<td style="border:1px solid #ccc;padding:5px 7px;font-size:10.5px;">${c ?? ''}</td>`).join('')}</tr>`).join('');
+  const contenedor = document.createElement('div');
+  contenedor.style.cssText = 'position:absolute;left:0;top:-10000px;width:1000px;background:#fff;padding:30px;font-family:Georgia,serif;color:#16233F;';
+  contenedor.innerHTML = `
+    <h1 style="font-size:18px;margin:0 0 4px;">${titulo}</h1>
+    <p style="font-size:11px;color:#666;margin:0 0 14px;">${new Date().toLocaleString('es-ES')}</p>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr>${cabecera.map(c => `<th style="border:1px solid #ccc;padding:5px 7px;font-size:10.5px;background:#F5F3EC;text-align:left;">${c}</th>`).join('')}</tr></thead>
+      <tbody>${filasHtml}</tbody>
+    </table>`;
+  document.body.appendChild(contenedor);
+  try {
+    const canvas = await html2canvas(contenedor, { scale: 2, backgroundColor: '#ffffff' });
+    const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const anchoPagina = pdf.internal.pageSize.getWidth();
+    const margen = 10;
+    const anchoImg = anchoPagina - margen * 2;
+    const altoImg = (canvas.height * anchoImg) / canvas.width;
+    pdf.addImage(imgData, 'PNG', margen, margen, anchoImg, altoImg);
+    pdf.save(nombreArchivo);
+  } finally {
+    document.body.removeChild(contenedor);
+  }
+}
+
+async function exportarFichajesExcel(){
+  const { data } = await sb.from('fichajes').select('*').order('entrada', { ascending:false });
+  const cabecera = ['Técnico','Entrada','Salida','Duración (min)','Cerrado automático','Nota'];
+  const filas = (data||[]).map(f => [
+    nombreTecnico(f.tecnico_email), new Date(f.entrada).toLocaleString('es-ES'),
+    f.salida ? new Date(f.salida).toLocaleString('es-ES') : 'En curso',
+    f.salida ? Math.round((new Date(f.salida)-new Date(f.entrada))/60000) : '',
+    f.cerrado_automaticamente ? 'Sí' : 'No', f.nota || ''
+  ]);
+  descargarXLSX(cabecera, filas, 'Fichajes-personal.xlsx', 'Fichajes');
+}
+async function exportarFichajesPDF(){
+  const { data } = await sb.from('fichajes').select('*').order('entrada', { ascending:false });
+  const cabecera = ['Técnico','Entrada','Salida','Duración','Cerrado automático'];
+  const filas = (data||[]).map(f => [
+    nombreTecnico(f.tecnico_email), new Date(f.entrada).toLocaleString('es-ES'),
+    f.salida ? new Date(f.salida).toLocaleString('es-ES') : 'En curso',
+    f.salida ? `${Math.floor(Math.round((new Date(f.salida)-new Date(f.entrada))/60000)/60)}h ${Math.round((new Date(f.salida)-new Date(f.entrada))/60000)%60}min` : '',
+    f.cerrado_automaticamente ? '⚠️ Sí' : ''
+  ]);
+  descargarPDFTabla('Fichajes de personal — Logos Intranet', cabecera, filas, 'Fichajes-personal.pdf');
+}
+
+async function exportarFichajesSalaExcel(){
+  const { data } = await sb.from('fichajes_sala').select('*').order('inicio', { ascending:false });
+  const cabecera = ['Técnico','Sala/Plaza','Motivo','Inicio','Fin','Duración (min)'];
+  const filas = (data||[]).map(f => [
+    nombreTecnico(f.tecnico_email), f.sala === 'reunion' ? 'Reunión' : ('Plaza ' + f.sala), f.motivo || '',
+    new Date(f.inicio).toLocaleString('es-ES'), f.fin ? new Date(f.fin).toLocaleString('es-ES') : 'En curso',
+    f.fin ? Math.round((new Date(f.fin)-new Date(f.inicio))/60000) : ''
+  ]);
+  descargarXLSX(cabecera, filas, 'Salas-y-reuniones.xlsx', 'Salas');
+}
+async function exportarFichajesSalaPDF(){
+  const { data } = await sb.from('fichajes_sala').select('*').order('inicio', { ascending:false });
+  const cabecera = ['Técnico','Sala/Plaza','Motivo','Inicio','Fin'];
+  const filas = (data||[]).map(f => [
+    nombreTecnico(f.tecnico_email), f.sala === 'reunion' ? 'Reunión' : ('Plaza ' + f.sala), f.motivo || '',
+    new Date(f.inicio).toLocaleString('es-ES'), f.fin ? new Date(f.fin).toLocaleString('es-ES') : 'En curso'
+  ]);
+  descargarPDFTabla('Salas y reuniones — Logos Intranet', cabecera, filas, 'Salas-y-reuniones.pdf');
+}
+
+async function exportarTraductorExcel(){
+  const { data } = await sb.from('traductor_historial').select('*').order('creado_en', { ascending:false });
+  const cabecera = ['Técnico','Persona usuaria','Idioma técnico','Idioma persona','Fecha y hora'];
+  const filas = (data||[]).map(f => [
+    nombreTecnico(f.tecnico_email), f.nombre_persona || '', f.idioma_tecnico, f.idioma_persona, new Date(f.creado_en).toLocaleString('es-ES')
+  ]);
+  descargarXLSX(cabecera, filas, 'Traductor-historial.xlsx', 'Traductor');
+}
+async function exportarTraductorPDF(){
+  const { data } = await sb.from('traductor_historial').select('*').order('creado_en', { ascending:false });
+  const cabecera = ['Técnico','Persona usuaria','Idioma técnico','Idioma persona','Fecha y hora'];
+  const filas = (data||[]).map(f => [
+    nombreTecnico(f.tecnico_email), f.nombre_persona || '', f.idioma_tecnico, f.idioma_persona, new Date(f.creado_en).toLocaleString('es-ES')
+  ]);
+  descargarPDFTabla('Traductor en directo — historial — Logos Intranet', cabecera, filas, 'Traductor-historial.pdf');
+}
+
 function renderFilasFichajes(fichajes){
   const t = TI[LANG_I];
   const horaFmt = iso => new Date(iso).toLocaleTimeString(t.localeFecha, { hour:'2-digit', minute:'2-digit' });
@@ -6267,6 +6665,7 @@ function renderFilasFichajes(fichajes){
           <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             ${horaFmt(f.entrada)} ${ubicacionHtml(f.entrada_lat, f.entrada_lng)}
             ${f.salida ? `– ${horaFmt(f.salida)} ${ubicacionHtml(f.salida_lat, f.salida_lng)} (${duracionFmt(f.entrada, f.salida)})` : `<span class="chip gold">${t.enCurso}</span>`}
+            ${f.cerrado_automaticamente ? `<span class="chip alert" title="${f.nota||''}">⚠️ ${LANG_I==='ca'?'Tancat automàticament':'Cerrado automático'}</span>` : ''}
             <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="borrarFichaje('${f.id}')">${LANG_I==='ca'?'Esborrar':'Borrar'}</button>
           </span>
         </div>`).join('')
