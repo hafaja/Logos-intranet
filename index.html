@@ -1056,7 +1056,11 @@ async function construirSalasAtencionHtml(){
       })()
     : PLAZAS_ATENCION.filter(p => p.id.startsWith('1')).map(p => tarjetaPlaza(p.id)).join('') +
       `<div class="panel-card" style="grid-column:1/-1;text-align:center;">
-        <button class="link-btn" ${ocupacionMiaActual ? 'disabled' : ''} onclick="abrirBloqueoSala1()">🔒 ${esCA?'Bloquejar tota la Sala 1 (reunió / esdeveniment)':'Bloquear toda la Sala 1 (reunión / evento)'}</button>
+        <p style="margin:0 0 8px;font-size:12.5px;color:var(--ink-soft);">${esCA?'Reunió o esdeveniment que ocupi tota la Sala 1:':'Reunión o evento que ocupe toda la Sala 1:'}</p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <button class="primary-btn" style="width:auto;margin:0;" ${ocupacionMiaActual ? 'disabled' : ''} onclick="abrirBloqueoSala1(true)">🔒 ${esCA?'Bloquejar ara':'Bloquear ahora'}</button>
+          <button class="link-btn" onclick="abrirBloqueoSala1(false)">📅 ${esCA?'Reservar per a més tard':'Reservar para más tarde'}</button>
+        </div>
       </div>`;
   const sala2Html = tarjetaPlaza('2');
   const sala3Html = tarjetaPlaza('3');
@@ -1133,19 +1137,18 @@ async function confirmarReservaPlaza(plazaId){
   renderMiEspacio();
 }
 
-function abrirBloqueoSala1(){
+function abrirBloqueoSala1(esAhora){
   const esCA = LANG_I === 'ca';
   const manana = new Date(); manana.setDate(manana.getDate() + 1);
   document.getElementById('reserva-plaza-form-wrap').innerHTML = `
     <div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);">
-      <h3>🔒 ${esCA?'Bloquejar tota la Sala 1':'Bloquear toda la Sala 1'}</h3>
+      <h3>🔒 ${esAhora ? (esCA?'Bloquejar tota la Sala 1 ara':'Bloquear toda la Sala 1 ahora') : (esCA?'Reservar el bloqueig de la Sala 1':'Reservar el bloqueo de la Sala 1')}</h3>
       <p class="subtle" style="margin:0 0 8px;">${esCA?'Les 4 places quedaran ocupades a la vegada.':'Las 4 plazas quedarán ocupadas a la vez.'}</p>
       <div class="field"><label>${esCA?'Motiu':'Motivo'}</label><input type="text" id="bloqueo-motivo" placeholder="${esCA?"Ex: Reunió d'equip":'Ej: Reunión de equipo'}"></div>
-      <label class="checkbox-row"><input type="checkbox" id="bloqueo-es-ahora" checked onchange="document.getElementById('bloqueo-fecha-hora-wrap').style.display=this.checked?'none':'block';">${esCA?'Ara mateix':'Ahora mismo'}</label>
-      <div id="bloqueo-fecha-hora-wrap" style="display:none;">
-        <div class="field"><label>${esCA?'Dia':'Día'}</label><input type="date" id="bloqueo-fecha" value="${manana.toISOString().slice(0,10)}"></div>
-        <div class="field"><label>${esCA?'Hora':'Hora'}</label><input type="time" id="bloqueo-hora" value="09:00"></div>
-      </div>
+      <input type="hidden" id="bloqueo-es-ahora" value="${esAhora ? '1' : '0'}">
+      ${esAhora ? '' : `
+      <div class="field"><label>${esCA?'Dia':'Día'}</label><input type="date" id="bloqueo-fecha" value="${manana.toISOString().slice(0,10)}"></div>
+      <div class="field"><label>${esCA?'Hora':'Hora'}</label><input type="time" id="bloqueo-hora" value="09:00"></div>`}
       <button class="primary-btn" style="background:var(--alert);" onclick="confirmarBloqueoSala1()">${esCA?'Confirmar':'Confirmar'}</button>
       <button class="link-btn" style="display:block;margin-top:8px;" onclick="document.getElementById('reserva-plaza-form-wrap').innerHTML='';">${esCA?'Cancel·lar':'Cancelar'}</button>
     </div>`;
@@ -1155,7 +1158,7 @@ function abrirBloqueoSala1(){
 async function confirmarBloqueoSala1(){
   const esCA = LANG_I === 'ca';
   const motivo = document.getElementById('bloqueo-motivo').value.trim() || (esCA?'Reunió / esdeveniment':'Reunión / evento');
-  const esAhora = document.getElementById('bloqueo-es-ahora').checked;
+  const esAhora = document.getElementById('bloqueo-es-ahora').value === '1';
   let inicio;
   if(esAhora){
     inicio = new Date();
