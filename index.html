@@ -287,7 +287,6 @@
       <button data-target="mipropioproyecto" onclick="showScreen('mipropioproyecto');renderMiPropioProyectoEntrada()">🏛️ Crea un proyecto de Logos</button>
       <button data-target="noticias" onclick="showScreen('noticias');renderNoticiasScreen()">📰 Portales del día</button>
       <button data-target="equipo" onclick="showScreen('equipo');renderEquipoScreen()">Trabajo en equipo</button>
-      <button data-target="documentosgenerales" onclick="showScreen('documentosgenerales');renderDocumentosGenerales()">📁 Documentos generales</button>
       <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
       <button data-target="config" onclick="showScreen('config');renderConfigScreen()">Configuración</button>
     </nav>
@@ -462,13 +461,6 @@
     <div class="main-content">
       <div class="topbar"><span class="brand">Trabajo en equipo</span></div>
       <div class="content" id="equipo-content"><div class="placeholder">Cargando…</div></div>
-    </div>
-  </div>
-
-  <div class="screen" id="screen-documentosgenerales">
-    <div class="main-content">
-      <div class="topbar"><span class="brand">📁 Documentos generales</span></div>
-      <div class="content" id="documentosgenerales-content"><div class="placeholder">Cargando…</div></div>
     </div>
   </div>
 
@@ -1986,24 +1978,232 @@ async function renderTramitesGlobalScreen(){
   `;
 }
 
+async function irAProyectoDesdeFuera(proyectoId){
+  showScreen('proyectos');
+  await renderProyectosScreen();
+  verProyecto(proyectoId);
+}
+
+const CATEGORIAS_DOC_GENERAL = ['Plantillas', 'Formularios', 'Protocolos', 'Manuales', 'Otros'];
+
+const DOCS_PAGE_SIZE = 50;
+let __docsBusqueda = '';
+let __docsBusquedaTimeout = null;
+let __docsProyectos = [];
+let __docsPersonas = [];
+let __docsProyTotal = 0;
+let __docsPersTotal = 0;
+let __docsNombresProyecto = {};
+let __docsNombresPersona = {};
+let __docsIdsProyBusqueda = [];
+let __docsIdsPersBusqueda = [];
+
 async function renderDocsGlobalScreen(){
   const cont = document.getElementById('docsglobal-content');
+  const esCA = LANG_I === 'ca';
+  __docsBusqueda = '';
+  cont.innerHTML = `
+    <p class="subtle">${esCA
+      ? "Tots els documents de l'entitat en un sol lloc: generals, de projectes i de persones."
+      : 'Todos los documentos de la entidad en un solo sitio: generales, de proyectos y de personas.'}</p>
+
+    <div class="field">
+      <input type="text" id="docs-busqueda" placeholder="🔎 ${esCA?'Cerca per nom de fitxer, persona o projecte…':'Buscar por nombre de archivo, persona o proyecto…'}" oninput="buscarDocsGlobal(this.value)">
+    </div>
+
+    <div class="panel-card" style="background:var(--ochre-soft);border-color:var(--ochre);">
+      <h3 style="color:#7A4A1F;">📁 ${esCA?'Pujar un document general':'Subir un documento general'}</h3>
+      <p class="subtle" style="margin:0 0 8px;">${esCA?"Plantilles, formularis, protocols... de tota l'entitat.":'Plantillas, formularios, protocolos... de toda la entidad.'}</p>
+      <div class="field">
+        <label>${esCA?'Categoria':'Categoría'}</label>
+        <select id="docgen-categoria">${CATEGORIAS_DOC_GENERAL.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
+      </div>
+      <div class="field"><input type="file" id="docgen-file-input"></div>
+      <button class="primary-btn" onclick="subirDocumentoGeneral()">⬆️ ${esCA?'Pujar':'Subir'}</button>
+    </div>
+
+    <div id="docs-resultados"><div class="placeholder">${TI[LANG_I].cargando}</div></div>
+  `;
+  await cargarResultadosDocs();
+}
+
+function buscarDocsGlobal(valor){
+  clearTimeout(__docsBusquedaTimeout);
+  __docsBusquedaTimeout = setTimeout(() => {
+    __docsBusqueda = valor.trim().replace(/[,()%]/g, ' ').trim();
+    cargarResultadosDocs();
+  }, 300);
+}
+
+function filtrarQDocsProyectos(q){
+  const b = __docsBusqueda;
+  if(!b) return q;
+  return __docsIdsProyBusqueda.length
+    ? q.or(`nombre_archivo.ilike.%${b}%,proyecto_id.in.(${__docsIdsProyBusqueda.join(',')})`)
+    : q.ilike('nombre_archivo', `%${b}%`);
+}
+function filtrarQDocsPersonas(q){
+  const b = __docsBusqueda;
+  if(!b) return q;
+  return __docsIdsPersBusqueda.length
+    ? q.or(`nombre_archivo.ilike.%${b}%,usuario_id.in.(${__docsIdsPersBusqueda.join(',')})`)
+    : q.ilike('nombre_archivo', `%${b}%`);
+}
+
+async function cargarNombresPersonasDocs(lista){
+  const ids = [...new Set(lista.map(d => d.usuario_id).filter(Boolean))].filter(id => !(id in __docsNombresPersona));
+  if(!ids.length) return;
+  const { data: perfiles } = await sb.from('perfiles').select('id, nombre_completo').in('id', ids);
+  (perfiles || []).forEach(p => { __docsNombresPersona[p.id] = p.nombre_completo; });
+}
+
+function filaDocProyecto(d){
+  const t = TI[LANG_I]; const esCA = LANG_I === 'ca';
+  return `
+    <div class="panel-stat-row">
+      <span>${d.nombre_archivo}<br><span class="subtle" style="font-size:11px;margin:0;">${__docsNombresProyecto[d.proyecto_id] || (esCA?'Projecte':'Proyecto')} · ${nombreTecnico(d.subido_por_email)} · ${new Date(d.creado_en).toLocaleDateString(t.localeFecha)}</span></span>
+      <span style="display:flex;gap:10px;align-items:center;">
+        <button class="link-btn" style="font-size:12px;" onclick="verDocumentoStaff('${d.ruta_storage}')">${t.ver}</button>
+        <button class="link-btn" style="font-size:12px;" onclick="irAProyectoDesdeFuera('${d.proyecto_id}')">${esCA?'Anar al projecte':'Ir al proyecto'}</button>
+      </span>
+    </div>`;
+}
+function filaDocPersona(d){
+  const t = TI[LANG_I]; const esCA = LANG_I === 'ca';
+  return `
+    <div class="panel-stat-row">
+      <span>${d.nombre_archivo}<br><span class="subtle" style="font-size:11px;margin:0;">${__docsNombresPersona[d.usuario_id] || t.sinNombre} · ${new Date(d.subido_en).toLocaleDateString(t.localeFecha)}</span></span>
+      <span style="display:flex;gap:10px;align-items:center;">
+        <button class="link-btn" style="font-size:12px;" onclick="verDocumentoStaff('${d.ruta_storage}')">${t.ver}</button>
+        ${d.usuario_id ? `<button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${d.usuario_id}','docsglobal')">${esCA?'Anar a la fitxa':'Ir a la ficha'}</button>` : ''}
+      </span>
+    </div>`;
+}
+
+function botonCargarMasDocs(mostrados, total, funcion){
   const t = TI[LANG_I];
-  const { data } = await sb.from('documentos').select('*').order('subido_en', { ascending:false }).limit(60);
-  const ids = [...new Set((data || []).map(d => d.usuario_id).filter(Boolean))];
-  let nombres = {};
-  if(ids.length){
-    const { data: perfiles } = await sb.from('perfiles').select('id, nombre_completo').in('id', ids);
-    (perfiles || []).forEach(p => { nombres[p.id] = p.nombre_completo; });
+  return total > mostrados
+    ? `<button class="link-btn" onclick="${funcion}()">${t.cargarTexto} ${Math.min(DOCS_PAGE_SIZE, total - mostrados)} ${t.masDeTexto} ${total} ${t.enTotalTexto}</button>`
+    : '';
+}
+
+async function cargarResultadosDocs(){
+  const cont = document.getElementById('docs-resultados');
+  if(!cont) return;
+  const t = TI[LANG_I];
+  const esCA = LANG_I === 'ca';
+  const b = __docsBusqueda;
+
+  const [{ data: proyectosLista }, { data: staffList }] = await Promise.all([
+    sb.from('proyectos').select('id, nombre'),
+    sb.from('staff').select('email, nombre')
+  ]);
+  (staffList || []).forEach(s => { if(s.nombre) __mapaNombresTecnicos[s.email] = s.nombre; });
+  __docsNombresProyecto = {};
+  (proyectosLista || []).forEach(p => { __docsNombresProyecto[p.id] = p.nombre; });
+
+  __docsIdsProyBusqueda = b ? (proyectosLista || []).filter(p => (p.nombre || '').toLowerCase().includes(b.toLowerCase())).map(p => p.id) : [];
+  __docsIdsPersBusqueda = [];
+  if(b){
+    const { data: pm } = await sb.from('perfiles').select('id').ilike('nombre_completo', `%${b}%`).limit(50);
+    __docsIdsPersBusqueda = (pm || []).map(p => p.id);
   }
-  const listaHtml = (data && data.length)
-    ? data.map(d => `<div class="panel-stat-row"><span>${d.nombre_archivo}<br><span class="subtle" style="font-size:11px;margin:0;">${nombres[d.usuario_id] || t.sinNombre} · ${new Date(d.subido_en).toLocaleDateString(t.localeFecha)}</span></span><button class="link-btn" style="font-size:12px;" onclick="verDocumentoStaff('${d.ruta_storage}')">${t.ver}</button></div>`).join('')
-    : `<div class="empty-note">${LANG_I==='ca' ? 'Sense documents.' : 'Sin documentos.'}</div>`;
+
+  let qGen = sb.from('documentos_generales').select('*').order('creado_en', { ascending:false });
+  if(b) qGen = qGen.ilike('nombre_archivo', `%${b}%`);
+  const qProy = filtrarQDocsProyectos(sb.from('proyecto_documentos').select('*', { count:'exact' }).order('creado_en', { ascending:false }).range(0, DOCS_PAGE_SIZE - 1));
+  const qPers = filtrarQDocsPersonas(sb.from('documentos').select('*', { count:'exact' }).order('subido_en', { ascending:false }).range(0, DOCS_PAGE_SIZE - 1));
+
+  const [genRes, proyRes, persRes] = await Promise.all([qGen, qProy, qPers]);
+  __docsProyectos = proyRes.data || [];
+  __docsProyTotal = proyRes.count || 0;
+  __docsPersonas = persRes.data || [];
+  __docsPersTotal = persRes.count || 0;
+  await cargarNombresPersonasDocs(__docsPersonas);
+
+  const porCategoria = {};
+  (genRes.data || []).forEach(d => {
+    const cat = d.categoria || 'Otros';
+    if(!porCategoria[cat]) porCategoria[cat] = [];
+    porCategoria[cat].push(d);
+  });
+  const generalesHtml = CATEGORIAS_DOC_GENERAL.map(cat => {
+    const items = porCategoria[cat] || [];
+    if(!items.length) return '';
+    return `
+      <div style="margin-bottom:10px;">
+        <p style="font-weight:700;font-size:12.5px;margin:0 0 4px;">${cat}</p>
+        ${items.map(d => `
+          <div class="panel-stat-row">
+            <span>${d.nombre_archivo}<br><span class="subtle" style="font-size:11px;margin:0;">${nombreTecnico(d.subido_por_email)} · ${new Date(d.creado_en).toLocaleDateString(t.localeFecha)}</span></span>
+            <span style="display:flex;gap:10px;align-items:center;">
+              <button class="link-btn" style="font-size:12px;" onclick="verDocumentoStaff('${d.ruta_storage}')">${t.ver}</button>
+              <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="borrarDocumentoGeneral('${d.id}')">${esCA?'Esborrar':'Borrar'}</button>
+            </span>
+          </div>`).join('')}
+      </div>`;
+  }).join('');
 
   cont.innerHTML = `
-    <p class="subtle">${LANG_I==='ca' ? 'Els últims 60 documents pujats de totes les persones.' : 'Los últimos 60 documentos subidos de todas las personas.'}</p>
-    <div class="panel-card">${listaHtml}</div>
+    <p class="subtle" style="font-weight:700;">📁 ${esCA?'Documents generals':'Documentos generales'}</p>
+    <div class="panel-card">${generalesHtml || `<div class="empty-note">${b ? (esCA?'Cap resultat.':'Sin resultados.') : (esCA?'Encara no hi ha documents generals.':'Todavía no hay documentos generales.')}</div>`}</div>
+
+    <p class="subtle" style="margin-top:18px;font-weight:700;">📎 ${esCA?'Documents de projectes':'Documentos de proyectos'}</p>
+    <div class="panel-card" id="docs-lista-proyectos">${__docsProyectos.length ? __docsProyectos.map(filaDocProyecto).join('') : `<div class="empty-note">${b ? (esCA?'Cap resultat.':'Sin resultados.') : (esCA?'Sense documents de projectes.':'Sin documentos de proyectos.')}</div>`}</div>
+    <div style="text-align:center;margin-top:8px;" id="docs-mas-proyectos">${botonCargarMasDocs(__docsProyectos.length, __docsProyTotal, 'cargarMasDocsProyectos')}</div>
+
+    <p class="subtle" style="margin-top:18px;font-weight:700;">👤 ${esCA?'Documents de persones':'Documentos de personas'}</p>
+    <div class="panel-card" id="docs-lista-personas">${__docsPersonas.length ? __docsPersonas.map(filaDocPersona).join('') : `<div class="empty-note">${b ? (esCA?'Cap resultat.':'Sin resultados.') : (esCA?'Sense documents.':'Sin documentos.')}</div>`}</div>
+    <div style="text-align:center;margin-top:8px;" id="docs-mas-personas">${botonCargarMasDocs(__docsPersonas.length, __docsPersTotal, 'cargarMasDocsPersonas')}</div>
   `;
+}
+
+async function cargarMasDocsProyectos(){
+  const desde = __docsProyectos.length;
+  const { data, count } = await filtrarQDocsProyectos(sb.from('proyecto_documentos').select('*', { count:'exact' }).order('creado_en', { ascending:false }).range(desde, desde + DOCS_PAGE_SIZE - 1));
+  __docsProyectos = __docsProyectos.concat(data || []);
+  __docsProyTotal = count || __docsProyTotal;
+  document.getElementById('docs-lista-proyectos').innerHTML = __docsProyectos.map(filaDocProyecto).join('');
+  document.getElementById('docs-mas-proyectos').innerHTML = botonCargarMasDocs(__docsProyectos.length, __docsProyTotal, 'cargarMasDocsProyectos');
+}
+
+async function cargarMasDocsPersonas(){
+  const desde = __docsPersonas.length;
+  const { data, count } = await filtrarQDocsPersonas(sb.from('documentos').select('*', { count:'exact' }).order('subido_en', { ascending:false }).range(desde, desde + DOCS_PAGE_SIZE - 1));
+  __docsPersonas = __docsPersonas.concat(data || []);
+  __docsPersTotal = count || __docsPersTotal;
+  await cargarNombresPersonasDocs(data || []);
+  document.getElementById('docs-lista-personas').innerHTML = __docsPersonas.map(filaDocPersona).join('');
+  document.getElementById('docs-mas-personas').innerHTML = botonCargarMasDocs(__docsPersonas.length, __docsPersTotal, 'cargarMasDocsPersonas');
+}
+
+async function subirDocumentoGeneral(){
+  const esCA = LANG_I === 'ca';
+  const input = document.getElementById('docgen-file-input');
+  if(!input.files.length){ alert(esCA?'Tria un fitxer.':'Elige un archivo.'); return; }
+  const file = input.files[0];
+  const categoria = document.getElementById('docgen-categoria').value;
+  const path = `generales/${Date.now()}_${file.name}`;
+
+  const { error: errorSubida } = await sb.storage.from('documentos').upload(path, file);
+  if(errorSubida){ alert(errorSubida.message); return; }
+
+  const { error } = await sb.from('documentos_generales').insert({
+    nombre_archivo: file.name,
+    ruta_storage: path,
+    categoria,
+    subido_por_email: CURRENT_USER.email
+  });
+  if(error){ alert(error.message); return; }
+  cargarResultadosDocs();
+}
+
+async function borrarDocumentoGeneral(id){
+  const esCA = LANG_I === 'ca';
+  if(!confirm(esCA?'Segur que vols esborrar aquest document?':'¿Seguro que quieres borrar este documento?')) return;
+  const { error } = await sb.from('documentos_generales').delete().eq('id', id);
+  if(error){ alert(error.message); return; }
+  cargarResultadosDocs();
 }
 
 function renderComunicacionScreen(){
@@ -4197,12 +4397,6 @@ async function subirDocumentoProyecto(proyectoId){
   verProyecto(proyectoId);
 }
 
-async function descargarDocumentoProyecto(rutaStorage){
-  const { data, error } = await sb.storage.from('documentos').createSignedUrl(rutaStorage, 60);
-  if(error){ alert(error.message); return; }
-  window.open(data.signedUrl, '_blank');
-}
-
 async function borrarDocumentoProyecto(id, proyectoId){
   const esCA = LANG_I === 'ca';
   if(!confirm(esCA?'Segur que vols esborrar aquest document?':'¿Seguro que quieres borrar este documento?')) return;
@@ -4393,7 +4587,7 @@ async function verProyecto(proyectoId){
             <div class="panel-stat-row">
               <span>${d.nombre_archivo}<br><span class="subtle" style="font-size:11px;margin:0;">${nombreTecnico(d.subido_por_email)} · ${new Date(d.creado_en).toLocaleDateString(esCA?'ca-ES':'es-ES')}</span></span>
               <span style="display:flex;gap:10px;align-items:center;">
-                <button class="link-btn" style="font-size:12px;" onclick="descargarDocumentoProyecto('${d.ruta_storage}')">${esCA?'Veure':'Ver'}</button>
+                <button class="link-btn" style="font-size:12px;" onclick="verDocumentoStaff('${d.ruta_storage}')">${esCA?'Veure':'Ver'}</button>
                 <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="borrarDocumentoProyecto('${d.id}','${proyectoId}')">${esCA?'Esborrar':'Borrar'}</button>
               </span>
             </div>`).join('')
@@ -4488,98 +4682,6 @@ async function enviarAvisoProyecto(proyectoId){
   });
   if(error){ alert(error.message); return; }
   verProyecto(proyectoId);
-}
-
-const CATEGORIAS_DOC_GENERAL = ['Plantillas', 'Formularios', 'Protocolos', 'Manuales', 'Otros'];
-
-async function renderDocumentosGenerales(){
-  const esCA = LANG_I === 'ca';
-  const cont = document.getElementById('documentosgenerales-content');
-  cont.innerHTML = `<div class="placeholder">${esCA?'Carregant…':'Cargando…'}</div>`;
-
-  const [{ data: docs, error }, { data: staffList }] = await Promise.all([
-    sb.from('documentos_generales').select('*').order('creado_en', { ascending:false }),
-    sb.from('staff').select('email, nombre')
-  ]);
-  if(error){ cont.innerHTML = `<div class="empty-note">Error al cargar: ${error.message}</div>`; return; }
-  (staffList || []).forEach(s => { if(s.nombre) __mapaNombresTecnicos[s.email] = s.nombre; });
-
-  const porCategoria = {};
-  (docs || []).forEach(d => {
-    const cat = d.categoria || 'Otros';
-    if(!porCategoria[cat]) porCategoria[cat] = [];
-    porCategoria[cat].push(d);
-  });
-
-  const listaHtml = CATEGORIAS_DOC_GENERAL.map(cat => {
-    const items = porCategoria[cat] || [];
-    if(!items.length) return '';
-    return `
-      <div class="panel-card">
-        <h3>${cat}</h3>
-        ${items.map(d => `
-          <div class="panel-stat-row">
-            <span>${d.nombre_archivo}<br><span class="subtle" style="font-size:11px;margin:0;">${nombreTecnico(d.subido_por_email)} · ${new Date(d.creado_en).toLocaleDateString(esCA?'ca-ES':'es-ES')}</span></span>
-            <span style="display:flex;gap:10px;align-items:center;">
-              <button class="link-btn" style="font-size:12px;" onclick="descargarDocumentoGeneral('${d.ruta_storage}')">${esCA?'Veure':'Ver'}</button>
-              <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="borrarDocumentoGeneral('${d.id}')">${esCA?'Esborrar':'Borrar'}</button>
-            </span>
-          </div>`).join('')}
-      </div>`;
-  }).join('');
-
-  cont.innerHTML = `
-    <p class="subtle">${esCA
-      ? "Documents de tota l'entitat: plantilles, formularis, protocols... Visibles per a tot l'equip."
-      : 'Documentos de toda la entidad: plantillas, formularios, protocolos... Visibles para todo el equipo.'}</p>
-
-    <div class="panel-card" style="background:var(--ochre-soft);border-color:var(--ochre);">
-      <h3 style="color:#7A4A1F;">⬆️ ${esCA?'Pujar un document':'Subir un documento'}</h3>
-      <div class="field">
-        <label>${esCA?'Categoria':'Categoría'}</label>
-        <select id="docgen-categoria">${CATEGORIAS_DOC_GENERAL.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
-      </div>
-      <div class="field"><input type="file" id="docgen-file-input"></div>
-      <button class="primary-btn" onclick="subirDocumentoGeneral()">${esCA?'Pujar':'Subir'}</button>
-    </div>
-
-    ${listaHtml || `<div class="empty-note">${esCA?'Encara no hi ha documents.':'Todavía no hay documentos.'}</div>`}
-  `;
-}
-
-async function subirDocumentoGeneral(){
-  const esCA = LANG_I === 'ca';
-  const input = document.getElementById('docgen-file-input');
-  if(!input.files.length){ alert(esCA?'Tria un fitxer.':'Elige un archivo.'); return; }
-  const file = input.files[0];
-  const categoria = document.getElementById('docgen-categoria').value;
-  const path = `generales/${Date.now()}_${file.name}`;
-
-  const { error: errorSubida } = await sb.storage.from('documentos').upload(path, file);
-  if(errorSubida){ alert(errorSubida.message); return; }
-
-  const { error } = await sb.from('documentos_generales').insert({
-    nombre_archivo: file.name,
-    ruta_storage: path,
-    categoria,
-    subido_por_email: CURRENT_USER.email
-  });
-  if(error){ alert(error.message); return; }
-  renderDocumentosGenerales();
-}
-
-async function descargarDocumentoGeneral(rutaStorage){
-  const { data, error } = await sb.storage.from('documentos').createSignedUrl(rutaStorage, 60);
-  if(error){ alert(error.message); return; }
-  window.open(data.signedUrl, '_blank');
-}
-
-async function borrarDocumentoGeneral(id){
-  const esCA = LANG_I === 'ca';
-  if(!confirm(esCA?'Segur que vols esborrar aquest document?':'¿Seguro que quieres borrar este documento?')) return;
-  const { error } = await sb.from('documentos_generales').delete().eq('id', id);
-  if(error){ alert(error.message); return; }
-  renderDocumentosGenerales();
 }
 
 async function renderEquipoScreen(){
