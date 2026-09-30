@@ -1850,7 +1850,26 @@ async function responderConsulta(id){
 
 let __agendaFechaActual = new Date().toISOString().slice(0,10);
 
+let __agendaVista = 'dia'; // 'dia' | 'proximas'
+
+function contactoCitaHtml(p){
+  if(!p.telefono) return '';
+  const tel = p.telefono.replace(/[^\d+]/g, '');
+  return `<div style="display:flex;gap:8px;margin-top:8px;">
+    <a href="tel:${tel}" class="link-btn" style="font-size:12px;">📞 ${LANG_I==='ca'?'Trucar':'Llamar'}</a>
+    <a href="${enlaceWhatsApp(p.telefono, p.nombre_completo)}" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;color:#1E9E52;">💬 WhatsApp</a>
+  </div>`;
+}
+
+function tabsAgendaHtml(){
+  return `<div style="display:flex;gap:8px;margin-bottom:14px;">
+    <button class="link-btn" style="${__agendaVista==='dia'?'font-weight:700;text-decoration:underline;':''}" onclick="__agendaVista='dia';renderAgendaCitas()">${LANG_I==='ca'?'Per dia':'Por día'}</button>
+    <button class="link-btn" style="${__agendaVista==='proximas'?'font-weight:700;text-decoration:underline;':''}" onclick="__agendaVista='proximas';renderProximasCitas()">${LANG_I==='ca'?'Properes cites':'Próximas citas'}</button>
+  </div>`;
+}
+
 async function renderAgendaCitas(fecha){
+  if(__agendaVista === 'proximas') { renderProximasCitas(); return; }
   if(fecha) __agendaFechaActual = fecha;
   const cont = document.getElementById('agenda-content');
   const t = TI[LANG_I];
@@ -1877,12 +1896,14 @@ async function renderAgendaCitas(fecha){
           <div class="panel-stat-row"><span>${LANG_I==='ca'?'Persona usuària':'Persona usuaria'}</span><span><strong>${p.nombre_completo || (LANG_I==='ca'?'Sense nom':'Sin nombre')}</strong></span></div>
           ${p.telefono ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Telèfon':'Teléfono'}</span><span>${p.telefono}</span></div>` : ''}
           ${c.motivo ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Motiu':'Motivo'}</span><span>${c.motivo}</span></div>` : ''}
-          ${c.usuario_id ? `<button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${c.usuario_id}','agenda')">${t.verInfoCompleta}</button>` : ''}
+          ${contactoCitaHtml(p)}
+          ${c.usuario_id ? `<button class="link-btn" style="font-size:12px;margin-top:8px;" onclick="verPersonaStaff('${c.usuario_id}','agenda')">${t.verInfoCompleta}</button>` : ''}
         </div>`;
       }).join('')
     : `<div class="empty-note">${LANG_I==='ca' ? 'Sense cites aquest dia.' : 'Sin citas este día.'}</div>`;
 
   cont.innerHTML = `
+    ${tabsAgendaHtml()}
     <div class="panel-card" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;">
       <button class="link-btn" onclick="cambiarDiaAgenda(-1)">←</button>
       <div style="text-align:center;">
@@ -1896,13 +1917,57 @@ async function renderAgendaCitas(fecha){
   `;
 }
 
+async function renderProximasCitas(){
+  __agendaVista = 'proximas';
+  const cont = document.getElementById('agenda-content');
+  const esCA = LANG_I === 'ca';
+  cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+
+  const hoyIso = new Date().toISOString().slice(0,10);
+  const { data: proximas } = await sb.from('citas').select('*').gte('fecha', hoyIso).neq('estado', 'cancelada').order('fecha', { ascending:true }).order('hora', { ascending:true }).limit(60);
+
+  const ids = [...new Set((proximas || []).map(c => c.usuario_id).filter(Boolean))];
+  let nombres = {};
+  if(ids.length){
+    const { data: perfiles } = await sb.from('perfiles').select('id, nombre_completo, telefono').in('id', ids);
+    (perfiles || []).forEach(p => { nombres[p.id] = p; });
+  }
+
+  const porDia = {};
+  (proximas || []).forEach(c => { if(!porDia[c.fecha]) porDia[c.fecha] = []; porDia[c.fecha].push(c); });
+
+  const listaHtml = Object.keys(porDia).length
+    ? Object.keys(porDia).sort().map(fecha => {
+        const fechaFmt = new Date(fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, { weekday:'long', day:'numeric', month:'long' });
+        const filas = porDia[fecha].map(c => {
+          const p = nombres[c.usuario_id] || {};
+          return `<div class="panel-card">
+            <div class="panel-stat-row"><span><strong>${c.hora || '—'}</strong></span><span class="chip ${c.estado==='confirmada'?'good':'gold'}">${c.estado}</span></div>
+            <div class="panel-stat-row"><span>${esCA?'Persona usuària':'Persona usuaria'}</span><span><strong>${p.nombre_completo || (esCA?'Sense nom':'Sin nombre')}</strong></span></div>
+            ${contactoCitaHtml(p)}
+            ${c.usuario_id ? `<button class="link-btn" style="font-size:12px;margin-top:8px;" onclick="verPersonaStaff('${c.usuario_id}','agenda')">${TI[LANG_I].verInfoCompleta}</button>` : ''}
+          </div>`;
+        }).join('');
+        return `<p class="subtle" style="font-weight:700;text-transform:capitalize;margin-top:14px;">${fechaFmt}</p><div class="cards-grid">${filas}</div>`;
+      }).join('')
+    : `<div class="empty-note">${esCA?'No hi ha properes cites.':'No hay próximas citas.'}</div>`;
+
+  cont.innerHTML = `
+    ${tabsAgendaHtml()}
+    <p class="subtle">${esCA ? 'Les properes cites pendents, de totes les dates.' : 'Las próximas citas pendientes, de todas las fechas.'}</p>
+    ${listaHtml}
+  `;
+}
+
 function cambiarDiaAgenda(delta){
+  __agendaVista = 'dia';
   const d = new Date(__agendaFechaActual + 'T00:00:00');
   d.setDate(d.getDate() + delta);
   renderAgendaCitas(d.toISOString().slice(0,10));
 }
 
 function irAHoyAgenda(){
+  __agendaVista = 'dia';
   renderAgendaCitas(new Date().toISOString().slice(0,10));
 }
 
