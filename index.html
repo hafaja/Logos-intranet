@@ -973,7 +973,7 @@ const PLAZAS_ATENCION = [
   { id:'3', label:'3' }
 ];
 
-async function construirSalasAtencionHtml(){
+async function construirSalasAtencionHtml(fichajeCardHtml){
   const esCA = LANG_I === 'ca';
   const ahora = new Date();
   const ahoraIso = ahora.toISOString();
@@ -1102,8 +1102,8 @@ async function construirSalasAtencionHtml(){
       ? 'Marca on ets ara mateix, o reserva una plaça per a més tard, perquè la resta de l\'equip ho vegi a "Treball en equip".'
       : 'Marca dónde estás ahora mismo, o reserva una plaza para más tarde, para que el resto del equipo lo vea en "Trabajo en equipo".'}</p>
 
-    <p style="font-weight:700;font-size:13px;margin:14px 0 6px;">${esCA?'Sala 1':'Sala 1'}</p>
-    <div class="salas-grid-uniforme" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:14px;">${sala1Html}</div>
+    <p style="font-weight:700;font-size:13px;margin:14px 0 6px;">${esCA?'Fitxatge i Sala 1':'Fichaje y Sala 1'}</p>
+    <div class="salas-grid-uniforme" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:14px;">${fichajeCardHtml || ''}${sala1Html}</div>
 
     <p style="font-weight:700;font-size:13px;margin:14px 0 6px;">${esCA?'Sala 2, sala 3 i reunió':'Sala 2, sala 3 y reunión'}</p>
     <div class="salas-grid-uniforme" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:14px;">${sala2Html}${sala3Html}${reunionHtml}</div>
@@ -1314,10 +1314,33 @@ async function renderMiEspacio(){
 
   const { data: mias } = await sb.from('atenciones').select('*').eq('creado_por_email', email).order('creado_en', { ascending:false }).limit(300);
   const lista = mias || [];
-  const salasAtencionHtml = await construirSalasAtencionHtml();
-
   const { data: fichajesHoy } = await sb.from('fichajes').select('*').eq('tecnico_email', email).gte('entrada', hoy.toISOString()).order('entrada', { ascending:true });
   const fichajesDeHoy = fichajesHoy || [];
+  const horaFmtFichaje = iso => new Date(iso).toLocaleTimeString(t.localeFecha, { hour:'2-digit', minute:'2-digit' });
+  const duracionFmtFichaje = (ini, fin) => {
+    const min = Math.round((new Date(fin) - new Date(ini)) / 60000);
+    return `${Math.floor(min/60)}h ${min%60}min`;
+  };
+  const ultimoFichaje = fichajesDeHoy[fichajesDeHoy.length - 1];
+  const fichadoAhora = ultimoFichaje && !ultimoFichaje.salida;
+  const historialHoyHtml = fichajesDeHoy.map(f => `
+    <div class="panel-stat-row">
+      <span>${t.entradaLbl} ${horaFmtFichaje(f.entrada)}${f.salida ? ` · ${t.salidaLbl} ${horaFmtFichaje(f.salida)}` : ` · ${t.enCurso}`}${f.cerrado_automaticamente ? ` · <span class="chip alert" title="${f.nota||''}">⚠️ ${LANG_I==='ca'?'Tancat automàticament, revisa-ho':'Cerrado automático, revísalo'}</span>` : ''}</span>
+      <span>${f.salida ? `<strong>${duracionFmtFichaje(f.entrada, f.salida)}</strong>` : `<span class="chip gold">${t.fichado}</span>`}</span>
+    </div>`).join('');
+  const fichajeCardHtml = `
+    <div class="panel-card" style="text-align:center;background:${fichadoAhora ? 'var(--good-soft)' : 'var(--gold-soft)'};border-color:${fichadoAhora ? 'var(--good)' : 'var(--gold)'};">
+      <h3 style="text-align:left;">${t.fichajeHoy}</h3>
+      ${fichadoAhora
+        ? `<p style="margin:0 0 12px;font-size:13.5px;">${t.fichadoDesde} <strong>${horaFmtFichaje(ultimoFichaje.entrada)}</strong></p>
+           <button class="primary-btn" style="background:var(--alert);" onclick="ficharSalida('${ultimoFichaje.id}')">${t.ficharSalida}</button>`
+        : `<p style="margin:0 0 12px;font-size:13.5px;">${fichajesDeHoy.length ? t.yaFichadoSalida : t.todaviaNoFichado}</p>
+           <button class="primary-btn" onclick="ficharEntrada()">${t.ficharEntrada}</button>`}
+      ${historialHoyHtml ? `<div style="text-align:left;margin-top:14px;">${historialHoyHtml}</div>` : ''}
+    </div>
+  `;
+
+  const salasAtencionHtml = await construirSalasAtencionHtml(fichajeCardHtml);
 
   const { data: misActuacionesRaw } = await sb.from('actuaciones').select('*').eq('tecnico_email', email).order('fecha', { ascending:false }).limit(300);
   const misActuaciones = misActuacionesRaw || [];
@@ -1374,33 +1397,6 @@ async function renderMiEspacio(){
       </span>
     </div>`).join('') || `<div class="empty-note">${t.sinActuaciones}</div>`;
 
-  const horaFmt = iso => new Date(iso).toLocaleTimeString(t.localeFecha, { hour:'2-digit', minute:'2-digit' });
-  const duracionFmt = (ini, fin) => {
-    const min = Math.round((new Date(fin) - new Date(ini)) / 60000);
-    return `${Math.floor(min/60)}h ${min%60}min`;
-  };
-
-  const ultimoFichaje = fichajesDeHoy[fichajesDeHoy.length - 1];
-  const fichadoAhora = ultimoFichaje && !ultimoFichaje.salida;
-
-  const historialHoyHtml = fichajesDeHoy.map(f => `
-    <div class="panel-stat-row">
-      <span>${t.entradaLbl} ${horaFmt(f.entrada)}${f.salida ? ` · ${t.salidaLbl} ${horaFmt(f.salida)}` : ` · ${t.enCurso}`}${f.cerrado_automaticamente ? ` · <span class="chip alert" title="${f.nota||''}">⚠️ ${LANG_I==='ca'?'Tancat automàticament, revisa-ho':'Cerrado automático, revísalo'}</span>` : ''}</span>
-      <span>${f.salida ? `<strong>${duracionFmt(f.entrada, f.salida)}</strong>` : `<span class="chip gold">${t.fichado}</span>`}</span>
-    </div>`).join('');
-
-  const fichajeCardHtml = `
-    <div class="panel-card" style="text-align:center;background:${fichadoAhora ? 'var(--good-soft)' : 'var(--gold-soft)'};border-color:${fichadoAhora ? 'var(--good)' : 'var(--gold)'};">
-      <h3 style="text-align:left;">${t.fichajeHoy}</h3>
-      ${fichadoAhora
-        ? `<p style="margin:0 0 12px;font-size:13.5px;">${t.fichadoDesde} <strong>${horaFmt(ultimoFichaje.entrada)}</strong></p>
-           <button class="primary-btn" style="background:var(--alert);" onclick="ficharSalida('${ultimoFichaje.id}')">${t.ficharSalida}</button>`
-        : `<p style="margin:0 0 12px;font-size:13.5px;">${fichajesDeHoy.length ? t.yaFichadoSalida : t.todaviaNoFichado}</p>
-           <button class="primary-btn" onclick="ficharEntrada()">${t.ficharEntrada}</button>`}
-      ${historialHoyHtml ? `<div style="text-align:left;margin-top:14px;">${historialHoyHtml}</div>` : ''}
-    </div>
-  `;
-
 
   const revisionesHtml = misRevisiones.length
     ? misRevisiones.map(r => {
@@ -1433,7 +1429,6 @@ async function renderMiEspacio(){
       </div>
     </div>
 
-    ${fichajeCardHtml}
     ${salasAtencionHtml}
 
     <div class="section-label" style="margin-bottom:6px;">${t.tusUltimasAtenciones}</div>
