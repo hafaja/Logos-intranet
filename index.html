@@ -102,7 +102,7 @@
   .cards-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:16px;align-items:start;}
   .panel-card{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:20px 24px;margin-bottom:0;opacity:0;transform:translateY(10px);animation:fadeUp .5s ease forwards;box-shadow:var(--shadow);transition:transform .2s ease, box-shadow .2s ease;}
   .salas-grid-uniforme{align-items:stretch;}
-  .salas-grid-uniforme>.panel-card{min-height:168px;display:flex;flex-direction:column;justify-content:center;}
+  .salas-grid-uniforme>.panel-card{min-height:168px;display:flex;flex-direction:column;justify-content:flex-start;height:100%;}
   .panel-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);}
   @keyframes fadeUp{to{opacity:1;transform:translateY(0);}}
 
