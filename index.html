@@ -1103,10 +1103,10 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
       : 'Marca dónde estás ahora mismo, o reserva una plaza para más tarde, para que el resto del equipo lo vea en "Trabajo en equipo".'}</p>
 
     <p style="font-weight:700;font-size:13px;margin:14px 0 6px;">${esCA?'Fitxatge i Sala 1':'Fichaje y Sala 1'}</p>
-    <div class="salas-grid-uniforme" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:14px;">${fichajeCardHtml || ''}${sala1Html}</div>
+    <div class="salas-grid-uniforme" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px;">${fichajeCardHtml || ''}${sala1Html}</div>
 
     <p style="font-weight:700;font-size:13px;margin:14px 0 6px;">${esCA?'Sala 2, sala 3 i reunió':'Sala 2, sala 3 y reunión'}</p>
-    <div class="salas-grid-uniforme" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:14px;">${sala2Html}${sala3Html}${reunionHtml}</div>
+    <div class="salas-grid-uniforme" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px;">${sala2Html}${sala3Html}${reunionHtml}</div>
 
     <div id="reserva-plaza-form-wrap"></div>
     ${historialHoySalaHtml ? `<div class="panel-card" style="margin-bottom:20px;"><h3>${esCA?'El teu historial d\'avui':'Tu historial de hoy'}</h3>${historialHoySalaHtml}</div>` : ''}
