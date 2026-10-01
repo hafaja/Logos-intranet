@@ -284,7 +284,6 @@
         <summary>📁 Personas y casos</summary>
         <button data-target="personas" onclick="showScreen('personas');renderPersonasScreen()">Personas usuarias</button>
         <button data-target="seguimiento" onclick="showScreen('seguimiento');renderSeguimientoScreen()">Expedientes</button>
-        <button data-target="tramitesglobal" onclick="showScreen('tramitesglobal');renderTramitesGlobalScreen()">Trámites y ayudas</button>
         <button data-target="agenda" onclick="showScreen('agenda');renderAgendaCitas()">Citas y calendario</button>
       </details>
 
@@ -405,13 +404,6 @@
     <div class="main-content">
       <div class="topbar"><span class="brand">Expedientes</span></div>
       <div class="content" id="seguimiento-content"><div class="placeholder">Cargando…</div></div>
-    </div>
-  </div>
-
-  <div class="screen" id="screen-tramitesglobal">
-    <div class="main-content">
-      <div class="topbar"><span class="brand">Trámites y ayudas</span></div>
-      <div class="content" id="tramitesglobal-content"><div class="placeholder">Cargando…</div></div>
     </div>
   </div>
 
@@ -2024,6 +2016,7 @@ let __seguimientoPersonasOrdenadas = [];
 let __seguimientoSinPersona = [];
 let __seguimientoNombres = {};
 let __seguimientoBusquedaTimeout = null;
+let __seguimientoSoloTramites = false;
 
 async function renderSeguimientoScreen(){
   const cont = document.getElementById('seguimiento-content');
@@ -2071,9 +2064,17 @@ async function renderSeguimientoScreen(){
       ? 'Agrupat per persona, de la més antiga a la més recent dins de cada una.'
       : 'Agrupado por persona, de la más antigua a la más reciente dentro de cada una.'}</p>
     <div class="field"><input type="text" id="seguimiento-busqueda" placeholder="🔎 ${esCA?'Cerca per nom de la persona…':'Buscar por nombre de la persona…'}" oninput="buscarSeguimiento(this.value)"></div>
+    <label class="checkbox-row" style="margin-bottom:10px;"><input type="checkbox" id="seguimiento-solo-tramites" onchange="toggleSoloTramitesSeguimiento(this.checked)">📄 ${esCA?'Mostrar només tràmits en curs':'Mostrar solo trámites en curso'}</label>
     <div id="seguimiento-resultados"></div>
   `;
+  __seguimientoSoloTramites = false;
   renderResultadosSeguimiento('');
+}
+
+function toggleSoloTramitesSeguimiento(activo){
+  __seguimientoSoloTramites = activo;
+  const texto = document.getElementById('seguimiento-busqueda').value.trim().toLowerCase();
+  renderResultadosSeguimiento(texto);
 }
 
 function filaItemSeguimiento(item){
@@ -2097,9 +2098,18 @@ function renderResultadosSeguimiento(busqueda){
   const cont = document.getElementById('seguimiento-resultados');
   if(!cont) return;
 
-  const personasFiltradas = busqueda
+  let personasFiltradas = busqueda
     ? __seguimientoPersonasOrdenadas.filter(([usuarioId]) => (__seguimientoNombres[usuarioId] || '').toLowerCase().includes(busqueda))
     : __seguimientoPersonasOrdenadas;
+
+  let sinPersonaFiltrada = __seguimientoSinPersona;
+
+  if(__seguimientoSoloTramites){
+    personasFiltradas = personasFiltradas
+      .map(([usuarioId, lista]) => [usuarioId, lista.filter(item => item.tipo === 'tramite' && item.data.estado !== 'hecho')])
+      .filter(([, lista]) => lista.length);
+    sinPersonaFiltrada = sinPersonaFiltrada.filter(item => item.tipo === 'tramite' && item.data.estado !== 'hecho');
+  }
 
   const listaHtml = personasFiltradas.length
     ? personasFiltradas.map(([usuarioId, lista]) => `
@@ -2112,43 +2122,22 @@ function renderResultadosSeguimiento(busqueda){
         </div>`).join('')
     : '';
 
-  const sinPersonaHtml = (!busqueda && __seguimientoSinPersona.length)
+  const sinPersonaHtml = (!busqueda && sinPersonaFiltrada.length)
     ? `<p class="subtle" style="font-weight:700;margin-top:18px;">${esCA?'Sense persona vinculada':'Sin persona vinculada'}</p>
-       <div class="panel-card">${__seguimientoSinPersona.slice().sort((a,b)=>new Date(b.fecha||0)-new Date(a.fecha||0)).map(filaItemSeguimiento).join('')}</div>`
+       <div class="panel-card">${sinPersonaFiltrada.slice().sort((a,b)=>new Date(b.fecha||0)-new Date(a.fecha||0)).map(filaItemSeguimiento).join('')}</div>`
     : '';
 
+  const mensajeVacio = busqueda
+    ? (esCA?'Cap resultat.':'Sin resultados.')
+    : (__seguimientoSoloTramites ? (esCA?'Cap tràmit en curs.':'Sin trámites en curso.') : t.sinActuacionesRegistradas);
+
   cont.innerHTML = `
-    ${listaHtml || `<div class="empty-note">${busqueda ? (esCA?'Cap resultat.':'Sin resultados.') : t.sinActuacionesRegistradas}</div>`}
+    ${listaHtml || `<div class="empty-note">${mensajeVacio}</div>`}
     ${sinPersonaHtml}
   `;
 }
 
-async function renderTramitesGlobalScreen(){
-  const cont = document.getElementById('tramitesglobal-content');
-  const t = TI[LANG_I];
-  const { data } = await sb.from('tramites').select('*').order('creado_en', { ascending:false }).limit(60);
-  const ids = [...new Set((data || []).map(tr => tr.usuario_id).filter(Boolean))];
-  let nombres = {};
-  if(ids.length){
-    const { data: perfiles } = await sb.from('perfiles').select('id, nombre_completo').in('id', ids);
-    (perfiles || []).forEach(p => { nombres[p.id] = p.nombre_completo; });
-  }
-  const listaHtml = (data && data.length)
-    ? data.map(tr => `
-        <div class="panel-stat-row" style="align-items:flex-start;">
-          <span>${tr.nombre_servicio}<br><span class="subtle" style="font-size:11px;margin:0;">${nombres[tr.usuario_id] || t.sinNombre}</span></span>
-          <span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-            <span class="chip ${tr.estado==='hecho'?'good':'gold'}">${tr.estado}</span>
-            ${tr.usuario_id ? `<button class="link-btn" style="font-size:11px;" onclick="verPersonaStaff('${tr.usuario_id}','tramitesglobal')">${t.ver}</button>` : ''}
-          </span>
-        </div>`).join('')
-    : `<div class="empty-note">${LANG_I==='ca' ? 'Sense tràmits.' : 'Sin trámites.'}</div>`;
 
-  cont.innerHTML = `
-    <p class="subtle">${LANG_I==='ca' ? 'Els últims 60 tràmits de totes les persones.' : 'Los últimos 60 trámites de todas las personas.'}</p>
-    <div class="panel-card">${listaHtml}</div>
-  `;
-}
 
 async function irAProyectoDesdeFuera(proyectoId){
   showScreen('proyectos');
@@ -5390,7 +5379,7 @@ async function renderPanelGeneral(){
 
   const statsIconos = [
     { icon:'👥', bg:'var(--good-soft)', color:'var(--good)', num:totalPersonas, label:t.personasAtendidasTotal, cta: LANG_I==='ca'?'Veure llistat →':'Ver listado →', onclick:"showScreen('personas');renderPersonasScreen()" },
-    { icon:'📁', bg:'var(--gold-soft)', color:'#7A5A16', num:tramitesEnCursoCount, label: LANG_I==='ca'?'Tràmits en curs':'Trámites en curso', cta: LANG_I==='ca'?'Veure tràmits →':'Ver trámites →', onclick:"showScreen('tramitesglobal');renderTramitesGlobalScreen()" },
+    { icon:'📁', bg:'var(--gold-soft)', color:'#7A5A16', num:tramitesEnCursoCount, label: LANG_I==='ca'?'Tràmits en curs':'Trámites en curso', cta: LANG_I==='ca'?'Veure tràmits →':'Ver trámites →', onclick:"showScreen('seguimiento');renderSeguimientoScreen().then(()=>{document.getElementById('seguimiento-solo-tramites').checked=true;toggleSoloTramitesSeguimiento(true);})" },
     { icon:'📅', bg:'#E7ECFF', color:'#33449E', num:citasHoyCount, label: LANG_I==='ca'?'Cites avui':'Citas hoy', cta: LANG_I==='ca'?'Veure calendari →':'Ver calendario →', onclick:"showScreen('agenda');renderAgendaCitas()", cta2: LANG_I==='ca'?'Properes cites →':'Próximas citas →', onclick2:"showScreen('agenda');renderProximasCitas()" },
     { icon:'📋', bg:'var(--alert-soft)', color:'var(--alert)', num:tareasPendCount, label: LANG_I==='ca'?'Tasques pendents':'Tareas pendientes', cta: LANG_I==='ca'?'Veure tasques →':'Ver tareas →', onclick:"showScreen('seguimiento');renderSeguimientoScreen()" }
   ];
@@ -5680,8 +5669,7 @@ async function verPersonaStaff(usuarioId, origen){
     miespacio: "showScreen('miespacio');renderMiEspacio()",
     agenda: "showScreen('agenda');renderAgendaCitas()",
     personas: "showScreen('personas');renderPersonasScreen()",
-    seguimiento: "showScreen('seguimiento');renderSeguimientoScreen()",
-    tramitesglobal: "showScreen('tramitesglobal');renderTramitesGlobalScreen()"
+    seguimiento: "showScreen('seguimiento');renderSeguimientoScreen()"
   };
   btnVolver.setAttribute('onclick', destinos[origen] || "showScreen('panel');renderPanelGeneral()");
 
