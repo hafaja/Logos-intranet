@@ -1341,8 +1341,8 @@ async function renderMiEspacio(){
   const { data: misActuacionesRaw } = await sb.from('actuaciones').select('*').eq('tecnico_email', email).order('fecha', { ascending:false }).limit(300);
   const misActuaciones = misActuacionesRaw || [];
   let nombresActuacion = {};
-  if(misActuaciones.length){
-    const idsAct = [...new Set(misActuaciones.map(a => a.usuario_id))];
+  const idsAct = [...new Set(misActuaciones.map(a => a.usuario_id).filter(Boolean))];
+  if(idsAct.length){
     const { data: perfilesAct } = await sb.from('perfiles').select('id, nombre_completo').in('id', idsAct);
     (perfilesAct || []).forEach(p => { nombresActuacion[p.id] = p.nombre_completo; });
   }
@@ -1383,15 +1383,41 @@ async function renderMiEspacio(){
       </span>
     </div>`).join('') || `<div class="empty-note">${t.sinAtenciones}</div>`;
 
-  const actuacionesRecientesHtml = misActuaciones.slice(0, 8).map(ac => `
+  // Agrupadas por persona (de la más antigua a la más reciente dentro de cada una),
+  // mostrando las últimas 8 personas con actividad, no las últimas 8 filas sueltas.
+  const gruposMiEspacio = {};
+  const sinPersonaMiEspacio = [];
+  misActuaciones.forEach(ac => {
+    if(!ac.usuario_id){ sinPersonaMiEspacio.push(ac); return; }
+    if(!gruposMiEspacio[ac.usuario_id]) gruposMiEspacio[ac.usuario_id] = [];
+    gruposMiEspacio[ac.usuario_id].push(ac);
+  });
+  Object.values(gruposMiEspacio).forEach(l => l.sort((a, b) => new Date(a.fecha || 0) - new Date(b.fecha || 0)));
+  const gruposOrdenadosMiEspacio = Object.entries(gruposMiEspacio).sort((a, b) => {
+    const masRecienteA = Math.max(...a[1].map(i => new Date(i.fecha || 0).getTime()));
+    const masRecienteB = Math.max(...b[1].map(i => new Date(i.fecha || 0).getTime()));
+    return masRecienteB - masRecienteA;
+  }).slice(0, 8);
+
+  const filaActuacionMiEspacio = (ac) => `
     <div class="list-row">
-      <span>${nombresActuacion[ac.usuario_id] || t.sinNombre}${ac.categoria ? `<br><span class="subtle" style="font-size:11px;margin:0;">${ac.categoria}</span>` : ''}</span>
+      <span>${ac.categoria || ''}</span>
       <span style="display:flex;align-items:center;gap:8px;">
         ${ac.resultado ? `<span class="chip ${ac.resultado==='conseguido'?'good':(ac.resultado==='no_conseguido'?'':'gold')}" style="${ac.resultado==='no_conseguido'?'background:var(--alert-soft);color:var(--alert);':''}">${ac.resultado==='conseguido'?t.conseguido:(ac.resultado==='en_tramite'?t.enTramite:t.noConseguido)}</span>` : ''}
         <span class="subtle" style="margin:0;font-size:11px;">${new Date(ac.fecha).toLocaleDateString(t.localeFecha)}</span>
-        ${ac.usuario_id ? `<button class="link-btn" style="font-size:11px;" onclick="verPersonaStaff('${ac.usuario_id}','miespacio')">${t.ver}</button>` : ''}
       </span>
-    </div>`).join('') || `<div class="empty-note">${t.sinActuaciones}</div>`;
+    </div>`;
+
+  const actuacionesRecientesHtml = gruposOrdenadosMiEspacio.length
+    ? gruposOrdenadosMiEspacio.map(([usuarioId, acs]) => `
+        <div class="list-row" style="flex-direction:column;align-items:stretch;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong>${nombresActuacion[usuarioId] || t.sinNombre}</strong>
+            <button class="link-btn" style="font-size:11px;" onclick="verPersonaStaff('${usuarioId}','miespacio')">${t.ver}</button>
+          </div>
+          ${acs.map(filaActuacionMiEspacio).join('')}
+        </div>`).join('')
+    : `<div class="empty-note">${t.sinActuaciones}</div>`;
 
 
   const revisionesHtml = misRevisiones.length
