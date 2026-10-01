@@ -2023,28 +2023,75 @@ async function exportarPersonasPDF(){
 async function renderSeguimientoScreen(){
   const cont = document.getElementById('seguimiento-content');
   const t = TI[LANG_I];
-  const { data } = await sb.from('actuaciones').select('*').order('fecha', { ascending:false }).limit(60);
-  const ids = [...new Set((data || []).map(a => a.usuario_id).filter(Boolean))];
+  const esCA = LANG_I === 'ca';
+  cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
+
+  const [{ data: actuaciones }, { data: tramites }] = await Promise.all([
+    sb.from('actuaciones').select('*').order('fecha', { ascending:false }).limit(150),
+    sb.from('tramites').select('*').order('fecha_inicio', { ascending:false }).limit(150)
+  ]);
+
+  const items = [
+    ...(actuaciones || []).map(ac => ({ usuario_id: ac.usuario_id, fecha: ac.fecha, tipo: 'actuacion', data: ac })),
+    ...(tramites || []).map(tr => ({ usuario_id: tr.usuario_id, fecha: tr.fecha_inicio, tipo: 'tramite', data: tr }))
+  ];
+
+  const ids = [...new Set(items.map(i => i.usuario_id).filter(Boolean))];
   let nombres = {};
   if(ids.length){
     const { data: perfiles } = await sb.from('perfiles').select('id, nombre_completo').in('id', ids);
     (perfiles || []).forEach(p => { nombres[p.id] = p.nombre_completo; });
   }
-  const listaHtml = (data && data.length)
-    ? data.map(ac => `
+
+  // Agrupar por persona (las que no tienen usuario_id vinculado van cada una por su cuenta)
+  const grupos = {};
+  const sinPersona = [];
+  items.forEach(item => {
+    if(!item.usuario_id){ sinPersona.push(item); return; }
+    if(!grupos[item.usuario_id]) grupos[item.usuario_id] = [];
+    grupos[item.usuario_id].push(item);
+  });
+
+  // Dentro de cada persona: de la más antigua a la más reciente.
+  Object.values(grupos).forEach(lista => lista.sort((a, b) => new Date(a.fecha || 0) - new Date(b.fecha || 0)));
+  // Entre personas: la que tiene la actividad más reciente, primero.
+  const personasOrdenadas = Object.entries(grupos).sort((a, b) => {
+    const masRecienteA = Math.max(...a[1].map(i => new Date(i.fecha || 0).getTime()));
+    const masRecienteB = Math.max(...b[1].map(i => new Date(i.fecha || 0).getTime()));
+    return masRecienteB - masRecienteA;
+  });
+
+  const filaItem = (item) => {
+    const fechaFmt = item.fecha ? new Date(item.fecha).toLocaleDateString(t.localeFecha) : '—';
+    if(item.tipo === 'tramite'){
+      return `<div class="panel-stat-row"><span>📄 ${fechaFmt} — ${item.data.nombre_servicio}</span><span class="chip ${item.data.estado==='hecho'?'good':'gold'}">${item.data.estado}</span></div>`;
+    }
+    const ac = item.data;
+    return `<div class="panel-stat-row"><span>📝 ${fechaFmt}${ac.categoria ? ' — ' + ac.categoria : ''}</span>${ac.resultado ? `<span class="chip ${ac.resultado==='conseguido'?'good':(ac.resultado==='no_conseguido'?'':'gold')}" style="${ac.resultado==='no_conseguido'?'background:var(--alert-soft);color:var(--alert);':''}">${ac.resultado==='conseguido'?t.conseguido:(ac.resultado==='en_tramite'?t.enTramite:t.noConseguido)}</span>` : '<span></span>'}</div>`;
+  };
+
+  const listaHtml = personasOrdenadas.length
+    ? personasOrdenadas.map(([usuarioId, lista]) => `
         <div class="panel-card">
-          <div class="panel-stat-row"><span>${t.personaLbl}</span><span><strong>${nombres[ac.usuario_id] || t.sinNombre}</strong></span></div>
-          <div class="panel-stat-row"><span>${t.tecnicoLbl}</span><span>${nombreTecnico(ac.tecnico_email)}</span></div>
-          <div class="panel-stat-row"><span>${t.fechaLbl}</span><span>${new Date(ac.fecha).toLocaleDateString(t.localeFecha)}</span></div>
-          ${ac.categoria ? `<div class="panel-stat-row"><span>${t.proyectoTramiteFormacion}</span><span>${ac.categoria}</span></div>` : ''}
-          ${ac.resultado ? `<div class="panel-stat-row"><span>${t.resultadoLbl}</span><span class="chip ${ac.resultado==='conseguido'?'good':(ac.resultado==='no_conseguido'?'':'gold')}" style="${ac.resultado==='no_conseguido'?'background:var(--alert-soft);color:var(--alert);':''}">${ac.resultado==='conseguido'?t.conseguido:(ac.resultado==='en_tramite'?t.enTramite:t.noConseguido)}</span></div>` : ''}
-          ${ac.usuario_id ? `<button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${ac.usuario_id}','seguimiento')">${t.verInfoCompleta}</button>` : ''}
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <h3 style="margin:0;">${nombres[usuarioId] || t.sinNombre}</h3>
+            <button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${usuarioId}','seguimiento')">${t.verInfoCompleta}</button>
+          </div>
+          ${lista.map(filaItem).join('')}
         </div>`).join('')
-    : `<div class="empty-note">${t.sinActuacionesRegistradas}</div>`;
+    : '';
+
+  const sinPersonaHtml = sinPersona.length
+    ? `<p class="subtle" style="font-weight:700;margin-top:18px;">${esCA?'Sense persona vinculada':'Sin persona vinculada'}</p>
+       <div class="panel-card">${sinPersona.sort((a,b)=>new Date(b.fecha||0)-new Date(a.fecha||0)).map(filaItem).join('')}</div>`
+    : '';
 
   cont.innerHTML = `
-    <p class="subtle">${LANG_I==='ca' ? 'Les últimes 60 actuacions de tots els tècnics (això és el mateix concepte que "Expedients").' : 'Las últimas 60 actuaciones de todos los técnicos (esto es lo mismo que "Expedientes").'}</p>
-    <div class="cards-grid">${listaHtml}</div>
+    <p class="subtle">${esCA
+      ? 'Agrupat per persona, de la més antiga a la més recent dins de cada una.'
+      : 'Agrupado por persona, de la más antigua a la más reciente dentro de cada una.'}</p>
+    ${listaHtml || `<div class="empty-note">${t.sinActuacionesRegistradas}</div>`}
+    ${sinPersonaHtml}
   `;
 }
 
