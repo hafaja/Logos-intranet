@@ -2020,6 +2020,11 @@ async function exportarPersonasPDF(){
   descargarPDFTabla('Personas usuarias — Logos Intranet', cabecera, filas, 'Personas-usuarias.pdf');
 }
 
+let __seguimientoPersonasOrdenadas = [];
+let __seguimientoSinPersona = [];
+let __seguimientoNombres = {};
+let __seguimientoBusquedaTimeout = null;
+
 async function renderSeguimientoScreen(){
   const cont = document.getElementById('seguimiento-content');
   const t = TI[LANG_I];
@@ -2037,17 +2042,17 @@ async function renderSeguimientoScreen(){
   ];
 
   const ids = [...new Set(items.map(i => i.usuario_id).filter(Boolean))];
-  let nombres = {};
+  __seguimientoNombres = {};
   if(ids.length){
     const { data: perfiles } = await sb.from('perfiles').select('id, nombre_completo').in('id', ids);
-    (perfiles || []).forEach(p => { nombres[p.id] = p.nombre_completo; });
+    (perfiles || []).forEach(p => { __seguimientoNombres[p.id] = p.nombre_completo; });
   }
 
   // Agrupar por persona (las que no tienen usuario_id vinculado van cada una por su cuenta)
   const grupos = {};
-  const sinPersona = [];
+  __seguimientoSinPersona = [];
   items.forEach(item => {
-    if(!item.usuario_id){ sinPersona.push(item); return; }
+    if(!item.usuario_id){ __seguimientoSinPersona.push(item); return; }
     if(!grupos[item.usuario_id]) grupos[item.usuario_id] = [];
     grupos[item.usuario_id].push(item);
   });
@@ -2055,42 +2060,65 @@ async function renderSeguimientoScreen(){
   // Dentro de cada persona: de la más antigua a la más reciente.
   Object.values(grupos).forEach(lista => lista.sort((a, b) => new Date(a.fecha || 0) - new Date(b.fecha || 0)));
   // Entre personas: la que tiene la actividad más reciente, primero.
-  const personasOrdenadas = Object.entries(grupos).sort((a, b) => {
+  __seguimientoPersonasOrdenadas = Object.entries(grupos).sort((a, b) => {
     const masRecienteA = Math.max(...a[1].map(i => new Date(i.fecha || 0).getTime()));
     const masRecienteB = Math.max(...b[1].map(i => new Date(i.fecha || 0).getTime()));
     return masRecienteB - masRecienteA;
   });
 
-  const filaItem = (item) => {
-    const fechaFmt = item.fecha ? new Date(item.fecha).toLocaleDateString(t.localeFecha) : '—';
-    if(item.tipo === 'tramite'){
-      return `<div class="panel-stat-row"><span>📄 ${fechaFmt} — ${item.data.nombre_servicio}</span><span class="chip ${item.data.estado==='hecho'?'good':'gold'}">${item.data.estado}</span></div>`;
-    }
-    const ac = item.data;
-    return `<div class="panel-stat-row"><span>📝 ${fechaFmt}${ac.categoria ? ' — ' + ac.categoria : ''}</span>${ac.resultado ? `<span class="chip ${ac.resultado==='conseguido'?'good':(ac.resultado==='no_conseguido'?'':'gold')}" style="${ac.resultado==='no_conseguido'?'background:var(--alert-soft);color:var(--alert);':''}">${ac.resultado==='conseguido'?t.conseguido:(ac.resultado==='en_tramite'?t.enTramite:t.noConseguido)}</span>` : '<span></span>'}</div>`;
-  };
-
-  const listaHtml = personasOrdenadas.length
-    ? personasOrdenadas.map(([usuarioId, lista]) => `
-        <div class="panel-card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <h3 style="margin:0;">${nombres[usuarioId] || t.sinNombre}</h3>
-            <button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${usuarioId}','seguimiento')">${t.verInfoCompleta}</button>
-          </div>
-          ${lista.map(filaItem).join('')}
-        </div>`).join('')
-    : '';
-
-  const sinPersonaHtml = sinPersona.length
-    ? `<p class="subtle" style="font-weight:700;margin-top:18px;">${esCA?'Sense persona vinculada':'Sin persona vinculada'}</p>
-       <div class="panel-card">${sinPersona.sort((a,b)=>new Date(b.fecha||0)-new Date(a.fecha||0)).map(filaItem).join('')}</div>`
-    : '';
-
   cont.innerHTML = `
     <p class="subtle">${esCA
       ? 'Agrupat per persona, de la més antiga a la més recent dins de cada una.'
       : 'Agrupado por persona, de la más antigua a la más reciente dentro de cada una.'}</p>
-    ${listaHtml || `<div class="empty-note">${t.sinActuacionesRegistradas}</div>`}
+    <div class="field"><input type="text" id="seguimiento-busqueda" placeholder="🔎 ${esCA?'Cerca per nom de la persona…':'Buscar por nombre de la persona…'}" oninput="buscarSeguimiento(this.value)"></div>
+    <div id="seguimiento-resultados"></div>
+  `;
+  renderResultadosSeguimiento('');
+}
+
+function filaItemSeguimiento(item){
+  const t = TI[LANG_I];
+  const fechaFmt = item.fecha ? new Date(item.fecha).toLocaleDateString(t.localeFecha) : '—';
+  if(item.tipo === 'tramite'){
+    return `<div class="panel-stat-row"><span>📄 ${fechaFmt} — ${item.data.nombre_servicio}</span><span class="chip ${item.data.estado==='hecho'?'good':'gold'}">${item.data.estado}</span></div>`;
+  }
+  const ac = item.data;
+  return `<div class="panel-stat-row"><span>📝 ${fechaFmt}${ac.categoria ? ' — ' + ac.categoria : ''}</span>${ac.resultado ? `<span class="chip ${ac.resultado==='conseguido'?'good':(ac.resultado==='no_conseguido'?'':'gold')}" style="${ac.resultado==='no_conseguido'?'background:var(--alert-soft);color:var(--alert);':''}">${ac.resultado==='conseguido'?t.conseguido:(ac.resultado==='en_tramite'?t.enTramite:t.noConseguido)}</span>` : '<span></span>'}</div>`;
+}
+
+function buscarSeguimiento(texto){
+  clearTimeout(__seguimientoBusquedaTimeout);
+  __seguimientoBusquedaTimeout = setTimeout(() => renderResultadosSeguimiento(texto.trim().toLowerCase()), 250);
+}
+
+function renderResultadosSeguimiento(busqueda){
+  const t = TI[LANG_I];
+  const esCA = LANG_I === 'ca';
+  const cont = document.getElementById('seguimiento-resultados');
+  if(!cont) return;
+
+  const personasFiltradas = busqueda
+    ? __seguimientoPersonasOrdenadas.filter(([usuarioId]) => (__seguimientoNombres[usuarioId] || '').toLowerCase().includes(busqueda))
+    : __seguimientoPersonasOrdenadas;
+
+  const listaHtml = personasFiltradas.length
+    ? personasFiltradas.map(([usuarioId, lista]) => `
+        <div class="panel-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <h3 style="margin:0;">${__seguimientoNombres[usuarioId] || t.sinNombre}</h3>
+            <button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${usuarioId}','seguimiento')">${t.verInfoCompleta}</button>
+          </div>
+          ${lista.map(filaItemSeguimiento).join('')}
+        </div>`).join('')
+    : '';
+
+  const sinPersonaHtml = (!busqueda && __seguimientoSinPersona.length)
+    ? `<p class="subtle" style="font-weight:700;margin-top:18px;">${esCA?'Sense persona vinculada':'Sin persona vinculada'}</p>
+       <div class="panel-card">${__seguimientoSinPersona.slice().sort((a,b)=>new Date(b.fecha||0)-new Date(a.fecha||0)).map(filaItemSeguimiento).join('')}</div>`
+    : '';
+
+  cont.innerHTML = `
+    ${listaHtml || `<div class="empty-note">${busqueda ? (esCA?'Cap resultat.':'Sin resultados.') : t.sinActuacionesRegistradas}</div>`}
     ${sinPersonaHtml}
   `;
 }
@@ -5363,7 +5391,7 @@ async function renderPanelGeneral(){
   const statsIconos = [
     { icon:'👥', bg:'var(--good-soft)', color:'var(--good)', num:totalPersonas, label:t.personasAtendidasTotal, cta: LANG_I==='ca'?'Veure llistat →':'Ver listado →', onclick:"showScreen('personas');renderPersonasScreen()" },
     { icon:'📁', bg:'var(--gold-soft)', color:'#7A5A16', num:tramitesEnCursoCount, label: LANG_I==='ca'?'Tràmits en curs':'Trámites en curso', cta: LANG_I==='ca'?'Veure tràmits →':'Ver trámites →', onclick:"showScreen('tramitesglobal');renderTramitesGlobalScreen()" },
-    { icon:'📅', bg:'#E7ECFF', color:'#33449E', num:citasHoyCount, label: LANG_I==='ca'?'Cites avui':'Citas hoy', cta: LANG_I==='ca'?'Veure calendari →':'Ver calendario →', onclick:"showScreen('agenda');renderAgendaCitas()" },
+    { icon:'📅', bg:'#E7ECFF', color:'#33449E', num:citasHoyCount, label: LANG_I==='ca'?'Cites avui':'Citas hoy', cta: LANG_I==='ca'?'Veure calendari →':'Ver calendario →', onclick:"showScreen('agenda');renderAgendaCitas()", cta2: LANG_I==='ca'?'Properes cites →':'Próximas citas →', onclick2:"showScreen('agenda');renderProximasCitas()" },
     { icon:'📋', bg:'var(--alert-soft)', color:'var(--alert)', num:tareasPendCount, label: LANG_I==='ca'?'Tasques pendents':'Tareas pendientes', cta: LANG_I==='ca'?'Veure tasques →':'Ver tareas →', onclick:"showScreen('seguimiento');renderSeguimientoScreen()" }
   ];
   const statsIconosHtml = statsIconos.map(s => `
@@ -5372,6 +5400,7 @@ async function renderPanelGeneral(){
       <div class="stat-icon-num">${s.num}</div>
       <div class="stat-icon-label">${s.label}</div>
       <div class="link-btn" style="font-size:11px;padding:6px 0 0;">${s.cta}</div>
+      ${s.cta2 ? `<div class="link-btn" style="font-size:11px;padding:2px 0 0;" onclick="event.stopPropagation();${s.onclick2}">${s.cta2}</div>` : ''}
     </div>`).join('');
 
   cont.innerHTML = `
@@ -6625,17 +6654,42 @@ async function renderAdministrador(){
 
 function renderFilasActuacionesAdmin(lista){
   const t = TI[LANG_I];
-  return lista.length
-    ? lista.map(ac => `
-        <div class="panel-card">
-          <div class="panel-stat-row"><span>${t.personaLbl}</span><span><strong>${__adminNombresPersona[ac.usuario_id] || t.sinNombre}</strong></span></div>
-          <div class="panel-stat-row"><span>${t.tecnicoLbl}</span><span><strong>${nombreTecnico(ac.tecnico_email)}</strong></span></div>
-          <div class="panel-stat-row"><span>${t.fechaLbl}</span><span>${new Date(ac.fecha).toLocaleDateString(t.localeFecha)}</span></div>
-          ${ac.categoria ? `<div class="panel-stat-row"><span>${t.proyectoTramiteFormacion}</span><span>${ac.categoria}</span></div>` : ''}
-          ${ac.resultado ? `<div class="panel-stat-row"><span>${t.resultadoLbl}</span><span class="chip ${ac.resultado==='conseguido'?'good':(ac.resultado==='no_conseguido'?'':'gold')}" style="${ac.resultado==='no_conseguido'?'background:var(--alert-soft);color:var(--alert);':''}">${ac.resultado==='conseguido'?t.conseguido:(ac.resultado==='en_tramite'?t.enTramite:t.noConseguido)}</span></div>` : ''}
-          ${ac.usuario_id ? `<button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${ac.usuario_id}','admin')">${t.verInfoCompleta}</button>` : ''}
-        </div>`).join('')
-    : `<div class="empty-note">${t.sinActuacionesRegistradas}</div>`;
+  const esCA = LANG_I === 'ca';
+  if(!lista.length) return `<div class="empty-note">${t.sinActuacionesRegistradas}</div>`;
+
+  // Agrupar por persona: una sola vez el nombre, con sus fechas de la más antigua a la más reciente.
+  const grupos = {};
+  const sinPersona = [];
+  lista.forEach(ac => {
+    if(!ac.usuario_id){ sinPersona.push(ac); return; }
+    if(!grupos[ac.usuario_id]) grupos[ac.usuario_id] = [];
+    grupos[ac.usuario_id].push(ac);
+  });
+  Object.values(grupos).forEach(l => l.sort((a, b) => new Date(a.fecha || 0) - new Date(b.fecha || 0)));
+  const personasOrdenadas = Object.entries(grupos).sort((a, b) => {
+    const masRecienteA = Math.max(...a[1].map(i => new Date(i.fecha || 0).getTime()));
+    const masRecienteB = Math.max(...b[1].map(i => new Date(i.fecha || 0).getTime()));
+    return masRecienteB - masRecienteA;
+  });
+
+  const filaActuacion = (ac) => `
+    <div class="panel-stat-row"><span>📝 ${new Date(ac.fecha).toLocaleDateString(t.localeFecha)}${ac.categoria ? ' — ' + ac.categoria : ''} · ${nombreTecnico(ac.tecnico_email)}</span>${ac.resultado ? `<span class="chip ${ac.resultado==='conseguido'?'good':(ac.resultado==='no_conseguido'?'':'gold')}" style="${ac.resultado==='no_conseguido'?'background:var(--alert-soft);color:var(--alert);':''}">${ac.resultado==='conseguido'?t.conseguido:(ac.resultado==='en_tramite'?t.enTramite:t.noConseguido)}</span>` : '<span></span>'}</div>`;
+
+  const gruposHtml = personasOrdenadas.map(([usuarioId, acs]) => `
+    <div class="panel-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <h3 style="margin:0;">${__adminNombresPersona[usuarioId] || t.sinNombre}</h3>
+        <button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${usuarioId}','admin')">${t.verInfoCompleta}</button>
+      </div>
+      ${acs.map(filaActuacion).join('')}
+    </div>`).join('');
+
+  const sinPersonaHtml = sinPersona.length
+    ? `<p class="subtle" style="font-weight:700;margin-top:14px;">${esCA?'Sense persona vinculada':'Sin persona vinculada'}</p>
+       <div class="panel-card">${sinPersona.sort((a,b)=>new Date(b.fecha||0)-new Date(a.fecha||0)).map(filaActuacion).join('')}</div>`
+    : '';
+
+  return gruposHtml + sinPersonaHtml;
 }
 
 async function cargarMasActuacionesAdmin(){
