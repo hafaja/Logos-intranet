@@ -969,6 +969,15 @@ const PLAZAS_ATENCION = [
   { id:'3', label:'3' }
 ];
 
+// Salas que existen hoy, y regla de "ocupación olvidada": plazas que ya no existen (p. ej. 2B) o abiertas hace 12 h o más.
+const SALAS_VALIDAS = PLAZAS_ATENCION.map(p => p.id).concat('reunion');
+const HORAS_MAX_OCUPACION = 12;
+function ocupacionObsoleta(o){
+  if(!SALAS_VALIDAS.includes(o.sala)) return true;
+  const horas = (Date.now() - new Date(o.inicio).getTime()) / 3600000;
+  return horas >= HORAS_MAX_OCUPACION; // una reserva futura da horas negativas: no es obsoleta
+}
+
 async function construirSalasAtencionHtml(fichajeCardHtml){
   const esCA = LANG_I === 'ca';
   const ahora = new Date();
@@ -983,9 +992,15 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
 
   const ocupacionPorPlaza = {};
   let reunionMia = null;
-  let ocupacionMiaActual = null; // algo que YA está en curso ahora mismo (bloquea empezar otra cosa AHORA)
+  let ocupacionMiaActual = null; // algo que YA está en curso ahora mismo (impide empezar otra cosa AHORA)
+  const misObsoletas = [];
   (ocupaciones || []).forEach(o => {
     const enCursoYa = o.inicio <= ahoraIso;
+    if(ocupacionObsoleta(o)){
+      // Plaza que ya no existe u ocupación olvidada: no ocupa nada ni bloquea nada. Si es mía, se ofrece cerrarla.
+      if(o.tecnico_email === CURRENT_USER.email) misObsoletas.push(o);
+      return;
+    }
     if(o.sala === 'reunion'){
       if(o.tecnico_email === CURRENT_USER.email && enCursoYa) reunionMia = o;
     } else {
@@ -994,6 +1009,9 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
     }
     if(o.tecnico_email === CURRENT_USER.email && enCursoYa) ocupacionMiaActual = o;
   });
+  window.__ocupacionMiaActual = ocupacionMiaActual;
+  window.__misOcupacionesObsoletas = misObsoletas;
+  window.__ocupacionPorPlaza = ocupacionPorPlaza;
 
   const horaFmt = iso => new Date(iso).toLocaleTimeString(esCA?'ca-ES':'es-ES', { hour:'2-digit', minute:'2-digit' });
   const fechaHoraFmt = iso => new Date(iso).toLocaleString(esCA?'ca-ES':'es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
@@ -1003,7 +1021,7 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
   const plazasSala1 = ['1A','1B','1C','1D'];
   const ocupacionesSala1 = plazasSala1.map(id => ocupacionPorPlaza[id]).filter(Boolean);
   const bloqueSala1Completo = ocupacionesSala1.length === 4 && ocupacionesSala1.every(o =>
-    o.motivo && o.motivo === ocupacionesSala1[0].motivo &&
+    (o.motivo || '') === (ocupacionesSala1[0].motivo || '') &&
     o.tecnico_email === ocupacionesSala1[0].tecnico_email &&
     o.inicio === ocupacionesSala1[0].inicio
   );
@@ -1015,7 +1033,7 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
       <div class="panel-card" style="text-align:center;background:var(--good-soft);border-color:var(--good);">
         <h3 style="text-align:center;">${plazaId}</h3>
         <p style="margin:0 0 12px;font-size:13.5px;">🟢 ${esCA?'Lliure':'Libre'}</p>
-        <button class="primary-btn" style="margin-bottom:6px;" ${ocupacionMiaActual ? 'disabled' : ''} onclick="iniciarAtencionSala('${plazaId}')">${esCA?'Començar ara':'Empezar ahora'}</button>
+        <button class="primary-btn" style="margin-bottom:6px;" onclick="iniciarAtencionSala('${plazaId}')">${esCA?'Començar ara':'Empezar ahora'}</button>
         <button class="link-btn" onclick="abrirReservaPlaza('${plazaId}')">📅 ${esCA?'Reservar per a més tard':'Reservar para más tarde'}</button>
       </div>`;
     }
@@ -1049,7 +1067,7 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
         return `
         <div class="panel-card" style="text-align:center;background:${esFuturo?'#EAF1F8':'var(--alert-soft)'};border-color:${esFuturo?'#2E5A8F':'var(--alert)'};">
           <h3 style="text-align:center;">${esCA?'Sala 1 completa':'Sala 1 completa'}</h3>
-          <p style="margin:0 0 4px;font-size:13.5px;">${esFuturo ? '🔵 '+(esCA?'Reservada':'Reservada') : '🔴 '+(esCA?'Ocupada':'Ocupada')} — ${o.motivo}</p>
+          <p style="margin:0 0 4px;font-size:13.5px;">${esFuturo ? '🔵 '+(esCA?'Reservada':'Reservada') : '🔴 '+(esCA?'Ocupada':'Ocupada')} — ${o.motivo || (esCA?'Reunió / esdeveniment':'Reunión / evento')}</p>
           <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-soft);">${nombreTecnico(o.tecnico_email)} · ${esFuturo ? fechaHoraFmt(o.inicio) : horaFmt(o.inicio)}</p>
           ${esMio
             ? `<button class="primary-btn" style="background:var(--alert);" onclick="finalizarBloqueoSala1()">${esCA?'Finalitzar bloqueig':'Finalizar bloqueo'}</button>`
@@ -1063,7 +1081,7 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
       <div class="panel-card" style="text-align:center;margin-bottom:14px;">
         <p style="margin:0 0 8px;font-size:12.5px;color:var(--ink-soft);">${esCA?'Reunió o esdeveniment que ocupi tota la Sala 1:':'Reunión o evento que ocupe toda la Sala 1:'}</p>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-          <button class="primary-btn" style="width:auto;margin:0;" ${ocupacionMiaActual ? 'disabled' : ''} onclick="abrirBloqueoSala1(true)">🔒 ${esCA?'Bloquejar ara':'Bloquear ahora'}</button>
+          <button class="primary-btn" style="width:auto;margin:0;" onclick="bloquearSala1Ahora()">🔒 ${esCA?'Bloquejar ara':'Bloquear ahora'}</button>
           <button class="link-btn" onclick="abrirBloqueoSala1(false)">📅 ${esCA?'Reservar per a més tard':'Reservar para más tarde'}</button>
         </div>
       </div>`;
@@ -1079,7 +1097,7 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
     : `<div class="panel-card" style="text-align:center;">
         <h3 style="text-align:center;">📅 ${esCA?'Reunió':'Reunión'}</h3>
         <p style="margin:0 0 12px;font-size:13.5px;color:var(--ink-soft);">${esCA?'Estàs al despatx però ocupat en una altra cosa?':'¿Estás en el despacho pero ocupado en otra cosa?'}</p>
-        <button class="primary-btn" ${ocupacionMiaActual ? 'disabled' : ''} onclick="iniciarReunion()">${esCA?'Estic en una reunió':'Estoy en una reunión'}</button>
+        <button class="primary-btn" onclick="iniciarReunion()">${esCA?'Estic en una reunió':'Estoy en una reunión'}</button>
       </div>`;
 
   const duracionFmtSala = (ini, fin) => {
@@ -1095,12 +1113,33 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
         </div>`).join('')
     : '';
 
+  const etiquetaOcup = o => o.sala === 'reunion' ? (esCA?'reunió':'reunión') : (esCA?'plaça ':'plaza ') + o.sala;
+  const avisoObsoletasHtml = misObsoletas.length ? `
+    <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);margin-bottom:14px;">
+      <strong>🧹 ${esCA?'Tens ocupacions antigues sense tancar':'Tienes ocupaciones antiguas sin cerrar'}</strong>
+      <p class="subtle" style="margin:4px 0 8px;">${misObsoletas.map(o => etiquetaOcup(o) + ' (' + fechaHoraFmt(o.inicio) + ')').join(' · ')}. ${esCA?'S\'ignoren, però convé tancar-les.':'Se ignoran, pero conviene cerrarlas.'}</p>
+      <button class="link-btn" onclick="cerrarMisOcupacionesObsoletas()">${esCA?'Tancar-les':'Cerrarlas'}</button>
+    </div>` : '';
+
+  const avisoEnCursoHtml = ocupacionMiaActual ? (() => {
+    const o = ocupacionMiaActual;
+    const esBloqueo = bloqueSala1Completo && ocupacionesSala1[0].tecnico_email === CURRENT_USER.email;
+    const donde = esBloqueo ? (esCA?'Sala 1 completa':'Sala 1 completa') : etiquetaOcup(o);
+    const accion = o.sala === 'reunion' ? `finalizarReunion('${o.id}')` : (esBloqueo ? `finalizarBloqueoSala1()` : `abrirNotaAtencion('${o.id}','${o.sala}')`);
+    return `<div class="panel-card" style="background:var(--good-soft);border-color:var(--good);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span>⏱ ${esCA?'Ara tens en curs:':'Ahora tienes en curso:'} <strong>${donde}</strong> ${esCA?'des de les':'desde las'} ${horaFmt(o.inicio)}</span>
+      <button class="link-btn" onclick="${accion}">${esCA?'Finalitzar':'Finalizar'}</button>
+    </div>`;
+  })() : '';
+
   const avisoErrorSalasHtml = errorLecturaSalas ? `
     <div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);margin-bottom:14px;"><div><strong>⚠️ ${esCA?'No es poden llegir les sales':'No se pueden leer las salas'}</strong><br>
     <span>${esCA?'Pot ser un permís de la base de dades. Avisa l\'administrador i ensenya-li aquest missatge: ':'Puede ser un permiso de la base de datos. Avisa al administrador y enséñale este mensaje: '}<em>${errorLecturaSalas.message}</em></span></div></div>` : '';
 
   return `
     ${avisoErrorSalasHtml}
+    ${avisoObsoletasHtml}
+    ${avisoEnCursoHtml}
     <div class="section-label" style="margin-bottom:6px;">🚪 ${esCA?'Sales d\'atenció i disponibilitat':'Salas de atención y disponibilidad'}</div>
     <p class="subtle" style="margin-top:0;">${esCA
       ? 'Marca on ets ara mateix, o reserva una plaça per a més tard, perquè la resta de l\'equip ho vegi a "Treball en equip".'
@@ -1147,7 +1186,32 @@ async function confirmarReservaPlaza(plazaId){
   renderMiEspacio();
 }
 
+async function bloquearSala1Ahora(){
+  const esCA = LANG_I === 'ca';
+  if(!(await puedeEmpezarAhora())) return;
+  const ahoraIso = new Date().toISOString();
+  const ocupadas = ['1A','1B','1C','1D'].filter(id => { const o = (window.__ocupacionPorPlaza || {})[id]; return o && o.inicio <= ahoraIso; });
+  if(ocupadas.length){
+    alert(esCA ? `No es pot bloquejar tota la Sala 1: ara hi ha atenció a ${ocupadas.join(', ')}.` : `No se puede bloquear toda la Sala 1: ahora hay atención en ${ocupadas.join(', ')}.`);
+    return;
+  }
+  await guardarBloqueoSala1(ahoraIso, esCA ? 'Reunió / esdeveniment' : 'Reunión / evento');
+}
+
+async function guardarBloqueoSala1(inicioIso, motivo){
+  const esCA = LANG_I === 'ca';
+  const filas = ['1A','1B','1C','1D'].map(sala => ({ sala, tecnico_email: CURRENT_USER.email, inicio: inicioIso, motivo }));
+  let { error } = await sb.from('fichajes_sala').insert(filas);
+  if(error && /motivo/i.test(error.message)){
+    // La base de datos todavía no tiene la columna "motivo": se guarda el bloqueo igualmente, sin el texto del motivo.
+    ({ error } = await sb.from('fichajes_sala').insert(filas.map(({ motivo: _m, ...resto }) => resto)));
+  }
+  if(error){ alert((esCA?'No s\'ha pogut guardar: ':'No se pudo guardar: ') + error.message); return; }
+  renderMiEspacio();
+}
+
 function abrirBloqueoSala1(esAhora){
+  if(esAhora){ bloquearSala1Ahora(); return; }
   const esCA = LANG_I === 'ca';
   const manana = new Date(); manana.setDate(manana.getDate() + 1);
   document.getElementById('reserva-plaza-form-wrap').innerHTML = `
@@ -1179,11 +1243,7 @@ async function confirmarBloqueoSala1(){
     inicio = new Date(`${fecha}T${hora}:00`);
     if(inicio <= new Date()){ alert(esCA?'Tria un moment futur.':'Elige un momento futuro.'); return; }
   }
-  const inicioIso = inicio.toISOString();
-  const filas = ['1A','1B','1C','1D'].map(sala => ({ sala, tecnico_email: CURRENT_USER.email, inicio: inicioIso, motivo }));
-  const { error } = await sb.from('fichajes_sala').insert(filas);
-  if(error){ alert(error.message); return; }
-  renderMiEspacio();
+  await guardarBloqueoSala1(inicio.toISOString(), motivo);
 }
 
 async function finalizarBloqueoSala1(){
@@ -1193,15 +1253,44 @@ async function finalizarBloqueoSala1(){
   renderMiEspacio();
 }
 
+async function puedeEmpezarAhora(){
+  const o = window.__ocupacionMiaActual;
+  if(!o) return true;
+  const esCA = LANG_I === 'ca';
+  const donde = o.sala === 'reunion' ? (esCA?'una reunió':'una reunión') : (esCA?'la plaça ':'la plaza ') + o.sala;
+  const desde = new Date(o.inicio).toLocaleTimeString(esCA?'ca-ES':'es-ES', { hour:'2-digit', minute:'2-digit' });
+  alert(esCA ? `Ja tens ${donde} en curs des de les ${desde}. Finalitza-ho primer.` : `Ya tienes ${donde} en curso desde las ${desde}. Finalízalo primero.`);
+  return false;
+}
+
+async function cerrarMisOcupacionesObsoletas(){
+  const lista = window.__misOcupacionesObsoletas || [];
+  const ahora = new Date();
+  for(const o of lista){
+    const inicio = new Date(o.inicio);
+    let error;
+    if(inicio > ahora){
+      ({ error } = await sb.from('fichajes_sala').delete().eq('id', o.id));          // reserva futura de una plaza que ya no existe
+    } else {
+      const tope = new Date(inicio.getTime() + HORAS_MAX_OCUPACION * 3600000);        // como en el fichaje: se cierra a las 12 h como máximo
+      ({ error } = await sb.from('fichajes_sala').update({ fin: (tope < ahora ? tope : ahora).toISOString() }).eq('id', o.id));
+    }
+    if(error){ alert((LANG_I==='ca'?'No s\'ha pogut tancar: ':'No se pudo cerrar: ') + error.message); return; }
+  }
+  renderMiEspacio();
+}
+
 async function iniciarAtencionSala(plazaId){
-  const { error } = await sb.from('fichajes_sala').insert({ sala: plazaId, tecnico_email: CURRENT_USER.email });
-  if(error){ alert(error.message); return; }
+  if(!(await puedeEmpezarAhora())) return;
+  const { error } = await sb.from('fichajes_sala').insert({ sala: plazaId, tecnico_email: CURRENT_USER.email, inicio: new Date().toISOString() });
+  if(error){ alert((LANG_I==='ca'?'No s\'ha pogut guardar: ':'No se pudo guardar: ') + error.message); return; }
   renderMiEspacio();
 }
 
 async function iniciarReunion(){
-  const { error } = await sb.from('fichajes_sala').insert({ sala: 'reunion', tecnico_email: CURRENT_USER.email });
-  if(error){ alert(error.message); return; }
+  if(!(await puedeEmpezarAhora())) return;
+  const { error } = await sb.from('fichajes_sala').insert({ sala: 'reunion', tecnico_email: CURRENT_USER.email, inicio: new Date().toISOString() });
+  if(error){ alert((LANG_I==='ca'?'No s\'ha pogut guardar: ':'No se pudo guardar: ') + error.message); return; }
   renderMiEspacio();
 }
 
@@ -1221,45 +1310,55 @@ async function finalizarReunion(id){
 
 let __notaAtencionPersonaId = null;
 
+function cerrarNotaOverlay(){
+  const o = document.getElementById('nota-overlay');
+  if(o) o.remove();
+}
+
 function abrirNotaAtencion(fichajeSalaId, plazaId){
   const esCA = LANG_I === 'ca';
   __notaAtencionPersonaId = null;
-  document.getElementById('reserva-plaza-form-wrap').innerHTML = `
-    <div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);">
-      <h3>✍️ ${esCA?'Finalitzar atenció a':'Finalizar atención en'} ${plazaId}</h3>
-      <p class="subtle" style="margin:0 0 10px;">${esCA
-        ? 'Abans de tancar, digues què has fet — queda desat a la fitxa de la persona, a "Actuacions".'
-        : 'Antes de cerrar, cuenta qué has hecho — queda guardado en la ficha de la persona, en "Actuaciones".'}</p>
+  cerrarNotaOverlay();
+  const ov = document.createElement('div');
+  ov.id = 'nota-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,15,20,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:14px;';
+  ov.innerHTML = `
+    <div class="panel-card" style="background:var(--paper);width:100%;max-width:460px;max-height:92vh;overflow-y:auto;opacity:1;transform:none;animation:none;">
+      <h3 style="margin-top:0;">✍️ ${esCA?'Finalitzar atenció':'Finalizar atención'} · ${plazaId}</h3>
 
       <div class="field">
-        <label>${esCA?'Persona atesa (opcional)':'Persona atendida (opcional)'}</label>
-        <input type="text" id="nota-buscar-usuario" placeholder="${esCA?'Escriu el nom per buscar el seu compte':'Escribe el nombre para buscar su cuenta'}" oninput="buscarUsuarioNotaAtencion(this.value)">
-        <div id="nota-resultados-busqueda"></div>
-        <div id="nota-usuario-vinculado" style="display:none;margin-top:6px;" class="chip hecho">
-          <span id="nota-usuario-vinculado-texto"></span>
-          <button class="link-btn" style="margin-left:8px;font-size:11px;" onclick="__notaAtencionPersonaId=null;document.getElementById('nota-usuario-vinculado').style.display='none';">${esCA?'Treure':'Quitar'}</button>
+        <label>${esCA?'Què has treballat? (en poques paraules)':'¿Qué has trabajado? (en pocas palabras)'}</label>
+        <textarea id="nota-descripcion" rows="3" placeholder="${esCA?'Ex: vam preparar la renovació del NIE':'Ej: preparamos la renovación del NIE'}"></textarea>
+      </div>
+
+      <details style="margin-bottom:12px;">
+        <summary style="cursor:pointer;font-size:13px;font-weight:700;">${esCA?'Vincular a una persona i tipus (opcional)':'Vincular a una persona y tipo (opcional)'}</summary>
+        <div class="field" style="margin-top:10px;">
+          <label>${esCA?'Persona atesa':'Persona atendida'}</label>
+          <input type="text" id="nota-buscar-usuario" placeholder="${esCA?'Escriu el nom per buscar el seu compte':'Escribe el nombre para buscar su cuenta'}" oninput="buscarUsuarioNotaAtencion(this.value)">
+          <div id="nota-resultados-busqueda"></div>
+          <div id="nota-usuario-vinculado" style="display:none;margin-top:6px;" class="chip hecho">
+            <span id="nota-usuario-vinculado-texto"></span>
+            <button class="link-btn" style="margin-left:8px;font-size:11px;" onclick="__notaAtencionPersonaId=null;document.getElementById('nota-usuario-vinculado').style.display='none';">${esCA?'Treure':'Quitar'}</button>
+          </div>
         </div>
-      </div>
-
-      <div class="field">
-        <label>${esCA?'Tipus d\'actuació':'Tipo de actuación'}</label>
-        <select id="nota-categoria">
-          <option value="">—</option>
-          <optgroup label="${esCA?'Projectes':'Proyectos'}">${PROYECTOS_LOGOS.map(p => `<option value="${p}">${p}</option>`).join('')}</optgroup>
-          <optgroup label="${esCA?'Formacions':'Formaciones'}">${FORMACIONES_LOGOS.map(f => `<option value="${f}">${f}</option>`).join('')}</optgroup>
-          <option value="Trámite administrativo">${esCA?'Tràmit administratiu':'Trámite administrativo'}</option>
-          <option value="Atención general">${esCA?'Atenció general':'Atención general'}</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label>${esCA?'Què has fet en aquesta atenció?':'¿Qué has hecho en esta atención?'}</label>
-        <textarea id="nota-descripcion" rows="3"></textarea>
-      </div>
+        <div class="field">
+          <label>${esCA?'Tipus d\'actuació':'Tipo de actuación'}</label>
+          <select id="nota-categoria">
+            <option value="">—</option>
+            <optgroup label="${esCA?'Projectes':'Proyectos'}">${PROYECTOS_LOGOS.map(p => `<option value="${p}">${p}</option>`).join('')}</optgroup>
+            <optgroup label="${esCA?'Formacions':'Formaciones'}">${FORMACIONES_LOGOS.map(f => `<option value="${f}">${f}</option>`).join('')}</optgroup>
+            <option value="Trámite administrativo">${esCA?'Tràmit administratiu':'Trámite administrativo'}</option>
+            <option value="Atención general">${esCA?'Atenció general':'Atención general'}</option>
+          </select>
+        </div>
+      </details>
 
       <button class="primary-btn" style="background:var(--alert);" onclick="guardarNotaYFinalizarAtencion('${fichajeSalaId}')">${esCA?'Desar i finalitzar':'Guardar y finalizar'}</button>
+      <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="cerrarNotaOverlay()">${esCA?'Tornar enrere':'Volver atrás'}</button>
     </div>`;
-  document.getElementById('reserva-plaza-form-wrap').scrollIntoView({ behavior:'smooth', block:'center' });
+  document.body.appendChild(ov);
+  setTimeout(() => { const t = document.getElementById('nota-descripcion'); if(t) t.focus(); }, 60);
 }
 
 let __busquedaNotaAtencionTimeout = null;
@@ -1293,20 +1392,35 @@ async function guardarNotaYFinalizarAtencion(fichajeSalaId){
   const categoria = document.getElementById('nota-categoria').value || null;
   const descripcion = document.getElementById('nota-descripcion').value.trim() || null;
 
+  if(!descripcion && !categoria && !__notaAtencionPersonaId){
+    const sinNota = confirm(esCA ? 'No has escrit què has treballat. Vols finalitzar l\'atenció sense nota?' : 'No has escrito qué has trabajado. ¿Quieres finalizar la atención sin nota?');
+    if(!sinNota) return;
+  }
+
   if(descripcion || categoria || __notaAtencionPersonaId){
-    const { error: errorAct } = await sb.from('actuaciones').insert({
+    const fila = {
       usuario_id: __notaAtencionPersonaId,
       tecnico_email: CURRENT_USER.email,
       fecha: ahora.toISOString().slice(0,10),
       hora: ahora.toTimeString().slice(0,8),
       categoria,
       descripcion
-    });
-    if(errorAct){ alert(errorAct.message); return; }
+    };
+    let { error: errorAct } = await sb.from('actuaciones').insert(fila);
+    if(errorAct && /hora/i.test(errorAct.message)){
+      // La columna "hora" todavía no existe en la base de datos: se guarda la nota igualmente, sin la hora.
+      const { hora: _h, ...sinHora } = fila;
+      ({ error: errorAct } = await sb.from('actuaciones').insert(sinHora));
+    }
+    if(errorAct){
+      const seguir = confirm((esCA?'No s\'ha pogut desar la nota: ':'No se pudo guardar la nota: ') + errorAct.message + '\n\n' + (esCA?'Vols finalitzar l\'atenció igualment (sense la nota)?':'¿Quieres finalizar la atención igualmente (sin la nota)?'));
+      if(!seguir) return;
+    }
   }
 
   const { error } = await sb.from('fichajes_sala').update({ fin: ahora.toISOString() }).eq('id', fichajeSalaId);
-  if(error){ alert(error.message); return; }
+  if(error){ alert((esCA?'No s\'ha pogut finalitzar: ':'No se pudo finalizar: ') + error.message); return; }
+  cerrarNotaOverlay();
   renderMiEspacio();
 }
 
@@ -4924,6 +5038,7 @@ async function renderEquipoScreen(){
   const ocupacionesPorEmail = {};
   const ahoraIsoEquipo = new Date().toISOString();
   (ocupacionesRes.data || []).forEach(o => {
+    if(ocupacionObsoleta(o)) return; // plazas que ya no existen (p. ej. 2B) u ocupaciones olvidadas (12 h o más)
     if(!ocupacionesPorEmail[o.tecnico_email]) ocupacionesPorEmail[o.tecnico_email] = [];
     ocupacionesPorEmail[o.tecnico_email].push(o);
   });
@@ -4984,6 +5099,7 @@ async function renderEquipoScreen(){
   `;
 }
 
+const APP_VERSION_INTRANET = '2026-10-04 · v5 (salas + nota)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -5021,6 +5137,8 @@ function renderConfigScreen(){
         <button class="link-btn" onclick="guardarMiNombreConfig()">${esCA?'Desar':'Guardar'}</button>
       </div>
     </div>
+
+    <p class="subtle" style="margin:14px 0 0;font-size:11.5px;">${esCA?'Versió de l\'app':'Versión de la app'}: <strong>${APP_VERSION_INTRANET}</strong></p>
 
     <div class="panel-card" style="margin-top:14px;">
       <h3>🎨 ${esCA ? 'Color de fons' : 'Color de fondo'}</h3>
