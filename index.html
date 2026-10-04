@@ -969,6 +969,69 @@ const PLAZAS_ATENCION = [
   { id:'3', label:'3' }
 ];
 
+// Escapa texto para meterlo con seguridad en HTML o en atributos (comillas, <, >, &)
+function escAttr(txt){
+  return String(txt == null ? '' : txt).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Una actuación en una línea clara: fecha y hora, tipo, QUÉ SE HIZO y QUIÉN ATENDIÓ.
+function actuacionLineaHtml(ac, opts){
+  opts = opts || {};
+  const t = TI[LANG_I]; const esCA = LANG_I === 'ca';
+  const fecha = ac.fecha ? new Date(ac.fecha).toLocaleDateString(t.localeFecha) : '—';
+  const hora = ac.hora ? ' · ' + ac.hora.slice(0,5) : '';
+  const chip = ac.resultado ? `<span class="chip ${ac.resultado==='conseguido'?'good':(ac.resultado==='no_conseguido'?'':'gold')}" style="${ac.resultado==='no_conseguido'?'background:var(--alert-soft);color:var(--alert);':''}">${ac.resultado==='conseguido'?t.conseguido:(ac.resultado==='en_tramite'?t.enTramite:t.noConseguido)}</span>` : '';
+  return `<div style="padding:8px 0;border-top:1px solid var(--line);">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;"><span>📝 <strong>${fecha}${hora}</strong>${ac.categoria ? ' — ' + escAttr(ac.categoria) : ''}</span>${chip}</div>
+    ${ac.descripcion ? `<div style="font-size:13px;margin-top:3px;">${escAttr(ac.descripcion)}</div>` : ''}
+    ${opts.tecnico === false ? '' : `<div class="subtle" style="font-size:11.5px;margin:3px 0 0;">${esCA?'Atès per':'Atendió'}: <strong>${escAttr(nombreTecnico(ac.tecnico_email))}</strong></div>`}
+    ${opts.vincular ? `<button class="link-btn" style="font-size:11.5px;margin-top:4px;" onclick="abrirVincularActuacion('${ac.id}')">🔗 ${esCA?'Vincular a una persona':'Vincular a una persona'}</button>` : ''}
+  </div>`;
+}
+
+// Vincular a su persona una actuación que quedó suelta (sin persona)
+let __vincularActuacionId = null;
+let __vincularTimeout = null;
+function cerrarVincularOverlay(){ const o = document.getElementById('vincular-overlay'); if(o) o.remove(); }
+function abrirVincularActuacion(actuacionId){
+  const esCA = LANG_I === 'ca';
+  __vincularActuacionId = actuacionId;
+  cerrarVincularOverlay();
+  const ov = document.createElement('div');
+  ov.id = 'vincular-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,15,20,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:14px;';
+  ov.innerHTML = `
+    <div class="panel-card" style="background:var(--paper);width:100%;max-width:440px;max-height:90vh;overflow-y:auto;opacity:1;transform:none;animation:none;">
+      <h3 style="margin-top:0;">🔗 ${esCA?'Vincular a una persona':'Vincular a una persona'}</h3>
+      <div class="field"><input type="text" id="vincular-buscar" placeholder="${esCA?'Escriu el nom…':'Escribe el nombre…'}" oninput="buscarParaVincularActuacion(this.value)"></div>
+      <div id="vincular-resultados"></div>
+      <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="cerrarVincularOverlay()">${esCA?'Cancel·lar':'Cancelar'}</button>
+    </div>`;
+  document.body.appendChild(ov);
+  setTimeout(() => { const i = document.getElementById('vincular-buscar'); if(i) i.focus(); }, 60);
+}
+function buscarParaVincularActuacion(texto){
+  clearTimeout(__vincularTimeout);
+  const cont = document.getElementById('vincular-resultados');
+  if(!texto || texto.trim().length < 2){ cont.innerHTML = ''; return; }
+  __vincularTimeout = setTimeout(async () => {
+    const esCA = LANG_I === 'ca';
+    const { data } = await sb.from('perfiles').select('id, nombre_completo, municipio').ilike('nombre_completo', `%${texto.trim()}%`).limit(6);
+    cont.innerHTML = (data && data.length)
+      ? data.map(p => `<div class="list-row" style="cursor:pointer;" data-id="${p.id}" onclick="confirmarVincularActuacion(this.dataset.id)"><span>${escAttr(p.nombre_completo)}</span><span class="subtle">${escAttr(p.municipio || '')}</span></div>`).join('')
+      : `<div class="empty-note">${esCA?'Cap resultat.':'Sin resultados.'}</div>`;
+  }, 300);
+}
+async function confirmarVincularActuacion(usuarioId){
+  const { error } = await sb.from('actuaciones').update({ usuario_id: usuarioId }).eq('id', __vincularActuacionId);
+  if(error){ alert((LANG_I==='ca'?'No s\'ha pogut vincular: ':'No se pudo vincular: ') + error.message); return; }
+  cerrarVincularOverlay();
+  const activa = id => { const e = document.getElementById(id); return e && e.classList.contains('active'); };
+  if(activa('screen-admin')) renderAdministrador();
+  else if(activa('screen-miespacio')) renderMiEspacio();
+  else renderSeguimientoScreen();
+}
+
 // Salas que existen hoy, y regla de "ocupación olvidada": plazas que ya no existen (p. ej. 2B) o abiertas hace 12 h o más.
 const SALAS_VALIDAS = PLAZAS_ATENCION.map(p => p.id).concat('reunion');
 const HORAS_MAX_OCUPACION = 12;
@@ -1371,7 +1434,7 @@ function buscarUsuarioNotaAtencion(texto){
     const { data, error } = await sb.from('perfiles').select('id, nombre_completo, municipio').ilike('nombre_completo', `%${texto.trim()}%`).limit(5);
     if(error || !data || !data.length){ cont.innerHTML = `<div class="empty-note">${esCA?'Cap resultat.':'Sin resultados.'}</div>`; return; }
     cont.innerHTML = data.map(p => `
-      <div class="list-row" style="cursor:pointer;" onclick="vincularUsuarioNotaAtencion('${p.id}', ${JSON.stringify(p.nombre_completo || '')})">
+      <div class="list-row" style="cursor:pointer;" data-id="${p.id}" data-nombre="${escAttr(p.nombre_completo || '')}" onclick="vincularUsuarioNotaAtencion(this.dataset.id, this.dataset.nombre)">
         <span>${p.nombre_completo}</span><span class="subtle">${p.municipio || ''}</span>
       </div>`).join('');
   }, 300);
@@ -1524,16 +1587,9 @@ async function renderMiEspacio(){
     return masRecienteB - masRecienteA;
   }).slice(0, 8);
 
-  const filaActuacionMiEspacio = (ac) => `
-    <div class="list-row">
-      <span>${ac.categoria || ''}</span>
-      <span style="display:flex;align-items:center;gap:8px;">
-        ${ac.resultado ? `<span class="chip ${ac.resultado==='conseguido'?'good':(ac.resultado==='no_conseguido'?'':'gold')}" style="${ac.resultado==='no_conseguido'?'background:var(--alert-soft);color:var(--alert);':''}">${ac.resultado==='conseguido'?t.conseguido:(ac.resultado==='en_tramite'?t.enTramite:t.noConseguido)}</span>` : ''}
-        <span class="subtle" style="margin:0;font-size:11px;">${new Date(ac.fecha).toLocaleDateString(t.localeFecha)}</span>
-      </span>
-    </div>`;
+  const filaActuacionMiEspacio = (ac) => actuacionLineaHtml(ac, { tecnico: false });
 
-  const actuacionesRecientesHtml = gruposOrdenadosMiEspacio.length
+  const actuacionesPorPersonaHtml = gruposOrdenadosMiEspacio.length
     ? gruposOrdenadosMiEspacio.map(([usuarioId, acs]) => `
         <div class="list-row" style="flex-direction:column;align-items:stretch;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -1542,6 +1598,14 @@ async function renderMiEspacio(){
           </div>
           ${acs.map(filaActuacionMiEspacio).join('')}
         </div>`).join('')
+    : '';
+  const sinPersonaMiEspacioHtml = sinPersonaMiEspacio.length ? `
+        <div class="list-row" style="flex-direction:column;align-items:stretch;">
+          <strong>${LANG_I==='ca'?'Sense persona vinculada':'Sin persona vinculada'}</strong>
+          ${sinPersonaMiEspacio.slice().sort((a,b)=>new Date(b.fecha||0)-new Date(a.fecha||0)).slice(0,6).map(ac => actuacionLineaHtml(ac, { tecnico: false, vincular: true })).join('')}
+        </div>` : '';
+  const actuacionesRecientesHtml = (actuacionesPorPersonaHtml + sinPersonaMiEspacioHtml).trim()
+    ? actuacionesPorPersonaHtml + sinPersonaMiEspacioHtml
     : `<div class="empty-note">${t.sinActuaciones}</div>`;
 
 
@@ -1926,7 +1990,7 @@ function buscarUsuarioAtencion(texto){
     const { data, error } = await sb.from('perfiles').select('id, nombre_completo, municipio').ilike('nombre_completo', `%${texto.trim()}%`).limit(5);
     if(error || !data || !data.length){ cont.innerHTML = `<div class="empty-note">Sin resultados.</div>`; return; }
     cont.innerHTML = data.map(p => `
-      <div class="list-row" style="cursor:pointer;" onclick="vincularUsuarioAtencion('${p.id}', ${JSON.stringify(p.nombre_completo || '')})">
+      <div class="list-row" style="cursor:pointer;" data-id="${p.id}" data-nombre="${escAttr(p.nombre_completo || '')}" onclick="vincularUsuarioAtencion(this.dataset.id, this.dataset.nombre)">
         <span>${p.nombre_completo}</span><span class="subtle" style="margin:0;">${p.municipio || ''}</span>
       </div>`).join('');
   }, 300);
@@ -2239,7 +2303,7 @@ function filaItemSeguimiento(item){
     return `<div class="panel-stat-row"><span>📄 ${fechaFmt} — ${item.data.nombre_servicio}</span><span class="chip ${item.data.estado==='hecho'?'good':'gold'}">${item.data.estado}</span></div>`;
   }
   const ac = item.data;
-  return `<div class="panel-stat-row"><span>📝 ${fechaFmt}${ac.categoria ? ' — ' + ac.categoria : ''}</span>${ac.resultado ? `<span class="chip ${ac.resultado==='conseguido'?'good':(ac.resultado==='no_conseguido'?'':'gold')}" style="${ac.resultado==='no_conseguido'?'background:var(--alert-soft);color:var(--alert);':''}">${ac.resultado==='conseguido'?t.conseguido:(ac.resultado==='en_tramite'?t.enTramite:t.noConseguido)}</span>` : '<span></span>'}</div>`;
+  return actuacionLineaHtml(ac, { vincular: !ac.usuario_id });
 }
 
 function buscarSeguimiento(texto){
@@ -5099,7 +5163,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-04 · v5 (salas + nota)';
+const APP_VERSION_INTRANET = '2026-10-04 · v6 (notas con persona)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -6861,8 +6925,7 @@ function renderFilasActuacionesAdmin(lista){
     return masRecienteB - masRecienteA;
   });
 
-  const filaActuacion = (ac) => `
-    <div class="panel-stat-row"><span>📝 ${new Date(ac.fecha).toLocaleDateString(t.localeFecha)}${ac.categoria ? ' — ' + ac.categoria : ''} · ${nombreTecnico(ac.tecnico_email)}</span>${ac.resultado ? `<span class="chip ${ac.resultado==='conseguido'?'good':(ac.resultado==='no_conseguido'?'':'gold')}" style="${ac.resultado==='no_conseguido'?'background:var(--alert-soft);color:var(--alert);':''}">${ac.resultado==='conseguido'?t.conseguido:(ac.resultado==='en_tramite'?t.enTramite:t.noConseguido)}</span>` : '<span></span>'}</div>`;
+  const filaActuacion = (ac) => actuacionLineaHtml(ac, { vincular: !ac.usuario_id });
 
   const gruposHtml = personasOrdenadas.map(([usuarioId, acs]) => `
     <div class="panel-card">
