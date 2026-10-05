@@ -163,6 +163,14 @@
   .carpeta-cuerpo>.panel-card>h3:first-child{display:none;}
   .carpeta-cuerpo>.info-box{margin:10px 0 0 !important;}
   .carpeta-cuerpo>.info-box>.info-box-title{display:none;}
+  .conta-tabla{width:100%;border-collapse:collapse;font-size:13px;min-width:520px;}
+  .conta-tabla th{text-align:right;font-size:11px;text-transform:uppercase;color:var(--ink-soft);padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:bottom;}
+  .conta-tabla th:nth-child(-n+2){text-align:left;}
+  .conta-tabla td{padding:6px 8px;border-top:1px solid var(--line);text-align:right;white-space:nowrap;}
+  .conta-tabla td:nth-child(-n+2){text-align:left;white-space:normal;}
+  .conta-tabla tr.sec td{background:var(--bg);font-weight:800;text-align:left;}
+  .conta-tabla tr.tot td{font-weight:800;}
+  .conta-pos{color:var(--good);} .conta-neg{color:var(--alert);}
   .ptab-content.active{display:block;}
 
   /* Dashboard "Inicio" — barra superior, accesos rápidos, actividad y eventos */
@@ -325,6 +333,7 @@
         <summary>📊 Gestión</summary>
         <button data-target="informes" onclick="showScreen('informes');renderInformesScreen()">Informes y datos</button>
         <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
+        <button data-target="contabilidad" id="nav-conta-btn" onclick="showScreen('contabilidad');renderContabilidad()" style="display:none;">🧾 Contabilidad</button>
         <button data-target="config" onclick="showScreen('config');renderConfigScreen()">Configuración</button>
       </details>
     </nav>
@@ -492,6 +501,13 @@
     <div class="main-content">
       <div class="topbar"><span class="brand">Trabajo en equipo</span></div>
       <div class="content" id="equipo-content"><div class="placeholder">Cargando…</div></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-contabilidad">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Contabilidad</span></div>
+      <div class="content" id="contabilidad-content"></div>
     </div>
   </div>
 
@@ -717,6 +733,7 @@ function aplicarTraduccionesSidebar(){
   document.querySelector('.sidebar nav button[data-target="miespacio"]').innerHTML = t.miEspacio;
   document.querySelector('.sidebar nav button[data-target="panel"]').innerHTML = `${t.panelGeneral} <span id="badge-panel" class="nav-badge" style="display:none;">0</span>`;
   document.getElementById('nav-admin-btn').innerHTML = t.administrador;
+  document.getElementById('nav-conta-btn').innerHTML = '🧾 ' + (LANG_I === 'ca' ? 'Comptabilitat' : 'Contabilidad');
   document.getElementById('sidebar-logout-btn').innerHTML = t.cerrarSesion;
   const heroTitle = document.querySelector('.hero-title');
   if(heroTitle) heroTitle.innerHTML = t.intranetTitulo;
@@ -771,6 +788,7 @@ async function checkStaff(){
   IS_ADMIN = !!(data && data.es_admin && data.activo !== false);
   CURRENT_USER_NOMBRE = (data && data.nombre) || null;
   document.getElementById('nav-admin-btn').style.display = IS_ADMIN ? '' : 'none';
+  document.getElementById('nav-conta-btn').style.display = IS_ADMIN ? '' : 'none';
 }
 
 let __intervaloBadge = null;
@@ -6277,6 +6295,754 @@ async function limpiarRegistrosAntiguos(tipo){
   renderAdministrador();
 }
 
+// ================= CONTABILIDAD (solo administración) =================
+const CT = {
+  es: {
+    titulo:`Contabilidad`, tabDiario:`Diario`, tabBalance:`Balance`, tabCodigos:`Códigos`, tabCuentas:`Cuentas`, tabAjustes:`Ajustes`,
+    soloAdmin:`Esta sección es solo para la administración.`, cargando:`Cargando…`,
+    faltaTablas:`No se puede leer la contabilidad. Si dice que falta una tabla, hay que ejecutar el archivo SQL de contabilidad en Supabase.`,
+    bienvenida:`Preparar la contabilidad`, bienvenidaTxt:`Empieza en blanco, sin ninguna cifra. Se crea un plan de códigos básico que puedes cambiar, una caja y un banco.`,
+    nombreEntidad:`Nombre de la entidad`, monedaPrincipal:`Moneda principal`, monedaSecundaria:`Segunda moneda (opcional)`,
+    tipoCambioDef:`Tipo de cambio por defecto`, crearBasico:`Crear con el plan básico`,
+    cuenta:`Cuenta`, anio:`Año`, mes:`Mes`, todoAnio:`Todo el año`,
+    saldoAnterior:`Saldo anterior`, entradas:`Entradas`, salidas:`Salidas`, saldo:`Saldo`,
+    nuevoMov:`Nuevo movimiento`, traspaso:`Traspaso entre cuentas`, fecha:`Fecha`, codigo:`Código`, concepto:`Concepto`, detalle:`Detalle`, importe:`Importe`,
+    entrada:`Entrada`, salida:`Salida`, tipoCambio:`Tipo de cambio`, guardar:`Guardar`, cancelar:`Cancelar`, editar:`Editar`, borrar:`Borrar`,
+    sinMovs:`Todavía no hay movimientos en este periodo.`, sinCuentas:`Primero crea una cuenta en la pestaña Cuentas.`,
+    elegirCodigo:`Elige un código`, ingresos:`Ingresos`, gastos:`Gastos`, traspasos:`Traspasos`, devolucion:`devolución`,
+    avisoFecha:`Indica una fecha válida.`, avisoCodigo:`Elige un código.`, avisoImporte:`Escribe un importe mayor que 0.`, avisoCambio:`Indica el tipo de cambio (o ponlo en Ajustes).`,
+    confirmBorrarMov:`¿Seguro que quieres borrar este movimiento?`, confirmBorrarTraspaso:`Este movimiento es un traspaso: se borrarán las dos partes. ¿Continuar?`,
+    origen:`Cuenta de origen`, destino:`Cuenta de destino`, importeOrigen:`Importe que sale`, importeDestino:`Importe que entra`, distintas:`Elige dos cuentas distintas.`,
+    traspasoNota:`Un traspaso no cuenta como ingreso ni como gasto: solo mueve dinero entre cuentas.`,
+    nuevoCodigo:`Nuevo código`, tipo:`Tipo`, grupo:`Grupo (opcional)`, activo:`Activo`, desactivar:`Desactivar`, activar:`Activar`,
+    codigoRepetido:`Ya existe un código con ese número.`, faltaCodigo:`Escribe el código y el concepto.`, codigoUsado:`Este código tiene movimientos: no se puede borrar, pero sí desactivar.`,
+    codigoSistema:`Los códigos de traspaso (560 y 570) no se pueden quitar.`, planBasico:`Cargar el plan de códigos básico`,
+    nuevaCuenta:`Nueva cuenta`, nombre:`Nombre`, caja:`Caja`, banco:`Banco`, moneda:`Moneda`, saldoInicial:`Saldo inicial`, cuentaUsada:`Esta cuenta tiene movimientos: no se puede borrar, pero sí desactivar.`,
+    faltaNombre:`Escribe un nombre.`,
+    ajustesGuardados:`Ajustes guardados`, ayudaCambio:`Se escribe cuántas unidades de la segunda moneda equivalen a 1 de la principal. Ejemplo: si 1 EUR = 655,957 XAF, escribe 655,957.`,
+    cambiosPorMes:`Tipos de cambio por mes`, mesLbl:`Mes`, tasa:`Tipo`, añadirTipo:`Añadir o cambiar`, sinTipos:`Sin tipos de cambio por mes: se usa el de por defecto.`,
+    monedaBloqueada:`No se puede cambiar la moneda principal porque ya hay movimientos.`,
+    total:`Total`, ingresosNetos:`Ingresos netos`, gastosNetos:`Gastos netos`, traspasosNetos:`Traspasos (neto)`, saldoActual:`Saldo actual`,
+    comprobaciones:`Comprobaciones`, todoBien:`Todo en orden.`, exportar:`Exportar`,
+    sinTasaAviso:`movimientos en la segunda moneda sin tipo de cambio: no entran en el total.`,
+    traspasoIncompleto:`traspasos con una sola parte`, fechaFutura:`movimientos con fecha futura`, saldoNegativo:`cuenta con saldo negativo`, devolucionesAviso:`devoluciones (entradas en códigos de gasto o salidas en códigos de ingreso)`,
+    ayudaTitulo:`Cómo funciona`, errorGuardar:`No se pudo guardar: `, notaTotales:`Los totales se calculan con el tipo de cambio de cada movimiento.`, sinActividad:`Sin movimientos en este periodo.`,
+  },
+  ca: {
+    titulo:`Comptabilitat`, tabDiario:`Diari`, tabBalance:`Balanç`, tabCodigos:`Codis`, tabCuentas:`Comptes`, tabAjustes:`Ajustos`,
+    soloAdmin:`Aquesta secció és només per a l'administració.`, cargando:`Carregant…`,
+    faltaTablas:`No es pot llegir la comptabilitat. Si diu que falta una taula, cal executar l'arxiu SQL de comptabilitat a Supabase.`,
+    bienvenida:`Preparar la comptabilitat`, bienvenidaTxt:`Comença en blanc, sense cap xifra. Es crea un pla de codis bàsic que pots canviar, una caixa i un banc.`,
+    nombreEntidad:`Nom de l'entitat`, monedaPrincipal:`Moneda principal`, monedaSecundaria:`Segona moneda (opcional)`,
+    tipoCambioDef:`Tipus de canvi per defecte`, crearBasico:`Crear amb el pla bàsic`,
+    cuenta:`Compte`, anio:`Any`, mes:`Mes`, todoAnio:`Tot l'any`,
+    saldoAnterior:`Saldo anterior`, entradas:`Entrades`, salidas:`Sortides`, saldo:`Saldo`,
+    nuevoMov:`Nou moviment`, traspaso:`Traspàs entre comptes`, fecha:`Data`, codigo:`Codi`, concepto:`Concepte`, detalle:`Detall`, importe:`Import`,
+    entrada:`Entrada`, salida:`Sortida`, tipoCambio:`Tipus de canvi`, guardar:`Desar`, cancelar:`Cancel·lar`, editar:`Editar`, borrar:`Esborrar`,
+    sinMovs:`Encara no hi ha moviments en aquest període.`, sinCuentas:`Primer crea un compte a la pestanya Comptes.`,
+    elegirCodigo:`Tria un codi`, ingresos:`Ingressos`, gastos:`Despeses`, traspasos:`Traspassos`, devolucion:`devolució`,
+    avisoFecha:`Indica una data vàlida.`, avisoCodigo:`Tria un codi.`, avisoImporte:`Escriu un import més gran que 0.`, avisoCambio:`Indica el tipus de canvi (o posa'l a Ajustos).`,
+    confirmBorrarMov:`Segur que vols esborrar aquest moviment?`, confirmBorrarTraspaso:`Aquest moviment és un traspàs: s'esborraran les dues parts. Continuar?`,
+    origen:`Compte d'origen`, destino:`Compte de destí`, importeOrigen:`Import que surt`, importeDestino:`Import que entra`, distintas:`Tria dos comptes diferents.`,
+    traspasoNota:`Un traspàs no compta com a ingrés ni com a despesa: només mou diners entre comptes.`,
+    nuevoCodigo:`Nou codi`, tipo:`Tipus`, grupo:`Grup (opcional)`, activo:`Actiu`, desactivar:`Desactivar`, activar:`Activar`,
+    codigoRepetido:`Ja existeix un codi amb aquest número.`, faltaCodigo:`Escriu el codi i el concepte.`, codigoUsado:`Aquest codi té moviments: no es pot esborrar, però sí desactivar.`,
+    codigoSistema:`Els codis de traspàs (560 i 570) no es poden treure.`, planBasico:`Carregar el pla de codis bàsic`,
+    nuevaCuenta:`Nou compte`, nombre:`Nom`, caja:`Caixa`, banco:`Banc`, moneda:`Moneda`, saldoInicial:`Saldo inicial`, cuentaUsada:`Aquest compte té moviments: no es pot esborrar, però sí desactivar.`,
+    faltaNombre:`Escriu un nom.`,
+    ajustesGuardados:`Ajustos desats`, ayudaCambio:`S'escriu quantes unitats de la segona moneda equivalen a 1 de la principal. Exemple: si 1 EUR = 655,957 XAF, escriu 655,957.`,
+    cambiosPorMes:`Tipus de canvi per mes`, mesLbl:`Mes`, tasa:`Tipus`, añadirTipo:`Afegir o canviar`, sinTipos:`Sense tipus de canvi per mes: s'usa el per defecte.`,
+    monedaBloqueada:`No es pot canviar la moneda principal perquè ja hi ha moviments.`,
+    total:`Total`, ingresosNetos:`Ingressos nets`, gastosNetos:`Despeses netes`, traspasosNetos:`Traspassos (net)`, saldoActual:`Saldo actual`,
+    comprobaciones:`Comprovacions`, todoBien:`Tot en ordre.`, exportar:`Exportar`,
+    sinTasaAviso:`moviments en la segona moneda sense tipus de canvi: no entren al total.`,
+    traspasoIncompleto:`traspassos amb una sola part`, fechaFutura:`moviments amb data futura`, saldoNegativo:`compte amb saldo negatiu`, devolucionesAviso:`devolucions (entrades en codis de despesa o sortides en codis d'ingrés)`,
+    ayudaTitulo:`Com funciona`, errorGuardar:`No s'ha pogut desar: `, notaTotales:`Els totals es calculen amb el tipus de canvi de cada moviment.`, sinActividad:`Sense moviments en aquest període.`,
+  }
+};
+function ct(k){ const d = CT[LANG_I] || CT.es; return d[k] != null ? d[k] : (CT.es[k] != null ? CT.es[k] : k); }
+
+// Plan de códigos básico (todo editable). 560 y 570 son los códigos técnicos de los traspasos.
+const CONTA_CODIGOS_BASE = [
+  ['710', 'Cuotas de socios y socias', 'ingreso', null],
+  ['711', 'Subvenciones y ayudas públicas', 'ingreso', null],
+  ['712', 'Donaciones de personas o entidades', 'ingreso', null],
+  ['713', 'Ingresos por actividades y servicios', 'ingreso', null],
+  ['714', 'Otros ingresos', 'ingreso', null],
+  ['602', 'Material y suministros', 'gasto', null],
+  ['603', 'Transporte y desplazamientos', 'gasto', null],
+  ['604for', 'Formación', 'gasto', '604 Formación y actividades'],
+  ['604act', 'Actividades y talleres', 'gasto', '604 Formación y actividades'],
+  ['604mat', 'Material de trabajo y fotocopias', 'gasto', '604 Formación y actividades'],
+  ['607', 'Ayudas a personas atendidas', 'gasto', null],
+  ['612', 'Publicaciones y suscripciones', 'gasto', null],
+  ['621', 'Alquileres', 'gasto', null],
+  ['628', 'Suministros (luz, agua, internet)', 'gasto', null],
+  ['634', 'Informática y mantenimiento', 'gasto', null],
+  ['640', 'Personal y colaboraciones', 'gasto', null],
+  ['669', 'Otros gastos', 'gasto', null],
+  ['560', 'Traspaso enviado (sale de una cuenta)', 'traspaso', null],
+  ['570', 'Traspaso recibido (entra en una cuenta)', 'traspaso', null]
+];
+
+const __conta = { cargado: false, ajustes: null, cuentas: [], codigos: [], movs: [], tipos: [], tab: 'diario', cuentaId: null, anio: new Date().getFullYear(), mes: 0, error: null };
+
+// ---------- utilidades ----------
+const contaCent = x => Math.round(Number(x || 0) * 100);
+const contaPad = n => String(n).padStart(2, '0');
+function contaFmt(cent, moneda){
+  const n = cent / 100, loc = LANG_I === 'ca' ? 'ca-ES' : 'es-ES';
+  const op = { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: 'always' };   // siempre con céntimos y punto de miles
+  try { return new Intl.NumberFormat(loc, Object.assign({ style: 'currency', currency: moneda || 'EUR' }, op)).format(n); }
+  catch(e) { return n.toLocaleString(loc, op) + ' ' + (moneda || ''); }
+}
+// Acepta 1.000,50 · 1000,5 · 1,000.50 · 12.5 · 12,5. En los tipos de cambio (esTasa) un punto solo es siempre decimal (655.957).
+function contaNum(texto, esTasa){
+  let t = String(texto == null ? '' : texto).trim().replace(/[\s'’]/g, '');
+  if(!t) return null;
+  const punto = t.includes('.'), coma = t.includes(',');
+  if(punto && coma){
+    const dec = t.lastIndexOf(',') > t.lastIndexOf('.') ? ',' : '.';
+    const mil = dec === ',' ? '.' : ',';
+    t = t.split(mil).join('').replace(dec, '.');
+  } else if(coma){
+    t = (t.match(/,/g).length > 1) ? t.split(',').join('') : t.replace(',', '.');
+  } else if(punto){
+    if(t.match(/\./g).length > 1) t = t.split('.').join('');
+    else if(!esTasa && /^\d{1,3}\.\d{3}$/.test(t)) t = t.replace('.', '');   // 1.000 -> mil
+  }
+  if(!/^-?\d*\.?\d+$/.test(t)) return null;
+  return parseFloat(t);
+}
+function contaFechaCorta(iso){ const p = String(iso).split('-'); return `${p[2]}/${p[1]}`; }
+function contaNombreMes(m){ return new Date(2000, m - 1, 1).toLocaleDateString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES', { month: 'long' }); }
+function contaMayus(t){ return t.charAt(0).toUpperCase() + t.slice(1); }
+function contaCodigoPorId(id){ return __conta.codigos.find(c => c.id === id); }
+function contaCuentaPorId(id){ return __conta.cuentas.find(c => c.id === id); }
+function contaEsSecundaria(cuenta){ const aj = __conta.ajustes; return !!(aj && cuenta && cuenta.moneda !== aj.moneda_principal); }
+
+// ---------- cálculos (sin pantalla) ----------
+// tipo de cambio = unidades de la segunda moneda por 1 de la principal
+function contaTasa(mov, cuenta){
+  const aj = __conta.ajustes;
+  if(!aj || !cuenta) return null;
+  if(cuenta.moneda === aj.moneda_principal) return 1;
+  if(mov.tipo_cambio != null && Number(mov.tipo_cambio) > 0) return Number(mov.tipo_cambio);
+  const t = __conta.tipos.find(x => x.periodo === String(mov.fecha).slice(0, 7));
+  if(t) return Number(t.tasa);
+  if(aj.tipo_cambio_defecto != null && Number(aj.tipo_cambio_defecto) > 0) return Number(aj.tipo_cambio_defecto);
+  return null;
+}
+function contaTasaSugerida(fecha){
+  const aj = __conta.ajustes; if(!aj) return null;
+  const t = __conta.tipos.find(x => x.periodo === String(fecha).slice(0, 7));
+  if(t) return Number(t.tasa);
+  return aj.tipo_cambio_defecto != null ? Number(aj.tipo_cambio_defecto) : null;
+}
+function contaAPrincipal(cent, mov, cuenta){ const t = contaTasa(mov, cuenta); return t == null ? null : Math.round(cent / t); }
+function contaRango(){
+  const a = __conta.anio, m = __conta.mes;
+  if(!m) return [`${a}-01-01`, `${a}-12-31`];
+  return [`${a}-${contaPad(m)}-01`, `${a}-${contaPad(m)}-${contaPad(new Date(a, m, 0).getDate())}`];
+}
+function contaMovsDeCuenta(cuentaId){
+  return __conta.movs.filter(m => m.cuenta_id === cuentaId).sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)) || String(a.creado_en || '').localeCompare(String(b.creado_en || '')));
+}
+function contaSaldoAnteriorCent(cuenta, desde){
+  let s = contaCent(cuenta.saldo_inicial);
+  __conta.movs.forEach(m => { if(m.cuenta_id === cuenta.id && String(m.fecha) < desde) s += contaCent(m.entrada) - contaCent(m.salida); });
+  return s;
+}
+function contaDiario(cuenta){
+  const [desde, hasta] = contaRango();
+  const saldoAnt = contaSaldoAnteriorCent(cuenta, desde);
+  let saldo = saldoAnt, ent = 0, sal = 0;
+  const filas = [];
+  contaMovsDeCuenta(cuenta.id).forEach(m => {
+    if(String(m.fecha) < desde) return;
+    saldo += contaCent(m.entrada) - contaCent(m.salida);
+    if(String(m.fecha) <= hasta){ ent += contaCent(m.entrada); sal += contaCent(m.salida); filas.push({ m, saldo }); }
+  });
+  return { saldoAnt, ent, sal, saldoFin: saldoAnt + ent - sal, filas };
+}
+// Balance del periodo: por código y por cuenta (en la moneda de cada cuenta) + total en la moneda principal
+function contaBalance(){
+  const [desde, hasta] = contaRango();
+  const cuentas = __conta.cuentas.filter(c => c.activo || __conta.movs.some(m => m.cuenta_id === c.id));
+  const por = {};          // codigoId -> { cuentas:{id:{ent,sal}}, totEnt, totSal }
+  let sinTasa = 0, futuros = 0, devoluciones = 0;
+  const hoy = new Date().toISOString().slice(0, 10);
+  const trasp = {};        // traspaso_id -> nº de partes
+  const res = { cuentas, filas: por, saldoAnt: {}, ingresos: {}, gastos: {}, traspasos: {}, saldoFin: {}, total: { saldoAnt: 0, ingresos: 0, gastos: 0, traspasos: 0, saldoFin: 0 }, avisos: [] };
+  cuentas.forEach(c => { res.saldoAnt[c.id] = contaSaldoAnteriorCent(c, desde); res.ingresos[c.id] = 0; res.gastos[c.id] = 0; res.traspasos[c.id] = 0; });
+
+  __conta.movs.forEach(m => {
+    if(m.traspaso_id) trasp[m.traspaso_id] = (trasp[m.traspaso_id] || 0) + 1;
+    if(String(m.fecha) < desde || String(m.fecha) > hasta) return;
+    const cu = contaCuentaPorId(m.cuenta_id), co = contaCodigoPorId(m.codigo_id);
+    if(!cu || !co || !res.saldoAnt.hasOwnProperty(cu.id)) return;
+    if(String(m.fecha) > hoy) futuros++;
+    const e = contaCent(m.entrada), s = contaCent(m.salida);
+    if((co.tipo === 'gasto' && e > 0) || (co.tipo === 'ingreso' && s > 0)) devoluciones++;
+    if(!por[co.id]) por[co.id] = { cuentas: {}, totEnt: 0, totSal: 0 };
+    const celda = por[co.id].cuentas[cu.id] || (por[co.id].cuentas[cu.id] = { ent: 0, sal: 0 });
+    celda.ent += e; celda.sal += s;
+    const neto = co.tipo === 'ingreso' ? e - s : co.tipo === 'gasto' ? s - e : e - s;
+    const clave = co.tipo === 'ingreso' ? 'ingresos' : co.tipo === 'gasto' ? 'gastos' : 'traspasos';
+    res[clave][cu.id] += neto;
+    const ep = contaAPrincipal(e, m, cu), sp = contaAPrincipal(s, m, cu);
+    if(ep == null || sp == null) { sinTasa++; return; }
+    por[co.id].totEnt += ep; por[co.id].totSal += sp;
+    res.total[clave] += (co.tipo === 'ingreso' ? ep - sp : co.tipo === 'gasto' ? sp - ep : ep - sp);
+  });
+
+  cuentas.forEach(c => {
+    res.saldoFin[c.id] = res.saldoAnt[c.id] + res.ingresos[c.id] - res.gastos[c.id] + res.traspasos[c.id];
+    // saldo anterior consolidado: con el tipo de cambio del mes de inicio (o el de por defecto)
+    const tasa = contaEsSecundaria(c) ? contaTasaSugerida(desde) : 1;
+    if(tasa != null && tasa > 0) res.total.saldoAnt += Math.round(res.saldoAnt[c.id] / tasa);
+    else if(res.saldoAnt[c.id] !== 0) sinTasa++;
+  });
+  res.total.saldoFin = res.total.saldoAnt + res.total.ingresos - res.total.gastos + res.total.traspasos;
+
+  // comprobaciones
+  const incompletos = Object.keys(trasp).filter(k => trasp[k] !== 2).length;
+  if(sinTasa) res.avisos.push({ nivel: 'aviso', texto: `${sinTasa} ${ct('sinTasaAviso')}` });
+  if(incompletos) res.avisos.push({ nivel: 'aviso', texto: `${incompletos} ${ct('traspasoIncompleto')}` });
+  if(futuros) res.avisos.push({ nivel: 'aviso', texto: `${futuros} ${ct('fechaFutura')}` });
+  cuentas.forEach(c => { if(res.saldoFin[c.id] < 0) res.avisos.push({ nivel: 'aviso', texto: `${c.nombre}: ${ct('saldoNegativo')} (${contaFmt(res.saldoFin[c.id], c.moneda)})` }); });
+  if(devoluciones) res.avisos.push({ nivel: 'info', texto: `${devoluciones} ${ct('devolucionesAviso')}` });
+  // el diario de cada cuenta tiene que dar el mismo saldo final
+  cuentas.forEach(c => { const d = contaDiario(c); if(d.saldoFin !== res.saldoFin[c.id]) res.avisos.push({ nivel: 'aviso', texto: `${c.nombre}: descuadre entre diario y balance` }); });
+  return res;
+}
+
+// ---------- carga de datos ----------
+async function contaCargarTodo(){
+  const [aj, cu, co, ti] = await Promise.all([
+    sb.from('conta_ajustes').select('*').eq('id', 1).maybeSingle(),
+    sb.from('conta_cuentas').select('*').order('orden', { ascending: true }).order('creado_en', { ascending: true }),
+    sb.from('conta_codigos').select('*').order('codigo', { ascending: true }),
+    sb.from('conta_tipos_cambio').select('*').order('periodo', { ascending: true })
+  ]);
+  const err = aj.error || cu.error || co.error || ti.error;
+  if(err) return { error: err };
+  const movs = [];
+  for(let d = 0; d < 50000; d += 1000){
+    const r = await sb.from('conta_movimientos').select('*').order('fecha', { ascending: true }).order('id', { ascending: true }).range(d, d + 999);
+    if(r.error) return { error: r.error };
+    movs.push(...(r.data || []));
+    if(!r.data || r.data.length < 1000) break;
+  }
+  Object.assign(__conta, { ajustes: aj.data || null, cuentas: cu.data || [], codigos: co.data || [], tipos: ti.data || [], movs, cargado: true, error: null });
+  return {};
+}
+async function contaRecargar(){
+  const r = await contaCargarTodo();
+  if(r.error){ __conta.error = r.error; }
+  contaRender();
+}
+
+// ---------- pantalla principal ----------
+async function renderContabilidad(tab){
+  const cont = document.getElementById('contabilidad-content');
+  if(!cont) return;
+  if(!IS_ADMIN){ cont.innerHTML = `<div class="empty-note">${ct('soloAdmin')}</div>`; return; }
+  if(tab) __conta.tab = tab;
+  cont.innerHTML = `<div class="placeholder">${ct('cargando')}</div>`;
+  const r = await contaCargarTodo();
+  if(r.error) __conta.error = r.error;
+  contaRender();
+}
+
+function contaRender(){
+  const cont = document.getElementById('contabilidad-content');
+  if(!cont) return;
+  if(__conta.error){
+    cont.innerHTML = `<div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);"><strong>⚠️ ${ct('faltaTablas')}</strong><div style="font-size:12.5px;margin-top:4px;">${escAttr(__conta.error.message || '')}</div></div>`;
+    return;
+  }
+  if(!__conta.ajustes){ cont.innerHTML = contaHtmlInicio(); return; }
+  const tabs = [['diario', 'tabDiario'], ['balance', 'tabBalance'], ['codigos', 'tabCodigos'], ['cuentas', 'tabCuentas'], ['ajustes', 'tabAjustes']];
+  const periodo = (__conta.tab === 'diario' || __conta.tab === 'balance') ? contaHtmlPeriodo() : '';
+  cont.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <h2 style="margin:0;font-size:20px;">🧾 ${escAttr(__conta.ajustes.nombre_entidad)} · ${ct('titulo')}</h2>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">${tabs.map(([id, k]) => `<button class="link-btn" style="font-size:13px;font-weight:${__conta.tab === id ? 800 : 500};border:1px solid ${__conta.tab === id ? 'var(--gold)' : 'var(--line)'};background:${__conta.tab === id ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:5px 14px;" onclick="__conta.tab='${id}';contaRender()">${ct(k)}</button>`).join('')}</div>
+    ${periodo}
+    <div id="conta-cuerpo">${__conta.tab === 'diario' ? contaHtmlDiario() : __conta.tab === 'balance' ? contaHtmlBalance() : __conta.tab === 'codigos' ? contaHtmlCodigos() : __conta.tab === 'cuentas' ? contaHtmlCuentas() : contaHtmlAjustes()}</div>`;
+}
+
+function contaHtmlPeriodo(){
+  const y0 = new Date().getFullYear();
+  const ys = new Set([y0 - 1, y0, y0 + 1, __conta.anio]);
+  __conta.movs.forEach(m => ys.add(+String(m.fecha).slice(0, 4)));
+  const anios = [...ys].sort();
+  const meses = `<option value="0"${__conta.mes === 0 ? ' selected' : ''}>${ct('todoAnio')}</option>` + Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}"${__conta.mes === i + 1 ? ' selected' : ''}>${contaMayus(contaNombreMes(i + 1))}</option>`).join('');
+  return `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+    <div class="field" style="margin:0;"><label>${ct('anio')}</label><select onchange="__conta.anio=+this.value;contaRender()">${anios.map(a => `<option value="${a}"${a === __conta.anio ? ' selected' : ''}>${a}</option>`).join('')}</select></div>
+    <div class="field" style="margin:0;"><label>${ct('mes')}</label><select onchange="__conta.mes=+this.value;contaRender()">${meses}</select></div></div>`;
+}
+
+// ---------- inicio (primera vez) ----------
+function contaHtmlInicio(){
+  return `<div class="panel-card">
+    <h3>🧾 ${ct('bienvenida')}</h3>
+    <p class="subtle">${ct('bienvenidaTxt')}</p>
+    <div class="field"><label>${ct('nombreEntidad')}</label><input type="text" id="ci-nombre" value="Logos"></div>
+    <div class="field"><label>${ct('monedaPrincipal')}</label><input type="text" id="ci-moneda" value="EUR" maxlength="3" style="text-transform:uppercase;"></div>
+    <div class="field"><label>${ct('monedaSecundaria')}</label><input type="text" id="ci-moneda2" maxlength="3" placeholder="XAF" style="text-transform:uppercase;"></div>
+    <div class="field"><label>${ct('tipoCambioDef')}</label><input type="text" inputmode="decimal" id="ci-cambio" placeholder="655,957"><div class="subtle" style="font-size:12px;">${ct('ayudaCambio')}</div></div>
+    <div id="conta-error" class="subtle" style="display:none;color:var(--alert);font-weight:700;"></div>
+    <button class="primary-btn" onclick="contaCrearInicial()">${ct('crearBasico')}</button></div>`;
+}
+async function contaCrearInicial(){
+  const v = id => (document.getElementById(id) || {}).value || '';
+  const nombre = v('ci-nombre').trim() || 'Logos', m1 = v('ci-moneda').trim().toUpperCase() || 'EUR', m2 = v('ci-moneda2').trim().toUpperCase();
+  if(!/^[A-Z]{3}$/.test(m1) || (m2 && !/^[A-Z]{3}$/.test(m2)) || m2 === m1) return contaErrorModal(LANG_I === 'ca' ? 'Les monedes són codis de 3 lletres (EUR, XAF…) i han de ser diferents.' : 'Las monedas son códigos de 3 letras (EUR, XAF…) y deben ser distintas.');
+  const tc = contaNum(v('ci-cambio'), true);
+  if(m2 && tc != null && tc <= 0) return contaErrorModal(ct('avisoCambio'));
+  let r = await sb.from('conta_ajustes').upsert({ id: 1, nombre_entidad: nombre, moneda_principal: m1, moneda_secundaria: m2 || null, tipo_cambio_defecto: m2 ? tc : null }, { onConflict: 'id' });
+  if(r.error) return contaErrorModal(ct('errorGuardar') + r.error.message);
+  if(!__conta.cuentas.length){
+    r = await sb.from('conta_cuentas').insert([{ nombre: LANG_I === 'ca' ? 'Caixa comuna' : 'Caja común', tipo: 'caja', moneda: m1, orden: 1 }, { nombre: 'Banco 1', tipo: 'banco', moneda: m1, orden: 2 }]);
+    if(r.error) return contaErrorModal(ct('errorGuardar') + r.error.message);
+  }
+  r = await contaInsertarPlanBasico();
+  if(r && r.error) return contaErrorModal(ct('errorGuardar') + r.error.message);
+  await contaRecargar();
+}
+async function contaInsertarPlanBasico(){
+  const existentes = new Set(__conta.codigos.map(c => String(c.codigo).trim().toLowerCase()));
+  const filas = CONTA_CODIGOS_BASE.filter(x => !existentes.has(x[0].toLowerCase())).map(([codigo, concepto, tipo, grupo]) => ({ codigo, concepto, tipo, grupo, es_sistema: tipo === 'traspaso' }));
+  if(!filas.length) return {};
+  return await sb.from('conta_codigos').insert(filas);
+}
+async function contaCargarPlanBasico(){
+  const r = await contaInsertarPlanBasico();
+  if(r && r.error){ alert(ct('errorGuardar') + r.error.message); return; }
+  await contaRecargar();
+}
+
+// ---------- ventanas ----------
+function contaModal(html){
+  contaCerrarModal();
+  const ov = document.createElement('div');
+  ov.id = 'conta-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,15,20,.55);z-index:400;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto;';
+  ov.innerHTML = `<div class="panel-card" style="background:var(--paper);width:100%;max-width:480px;margin:auto;opacity:1;transform:none;animation:none;">${html}</div>`;
+  document.body.appendChild(ov);
+}
+function contaCerrarModal(){ const o = document.getElementById('conta-overlay'); if(o) o.remove(); }
+function contaErrorModal(txt){ const e = document.getElementById('conta-error'); if(e){ e.textContent = txt || ''; e.style.display = txt ? '' : 'none'; } else if(txt) alert(txt); }
+const contaV = id => (document.getElementById(id) || {}).value || '';
+const contaRedondea = x => Math.round(x * 100) / 100;
+
+// ---------- DIARIO ----------
+function contaHtmlDiario(){
+  const cuentas = __conta.cuentas.filter(c => c.activo);
+  if(!cuentas.length) return `<div class="empty-note">${ct('sinCuentas')}</div>`;
+  if(!cuentas.some(c => c.id === __conta.cuentaId)) __conta.cuentaId = cuentas[0].id;
+  const cu = contaCuentaPorId(__conta.cuentaId), d = contaDiario(cu), mon = cu.moneda;
+  const tile = (t, v, extra) => `<div style="flex:1;min-width:120px;background:var(--bg);border-radius:10px;padding:8px 10px;"><div class="subtle" style="margin:0;font-size:11px;">${t}</div><div style="font-weight:800;${extra || ''}">${contaFmt(v, mon)}</div></div>`;
+  let lista;
+  if(!d.filas.length) lista = `<div class="empty-note">${ct('sinMovs')}</div>`;
+  else if(__conta.mes) lista = d.filas.map(f => contaFilaMov(f, mon)).join('');
+  else {
+    const grupos = {};
+    d.filas.forEach(f => { const ym = String(f.m.fecha).slice(0, 7); (grupos[ym] = grupos[ym] || []).push(f); });
+    const claves = Object.keys(grupos).sort();
+    lista = `<div class="carpetas-lista">${claves.length > 1 ? carpetasBarra('') : ''}${claves.map((ym, i) => carpetaDesplegable({
+      clave: `conta:d:${cu.id}:${ym}`, icono: '🗓️', titulo: contaMayus(contaNombreMes(+ym.slice(5))) + ' ' + ym.slice(0, 4), cuenta: grupos[ym].length, abierta: i === claves.length - 1,
+      cuerpo: grupos[ym].map(f => contaFilaMov(f, mon)).join('') })).join('')}</div>`;
+  }
+  return `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">
+      <div class="field" style="margin:0;flex:1;min-width:160px;"><label>${ct('cuenta')}</label><select onchange="__conta.cuentaId=this.value;contaRender()">${cuentas.map(c => `<option value="${c.id}"${c.id === cu.id ? ' selected' : ''}>${escAttr(c.nombre)} (${c.moneda})</option>`).join('')}</select></div>
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="contaAbrirMovimiento()">➕ ${ct('nuevoMov')}</button>
+      <button class="link-btn" style="border:1px solid var(--line);border-radius:10px;padding:8px 12px;" onclick="contaAbrirTraspaso()">↔️ ${ct('traspaso')}</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">${tile(ct('saldoAnterior'), d.saldoAnt)}${tile(ct('entradas'), d.ent, 'color:var(--good);')}${tile(ct('salidas'), d.sal, 'color:var(--alert);')}${tile(ct('saldo'), d.saldoFin)}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:6px;"><button class="link-btn" style="font-size:12px;" onclick="contaExportarDiario('xlsx')">⬇️ Excel</button><button class="link-btn" style="font-size:12px;" onclick="contaExportarDiario('pdf')">⬇️ PDF</button></div>
+    ${lista}`;
+}
+function contaFilaMov(f, mon){
+  const m = f.m, co = contaCodigoPorId(m.codigo_id), esT = !!m.traspaso_id;
+  const ent = contaCent(m.entrada), sal = contaCent(m.salida);
+  const dev = co && ((co.tipo === 'gasto' && ent > 0) || (co.tipo === 'ingreso' && sal > 0));
+  return `<div class="panel-stat-row" style="align-items:flex-start;gap:8px;flex-wrap:nowrap;">
+    <span style="min-width:0;flex:1 1 auto;overflow-wrap:anywhere;"><strong>${contaFechaCorta(m.fecha)}</strong> · <span class="chip" style="font-size:11px;">${escAttr(co ? co.codigo : '?')}</span> ${escAttr(co ? co.concepto : '')}${dev ? ` <span class="subtle" style="margin:0;font-size:11px;">(${ct('devolucion')})</span>` : ''}${esT ? ' ↔️' : ''}<br><span class="subtle" style="font-size:11.5px;margin:0;">${[m.detalle ? escAttr(m.detalle) : '', m.tipo_cambio ? `${ct('tipoCambio')} ${escAttr(String(Number(m.tipo_cambio)))}` : ''].filter(Boolean).join(' · ')}</span></span>
+    <span style="text-align:right;white-space:nowrap;flex:0 0 auto;"><span class="${ent ? 'conta-pos' : 'conta-neg'}" style="font-weight:700;">${ent ? '+' + contaFmt(ent, mon) : '−' + contaFmt(sal, mon)}</span><br><span class="subtle" style="font-size:11px;margin:0;">${contaFmt(f.saldo, mon)}</span><br>${esT ? '' : `<button class="link-btn" style="font-size:11px;" onclick="contaAbrirMovimiento('${m.id}')">${ct('editar')}</button> `}<button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="contaBorrarMovimiento('${m.id}')">✕</button></span></div>`;
+}
+
+function contaAbrirMovimiento(id){
+  const m = id ? __conta.movs.find(x => x.id === id) : null;
+  const cuentas = __conta.cuentas.filter(c => c.activo || (m && c.id === m.cuenta_id));
+  const cuentaSel = m ? m.cuenta_id : __conta.cuentaId;
+  const dir = m ? (contaCent(m.entrada) > 0 ? 'entrada' : 'salida') : 'salida';
+  const importe = m ? String(contaCent(m.entrada) > 0 ? m.entrada : m.salida) : '';
+  contaModal(`
+    <h3 style="margin-top:0;">${m ? ct('editar') : ct('nuevoMov')}</h3>
+    <div class="field"><label>${ct('cuenta')}</label><select id="cm-cuenta" onchange="contaCambioMov(true)">${cuentas.map(c => `<option value="${c.id}"${c.id === cuentaSel ? ' selected' : ''}>${escAttr(c.nombre)} (${c.moneda})</option>`).join('')}</select></div>
+    <div class="field"><label>${ct('fecha')} *</label><input type="date" id="cm-fecha" value="${m ? m.fecha : new Date().toISOString().slice(0, 10)}" onchange="contaCambioMov(true)"></div>
+    <div class="field"><label>&nbsp;</label>
+      <label style="display:inline-flex;gap:6px;align-items:center;margin-right:16px;"><input type="radio" name="cm-dir" value="entrada"${dir === 'entrada' ? ' checked' : ''} onchange="contaRellenarCodigosMov()"> ${ct('entrada')}</label>
+      <label style="display:inline-flex;gap:6px;align-items:center;"><input type="radio" name="cm-dir" value="salida"${dir === 'salida' ? ' checked' : ''} onchange="contaRellenarCodigosMov()"> ${ct('salida')}</label></div>
+    <div class="field"><label>${ct('codigo')} *</label><select id="cm-codigo"></select></div>
+    <div class="field"><label>${ct('detalle')}</label><input type="text" id="cm-detalle" value="${escAttr(m ? m.detalle || '' : '')}"></div>
+    <div class="field"><label>${ct('importe')} *</label><input type="text" inputmode="decimal" id="cm-importe" value="${escAttr(importe)}" oninput="contaCambioMov(false)"></div>
+    <div class="field" id="cm-cambio-wrap" style="display:none;"><label>${ct('tipoCambio')}</label><input type="text" inputmode="decimal" id="cm-cambio" value="${m && m.tipo_cambio ? escAttr(String(Number(m.tipo_cambio))) : ''}" oninput="this.dataset.tocado='1';contaCambioMov(false)"><div class="subtle" id="cm-equiv" style="font-size:12px;"></div></div>
+    <div id="conta-error" class="subtle" style="display:none;color:var(--alert);font-weight:700;"></div>
+    <button class="primary-btn" onclick="contaGuardarMovimiento('${id || ''}')">${ct('guardar')}</button>
+    <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="contaCerrarModal()">${ct('cancelar')}</button>`);
+  contaRellenarCodigosMov(m ? m.codigo_id : '');
+  if(m && m.tipo_cambio) document.getElementById('cm-cambio').dataset.tocado = '1';
+  contaCambioMov(true);
+}
+function contaRellenarCodigosMov(seleccionado){
+  const sel = document.getElementById('cm-codigo'); if(!sel) return;
+  const actual = seleccionado != null && typeof seleccionado === 'string' ? seleccionado : sel.value;
+  const dir = (document.querySelector('input[name="cm-dir"]:checked') || {}).value || 'salida';
+  const visibles = __conta.codigos.filter(c => c.tipo !== 'traspaso' && (c.activo || c.id === actual));
+  const orden = dir === 'entrada' ? ['ingreso', 'gasto'] : ['gasto', 'ingreso'];
+  const natural = (a, b) => String(a.codigo).localeCompare(String(b.codigo), undefined, { numeric: true });
+  sel.innerHTML = `<option value="">${ct('elegirCodigo')}</option>` + orden.map(t => {
+    const l = visibles.filter(c => c.tipo === t).sort(natural);
+    return l.length ? `<optgroup label="${t === 'ingreso' ? ct('ingresos') : ct('gastos')}">${l.map(c => `<option value="${c.id}"${c.id === actual ? ' selected' : ''}>${escAttr(c.codigo)} · ${escAttr(c.concepto)}${c.activo ? '' : ' (—)'}</option>`).join('')}</optgroup>` : '';
+  }).join('');
+}
+function contaCambioMov(cambioCuentaOFecha){
+  const cu = contaCuentaPorId(contaV('cm-cuenta')); if(!cu) return;
+  const wrap = document.getElementById('cm-cambio-wrap'), inp = document.getElementById('cm-cambio');
+  const sec = contaEsSecundaria(cu);
+  wrap.style.display = sec ? '' : 'none';
+  if(!sec) return;
+  if(cambioCuentaOFecha && !inp.dataset.tocado){
+    const s = contaTasaSugerida(contaV('cm-fecha'));
+    inp.value = s != null ? String(s) : '';
+  }
+  const tc = contaNum(inp.value, true), imp = contaNum(contaV('cm-importe'));
+  document.getElementById('cm-equiv').textContent = (tc > 0 && imp > 0) ? `≈ ${contaFmt(Math.round(imp * 100 / tc), __conta.ajustes.moneda_principal)}` : '';
+}
+async function contaGuardarMovimiento(id){
+  const cuentaId = contaV('cm-cuenta'), fecha = contaV('cm-fecha'), codigoId = contaV('cm-codigo'), detalle = contaV('cm-detalle').trim();
+  const dir = (document.querySelector('input[name="cm-dir"]:checked') || {}).value;
+  const imp = contaNum(contaV('cm-importe'));
+  const fechaOk = /^\d{4}-\d{2}-\d{2}$/.test(fecha) && +fecha.slice(0, 4) >= 2000 && +fecha.slice(0, 4) <= 2100 && !isNaN(new Date(fecha).getTime()) && new Date(fecha).toISOString().slice(0, 10) === fecha;
+  if(!fechaOk) return contaErrorModal(ct('avisoFecha'));
+  if(!codigoId) return contaErrorModal(ct('avisoCodigo'));
+  if(imp == null || !(imp > 0)) return contaErrorModal(ct('avisoImporte'));
+  const cu = contaCuentaPorId(cuentaId);
+  let tc = null;
+  if(contaEsSecundaria(cu)){ tc = contaNum(contaV('cm-cambio'), true); if(!(tc > 0)) return contaErrorModal(ct('avisoCambio')); }
+  const fila = { cuenta_id: cuentaId, fecha, codigo_id: codigoId, detalle: detalle || null, entrada: dir === 'entrada' ? contaRedondea(imp) : 0, salida: dir === 'salida' ? contaRedondea(imp) : 0, tipo_cambio: tc };
+  let r;
+  if(id) r = await sb.from('conta_movimientos').update(fila).eq('id', id);
+  else r = await sb.from('conta_movimientos').insert(Object.assign(fila, { creado_por_email: CURRENT_USER.email }));
+  if(r.error) return contaErrorModal(ct('errorGuardar') + r.error.message);
+  __conta.cuentaId = cuentaId;
+  contaCerrarModal();
+  await contaRecargar();
+}
+async function contaBorrarMovimiento(id){
+  const m = __conta.movs.find(x => x.id === id); if(!m) return;
+  if(!confirm(m.traspaso_id ? ct('confirmBorrarTraspaso') : ct('confirmBorrarMov'))) return;
+  const r = m.traspaso_id ? await sb.from('conta_movimientos').delete().eq('traspaso_id', m.traspaso_id) : await sb.from('conta_movimientos').delete().eq('id', id);
+  if(r.error){ alert(ct('errorGuardar') + r.error.message); return; }
+  await contaRecargar();
+}
+
+// ---------- TRASPASOS ----------
+function contaAbrirTraspaso(){
+  const cuentas = __conta.cuentas.filter(c => c.activo);
+  if(cuentas.length < 2){ alert(ct('sinCuentas')); return; }
+  const opt = (sel) => cuentas.map(c => `<option value="${c.id}"${c.id === sel ? ' selected' : ''}>${escAttr(c.nombre)} (${c.moneda})</option>`).join('');
+  const orig = __conta.cuentaId && cuentas.some(c => c.id === __conta.cuentaId) ? __conta.cuentaId : cuentas[0].id;
+  const dest = (cuentas.find(c => c.id !== orig) || cuentas[1]).id;
+  contaModal(`
+    <h3 style="margin-top:0;">↔️ ${ct('traspaso')}</h3>
+    <p class="subtle" style="margin:0 0 8px;">${ct('traspasoNota')}</p>
+    <div class="field"><label>${ct('origen')}</label><select id="ct-origen" onchange="contaCambioTraspaso(true)">${opt(orig)}</select></div>
+    <div class="field"><label>${ct('destino')}</label><select id="ct-destino" onchange="contaCambioTraspaso(true)">${opt(dest)}</select></div>
+    <div class="field"><label>${ct('fecha')} *</label><input type="date" id="ct-fecha" value="${new Date().toISOString().slice(0, 10)}" onchange="contaCambioTraspaso(true)"></div>
+    <div class="field"><label>${ct('importeOrigen')} *</label><input type="text" inputmode="decimal" id="ct-imp-o" oninput="contaCambioTraspaso(false)"></div>
+    <div class="field" id="ct-imp-d-wrap" style="display:none;"><label>${ct('importeDestino')} *</label><input type="text" inputmode="decimal" id="ct-imp-d" oninput="this.dataset.tocado='1'"><div class="subtle" id="ct-tasa" style="font-size:12px;"></div></div>
+    <div class="field"><label>${ct('detalle')}</label><input type="text" id="ct-detalle"></div>
+    <div id="conta-error" class="subtle" style="display:none;color:var(--alert);font-weight:700;"></div>
+    <button class="primary-btn" onclick="contaGuardarTraspaso()">${ct('guardar')}</button>
+    <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="contaCerrarModal()">${ct('cancelar')}</button>`);
+  contaCambioTraspaso(true);
+}
+function contaCambioTraspaso(recalcular){
+  const o = contaCuentaPorId(contaV('ct-origen')), d = contaCuentaPorId(contaV('ct-destino'));
+  if(!o || !d) return;
+  const distinta = o.moneda !== d.moneda;
+  document.getElementById('ct-imp-d-wrap').style.display = distinta ? '' : 'none';
+  if(!distinta) return;
+  const inp = document.getElementById('ct-imp-d');
+  const tasa = contaTasaSugerida(contaV('ct-fecha'));
+  const imp = contaNum(contaV('ct-imp-o'));
+  document.getElementById('ct-tasa').textContent = tasa ? `1 ${__conta.ajustes.moneda_principal} = ${tasa} ${__conta.ajustes.moneda_secundaria}` : '';
+  if(recalcular !== undefined && !inp.dataset.tocado && imp > 0 && tasa){
+    const v = contaEsSecundaria(d) ? imp * tasa : imp / tasa;
+    inp.value = String(contaRedondea(v));
+  }
+}
+async function contaGuardarTraspaso(){
+  const o = contaCuentaPorId(contaV('ct-origen')), d = contaCuentaPorId(contaV('ct-destino'));
+  const fecha = contaV('ct-fecha'), detalle = contaV('ct-detalle').trim();
+  const fechaOk = /^\d{4}-\d{2}-\d{2}$/.test(fecha) && !isNaN(new Date(fecha).getTime()) && new Date(fecha).toISOString().slice(0, 10) === fecha && +fecha.slice(0, 4) >= 2000 && +fecha.slice(0, 4) <= 2100;
+  if(!fechaOk) return contaErrorModal(ct('avisoFecha'));
+  if(!o || !d || o.id === d.id) return contaErrorModal(ct('distintas'));
+  const impO = contaNum(contaV('ct-imp-o'));
+  if(impO == null || !(impO > 0)) return contaErrorModal(ct('avisoImporte'));
+  let impD = impO;
+  if(o.moneda !== d.moneda){ impD = contaNum(contaV('ct-imp-d')); if(impD == null || !(impD > 0)) return contaErrorModal(ct('avisoImporte')); }
+  const c560 = __conta.codigos.find(c => String(c.codigo).trim() === '560'), c570 = __conta.codigos.find(c => String(c.codigo).trim() === '570');
+  if(!c560 || !c570) return contaErrorModal(ct('codigoSistema'));
+  // tipo de cambio de cada parte: en un cambio de moneda es el implícito (así el total en la moneda principal cuadra)
+  let tcO = null, tcD = null;
+  if(o.moneda !== d.moneda){
+    const imp = contaEsSecundaria(o) ? impO / impD : impD / impO;   // secundaria por 1 principal
+    if(contaEsSecundaria(o)) tcO = Math.round(imp * 1e6) / 1e6; else tcD = Math.round(imp * 1e6) / 1e6;
+  } else if(contaEsSecundaria(o)){ tcO = tcD = contaTasaSugerida(fecha); }
+  const tid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c => (c ^ Math.random() * 16 >> c / 4).toString(16));
+  const base = { fecha, detalle: detalle || null, traspaso_id: tid, creado_por_email: CURRENT_USER.email };
+  const r = await sb.from('conta_movimientos').insert([
+    Object.assign({}, base, { cuenta_id: o.id, codigo_id: c560.id, entrada: 0, salida: contaRedondea(impO), tipo_cambio: tcO }),
+    Object.assign({}, base, { cuenta_id: d.id, codigo_id: c570.id, entrada: contaRedondea(impD), salida: 0, tipo_cambio: tcD })
+  ]);
+  if(r.error) return contaErrorModal(ct('errorGuardar') + r.error.message);
+  contaCerrarModal();
+  await contaRecargar();
+}
+
+// ---------- BALANCE ----------
+function contaPeriodoTexto(){ return __conta.mes ? `${__conta.anio}-${contaPad(__conta.mes)}` : String(__conta.anio); }
+function contaBalanceTabla(b){
+  const natural = (a, c) => String(a.codigo).localeCompare(String(c.codigo), undefined, { numeric: true });
+  const cols = b.cuentas, filas = [];
+  [['ingreso', ct('ingresos')], ['gasto', ct('gastos')], ['traspaso', ct('traspasos')]].forEach(([tipo, titulo]) => {
+    const cods = __conta.codigos.filter(c => c.tipo === tipo && b.filas[c.id]).sort(natural);
+    if(!cods.length) return;
+    filas.push({ t: 'sec', texto: titulo });
+    cods.forEach(co => {
+      const f = b.filas[co.id];
+      const celdas = cols.map(cu => { const x = f.cuentas[cu.id]; return x ? (tipo === 'gasto' ? x.sal - x.ent : x.ent - x.sal) : 0; });
+      filas.push({ t: 'fila', codigo: co.codigo, concepto: co.concepto, celdas, total: tipo === 'gasto' ? f.totSal - f.totEnt : f.totEnt - f.totSal });
+    });
+  });
+  filas.push({ t: 'sec', texto: ct('saldo') });
+  [[ct('saldoAnterior'), b.saldoAnt, b.total.saldoAnt], [ct('ingresosNetos'), b.ingresos, b.total.ingresos], [ct('gastosNetos'), b.gastos, b.total.gastos], [ct('traspasosNetos'), b.traspasos, b.total.traspasos], [ct('saldoActual'), b.saldoFin, b.total.saldoFin]]
+    .forEach(([txt, obj, tot]) => filas.push({ t: 'tot', codigo: '', concepto: txt, celdas: cols.map(cu => obj[cu.id] || 0), total: tot }));
+  return filas;
+}
+function contaHtmlBalance(){
+  const b = contaBalance(), cols = b.cuentas, prin = __conta.ajustes.moneda_principal;
+  if(!cols.length) return `<div class="empty-note">${ct('sinCuentas')}</div>`;
+  const tabla = contaBalanceTabla(b);
+  const hayActividad = tabla.some(f => f.t === 'fila');
+  const cab = `<tr><th>${ct('codigo')}</th><th>${ct('concepto')}</th>${cols.map(c => `<th>${escAttr(c.nombre)}<br>${escAttr(c.moneda)}</th>`).join('')}<th>${ct('total')}<br>${escAttr(prin)}</th></tr>`;
+  const cuerpo = tabla.map(f => f.t === 'sec'
+    ? `<tr class="sec"><td colspan="${cols.length + 3}">${escAttr(f.texto)}</td></tr>`
+    : `<tr class="${f.t === 'tot' ? 'tot' : ''}"><td>${escAttr(f.codigo)}</td><td>${escAttr(f.concepto)}</td>${f.celdas.map((c, i) => `<td>${(f.t === 'tot' || c) ? contaFmt(c, cols[i].moneda) : ''}</td>`).join('')}<td>${(f.t === 'tot' || f.total) ? contaFmt(f.total, prin) : ''}</td></tr>`).join('');
+  const avisos = b.avisos.length
+    ? b.avisos.map(a => `<div class="panel-stat-row"><span>${a.nivel === 'aviso' ? '⚠️' : 'ℹ️'} ${escAttr(a.texto)}</span></div>`).join('')
+    : `<div class="panel-stat-row"><span>✓ ${ct('todoBien')}</span></div>`;
+  return `
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:6px;"><button class="link-btn" style="font-size:12px;" onclick="contaExportarBalance('xlsx')">⬇️ Excel</button><button class="link-btn" style="font-size:12px;" onclick="contaExportarBalance('pdf')">⬇️ PDF</button></div>
+    ${hayActividad ? '' : `<div class="empty-note">${ct('sinActividad')}</div>`}
+    <div style="overflow-x:auto;"><table class="conta-tabla"><thead>${cab}</thead><tbody>${cuerpo}</tbody></table></div>
+    <p class="subtle" style="font-size:12px;">${ct('notaTotales')}</p>
+    <div class="panel-card" style="margin-top:10px;"><h3>${ct('comprobaciones')}</h3>${avisos}</div>`;
+}
+function contaExportarBalance(formato){
+  const b = contaBalance(), cols = b.cuentas, aj = __conta.ajustes, prin = aj.moneda_principal;
+  const tabla = contaBalanceTabla(b);
+  const cabecera = [ct('codigo'), ct('concepto'), ...cols.map(c => `${c.nombre} (${c.moneda})`), `${ct('total')} (${prin})`];
+  const num = formato === 'xlsx';
+  const filas = tabla.map(f => f.t === 'sec' ? [f.texto, '', ...cols.map(() => ''), ''] :
+    [f.codigo, f.concepto, ...f.celdas.map((c, i) => num ? c / 100 : ((f.t === 'tot' || c) ? contaFmt(c, cols[i].moneda) : '')), num ? f.total / 100 : ((f.t === 'tot' || f.total) ? contaFmt(f.total, prin) : '')]);
+  const titulo = `${aj.nombre_entidad} · ${ct('tabBalance')} ${contaPeriodoTexto()}`;
+  const nombre = rutaSeguraArchivo(`Balance ${aj.nombre_entidad} ${contaPeriodoTexto()}`);
+  if(num) descargarXLSX(cabecera, filas, nombre + '.xlsx', ct('tabBalance')); else descargarPDFTabla(titulo, cabecera, filas, nombre + '.pdf');
+}
+function contaExportarDiario(formato){
+  const cu = contaCuentaPorId(__conta.cuentaId); if(!cu) return;
+  const aj = __conta.ajustes, d = contaDiario(cu), num = formato === 'xlsx', loc = LANG_I === 'ca' ? 'ca-ES' : 'es-ES';
+  const cabecera = [ct('fecha'), ct('codigo'), ct('concepto'), ct('detalle'), ct('entrada'), ct('salida'), ct('saldo'), ct('tipoCambio')];
+  const fm = c => num ? c / 100 : contaFmt(c, cu.moneda);
+  const filas = [['', '', ct('saldoAnterior'), '', '', '', fm(d.saldoAnt), '']].concat(d.filas.map(({ m, saldo }) => {
+    const co = contaCodigoPorId(m.codigo_id);
+    return [new Date(m.fecha + 'T00:00:00').toLocaleDateString(loc), co ? co.codigo : '', co ? co.concepto : '', m.detalle || '', contaCent(m.entrada) ? fm(contaCent(m.entrada)) : '', contaCent(m.salida) ? fm(contaCent(m.salida)) : '', fm(saldo), m.tipo_cambio ? Number(m.tipo_cambio) : ''];
+  }));
+  const titulo = `${aj.nombre_entidad} · ${cu.nombre} (${cu.moneda}) · ${ct('tabDiario')} ${contaPeriodoTexto()}`;
+  const nombre = rutaSeguraArchivo(`Diario ${cu.nombre} ${contaPeriodoTexto()}`);
+  if(num) descargarXLSX(cabecera, filas, nombre + '.xlsx', ct('tabDiario')); else descargarPDFTabla(titulo, cabecera, filas, nombre + '.pdf');
+}
+
+// ---------- CÓDIGOS ----------
+function contaHtmlCodigos(){
+  const natural = (a, c) => String(a.codigo).localeCompare(String(c.codigo), undefined, { numeric: true });
+  if(!__conta.codigos.length) return `<div class="empty-note">${LANG_I === 'ca' ? 'Encara no hi ha codis.' : 'Todavía no hay códigos.'}</div><button class="primary-btn" style="width:auto;" onclick="contaCargarPlanBasico()">${ct('planBasico')}</button> <button class="link-btn" onclick="contaAbrirCodigo()">➕ ${ct('nuevoCodigo')}</button>`;
+  const usados = new Set(__conta.movs.map(m => m.codigo_id));
+  const fila = c => `<div class="panel-stat-row" style="align-items:center;gap:8px;">
+      <span style="min-width:0;${c.activo ? '' : 'opacity:.55;'}"><span class="chip" style="font-size:11px;">${escAttr(c.codigo)}</span> ${escAttr(c.concepto)}${c.grupo ? `<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(c.grupo)}</span>` : ''}${c.activo ? '' : ` <span class="subtle" style="margin:0;font-size:11px;">(${LANG_I === 'ca' ? 'inactiu' : 'inactivo'})</span>`}</span>
+      <span style="white-space:nowrap;"><button class="link-btn" style="font-size:11.5px;" onclick="contaAbrirCodigo('${c.id}')">${ct('editar')}</button>
+      ${c.es_sistema ? '' : `<button class="link-btn" style="font-size:11.5px;" onclick="contaActivarCodigo('${c.id}', ${c.activo ? 'false' : 'true'})">${c.activo ? ct('desactivar') : ct('activar')}</button><button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="contaBorrarCodigo('${c.id}')">🗑</button>`}</span></div>`;
+  return `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button class="primary-btn" style="width:auto;margin:0;" onclick="contaAbrirCodigo()">➕ ${ct('nuevoCodigo')}</button></div>
+    <div class="carpetas-lista">${[['ingreso', ct('ingresos'), '⬇️'], ['gasto', ct('gastos'), '⬆️'], ['traspaso', ct('traspasos'), '↔️']].map(([t, tit, ic]) => {
+      const l = __conta.codigos.filter(c => c.tipo === t).sort(natural);
+      return carpetaDesplegable({ clave: 'conta:cod:' + t, icono: ic, titulo: tit, cuenta: l.length, abierta: t !== 'traspaso', cuerpo: l.length ? l.map(fila).join('') : `<div class="empty-note">—</div>` });
+    }).join('')}</div>
+    <p class="subtle" style="font-size:12px;">${ct('codigoSistema')}</p>`;
+}
+function contaAbrirCodigo(id){
+  const c = id ? __conta.codigos.find(x => x.id === id) : null, sis = !!(c && c.es_sistema), ca = LANG_I === 'ca';
+  contaModal(`
+    <h3 style="margin-top:0;">${c ? ct('editar') : ct('nuevoCodigo')}</h3>
+    <div class="field"><label>${ct('codigo')} *</label><input type="text" id="cc-codigo" maxlength="20" value="${escAttr(c ? c.codigo : '')}"${sis ? ' disabled' : ''}></div>
+    <div class="field"><label>${ct('concepto')} *</label><input type="text" id="cc-concepto" value="${escAttr(c ? c.concepto : '')}"></div>
+    <div class="field"><label>${ct('tipo')}</label><select id="cc-tipo"${sis ? ' disabled' : ''}>
+      ${sis ? `<option value="traspaso" selected>${ct('traspasos')}</option>` : `<option value="ingreso"${c && c.tipo === 'ingreso' ? ' selected' : ''}>${ca ? 'Ingrés' : 'Ingreso'}</option><option value="gasto"${c && c.tipo === 'gasto' ? ' selected' : ''}>${ca ? 'Despesa' : 'Gasto'}</option>`}</select></div>
+    <div class="field"><label>${ct('grupo')}</label><input type="text" id="cc-grupo" value="${escAttr(c ? c.grupo || '' : '')}"></div>
+    <div id="conta-error" class="subtle" style="display:none;color:var(--alert);font-weight:700;"></div>
+    <button class="primary-btn" onclick="contaGuardarCodigo('${id || ''}')">${ct('guardar')}</button>
+    <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="contaCerrarModal()">${ct('cancelar')}</button>`);
+}
+async function contaGuardarCodigo(id){
+  const c = id ? __conta.codigos.find(x => x.id === id) : null, sis = !!(c && c.es_sistema);
+  const codigo = contaV('cc-codigo').trim(), concepto = contaV('cc-concepto').trim(), tipo = contaV('cc-tipo'), grupo = contaV('cc-grupo').trim();
+  if((!sis && !codigo) || !concepto) return contaErrorModal(ct('faltaCodigo'));
+  if(!sis && __conta.codigos.some(x => x.id !== id && String(x.codigo).trim().toLowerCase() === codigo.toLowerCase())) return contaErrorModal(ct('codigoRepetido'));
+  const fila = sis ? { concepto, grupo: grupo || null } : { codigo, concepto, tipo, grupo: grupo || null };
+  const r = id ? await sb.from('conta_codigos').update(fila).eq('id', id) : await sb.from('conta_codigos').insert(Object.assign(fila, { es_sistema: false }));
+  if(r.error) return contaErrorModal(/codigo_unico|duplicate/i.test(r.error.message) ? ct('codigoRepetido') : ct('errorGuardar') + r.error.message);
+  contaCerrarModal(); await contaRecargar();
+}
+async function contaActivarCodigo(id, activo){
+  const r = await sb.from('conta_codigos').update({ activo }).eq('id', id);
+  if(r.error){ alert(ct('errorGuardar') + r.error.message); return; }
+  await contaRecargar();
+}
+async function contaBorrarCodigo(id){
+  const c = __conta.codigos.find(x => x.id === id); if(!c || c.es_sistema) return;
+  if(__conta.movs.some(m => m.codigo_id === id)){ alert(ct('codigoUsado')); return; }
+  if(!confirm(`${ct('borrar')}: ${c.codigo} · ${c.concepto}?`)) return;
+  const r = await sb.from('conta_codigos').delete().eq('id', id);
+  if(r.error){ alert(ct('errorGuardar') + r.error.message); return; }
+  await contaRecargar();
+}
+
+// ---------- CUENTAS ----------
+function contaHtmlCuentas(){
+  const usadas = new Set(__conta.movs.map(m => m.cuenta_id));
+  const fila = c => `<div class="panel-stat-row" style="align-items:center;gap:8px;">
+      <span style="${c.activo ? '' : 'opacity:.55;'}"><strong>${escAttr(c.nombre)}</strong> <span class="chip" style="font-size:11px;">${c.tipo === 'caja' ? ct('caja') : ct('banco')} · ${escAttr(c.moneda)}</span><br><span class="subtle" style="font-size:11.5px;margin:0;">${ct('saldoInicial')}: ${contaFmt(contaCent(c.saldo_inicial), c.moneda)}${c.activo ? '' : ' · ' + (LANG_I === 'ca' ? 'inactiu' : 'inactivo')}</span></span>
+      <span style="white-space:nowrap;"><button class="link-btn" style="font-size:11.5px;" onclick="contaAbrirCuenta('${c.id}')">${ct('editar')}</button><button class="link-btn" style="font-size:11.5px;" onclick="contaActivarCuenta('${c.id}', ${c.activo ? 'false' : 'true'})">${c.activo ? ct('desactivar') : ct('activar')}</button>${usadas.has(c.id) ? '' : `<button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="contaBorrarCuenta('${c.id}')">🗑</button>`}</span></div>`;
+  return `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button class="primary-btn" style="width:auto;margin:0;" onclick="contaAbrirCuenta()">➕ ${ct('nuevaCuenta')}</button></div>
+    <div class="panel-card">${__conta.cuentas.length ? __conta.cuentas.map(fila).join('') : `<div class="empty-note">${ct('sinCuentas')}</div>`}</div>`;
+}
+function contaAbrirCuenta(id){
+  const c = id ? contaCuentaPorId(id) : null, aj = __conta.ajustes;
+  const monedas = [aj.moneda_principal].concat(aj.moneda_secundaria ? [aj.moneda_secundaria] : []);
+  const conMovs = !!(c && __conta.movs.some(m => m.cuenta_id === c.id));
+  contaModal(`
+    <h3 style="margin-top:0;">${c ? ct('editar') : ct('nuevaCuenta')}</h3>
+    <div class="field"><label>${ct('nombre')} *</label><input type="text" id="cu-nombre" value="${escAttr(c ? c.nombre : '')}"></div>
+    <div class="field"><label>${ct('tipo')}</label><select id="cu-tipo"><option value="caja"${c && c.tipo === 'caja' ? ' selected' : ''}>${ct('caja')}</option><option value="banco"${!c || c.tipo === 'banco' ? ' selected' : ''}>${ct('banco')}</option></select></div>
+    <div class="field"><label>${ct('moneda')}</label><select id="cu-moneda"${conMovs ? ' disabled' : ''}>${monedas.map(m => `<option value="${m}"${c && c.moneda === m ? ' selected' : ''}>${m}</option>`).join('')}</select></div>
+    <div class="field"><label>${ct('saldoInicial')}</label><input type="text" inputmode="decimal" id="cu-saldo" value="${c ? escAttr(String(Number(c.saldo_inicial))) : '0'}"></div>
+    <div id="conta-error" class="subtle" style="display:none;color:var(--alert);font-weight:700;"></div>
+    <button class="primary-btn" onclick="contaGuardarCuenta('${id || ''}')">${ct('guardar')}</button>
+    <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="contaCerrarModal()">${ct('cancelar')}</button>`);
+}
+async function contaGuardarCuenta(id){
+  const nombre = contaV('cu-nombre').trim(), tipo = contaV('cu-tipo'), saldo = contaNum(contaV('cu-saldo'));
+  if(!nombre) return contaErrorModal(ct('faltaNombre'));
+  if(saldo == null) return contaErrorModal(ct('avisoImporte'));
+  const c = id ? contaCuentaPorId(id) : null;
+  const fila = { nombre, tipo, saldo_inicial: contaRedondea(saldo) };
+  if(!c || !__conta.movs.some(m => m.cuenta_id === c.id)) fila.moneda = contaV('cu-moneda') || __conta.ajustes.moneda_principal;
+  const r = id ? await sb.from('conta_cuentas').update(fila).eq('id', id) : await sb.from('conta_cuentas').insert(Object.assign(fila, { orden: __conta.cuentas.length + 1 }));
+  if(r.error) return contaErrorModal(ct('errorGuardar') + r.error.message);
+  contaCerrarModal(); await contaRecargar();
+}
+async function contaActivarCuenta(id, activo){
+  const r = await sb.from('conta_cuentas').update({ activo }).eq('id', id);
+  if(r.error){ alert(ct('errorGuardar') + r.error.message); return; }
+  await contaRecargar();
+}
+async function contaBorrarCuenta(id){
+  const c = contaCuentaPorId(id); if(!c) return;
+  if(__conta.movs.some(m => m.cuenta_id === id)){ alert(ct('cuentaUsada')); return; }
+  if(!confirm(`${ct('borrar')}: ${c.nombre}?`)) return;
+  const r = await sb.from('conta_cuentas').delete().eq('id', id);
+  if(r.error){ alert(ct('errorGuardar') + r.error.message); return; }
+  await contaRecargar();
+}
+
+// ---------- AJUSTES (nombre de la entidad y tipo de cambio abierto) ----------
+function contaHtmlAjustes(){
+  const aj = __conta.ajustes, ca = LANG_I === 'ca';
+  const hayMovs = __conta.movs.length > 0;
+  const m2EnUso = !!(aj.moneda_secundaria && __conta.cuentas.some(c => c.moneda === aj.moneda_secundaria));
+  const tipos = __conta.tipos.slice().sort((a, b) => b.periodo.localeCompare(a.periodo));
+  const bloqueTipos = aj.moneda_secundaria ? `
+    <h3 style="margin-top:18px;">${ct('cambiosPorMes')}</h3>
+    <p class="subtle" style="font-size:12.5px;">1 ${escAttr(aj.moneda_principal)} = X ${escAttr(aj.moneda_secundaria)}</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">
+      <div class="field" style="margin:0;"><label>${ct('mesLbl')}</label><input type="month" id="ca-mes" value="${new Date().toISOString().slice(0, 7)}"></div>
+      <div class="field" style="margin:0;"><label>${ct('tasa')}</label><input type="text" inputmode="decimal" id="ca-tasa" placeholder="655,957" style="max-width:130px;"></div>
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="contaGuardarTipoMes()">${ct('añadirTipo')}</button></div>
+    <div id="conta-error" class="subtle" style="display:none;color:var(--alert);font-weight:700;"></div>
+    ${tipos.length ? tipos.map(t => `<div class="panel-stat-row" style="align-items:center;"><span>${escAttr(t.periodo)}</span><span style="display:flex;gap:10px;align-items:center;"><strong>${escAttr(String(Number(t.tasa)))}</strong><button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="contaBorrarTipoMes('${t.id}')">✕</button></span></div>`).join('') : `<div class="empty-note">${ct('sinTipos')}</div>`}` : '';
+  const ayuda = ca
+    ? ['Cada moviment va amb un <strong>codi</strong> (ingrés o despesa). Tu crees els teus codis a la pestanya Codis.', 'Els <strong>traspassos</strong> mouen diners entre comptes (caixa, bancs…) i no compten com a ingrés ni com a despesa.', 'El <strong>saldo anterior</strong> d\'un any es calcula sol amb tot el que hi ha abans.', 'Una <strong>devolució</strong> es registra com una entrada en un codi de despesa (o una sortida en un d\'ingrés) i resta del total d\'aquest codi.', 'Només l\'administració veu aquesta secció.']
+    : ['Cada movimiento lleva un <strong>código</strong> (ingreso o gasto). Tú creas tus códigos en la pestaña Códigos.', 'Los <strong>traspasos</strong> mueven dinero entre cuentas (caja, bancos…) y no cuentan como ingreso ni como gasto.', 'El <strong>saldo anterior</strong> de un año se calcula solo con todo lo que hay antes.', 'Una <strong>devolución</strong> se registra como una entrada en un código de gasto (o una salida en uno de ingreso) y resta del total de ese código.', 'Solo la administración ve esta sección.'];
+  return `<div class="panel-card">
+    <div class="field"><label>${ct('nombreEntidad')}</label><input type="text" id="ca-nombre" value="${escAttr(aj.nombre_entidad)}"></div>
+    <div class="field"><label>${ct('monedaPrincipal')}</label><input type="text" id="ca-moneda" maxlength="3" value="${escAttr(aj.moneda_principal)}" style="text-transform:uppercase;"${hayMovs ? ' disabled' : ''}>${hayMovs ? `<div class="subtle" style="font-size:12px;">${ct('monedaBloqueada')}</div>` : ''}</div>
+    <div class="field"><label>${ct('monedaSecundaria')}</label><input type="text" id="ca-moneda2" maxlength="3" value="${escAttr(aj.moneda_secundaria || '')}" style="text-transform:uppercase;"${m2EnUso ? ' disabled' : ''}></div>
+    <div class="field"><label>${ct('tipoCambioDef')}</label><input type="text" inputmode="decimal" id="ca-cambio" value="${aj.tipo_cambio_defecto != null ? escAttr(String(Number(aj.tipo_cambio_defecto))) : ''}" placeholder="655,957"><div class="subtle" style="font-size:12px;">${ct('ayudaCambio')}</div></div>
+    <button class="primary-btn" onclick="contaGuardarAjustes()">${ct('guardar')}</button>
+    ${bloqueTipos}
+    <div id="conta-aviso-ajustes" class="subtle" style="font-weight:700;"></div></div>
+    <div class="carpetas-lista" style="margin-top:12px;">${carpetaDesplegable({ clave: 'conta:ayuda', icono: 'ℹ️', titulo: ct('ayudaTitulo'), cuerpo: `<ul style="margin:8px 0 0 18px;padding:0;font-size:13px;">${ayuda.map(x => `<li style="margin-bottom:4px;">${x}</li>`).join('')}</ul>` })}</div>`;
+}
+async function contaGuardarAjustes(){
+  const aj = __conta.ajustes, hayMovs = __conta.movs.length > 0;
+  const nombre = contaV('ca-nombre').trim() || 'Logos';
+  const m1 = hayMovs ? aj.moneda_principal : (contaV('ca-moneda').trim().toUpperCase() || aj.moneda_principal);
+  const m2enUso = !!(aj.moneda_secundaria && __conta.cuentas.some(c => c.moneda === aj.moneda_secundaria));
+  const m2 = m2enUso ? aj.moneda_secundaria : contaV('ca-moneda2').trim().toUpperCase();
+  const tc = contaNum(contaV('ca-cambio'), true);
+  const aviso = document.getElementById('conta-aviso-ajustes');
+  const falla = txt => { if(aviso){ aviso.textContent = txt; aviso.style.color = 'var(--alert)'; } else alert(txt); };
+  if(!/^[A-Z]{3}$/.test(m1) || (m2 && !/^[A-Z]{3}$/.test(m2)) || m2 === m1) return falla(LANG_I === 'ca' ? 'Les monedes són codis de 3 lletres (EUR, XAF…) i han de ser diferents.' : 'Las monedas son códigos de 3 letras (EUR, XAF…) y deben ser distintas.');
+  if(m2 && tc != null && !(tc > 0)) return falla(ct('avisoCambio'));
+  let r = await sb.from('conta_ajustes').upsert({ id: 1, nombre_entidad: nombre, moneda_principal: m1, moneda_secundaria: m2 || null, tipo_cambio_defecto: m2 ? tc : null, actualizado_en: new Date().toISOString() }, { onConflict: 'id' });
+  if(r.error) return falla(ct('errorGuardar') + r.error.message);
+  if(m1 !== aj.moneda_principal){ r = await sb.from('conta_cuentas').update({ moneda: m1 }).eq('moneda', aj.moneda_principal); if(r.error) return falla(ct('errorGuardar') + r.error.message); }
+  await contaRecargar();
+  const a2 = document.getElementById('conta-aviso-ajustes'); if(a2){ a2.textContent = '✓ ' + ct('ajustesGuardados'); a2.style.color = 'var(--good)'; }
+}
+async function contaGuardarTipoMes(){
+  const periodo = contaV('ca-mes'), tasa = contaNum(contaV('ca-tasa'), true);
+  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(periodo)) return contaErrorModal(ct('avisoFecha'));
+  if(!(tasa > 0)) return contaErrorModal(ct('avisoCambio'));
+  const r = await sb.from('conta_tipos_cambio').upsert({ periodo, tasa }, { onConflict: 'periodo' });
+  if(r.error) return contaErrorModal(ct('errorGuardar') + r.error.message);
+  await contaRecargar();
+}
+async function contaBorrarTipoMes(id){
+  const r = await sb.from('conta_tipos_cambio').delete().eq('id', id);
+  if(r.error){ alert(ct('errorGuardar') + r.error.message); return; }
+  await contaRecargar();
+}
+
+
 async function anadirProfesionalAProyecto(proyectoId){
   const email = document.getElementById('select-anadir-profesional').value;
   if(!email) return;
@@ -6417,7 +7183,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-05 · v18 (proyectos, personas y administrador plegables)';
+const APP_VERSION_INTRANET = '2026-10-05 · v19 (contabilidad)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
