@@ -3001,6 +3001,15 @@ const CATEGORIAS_DOC_GENERAL = ['Plantillas', 'Formularios', 'Protocolos', 'Manu
 const DOCS_PAGE_SIZE = 50;
 let __docsBusqueda = '';
 let __docsBusquedaTimeout = null;
+let __docsUltimaCarga = 0;
+
+// Gestión documental se vuelve a cargar sola al volver a esta pestaña o ventana (por ejemplo, tras subir algo en un proyecto desde otra pestaña)
+function refrescarGestionDocumentalSiVisible(){
+  const pantalla = document.getElementById('screen-docsglobal');
+  if(pantalla && pantalla.classList.contains('active') && document.getElementById('docs-resultados') && Date.now() - __docsUltimaCarga > 1500) cargarResultadosDocs();
+}
+document.addEventListener('visibilitychange', () => { if(!document.hidden) refrescarGestionDocumentalSiVisible(); });
+window.addEventListener('focus', refrescarGestionDocumentalSiVisible);
 let __docsProyectos = [];
 let __docsPersonas = [];
 let __docsProyTotal = 0;
@@ -3018,6 +3027,8 @@ async function renderDocsGlobalScreen(){
     <p class="subtle">${esCA
       ? "Tots els documents de l'entitat en un sol lloc: generals, de projectes i de persones."
       : 'Todos los documentos de la entidad en un solo sitio: generales, de proyectos y de personas.'}</p>
+
+    <div style="display:flex;justify-content:flex-end;margin-bottom:4px;"><button class="link-btn" style="font-size:12px;" onclick="cargarResultadosDocs()">↻ ${esCA?'Actualitzar':'Actualizar'}</button></div>
 
     <div class="field">
       <input type="text" id="docs-busqueda" placeholder="🔎 ${esCA?'Cerca per nom de fitxer, persona o projecte…':'Buscar por nombre de archivo, persona o proyecto…'}" oninput="buscarDocsGlobal(this.value)">
@@ -3102,6 +3113,7 @@ function botonCargarMasDocs(mostrados, total, funcion){
 async function cargarResultadosDocs(){
   const cont = document.getElementById('docs-resultados');
   if(!cont) return;
+  __docsUltimaCarga = Date.now();
   const t = TI[LANG_I];
   const esCA = LANG_I === 'ca';
   const b = __docsBusqueda;
@@ -3127,6 +3139,17 @@ async function cargarResultadosDocs(){
   const qPers = filtrarQDocsPersonas(sb.from('documentos').select('*', { count:'exact' }).order('subido_en', { ascending:false }).range(0, DOCS_PAGE_SIZE - 1));
 
   const [genRes, proyRes, persRes] = await Promise.all([qGen, qProy, qPers]);
+  const erroresCarga = [
+    genRes.error && ((esCA?'Documents generals: ':'Documentos generales: ') + genRes.error.message),
+    proyRes.error && ((esCA?'Documents de projectes: ':'Documentos de proyectos: ') + proyRes.error.message),
+    persRes.error && ((esCA?'Documents de persones: ':'Documentos de personas: ') + persRes.error.message)
+  ].filter(Boolean);
+  const avisoErroresHtml = erroresCarga.length ? `
+    <div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);margin-bottom:12px;">
+      <strong>⚠️ ${esCA?'No s\'han pogut llegir alguns documents':'No se han podido leer algunos documentos'}</strong>
+      ${erroresCarga.map(e => `<div style="font-size:12.5px;margin-top:3px;">${escAttr(e)}</div>`).join('')}
+      <div class="subtle" style="font-size:12px;margin-top:4px;">${esCA?'Pot ser un permís de la base de dades: vegeu el fitxer SQL de permisos de l\'equip.':'Puede ser un permiso de la base de datos: ver el archivo SQL de permisos del equipo.'}</div>
+    </div>` : '';
   __docsProyectos = proyRes.data || [];
   __docsProyTotal = proyRes.count || 0;
   __docsPersonas = persRes.data || [];
@@ -3157,6 +3180,7 @@ async function cargarResultadosDocs(){
   }).join('');
 
   cont.innerHTML = `
+    ${avisoErroresHtml}
     <p class="subtle" style="font-weight:700;">📁 ${esCA?'Documents generals':'Documentos generales'}</p>
     <div class="panel-card">${generalesHtml || `<div class="empty-note">${b ? (esCA?'Cap resultat.':'Sin resultados.') : (esCA?'Encara no hi ha documents generals.':'Todavía no hay documentos generales.')}</div>`}</div>
 
@@ -3195,10 +3219,10 @@ async function subirDocumentoGeneral(){
   if(!input.files.length){ alert(esCA?'Tria un fitxer.':'Elige un archivo.'); return; }
   const file = input.files[0];
   const categoria = document.getElementById('docgen-categoria').value;
-  const path = `generales/${Date.now()}_${file.name}`;
+  const path = `generales/${Date.now()}_${rutaSeguraArchivo(file.name)}`;
 
   const { error: errorSubida } = await sb.storage.from('documentos').upload(path, file);
-  if(errorSubida){ alert(errorSubida.message); return; }
+  if(errorSubida){ alert((esCA?'No s\'ha pogut pujar el fitxer: ':'No se pudo subir el archivo: ') + errorSubida.message); return; }
 
   const { error } = await sb.from('documentos_generales').insert({
     nombre_archivo: file.name,
@@ -3206,7 +3230,12 @@ async function subirDocumentoGeneral(){
     categoria,
     subido_por_email: CURRENT_USER.email
   });
-  if(error){ alert(error.message); return; }
+  if(error){
+    await sb.storage.from('documentos').remove([path]);   // no dejar el archivo suelto si el registro no se guardó
+    alert((esCA?'No s\'ha pogut desar el document: ':'No se pudo guardar el documento: ') + error.message);
+    return;
+  }
+  input.value = '';
   cargarResultadosDocs();
 }
 
@@ -4015,7 +4044,7 @@ async function anadirContenido(moduloId){
     const archivoInput = document.getElementById(`archivo-contenido-${moduloId}`);
     if(archivoInput.files.length){
       const file = archivoInput.files[0];
-      const path = `cursos/${moduloId}/${Date.now()}_${file.name}`;
+      const path = `cursos/${moduloId}/${Date.now()}_${rutaSeguraArchivo(file.name)}`;
       const { error: uploadError } = await sb.storage.from('documentos').upload(path, file);
       if(uploadError){ alert(uploadError.message); return; }
       payload.ruta_storage = path;
@@ -6170,7 +6199,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-05 · v12 (avisos personales)';
+const APP_VERSION_INTRANET = '2026-10-05 · v14 (gestión documental al día)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -6775,15 +6804,21 @@ async function subirDocumentoStaff(){
   if(!input.files.length) return;
   const file = input.files[0];
   const esCV = document.getElementById('staff-doc-es-cv').checked;
-  const path = `${usuarioId}/${Date.now()}_${file.name}`;
+  const path = `${usuarioId}/${Date.now()}_${rutaSeguraArchivo(file.name)}`;
+  const esCA = LANG_I === 'ca';
 
   const { error: uploadError } = await sb.storage.from('documentos').upload(path, file);
-  if(uploadError){ alert(uploadError.message); return; }
+  if(uploadError){ alert((esCA?'No s\'ha pogut pujar el fitxer: ':'No se pudo subir el archivo: ') + uploadError.message); return; }
 
-  await sb.from('documentos').insert({
+  const { error: errorRegistro } = await sb.from('documentos').insert({
     usuario_id: usuarioId, nombre_archivo: file.name, ruta_storage: path,
     tipo_documento: esCV ? 'curriculum' : null
   });
+  if(errorRegistro){
+    await sb.storage.from('documentos').remove([path]);   // antes el archivo se quedaba subido sin que se viera en ninguna lista
+    alert((esCA?'No s\'ha pogut desar el document: ':'No se pudo guardar el documento: ') + errorRegistro.message);
+    return;
+  }
   verPersonaStaff(usuarioId, window.__origenPersonaVista);
 }
 
