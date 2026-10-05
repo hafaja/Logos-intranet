@@ -150,6 +150,15 @@
   .ptab-btn{background:none;border:none;padding:9px 14px;font-family:var(--font-body);font-weight:700;font-size:12.5px;color:var(--ink-soft);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;}
   .ptab-btn.active{color:var(--navy);border-bottom-color:var(--gold);}
   .ptab-content{display:none;}
+  .carpeta{border:1px solid var(--line);border-radius:12px;background:var(--paper);margin-bottom:8px;}
+  .carpeta>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:11px 14px;font-weight:700;font-size:14px;flex-wrap:wrap;}
+  .carpeta>summary::-webkit-details-marker{display:none;}
+  .carpeta>summary::before{content:'▸';font-size:12px;color:var(--ink-soft);transition:transform .15s;}
+  .carpeta[open]>summary::before{transform:rotate(90deg);}
+  .carpeta-cuenta{margin-left:auto;font-size:12px;font-weight:700;background:var(--bg);border-radius:999px;padding:2px 10px;color:var(--ink-soft);}
+  .carpeta-cuerpo{padding:0 14px 12px;border-top:1px solid var(--line);}
+  .carpeta-n2{border-radius:10px;background:var(--bg);margin:8px 0 0;}
+  .carpetas-barra{display:flex;align-items:center;justify-content:flex-end;gap:14px;margin-bottom:8px;}
   .ptab-content.active{display:block;}
 
   /* Dashboard "Inicio" — barra superior, accesos rápidos, actividad y eventos */
@@ -1664,6 +1673,28 @@ async function confirmarVincularActuacion(usuarioId){
   else renderSeguimientoScreen();
 }
 
+// ---------- Carpetas desplegables para listas largas (recuerdan lo que la persona abre y cierra) ----------
+const __carpetasEstado = new Map();
+function carpetaAlternar(clave, abrir){ __carpetasEstado.set(clave, abrir); }
+function carpetaDesplegable(o){
+  const abierta = o.forzar ? true : (__carpetasEstado.has(o.clave) ? __carpetasEstado.get(o.clave) : !!o.abierta);
+  return `<details class="carpeta${o.nivel === 2 ? ' carpeta-n2' : ''}" data-clave="${escAttr(o.clave)}"${abierta ? ' open' : ''}>
+    <summary onclick="carpetaAlternar(this.parentElement.dataset.clave, !this.parentElement.open)"><span>${o.icono || '📁'}</span><span>${escAttr(o.titulo)}</span>${o.etiquetas || ''}<span class="carpeta-cuenta">${o.cuenta}</span></summary>
+    <div class="carpeta-cuerpo">${o.cuerpo}</div>
+  </details>`;
+}
+function carpetasBarra(texto){
+  const esCA = LANG_I === 'ca';
+  return `<div class="carpetas-barra"><span class="subtle" style="margin:0 auto 0 0;font-size:12px;">${texto || ''}</span>
+    <button class="link-btn" style="font-size:12px;" onclick="carpetasExpandir(this, true)">${esCA?'Desplega-ho tot':'Expandir todo'}</button>
+    <button class="link-btn" style="font-size:12px;" onclick="carpetasExpandir(this, false)">${esCA?'Plega-ho tot':'Plegar todo'}</button></div>`;
+}
+function carpetasExpandir(boton, abrir){
+  const lista = boton.closest('.carpetas-lista');
+  if(!lista) return;
+  lista.querySelectorAll('details.carpeta').forEach(d => { d.open = abrir; carpetaAlternar(d.dataset.clave, abrir); });
+}
+
 // Salas que existen hoy, y regla de "ocupación olvidada": plazas que ya no existen (p. ej. 2B) o abiertas hace 12 h o más.
 const SALAS_VALIDAS = PLAZAS_ATENCION.map(p => p.id).concat('reunion');
 const HORAS_MAX_OCUPACION = 12;
@@ -2962,30 +2993,34 @@ function renderResultadosSeguimiento(busqueda){
     sinPersonaFiltrada = sinPersonaFiltrada.filter(item => item.tipo === 'tramite' && item.data.estado !== 'hecho');
   }
 
-  const listaHtml = personasFiltradas.length
-    ? personasFiltradas.map(([usuarioId, lista]) => `
-        <div class="panel-card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <h3 style="margin:0;">${__seguimientoNombres[usuarioId] || t.sinNombre}</h3>
-            <button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${usuarioId}','seguimiento')">${t.verInfoCompleta}</button>
-          </div>
-          ${lista.map(filaItemSeguimiento).join('')}
-        </div>`).join('')
+  const enCursoDe = lista => lista.filter(x => x.tipo === 'tramite' && x.data.estado !== 'hecho').length;
+  const ultimaDe = lista => { const m = Math.max(...lista.map(x => new Date(x.fecha || 0).getTime())); return m ? new Date(m).toLocaleDateString(t.localeFecha) : '—'; };
+  const abrirPorDefecto = __seguimientoSoloTramites || (!!busqueda && personasFiltradas.length <= 3);
+
+  const carpetasPersonas = personasFiltradas.map(([usuarioId, lista]) => {
+    const enCurso = enCursoDe(lista);
+    return carpetaDesplegable({
+      clave: 'exp:' + usuarioId, titulo: __seguimientoNombres[usuarioId] || t.sinNombre, cuenta: lista.length, forzar: abrirPorDefecto,
+      etiquetas: (enCurso ? `<span class="chip gold" style="font-size:11px;">${enCurso} ${esCA ? (enCurso === 1 ? 'tràmit en curs' : 'tràmits en curs') : (enCurso === 1 ? 'trámite en curso' : 'trámites en curso')}</span>` : '')
+        + `<span class="subtle" style="margin:0;font-size:11.5px;font-weight:400;">${esCA?'Última':'Última'}: ${ultimaDe(lista)}</span>`,
+      cuerpo: `<div style="padding:8px 0 2px;"><button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${usuarioId}','seguimiento')">${t.verInfoCompleta}</button></div>${lista.map(filaItemSeguimiento).join('')}`
+    });
+  }).join('');
+
+  const carpetaSinPersona = (!busqueda && sinPersonaFiltrada.length)
+    ? carpetaDesplegable({ clave: 'exp:__sin__', icono: '🔗', titulo: esCA?'Sense persona vinculada':'Sin persona vinculada', cuenta: sinPersonaFiltrada.length,
+        cuerpo: sinPersonaFiltrada.slice().sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0)).map(filaItemSeguimiento).join('') })
     : '';
 
-  const sinPersonaHtml = (!busqueda && sinPersonaFiltrada.length)
-    ? `<p class="subtle" style="font-weight:700;margin-top:18px;">${esCA?'Sense persona vinculada':'Sin persona vinculada'}</p>
-       <div class="panel-card">${sinPersonaFiltrada.slice().sort((a,b)=>new Date(b.fecha||0)-new Date(a.fecha||0)).map(filaItemSeguimiento).join('')}</div>`
-    : '';
+  const barra = personasFiltradas.length > 1 ? carpetasBarra(`${personasFiltradas.length} ${esCA?'persones':'personas'}`) : '';
 
   const mensajeVacio = busqueda
     ? (esCA?'Cap resultat.':'Sin resultados.')
     : (__seguimientoSoloTramites ? (esCA?'Cap tràmit en curs.':'Sin trámites en curso.') : t.sinActuacionesRegistradas);
 
-  cont.innerHTML = `
-    ${listaHtml || `<div class="empty-note">${mensajeVacio}</div>`}
-    ${sinPersonaHtml}
-  `;
+  cont.innerHTML = (carpetasPersonas || carpetaSinPersona)
+    ? `<div class="carpetas-lista">${barra}${carpetasPersonas}${carpetaSinPersona}</div>`
+    : `<div class="empty-note">${mensajeVacio}</div>`;
 }
 
 
@@ -3034,16 +3069,18 @@ async function renderDocsGlobalScreen(){
       <input type="text" id="docs-busqueda" placeholder="🔎 ${esCA?'Cerca per nom de fitxer, persona o projecte…':'Buscar por nombre de archivo, persona o proyecto…'}" oninput="buscarDocsGlobal(this.value)">
     </div>
 
-    <div class="panel-card" style="background:var(--ochre-soft);border-color:var(--ochre);">
-      <h3 style="color:#7A4A1F;">📁 ${esCA?'Pujar un document general':'Subir un documento general'}</h3>
-      <p class="subtle" style="margin:0 0 8px;">${esCA?"Plantilles, formularis, protocols... de tota l'entitat.":'Plantillas, formularios, protocolos... de toda la entidad.'}</p>
-      <div class="field">
-        <label>${esCA?'Categoria':'Categoría'}</label>
-        <select id="docgen-categoria">${CATEGORIAS_DOC_GENERAL.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
+    <details class="carpeta" style="background:var(--ochre-soft);border-color:var(--ochre);margin-bottom:12px;">
+      <summary><span>⬆️</span><span>${esCA?'Pujar un document general':'Subir un documento general'}</span></summary>
+      <div class="carpeta-cuerpo" style="border-top-color:var(--ochre);">
+        <p class="subtle" style="margin:8px 0;">${esCA?"Plantilles, formularis, protocols... de tota l'entitat.":'Plantillas, formularios, protocolos... de toda la entidad.'}</p>
+        <div class="field">
+          <label>${esCA?'Categoria':'Categoría'}</label>
+          <select id="docgen-categoria">${CATEGORIAS_DOC_GENERAL.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
+        </div>
+        <div class="field"><input type="file" id="docgen-file-input"></div>
+        <button class="primary-btn" onclick="subirDocumentoGeneral()">⬆️ ${esCA?'Pujar':'Subir'}</button>
       </div>
-      <div class="field"><input type="file" id="docgen-file-input"></div>
-      <button class="primary-btn" onclick="subirDocumentoGeneral()">⬆️ ${esCA?'Pujar':'Subir'}</button>
-    </div>
+    </details>
 
     <div id="docs-resultados"><div class="placeholder">${TI[LANG_I].cargando}</div></div>
   `;
@@ -3080,27 +3117,54 @@ async function cargarNombresPersonasDocs(lista){
   (perfiles || []).forEach(p => { __docsNombresPersona[p.id] = p.nombre_completo; });
 }
 
-function filaDocProyecto(d){
+function filaDocProyecto(d, enCarpeta){
   const t = TI[LANG_I]; const esCA = LANG_I === 'ca';
   return `
     <div class="panel-stat-row">
-      <span>${d.nombre_archivo}<br><span class="subtle" style="font-size:11px;margin:0;">${__docsNombresProyecto[d.proyecto_id] || (esCA?'Projecte':'Proyecto')} · ${nombreTecnico(d.subido_por_email)} · ${new Date(d.creado_en).toLocaleDateString(t.localeFecha)}</span></span>
+      <span>${escAttr(d.nombre_archivo)}${d.categoria ? ` <span style="background:var(--ochre-soft);color:#7A4A1F;border-radius:999px;padding:1px 8px;font-size:10.5px;font-weight:700;">${escAttr((DOCS_PROYECTO_CATEGORIAS.find(c => c.id === d.categoria) || {})[esCA ? 'ca' : 'es'] || d.categoria)}</span>` : ''}<br><span class="subtle" style="font-size:11px;margin:0;">${enCarpeta ? '' : (escAttr(__docsNombresProyecto[d.proyecto_id] || (esCA?'Projecte':'Proyecto')) + ' · ')}${escAttr(nombreTecnico(d.subido_por_email))} · ${new Date(d.creado_en).toLocaleDateString(t.localeFecha)}</span></span>
       <span style="display:flex;gap:10px;align-items:center;">
         <button class="link-btn" style="font-size:12px;" onclick="verDocumentoStaff('${d.ruta_storage}')">${t.ver}</button>
-        <button class="link-btn" style="font-size:12px;" onclick="irAProyectoDesdeFuera('${d.proyecto_id}')">${esCA?'Anar al projecte':'Ir al proyecto'}</button>
+        ${enCarpeta ? '' : `<button class="link-btn" style="font-size:12px;" onclick="irAProyectoDesdeFuera('${d.proyecto_id}')">${esCA?'Anar al projecte':'Ir al proyecto'}</button>`}
       </span>
     </div>`;
 }
-function filaDocPersona(d){
+
+function htmlDocsProyectos(){
+  const esCA = LANG_I === 'ca'; const b = __docsBusqueda;
+  if(!__docsProyectos.length) return `<div class="empty-note">${b ? (esCA?'Cap resultat.':'Sin resultados.') : (esCA?'Sense documents de projectes.':'Sin documentos de proyectos.')}</div>`;
+  const grupos = {};
+  __docsProyectos.forEach(d => { (grupos[d.proyecto_id] = grupos[d.proyecto_id] || []).push(d); });
+  const orden = Object.entries(grupos).sort((x, y) => Math.max(...y[1].map(d => new Date(d.creado_en || 0).getTime())) - Math.max(...x[1].map(d => new Date(d.creado_en || 0).getTime())));
+  const html = orden.map(([pid, docs]) => carpetaDesplegable({
+    clave: 'docp:' + pid, titulo: __docsNombresProyecto[pid] || (esCA?'Projecte':'Proyecto'), cuenta: docs.length, forzar: !!b && orden.length <= 6,
+    cuerpo: `<div style="padding:8px 0 2px;"><button class="link-btn" style="font-size:12px;" onclick="irAProyectoDesdeFuera('${pid}')">${esCA?'Anar al projecte':'Ir al proyecto'}</button></div>` + docs.map(d => filaDocProyecto(d, true)).join('')
+  })).join('');
+  return `<div class="carpetas-lista">${orden.length > 1 ? carpetasBarra(`${orden.length} ${esCA?'projectes':'proyectos'}`) : ''}${html}</div>`;
+}
+function filaDocPersona(d, enCarpeta){
   const t = TI[LANG_I]; const esCA = LANG_I === 'ca';
   return `
     <div class="panel-stat-row">
-      <span>${d.nombre_archivo}<br><span class="subtle" style="font-size:11px;margin:0;">${__docsNombresPersona[d.usuario_id] || t.sinNombre} · ${new Date(d.subido_en).toLocaleDateString(t.localeFecha)}</span></span>
+      <span>${escAttr(d.nombre_archivo)}<br><span class="subtle" style="font-size:11px;margin:0;">${enCarpeta ? '' : (escAttr(__docsNombresPersona[d.usuario_id] || t.sinNombre) + ' · ')}${new Date(d.subido_en).toLocaleDateString(t.localeFecha)}</span></span>
       <span style="display:flex;gap:10px;align-items:center;">
         <button class="link-btn" style="font-size:12px;" onclick="verDocumentoStaff('${d.ruta_storage}')">${t.ver}</button>
-        ${d.usuario_id ? `<button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${d.usuario_id}','docsglobal')">${esCA?'Anar a la fitxa':'Ir a la ficha'}</button>` : ''}
+        ${(!enCarpeta && d.usuario_id) ? `<button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${d.usuario_id}','docsglobal')">${esCA?'Anar a la fitxa':'Ir a la ficha'}</button>` : ''}
       </span>
     </div>`;
+}
+
+function htmlDocsPersonas(){
+  const esCA = LANG_I === 'ca'; const t = TI[LANG_I]; const b = __docsBusqueda;
+  if(!__docsPersonas.length) return `<div class="empty-note">${b ? (esCA?'Cap resultat.':'Sin resultados.') : (esCA?'Sense documents.':'Sin documentos.')}</div>`;
+  const grupos = {};
+  __docsPersonas.forEach(d => { const k = d.usuario_id || '__sin__'; (grupos[k] = grupos[k] || []).push(d); });
+  const orden = Object.entries(grupos).sort((x, y) => Math.max(...y[1].map(d => new Date(d.subido_en || 0).getTime())) - Math.max(...x[1].map(d => new Date(d.subido_en || 0).getTime())));
+  const html = orden.map(([uid, docs]) => carpetaDesplegable({
+    clave: 'docs:' + uid, icono: uid === '__sin__' ? '🔗' : '👤', titulo: uid === '__sin__' ? (esCA?'Sense persona':'Sin persona') : (__docsNombresPersona[uid] || t.sinNombre),
+    cuenta: docs.length, forzar: !!b && orden.length <= 6,
+    cuerpo: (uid !== '__sin__' ? `<div style="padding:8px 0 2px;"><button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${uid}','docsglobal')">${esCA?'Anar a la fitxa':'Ir a la ficha'}</button></div>` : '') + docs.map(d => filaDocPersona(d, true)).join('')
+  })).join('');
+  return `<div class="carpetas-lista">${orden.length > 1 ? carpetasBarra(`${orden.length} ${esCA?'persones':'personas'}`) : ''}${html}</div>`;
 }
 
 function botonCargarMasDocs(mostrados, total, funcion){
@@ -3165,32 +3229,33 @@ async function cargarResultadosDocs(){
   const generalesHtml = CATEGORIAS_DOC_GENERAL.map(cat => {
     const items = porCategoria[cat] || [];
     if(!items.length) return '';
-    return `
-      <div style="margin-bottom:10px;">
-        <p style="font-weight:700;font-size:12.5px;margin:0 0 4px;">${cat}</p>
-        ${items.map(d => `
+    return carpetaDesplegable({
+      clave: 'docg:' + cat, titulo: cat, cuenta: items.length, forzar: !!b,
+      cuerpo: items.map(d => `
           <div class="panel-stat-row">
-            <span>${d.nombre_archivo}<br><span class="subtle" style="font-size:11px;margin:0;">${nombreTecnico(d.subido_por_email)} · ${new Date(d.creado_en).toLocaleDateString(t.localeFecha)}</span></span>
+            <span>${escAttr(d.nombre_archivo)}<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(nombreTecnico(d.subido_por_email))} · ${new Date(d.creado_en).toLocaleDateString(t.localeFecha)}</span></span>
             <span style="display:flex;gap:10px;align-items:center;">
               <button class="link-btn" style="font-size:12px;" onclick="verDocumentoStaff('${d.ruta_storage}')">${t.ver}</button>
               <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="borrarDocumentoGeneral('${d.id}')">${esCA?'Esborrar':'Borrar'}</button>
             </span>
-          </div>`).join('')}
-      </div>`;
+          </div>`).join('')
+    });
   }).join('');
+  const totalGenerales = (genRes.data || []).length;
+
+  const hayBusqueda = !!b;
+  const seccion = (clave, icono, titulo, total, cuerpo) => carpetaDesplegable({ clave: 'sec:' + clave, icono, titulo, cuenta: total, forzar: hayBusqueda && total > 0, cuerpo });
 
   cont.innerHTML = `
     ${avisoErroresHtml}
-    <p class="subtle" style="font-weight:700;">📁 ${esCA?'Documents generals':'Documentos generales'}</p>
-    <div class="panel-card">${generalesHtml || `<div class="empty-note">${b ? (esCA?'Cap resultat.':'Sin resultados.') : (esCA?'Encara no hi ha documents generals.':'Todavía no hay documentos generales.')}</div>`}</div>
-
-    <p class="subtle" style="margin-top:18px;font-weight:700;">📎 ${esCA?'Documents de projectes':'Documentos de proyectos'}</p>
-    <div class="panel-card" id="docs-lista-proyectos">${__docsProyectos.length ? __docsProyectos.map(filaDocProyecto).join('') : `<div class="empty-note">${b ? (esCA?'Cap resultat.':'Sin resultados.') : (esCA?'Sense documents de projectes.':'Sin documentos de proyectos.')}</div>`}</div>
-    <div style="text-align:center;margin-top:8px;" id="docs-mas-proyectos">${botonCargarMasDocs(__docsProyectos.length, __docsProyTotal, 'cargarMasDocsProyectos')}</div>
-
-    <p class="subtle" style="margin-top:18px;font-weight:700;">👤 ${esCA?'Documents de persones':'Documentos de personas'}</p>
-    <div class="panel-card" id="docs-lista-personas">${__docsPersonas.length ? __docsPersonas.map(filaDocPersona).join('') : `<div class="empty-note">${b ? (esCA?'Cap resultat.':'Sin resultados.') : (esCA?'Sense documents.':'Sin documentos.')}</div>`}</div>
-    <div style="text-align:center;margin-top:8px;" id="docs-mas-personas">${botonCargarMasDocs(__docsPersonas.length, __docsPersTotal, 'cargarMasDocsPersonas')}</div>
+    ${seccion('generales', '📁', esCA?'Documents generals':'Documentos generales', totalGenerales,
+      `<div class="carpetas-lista" style="padding-top:8px;">${generalesHtml || `<div class="empty-note">${b ? (esCA?'Cap resultat.':'Sin resultados.') : (esCA?'Encara no hi ha documents generals.':'Todavía no hay documentos generales.')}</div>`}</div>`)}
+    ${seccion('proyectos', '📎', esCA?'Documents de projectes':'Documentos de proyectos', __docsProyTotal,
+      `<div id="docs-lista-proyectos" style="padding-top:8px;">${htmlDocsProyectos()}</div>
+       <div style="text-align:center;margin-top:8px;" id="docs-mas-proyectos">${botonCargarMasDocs(__docsProyectos.length, __docsProyTotal, 'cargarMasDocsProyectos')}</div>`)}
+    ${seccion('personas', '👤', esCA?'Documents de persones':'Documentos de personas', __docsPersTotal,
+      `<div id="docs-lista-personas" style="padding-top:8px;">${htmlDocsPersonas()}</div>
+       <div style="text-align:center;margin-top:8px;" id="docs-mas-personas">${botonCargarMasDocs(__docsPersonas.length, __docsPersTotal, 'cargarMasDocsPersonas')}</div>`)}
   `;
 }
 
@@ -3199,7 +3264,7 @@ async function cargarMasDocsProyectos(){
   const { data, count } = await filtrarQDocsProyectos(sb.from('proyecto_documentos').select('*', { count:'exact' }).order('creado_en', { ascending:false }).range(desde, desde + DOCS_PAGE_SIZE - 1));
   __docsProyectos = __docsProyectos.concat(data || []);
   __docsProyTotal = count || __docsProyTotal;
-  document.getElementById('docs-lista-proyectos').innerHTML = __docsProyectos.map(filaDocProyecto).join('');
+  document.getElementById('docs-lista-proyectos').innerHTML = htmlDocsProyectos();
   document.getElementById('docs-mas-proyectos').innerHTML = botonCargarMasDocs(__docsProyectos.length, __docsProyTotal, 'cargarMasDocsProyectos');
 }
 
@@ -3209,7 +3274,7 @@ async function cargarMasDocsPersonas(){
   __docsPersonas = __docsPersonas.concat(data || []);
   __docsPersTotal = count || __docsPersTotal;
   await cargarNombresPersonasDocs(data || []);
-  document.getElementById('docs-lista-personas').innerHTML = __docsPersonas.map(filaDocPersona).join('');
+  document.getElementById('docs-lista-personas').innerHTML = htmlDocsPersonas();
   document.getElementById('docs-mas-personas').innerHTML = botonCargarMasDocs(__docsPersonas.length, __docsPersTotal, 'cargarMasDocsPersonas');
 }
 
@@ -6059,6 +6124,47 @@ function pintarWhatsAppAviso(){
   }).join('');
 }
 
+// Expediente de una persona: por año y mes (de más antiguo a más reciente), con filtros. Se abre solo lo más reciente.
+function pintarExpedientePersona(){
+  const cont = document.getElementById('expediente-lista');
+  if(!cont) return;
+  const esCA = LANG_I === 'ca'; const t = TI[LANG_I];
+  const todos = window.__expedienteItems || [];
+  const filtro = window.__expedienteFiltro || 'todo';
+  const cuenta = tipo => todos.filter(i => i.tipo === tipo).length;
+  const chip = (id, txt, n) => `<button class="link-btn" style="font-size:12px;border:1px solid ${filtro === id ? 'var(--gold)' : 'var(--line)'};background:${filtro === id ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:3px 11px;" onclick="window.__expedienteFiltro='${id}';pintarExpedientePersona()">${txt} (${n})</button>`;
+  const chips = todos.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">${chip('todo', esCA?'Tot':'Todo', todos.length)}${chip('actuacion', esCA?'Actuacions':'Actuaciones', cuenta('actuacion'))}${chip('tramite', esCA?'Tràmits':'Trámites', cuenta('tramite'))}</div>` : '';
+  const items = todos.filter(i => filtro === 'todo' || i.tipo === filtro);
+  if(!items.length){ cont.innerHTML = chips + `<div class="empty-note">${t.sinActuacionesRegistradas}</div>`; return; }
+  if(items.length <= 6){ cont.innerHTML = chips + items.map(i => i.html).join(''); return; }
+
+  const porAnio = {};
+  items.forEach(i => {
+    const d = i.fecha ? new Date(i.fecha) : null;
+    const y = d ? d.getFullYear() : 0, m = d ? d.getMonth() : 0;
+    if(!porAnio[y]) porAnio[y] = {};
+    if(!porAnio[y][m]) porAnio[y][m] = [];
+    porAnio[y][m].push(i);
+  });
+  const anios = Object.keys(porAnio).map(Number).sort((a, b) => a - b);
+  const ultimoAnio = anios[anios.length - 1];
+  const uid = window.__usuarioIdVisto;
+  const loc = esCA ? 'ca-ES' : 'es-ES';
+  const html = anios.map(y => {
+    const meses = Object.keys(porAnio[y]).map(Number).sort((a, b) => a - b);
+    const ultimoMes = meses[meses.length - 1];
+    const total = meses.reduce((suma, m) => suma + porAnio[y][m].length, 0);
+    // Con pocas entradas en el año se listan directamente; solo se subdivide por meses cuando hay muchas
+    const cuerpo = total <= 8 ? meses.map(m => porAnio[y][m].map(i => i.html).join('')).join('') : meses.map(m => {
+      const nombre = y === 0 ? (esCA?'Sense data':'Sin fecha') : new Date(y, m, 1).toLocaleDateString(loc, { month: 'long' });
+      return carpetaDesplegable({ clave: `ficha:${uid}:${y}-${m}`, nivel: 2, icono: '🗓️', titulo: nombre.charAt(0).toUpperCase() + nombre.slice(1),
+        cuenta: porAnio[y][m].length, abierta: y === ultimoAnio && m === ultimoMes, cuerpo: porAnio[y][m].map(i => i.html).join('') });
+    }).join('');
+    return carpetaDesplegable({ clave: `ficha:${uid}:${y}`, titulo: y === 0 ? (esCA?'Sense data':'Sin fecha') : String(y), cuenta: total, abierta: y === ultimoAnio, cuerpo });
+  }).join('');
+  cont.innerHTML = chips + `<div class="carpetas-lista">${anios.length > 1 || items.length > 12 ? carpetasBarra(`${items.length} ${esCA?'entrades':'entradas'}`) : ''}${html}</div>`;
+}
+
 async function anadirProfesionalAProyecto(proyectoId){
   const email = document.getElementById('select-anadir-profesional').value;
   if(!email) return;
@@ -6199,7 +6305,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-05 · v14 (gestión documental al día)';
+const APP_VERSION_INTRANET = '2026-10-05 · v17 (sin duplicados en expedientes)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -7041,12 +7147,12 @@ async function verPersonaStaff(usuarioId, origen){
 
   const actuacionesLista = actuacionesRes.data || [];
   const expedienteItems = [
-    ...actuacionesLista.map(ac => ({ fecha: ac.fecha, html: renderActuacionCard(ac) })),
-    ...(tramitesRes.data || []).map(tr => ({ fecha: tr.fecha_inicio, html: renderTramiteCardExpediente(tr) }))
+    ...actuacionesLista.map(ac => ({ fecha: ac.fecha, tipo: 'actuacion', html: renderActuacionCard(ac) })),
+    ...(tramitesRes.data || []).map(tr => ({ fecha: tr.fecha_inicio, tipo: 'tramite', html: renderTramiteCardExpediente(tr) }))
   ].sort((a, b) => new Date(a.fecha || 0) - new Date(b.fecha || 0));
-  const actuacionesHtml = expedienteItems.length
-    ? expedienteItems.map(item => item.html).join('')
-    : `<div class="empty-note">${t.sinActuacionesRegistradas}</div>`;
+  window.__expedienteItems = expedienteItems;
+  window.__expedienteFiltro = 'todo';
+  const actuacionesHtml = `<div id="expediente-lista"></div>`;
 
   const proyectosLista = actuacionesLista.filter(ac => PROYECTOS_LOGOS.includes(ac.categoria));
   const proyectosHtml = proyectosLista.length ? proyectosLista.map(renderActuacionCard).join('') : `<div class="empty-note">${t.sinProyectosVinculados}</div>`;
@@ -7339,6 +7445,8 @@ async function verPersonaStaff(usuarioId, origen){
       ${atencionesHtml}
     </div>
   `;
+
+  pintarExpedientePersona();
 
   if(p.telefono){
     const { data: plantillasDisp } = await sb.from('plantillas_mensajes').select('*').eq('activo', true).order('creado_en', { ascending:true });
@@ -7971,21 +8079,18 @@ function renderFilasActuacionesAdmin(lista){
 
   const filaActuacion = (ac) => actuacionLineaHtml(ac, { vincular: !ac.usuario_id });
 
-  const gruposHtml = personasOrdenadas.map(([usuarioId, acs]) => `
-    <div class="panel-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <h3 style="margin:0;">${__adminNombresPersona[usuarioId] || t.sinNombre}</h3>
-        <button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${usuarioId}','admin')">${t.verInfoCompleta}</button>
-      </div>
-      ${acs.map(filaActuacion).join('')}
-    </div>`).join('');
+  const gruposHtml = personasOrdenadas.map(([usuarioId, acs]) => carpetaDesplegable({
+    clave: 'adm:' + usuarioId, titulo: __adminNombresPersona[usuarioId] || t.sinNombre, cuenta: acs.length,
+    etiquetas: `<span class="subtle" style="margin:0;font-size:11.5px;font-weight:400;">${esCA?'Última':'Última'}: ${new Date(Math.max(...acs.map(a => new Date(a.fecha || 0).getTime()))).toLocaleDateString(t.localeFecha)}</span>`,
+    cuerpo: `<div style="padding:8px 0 2px;"><button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${usuarioId}','admin')">${t.verInfoCompleta}</button></div>${acs.map(filaActuacion).join('')}`
+  })).join('');
 
   const sinPersonaHtml = sinPersona.length
-    ? `<p class="subtle" style="font-weight:700;margin-top:14px;">${esCA?'Sense persona vinculada':'Sin persona vinculada'}</p>
-       <div class="panel-card">${sinPersona.sort((a,b)=>new Date(b.fecha||0)-new Date(a.fecha||0)).map(filaActuacion).join('')}</div>`
+    ? carpetaDesplegable({ clave: 'adm:__sin__', icono: '🔗', titulo: esCA?'Sense persona vinculada':'Sin persona vinculada', cuenta: sinPersona.length,
+        cuerpo: sinPersona.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0)).map(filaActuacion).join('') })
     : '';
 
-  return gruposHtml + sinPersonaHtml;
+  return `<div class="carpetas-lista">${personasOrdenadas.length > 1 ? carpetasBarra(`${personasOrdenadas.length} ${esCA?'persones':'personas'}`) : ''}${gruposHtml}${sinPersonaHtml}</div>`;
 }
 
 async function cargarMasActuacionesAdmin(){
