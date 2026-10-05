@@ -5403,31 +5403,115 @@ async function descargarExportacionProyecto(rutaStorage){
   window.open(data.signedUrl, '_blank');
 }
 
-async function subirDocumentoProyecto(proyectoId){
+const DOCS_PROYECTO_CATEGORIAS = [
+  { id:'memoria',      es:'Memoria / proyecto',        ca:'Memòria / projecte' },
+  { id:'justificacion',es:'Justificación',             ca:'Justificació' },
+  { id:'convenio',     es:'Convenio / resolución',     ca:'Conveni / resolució' },
+  { id:'listados',     es:'Listados y asistencia',     ca:'Llistats i assistència' },
+  { id:'facturas',     es:'Facturas y gastos',         ca:'Factures i despeses' },
+  { id:'fotos',        es:'Fotos y material',          ca:'Fotos i material' },
+  { id:'otros',        es:'Otros',                     ca:'Altres' }
+];
+const DOCS_PROYECTO_MAX_MB = 50;
+let __docsProyectoPendientes = [];
+
+// Nombre apto para el almacenamiento (sin tildes, espacios ni símbolos raros). El nombre original se conserva aparte para mostrarlo.
+function rutaSeguraArchivo(nombre){
+  const partes = String(nombre || 'archivo').split('.');
+  const ext = partes.length > 1 ? '.' + partes.pop().toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8) : '';
+  const base = partes.join('.').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 80) || 'archivo';
+  return base + ext;
+}
+function tamanoLegible(bytes){
+  if(!bytes && bytes !== 0) return '';
+  if(bytes < 1024) return bytes + ' B';
+  if(bytes < 1048576) return Math.round(bytes / 1024) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function elegirArchivosProyecto(){ const i = document.getElementById('proyecto-doc-input'); if(i) i.click(); }
+
+function irASubirDocumentosProyecto(){
+  const card = document.getElementById('proyecto-docs-card');
+  if(card) card.scrollIntoView({ behavior:'smooth', block:'start' });
+  setTimeout(elegirArchivosProyecto, 350);
+}
+
+function anadirArchivosProyecto(lista){
   const esCA = LANG_I === 'ca';
-  const input = document.getElementById('proyecto-doc-input');
-  if(!input.files.length){ alert(esCA?'Tria un fitxer.':'Elige un archivo.'); return; }
-  const file = input.files[0];
-  const path = `proyectos/${proyectoId}/documentos/${Date.now()}_${file.name}`;
+  const nuevos = Array.from(lista || []);
+  const demasiado = nuevos.filter(f => f.size > DOCS_PROYECTO_MAX_MB * 1048576);
+  if(demasiado.length) alert((esCA ? 'Aquests fitxers superen els ' : 'Estos archivos superan los ') + DOCS_PROYECTO_MAX_MB + ' MB:\n' + demasiado.map(f => '· ' + f.name).join('\n'));
+  __docsProyectoPendientes = __docsProyectoPendientes.concat(nuevos.filter(f => f.size <= DOCS_PROYECTO_MAX_MB * 1048576));
+  const input = document.getElementById('proyecto-doc-input'); if(input) input.value = '';
+  pintarPendientesProyecto();
+}
 
-  const { error: errorSubida } = await sb.storage.from('documentos').upload(path, file);
-  if(errorSubida){ alert(errorSubida.message); return; }
+function quitarPendienteProyecto(i){
+  __docsProyectoPendientes.splice(i, 1);
+  pintarPendientesProyecto();
+}
 
-  const { error } = await sb.from('proyecto_documentos').insert({
-    proyecto_id: proyectoId,
-    nombre_archivo: file.name,
-    ruta_storage: path,
-    subido_por_email: CURRENT_USER.email
-  });
-  if(error){ alert(error.message); return; }
+function pintarPendientesProyecto(){
+  const esCA = LANG_I === 'ca';
+  const caja = document.getElementById('proyecto-docs-pendientes');
+  if(!caja) return;
+  if(!__docsProyectoPendientes.length){ caja.innerHTML = ''; return; }
+  caja.innerHTML = `
+    <div style="margin-top:12px;">
+      <div class="field" style="max-width:320px;"><label>${esCA?'Categoria (opcional, per a tots)':'Categoría (opcional, para todos)'}</label>
+        <select id="proyecto-docs-categoria"><option value="">—</option>${DOCS_PROYECTO_CATEGORIAS.map(c => `<option value="${c.id}">${esCA ? c.ca : c.es}</option>`).join('')}</select></div>
+      ${__docsProyectoPendientes.map((f, i) => `
+        <div class="panel-stat-row" style="align-items:center;"><span>📄 ${escAttr(f.name)} <span class="subtle" style="font-size:11px;margin:0;">${tamanoLegible(f.size)}</span></span>
+          <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="quitarPendienteProyecto(${i})">✕</button></div>`).join('')}
+      <div id="proyecto-docs-estado" class="subtle" style="margin:8px 0;"></div>
+      <button class="primary-btn" id="proyecto-docs-btn-subir" style="width:auto;margin:0;" onclick="subirDocumentosProyecto('${window.__proyectoActual}')">⬆️ ${esCA?'Pujar':'Subir'} ${__docsProyectoPendientes.length} ${esCA?(__docsProyectoPendientes.length === 1 ? 'document' : 'documents'):(__docsProyectoPendientes.length === 1 ? 'documento' : 'documentos')}</button>
+    </div>`;
+}
+
+async function subirDocumentosProyecto(proyectoId){
+  const esCA = LANG_I === 'ca';
+  const lista = __docsProyectoPendientes.slice();
+  if(!lista.length){ alert(esCA?'Tria algun fitxer.':'Elige algún archivo.'); return; }
+  const categoria = (document.getElementById('proyecto-docs-categoria') || {}).value || null;
+  const estado = document.getElementById('proyecto-docs-estado');
+  const boton = document.getElementById('proyecto-docs-btn-subir');
+  if(boton) boton.disabled = true;
+  const subidos = [], fallos = [];
+
+  for(let i = 0; i < lista.length; i++){
+    const file = lista[i];
+    if(estado) estado.textContent = (esCA ? 'Pujant ' : 'Subiendo ') + (i + 1) + (esCA ? ' de ' : ' de ') + lista.length + '… ' + file.name;
+    const path = `proyectos/${proyectoId}/documentos/${Date.now()}_${i}_${rutaSeguraArchivo(file.name)}`;
+    const { error: errorSubida } = await sb.storage.from('documentos').upload(path, file);
+    if(errorSubida){ fallos.push(file.name + ' — ' + errorSubida.message); continue; }
+
+    const fila = { proyecto_id: proyectoId, nombre_archivo: file.name, ruta_storage: path, subido_por_email: CURRENT_USER.email, categoria, tamano: file.size };
+    let { error } = await sb.from('proyecto_documentos').insert(fila);
+    if(error && /categoria|tamano/i.test(error.message)){
+      // La base de datos aún no tiene las columnas nuevas: se guarda igualmente, sin categoría ni tamaño.
+      const { categoria: _c, tamano: _t, ...basica } = fila;
+      ({ error } = await sb.from('proyecto_documentos').insert(basica));
+    }
+    if(error){
+      await sb.storage.from('documentos').remove([path]);   // no dejar archivos huérfanos
+      fallos.push(file.name + ' — ' + error.message);
+      continue;
+    }
+    subidos.push(file.name);
+  }
+
+  __docsProyectoPendientes = fallos.length ? lista.filter(f => !subidos.includes(f.name)) : [];
+  window.__avisoDocsProyecto = { subidos: subidos.length, fallos };
   verProyecto(proyectoId);
 }
 
-async function borrarDocumentoProyecto(id, proyectoId){
+async function borrarDocumentoProyecto(id, proyectoId, ruta){
   const esCA = LANG_I === 'ca';
   if(!confirm(esCA?'Segur que vols esborrar aquest document?':'¿Seguro que quieres borrar este documento?')) return;
   const { error } = await sb.from('proyecto_documentos').delete().eq('id', id);
   if(error){ alert(error.message); return; }
+  if(ruta) await sb.storage.from('documentos').remove([ruta]);   // y también el archivo
   verProyecto(proyectoId);
 }
 
@@ -5479,7 +5563,7 @@ async function verProyecto(proyectoId){
 
   try {
 
-  const [{ data: proyecto, error: errorProyecto }, { data: participantes }, { data: actividades }, { data: avisos }, { data: seguimientos }, { data: staffLista }, { data: asistencias }, { data: exportaciones }, { data: documentosProyecto }] = await Promise.all([
+  const [{ data: proyecto, error: errorProyecto }, { data: participantes }, { data: actividades }, { data: avisos }, { data: seguimientos }, { data: staffLista }, { data: asistencias }, { data: exportaciones }, { data: documentosProyecto, error: errorDocsProyecto }] = await Promise.all([
     sb.from('proyectos').select('*').eq('id', proyectoId).maybeSingle(),
     sb.from('proyecto_participantes').select('*').eq('proyecto_id', proyectoId),
     sb.from('proyecto_actividades').select('*').eq('proyecto_id', proyectoId).order('fecha', { ascending:false }),
@@ -5564,13 +5648,20 @@ async function verProyecto(proyectoId){
         </label>`).join('')
     : `<div class="empty-note">${esCA?'Encara no hi ha beneficiaris.':'Todavía no hay beneficiarios.'}</div>`;
 
+  const avisoDocs = window.__avisoDocsProyecto; window.__avisoDocsProyecto = null;
+  const avisoDocsHtml = avisoDocs ? `<div class="panel-card" style="background:${avisoDocs.fallos.length ? 'var(--alert-soft)' : 'var(--good-soft)'};border-color:${avisoDocs.fallos.length ? 'var(--alert)' : 'var(--good)'};margin-bottom:10px;">
+      ${avisoDocs.subidos ? `<div>✓ ${avisoDocs.subidos} ${esCA ? (avisoDocs.subidos === 1 ? 'document pujat' : 'documents pujats') : (avisoDocs.subidos === 1 ? 'documento subido' : 'documentos subidos')}</div>` : ''}
+      ${avisoDocs.fallos.length ? `<div><strong>⚠️ ${avisoDocs.fallos.length} ${esCA ? 'no s\'han pogut pujar:' : 'no se pudieron subir:'}</strong>${avisoDocs.fallos.map(f => `<div style="font-size:12.5px;">· ${escAttr(f)}</div>`).join('')}</div>` : ''}
+    </div>` : '';
+
   wrap.innerHTML = `
     <div class="panel-card" style="margin-top:16px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <h2 style="margin:0;">📁 ${proyecto.nombre}</h2>
-        <button class="link-btn" onclick="document.getElementById('proyecto-detalle-wrap').innerHTML='';window.__proyectoActual=null;">✕ ${esCA?'Tancar':'Cerrar'}</button>
+        <button class="link-btn" onclick="document.getElementById('proyecto-detalle-wrap').innerHTML='';window.__proyectoActual=null;__docsProyectoPendientes=[];">✕ ${esCA?'Tancar':'Cerrar'}</button>
       </div>
       ${proyecto.descripcion ? `<p class="subtle">${proyecto.descripcion}</p>` : ''}
+      <button class="primary-btn" id="proyecto-btn-subir-arriba" style="width:auto;margin:6px 0 10px;" onclick="irASubirDocumentosProyecto()">⬆️ ${esCA?'Pujar documents del projecte':'Subir documentos del proyecto'}${(documentosProyecto && documentosProyecto.length) ? ` · ${documentosProyecto.length}` : ''}</button><br>
       <select onchange="cambiarEstadoProyecto('${proyectoId}', this.value)">
         <option value="activo" ${proyecto.estado==='activo'?'selected':''}>${esCA?'Actiu':'Activo'}</option>
         <option value="pausado" ${proyecto.estado==='pausado'?'selected':''}>${esCA?'Pausat':'Pausado'}</option>
@@ -5606,22 +5697,32 @@ async function verProyecto(proyectoId){
         : `<div class="empty-note">${esCA?'Encara no s\'ha exportat cap llistat.':'Todavía no se ha exportado ningún listado.'}</div>`}
     </div>
 
-    <div class="panel-card">
-      <h3>📎 ${esCA?'Documents del projecte':'Documentos del proyecto'}</h3>
+    <div class="panel-card" id="proyecto-docs-card">
+      <h3>📎 ${esCA?'Documents del projecte':'Documentos del proyecto'}${(documentosProyecto && documentosProyecto.length) ? ` (${documentosProyecto.length})` : ''}</h3>
+      ${avisoDocsHtml}
+      ${errorDocsProyecto ? `<div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);"><strong>⚠️ ${esCA?'No es poden llegir els documents':'No se pueden leer los documentos'}</strong><br><span style="font-size:13px;">${escAttr(errorDocsProyecto.message)}</span><br><span class="subtle" style="font-size:12px;">${esCA?'Si diu que falta la taula, cal executar l\'SQL de documents de projecte a Supabase.':'Si dice que falta la tabla, hay que ejecutar el SQL de documentos de proyecto en Supabase.'}</span></div>` : ''}
+      <div id="proyecto-docs-zona" style="border:2px dashed var(--line);border-radius:12px;padding:16px;text-align:center;margin-bottom:10px;"
+           ondragover="event.preventDefault();this.style.borderColor='var(--gold)';this.style.background='var(--gold-soft)';"
+           ondragleave="this.style.borderColor='';this.style.background='';"
+           ondrop="event.preventDefault();this.style.borderColor='';this.style.background='';anadirArchivosProyecto(event.dataTransfer.files);">
+        <div style="font-size:13.5px;margin-bottom:8px;">${esCA?'Arrossega aquí els documents o tria\'ls (pots seleccionar-ne diversos):':'Arrastra aquí los documentos o elígelos (puedes seleccionar varios):'}</div>
+        <input type="file" id="proyecto-doc-input" multiple style="display:none;" onchange="anadirArchivosProyecto(this.files)">
+        <button class="link-btn" style="font-weight:700;" onclick="elegirArchivosProyecto()">📂 ${esCA?'Triar fitxers':'Elegir archivos'}</button>
+        <div class="subtle" style="font-size:11.5px;margin-top:4px;">${esCA?'Màxim':'Máximo'} ${DOCS_PROYECTO_MAX_MB} MB ${esCA?'per fitxer':'por archivo'}</div>
+        <div id="proyecto-docs-pendientes" style="text-align:left;"></div>
+      </div>
       ${(documentosProyecto && documentosProyecto.length)
-        ? documentosProyecto.map(d => `
-            <div class="panel-stat-row">
-              <span>${d.nombre_archivo}<br><span class="subtle" style="font-size:11px;margin:0;">${nombreTecnico(d.subido_por_email)} · ${new Date(d.creado_en).toLocaleDateString(esCA?'ca-ES':'es-ES')}</span></span>
+        ? documentosProyecto.map(d => {
+            const cat = DOCS_PROYECTO_CATEGORIAS.find(c => c.id === d.categoria);
+            return `
+            <div class="panel-stat-row" style="align-items:center;">
+              <span>📄 ${escAttr(d.nombre_archivo)}${cat ? ` <span style="background:var(--ochre-soft);color:#7A4A1F;border-radius:999px;padding:1px 8px;font-size:10.5px;font-weight:700;">${esCA ? cat.ca : cat.es}</span>` : ''}<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(nombreTecnico(d.subido_por_email))} · ${new Date(d.creado_en).toLocaleDateString(esCA?'ca-ES':'es-ES')}${d.tamano ? ' · ' + tamanoLegible(d.tamano) : ''}</span></span>
               <span style="display:flex;gap:10px;align-items:center;">
                 <button class="link-btn" style="font-size:12px;" onclick="verDocumentoStaff('${d.ruta_storage}')">${esCA?'Veure':'Ver'}</button>
-                <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="borrarDocumentoProyecto('${d.id}','${proyectoId}')">${esCA?'Esborrar':'Borrar'}</button>
+                <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="borrarDocumentoProyecto('${d.id}','${proyectoId}','${d.ruta_storage}')">${esCA?'Esborrar':'Borrar'}</button>
               </span>
-            </div>`).join('')
-        : `<div class="empty-note">${esCA?'Encara no hi ha documents en aquest projecte.':'Todavía no hay documentos en este proyecto.'}</div>`}
-      <div class="doc-upload-row" style="margin-top:10px;">
-        <input type="file" id="proyecto-doc-input">
-        <button class="link-btn" style="margin-top:8px;" onclick="subirDocumentoProyecto('${proyectoId}')">${esCA?'Pujar document':'Subir documento'}</button>
-      </div>
+            </div>`; }).join('')
+        : (errorDocsProyecto ? '' : `<div class="empty-note">${esCA?'Encara no hi ha documents en aquest projecte.':'Todavía no hay documentos en este proyecto.'}</div>`)}
     </div>
 
     <div class="panel-card">
@@ -5795,7 +5896,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-05 · v8 (salir solo/a)';
+const APP_VERSION_INTRANET = '2026-10-05 · v9 (documentos de proyecto)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
