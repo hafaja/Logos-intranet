@@ -5592,10 +5592,11 @@ async function verProyecto(proyectoId, opts){
   const profesionales = (participantes||[]).filter(pp => pp.rol === 'profesional');
 
   let nombresBeneficiarios = {};
+  const telefonosBenef = {};
   const idsBeneficiarios = beneficiarios.map(b => b.usuario_id).filter(Boolean);
   if(idsBeneficiarios.length){
-    const { data: perfilesRes } = await sb.from('perfiles').select('id, nombre_completo').in('id', idsBeneficiarios);
-    (perfilesRes || []).forEach(pf => { nombresBeneficiarios[pf.id] = pf.nombre_completo; });
+    const { data: perfilesRes } = await sb.from('perfiles').select('id, nombre_completo, telefono').in('id', idsBeneficiarios);
+    (perfilesRes || []).forEach(pf => { nombresBeneficiarios[pf.id] = pf.nombre_completo; telefonosBenef[pf.id] = pf.telefono; });
   }
 
   const beneficiariosHtml = beneficiarios.length
@@ -5624,14 +5625,6 @@ async function verProyecto(proyectoId, opts){
           <span class="subtle">${a.fecha ? new Date(a.fecha+'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha) : ''}</span>
         </div>`).join('')
     : `<div class="empty-note">${esCA?'Encara no hi ha activitats.':'Todavía no hay actividades.'}</div>`;
-
-  const avisosHtml = (avisos && avisos.length)
-    ? avisos.map(av => `
-        <div class="panel-stat-row" style="align-items:flex-start;">
-          <span><strong>${av.titulo}</strong><br><span style="font-size:12.5px;">${av.mensaje}</span></span>
-          <span class="subtle" style="font-size:11px;">${new Date(av.creado_en).toLocaleDateString(TI[LANG_I].localeFecha)}</span>
-        </div>`).join('')
-    : `<div class="empty-note">${esCA?'Encara no s\'ha enviat cap avís.':'Todavía no se ha enviado ningún aviso.'}</div>`;
 
   window.__proyectoCtx = { id: proyectoId, nombre: proyecto.nombre, beneficiarios: [] };
   const nombresSeg = Object.assign({}, nombresBeneficiarios);
@@ -5670,6 +5663,31 @@ async function verProyecto(proyectoId, opts){
           <span class="subtle" style="margin-left:auto;font-size:11px;">${esCA?'total':'total'}: ${conteoAsistencias[b.usuario_id] || 0}</span>
         </label>`).join('')
     : `<div class="empty-note">${esCA?'Encara no hi ha beneficiaris.':'Todavía no hay beneficiarios.'}</div>`;
+
+  // Avisos: el general (para todos) + los mensajes personales que se le añaden a cada persona
+  const idsAvisos = (avisos || []).map(a => a.id);
+  const { data: personalesData, error: errorPersonales } = await sb.from('proyecto_avisos_personales').select('*').in('aviso_id', idsAvisos.length ? idsAvisos : ['00000000-0000-0000-0000-000000000000']);
+  const personalesOk = !errorPersonales;
+  const personalesPorAviso = {};
+  (personalesData || []).forEach(x => { (personalesPorAviso[x.aviso_id] = personalesPorAviso[x.aviso_id] || []).push(x); });
+  window.__proyectoCtx.avisos = (avisos || []).map(a => Object.assign({}, a, { personales: personalesPorAviso[a.id] || [] }));
+  window.__proyectoCtx.telefonos = telefonosBenef;
+  window.__proyectoCtx.personalesOk = personalesOk;
+  const avisosHtml = (avisos && avisos.length)
+    ? avisos.map(av => `
+        <div style="padding:8px 0;border-bottom:1px solid var(--line);">
+          <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
+            <span><strong>${escAttr(av.titulo)}</strong><br><span style="font-size:12.5px;white-space:pre-line;">${escAttr(av.mensaje)}</span></span>
+            <span class="subtle" style="font-size:11px;margin:0;white-space:nowrap;">${new Date(av.creado_en).toLocaleDateString(TI[LANG_I].localeFecha)}</span>
+          </div>
+          ${(personalesPorAviso[av.id] || []).map(pp => `
+          <div style="font-size:12px;margin-top:4px;padding:4px 8px;background:var(--gold-soft);border-radius:6px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
+            <span><strong>${escAttr(nombresSeg[pp.usuario_id] || (esCA?'Sense nom':'Sin nombre'))}:</strong> ${escAttr(pp.mensaje)}</span>
+            <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="borrarMensajePersonalAviso('${pp.id}','${proyectoId}')">✕</button>
+          </div>`).join('')}
+          ${personalesOk && beneficiarios.filter(b => b.usuario_id).length ? `<button class="link-btn" style="font-size:11.5px;margin-top:4px;" onclick="abrirMensajePersonalAviso('${av.id}')">➕ ${esCA?'Afegir missatge personal':'Añadir mensaje personal'}</button>` : ''}
+        </div>`).join('')
+    : `<div class="empty-note">${esCA?'Encara no s\'ha enviat cap avís.':'Todavía no se ha enviado ningún aviso.'}</div>`;
 
   const avisoDocs = window.__avisoDocsProyecto; window.__avisoDocsProyecto = null;
   const avisoDocsHtml = avisoDocs ? `<div class="panel-card" style="background:${avisoDocs.fallos.length ? 'var(--alert-soft)' : 'var(--good-soft)'};border-color:${avisoDocs.fallos.length ? 'var(--alert)' : 'var(--good)'};margin-bottom:10px;">
@@ -5797,16 +5815,29 @@ async function verProyecto(proyectoId, opts){
         ? 'Es guarda com a av\u00eds i apareix a "Mi espacio" de cada beneficiari a Logos Acompanya. Per als professionals, avisa\'ls directament.'
         : 'Se guarda como aviso y aparece en "Mi espacio" de cada beneficiario en Logos Acompanya. Para los profesionales, avísales directamente.'}</p>
       ${avisosHtml}
-      <div class="doc-upload-row" style="margin-top:10px;">
+      <div class="doc-upload-row" style="margin-top:12px;">
         <input type="text" id="aviso-proyecto-titulo" placeholder="${esCA?"Títol de l'avís":'Título del aviso'}" style="margin-bottom:6px;">
-        <textarea id="aviso-proyecto-mensaje" rows="2" placeholder="${esCA?'Missatge':'Mensaje'}" style="margin-bottom:6px;"></textarea>
+        <textarea id="aviso-proyecto-mensaje" rows="3" placeholder="${esCA?'Missatge per a tothom':'Mensaje para todos'}" style="margin-bottom:6px;"></textarea>
+        ${personalesOk ? `
+        <details ontoggle="if(this.open && !document.querySelector('#aviso-personales-filas .aviso-personal-fila')) anadirFilaPersonalAviso();" style="margin-bottom:8px;">
+          <summary style="cursor:pointer;font-weight:700;font-size:13px;">➕ ${esCA?'Missatge personal per a algunes persones (s\'afegeix a l\'avís general)':'Mensaje personal para algunas personas (se añade al aviso general)'}</summary>
+          <p class="subtle" style="margin:6px 0;">${esCA?'Cada persona veurà l\'avís general i, a sota, el seu missatge personal. Ningú veu els personals dels altres.':'Cada persona verá el aviso general y, debajo, su mensaje personal. Nadie ve los personales de los demás.'}</p>
+          <div id="aviso-personales-filas"></div>
+          <button class="link-btn" type="button" onclick="anadirFilaPersonalAviso()">➕ ${esCA?'Una altra persona':'Otra persona'}</button>
+        </details>` : `<p class="subtle" style="font-size:12px;margin:0 0 8px;">${esCA?'Missatges personals: falta crear la taula a Supabase (vegeu el fitxer SQL d\'avisos personals).':'Mensajes personales: falta crear la tabla en Supabase (ver el archivo SQL de avisos personales).'}</p>`}
         <button class="primary-btn" onclick="enviarAvisoProyecto('${proyectoId}')">📢 ${esCA?'Enviar av\u00eds':'Enviar aviso'}</button>
       </div>
-      ${beneficiarios.filter(b=>b.usuario_id).length ? `
-      <p class="subtle" style="margin-top:14px;font-weight:700;">${esCA?'O enviar per WhatsApp, un a un:':'O enviar por WhatsApp, uno a uno:'}</p>
-      ` : ''}
+      ${beneficiarios.filter(b => b.usuario_id).length ? `
+      <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px;">
+        <p class="subtle" style="font-weight:700;margin:0 0 6px;">${esCA?'O enviar per WhatsApp, un a un (avís general + missatge personal):':'O enviar por WhatsApp, uno a uno (aviso general + mensaje personal):'}</p>
+        ${(avisos && avisos.length) ? `
+        <div class="field" style="max-width:380px;"><label>${esCA?'Avís a enviar':'Aviso a enviar'}</label>
+          <select id="wa-aviso-sel" onchange="pintarWhatsAppAviso()">${avisos.slice(0, 10).map(a => `<option value="${a.id}">${new Date(a.creado_en).toLocaleDateString(TI[LANG_I].localeFecha)} · ${escAttr(a.titulo)}</option>`).join('')}</select></div>
+        <div id="wa-aviso-lista"></div>` : `<div class="empty-note">${esCA?'Envia primer un avís per poder reenviar-lo per WhatsApp.':'Envía primero un aviso para poder reenviarlo por WhatsApp.'}</div>`}
+      </div>` : ''}
     </div>
   `;
+  pintarWhatsAppAviso();
   if(opts.silencioso && window.__benefBusquedaTexto){
     const inputBenef = document.getElementById('benef-buscar');
     if(inputBenef){ inputBenef.value = window.__benefBusquedaTexto; buscarBeneficiarioProyecto(window.__benefBusquedaTexto, proyectoId, true); }
@@ -5913,6 +5944,92 @@ async function guardarSeguimientoProyecto(proyectoId){
   await verProyecto(proyectoId, { silencioso: true });
 }
 
+// ---------- Avisos de proyecto: mensajes personales que se añaden al aviso general ----------
+function anadirFilaPersonalAviso(){
+  const esCA = LANG_I === 'ca';
+  const ctx = window.__proyectoCtx;
+  const cont = document.getElementById('aviso-personales-filas');
+  if(!ctx || !cont) return;
+  const fila = document.createElement('div');
+  fila.className = 'aviso-personal-fila';
+  fila.style.cssText = 'display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px;';
+  fila.innerHTML = `<select style="flex:0 0 190px;max-width:100%;">${ctx.beneficiarios.map(b => `<option value="${b.id}">${escAttr(b.nombre)}</option>`).join('')}</select>
+    <input type="text" placeholder="${esCA?'Missatge personal…':'Mensaje personal…'}" style="flex:1;min-width:170px;">
+    <button class="link-btn" type="button" style="color:var(--alert);" onclick="this.parentElement.remove()">✕</button>`;
+  cont.appendChild(fila);
+}
+
+function cerrarMensajePersonalOverlay(){ const o = document.getElementById('avp-overlay'); if(o) o.remove(); }
+
+function abrirMensajePersonalAviso(avisoId){
+  const esCA = LANG_I === 'ca';
+  const ctx = window.__proyectoCtx;
+  const aviso = ctx && (ctx.avisos || []).find(a => a.id === avisoId);
+  if(!aviso || !ctx.beneficiarios.length) return;
+  cerrarMensajePersonalOverlay();
+  const ov = document.createElement('div');
+  ov.id = 'avp-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,15,20,.55);z-index:400;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto;';
+  ov.innerHTML = `
+    <div class="panel-card" style="background:var(--paper);width:100%;max-width:460px;margin:auto;opacity:1;transform:none;animation:none;">
+      <h3 style="margin-top:0;">➕ ${esCA?'Missatge personal':'Mensaje personal'}</h3>
+      <p class="subtle" style="margin:0 0 8px;">${esCA?'S\'afegirà sota l\'avís':'Se añadirá bajo el aviso'} «${escAttr(aviso.titulo)}».</p>
+      <div class="field"><label>${esCA?'Persona':'Persona'}</label>
+        <select id="avp-persona" onchange="document.getElementById('avp-texto').value = ((window.__proyectoCtx.avisos.find(a => a.id === '${avisoId}').personales.find(p => p.usuario_id === this.value)) || {}).mensaje || ''">${ctx.beneficiarios.map(b => `<option value="${b.id}">${escAttr(b.nombre)}</option>`).join('')}</select></div>
+      <div class="field"><label>${esCA?'Missatge':'Mensaje'} *</label><textarea id="avp-texto" rows="3">${escAttr(((aviso.personales || []).find(p => p.usuario_id === ctx.beneficiarios[0].id) || {}).mensaje || '')}</textarea></div>
+      <button class="primary-btn" onclick="guardarMensajePersonalAviso('${avisoId}')">${esCA?'Desar':'Guardar'}</button>
+      <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="cerrarMensajePersonalOverlay()">${esCA?'Cancel·lar':'Cancelar'}</button>
+    </div>`;
+  document.body.appendChild(ov);
+  setTimeout(() => { const t = document.getElementById('avp-texto'); if(t) t.focus(); }, 60);
+}
+
+async function guardarMensajePersonalAviso(avisoId){
+  const esCA = LANG_I === 'ca';
+  const usuarioId = document.getElementById('avp-persona').value;
+  const mensaje = document.getElementById('avp-texto').value.trim();
+  if(!usuarioId || !mensaje){ alert(esCA ? 'Escriu el missatge.' : 'Escribe el mensaje.'); return; }
+  const { error } = await sb.from('proyecto_avisos_personales').upsert({ aviso_id: avisoId, usuario_id: usuarioId, mensaje }, { onConflict: 'aviso_id,usuario_id' });
+  if(error){ alert((esCA?'No s\'ha pogut desar: ':'No se pudo guardar: ') + error.message); return; }
+  cerrarMensajePersonalOverlay();
+  await verProyecto(window.__proyectoCtx.id, { silencioso: true });
+}
+
+async function borrarMensajePersonalAviso(id, proyectoId){
+  const esCA = LANG_I === 'ca';
+  if(!confirm(esCA ? 'Segur que vols treure aquest missatge personal?' : '¿Seguro que quieres quitar este mensaje personal?')) return;
+  const { error } = await sb.from('proyecto_avisos_personales').delete().eq('id', id);
+  if(error){ alert(error.message); return; }
+  await verProyecto(proyectoId, { silencioso: true });
+}
+
+function enlaceWhatsAppTexto(telefono, texto){
+  if(!telefono) return '';
+  let limpio = String(telefono).replace(/[^\d+]/g, '').replace(/^\+/, '');
+  if(limpio.length === 9) limpio = '34' + limpio;   // número español sin prefijo
+  return `https://wa.me/${limpio}?text=${encodeURIComponent(texto)}`;
+}
+
+function pintarWhatsAppAviso(){
+  const caja = document.getElementById('wa-aviso-lista');
+  const sel = document.getElementById('wa-aviso-sel');
+  const ctx = window.__proyectoCtx;
+  if(!caja || !sel || !ctx) return;
+  const esCA = LANG_I === 'ca';
+  const aviso = (ctx.avisos || []).find(a => a.id === sel.value);
+  if(!aviso){ caja.innerHTML = ''; return; }
+  caja.innerHTML = ctx.beneficiarios.map(b => {
+    const tel = (ctx.telefonos || {})[b.id];
+    const pers = (aviso.personales || []).find(p => p.usuario_id === b.id);
+    if(!tel) return `<div class="panel-stat-row"><span>${escAttr(b.nombre)}</span><span class="subtle" style="font-size:11.5px;margin:0;">${esCA?'sense telèfon':'sin teléfono'}</span></div>`;
+    const primero = String(b.nombre || '').split(' ')[0];
+    const texto = `Hola ${primero}, ${esCA ? 'des de Logos' : 'desde Logos'} (${ctx.nombre}): ${aviso.titulo}. ${aviso.mensaje}${pers ? '\n\n' + pers.mensaje : ''}`;
+    return `<div class="panel-stat-row" style="align-items:center;">
+      <span>${escAttr(b.nombre)}${pers ? ` <span style="background:var(--gold-soft);border-radius:999px;padding:1px 8px;font-size:10.5px;font-weight:700;">${esCA?'amb missatge personal':'con mensaje personal'}</span>` : ''}</span>
+      <a class="link-btn" style="font-size:12px;color:#1E9E52;" target="_blank" rel="noopener" href="${escAttr(enlaceWhatsAppTexto(tel, texto))}">💬 WhatsApp</a></div>`;
+  }).join('');
+}
+
 async function anadirProfesionalAProyecto(proyectoId){
   const email = document.getElementById('select-anadir-profesional').value;
   if(!email) return;
@@ -5942,11 +6059,30 @@ async function enviarAvisoProyecto(proyectoId){
   const titulo = document.getElementById('aviso-proyecto-titulo').value.trim();
   const mensaje = document.getElementById('aviso-proyecto-mensaje').value.trim();
   if(!titulo || !mensaje){ alert(esCA ? 'Omple el títol i el missatge.' : 'Rellena el título y el mensaje.'); return; }
-  const { error } = await sb.from('proyecto_avisos').insert({
-    proyecto_id: proyectoId, titulo, mensaje, creado_por_email: CURRENT_USER.email
+
+  // Mensajes personales (si repiten a la misma persona, se juntan)
+  const mapa = {};
+  document.querySelectorAll('#aviso-personales-filas .aviso-personal-fila').forEach(fila => {
+    const uid = fila.querySelector('select').value;
+    const txt = fila.querySelector('input').value.trim();
+    if(uid && txt) mapa[uid] = mapa[uid] ? mapa[uid] + ' ' + txt : txt;
   });
+  const personales = Object.entries(mapa).map(([usuario_id, msg]) => ({ usuario_id, mensaje: msg }));
+
+  const { data: nuevo, error } = await sb.from('proyecto_avisos').insert({
+    proyecto_id: proyectoId, titulo, mensaje, creado_por_email: CURRENT_USER.email
+  }).select('id').single();
   if(error){ alert(error.message); return; }
-  verProyecto(proyectoId);
+
+  if(personales.length){
+    if(!nuevo || !nuevo.id){
+      alert(esCA ? 'L\'avís general s\'ha enviat, però no s\'han pogut desar els missatges personals.' : 'El aviso general se ha enviado, pero no se pudieron guardar los mensajes personales.');
+    } else {
+      const { error: errorPers } = await sb.from('proyecto_avisos_personales').insert(personales.map(p => ({ aviso_id: nuevo.id, usuario_id: p.usuario_id, mensaje: p.mensaje })));
+      if(errorPers) alert((esCA ? 'L\'avís general s\'ha enviat, però no s\'han pogut desar els missatges personals: ' : 'El aviso general se ha enviado, pero no se pudieron guardar los mensajes personales: ') + errorPers.message);
+    }
+  }
+  await verProyecto(proyectoId, { silencioso: true });
 }
 
 async function renderEquipoScreen(){
@@ -6034,7 +6170,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-05 · v11 (proyecto: beneficiarios y seguimiento)';
+const APP_VERSION_INTRANET = '2026-10-05 · v12 (avisos personales)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
