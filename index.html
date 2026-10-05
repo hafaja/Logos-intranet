@@ -159,6 +159,10 @@
   .carpeta-cuerpo{padding:0 14px 12px;border-top:1px solid var(--line);}
   .carpeta-n2{border-radius:10px;background:var(--bg);margin:8px 0 0;}
   .carpetas-barra{display:flex;align-items:center;justify-content:flex-end;gap:14px;margin-bottom:8px;}
+  .carpeta-cuerpo>.panel-card{border:none;box-shadow:none;background:transparent;padding:10px 0 0;margin:0 !important;}
+  .carpeta-cuerpo>.panel-card>h3:first-child{display:none;}
+  .carpeta-cuerpo>.info-box{margin:10px 0 0 !important;}
+  .carpeta-cuerpo>.info-box>.info-box-title{display:none;}
   .ptab-content.active{display:block;}
 
   /* Dashboard "Inicio" — barra superior, accesos rápidos, actividad y eventos */
@@ -1676,13 +1680,18 @@ async function confirmarVincularActuacion(usuarioId){
 // ---------- Carpetas desplegables para listas largas (recuerdan lo que la persona abre y cierra) ----------
 const __carpetasEstado = new Map();
 function carpetaAlternar(clave, abrir){ __carpetasEstado.set(clave, abrir); }
-function carpetaDesplegable(o){
+function carpetaAbre(o){
   const abierta = o.forzar ? true : (__carpetasEstado.has(o.clave) ? __carpetasEstado.get(o.clave) : !!o.abierta);
+  const cuenta = (o.cuenta === '' || o.cuenta == null) ? '' : `<span class="carpeta-cuenta">${o.cuenta}</span>`;
+  const titulo = String(o.titulo == null ? '' : o.titulo).replace(/\.\s*$/, '');
+  const yaTieneEmoji = /^\s*\p{Extended_Pictographic}/u.test(titulo);   // algunos títulos ya traen su emoji: no se repite
   return `<details class="carpeta${o.nivel === 2 ? ' carpeta-n2' : ''}" data-clave="${escAttr(o.clave)}"${abierta ? ' open' : ''}>
-    <summary onclick="carpetaAlternar(this.parentElement.dataset.clave, !this.parentElement.open)"><span>${o.icono || '📁'}</span><span>${escAttr(o.titulo)}</span>${o.etiquetas || ''}<span class="carpeta-cuenta">${o.cuenta}</span></summary>
-    <div class="carpeta-cuerpo">${o.cuerpo}</div>
-  </details>`;
+    <summary onclick="carpetaAlternar(this.parentElement.dataset.clave, !this.parentElement.open)">${yaTieneEmoji ? '' : `<span>${o.icono || '📁'}</span>`}<span>${escAttr(titulo)}</span>${o.etiquetas || ''}${cuenta}</summary>
+    <div class="carpeta-cuerpo">`;
 }
+function carpetaCierra(){ return '</div></details>'; }
+function carpetaDesplegable(o){ return carpetaAbre(o) + o.cuerpo + carpetaCierra(); }
+
 function carpetasBarra(texto){
   const esCA = LANG_I === 'ca';
   return `<div class="carpetas-barra"><span class="subtle" style="margin:0 auto 0 0;font-size:12px;">${texto || ''}</span>
@@ -2853,26 +2862,66 @@ function irAHoyAgenda(){
 let __busquedaPersonasTimeout = null;
 let __personasUltimoTexto = '';
 
+let __personasTodas = [];
+async function cargarTodasLasPersonas(){
+  const todas = [];
+  for(let desde = 0; desde < 20000; desde += 1000){
+    const { data, error } = await sb.from('perfiles').select('id, nombre_completo, municipio, telefono').not('nombre_completo', 'is', null).order('nombre_completo', { ascending:true }).range(desde, desde + 999);
+    if(error) return { error };
+    todas.push(...(data || []));
+    if(!data || data.length < 1000) break;
+  }
+  return { data: todas };
+}
+function letraInicialPersona(nombre){
+  const l = String(nombre || '').trim().charAt(0).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+  return /[A-Z]/.test(l) ? l : '#';
+}
+
 async function renderPersonasScreen(texto){
   __personasUltimoTexto = texto || '';
   const cont = document.getElementById('personas-content');
   const t = TI[LANG_I];
   const esCA = LANG_I === 'ca';
-  const q = (sb.from('perfiles').select('id, nombre_completo, municipio, telefono').not('nombre_completo', 'is', null).order('nombre_completo', { ascending:true }));
-  const { data } = texto && texto.trim().length >= 2 ? await q.ilike('nombre_completo', `%${texto.trim()}%`).limit(50) : await q.limit(50);
+  // Al teclear solo se vuelve a pintar la lista (así el cuadro de búsqueda no pierde el cursor)
+  if(texto === undefined || !document.getElementById('personas-lista')){
+    cont.innerHTML = `
+      <div class="field"><input type="text" id="personas-buscar" placeholder="${esCA?'Cerca per nom o telèfon...':'Buscar por nombre o teléfono...'}" value="${escAttr(texto || '')}" oninput="renderPersonasScreen(this.value)"></div>
+      <div style="display:flex;gap:10px;margin-bottom:10px;">
+        <button class="link-btn" onclick="exportarPersonasExcel()">⬇️ Excel</button>
+        <button class="link-btn" onclick="exportarPersonasPDF()">⬇️ PDF</button>
+      </div>
+      <div id="personas-lista"><div class="placeholder">${t.cargando}</div></div>`;
+    const res = await cargarTodasLasPersonas();
+    if(res.error){ document.getElementById('personas-lista').innerHTML = `<div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);">⚠️ ${escAttr(res.error.message)}</div>`; return; }
+    __personasTodas = res.data;
+  }
+  pintarListaPersonas(texto || '');
+}
 
-  const listaHtml = (data && data.length)
-    ? data.map(p => `<div class="panel-stat-row"><span>${p.nombre_completo}<br><span class="subtle" style="font-size:11px;margin:0;">${p.municipio || ''}${p.telefono ? ' · ' + p.telefono : ''}</span></span><button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${p.id}','personas')">${t.ver}</button></div>`).join('')
-    : `<div class="empty-note">${esCA ? 'Sense resultats.' : 'Sin resultados.'}</div>`;
+function pintarListaPersonas(texto){
+  const caja = document.getElementById('personas-lista');
+  if(!caja) return;
+  const t = TI[LANG_I]; const esCA = LANG_I === 'ca';
+  const norm = x => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const q = norm(texto.trim());
+  const fila = p => `<div class="panel-stat-row"><span>${escAttr(p.nombre_completo)}<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(p.municipio || '')}${p.telefono ? ' · ' + escAttr(p.telefono) : ''}</span></span><button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${p.id}','personas')">${t.ver}</button></div>`;
 
-  cont.innerHTML = `
-    <div class="field"><input type="text" id="personas-buscar" placeholder="${esCA?'Cerca per nom...':'Buscar por nombre...'}" value="${texto || ''}" oninput="renderPersonasScreen(this.value)"></div>
-    <div style="display:flex;gap:10px;margin-bottom:10px;">
-      <button class="link-btn" onclick="exportarPersonasExcel()">⬇️ Excel</button>
-      <button class="link-btn" onclick="exportarPersonasPDF()">⬇️ PDF</button>
-    </div>
-    <div class="panel-card">${listaHtml}</div>
-  `;
+  if(q.length >= 2){
+    const encontradas = __personasTodas.filter(p => norm(p.nombre_completo).includes(q) || String(p.telefono || '').replace(/\s/g, '').includes(q.replace(/\s/g, '')));
+    const mostradas = encontradas.slice(0, 100);
+    caja.innerHTML = mostradas.length
+      ? `<div class="panel-card">${mostradas.map(fila).join('')}</div>${encontradas.length > 100 ? `<p class="subtle" style="font-size:12px;">${esCA?'Es mostren 100 de':'Se muestran 100 de'} ${encontradas.length}. ${esCA?'Afina la cerca.':'Afina la búsqueda.'}</p>` : ''}`
+      : `<div class="empty-note">${esCA ? 'Sense resultats.' : 'Sin resultados.'}</div>`;
+    return;
+  }
+  if(!__personasTodas.length){ caja.innerHTML = `<div class="empty-note">${esCA ? 'Encara no hi ha persones.' : 'Todavía no hay personas.'}</div>`; return; }
+  const porLetra = {};
+  __personasTodas.forEach(p => { const l = letraInicialPersona(p.nombre_completo); (porLetra[l] = porLetra[l] || []).push(p); });
+  const letras = Object.keys(porLetra).sort((a, b) => a === '#' ? 1 : b === '#' ? -1 : a.localeCompare(b));
+  caja.innerHTML = `<div class="carpetas-lista">${letras.length > 1 ? carpetasBarra(`${__personasTodas.length} ${esCA?'persones':'personas'}`) : ''}${letras.map(l => carpetaDesplegable({
+    clave: 'pers:' + l, icono: '🔤', titulo: l, cuenta: porLetra[l].length, abierta: letras.length === 1, cuerpo: porLetra[l].map(fila).join('')
+  })).join('')}</div>`;
 }
 
 async function obtenerPersonasParaExport(){
@@ -5271,8 +5320,7 @@ async function renderProyectosScreen(){
   const estadoColor = { activo: 'good', finalizado: '', pausado: 'gold' };
   const estadoTexto = { activo: esCA?'Actiu':'Activo', finalizado: esCA?'Finalitzat':'Finalizado', pausado: esCA?'Pausat':'Pausado' };
 
-  const proyectosHtml = (proyectos && proyectos.length)
-    ? proyectos.map(pr => {
+  const tarjetaProyecto = pr => {
         const c = conteos[pr.id] || { beneficiarios: 0, profesionales: 0 };
         return `
         <div class="panel-card">
@@ -5293,9 +5341,15 @@ async function renderProyectosScreen(){
             <button class="link-btn" onclick="exportarProyectoPDF('${pr.id}','${pr.nombre.replace(/'/g,"\\'")}')">⬇️ PDF</button>
           </div>
         </div>`;
-      }).join('')
-    : `<div class="empty-note">${esCA ? 'Encara no hi ha projectes.' : 'Todavía no hay proyectos.'}</div>`;
+  };
 
+  const listaProy = proyectos || [];
+  const gruposProy = [['activo', esCA?'Projectes en curs':'Proyectos en curso'], ['pausado', esCA?'Projectes pausats':'Proyectos pausados'], ['finalizado', esCA?'Projectes finalitzats':'Proyectos finalizados']];
+  const conocidos = gruposProy.map(g => g[0]);
+  const carpetaProy = (clave, titulo, l, abierta) => carpetaDesplegable({ clave: 'proy:' + clave, icono: '📁', titulo, cuenta: l.length, abierta, cuerpo: `<div class="cards-grid" style="padding-top:10px;">${l.map(tarjetaProyecto).join('')}</div>` });
+  const proyectosHtml = listaProy.length
+    ? `<div class="carpetas-lista">${gruposProy.map(([est, titulo]) => { const l = listaProy.filter(pr => pr.estado === est); return l.length ? carpetaProy(est, titulo, l, est === 'activo' && l.length <= 3) : ''; }).join('')}${(() => { const l = listaProy.filter(pr => !conocidos.includes(pr.estado)); return l.length ? carpetaProy('otros', esCA?'Altres projectes':'Otros proyectos', l, false) : ''; })()}</div>`
+    : `<div class="empty-note">${esCA ? 'Encara no hi ha projectes.' : 'Todavía no hay proyectos.'}</div>`;
   cont.innerHTML = `
     <div class="panel-card" style="margin-bottom:16px;background:var(--bg);">
       <button onclick="document.getElementById('guia-crear-proyecto').style.display = document.getElementById('guia-crear-proyecto').style.display==='none' ? 'block' : 'none';" class="link-btn" style="font-weight:700;">📖 ${esCA ? 'Guia: com crear i gestionar un projecte' : 'Guía: cómo crear y gestionar un proyecto'}</button>
@@ -5304,8 +5358,8 @@ async function renderProyectosScreen(){
           ? 'Emplena el nom (obligatori), una descripció breu i les dates si les coneixes, i prem \"Crear projecte\". Apareixerà a la llista de sobre.'
           : 'Rellena el nombre (obligatorio), una descripción breve y las fechas si las conoces, y pulsa \"Crear proyecto\". Aparecerá en la lista de arriba.'}</p>
         <p><strong>2. ${esCA?'Afegeix beneficiaris':'Añade beneficiarios'}</strong><br>${esCA
-          ? 'Els beneficiaris NO s\'afegeixen des d\'aquí. Ves a \"Personas usuarias\", obre la fitxa de la persona, pestanya \"Proyectos\", i afegeix-la des d\'allà al projecte que acabes de crear.'
-          : 'Los beneficiarios NO se añaden desde aquí. Ve a \"Personas usuarias\", abre la ficha de la persona, pestaña \"Proyectos\", y añádela desde ahí al proyecto que acabas de crear.'}</p>
+          ? 'Obre el projecte (\"Abrir proyecto\") i, a l\'apartat \"Beneficiaris\", busca la persona pel nom, DNI o telèfon i prem \"➕ Afegir\". També es pot fer des de la fitxa de cada persona.'
+          : 'Abre el proyecto (\"Abrir proyecto\") y, en el apartado \"Beneficiarios\", busca a la persona por nombre, DNI o teléfono y pulsa \"➕ Añadir\". También se puede hacer desde la ficha de cada persona.'}</p>
         <p><strong>3. ${esCA?'Afegeix professionals':'Añade profesionales'}</strong><br>${esCA
           ? 'Obre el projecte (\"Abrir proyecto\") i, a l\'apartat \"Professionals\", tria un company de la llista desplegable i prem \"➕\".'
           : 'Abre el proyecto (\"Abrir proyecto\") y, en el apartado \"Profesionales\", elige un compañero de la lista desplegable y pulsa \"➕\".'}</p>
@@ -5321,7 +5375,7 @@ async function renderProyectosScreen(){
       </div>
     </div>
 
-    <div class="cards-grid" style="margin-bottom:16px;">${proyectosHtml}</div>
+    <div style="margin-bottom:16px;">${proyectosHtml}</div>
 
     <button class="primary-btn" style="margin-bottom:16px;" onclick="document.getElementById('form-nuevo-proyecto').style.display = document.getElementById('form-nuevo-proyecto').style.display==='none' ? 'block' : 'none';">➕ ${esCA?'Afegir projecte nou':'Añadir proyecto nuevo'}</button>
 
@@ -6165,6 +6219,64 @@ function pintarExpedientePersona(){
   cont.innerHTML = chips + `<div class="carpetas-lista">${anios.length > 1 || items.length > 12 ? carpetasBarra(`${items.length} ${esCA?'entrades':'entradas'}`) : ''}${html}</div>`;
 }
 
+// ---------- Administrador: limpiar registros de más de 24 horas (manual; primero se descarga una copia en Excel) ----------
+async function limpiarRegistrosAntiguos(tipo){
+  const esCA = LANG_I === 'ca';
+  const loc = esCA ? 'ca-ES' : 'es-ES';
+  const cfg = tipo === 'fichajes'
+    ? { tabla: 'fichajes', ini: 'entrada', fin: 'salida', nombre: esCA?'fitxatges del personal':'fichajes del personal', archivo: 'Fichajes-personal', hoja: 'Fichajes' }
+    : { tabla: 'fichajes_sala', ini: 'inicio', fin: 'fin', nombre: esCA?'registres de sales i reunions':'registros de salas y reuniones', archivo: 'Salas-y-reuniones', hoja: 'Salas' };
+  const limite = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+
+  // Solo registros ya cerrados cuyo final es de hace más de 24 horas (nunca los abiertos ni las reservas futuras)
+  const { data, error } = await sb.from(cfg.tabla).select('*').lt(cfg.fin, limite).order(cfg.ini, { ascending: true }).limit(5000);
+  if(error){ alert((esCA?'No s\'han pogut llegir els registres: ':'No se pudieron leer los registros: ') + error.message); return; }
+  const registros = data || [];
+  if(!registros.length){ alert(esCA ? 'No hi ha registres de més de 24 hores per netejar.' : 'No hay registros de más de 24 horas para limpiar.'); return; }
+
+  const avisoLegal = tipo === 'fichajes'
+    ? (esCA ? '\n\nATENCIÓ: els fitxatges són el registre de jornada del personal i la normativa laboral obliga a conservar-lo durant 4 anys. Guarda l\'Excel que es descarregarà i consulta-ho amb la gestoria abans d\'esborrar.'
+            : '\n\nATENCIÓN: los fichajes son el registro de jornada del personal y la normativa laboral obliga a conservarlo durante 4 años. Guarda el Excel que se descargará y consúltalo con la gestoría antes de borrar.')
+    : '';
+  if(!confirm((esCA ? `Hi ha ${registros.length} ${cfg.nombre} de més de 24 hores.\n\nPrimer es descarregarà un Excel amb tots ells i després s\'esborraran de l\'aplicació. Vols continuar?`
+                    : `Hay ${registros.length} ${cfg.nombre} de más de 24 horas.\n\nPrimero se descargará un Excel con todos ellos y después se borrarán de la aplicación. ¿Continuar?`) + avisoLegal)) return;
+  if(tipo === 'fichajes'){
+    const palabra = esCA ? 'ESBORRAR' : 'BORRAR';
+    const r = prompt((esCA ? 'Per confirmar, escriu ' : 'Para confirmar, escribe ') + palabra);
+    if(!r || r.trim().toUpperCase() !== palabra){ alert(esCA ? 'Cancel·lat: no s\'ha esborrat res.' : 'Cancelado: no se ha borrado nada.'); return; }
+  }
+
+  // 1) Copia en Excel. Si falla, no se borra nada.
+  const f = d => d ? new Date(d).toLocaleString(loc) : (esCA ? 'En curs' : 'En curso');
+  const minutos = (a, b) => (a && b) ? Math.round((new Date(b) - new Date(a)) / 60000) : '';
+  const cabecera = tipo === 'fichajes' ? ['Técnico','Entrada','Salida','Duración (min)','Cerrado automático','Nota'] : ['Técnico','Sala/Plaza','Motivo','Inicio','Fin','Duración (min)'];
+  const filas = registros.map(r => tipo === 'fichajes'
+    ? [nombreTecnico(r.tecnico_email), f(r.entrada), f(r.salida), minutos(r.entrada, r.salida), r.cerrado_automaticamente ? 'Sí' : 'No', r.nota || '']
+    : [nombreTecnico(r.tecnico_email), r.sala === 'reunion' ? 'Reunión' : ('Plaza ' + r.sala), r.motivo || '', f(r.inicio), f(r.fin), minutos(r.inicio, r.fin)]);
+  try {
+    await descargarXLSX(cabecera, filas, `${cfg.archivo}-anteriores-${new Date().toISOString().slice(0,10)}.xlsx`, cfg.hoja);
+  } catch(e) {
+    alert((esCA ? 'No s\'ha pogut descarregar la còpia, per això no s\'ha esborrat res: ' : 'No se pudo descargar la copia, por eso no se ha borrado nada: ') + e.message);
+    return;
+  }
+
+  // 2) Borrado por tandas
+  const ids = registros.map(r => r.id);
+  let borrados = 0;
+  for(let i = 0; i < ids.length; i += 100){
+    const tanda = ids.slice(i, i + 100);
+    const { error: errorBorrado } = await sb.from(cfg.tabla).delete().in('id', tanda);
+    if(errorBorrado){
+      alert((esCA ? `S\'han esborrat ${borrados} de ${ids.length}. Error: ` : `Se han borrado ${borrados} de ${ids.length}. Error: `) + errorBorrado.message);
+      renderAdministrador();
+      return;
+    }
+    borrados += tanda.length;
+  }
+  alert(esCA ? `Fet: ${borrados} registres esborrats. L\'Excel amb la còpia ja s\'ha descarregat: guarda\'l.` : `Hecho: ${borrados} registros borrados. El Excel con la copia ya se ha descargado: guárdalo.`);
+  renderAdministrador();
+}
+
 async function anadirProfesionalAProyecto(proyectoId){
   const email = document.getElementById('select-anadir-profesional').value;
   if(!email) return;
@@ -6305,7 +6417,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-05 · v17 (sin duplicados en expedientes)';
+const APP_VERSION_INTRANET = '2026-10-05 · v18 (proyectos, personas y administrador plegables)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -7900,36 +8012,40 @@ async function renderAdministrador(){
     conteoPorProyectoAdmin[pp.proyecto_id][pp.rol === 'profesional' ? 'profesionales' : 'beneficiarios']++;
   });
   const proyectosActivosAdmin = proyectosAdminLista.filter(pr => pr.estado === 'activo').length;
+  const esCAadm = LANG_I === 'ca';
+  const filaProyAdm = pr => `<div class="panel-stat-row" style="align-items:center;"><span>${escAttr(pr.nombre)}</span><span style="display:flex;gap:10px;align-items:center;"><span class="subtle" style="margin:0;font-size:12px;">${(conteoPorProyectoAdmin[pr.id] || {}).beneficiarios || 0} ${esCAadm?'beneficiaris':'beneficiarios'}</span><button class="link-btn" style="font-size:12px;" onclick="irAProyectoDesdeFuera('${pr.id}')">${esCAadm?'Obrir':'Abrir'}</button></span></div>`;
+  const gruposProyAdm = [['activo', esCAadm?'Projectes en curs':'Proyectos en curso'], ['pausado', esCAadm?'Projectes pausats':'Proyectos pausados'], ['finalizado', esCAadm?'Projectes finalitzats':'Proyectos finalizados']];
+  const proyectosAdminHtml = proyectosAdminLista.length
+    ? `<div class="carpetas-lista" style="padding-top:8px;"><div style="display:flex;justify-content:flex-end;"><button class="link-btn" style="font-size:12px;" onclick="showScreen('proyectos');renderProyectosScreen()">${esCAadm?'Veure tots':'Ver todos'} →</button></div>${gruposProyAdm.map(([est, titulo]) => { const l = proyectosAdminLista.filter(pr => pr.estado === est); return l.length ? carpetaDesplegable({ clave: 'adm-proy:' + est, nivel: 2, titulo, cuenta: l.length, abierta: est === 'activo' && l.length <= 5, cuerpo: l.map(filaProyAdm).join('') }) : ''; }).join('')}</div>`
+    : `<div class="empty-note">${esCAadm?'Encara no hi ha projectes.':'Todavía no hay proyectos.'}</div>`;
 
   cont.innerHTML = `
-    <div class="panel-card" style="margin-bottom:16px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3 style="margin:0;">📁 ${LANG_I==='ca'?'Projectes':'Proyectos'}</h3>
-        <button class="link-btn" style="font-size:12px;" onclick="showScreen('proyectos');renderProyectosScreen()">${LANG_I==='ca'?'Veure tots':'Ver todos'} →</button>
-      </div>
-      <div class="panel-stat-row"><span>${LANG_I==='ca'?'Projectes actius':'Proyectos activos'}</span><span><strong>${proyectosActivosAdmin}</strong> / ${proyectosAdminLista.length}</span></div>
-      ${proyectosAdminLista.slice(0,5).map(pr => `<div class="panel-stat-row"><span>${pr.nombre}</span><span>${(conteoPorProyectoAdmin[pr.id]||{}).beneficiarios||0} ${LANG_I==='ca'?'benef.':'benef.'} · ${(conteoPorProyectoAdmin[pr.id]||{}).profesionales||0} ${LANG_I==='ca'?'prof.':'prof.'}</span></div>`).join('')}
-    </div>
+    ${carpetaDesplegable({ clave: 'adm-sec:proyectos', icono: '📁', titulo: LANG_I==='ca'?'Projectes':'Proyectos', cuenta: proyectosAdminLista.length, cuerpo: proyectosAdminHtml })}
 
-    <div class="cards-grid" style="margin-bottom:16px;">
+    ${carpetaAbre({ clave: 'adm-sec:revisiones', icono: '📅', titulo: t.proximasRevisionesPendientes, cuenta: '' })}
       <div class="panel-card">
         <h3>${t.proximasRevisionesPendientes}</h3>
         <p class="subtle" style="margin:0 0 10px;">${t.deTodosLosTecnicos}</p>
         ${revisionesHtml}
       </div>
+    ${carpetaCierra()}
+    ${carpetaAbre({ clave: 'adm-sec:incompletos', icono: '🧩', titulo: t.perfilesIncompletosTitulo, cuenta: perfilesIncompletos.length })}
       <div class="panel-card">
         <h3>${t.perfilesIncompletosTitulo}</h3>
         <p class="subtle" style="margin:0 0 10px;">${perfilesIncompletos.length} ${LANG_I==='ca'?'de':'de'} ${(perfilesIncompletosRes.data||[]).length} ${LANG_I==='ca'?'persones':'personas'} ${t.faltaTexto}${perfilesIncompletos.length > 30 ? t.mostrandoPrimeras30 : ''}</p>
         ${incompletosHtml}
       </div>
-    </div>
+    ${carpetaCierra()}
 
+    ${carpetaAbre({ clave: 'adm-sec:historial', icono: '🕘', titulo: t.historialPersonasTitulo, cuenta: historialPersonas.length })}
     <div class="panel-card" style="margin-bottom:16px;">
       <h3>${t.historialPersonasTitulo}</h3>
       <p class="subtle" style="margin:0 0 10px;">${t.historialPersonasDesc}</p>
       ${historialPersonasHtml}
     </div>
+    ${carpetaCierra()}
 
+    ${carpetaAbre({ clave: 'adm-sec:noticias', icono: '📢', titulo: LANG_I==='ca' ? 'Notícies i recordatoris' : 'Noticias y recordatorios', cuenta: (avisosAdminRes.data || []).length })}
     <div class="panel-card" style="margin-bottom:16px;">
       <h3>${LANG_I==='ca' ? 'Notícies i recordatoris (gestió)' : 'Noticias y recordatorios (gestión)'}</h3>
       <p class="subtle" style="margin:0 0 10px;">${LANG_I==='ca' ? 'Els avisos actius es veuen al Panell general de tot el personal.' : 'Los avisos activos se ven en el Panel general de todo el personal.'}</p>
@@ -7960,20 +8076,25 @@ async function renderAdministrador(){
         <button class="primary-btn" onclick="crearAviso()">${LANG_I==='ca'?'➕ Publicar avís':'➕ Publicar aviso'}</button>
       </div>
     </div>
+    ${carpetaCierra()}
 
+    ${carpetaAbre({ clave: 'adm-sec:fuera', icono: '🧭', titulo: t.fueraDelCatalogo, cuenta: '' })}
     <div class="info-box info-box-gold" style="margin-bottom:16px;">
       <div class="info-box-title">${t.fueraDelCatalogo}</div>
       <p style="margin-bottom:12px;">${t.fueraDelCatalogoDesc}</p>
       ${necesidadesHtml}
     </div>
+    ${carpetaCierra()}
 
-    <div class="cards-grid" style="margin-bottom:16px;">
+    ${carpetaAbre({ clave: 'adm-sec:carga', icono: '📊', titulo: t.cargaTrabajoTecnico, cuenta: totalAtenciones })}
       <div class="panel-card">
         <h3>${t.cargaTrabajoTecnico}</h3>
         <p class="subtle" style="margin:0 0 10px;">${t.sobreElTotal} ${totalAtenciones} ${t.atencionesRegistradas}</p>
         ${cargaOrdenada.length ? cargaOrdenada.map(([email,v]) => barRow(nombreTecnico(email), v, maxCarga)).join('') : `<div class="empty-note">${t.sinDatos}</div>`}
       </div>
+    ${carpetaCierra()}
 
+    ${carpetaAbre({ clave: 'adm-sec:personal', icono: '👥', titulo: t.gestionPersonal, cuenta: '' })}
       <div class="panel-card">
         <h3>${t.gestionPersonal}</h3>
         ${staffHtml}
@@ -7983,8 +8104,9 @@ async function renderAdministrador(){
         </div>
         <button class="link-btn" onclick="agregarTecnico()">${t.anadirPlataforma}</button>
       </div>
-    </div>
+    ${carpetaCierra()}
 
+    ${carpetaAbre({ clave: 'adm-sec:oficina', icono: '📍', titulo: LANG_I==='ca' ? 'Ubicació de la oficina' : 'Ubicación de la oficina', cuenta: '' })}
     <div class="panel-card" style="margin-bottom:16px;background:var(--ochre-soft);border-color:var(--ochre);">
       <h3>📍 ${LANG_I==='ca' ? 'Ubicació de la oficina' : 'Ubicación de la oficina'}</h3>
       <p class="subtle" style="margin:0 0 8px;">${window.__configOficina?.direccion || ''}</p>
@@ -7994,12 +8116,15 @@ async function renderAdministrador(){
       <button class="primary-btn" style="background:var(--ochre);" onclick="guardarUbicacionOficina()">${LANG_I==='ca' ? '📍 Guardar la meva ubicació actual com a oficina' : '📍 Guardar mi ubicación actual como oficina'}</button>
       <p class="subtle" style="margin:8px 0 0;font-size:11px;">${LANG_I==='ca' ? "Toca aquest botó estant físicament dins l'oficina, des del mòbil, per capturar la ubicació exacta." : 'Toca este botón estando físicamente dentro de la oficina, desde el móvil, para capturar la ubicación exacta.'}</p>
     </div>
+    ${carpetaCierra()}
 
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:18px;">
-      <p class="subtle" style="margin:0;">${t.fichajesPersonal}</p>
+    ${carpetaAbre({ clave: 'adm-sec:fichajes', icono: '🕒', titulo: t.fichajesPersonal, cuenta: totalFichajes })}
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:6px;">
+      <span></span>
       <div style="display:flex;gap:10px;">
         <button class="link-btn" onclick="exportarFichajesExcel()">⬇️ Excel</button>
         <button class="link-btn" onclick="exportarFichajesPDF()">⬇️ PDF</button>
+        <button class="link-btn" style="color:var(--alert);" onclick="limpiarRegistrosAntiguos('fichajes')">🧹 ${LANG_I==='ca'?'Netejar +24 h':'Limpiar +24 h'}</button>
       </div>
     </div>
     <div class="panel-card" id="admin-fichajes-lista">${renderFilasFichajes(__adminFichajesTodos)}</div>
@@ -8008,12 +8133,15 @@ async function renderAdministrador(){
         ? `<button class="link-btn" onclick="cargarMasFichajes()">${t.cargarTexto} ${Math.min(ADMIN_PAGE_SIZE, totalFichajes - __adminFichajesTodos.length)} ${t.masDeTexto} ${totalFichajes} ${t.enTotalTexto}</button>`
         : ''}
     </div>
+    ${carpetaCierra()}
 
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:18px;">
-      <p class="subtle" style="margin:0;">${LANG_I==='ca' ? 'Sales i reunions' : 'Salas y reuniones'}</p>
+    ${carpetaAbre({ clave: 'adm-sec:salas', icono: '🚪', titulo: LANG_I==='ca' ? 'Sales i reunions' : 'Salas y reuniones', cuenta: totalSalas })}
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:6px;">
+      <span></span>
       <div style="display:flex;gap:10px;">
         <button class="link-btn" onclick="exportarFichajesSalaExcel()">⬇️ Excel</button>
         <button class="link-btn" onclick="exportarFichajesSalaPDF()">⬇️ PDF</button>
+        <button class="link-btn" style="color:var(--alert);" onclick="limpiarRegistrosAntiguos('salas')">🧹 ${LANG_I==='ca'?'Netejar +24 h':'Limpiar +24 h'}</button>
       </div>
     </div>
     <div class="panel-card" id="admin-salas-lista">${renderFilasSalas(__adminSalasTodos)}</div>
@@ -8022,9 +8150,11 @@ async function renderAdministrador(){
         ? `<button class="link-btn" onclick="cargarMasSalas()">${t.cargarTexto} ${Math.min(ADMIN_PAGE_SIZE, totalSalas - __adminSalasTodos.length)} ${t.masDeTexto} ${totalSalas} ${t.enTotalTexto}</button>`
         : ''}
     </div>
+    ${carpetaCierra()}
 
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:18px;">
-      <p class="subtle" style="margin:0;">${LANG_I==='ca' ? 'Traductor en directe' : 'Traductor en directo'}</p>
+    ${carpetaAbre({ clave: 'adm-sec:traductor', icono: '🌐', titulo: LANG_I==='ca' ? 'Traductor en directe' : 'Traductor en directo', cuenta: totalTraductor })}
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:6px;">
+      <span></span>
       <div style="display:flex;gap:10px;">
         <button class="link-btn" onclick="exportarTraductorExcel()">⬇️ Excel</button>
         <button class="link-btn" onclick="exportarTraductorPDF()">⬇️ PDF</button>
@@ -8036,22 +8166,27 @@ async function renderAdministrador(){
         ? `<button class="link-btn" onclick="cargarMasTraductor()">${t.cargarTexto} ${Math.min(ADMIN_PAGE_SIZE, totalTraductor - __adminTraductorTodos.length)} ${t.masDeTexto} ${totalTraductor} ${t.enTotalTexto}</button>`
         : ''}
     </div>
+    ${carpetaCierra()}
 
-    <p class="subtle" style="margin-top:18px;">${t.registroAtencionesDesc}</p>
+    ${carpetaAbre({ clave: 'adm-sec:atenciones', icono: '🗂️', titulo: LANG_I==='ca' ? 'Registre d\'atencions' : 'Registro de atenciones', cuenta: totalAtenciones })}
+    <p class="subtle" style="margin-top:6px;">${t.registroAtencionesDesc}</p>
     <div class="cards-grid" id="admin-atenciones-grid">${renderFilasAtenciones(__adminAtencionesTodas)}</div>
     <div style="text-align:center;margin-top:18px;margin-bottom:24px;" id="admin-cargar-mas-wrap">
       ${totalAtenciones > __adminAtencionesTodas.length
         ? `<button class="link-btn" onclick="cargarMasAtenciones()">${t.cargarTexto} ${Math.min(ADMIN_PAGE_SIZE, totalAtenciones - __adminAtencionesTodas.length)} ${t.masDeTexto} ${totalAtenciones} ${t.enTotalTexto}</button>`
         : ''}
     </div>
+    ${carpetaCierra()}
 
-    <p class="subtle" style="margin-top:18px;">${t.registroActuacionesDesc}</p>
+    ${carpetaAbre({ clave: 'adm-sec:actuaciones', icono: '📝', titulo: LANG_I==='ca' ? 'Registre d\'actuacions (expedients)' : 'Registro de actuaciones (expedientes)', cuenta: totalActuaciones })}
+    <p class="subtle" style="margin-top:6px;">${t.registroActuacionesDesc}</p>
     <div class="cards-grid" id="admin-actuaciones-grid">${renderFilasActuacionesAdmin(__adminActuacionesTodas)}</div>
     <div style="text-align:center;margin-top:18px;margin-bottom:24px;" id="admin-actuaciones-cargar-mas-wrap">
       ${totalActuaciones > __adminActuacionesTodas.length
         ? `<button class="link-btn" onclick="cargarMasActuacionesAdmin()">${t.cargarTexto} ${Math.min(ADMIN_PAGE_SIZE, totalActuaciones - __adminActuacionesTodas.length)} ${t.masDeTexto} ${totalActuaciones} ${t.enTotalTexto}</button>`
         : ''}
     </div>
+    ${carpetaCierra()}
   `;
 
   activarBarras();
