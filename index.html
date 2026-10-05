@@ -5548,18 +5548,22 @@ async function guardarAsistenciaProyecto(proyectoId){
     if(error){ alert(error.message); return; }
   }
   if(noMarcados.length){
-    await sb.from('proyecto_asistencias').delete().eq('proyecto_id', proyectoId).eq('fecha', fecha).in('usuario_id', noMarcados);
+    const { error: errorBorrado } = await sb.from('proyecto_asistencias').delete().eq('proyecto_id', proyectoId).eq('fecha', fecha).in('usuario_id', noMarcados);
+    if(errorBorrado){ alert((esCA ? 'No s\'ha pogut desmarcar l\'assistència: ' : 'No se pudo desmarcar la asistencia: ') + errorBorrado.message); return; }
   }
   window.__fechaAsistenciaProyecto = fecha;
   verProyecto(proyectoId);
 }
 
-async function verProyecto(proyectoId){
+async function verProyecto(proyectoId, opts){
+  opts = opts || {};
   window.__proyectoActual = proyectoId;
   const esCA = LANG_I === 'ca';
   const wrap = document.getElementById('proyecto-detalle-wrap');
-  wrap.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
-  wrap.scrollIntoView({ behavior:'smooth' });
+  if(!opts.silencioso){
+    wrap.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+    wrap.scrollIntoView({ behavior:'smooth' });
+  }
 
   try {
 
@@ -5599,8 +5603,8 @@ async function verProyecto(proyectoId){
         <div class="panel-stat-row">
           <span>${nombresBeneficiarios[b.usuario_id] || (esCA?'Sense nom':'Sin nombre')}</span>
           <span style="display:flex;gap:8px;">
-            ${b.usuario_id ? `<button class="link-btn" style="font-size:11px;" onclick="verPersonaStaff('${b.usuario_id}','personas')">${esCA?'Veure':'Ver'}</button>` : ''}
-            <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="quitarPersonaDeProyecto('${b.id}');setTimeout(()=>verProyecto('${proyectoId}'),300)">${esCA?'Treure':'Quitar'}</button>
+            ${b.usuario_id ? `<button class="link-btn" style="font-size:11px;" onclick="verPersonaDesdeProyecto('${b.usuario_id}','${proyectoId}')">${esCA?'Veure':'Ver'}</button>` : ''}
+            <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="quitarParticipanteDeProyecto('${b.id}','${proyectoId}')">${esCA?'Treure':'Quitar'}</button>
           </span>
         </div>`).join('')
     : `<div class="empty-note">${esCA?'Encara no hi ha beneficiaris.':'Todavía no hay beneficiarios.'}</div>`;
@@ -5609,7 +5613,7 @@ async function verProyecto(proyectoId){
     ? profesionales.map(pf => `
         <div class="panel-stat-row">
           <span>${(staffLista||[]).find(s=>s.email===pf.tecnico_email)?.nombre || pf.tecnico_email}</span>
-          <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="quitarPersonaDeProyecto('${pf.id}');setTimeout(()=>verProyecto('${proyectoId}'),300)">${esCA?'Treure':'Quitar'}</button>
+          <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="quitarParticipanteDeProyecto('${pf.id}','${proyectoId}')">${esCA?'Treure':'Quitar'}</button>
         </div>`).join('')
     : `<div class="empty-note">${esCA?'Encara no hi ha professionals assignats.':'Todavía no hay profesionales asignados.'}</div>`;
 
@@ -5629,8 +5633,27 @@ async function verProyecto(proyectoId){
         </div>`).join('')
     : `<div class="empty-note">${esCA?'Encara no s\'ha enviat cap avís.':'Todavía no se ha enviado ningún aviso.'}</div>`;
 
-  const seguimientosHtml = (seguimientos && seguimientos.length)
-    ? seguimientos.map(renderActuacionCard).join('')
+  window.__proyectoCtx = { id: proyectoId, nombre: proyecto.nombre, beneficiarios: [] };
+  const nombresSeg = Object.assign({}, nombresBeneficiarios);
+  const faltanNombres = [...new Set((seguimientos || []).map(a => a.usuario_id).filter(Boolean))].filter(id => !(id in nombresSeg));
+  if(faltanNombres.length){
+    const { data: pfSeg } = await sb.from('perfiles').select('id, nombre_completo').in('id', faltanNombres);
+    (pfSeg || []).forEach(x => { nombresSeg[x.id] = x.nombre_completo; });
+  }
+  window.__proyectoCtx.beneficiarios = beneficiarios.filter(b => b.usuario_id).map(b => ({ id: b.usuario_id, nombre: nombresBeneficiarios[b.usuario_id] || (esCA?'Sense nom':'Sin nombre') }));
+  const gruposSeg = {};
+  (seguimientos || []).forEach(a => { const k = a.usuario_id || '__sin__'; (gruposSeg[k] = gruposSeg[k] || []).push(a); });
+  Object.values(gruposSeg).forEach(l => l.sort((a, b) => new Date(a.fecha || 0) - new Date(b.fecha || 0)));
+  const ordenSeg = Object.entries(gruposSeg).sort((a, b) => Math.max(...b[1].map(i => new Date(i.fecha || 0).getTime())) - Math.max(...a[1].map(i => new Date(i.fecha || 0).getTime())));
+  const seguimientosHtml = ordenSeg.length
+    ? ordenSeg.map(([uid, lista]) => `
+        <div style="margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong>${uid === '__sin__' ? (esCA?'Sense persona vinculada':'Sin persona vinculada') : escAttr(nombresSeg[uid] || (esCA?'Sense nom':'Sin nombre'))}</strong>
+            ${uid !== '__sin__' ? `<button class="link-btn" style="font-size:11px;" onclick="verPersonaDesdeProyecto('${uid}','${proyectoId}')">${esCA?'Veure':'Ver'}</button>` : ''}
+          </div>
+          ${lista.map(ac => actuacionLineaHtml(ac, { vincular: !ac.usuario_id })).join('')}
+        </div>`).join('')
     : `<div class="empty-note">${esCA?'Encara no hi ha seguiments vinculats a aquest projecte.':'Todavía no hay seguimientos vinculados a este proyecto.'}</div>`;
 
   const fechaAsistenciaSel = window.__fechaAsistenciaProyecto || new Date().toISOString().slice(0,10);
@@ -5661,6 +5684,9 @@ async function verProyecto(proyectoId){
         <button class="link-btn" onclick="document.getElementById('proyecto-detalle-wrap').innerHTML='';window.__proyectoActual=null;__docsProyectoPendientes=[];">✕ ${esCA?'Tancar':'Cerrar'}</button>
       </div>
       ${proyecto.descripcion ? `<p class="subtle">${proyecto.descripcion}</p>` : ''}
+      <div id="proyecto-nav" style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 10px;">
+        ${[['proyecto-card-beneficiarios','👥 ' + (esCA?'Beneficiaris':'Beneficiarios')],['proyecto-card-asistencia','📆 ' + (esCA?'Assistència':'Asistencia')],['proyecto-card-seguimiento','📌 ' + (esCA?'Seguiment':'Seguimiento')],['proyecto-docs-card','📎 ' + (esCA?'Documents':'Documentos')],['proyecto-card-profesionales','👨‍💼 ' + (esCA?'Professionals':'Profesionales')],['proyecto-card-actividades','📋 ' + (esCA?'Activitats':'Actividades')],['proyecto-card-avisos','📢 ' + (esCA?'Avisos':'Avisos')]].map(([id, txt]) => `<button class="link-btn" style="font-size:12px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;" onclick="document.getElementById('${id}').scrollIntoView({behavior:'smooth',block:'start'})">${txt}</button>`).join('')}
+      </div>
       <button class="primary-btn" id="proyecto-btn-subir-arriba" style="width:auto;margin:6px 0 10px;" onclick="irASubirDocumentosProyecto()">⬆️ ${esCA?'Pujar documents del projecte':'Subir documentos del proyecto'}${(documentosProyecto && documentosProyecto.length) ? ` · ${documentosProyecto.length}` : ''}</button><br>
       <select onchange="cambiarEstadoProyecto('${proyectoId}', this.value)">
         <option value="activo" ${proyecto.estado==='activo'?'selected':''}>${esCA?'Actiu':'Activo'}</option>
@@ -5670,13 +5696,30 @@ async function verProyecto(proyectoId){
       <button class="link-btn" style="color:var(--alert);margin-left:8px;" onclick="borrarProyecto('${proyectoId}')">${esCA?'Esborrar projecte':'Borrar proyecto'}</button>
     </div>
 
-    <div class="panel-card">
-      <h3>👥 ${esCA?'Beneficiaris':'Beneficiarios'}</h3>
+    <div class="panel-card" id="proyecto-card-beneficiarios">
+      <h3>👥 ${esCA?'Beneficiaris':'Beneficiarios'}${beneficiarios.length ? ` (${beneficiarios.length})` : ''}</h3>
       ${beneficiariosHtml}
-      <p class="subtle" style="margin:10px 0 4px;">${esCA?'Per afegir un beneficiari, ves a la seva fitxa (Persones usuàries) i afegeix-lo des de la pestanya \"Projectes\".':'Para añadir un beneficiario, ve a su ficha (Personas usuarias) y añádelo desde la pestaña \"Proyectos\".'}</p>
+      <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px;">
+        <div class="field" style="margin-bottom:6px;">
+          <label>➕ ${esCA?'Afegir beneficiaris':'Añadir beneficiarios'}</label>
+          <input type="text" id="benef-buscar" placeholder="🔎 ${esCA?'Nom, DNI/NIE o telèfon…':'Nombre, DNI/NIE o teléfono…'}" oninput="buscarBeneficiarioProyecto(this.value,'${proyectoId}')">
+        </div>
+        <div id="benef-resultados"></div>
+        <p class="subtle" style="font-size:12px;margin:6px 0 0;">${esCA?'No hi surt?':'¿No aparece?'} <button class="link-btn" style="font-size:12px;" onclick="showScreen('personas');renderPersonasScreen()">${esCA?'Donar-la d\'alta a Persones usuàries':'Darla de alta en Personas usuarias'}</button></p>
+      </div>
     </div>
 
-    <div class="panel-card">
+    <div class="panel-card" id="proyecto-card-seguimiento">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+        <h3 style="margin:0;">📌 ${esCA?'Seguiment del projecte':'Seguimiento del proyecto'}${(seguimientos && seguimientos.length) ? ` (${seguimientos.length})` : ''}</h3>
+        ${beneficiarios.filter(b => b.usuario_id).length ? `<button class="primary-btn" style="width:auto;margin:0;padding:8px 14px;font-size:13px;" onclick="abrirSeguimientoProyecto('${proyectoId}')">➕ ${esCA?'Registrar seguiment':'Registrar seguimiento'}</button>` : ''}
+      </div>
+      <p class="subtle" style="margin:0 0 10px;">${esCA?'Cada persona surt una sola vegada, amb el treballat de més antic a més recent. Són les mateixes actuacions del seu expedient: no cal apuntar-les dues vegades.':'Cada persona sale una sola vez, con lo trabajado de más antiguo a más reciente. Son las mismas actuaciones de su expediente: no hay que apuntarlas dos veces.'}</p>
+      ${beneficiarios.filter(b => b.usuario_id).length ? '' : `<p class="subtle" style="margin:0 0 10px;">${esCA?'Afegeix primer beneficiaris al projecte per poder registrar seguiments.':'Añade primero beneficiarios al proyecto para poder registrar seguimientos.'}</p>`}
+      ${seguimientosHtml}
+    </div>
+
+    <div class="panel-card" id="proyecto-card-asistencia">
       <h3>📆 ${esCA?'Assistència':'Asistencia'}</h3>
       <div class="field">
         <label>${esCA?'Dia':'Día'}</label>
@@ -5725,7 +5768,7 @@ async function verProyecto(proyectoId){
         : (errorDocsProyecto ? '' : `<div class="empty-note">${esCA?'Encara no hi ha documents en aquest projecte.':'Todavía no hay documentos en este proyecto.'}</div>`)}
     </div>
 
-    <div class="panel-card">
+    <div class="panel-card" id="proyecto-card-profesionales">
       <h3>👨‍💼 ${esCA?'Professionals':'Profesionales'}</h3>
       ${profesionalesHtml}
       <div style="display:flex;gap:8px;margin-top:8px;">
@@ -5737,13 +5780,7 @@ async function verProyecto(proyectoId){
       </div>
     </div>
 
-    <div class="panel-card">
-      <h3>📌 ${esCA?'Seguiments (actuacions vinculades)':'Seguimientos (actuaciones vinculadas)'}</h3>
-      ${seguimientosHtml}
-      <p class="subtle" style="margin-top:8px;">${esCA?'Vincula una actuació a aquest projecte des de \"Seguiment i activitats\", triant aquest projecte en registrar-la.':'Vincula una actuación a este proyecto desde \"Seguimiento y actividades\", eligiendo este proyecto al registrarla.'}</p>
-    </div>
-
-    <div class="panel-card">
+    <div class="panel-card" id="proyecto-card-actividades">
       <h3>📋 ${esCA?'Activitats':'Actividades'}</h3>
       ${actividadesHtml}
       <div class="doc-upload-row" style="margin-top:10px;">
@@ -5754,7 +5791,7 @@ async function verProyecto(proyectoId){
       </div>
     </div>
 
-    <div class="panel-card">
+    <div class="panel-card" id="proyecto-card-avisos">
       <h3>📢 ${esCA?'Avisos a tots els participants':'Avisos a todos los participantes'}</h3>
       <p class="subtle" style="margin:0 0 8px;">${esCA
         ? 'Es guarda com a av\u00eds i apareix a "Mi espacio" de cada beneficiari a Logos Acompanya. Per als professionals, avisa\'ls directament.'
@@ -5770,9 +5807,110 @@ async function verProyecto(proyectoId){
       ` : ''}
     </div>
   `;
+  if(opts.silencioso && window.__benefBusquedaTexto){
+    const inputBenef = document.getElementById('benef-buscar');
+    if(inputBenef){ inputBenef.value = window.__benefBusquedaTexto; buscarBeneficiarioProyecto(window.__benefBusquedaTexto, proyectoId, true); }
+  } else { window.__benefBusquedaTexto = ''; }
   } catch(e) {
     wrap.innerHTML = `<div class="panel-card"><div class="empty-note">${esCA?'Hi ha hagut un error inesperat':'Ha habido un error inesperado'}: ${e.message}</div></div>`;
   }
+}
+
+
+// ---------- Proyectos: añadir beneficiarios y registrar seguimiento sin salir del proyecto ----------
+let __benefTimeout = null;
+
+function verPersonaDesdeProyecto(usuarioId, proyectoId){
+  window.__volverAProyecto = proyectoId;
+  verPersonaStaff(usuarioId, 'proyectos');
+}
+
+function buscarBeneficiarioProyecto(texto, proyectoId, inmediato){
+  window.__benefBusquedaTexto = texto;
+  clearTimeout(__benefTimeout);
+  const caja = document.getElementById('benef-resultados');
+  if(!caja) return;
+  if(!texto || texto.trim().length < 2){ caja.innerHTML = ''; return; }
+  const ejecutar = async () => {
+    const esCA = LANG_I === 'ca';
+    const q = texto.trim().replace(/[,()%*]/g, ' ');
+    let res = await sb.from('perfiles').select('id, nombre_completo, municipio, telefono').or(`nombre_completo.ilike.%${q}%,dni_nie.ilike.%${q}%,telefono.ilike.%${q}%`).limit(10);
+    if(res.error) res = await sb.from('perfiles').select('id, nombre_completo, municipio, telefono').ilike('nombre_completo', `%${q}%`).limit(10);
+    if(res.error){ caja.innerHTML = `<div class="empty-note">${escAttr(res.error.message)}</div>`; return; }
+    const { data: part } = await sb.from('proyecto_participantes').select('usuario_id').eq('proyecto_id', proyectoId).eq('rol', 'beneficiario');
+    const ya = new Set((part || []).map(p => p.usuario_id));
+    const lista = (res.data || []).filter(p => !ya.has(p.id));
+    const yaEstan = (res.data || []).length - lista.length;
+    caja.innerHTML = (lista.length
+      ? lista.map(p => `
+        <div class="panel-stat-row" style="align-items:center;">
+          <span><strong>${escAttr(p.nombre_completo || (esCA?'Sense nom':'Sin nombre'))}</strong><br><span class="subtle" style="font-size:11.5px;margin:0;">${escAttr(p.municipio || '')}${p.telefono ? ' · ' + escAttr(p.telefono) : ''}</span></span>
+          <button class="primary-btn" style="width:auto;margin:0;padding:6px 14px;font-size:12.5px;" data-id="${p.id}" onclick="anadirBeneficiarioAProyecto(this.dataset.id,'${proyectoId}')">➕ ${esCA?'Afegir':'Añadir'}</button>
+        </div>`).join('')
+      : `<div class="empty-note">${esCA?'Cap persona nova amb aquesta cerca.':'Ninguna persona nueva con esa búsqueda.'}</div>`)
+      + (yaEstan ? `<p class="subtle" style="font-size:12px;margin:4px 0 0;">${yaEstan} ${esCA?(yaEstan === 1 ? 'persona ja és al projecte.' : 'persones ja són al projecte.'):(yaEstan === 1 ? 'persona ya está en el proyecto.' : 'personas ya están en el proyecto.')}</p>` : '');
+  };
+  if(inmediato) ejecutar(); else __benefTimeout = setTimeout(ejecutar, 300);
+}
+
+async function anadirBeneficiarioAProyecto(usuarioId, proyectoId){
+  const esCA = LANG_I === 'ca';
+  const { data: yaEsta } = await sb.from('proyecto_participantes').select('id').eq('proyecto_id', proyectoId).eq('usuario_id', usuarioId).eq('rol', 'beneficiario').maybeSingle();
+  if(!yaEsta){
+    const { error } = await sb.from('proyecto_participantes').insert({ proyecto_id: proyectoId, rol: 'beneficiario', usuario_id: usuarioId, anadido_por_email: CURRENT_USER.email });
+    if(error){ alert((esCA?'No s\'ha pogut afegir: ':'No se pudo añadir: ') + error.message); return; }
+  }
+  await verProyecto(proyectoId, { silencioso: true });
+}
+
+async function quitarParticipanteDeProyecto(participacionId, proyectoId){
+  const esCA = LANG_I === 'ca';
+  if(!confirm(esCA ? 'Segur que vols treure aquesta persona del projecte?' : '¿Seguro que quieres quitar a esta persona del proyecto?')) return;
+  const { error } = await sb.from('proyecto_participantes').delete().eq('id', participacionId);
+  if(error){ alert((esCA?'No s\'ha pogut treure: ':'No se pudo quitar: ') + error.message); return; }
+  await verProyecto(proyectoId, { silencioso: true });
+}
+
+function cerrarSeguimientoOverlay(){ const o = document.getElementById('seg-overlay'); if(o) o.remove(); }
+
+function abrirSeguimientoProyecto(proyectoId){
+  const esCA = LANG_I === 'ca'; const t = TI[LANG_I];
+  const ctx = window.__proyectoCtx;
+  if(!ctx || ctx.id !== proyectoId || !ctx.beneficiarios.length) return;
+  cerrarSeguimientoOverlay();
+  const ov = document.createElement('div');
+  ov.id = 'seg-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,15,20,.55);z-index:400;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto;';
+  ov.innerHTML = `
+    <div class="panel-card" style="background:var(--paper);width:100%;max-width:480px;margin:auto;opacity:1;transform:none;animation:none;">
+      <h3 style="margin-top:0;">📌 ${esCA?'Registrar seguiment':'Registrar seguimiento'} · ${escAttr(ctx.nombre)}</h3>
+      <div class="field"><label>${esCA?'Persona':'Persona'} *</label>
+        <select id="seg-persona">${ctx.beneficiarios.map(b => `<option value="${b.id}">${escAttr(b.nombre)}</option>`).join('')}</select></div>
+      <div class="field"><label>${esCA?'Data':'Fecha'}</label><input type="date" id="seg-fecha" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div class="field"><label>${esCA?'Què s\'ha treballat? *':'¿Qué se ha trabajado? *'}</label><textarea id="seg-descripcion" rows="3" placeholder="${esCA?'En poques paraules':'En pocas palabras'}"></textarea></div>
+      <div class="field"><label>${esCA?'Resultat':'Resultado'}</label>
+        <select id="seg-resultado"><option value="">—</option><option value="conseguido">${t.conseguido}</option><option value="en_tramite">${t.enTramite}</option><option value="no_conseguido">${t.noConseguido}</option></select></div>
+      <div class="field"><label>${esCA?'Proper pas':'Próximo paso'}</label><input type="text" id="seg-proximo"></div>
+      <button class="primary-btn" onclick="guardarSeguimientoProyecto('${proyectoId}')">${esCA?'Desar':'Guardar'}</button>
+      <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="cerrarSeguimientoOverlay()">${esCA?'Cancel·lar':'Cancelar'}</button>
+    </div>`;
+  document.body.appendChild(ov);
+  setTimeout(() => { const d = document.getElementById('seg-descripcion'); if(d) d.focus(); }, 60);
+}
+
+async function guardarSeguimientoProyecto(proyectoId){
+  const esCA = LANG_I === 'ca';
+  const ctx = window.__proyectoCtx;
+  const v = id => document.getElementById(id).value.trim();
+  if(!v('seg-persona') || !v('seg-descripcion')){ alert(esCA ? 'Cal triar la persona i explicar què s\'ha treballat.' : 'Hay que elegir la persona y explicar qué se ha trabajado.'); return; }
+  const { error } = await sb.from('actuaciones').insert({
+    usuario_id: v('seg-persona'), tecnico_email: CURRENT_USER.email, fecha: v('seg-fecha') || new Date().toISOString().slice(0,10),
+    categoria: ctx ? ctx.nombre : null, descripcion: v('seg-descripcion'), resultado: v('seg-resultado') || null,
+    proximo_paso: v('seg-proximo') || null, proyecto_id: proyectoId
+  });
+  if(error){ alert((esCA?'No s\'ha pogut desar: ':'No se pudo guardar: ') + error.message); return; }
+  cerrarSeguimientoOverlay();
+  await verProyecto(proyectoId, { silencioso: true });
 }
 
 async function anadirProfesionalAProyecto(proyectoId){
@@ -5896,7 +6034,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-05 · v9 (documentos de proyecto)';
+const APP_VERSION_INTRANET = '2026-10-05 · v11 (proyecto: beneficiarios y seguimiento)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -6668,6 +6806,7 @@ async function verPersonaStaff(usuarioId, origen){
     agenda: "showScreen('agenda');renderAgendaCitas()",
     personas: "showScreen('personas');renderPersonasScreen()",
     seguimiento: "showScreen('seguimiento');renderSeguimientoScreen()",
+    proyectos: "showScreen('proyectos');Promise.resolve(renderProyectosScreen()).then(()=>{ if(window.__volverAProyecto) verProyecto(window.__volverAProyecto); })",
     jovenes: "showScreen('jovenes');renderJovenesScreen('menores')"
   };
   btnVolver.setAttribute('onclick', destinos[origen] || "showScreen('panel');renderPanelGeneral()");
