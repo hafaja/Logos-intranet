@@ -79,6 +79,8 @@
   .field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:4px;}
   .field input,.field select,.field textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-family:var(--font-body);font-size:14px;color:var(--ink);background:var(--paper);}
   .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft);}
+  .field input[type=radio],.field input[type=checkbox]{width:auto;padding:0;border:none;box-shadow:none;margin:0;accent-color:var(--gold);}
+  .field label:has(> input[type=radio]),.field label:has(> input[type=checkbox]){font-weight:500;color:var(--ink);}
   .checkbox-row{display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:13px;cursor:pointer;}
   .checkbox-row input{margin-top:3px;flex-shrink:0;}
 
@@ -171,6 +173,10 @@
   .conta-tabla tr.sec td{background:var(--bg);font-weight:800;text-align:left;}
   .conta-tabla tr.tot td{font-weight:800;}
   .conta-pos{color:var(--good);} .conta-neg{color:var(--alert);}
+  .conta-tabla.simple th:nth-child(2),.conta-tabla.simple td:nth-child(2){text-align:right;white-space:nowrap;}
+  .conta-tabla.cuotas{min-width:760px;}
+  .conta-tabla.cuotas th,.conta-tabla.cuotas td{text-align:center;padding:6px 3px;white-space:normal;}
+  .conta-tabla.cuotas th:first-child,.conta-tabla.cuotas td:first-child{text-align:left;min-width:130px;}
   .ptab-content.active{display:block;}
 
   /* Dashboard "Inicio" — barra superior, accesos rápidos, actividad y eventos */
@@ -1049,7 +1055,7 @@ const JA_DOC = {
     padre: `Padre`, madre: `Madre`, tutor: `Tutor/a legal`,
     delMenor: `del/de la menor`, autorizoSimple: `AUTORIZO su participación en la siguiente actividad:`,
     tipoAct: `Tipo de actividad`, lugar: `Lugar`, fecha: `Fecha`, horario: `Horario aproximado`, de: `de`, a: `a`,
-    puntoSalida: `Punto de salida`, puntoRegreso: `Punto de regreso`,
+    puntoSalida: `Punto de salida`, puntoRegreso: `Punto de regreso`, queLlevar: `Qué hay que llevar`, plazoAut: `Plazo para autorizar`,
     declaro: `Declaro que he sido informado/a sobre la actividad y autorizo al menor a participar en ella.`,
     contactoIntro: `Asimismo, facilito los siguientes datos de contacto para cualquier comunicación necesaria durante la actividad:`,
     telefono: `Teléfono del padre/madre/tutor`, telAlt: `Teléfono alternativo`, observaciones: `Observaciones o información relevante`,
@@ -1074,7 +1080,7 @@ const JA_DOC = {
     padre: `Pare`, madre: `Mare`, tutor: `Tutor/a legal`,
     delMenor: `del/de la menor`, autorizoSimple: `AUTORITZO la seva participació en la següent activitat:`,
     tipoAct: `Tipus d'activitat`, lugar: `Lloc`, fecha: `Data`, horario: `Horari aproximat`, de: `de`, a: `a`,
-    puntoSalida: `Punt de sortida`, puntoRegreso: `Punt de tornada`,
+    puntoSalida: `Punt de sortida`, puntoRegreso: `Punt de tornada`, queLlevar: `Què cal portar`, plazoAut: `Termini per autoritzar`,
     declaro: `Declaro que he estat informat/da sobre l'activitat i autoritzo el menor a participar-hi.`,
     contactoIntro: `Així mateix, facilito les següents dades de contacte per a qualsevol comunicació necessària durant l'activitat:`,
     telefono: `Telèfon del pare/mare/tutor`, telAlt: `Telèfon alternatiu`, observaciones: `Observacions o informació rellevant`,
@@ -1216,7 +1222,7 @@ function tarjetaActividadHtml(a, esCA){
         <span style="background:var(--ochre-soft);color:#7A4A1F;border-radius:999px;padding:2px 10px;font-size:11.5px;font-weight:700;">${escAttr(jaTipoLabel(a.tipo, a.tipo_otro, esCA))}</span>
       </div>
       ${dato(D.lugar, a.lugar)}${dato(D.fecha, jaActividadFechas(a, esCA))}${dato(D.horario, horario)}
-      ${dato(D.puntoSalida, a.punto_salida)}${dato(D.puntoRegreso, a.punto_regreso)}${dato(D.transporte, a.transporte)}
+      ${dato(D.puntoSalida, a.punto_salida)}${dato(D.puntoRegreso, a.punto_regreso)}${dato(D.transporte, a.transporte)}${dato(D.queLlevar, a.que_llevar)}${dato(D.plazoAut, a.plazo_autorizacion ? jaFecha(a.plazo_autorizacion, esCA) : '')}
       ${a.descripcion ? `<div style="font-size:13px;margin-top:6px;">${escAttr(a.descripcion)}</div>` : ''}
     </div>`;
 }
@@ -1384,6 +1390,8 @@ function abrirFormActividad(id){
       <div class="field"><label>${D.puntoRegreso}</label><input type="text" id="ja-punto-regreso" value="${val('punto_regreso')}"></div>
       <div class="field"><label>${D.transporte}</label><input type="text" id="ja-transporte" value="${val('transporte')}"></div>
       <div class="field"><label>${esCA?'Descripció / informació per a les famílies':'Descripción / información para las familias'}</label><textarea id="ja-descripcion" rows="3">${val('descripcion')}</textarea></div>
+      <div class="field"><label>${esCA?'Què cal portar (per als missatges i les famílies)':'Qué hay que llevar (para los mensajes y las familias)'}</label><textarea id="ja-que-llevar" rows="2" placeholder="${esCA?'Ex: tovallola, crema solar, aigua i esmorzar':'Ej: toalla, crema solar, agua y almuerzo'}">${val('que_llevar')}</textarea></div>
+      <div class="field"><label>${esCA?'Termini per signar l\'autorització (opcional)':'Plazo para firmar la autorización (opcional)'}</label><input type="date" id="ja-plazo" value="${val('plazo_autorizacion')}"></div>
       <label class="checkbox-row"><input type="checkbox" id="ja-completo" ${a.formulario_completo?'checked':''}> ${esCA?'Formulari complet (campaments o sortides llargues: dades de salut i contacte d\'emergència)':'Formulario completo (campamentos o salidas largas: datos de salud y contacto de emergencia)'}</label>
       <div style="margin-top:10px;display:flex;gap:12px;"><button class="primary-btn" style="width:auto;margin:0;" onclick="guardarActividad()">${esCA?'Desar':'Guardar'}</button>
         <button class="link-btn" onclick="document.getElementById('ja-form-wrap').innerHTML=''">${esCA?'Cancel·lar':'Cancelar'}</button></div>
@@ -1401,12 +1409,18 @@ async function guardarActividad(){
     lugar: v('ja-lugar') || null, fecha_salida: v('ja-fecha-salida') || null, fecha_regreso: v('ja-fecha-regreso') || null,
     hora_salida: v('ja-hora-salida') || null, hora_regreso: v('ja-hora-regreso') || null,
     punto_salida: v('ja-punto-salida') || null, punto_regreso: v('ja-punto-regreso') || null, transporte: v('ja-transporte') || null,
-    descripcion: v('ja-descripcion') || null, formulario_completo: document.getElementById('ja-completo').checked
+    descripcion: v('ja-descripcion') || null, formulario_completo: document.getElementById('ja-completo').checked,
+    que_llevar: v('ja-que-llevar') || null, plazo_autorizacion: v('ja-plazo') || null
   };
   const id = v('ja-id');
-  const { error } = id
-    ? await sb.from('actividades_jovenes').update(fila).eq('id', id)
-    : await sb.from('actividades_jovenes').insert({ ...fila, estado:'abierta', creado_por_email: CURRENT_USER.email });
+  const guardar = f => id ? sb.from('actividades_jovenes').update(f).eq('id', id) : sb.from('actividades_jovenes').insert({ ...f, estado:'abierta', creado_por_email: CURRENT_USER.email });
+  let { error } = await guardar(fila);
+  if(error && /que_llevar|plazo_autorizacion/.test(error.message)){
+    // La base de datos aún no tiene los dos campos nuevos: se guarda lo demás y se avisa
+    const { que_llevar, plazo_autorizacion, ...basica } = fila;
+    ({ error } = await guardar(basica));
+    if(!error && (que_llevar || plazo_autorizacion)) alert(esCA ? 'L\'activitat s\'ha desat, però "què cal portar" i el termini no: cal executar l\'SQL de comunicació amb famílies a Supabase.' : 'La actividad se ha guardado, pero "qué hay que llevar" y el plazo no: hay que ejecutar el SQL de comunicación con familias en Supabase.');
+  }
   if(error){ alert((esCA?'No s\'ha pogut desar: ':'No se pudo guardar: ') + error.message); return; }
   renderJovenesScreen('actividades');
 }
@@ -1469,6 +1483,7 @@ async function verAutorizacionesActividad(actId){
     return `<div class="panel-stat-row" style="align-items:center;"><span><strong>${escAttr(m.nombre_completo)}</strong><br><span class="subtle" style="font-size:11.5px;margin:0;">${escAttr(f.nombre_completo || '—')}${f.telefono ? ' · ' + escAttr(f.telefono) : ''}</span></span>
       ${f.telefono ? `<span style="display:flex;gap:10px;"><a class="link-btn" style="font-size:12px;" href="tel:${escAttr(f.telefono.replace(/[^\d+]/g,''))}">📞</a><a class="link-btn" style="font-size:12px;color:#1E9E52;" target="_blank" rel="noopener" href="${escAttr(enlaceWhatsApp(f.telefono, f.nombre_completo))}">💬</a></span>` : ''}</div>`; };
   det.innerHTML = `
+    <div id="jm-zona"></div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin:14px 0 4px;">
       <strong>${vigentes.length} ${esCA?'autoritzacions vigents':'autorizaciones vigentes'}</strong>
       <button class="link-btn" onclick="exportarAutorizacionesExcel('${actId}')">⬇️ Excel</button>
@@ -1477,6 +1492,7 @@ async function verAutorizacionesActividad(actId){
     ${__jaiAutorizaciones.length ? __jaiAutorizaciones.map(filaAut).join('') : `<div class="empty-note">${esCA?'Encara no hi ha cap autorització.':'Todavía no hay ninguna autorización.'}</div>`}
     <div class="section-label" style="margin-top:20px;">⏳ ${esCA?'Menors registrats que encara no han autoritzat':'Menores registrados que aún no han autorizado'} (${pendientes.length})</div>
     <div class="panel-card">${pendientes.length ? pendientes.map(filaPend).join('') : `<div class="empty-note" style="margin:0;">${esCA?'Tots els menors registrats han autoritzat.':'Todos los menores registrados han autorizado.'}</div>`}</div>`;
+  jmPintarZona(actId, vigentes.length, pendientes.length);
 }
 
 function descargarAutorizacionStaff(id){
@@ -1531,17 +1547,17 @@ async function renderJovenesMenores(cont){
   (aut.data || []).forEach(x => { if(x.estado === 'autorizada') nAut[x.menor_id] = (nAut[x.menor_id] || 0) + 1; });
   const porFamilia = {};
   lista.forEach(m => { (porFamilia[m.familiar_usuario_id] = porFamilia[m.familiar_usuario_id] || []).push(m); });
-  box.innerHTML = lista.length ? Object.entries(porFamilia).map(([fid, ms]) => {
+  box.innerHTML = (lista.length ? `<div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><button class="primary-btn" style="width:auto;margin:0;" onclick="jmAbrir({audiencia:'todas'})">💬 ${esCA?'Escriure a les famílies':'Escribir a las familias'}</button></div>` : '') + (lista.length ? Object.entries(porFamilia).map(([fid, ms]) => {
     const f = fam[fid] || {};
     return `<div class="panel-card" style="margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
         <h3 style="margin:0;">${escAttr(f.nombre_completo || (esCA?'Sense nom':'Sin nombre'))}</h3>
-        <button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${fid}','jovenes')">${TI[LANG_I].verInfoCompleta}</button>
+        <span style="display:flex;gap:10px;align-items:center;"><button class="link-btn" style="font-size:12px;color:#1E9E52;" onclick="jmAbrir({familiaId:'${fid}',audiencia:'una'})">💬 ${esCA?'Escriure':'Escribir'}</button><button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${fid}','jovenes')">${TI[LANG_I].verInfoCompleta}</button></span>
       </div>
       ${f.telefono ? `<div class="subtle" style="margin:2px 0 6px;">📞 ${escAttr(f.telefono)}</div>` : ''}
       ${ms.map(m => `<div class="panel-stat-row"><span><strong>${escAttr(m.nombre_completo)}</strong>${m.fecha_nacimiento ? ` <span class="subtle" style="font-size:12px;">· ${jaEdad(m.fecha_nacimiento)} ${esCA?'anys':'años'}</span>` : ''}</span><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">${chipSalida(m.id)}<span class="subtle" style="font-size:12px;">${nAut[m.id] || 0} ${esCA?'activitats':'actividades'}</span></span></div>`).join('')}
     </div>`;
-  }).join('') : `<div class="empty-note">${esCA?'Encara no hi ha cap família amb menors registrats.':'Todavía no hay ninguna familia con menores registrados.'}</div>`;
+  }).join('') : `<div class="empty-note">${esCA?'Encara no hi ha cap família amb menors registrats.':'Todavía no hay ninguna familia con menores registrados.'}</div>`);
 }
 
 // ---- Pestaña "Salir solo/a": quién puede salir solo/a del centro ----
@@ -6295,6 +6311,278 @@ async function limpiarRegistrosAntiguos(tipo){
   renderAdministrador();
 }
 
+// ================= JÓVENES EN ACCIÓN · COMUNICACIÓN CON LAS FAMILIAS =================
+const JM_MARCADORES = ['familia', 'menor', 'actividad', 'cuando', 'donde', 'dias', 'llevar_frase', 'falta', 'plazo_frase'];
+const jmL = (es, ca) => LANG_I === 'ca' ? ca : es;
+
+function jmPlantilla(tipo){
+  const ca = LANG_I === 'ca';
+  const P = {
+    recordatorio: ca
+      ? { asunto: 'Recordatori: {actividad}', texto: 'Hola {familia}, us recordem que {menor} participa a «{actividad}» {cuando} {donde} ({dias}). {llevar_frase} Us hi esperem!' }
+      : { asunto: 'Recordatorio: {actividad}', texto: 'Hola {familia}, os recordamos que {menor} participa en «{actividad}» {cuando} {donde} ({dias}). {llevar_frase} ¡Os esperamos!' },
+    falta: ca
+      ? { asunto: 'Falta l\'autorització de {menor}', texto: 'Hola {familia}, perquè {menor} pugui participar a «{actividad}» {cuando} encara falta signar l\'autorització{plazo_frase}. Podeu fer-ho des de Logos Acompanya, a l\'apartat Famílies. Si teniu qualsevol dubte, escriviu-nos.' }
+      : { asunto: 'Falta la autorización de {menor}', texto: 'Hola {familia}, para que {menor} pueda participar en «{actividad}» {cuando} todavía falta firmar la autorización{plazo_frase}. Podéis hacerlo desde Logos Acompanya, en el apartado Familias. Si tenéis cualquier duda, escribidnos.' },
+    requisitos: ca
+      ? { asunto: 'Què cal saber de {actividad}', texto: 'Hola {familia}, això és el que cal saber sobre «{actividad}» ({menor}): {cuando} {donde}. {llevar_frase} Pendent: {falta}.' }
+      : { asunto: 'Qué hay que saber de {actividad}', texto: 'Hola {familia}, esto es lo que hay que saber sobre «{actividad}» ({menor}): {cuando} {donde}. {llevar_frase} Pendiente: {falta}.' },
+    cambio: ca
+      ? { asunto: 'Canvi a {actividad}', texto: 'Hola {familia}, us informem d\'un canvi a «{actividad}»: ' }
+      : { asunto: 'Cambio en {actividad}', texto: 'Hola {familia}, os informamos de un cambio en «{actividad}»: ' },
+    libre: ca ? { asunto: '', texto: 'Hola {familia}, ' } : { asunto: '', texto: 'Hola {familia}, ' }
+  };
+  return P[tipo] || P.libre;
+}
+const jmNombreTipo = t => ({ recordatorio: jmL('Recordatorio de la actividad', 'Recordatori de l\'activitat'), falta: jmL('Falta la autorización', 'Falta l\'autorització'), requisitos: jmL('Qué hay que saber y llevar', 'Què cal saber i portar'), cambio: jmL('Cambio de información', 'Canvi d\'informació'), libre: jmL('Mensaje libre', 'Missatge lliure') }[t]);
+
+// "viernes 9 de octubre" (y el año solo si no es el actual); se calcula con la fecha local para que no se corra un día
+function jmFechaTxt(iso, ca){
+  if(!iso) return '';
+  const d = new Date(String(iso).slice(0, 10) + 'T00:00:00'), op = { weekday: 'long', day: 'numeric', month: 'long' };
+  if(d.getFullYear() !== new Date().getFullYear()) op.year = 'numeric';
+  return d.toLocaleDateString(ca ? 'ca-ES' : 'es-ES', op).replace(/^([^\s,]+),\s*/, '$1 ');
+}
+function jmDias(a){
+  if(!a || !a.fecha_salida) return null;
+  return Math.round((new Date(a.fecha_salida + 'T00:00:00') - new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00')) / 86400000);
+}
+// Valores con los que se rellenan las marcas {familia}, {menor}… para CADA familia
+function jmValores(a, fam){
+  const ca = LANG_I === 'ca', y = ca ? ' i ' : ' y ';
+  const lista = arr => arr.length <= 1 ? (arr[0] || '') : arr.slice(0, -1).join(', ') + y + arr[arr.length - 1];
+  const d = jmDias(a), hora = (a && a.hora_salida) || '', donde = (a && (a.punto_salida || a.lugar)) || '';
+  const sal = a && a.fecha_salida ? jmFechaTxt(a.fecha_salida, ca) : '', reg = a && a.fecha_regreso && a.fecha_regreso !== a.fecha_salida ? jmFechaTxt(a.fecha_regreso, ca) : '';
+  const fecha = sal && reg ? (ca ? `del ${sal} al ${reg}` : `del ${sal} al ${reg}`) : sal;
+  return {
+    familia: String(fam.nombre || '').split(' ')[0] || (ca ? 'família' : 'familia'),
+    menor: lista(fam.menoresSel || []),
+    actividad: (a && a.titulo) || '',
+    fecha, hora, lugar: (a && a.lugar) || '', punto: (a && a.punto_salida) || '',
+    cuando: sal ? (reg ? fecha : 'el ' + fecha) + (hora ? (ca ? ' a les ' : ' a las ') + hora : '') : '',
+    donde: donde ? (ca ? 'a ' : 'en ') + donde : '',
+    dias: d == null || d < 0 ? '' : d === 0 ? (ca ? 'avui' : 'hoy') : d === 1 ? (ca ? 'demà' : 'mañana') : (ca ? `d'aquí a ${d} dies` : `en ${d} días`),
+    llevar_frase: a && a.que_llevar ? (ca ? 'Recordeu portar: ' : 'Recordad llevar: ') + a.que_llevar + '.' : '',
+    que_llevar: (a && a.que_llevar) || '',
+    plazo_frase: a && a.plazo_autorizacion ? (ca ? ' abans del ' : ' antes del ') + jmFechaTxt(a.plazo_autorizacion, ca) : '',
+    falta: (fam.faltan || []).length ? fam.faltan.map(m => (ca ? 'signar l\'autorització de ' : 'firmar la autorización de ') + m).join('; ') : (ca ? 'res, tot a punt!' : 'nada, ¡todo listo!')
+  };
+}
+function jmAplicar(texto, vals){
+  return String(texto || '').replace(/\{(\w+)\}/g, (m, k) => (k in vals ? vals[k] : m))
+    .replace(/[ \t]{2,}/g, ' ').replace(/ ([.,;:!?])/g, '$1').replace(/\(\s*\)/g, '').replace(/ +\n/g, '\n').replace(/\s+$/g, '').replace(/^\s+/g, '');
+}
+// Familias a las que va el mensaje, según el grupo elegido
+function jmFamilias(ctx, audiencia, familiaId){
+  const por = {};
+  ctx.menores.forEach(m => { (por[m.familiar_usuario_id] = por[m.familiar_usuario_id] || []).push(m); });
+  const out = [];
+  Object.entries(por).forEach(([fid, ms]) => {
+    const aut = ms.filter(m => ctx.autorizados.has(m.id)), pend = ms.filter(m => !ctx.autorizados.has(m.id));
+    const p = ctx.perfiles[fid] || {};
+    const sel = audiencia === 'participan' ? aut : audiencia === 'pendientes' ? pend : audiencia === 'una' ? (fid === familiaId ? ms : []) : ms;
+    if(!sel.length) return;
+    out.push({ id: fid, nombre: p.nombre_completo || '', telefono: p.telefono || '', menoresSel: sel.map(m => m.nombre_completo), faltan: pend.map(m => m.nombre_completo) });
+  });
+  return out.sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
+async function jmCargarCtx(actId){
+  const [men, aut] = await Promise.all([
+    sb.from('menores_familia').select('id, nombre_completo, familiar_usuario_id'),
+    actId ? sb.from('autorizaciones_familiares').select('menor_id, estado').eq('actividad_id', actId) : Promise.resolve({ data: [] })
+  ]);
+  if(men.error || aut.error) return { error: men.error || aut.error };
+  const ids = [...new Set((men.data || []).map(m => m.familiar_usuario_id))];
+  const perfiles = {};
+  if(ids.length){ const { data } = await sb.from('perfiles').select('id, nombre_completo, telefono').in('id', ids); (data || []).forEach(p => { perfiles[p.id] = p; }); }
+  return { menores: men.data || [], perfiles, autorizados: new Set((aut.data || []).filter(x => x.estado === 'autorizada').map(x => x.menor_id)) };
+}
+
+// ---------- ventana ----------
+function jmModal(html){
+  jmCerrar();
+  const ov = document.createElement('div');
+  ov.id = 'jm-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,15,20,.55);z-index:400;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto;';
+  ov.innerHTML = `<div class="panel-card" style="background:var(--paper);width:100%;max-width:560px;margin:auto;opacity:1;transform:none;animation:none;">${html}</div>`;
+  document.body.appendChild(ov);
+}
+function jmCerrar(){ const o = document.getElementById('jm-overlay'); if(o) o.remove(); }
+const jmV = id => (document.getElementById(id) || {}).value || '';
+function jmError(txt){ const e = document.getElementById('jm-error'); if(e){ e.textContent = txt || ''; e.style.display = txt ? '' : 'none'; } else if(txt) alert(txt); }
+
+async function jmAbrir(opts){
+  opts = opts || {};
+  jmModal(`<div class="placeholder">${TI[LANG_I].cargando}</div>`);
+  const { data: acts, error } = await sb.from('actividades_jovenes').select('*').order('fecha_salida', { ascending: false });
+  if(error){ jmModal(`<div class="auth-error">${escAttr(error.message)}</div><button class="link-btn" onclick="jmCerrar()">${jmL('Cerrar', 'Tancar')}</button>`); return; }
+  const actId = opts.actId || '';
+  const ctx = await jmCargarCtx(actId);
+  if(ctx.error){ jmModal(`<div class="auth-error">${escAttr(ctx.error.message)}</div><button class="link-btn" onclick="jmCerrar()">${jmL('Cerrar', 'Tancar')}</button>`); return; }
+  window.__jm = { acts: acts || [], actId, ctx, audiencia: opts.audiencia || (opts.familiaId ? 'una' : (actId ? 'participan' : 'todas')), familiaId: opts.familiaId || '', desmarcadas: new Set(), enviado: null };
+  const tipo = opts.plantilla || (opts.familiaId || !actId ? 'libre' : 'recordatorio');
+  const ca = LANG_I === 'ca';
+  const aud = (v, txt) => `<label style="display:flex;gap:6px;align-items:center;margin:3px 0;font-size:13.5px;"><input type="radio" name="jm-aud" value="${v}"${window.__jm.audiencia === v ? ' checked' : ''} onchange="jmCambioAudiencia(this.value)"> ${txt} <span class="subtle" id="jm-n-${v}" style="margin:0;font-size:12px;"></span></label>`;
+  jmModal(`
+    <h3 style="margin-top:0;">💬 ${jmL('Escribir a las familias', 'Escriure a les famílies')}</h3>
+    <div class="field"><label>${jmL('Actividad', 'Activitat')}</label>
+      <select id="jm-act" onchange="jmCambioActividad(this.value)"><option value="">${jmL('— Sin actividad —', '— Sense activitat —')}</option>${(acts || []).map(a => `<option value="${a.id}"${a.id === actId ? ' selected' : ''}>${escAttr(a.titulo)}</option>`).join('')}</select></div>
+    <div class="field"><label>${jmL('¿A quién?', 'A qui?')}</label>
+      ${aud('participan', jmL('Familias de quienes participan (ya autorizado)', 'Famílies de qui participa (ja autoritzat)'))}
+      ${aud('pendientes', jmL('Familias que aún no han autorizado', 'Famílies que encara no han autoritzat'))}
+      ${aud('todas', jmL('Todas las familias con menores registrados', 'Totes les famílies amb menors registrats'))}
+      ${aud('una', jmL('Una familia concreta', 'Una família concreta'))}
+      <select id="jm-familia" style="display:${window.__jm.audiencia === 'una' ? '' : 'none'};margin-top:4px;" onchange="window.__jm.familiaId=this.value;jmRefrescar()"></select></div>
+    <div class="field"><label>${jmL('Tipo de mensaje', 'Tipus de missatge')}</label>
+      <select id="jm-plantilla" onchange="jmAplicarPlantilla(this.value)">${['recordatorio', 'falta', 'requisitos', 'cambio', 'libre'].map(t => `<option value="${t}"${t === tipo ? ' selected' : ''}>${jmNombreTipo(t)}</option>`).join('')}</select></div>
+    <div class="field"><label>${jmL('Asunto', 'Assumpte')}</label><input type="text" id="jm-asunto" oninput="jmRefrescar()"></div>
+    <div class="field"><label>${jmL('Mensaje', 'Missatge')} *</label><textarea id="jm-texto" rows="6" oninput="jmRefrescar()"></textarea>
+      <div style="margin-top:4px;font-size:11.5px;" class="subtle">${jmL('Pulsa para insertar (se rellena con los datos de cada familia):', 'Prem per inserir (s\'omple amb les dades de cada família):')}<br>
+        ${JM_MARCADORES.map(m => `<button type="button" class="link-btn" style="font-size:11px;border:1px solid var(--line);border-radius:999px;padding:1px 8px;margin:2px 2px 0 0;" onclick="jmInsertar('{${m}}')">{${m}}</button>`).join('')}</div></div>
+    <label class="checkbox-row" style="margin:6px 0;"><input type="checkbox" id="jm-enapp" checked onchange="document.getElementById('jm-visible-wrap').style.display=this.checked?'':'none'"> ${jmL('Mostrar en la app de las familias (Logos Acompanya)', 'Mostrar a l\'app de les famílies (Logos Acompanya)')}</label>
+    <div class="field" id="jm-visible-wrap"><label>${jmL('Visible desde (opcional, para programarlo)', 'Visible des de (opcional, per programar-ho)')}</label><input type="datetime-local" id="jm-visible"></div>
+    <div id="jm-dest"></div>
+    <div id="jm-error" class="subtle" style="display:none;color:var(--alert);font-weight:700;"></div>
+    <button class="primary-btn" id="jm-btn" onclick="jmEnviar()">${jmL('Enviar', 'Enviar')}</button>
+    <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="jmCerrar()">${jmL('Cancelar', 'Cancel·lar')}</button>`);
+  jmAplicarPlantilla(tipo);
+}
+function jmAplicarPlantilla(tipo){
+  const p = jmPlantilla(tipo);
+  document.getElementById('jm-asunto').value = p.asunto; document.getElementById('jm-texto').value = p.texto;
+  jmRefrescar();
+}
+function jmInsertar(marca){
+  const t = document.getElementById('jm-texto'), i = t.selectionStart == null ? t.value.length : t.selectionStart;
+  t.value = t.value.slice(0, i) + marca + t.value.slice(t.selectionEnd == null ? i : t.selectionEnd);
+  t.focus(); t.selectionStart = t.selectionEnd = i + marca.length; jmRefrescar();
+}
+async function jmCambioActividad(id){
+  const J = window.__jm; jmError('');
+  const ctx = await jmCargarCtx(id);
+  if(ctx.error){ jmError(ctx.error.message); return; }
+  J.actId = id; J.ctx = ctx; J.desmarcadas = new Set();
+  if(!id && (J.audiencia === 'participan')) { J.audiencia = 'todas'; const r = document.querySelector('input[name="jm-aud"][value="todas"]'); if(r) r.checked = true; }
+  jmRefrescar();
+}
+function jmCambioAudiencia(v){
+  const J = window.__jm; J.audiencia = v; J.desmarcadas = new Set();
+  document.getElementById('jm-familia').style.display = v === 'una' ? '' : 'none';
+  jmRefrescar();
+}
+// Recalcula destinatarios, contadores y vista previa (sin tocar lo que se ha escrito)
+function jmRefrescar(){
+  const J = window.__jm; if(!J) return;
+  const ca = LANG_I === 'ca', a = J.acts.find(x => x.id === J.actId) || {};
+  ['participan', 'pendientes', 'todas'].forEach(v => { const n = jmFamilias(J.ctx, v, '').length, el = document.getElementById('jm-n-' + v); if(el) el.textContent = `(${n})`; });
+  const sel = document.getElementById('jm-familia');
+  if(sel && !sel.dataset.listo){
+    const todas = jmFamilias(J.ctx, 'todas', '');
+    sel.innerHTML = todas.map(f => `<option value="${f.id}">${escAttr(f.nombre || '—')} · ${escAttr(f.menoresSel.join(', '))}</option>`).join('');
+    sel.dataset.listo = '1';
+    if(!J.familiaId && todas[0]) J.familiaId = todas[0].id;
+    if(J.familiaId) sel.value = J.familiaId;
+  }
+  const fams = jmFamilias(J.ctx, J.audiencia, J.familiaId);
+  const marcadas = fams.filter(f => !J.desmarcadas.has(f.id));
+  const texto = jmV('jm-texto'), asunto = jmV('jm-asunto');
+  const prim = marcadas[0];
+  const previa = prim ? jmAplicar(texto, jmValores(a, prim)) : '';
+  const previaAsunto = prim ? jmAplicar(asunto, jmValores(a, prim)) : '';
+  document.getElementById('jm-dest').innerHTML = `
+    <div class="subtle" style="font-weight:700;margin:8px 0 4px;">${jmL('Familias', 'Famílies')} (${marcadas.length}/${fams.length})</div>
+    ${fams.length ? `<div style="max-height:150px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:4px 10px;margin-bottom:8px;">${fams.map(f => `<label style="display:flex;gap:8px;align-items:center;font-size:13px;margin:3px 0;"><input type="checkbox"${J.desmarcadas.has(f.id) ? '' : ' checked'} onchange="jmMarcar('${f.id}', this.checked)"><span><strong>${escAttr(f.nombre || '—')}</strong> · ${escAttr(f.menoresSel.join(', '))}${f.telefono ? '' : ` <span class="subtle" style="margin:0;font-size:11px;">(${jmL('sin teléfono', 'sense telèfon')})</span>`}</span></label>`).join('')}</div>`
+      : `<div class="empty-note">${jmL('No hay ninguna familia en ese grupo.', 'No hi ha cap família en aquest grup.')}</div>`}
+    ${prim ? `<div class="subtle" style="font-weight:700;margin:6px 0 4px;">${jmL('Así lo recibirá', 'Així ho rebrà')} ${escAttr(prim.nombre.split(' ')[0] || '')}:</div>
+      <div style="background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13.5px;white-space:pre-line;line-height:1.5;">${previaAsunto ? `<strong>${escAttr(previaAsunto)}</strong><br>` : ''}${escAttr(previa) || `<span class="subtle">${jmL('(escribe el mensaje)', '(escriu el missatge)')}</span>`}</div>` : ''}`;
+  const b = document.getElementById('jm-btn'); if(b){ b.textContent = `${jmL('Enviar a', 'Enviar a')} ${marcadas.length} ${marcadas.length === 1 ? jmL('familia', 'família') : jmL('familias', 'famílies')}`; b.disabled = !marcadas.length; }
+}
+function jmMarcar(id, on){ const J = window.__jm; if(on) J.desmarcadas.delete(id); else J.desmarcadas.add(id); jmRefrescar(); }
+
+async function jmEnviar(){
+  const J = window.__jm, a = J.acts.find(x => x.id === J.actId) || {};
+  const texto = jmV('jm-texto').trim(), asunto = jmV('jm-asunto').trim(), tipo = jmV('jm-plantilla') || 'libre';
+  const fams = jmFamilias(J.ctx, J.audiencia, J.familiaId).filter(f => !J.desmarcadas.has(f.id));
+  if(!texto || texto.replace(/\{\w+\}|,|\s|hola/gi, '').length < 3) return jmError(jmL('Escribe el mensaje.', 'Escriu el missatge.'));
+  if(!fams.length) return jmError(jmL('No hay ninguna familia seleccionada.', 'No hi ha cap família seleccionada.'));
+  const enApp = document.getElementById('jm-enapp').checked, vis = jmV('jm-visible');
+  const visible = enApp && vis ? new Date(vis).toISOString() : new Date().toISOString();
+  const lote = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
+  const filas = fams.map(f => { const v = jmValores(a, f); return { lote_id: lote, actividad_id: J.actId || null, familiar_usuario_id: f.id, tipo, asunto: jmAplicar(asunto, v) || jmL('Mensaje de Jóvenes en acción', 'Missatge de Joves en acció'), mensaje: jmAplicar(texto, v), en_app: enApp, visible_desde: visible, creado_por_email: CURRENT_USER.email }; });
+  const b = document.getElementById('jm-btn'); if(b) b.disabled = true;
+  const r = await sb.from('jovenes_mensajes').insert(filas).select('id, familiar_usuario_id');
+  if(r.error){ if(b) b.disabled = false; return jmError(jmL('No se pudo enviar: ', 'No s\'ha pogut enviar: ') + r.error.message + (/relation|does not exist|column/i.test(r.error.message) ? jmL(' (falta ejecutar el SQL de comunicación con familias)', ' (falta executar l\'SQL de comunicació amb famílies)') : '')); }
+  const idDe = {}; (r.data || []).forEach(x => { idDe[x.familiar_usuario_id] = x.id; });
+  J.enviado = { lote, fams, filas, idDe };
+  jmPanelEnviado();
+  if(J.actId) jmPintarZonaRecarga();
+}
+function jmPanelEnviado(){
+  const J = window.__jm, E = J.enviado, ca = LANG_I === 'ca', prog = E.filas[0] && new Date(E.filas[0].visible_desde) > new Date(Date.now() + 60000);
+  jmModal(`
+    <h3 style="margin-top:0;">✓ ${jmL('Enviado a', 'Enviat a')} ${E.fams.length} ${E.fams.length === 1 ? jmL('familia', 'família') : jmL('familias', 'famílies')}</h3>
+    <p class="subtle" style="margin:0 0 8px;">${E.filas[0].en_app ? (prog ? jmL('Lo verán en la app a partir del ', 'Ho veuran a l\'app a partir del ') + new Date(E.filas[0].visible_desde).toLocaleString(ca ? 'ca-ES' : 'es-ES') + '.' : jmL('Ya lo tienen en la app (Logos Acompanya → Familias).', 'Ja ho tenen a l\'app (Logos Acompanya → Famílies).')) : jmL('No se muestra en la app (solo queda registrado).', 'No es mostra a l\'app (només queda registrat).')}</p>
+    <div class="subtle" style="font-weight:700;margin:8px 0 4px;">${jmL('Si además quieres enviarlo por WhatsApp, pulsa en cada familia:', 'Si a més vols enviar-ho per WhatsApp, prem a cada família:')}</div>
+    ${E.fams.map((f, i) => { const fila = E.filas[i], id = E.idDe[f.id] || ''; const txt = (fila.asunto ? `*${fila.asunto}*\n` : '') + fila.mensaje;
+      return `<div class="panel-stat-row" style="align-items:center;"><span><strong>${escAttr(f.nombre || '—')}</strong><br><span class="subtle" style="font-size:11.5px;margin:0;">${escAttr(f.menoresSel.join(', '))}</span></span>${f.telefono ? `<a class="link-btn" style="font-size:12.5px;color:#1E9E52;" target="_blank" rel="noopener" href="${escAttr(enlaceWhatsAppTexto(f.telefono, txt))}" onclick="jmMarcarWhatsApp('${id}')">💬 WhatsApp</a>` : `<span class="subtle" style="font-size:11.5px;margin:0;">${jmL('sin teléfono', 'sense telèfon')}</span>`}</div>`; }).join('')}
+    <button class="primary-btn" style="margin-top:12px;" onclick="jmCerrar()">${jmL('Cerrar', 'Tancar')}</button>`);
+}
+async function jmMarcarWhatsApp(id){ if(id) await sb.from('jovenes_mensajes').update({ whatsapp_en: new Date().toISOString() }).eq('id', id); }
+
+// ---------- zona dentro de una actividad: avisos de "toca recordar" + historial ----------
+let __jmZona = null;
+function jmPintarZonaRecarga(){ if(__jmZona) jmPintarZona(__jmZona.actId, __jmZona.nPart, __jmZona.nPend); }
+async function jmPintarZona(actId, nPart, nPend){
+  const zona = document.getElementById('jm-zona'); if(!zona) return;
+  __jmZona = { actId, nPart, nPend };
+  const a = (typeof __jaiActividades !== 'undefined' ? __jaiActividades : []).find(x => x.id === actId) || {};
+  const ca = LANG_I === 'ca', d = jmDias(a), hoy = new Date().toISOString().slice(0, 10);
+  const vencido = !!(a.plazo_autorizacion && a.plazo_autorizacion < hoy);
+  const avisos = [];
+  if(a.estado !== 'cerrada' && d != null && d >= 0 && d <= 7 && nPart > 0)
+    avisos.push({ txt: `📅 ${jmL('La actividad es', 'L\'activitat és')} ${d === 0 ? jmL('hoy', 'avui') : d === 1 ? jmL('mañana', 'demà') : jmL(`en ${d} días`, `d'aquí a ${d} dies`)}`, btn: jmL('Recordar a quienes participan', 'Recordar a qui participa'), op: `{actId:'${actId}',audiencia:'participan',plantilla:'recordatorio'}` });
+  if(nPend > 0)
+    avisos.push({ txt: `⏳ ${nPend} ${nPend === 1 ? jmL('menor sin autorización', 'menor sense autorització') : jmL('menores sin autorización', 'menors sense autorització')}${vencido ? ' · ' + jmL('plazo vencido', 'termini vençut') : ''}`, btn: jmL('Recordar a esas familias', 'Recordar a aquestes famílies'), op: `{actId:'${actId}',audiencia:'pendientes',plantilla:'falta'}` });
+  zona.innerHTML = `
+    <div class="panel-card" style="margin:14px 0 4px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:${avisos.length ? 8 : 0}px;">
+        <strong>💬 ${jmL('Comunicación con las familias', 'Comunicació amb les famílies')}</strong>
+        <button class="primary-btn" style="width:auto;margin:0;padding:7px 14px;font-size:13px;" onclick="jmAbrir({actId:'${actId}'})">✉️ ${jmL('Escribir a las familias', 'Escriure a les famílies')}</button>
+      </div>
+      ${avisos.map(x => `<div class="panel-stat-row" style="align-items:center;gap:8px;"><span>${x.txt}</span><button class="link-btn" style="font-size:12.5px;" onclick="jmAbrir(${x.op})">${x.btn} →</button></div>`).join('')}
+      <div id="jm-historial"></div>
+    </div>`;
+  const r = await sb.from('jovenes_mensajes').select('*').eq('actividad_id', actId).order('creado_en', { ascending: false }).limit(400);
+  const h = document.getElementById('jm-historial'); if(!h) return;
+  if(r.error){ h.innerHTML = /relation|does not exist|column/i.test(r.error.message) ? `<p class="subtle" style="font-size:12px;margin:6px 0 0;">⚠️ ${jmL('Para enviar mensajes a las familias hay que ejecutar el SQL de comunicación con familias en Supabase.', 'Per enviar missatges a les famílies cal executar l\'SQL de comunicació amb famílies a Supabase.')}</p>` : ''; return; }
+  const lotes = {};
+  (r.data || []).forEach(m => { const l = lotes[m.lote_id] || (lotes[m.lote_id] = { lote: m.lote_id, asunto: m.asunto, creado_en: m.creado_en, filas: [] }); l.filas.push(m); });
+  const lista = Object.values(lotes).sort((x, y) => String(y.creado_en).localeCompare(String(x.creado_en)));
+  window.__jmLotes = lotes;
+  if(!lista.length) return;
+  h.innerHTML = `<div class="carpetas-lista" style="margin-top:8px;">${carpetaDesplegable({ clave: 'jm:hist:' + actId, icono: '📨', titulo: jmL('Mensajes enviados', 'Missatges enviats'), cuenta: lista.length, cuerpo: lista.map(l => {
+      const leidos = l.filas.filter(m => m.leido_en).length, prog = l.filas.some(m => new Date(m.visible_desde) > new Date());
+      return `<div class="panel-stat-row" style="align-items:center;gap:8px;"><span><strong>${escAttr(l.asunto || '—')}</strong><br><span class="subtle" style="font-size:11.5px;margin:0;">${new Date(l.creado_en).toLocaleDateString(ca ? 'ca-ES' : 'es-ES')} · ${l.filas.length} ${jmL('familias', 'famílies')} · ${l.filas[0].en_app ? `${leidos} ${leidos === 1 ? jmL('ha leído', 'ha llegit') : jmL('han leído', 'han llegit')}${prog ? ' · ' + jmL('programado', 'programat') : ''}` : jmL('solo WhatsApp', 'només WhatsApp')}</span></span><button class="link-btn" style="font-size:12px;" onclick="jmVerLote('${l.lote}')">${jmL('Ver', 'Veure')}</button></div>`; }).join('') })}</div>`;
+}
+async function jmVerLote(lote){
+  const l = (window.__jmLotes || {})[lote]; if(!l) return;
+  const ids = [...new Set(l.filas.map(m => m.familiar_usuario_id))], per = {};
+  if(ids.length){ const { data } = await sb.from('perfiles').select('id, nombre_completo, telefono').in('id', ids); (data || []).forEach(p => { per[p.id] = p; }); }
+  const ca = LANG_I === 'ca';
+  jmModal(`<h3 style="margin-top:0;">📨 ${escAttr(l.asunto || '—')}</h3>
+    <p class="subtle" style="margin:0 0 8px;">${new Date(l.creado_en).toLocaleString(ca ? 'ca-ES' : 'es-ES')}</p>
+    ${l.filas.map(m => { const p = per[m.familiar_usuario_id] || {}; const txt = (m.asunto ? `*${m.asunto}*\n` : '') + m.mensaje;
+      return `<div class="panel-stat-row" style="align-items:flex-start;gap:8px;"><span><strong>${escAttr(p.nombre_completo || '—')}</strong><br><span class="subtle" style="font-size:11.5px;margin:0;white-space:pre-line;">${escAttr(m.mensaje)}</span><br><span style="font-size:11.5px;color:${m.leido_en ? 'var(--good)' : 'var(--ink-soft)'};">${m.en_app ? (m.leido_en ? '✓ ' + jmL('Leído', 'Llegit') + ' · ' + new Date(m.leido_en).toLocaleString(ca ? 'ca-ES' : 'es-ES') : jmL('Sin leer', 'Sense llegir')) : jmL('Solo WhatsApp', 'Només WhatsApp')}${m.whatsapp_en ? ' · 💬 ' + jmL('WhatsApp enviado', 'WhatsApp enviat') : ''}</span></span>${p.telefono ? `<a class="link-btn" style="font-size:12px;color:#1E9E52;" target="_blank" rel="noopener" href="${escAttr(enlaceWhatsAppTexto(p.telefono, txt))}" onclick="jmMarcarWhatsApp('${m.id}')">💬</a>` : ''}</div>`; }).join('')}
+    <button class="link-btn" style="color:var(--alert);display:block;margin:12px auto 0;" onclick="jmBorrarLote('${lote}')">${jmL('Borrar este envío', 'Esborrar aquest enviament')}</button>
+    <button class="link-btn" style="display:block;margin:8px auto 0;" onclick="jmCerrar()">${jmL('Cerrar', 'Tancar')}</button>`);
+}
+async function jmBorrarLote(lote){
+  if(!confirm(jmL('¿Borrar este envío? Las familias dejarán de verlo en la app.', 'Esborrar aquest enviament? Les famílies deixaran de veure\'l a l\'app.'))) return;
+  const r = await sb.from('jovenes_mensajes').delete().eq('lote_id', lote);
+  if(r.error){ alert(r.error.message); return; }
+  jmCerrar(); jmPintarZonaRecarga();
+}
+
 // ================= CONTABILIDAD (solo administración) =================
 const CT = {
   es: {
@@ -6387,6 +6675,73 @@ const CONTA_CODIGOS_BASE = [
 
 const __conta = { cargado: false, ajustes: null, cuentas: [], codigos: [], movs: [], tipos: [], tab: 'diario', cuentaId: null, anio: new Date().getFullYear(), mes: 0, error: null };
 
+// ---- textos de la versión 2: medios de pago, arqueo, cierre de mes y cuotas ----
+Object.assign(CT.es, {
+  tabCuotas:`Cuotas`, medioPago:`Medio de pago`, referencia:`Referencia (factura, recibo…)`, sinIndicar:`Sin indicar`, todosMedios:`Todos`,
+  medio_efectivo:`Efectivo`, medio_tarjeta:`Tarjeta`, medio_transferencia:`Transferencia`, medio_bizum:`Bizum`, medio_domiciliacion:`Domiciliación`, medio_otro:`Otro`,
+  avisoMedio:`Elige el medio de pago.`, medioCajaAviso:`El efectivo solo se apunta en una caja.`,
+  medioBancoAviso:`Con tarjeta, transferencia, Bizum o domiciliación hay que usar una cuenta de banco, tarjeta o monedero (no una caja).`,
+  sinCuentaMedio:`No tienes ninguna cuenta para este medio de pago. Créala en la pestaña Cuentas.`,
+  tarjetaCredito:`Tarjeta de crédito`, monedero:`Monedero digital`, tarjetaPendiente:`pendiente de liquidar`,
+  mesCerrado:`Ese mes está cerrado. Ábrelo de nuevo para cambiar movimientos.`,
+  porMedio:`Por medio de pago`, cobros:`Cobros`, pagos:`Pagos`, neto:`Neto`, traspasosNoIncluidos:`Los traspasos no se incluyen: solo mueven dinero entre cuentas.`,
+  sqlViejo:`Falta actualizar el SQL de contabilidad en Supabase (medios de pago, arqueo, cierre de mes y cuotas). Mientras tanto funciona lo básico.`,
+  arqueo:`Arqueo`, conciliar:`Conciliar`, arqueoTitulo:`Arqueo de caja`, conciliacionTitulo:`Conciliación con el extracto`, segunExtracto:`Saldo según el extracto`,
+  saldoLibros:`Saldo en libros`, diferencia:`Diferencia`, desgloseTxt:`Billetes y monedas (cuántos hay de cada)`, totalContado:`Total contado`, nota:`Nota`, cuadra:`Cuadra`, descuadre:`No cuadra`,
+  historial:`Historial`, sinArqueos:`Aún no hay comprobaciones.`, ultimaComprobacion:`Última comprobación`,
+  cerrarMes:`Cerrar este mes`, reabrirMes:`Reabrir`, mesCerradoTxt:`Mes cerrado`, cierreBloqueado:`No se puede cerrar todavía:`,
+  confirmarCierre:`Al cerrar el mes no se podrán añadir, cambiar ni borrar movimientos de ese mes (ni su tipo de cambio) hasta que lo reabras.`,
+  confirmarReabrir:`¿Reabrir este mes? Se podrán volver a cambiar sus movimientos.`, mesesCerrados:`Meses cerrados`, ningunMesCerrado:`Ningún mes cerrado todavía.`,
+  eligeMes:`Elige un mes para poder cerrarlo.`, saldoInicialBloqueado:`El saldo inicial no se puede cambiar porque ya hay meses cerrados.`,
+  cuotistas:`Quién paga cuotas`, nuevoCuotista:`Nuevo`, periodicidad:`Periodicidad`, mensual:`Mensual`, bimestral:`Cada 2 meses`, trimestral:`Cada 3 meses`, semestral:`Cada 6 meses`, anual:`Anual`,
+  desde:`Desde (mes)`, hasta:`Hasta (mes, opcional)`, codigoIngreso:`Código de ingreso`, cuentaHabitual:`Cuenta habitual (opcional)`,
+  cobrar:`Registrar cobro`, cobrada:`Cobrada`, pendienteTxt:`Pendiente`, cobradoTot:`Cobrado`, pendienteTot:`Pendiente de cobro`, previstoTot:`Previsto hasta hoy`,
+  deshacerCobro:`Deshacer cobro`, confirmDeshacer:`¿Deshacer este cobro? Se borrará también el movimiento del diario.`,
+  sinCuotistas:`Todavía no hay nadie en cuotas. Añade a quien paga una cuota periódica.`, pendientesDeCobro:`Pendientes de cobro`, nada:`Nada pendiente.`,
+  importeCuota:`Importe de la cuota`, importeCobrado:`Importe cobrado (en la moneda de la cuenta)`, soloNombre:`Solo se guarda el nombre: no escribas datos personales.`,
+  faltaCodigoIngreso:`Elige un código de ingreso (créalo antes en Códigos).`, faltaDesde:`Indica desde qué mes.`, cuentaCuota:`Cuenta donde entra el cobro`,
+  desactivado:`inactivo`, ultimoCobro:`Cobrada el`, borrarCuotista:`Borrar`, cuotistaConCobros:`Tiene cobros registrados: no se puede borrar, pero sí desactivar.`,
+});
+Object.assign(CT.ca, {
+  tabCuotas:`Quotes`, medioPago:`Mitjà de pagament`, referencia:`Referència (factura, rebut…)`, sinIndicar:`Sense indicar`, todosMedios:`Tots`,
+  medio_efectivo:`Efectiu`, medio_tarjeta:`Targeta`, medio_transferencia:`Transferència`, medio_bizum:`Bizum`, medio_domiciliacion:`Domiciliació`, medio_otro:`Altre`,
+  avisoMedio:`Tria el mitjà de pagament.`, medioCajaAviso:`L'efectiu només s'apunta en una caixa.`,
+  medioBancoAviso:`Amb targeta, transferència, Bizum o domiciliació cal usar un compte de banc, targeta o moneder (no una caixa).`,
+  sinCuentaMedio:`No tens cap compte per a aquest mitjà de pagament. Crea'l a la pestanya Comptes.`,
+  tarjetaCredito:`Targeta de crèdit`, monedero:`Moneder digital`, tarjetaPendiente:`pendent de liquidar`,
+  mesCerrado:`Aquest mes està tancat. Reobre'l per canviar moviments.`,
+  porMedio:`Per mitjà de pagament`, cobros:`Cobraments`, pagos:`Pagaments`, neto:`Net`, traspasosNoIncluidos:`Els traspassos no s'inclouen: només mouen diners entre comptes.`,
+  sqlViejo:`Falta actualitzar l'SQL de comptabilitat a Supabase (mitjans de pagament, arqueig, tancament de mes i quotes). Mentrestant funciona el bàsic.`,
+  arqueo:`Arqueig`, conciliar:`Conciliar`, arqueoTitulo:`Arqueig de caixa`, conciliacionTitulo:`Conciliació amb l'extracte`, segunExtracto:`Saldo segons l'extracte`,
+  saldoLibros:`Saldo en llibres`, diferencia:`Diferència`, desgloseTxt:`Bitllets i monedes (quants n'hi ha de cada)`, totalContado:`Total comptat`, nota:`Nota`, cuadra:`Quadra`, descuadre:`No quadra`,
+  historial:`Historial`, sinArqueos:`Encara no hi ha comprovacions.`, ultimaComprobacion:`Última comprovació`,
+  cerrarMes:`Tancar aquest mes`, reabrirMes:`Reobrir`, mesCerradoTxt:`Mes tancat`, cierreBloqueado:`Encara no es pot tancar:`,
+  confirmarCierre:`En tancar el mes no es podran afegir, canviar ni esborrar moviments d'aquest mes (ni el seu tipus de canvi) fins que el reobris.`,
+  confirmarReabrir:`Reobrir aquest mes? Es podran tornar a canviar els seus moviments.`, mesesCerrados:`Mesos tancats`, ningunMesCerrado:`Cap mes tancat encara.`,
+  eligeMes:`Tria un mes per poder tancar-lo.`, saldoInicialBloqueado:`El saldo inicial no es pot canviar perquè ja hi ha mesos tancats.`,
+  cuotistas:`Qui paga quotes`, nuevoCuotista:`Nou`, periodicidad:`Periodicitat`, mensual:`Mensual`, bimestral:`Cada 2 mesos`, trimestral:`Cada 3 mesos`, semestral:`Cada 6 mesos`, anual:`Anual`,
+  desde:`Des de (mes)`, hasta:`Fins a (mes, opcional)`, codigoIngreso:`Codi d'ingrés`, cuentaHabitual:`Compte habitual (opcional)`,
+  cobrar:`Registrar cobrament`, cobrada:`Cobrada`, pendienteTxt:`Pendent`, cobradoTot:`Cobrat`, pendienteTot:`Pendent de cobrament`, previstoTot:`Previst fins avui`,
+  deshacerCobro:`Desfer cobrament`, confirmDeshacer:`Desfer aquest cobrament? S'esborrarà també el moviment del diari.`,
+  sinCuotistas:`Encara no hi ha ningú en quotes. Afegeix qui paga una quota periòdica.`, pendientesDeCobro:`Pendents de cobrament`, nada:`Res pendent.`,
+  importeCuota:`Import de la quota`, importeCobrado:`Import cobrat (en la moneda del compte)`, soloNombre:`Només es desa el nom: no escriguis dades personals.`,
+  faltaCodigoIngreso:`Tria un codi d'ingrés (crea'l abans a Codis).`, faltaDesde:`Indica des de quin mes.`, cuentaCuota:`Compte on entra el cobrament`,
+  desactivado:`inactiu`, ultimoCobro:`Cobrada el`, borrarCuotista:`Esborrar`, cuotistaConCobros:`Té cobraments registrats: no es pot esborrar, però sí desactivar.`,
+});
+
+const CONTA_MEDIOS = ['efectivo', 'tarjeta', 'transferencia', 'bizum', 'domiciliacion', 'otro'];
+const CONTA_ICONO_MEDIO = { efectivo: '💶', tarjeta: '💳', transferencia: '🏦', bizum: '📱', domiciliacion: '🔁', otro: '•', sin: '·' };
+const contaMedioTxt = m => m ? `${CONTA_ICONO_MEDIO[m] || '•'} ${ct('medio_' + m)}` : `${CONTA_ICONO_MEDIO.sin} ${ct('sinIndicar')}`;
+const contaTipoCuentaTxt = t => t === 'caja' ? ct('caja') : t === 'banco' ? ct('banco') : t === 'tarjeta' ? ct('tarjetaCredito') : ct('monedero');
+// El efectivo solo va en cajas; tarjeta, transferencia, Bizum y domiciliación, en cuentas que no son caja; "otro" en cualquiera.
+function contaMedioCompatible(medio, cuenta){
+  if(!medio || medio === 'otro' || !cuenta) return true;
+  return medio === 'efectivo' ? cuenta.tipo === 'caja' : cuenta.tipo !== 'caja';
+}
+function contaMesCerrado(fecha){ return __conta.sqlNuevo && __conta.cierres.some(c => c.periodo === String(fecha).slice(0, 7)); }
+
+Object.assign(__conta, { arqueos: [], cierres: [], cuotistas: [], pagos: [], sqlNuevo: true, filtroMedio: 'todos', ultimoMedio: {} });
+
 // ---------- utilidades ----------
 const contaCent = x => Math.round(Number(x || 0) * 100);
 const contaPad = n => String(n).padStart(2, '0');
@@ -6469,11 +6824,11 @@ function contaDiario(cuenta){
 function contaBalance(){
   const [desde, hasta] = contaRango();
   const cuentas = __conta.cuentas.filter(c => c.activo || __conta.movs.some(m => m.cuenta_id === c.id));
-  const por = {};          // codigoId -> { cuentas:{id:{ent,sal}}, totEnt, totSal }
+  const por = {};
   let sinTasa = 0, futuros = 0, devoluciones = 0;
   const hoy = new Date().toISOString().slice(0, 10);
-  const trasp = {};        // traspaso_id -> nº de partes
-  const res = { cuentas, filas: por, saldoAnt: {}, ingresos: {}, gastos: {}, traspasos: {}, saldoFin: {}, total: { saldoAnt: 0, ingresos: 0, gastos: 0, traspasos: 0, saldoFin: 0 }, avisos: [] };
+  const trasp = {};
+  const res = { cuentas, filas: por, porMedio: {}, saldoAnt: {}, ingresos: {}, gastos: {}, traspasos: {}, saldoFin: {}, total: { saldoAnt: 0, ingresos: 0, gastos: 0, traspasos: 0, saldoFin: 0 }, avisos: [] };
   cuentas.forEach(c => { res.saldoAnt[c.id] = contaSaldoAnteriorCent(c, desde); res.ingresos[c.id] = 0; res.gastos[c.id] = 0; res.traspasos[c.id] = 0; });
 
   __conta.movs.forEach(m => {
@@ -6494,25 +6849,34 @@ function contaBalance(){
     if(ep == null || sp == null) { sinTasa++; return; }
     por[co.id].totEnt += ep; por[co.id].totSal += sp;
     res.total[clave] += (co.tipo === 'ingreso' ? ep - sp : co.tipo === 'gasto' ? sp - ep : ep - sp);
+    if(co.tipo !== 'traspaso'){
+      const mk = m.medio_pago || 'sin';
+      const x = res.porMedio[mk] || (res.porMedio[mk] = { ent: 0, sal: 0 });
+      x.ent += ep; x.sal += sp;
+    }
   });
 
   cuentas.forEach(c => {
     res.saldoFin[c.id] = res.saldoAnt[c.id] + res.ingresos[c.id] - res.gastos[c.id] + res.traspasos[c.id];
-    // saldo anterior consolidado: con el tipo de cambio del mes de inicio (o el de por defecto)
     const tasa = contaEsSecundaria(c) ? contaTasaSugerida(desde) : 1;
     if(tasa != null && tasa > 0) res.total.saldoAnt += Math.round(res.saldoAnt[c.id] / tasa);
     else if(res.saldoAnt[c.id] !== 0) sinTasa++;
   });
   res.total.saldoFin = res.total.saldoAnt + res.total.ingresos - res.total.gastos + res.total.traspasos;
 
-  // comprobaciones
   const incompletos = Object.keys(trasp).filter(k => trasp[k] !== 2).length;
   if(sinTasa) res.avisos.push({ nivel: 'aviso', texto: `${sinTasa} ${ct('sinTasaAviso')}` });
   if(incompletos) res.avisos.push({ nivel: 'aviso', texto: `${incompletos} ${ct('traspasoIncompleto')}` });
   if(futuros) res.avisos.push({ nivel: 'aviso', texto: `${futuros} ${ct('fechaFutura')}` });
-  cuentas.forEach(c => { if(res.saldoFin[c.id] < 0) res.avisos.push({ nivel: 'aviso', texto: `${c.nombre}: ${ct('saldoNegativo')} (${contaFmt(res.saldoFin[c.id], c.moneda)})` }); });
+  cuentas.forEach(c => {
+    if(res.saldoFin[c.id] < 0){
+      if(c.tipo === 'tarjeta') res.avisos.push({ nivel: 'info', texto: `${c.nombre}: ${contaFmt(-res.saldoFin[c.id], c.moneda)} ${ct('tarjetaPendiente')}` });
+      else res.avisos.push({ nivel: 'aviso', texto: `${c.nombre}: ${ct('saldoNegativo')} (${contaFmt(res.saldoFin[c.id], c.moneda)})` });
+    }
+    const aq = __conta.sqlNuevo ? contaUltimoArqueo(c.id, hasta) : null;
+    if(aq && contaCent(aq.diferencia) !== 0) res.avisos.push({ nivel: 'aviso', texto: `${c.nombre}: ${ct('descuadre')} (${aq.fecha}, ${ct('diferencia')} ${contaFmt(contaCent(aq.diferencia), c.moneda)})` });
+  });
   if(devoluciones) res.avisos.push({ nivel: 'info', texto: `${devoluciones} ${ct('devolucionesAviso')}` });
-  // el diario de cada cuenta tiene que dar el mismo saldo final
   cuentas.forEach(c => { const d = contaDiario(c); if(d.saldoFin !== res.saldoFin[c.id]) res.avisos.push({ nivel: 'aviso', texto: `${c.nombre}: descuadre entre diario y balance` }); });
   return res;
 }
@@ -6534,7 +6898,19 @@ async function contaCargarTodo(){
     movs.push(...(r.data || []));
     if(!r.data || r.data.length < 1000) break;
   }
-  Object.assign(__conta, { ajustes: aj.data || null, cuentas: cu.data || [], codigos: co.data || [], tipos: ti.data || [], movs, cargado: true, error: null });
+  // Novedades (medios de pago, arqueo, cierre de mes, cuotas): si el SQL nuevo aún no se ha ejecutado, sigue funcionando lo básico
+  const [ar, ci, cuo, pag, sonda] = await Promise.all([
+    sb.from('conta_arqueos').select('*').order('fecha', { ascending: false }),
+    sb.from('conta_cierres').select('*').order('periodo', { ascending: true }),
+    sb.from('conta_cuotistas').select('*').order('nombre', { ascending: true }),
+    sb.from('conta_cuotas_pagos').select('*'),
+    sb.from('conta_movimientos').select('medio_pago').limit(1)
+  ]);
+  const nuevoOk = !(ar.error || ci.error || cuo.error || pag.error || sonda.error);
+  Object.assign(__conta, {
+    ajustes: aj.data || null, cuentas: cu.data || [], codigos: co.data || [], tipos: ti.data || [], movs, cargado: true, error: null,
+    arqueos: nuevoOk ? (ar.data || []) : [], cierres: nuevoOk ? (ci.data || []) : [], cuotistas: nuevoOk ? (cuo.data || []) : [], pagos: nuevoOk ? (pag.data || []) : [], sqlNuevo: nuevoOk
+  });
   return {};
 }
 async function contaRecargar(){
@@ -6563,18 +6939,21 @@ function contaRender(){
     return;
   }
   if(!__conta.ajustes){ cont.innerHTML = contaHtmlInicio(); return; }
-  const tabs = [['diario', 'tabDiario'], ['balance', 'tabBalance'], ['codigos', 'tabCodigos'], ['cuentas', 'tabCuentas'], ['ajustes', 'tabAjustes']];
-  const periodo = (__conta.tab === 'diario' || __conta.tab === 'balance') ? contaHtmlPeriodo() : '';
+  const tabs = [['diario', 'tabDiario'], ['balance', 'tabBalance']].concat(__conta.sqlNuevo ? [['cuotas', 'tabCuotas']] : []).concat([['codigos', 'tabCodigos'], ['cuentas', 'tabCuentas'], ['ajustes', 'tabAjustes']]);
+  if(!tabs.some(t => t[0] === __conta.tab)) __conta.tab = 'diario';
+  const periodo = (__conta.tab === 'diario' || __conta.tab === 'balance') ? contaHtmlPeriodo() : (__conta.tab === 'cuotas' ? contaHtmlPeriodo(true) : '');
+  const cuerpo = { diario: contaHtmlDiario, balance: contaHtmlBalance, cuotas: contaHtmlCuotas, codigos: contaHtmlCodigos, cuentas: contaHtmlCuentas, ajustes: contaHtmlAjustes }[__conta.tab]();
   cont.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
       <h2 style="margin:0;font-size:20px;">🧾 ${escAttr(__conta.ajustes.nombre_entidad)} · ${ct('titulo')}</h2>
     </div>
+    ${__conta.sqlNuevo ? '' : `<div class="info-box info-box-gold" style="margin-bottom:10px;">⚠️ ${ct('sqlViejo')}</div>`}
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">${tabs.map(([id, k]) => `<button class="link-btn" style="font-size:13px;font-weight:${__conta.tab === id ? 800 : 500};border:1px solid ${__conta.tab === id ? 'var(--gold)' : 'var(--line)'};background:${__conta.tab === id ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:5px 14px;" onclick="__conta.tab='${id}';contaRender()">${ct(k)}</button>`).join('')}</div>
     ${periodo}
-    <div id="conta-cuerpo">${__conta.tab === 'diario' ? contaHtmlDiario() : __conta.tab === 'balance' ? contaHtmlBalance() : __conta.tab === 'codigos' ? contaHtmlCodigos() : __conta.tab === 'cuentas' ? contaHtmlCuentas() : contaHtmlAjustes()}</div>`;
+    <div id="conta-cuerpo">${cuerpo}</div>`;
 }
 
-function contaHtmlPeriodo(){
+function contaHtmlPeriodo(soloAnio){
   const y0 = new Date().getFullYear();
   const ys = new Set([y0 - 1, y0, y0 + 1, __conta.anio]);
   __conta.movs.forEach(m => ys.add(+String(m.fecha).slice(0, 4)));
@@ -6582,7 +6961,7 @@ function contaHtmlPeriodo(){
   const meses = `<option value="0"${__conta.mes === 0 ? ' selected' : ''}>${ct('todoAnio')}</option>` + Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}"${__conta.mes === i + 1 ? ' selected' : ''}>${contaMayus(contaNombreMes(i + 1))}</option>`).join('');
   return `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
     <div class="field" style="margin:0;"><label>${ct('anio')}</label><select onchange="__conta.anio=+this.value;contaRender()">${anios.map(a => `<option value="${a}"${a === __conta.anio ? ' selected' : ''}>${a}</option>`).join('')}</select></div>
-    <div class="field" style="margin:0;"><label>${ct('mes')}</label><select onchange="__conta.mes=+this.value;contaRender()">${meses}</select></div></div>`;
+    ${soloAnio ? '' : `<div class="field" style="margin:0;"><label>${ct('mes')}</label><select onchange="__conta.mes=+this.value;contaRender()">${meses}</select></div>`}</div>`;
 }
 
 // ---------- inicio (primera vez) ----------
@@ -6645,17 +7024,24 @@ function contaHtmlDiario(){
   if(!cuentas.length) return `<div class="empty-note">${ct('sinCuentas')}</div>`;
   if(!cuentas.some(c => c.id === __conta.cuentaId)) __conta.cuentaId = cuentas[0].id;
   const cu = contaCuentaPorId(__conta.cuentaId), d = contaDiario(cu), mon = cu.moneda;
+  const ym = __conta.mes ? `${__conta.anio}-${contaPad(__conta.mes)}` : null;
   const tile = (t, v, extra) => `<div style="flex:1;min-width:120px;background:var(--bg);border-radius:10px;padding:8px 10px;"><div class="subtle" style="margin:0;font-size:11px;">${t}</div><div style="font-weight:800;${extra || ''}">${contaFmt(v, mon)}</div></div>`;
+  // filtro por medio de pago (solo salen los medios que hay en este periodo)
+  const presentes = new Set(d.filas.map(f => f.m.medio_pago || 'sin'));
+  if(__conta.filtroMedio !== 'todos' && !presentes.has(__conta.filtroMedio)) __conta.filtroMedio = 'todos';
+  const claves = ['todos'].concat(CONTA_MEDIOS.concat(['sin']).filter(k => presentes.has(k)));
+  const chips = (__conta.sqlNuevo && claves.length > 2) ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">${claves.map(k => `<button class="link-btn" style="font-size:12px;border:1px solid ${__conta.filtroMedio === k ? 'var(--gold)' : 'var(--line)'};background:${__conta.filtroMedio === k ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:3px 11px;" onclick="__conta.filtroMedio='${k}';contaRender()">${k === 'todos' ? ct('todosMedios') : contaMedioTxt(k === 'sin' ? '' : k)}</button>`).join('')}</div>` : '';
+  const filas = __conta.filtroMedio === 'todos' ? d.filas : d.filas.filter(f => (f.m.medio_pago || 'sin') === __conta.filtroMedio);
   let lista;
-  if(!d.filas.length) lista = `<div class="empty-note">${ct('sinMovs')}</div>`;
-  else if(__conta.mes) lista = d.filas.map(f => contaFilaMov(f, mon)).join('');
+  if(!filas.length) lista = `<div class="empty-note">${ct('sinMovs')}</div>`;
+  else if(__conta.mes) lista = filas.map(f => contaFilaMov(f, mon)).join('');
   else {
     const grupos = {};
-    d.filas.forEach(f => { const ym = String(f.m.fecha).slice(0, 7); (grupos[ym] = grupos[ym] || []).push(f); });
-    const claves = Object.keys(grupos).sort();
-    lista = `<div class="carpetas-lista">${claves.length > 1 ? carpetasBarra('') : ''}${claves.map((ym, i) => carpetaDesplegable({
-      clave: `conta:d:${cu.id}:${ym}`, icono: '🗓️', titulo: contaMayus(contaNombreMes(+ym.slice(5))) + ' ' + ym.slice(0, 4), cuenta: grupos[ym].length, abierta: i === claves.length - 1,
-      cuerpo: grupos[ym].map(f => contaFilaMov(f, mon)).join('') })).join('')}</div>`;
+    filas.forEach(f => { const k = String(f.m.fecha).slice(0, 7); (grupos[k] = grupos[k] || []).push(f); });
+    const ks = Object.keys(grupos).sort();
+    lista = `<div class="carpetas-lista">${ks.length > 1 ? carpetasBarra('') : ''}${ks.map((k, i) => carpetaDesplegable({
+      clave: `conta:d:${cu.id}:${k}`, icono: contaMesCerrado(k) ? '🔒' : '🗓️', titulo: contaMayus(contaNombreMes(+k.slice(5))) + ' ' + k.slice(0, 4), cuenta: grupos[k].length, abierta: i === ks.length - 1,
+      cuerpo: grupos[k].map(f => contaFilaMov(f, mon)).join('') })).join('')}</div>`;
   }
   return `
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">
@@ -6663,39 +7049,50 @@ function contaHtmlDiario(){
       <button class="primary-btn" style="width:auto;margin:0;" onclick="contaAbrirMovimiento()">➕ ${ct('nuevoMov')}</button>
       <button class="link-btn" style="border:1px solid var(--line);border-radius:10px;padding:8px 12px;" onclick="contaAbrirTraspaso()">↔️ ${ct('traspaso')}</button>
     </div>
+    ${ym && contaMesCerrado(ym) ? `<div class="info-box" style="margin-bottom:10px;">🔒 ${ct('mesCerradoTxt')}</div>` : ''}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">${tile(ct('saldoAnterior'), d.saldoAnt)}${tile(ct('entradas'), d.ent, 'color:var(--good);')}${tile(ct('salidas'), d.sal, 'color:var(--alert);')}${tile(ct('saldo'), d.saldoFin)}</div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:6px;"><button class="link-btn" style="font-size:12px;" onclick="contaExportarDiario('xlsx')">⬇️ Excel</button><button class="link-btn" style="font-size:12px;" onclick="contaExportarDiario('pdf')">⬇️ PDF</button></div>
+    ${chips}
     ${lista}`;
 }
 function contaFilaMov(f, mon){
-  const m = f.m, co = contaCodigoPorId(m.codigo_id), esT = !!m.traspaso_id;
+  const m = f.m, co = contaCodigoPorId(m.codigo_id), esT = !!m.traspaso_id, cerrado = contaMesCerrado(m.fecha);
   const ent = contaCent(m.entrada), sal = contaCent(m.salida);
   const dev = co && ((co.tipo === 'gasto' && ent > 0) || (co.tipo === 'ingreso' && sal > 0));
+  const detalle = [m.detalle ? escAttr(m.detalle) : '', m.referencia ? '#' + escAttr(m.referencia) : '', m.tipo_cambio ? `${ct('tipoCambio')} ${escAttr(String(Number(m.tipo_cambio)))}` : ''].filter(Boolean).join(' · ');
+  const acciones = cerrado ? '<span title="' + escAttr(ct('mesCerradoTxt')) + '">🔒</span>' : `${esT ? '' : `<button class="link-btn" style="font-size:11px;" onclick="contaAbrirMovimiento('${m.id}')">${ct('editar')}</button> `}<button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="contaBorrarMovimiento('${m.id}')">✕</button>`;
   return `<div class="panel-stat-row" style="align-items:flex-start;gap:8px;flex-wrap:nowrap;">
-    <span style="min-width:0;flex:1 1 auto;overflow-wrap:anywhere;"><strong>${contaFechaCorta(m.fecha)}</strong> · <span class="chip" style="font-size:11px;">${escAttr(co ? co.codigo : '?')}</span> ${escAttr(co ? co.concepto : '')}${dev ? ` <span class="subtle" style="margin:0;font-size:11px;">(${ct('devolucion')})</span>` : ''}${esT ? ' ↔️' : ''}<br><span class="subtle" style="font-size:11.5px;margin:0;">${[m.detalle ? escAttr(m.detalle) : '', m.tipo_cambio ? `${ct('tipoCambio')} ${escAttr(String(Number(m.tipo_cambio)))}` : ''].filter(Boolean).join(' · ')}</span></span>
-    <span style="text-align:right;white-space:nowrap;flex:0 0 auto;"><span class="${ent ? 'conta-pos' : 'conta-neg'}" style="font-weight:700;">${ent ? '+' + contaFmt(ent, mon) : '−' + contaFmt(sal, mon)}</span><br><span class="subtle" style="font-size:11px;margin:0;">${contaFmt(f.saldo, mon)}</span><br>${esT ? '' : `<button class="link-btn" style="font-size:11px;" onclick="contaAbrirMovimiento('${m.id}')">${ct('editar')}</button> `}<button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="contaBorrarMovimiento('${m.id}')">✕</button></span></div>`;
+    <span style="min-width:0;flex:1 1 auto;overflow-wrap:anywhere;"><strong>${contaFechaCorta(m.fecha)}</strong> · <span class="chip" style="font-size:11px;">${escAttr(co ? co.codigo : '?')}</span> ${escAttr(co ? co.concepto : '')}${dev ? ` <span class="subtle" style="margin:0;font-size:11px;">(${ct('devolucion')})</span>` : ''}${esT ? ' ↔️' : ''}${m.medio_pago ? ` <span class="subtle" style="margin:0;font-size:11px;white-space:nowrap;">${contaMedioTxt(m.medio_pago)}</span>` : ''}<br><span class="subtle" style="font-size:11.5px;margin:0;">${detalle}</span></span>
+    <span style="text-align:right;white-space:nowrap;flex:0 0 auto;"><span class="${ent ? 'conta-pos' : 'conta-neg'}" style="font-weight:700;">${ent ? '+' + contaFmt(ent, mon) : '−' + contaFmt(sal, mon)}</span><br><span class="subtle" style="font-size:11px;margin:0;">${contaFmt(f.saldo, mon)}</span><br>${acciones}</span></div>`;
 }
 
 function contaAbrirMovimiento(id){
   const m = id ? __conta.movs.find(x => x.id === id) : null;
-  const cuentas = __conta.cuentas.filter(c => c.activo || (m && c.id === m.cuenta_id));
-  const cuentaSel = m ? m.cuenta_id : __conta.cuentaId;
+  if(m && contaMesCerrado(m.fecha)){ alert(ct('mesCerrado')); return; }
+  const nuevo = __conta.sqlNuevo;
+  const cuentaBase = (m ? contaCuentaPorId(m.cuenta_id) : contaCuentaPorId(__conta.cuentaId)) || __conta.cuentas.find(c => c.activo);
+  if(!cuentaBase){ alert(ct('sinCuentas')); return; }
   const dir = m ? (contaCent(m.entrada) > 0 ? 'entrada' : 'salida') : 'salida';
   const importe = m ? String(contaCent(m.entrada) > 0 ? m.entrada : m.salida) : '';
+  const medio = m ? (m.medio_pago || '') : (__conta.ultimoMedio[cuentaBase.id] || (cuentaBase.tipo === 'caja' ? 'efectivo' : 'tarjeta'));
+  const opcionesMedio = (m && !m.medio_pago ? `<option value="">${ct('sinIndicar')}</option>` : '') + CONTA_MEDIOS.map(k => `<option value="${k}"${k === medio ? ' selected' : ''}>${contaMedioTxt(k)}</option>`).join('');
   contaModal(`
     <h3 style="margin-top:0;">${m ? ct('editar') : ct('nuevoMov')}</h3>
-    <div class="field"><label>${ct('cuenta')}</label><select id="cm-cuenta" onchange="contaCambioMov(true)">${cuentas.map(c => `<option value="${c.id}"${c.id === cuentaSel ? ' selected' : ''}>${escAttr(c.nombre)} (${c.moneda})</option>`).join('')}</select></div>
-    <div class="field"><label>${ct('fecha')} *</label><input type="date" id="cm-fecha" value="${m ? m.fecha : new Date().toISOString().slice(0, 10)}" onchange="contaCambioMov(true)"></div>
     <div class="field"><label>&nbsp;</label>
       <label style="display:inline-flex;gap:6px;align-items:center;margin-right:16px;"><input type="radio" name="cm-dir" value="entrada"${dir === 'entrada' ? ' checked' : ''} onchange="contaRellenarCodigosMov()"> ${ct('entrada')}</label>
       <label style="display:inline-flex;gap:6px;align-items:center;"><input type="radio" name="cm-dir" value="salida"${dir === 'salida' ? ' checked' : ''} onchange="contaRellenarCodigosMov()"> ${ct('salida')}</label></div>
+    ${nuevo ? `<div class="field"><label>${ct('medioPago')} *</label><select id="cm-medio" onchange="contaCambioMedioMov()">${opcionesMedio}</select></div>` : ''}
+    <div class="field"><label>${ct('cuenta')}</label><select id="cm-cuenta" onchange="contaCambioMov(true)"></select></div>
+    <div class="field"><label>${ct('fecha')} *</label><input type="date" id="cm-fecha" value="${m ? m.fecha : new Date().toISOString().slice(0, 10)}" onchange="contaCambioMov(true)"></div>
     <div class="field"><label>${ct('codigo')} *</label><select id="cm-codigo"></select></div>
     <div class="field"><label>${ct('detalle')}</label><input type="text" id="cm-detalle" value="${escAttr(m ? m.detalle || '' : '')}"></div>
+    ${nuevo ? `<div class="field"><label>${ct('referencia')}</label><input type="text" id="cm-ref" value="${escAttr(m ? m.referencia || '' : '')}"></div>` : ''}
     <div class="field"><label>${ct('importe')} *</label><input type="text" inputmode="decimal" id="cm-importe" value="${escAttr(importe)}" oninput="contaCambioMov(false)"></div>
     <div class="field" id="cm-cambio-wrap" style="display:none;"><label>${ct('tipoCambio')}</label><input type="text" inputmode="decimal" id="cm-cambio" value="${m && m.tipo_cambio ? escAttr(String(Number(m.tipo_cambio))) : ''}" oninput="this.dataset.tocado='1';contaCambioMov(false)"><div class="subtle" id="cm-equiv" style="font-size:12px;"></div></div>
     <div id="conta-error" class="subtle" style="display:none;color:var(--alert);font-weight:700;"></div>
     <button class="primary-btn" onclick="contaGuardarMovimiento('${id || ''}')">${ct('guardar')}</button>
     <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="contaCerrarModal()">${ct('cancelar')}</button>`);
+  contaRellenarCuentasMov(cuentaBase.id);
   contaRellenarCodigosMov(m ? m.codigo_id : '');
   if(m && m.tipo_cambio) document.getElementById('cm-cambio').dataset.tocado = '1';
   contaCambioMov(true);
@@ -6729,24 +7126,34 @@ async function contaGuardarMovimiento(id){
   const cuentaId = contaV('cm-cuenta'), fecha = contaV('cm-fecha'), codigoId = contaV('cm-codigo'), detalle = contaV('cm-detalle').trim();
   const dir = (document.querySelector('input[name="cm-dir"]:checked') || {}).value;
   const imp = contaNum(contaV('cm-importe'));
+  const orig = id ? __conta.movs.find(x => x.id === id) : null;
+  const nuevo = __conta.sqlNuevo, medio = nuevo ? contaV('cm-medio') : '';
   const fechaOk = /^\d{4}-\d{2}-\d{2}$/.test(fecha) && +fecha.slice(0, 4) >= 2000 && +fecha.slice(0, 4) <= 2100 && !isNaN(new Date(fecha).getTime()) && new Date(fecha).toISOString().slice(0, 10) === fecha;
   if(!fechaOk) return contaErrorModal(ct('avisoFecha'));
+  if(nuevo && !medio && !(orig && !orig.medio_pago)) return contaErrorModal(ct('avisoMedio'));
+  const cu = contaCuentaPorId(cuentaId);
+  if(!cu) return contaErrorModal(ct('sinCuentaMedio'));
+  if(medio === 'efectivo' && cu.tipo !== 'caja') return contaErrorModal(ct('medioCajaAviso'));
+  if(medio && medio !== 'efectivo' && medio !== 'otro' && cu.tipo === 'caja') return contaErrorModal(ct('medioBancoAviso'));
   if(!codigoId) return contaErrorModal(ct('avisoCodigo'));
   if(imp == null || !(imp > 0)) return contaErrorModal(ct('avisoImporte'));
-  const cu = contaCuentaPorId(cuentaId);
+  if(contaMesCerrado(fecha) || (orig && contaMesCerrado(orig.fecha))) return contaErrorModal(ct('mesCerrado'));
   let tc = null;
   if(contaEsSecundaria(cu)){ tc = contaNum(contaV('cm-cambio'), true); if(!(tc > 0)) return contaErrorModal(ct('avisoCambio')); }
   const fila = { cuenta_id: cuentaId, fecha, codigo_id: codigoId, detalle: detalle || null, entrada: dir === 'entrada' ? contaRedondea(imp) : 0, salida: dir === 'salida' ? contaRedondea(imp) : 0, tipo_cambio: tc };
+  if(nuevo){ fila.medio_pago = medio || null; fila.referencia = contaV('cm-ref').trim() || null; }
   let r;
   if(id) r = await sb.from('conta_movimientos').update(fila).eq('id', id);
   else r = await sb.from('conta_movimientos').insert(Object.assign(fila, { creado_por_email: CURRENT_USER.email }));
   if(r.error) return contaErrorModal(ct('errorGuardar') + r.error.message);
   __conta.cuentaId = cuentaId;
+  if(medio) __conta.ultimoMedio[cuentaId] = medio;
   contaCerrarModal();
   await contaRecargar();
 }
 async function contaBorrarMovimiento(id){
   const m = __conta.movs.find(x => x.id === id); if(!m) return;
+  if(contaMesCerrado(m.fecha)){ alert(ct('mesCerrado')); return; }
   if(!confirm(m.traspaso_id ? ct('confirmBorrarTraspaso') : ct('confirmBorrarMov'))) return;
   const r = m.traspaso_id ? await sb.from('conta_movimientos').delete().eq('traspaso_id', m.traspaso_id) : await sb.from('conta_movimientos').delete().eq('id', id);
   if(r.error){ alert(ct('errorGuardar') + r.error.message); return; }
@@ -6765,6 +7172,7 @@ function contaAbrirTraspaso(){
     <p class="subtle" style="margin:0 0 8px;">${ct('traspasoNota')}</p>
     <div class="field"><label>${ct('origen')}</label><select id="ct-origen" onchange="contaCambioTraspaso(true)">${opt(orig)}</select></div>
     <div class="field"><label>${ct('destino')}</label><select id="ct-destino" onchange="contaCambioTraspaso(true)">${opt(dest)}</select></div>
+    ${__conta.sqlNuevo ? `<div class="field"><label>${ct('medioPago')}</label><select id="ct-medio" onchange="this.dataset.tocado='1'">${['efectivo', 'transferencia', 'bizum', 'otro'].map(k => `<option value="${k}">${contaMedioTxt(k)}</option>`).join('')}</select></div>` : ''}
     <div class="field"><label>${ct('fecha')} *</label><input type="date" id="ct-fecha" value="${new Date().toISOString().slice(0, 10)}" onchange="contaCambioTraspaso(true)"></div>
     <div class="field"><label>${ct('importeOrigen')} *</label><input type="text" inputmode="decimal" id="ct-imp-o" oninput="contaCambioTraspaso(false)"></div>
     <div class="field" id="ct-imp-d-wrap" style="display:none;"><label>${ct('importeDestino')} *</label><input type="text" inputmode="decimal" id="ct-imp-d" oninput="this.dataset.tocado='1'"><div class="subtle" id="ct-tasa" style="font-size:12px;"></div></div>
@@ -6777,6 +7185,8 @@ function contaAbrirTraspaso(){
 function contaCambioTraspaso(recalcular){
   const o = contaCuentaPorId(contaV('ct-origen')), d = contaCuentaPorId(contaV('ct-destino'));
   if(!o || !d) return;
+  const medio = document.getElementById('ct-medio');
+  if(medio && !medio.dataset.tocado) medio.value = (o.tipo === 'caja' || d.tipo === 'caja') ? 'efectivo' : 'transferencia';
   const distinta = o.moneda !== d.moneda;
   document.getElementById('ct-imp-d-wrap').style.display = distinta ? '' : 'none';
   if(!distinta) return;
@@ -6799,16 +7209,17 @@ async function contaGuardarTraspaso(){
   if(impO == null || !(impO > 0)) return contaErrorModal(ct('avisoImporte'));
   let impD = impO;
   if(o.moneda !== d.moneda){ impD = contaNum(contaV('ct-imp-d')); if(impD == null || !(impD > 0)) return contaErrorModal(ct('avisoImporte')); }
+  if(contaMesCerrado(fecha)) return contaErrorModal(ct('mesCerrado'));
   const c560 = __conta.codigos.find(c => String(c.codigo).trim() === '560'), c570 = __conta.codigos.find(c => String(c.codigo).trim() === '570');
   if(!c560 || !c570) return contaErrorModal(ct('codigoSistema'));
-  // tipo de cambio de cada parte: en un cambio de moneda es el implícito (así el total en la moneda principal cuadra)
   let tcO = null, tcD = null;
   if(o.moneda !== d.moneda){
-    const imp = contaEsSecundaria(o) ? impO / impD : impD / impO;   // secundaria por 1 principal
+    const imp = contaEsSecundaria(o) ? impO / impD : impD / impO;
     if(contaEsSecundaria(o)) tcO = Math.round(imp * 1e6) / 1e6; else tcD = Math.round(imp * 1e6) / 1e6;
   } else if(contaEsSecundaria(o)){ tcO = tcD = contaTasaSugerida(fecha); }
   const tid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c => (c ^ Math.random() * 16 >> c / 4).toString(16));
   const base = { fecha, detalle: detalle || null, traspaso_id: tid, creado_por_email: CURRENT_USER.email };
+  if(__conta.sqlNuevo) base.medio_pago = contaV('ct-medio') || null;
   const r = await sb.from('conta_movimientos').insert([
     Object.assign({}, base, { cuenta_id: o.id, codigo_id: c560.id, entrada: 0, salida: contaRedondea(impO), tipo_cambio: tcO }),
     Object.assign({}, base, { cuenta_id: d.id, codigo_id: c570.id, entrada: contaRedondea(impD), salida: 0, tipo_cambio: tcD })
@@ -6850,32 +7261,39 @@ function contaHtmlBalance(){
   const avisos = b.avisos.length
     ? b.avisos.map(a => `<div class="panel-stat-row"><span>${a.nivel === 'aviso' ? '⚠️' : 'ℹ️'} ${escAttr(a.texto)}</span></div>`).join('')
     : `<div class="panel-stat-row"><span>✓ ${ct('todoBien')}</span></div>`;
+  const ym = __conta.mes ? `${__conta.anio}-${contaPad(__conta.mes)}` : null;
   return `
+    ${__conta.sqlNuevo ? contaHtmlCierre(ym) : ''}
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:6px;"><button class="link-btn" style="font-size:12px;" onclick="contaExportarBalance('xlsx')">⬇️ Excel</button><button class="link-btn" style="font-size:12px;" onclick="contaExportarBalance('pdf')">⬇️ PDF</button></div>
     ${hayActividad ? '' : `<div class="empty-note">${ct('sinActividad')}</div>`}
     <div style="overflow-x:auto;"><table class="conta-tabla"><thead>${cab}</thead><tbody>${cuerpo}</tbody></table></div>
     <p class="subtle" style="font-size:12px;">${ct('notaTotales')}</p>
+    ${__conta.sqlNuevo ? contaHtmlPorMedio(b) : ''}
     <div class="panel-card" style="margin-top:10px;"><h3>${ct('comprobaciones')}</h3>${avisos}</div>`;
 }
 function contaExportarBalance(formato){
   const b = contaBalance(), cols = b.cuentas, aj = __conta.ajustes, prin = aj.moneda_principal;
-  const tabla = contaBalanceTabla(b);
+  const tabla = contaBalanceTabla(b), num = formato === 'xlsx';
   const cabecera = [ct('codigo'), ct('concepto'), ...cols.map(c => `${c.nombre} (${c.moneda})`), `${ct('total')} (${prin})`];
-  const num = formato === 'xlsx';
   const filas = tabla.map(f => f.t === 'sec' ? [f.texto, '', ...cols.map(() => ''), ''] :
     [f.codigo, f.concepto, ...f.celdas.map((c, i) => num ? c / 100 : ((f.t === 'tot' || c) ? contaFmt(c, cols[i].moneda) : '')), num ? f.total / 100 : ((f.t === 'tot' || f.total) ? contaFmt(f.total, prin) : '')]);
   const titulo = `${aj.nombre_entidad} · ${ct('tabBalance')} ${contaPeriodoTexto()}`;
   const nombre = rutaSeguraArchivo(`Balance ${aj.nombre_entidad} ${contaPeriodoTexto()}`);
-  if(num) descargarXLSX(cabecera, filas, nombre + '.xlsx', ct('tabBalance')); else descargarPDFTabla(titulo, cabecera, filas, nombre + '.pdf');
+  if(!num) return descargarPDFTabla(titulo, cabecera, filas, nombre + '.pdf');
+  const hojas = [{ nombre: ct('tabBalance'), cabecera, filas }];
+  const pm = __conta.sqlNuevo ? contaPorMedioFilas(b) : [];
+  if(pm.length) hojas.push({ nombre: ct('porMedio'), cabecera: [ct('medioPago'), `${ct('cobros')} (${prin})`, `${ct('pagos')} (${prin})`, `${ct('neto')} (${prin})`],
+    filas: pm.map(x => [x.medio === 'sin' ? ct('sinIndicar') : ct('medio_' + x.medio), x.ent / 100, x.sal / 100, (x.ent - x.sal) / 100]) });
+  contaDescargarLibro(hojas, nombre + '.xlsx');
 }
 function contaExportarDiario(formato){
   const cu = contaCuentaPorId(__conta.cuentaId); if(!cu) return;
   const aj = __conta.ajustes, d = contaDiario(cu), num = formato === 'xlsx', loc = LANG_I === 'ca' ? 'ca-ES' : 'es-ES';
-  const cabecera = [ct('fecha'), ct('codigo'), ct('concepto'), ct('detalle'), ct('entrada'), ct('salida'), ct('saldo'), ct('tipoCambio')];
+  const cabecera = [ct('fecha'), ct('codigo'), ct('concepto'), ct('detalle'), ct('medioPago'), ct('referencia'), ct('entrada'), ct('salida'), ct('saldo'), ct('tipoCambio')];
   const fm = c => num ? c / 100 : contaFmt(c, cu.moneda);
-  const filas = [['', '', ct('saldoAnterior'), '', '', '', fm(d.saldoAnt), '']].concat(d.filas.map(({ m, saldo }) => {
+  const filas = [['', '', ct('saldoAnterior'), '', '', '', '', '', fm(d.saldoAnt), '']].concat(d.filas.map(({ m, saldo }) => {
     const co = contaCodigoPorId(m.codigo_id);
-    return [new Date(m.fecha + 'T00:00:00').toLocaleDateString(loc), co ? co.codigo : '', co ? co.concepto : '', m.detalle || '', contaCent(m.entrada) ? fm(contaCent(m.entrada)) : '', contaCent(m.salida) ? fm(contaCent(m.salida)) : '', fm(saldo), m.tipo_cambio ? Number(m.tipo_cambio) : ''];
+    return [new Date(m.fecha + 'T00:00:00').toLocaleDateString(loc), co ? co.codigo : '', co ? co.concepto : '', m.detalle || '', m.medio_pago ? ct('medio_' + m.medio_pago) : '', m.referencia || '', contaCent(m.entrada) ? fm(contaCent(m.entrada)) : '', contaCent(m.salida) ? fm(contaCent(m.salida)) : '', fm(saldo), m.tipo_cambio ? Number(m.tipo_cambio) : ''];
   }));
   const titulo = `${aj.nombre_entidad} · ${cu.nombre} (${cu.moneda}) · ${ct('tabDiario')} ${contaPeriodoTexto()}`;
   const nombre = rutaSeguraArchivo(`Diario ${cu.nombre} ${contaPeriodoTexto()}`);
@@ -6938,22 +7356,28 @@ async function contaBorrarCodigo(id){
 // ---------- CUENTAS ----------
 function contaHtmlCuentas(){
   const usadas = new Set(__conta.movs.map(m => m.cuenta_id));
-  const fila = c => `<div class="panel-stat-row" style="align-items:center;gap:8px;">
-      <span style="${c.activo ? '' : 'opacity:.55;'}"><strong>${escAttr(c.nombre)}</strong> <span class="chip" style="font-size:11px;">${c.tipo === 'caja' ? ct('caja') : ct('banco')} · ${escAttr(c.moneda)}</span><br><span class="subtle" style="font-size:11.5px;margin:0;">${ct('saldoInicial')}: ${contaFmt(contaCent(c.saldo_inicial), c.moneda)}${c.activo ? '' : ' · ' + (LANG_I === 'ca' ? 'inactiu' : 'inactivo')}</span></span>
-      <span style="white-space:nowrap;"><button class="link-btn" style="font-size:11.5px;" onclick="contaAbrirCuenta('${c.id}')">${ct('editar')}</button><button class="link-btn" style="font-size:11.5px;" onclick="contaActivarCuenta('${c.id}', ${c.activo ? 'false' : 'true'})">${c.activo ? ct('desactivar') : ct('activar')}</button>${usadas.has(c.id) ? '' : `<button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="contaBorrarCuenta('${c.id}')">🗑</button>`}</span></div>`;
+  const fila = c => {
+    const aq = __conta.sqlNuevo ? contaUltimoArqueo(c.id) : null;
+    const ultimo = aq ? `<br><span class="subtle" style="font-size:11px;margin:0;">${ct('ultimaComprobacion')}: ${escAttr(aq.fecha)} · ${contaCent(aq.diferencia) === 0 ? '✓ ' + ct('cuadra') : '⚠️ ' + ct('diferencia') + ' ' + contaFmt(contaCent(aq.diferencia), c.moneda)}</span>` : '';
+    return `<div class="panel-stat-row" style="align-items:center;gap:8px;">
+      <span style="${c.activo ? '' : 'opacity:.55;'}"><strong>${escAttr(c.nombre)}</strong> <span class="chip" style="font-size:11px;">${contaTipoCuentaTxt(c.tipo)} · ${escAttr(c.moneda)}</span><br><span class="subtle" style="font-size:11.5px;margin:0;">${ct('saldoInicial')}: ${contaFmt(contaCent(c.saldo_inicial), c.moneda)}${c.activo ? '' : ' · ' + ct('desactivado')}</span>${ultimo}</span>
+      <span style="white-space:nowrap;text-align:right;">${__conta.sqlNuevo && c.activo ? `<button class="link-btn" style="font-size:11.5px;" onclick="contaAbrirArqueo('${c.id}')">${c.tipo === 'caja' ? ct('arqueo') : ct('conciliar')}</button>` : ''}${aq ? `<button class="link-btn" style="font-size:11.5px;" onclick="contaVerArqueos('${c.id}')">${ct('historial')}</button>` : ''}<br><button class="link-btn" style="font-size:11.5px;" onclick="contaAbrirCuenta('${c.id}')">${ct('editar')}</button><button class="link-btn" style="font-size:11.5px;" onclick="contaActivarCuenta('${c.id}', ${c.activo ? 'false' : 'true'})">${c.activo ? ct('desactivar') : ct('activar')}</button>${usadas.has(c.id) ? '' : `<button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="contaBorrarCuenta('${c.id}')">🗑</button>`}</span></div>`;
+  };
   return `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button class="primary-btn" style="width:auto;margin:0;" onclick="contaAbrirCuenta()">➕ ${ct('nuevaCuenta')}</button></div>
-    <div class="panel-card">${__conta.cuentas.length ? __conta.cuentas.map(fila).join('') : `<div class="empty-note">${ct('sinCuentas')}</div>`}</div>`;
+    <div class="panel-card">${__conta.cuentas.length ? __conta.cuentas.map(fila).join('') : `<div class="empty-note">${ct('sinCuentas')}</div>`}</div>
+    <p class="subtle" style="font-size:12px;">💳 ${LANG_I === 'ca' ? 'La targeta de dèbit es paga amb el compte del banc. La de crèdit és un compte a part: les compres la deixen en negatiu i es liquida amb un traspàs des del banc.' : 'La tarjeta de débito se paga con la cuenta del banco. La de crédito es una cuenta aparte: las compras la dejan en negativo y se liquida con un traspaso desde el banco.'}</p>`;
 }
 function contaAbrirCuenta(id){
   const c = id ? contaCuentaPorId(id) : null, aj = __conta.ajustes;
   const monedas = [aj.moneda_principal].concat(aj.moneda_secundaria ? [aj.moneda_secundaria] : []);
   const conMovs = !!(c && __conta.movs.some(m => m.cuenta_id === c.id));
+  const saldoBloqueado = !!(c && __conta.sqlNuevo && __conta.cierres.length);
   contaModal(`
     <h3 style="margin-top:0;">${c ? ct('editar') : ct('nuevaCuenta')}</h3>
     <div class="field"><label>${ct('nombre')} *</label><input type="text" id="cu-nombre" value="${escAttr(c ? c.nombre : '')}"></div>
-    <div class="field"><label>${ct('tipo')}</label><select id="cu-tipo"><option value="caja"${c && c.tipo === 'caja' ? ' selected' : ''}>${ct('caja')}</option><option value="banco"${!c || c.tipo === 'banco' ? ' selected' : ''}>${ct('banco')}</option></select></div>
+    <div class="field"><label>${ct('tipo')}</label><select id="cu-tipo">${['caja', 'banco', 'tarjeta', 'monedero'].map(t => `<option value="${t}"${(c ? c.tipo : 'banco') === t ? ' selected' : ''}>${contaTipoCuentaTxt(t)}</option>`).join('')}</select></div>
     <div class="field"><label>${ct('moneda')}</label><select id="cu-moneda"${conMovs ? ' disabled' : ''}>${monedas.map(m => `<option value="${m}"${c && c.moneda === m ? ' selected' : ''}>${m}</option>`).join('')}</select></div>
-    <div class="field"><label>${ct('saldoInicial')}</label><input type="text" inputmode="decimal" id="cu-saldo" value="${c ? escAttr(String(Number(c.saldo_inicial))) : '0'}"></div>
+    <div class="field"><label>${ct('saldoInicial')}</label><input type="text" inputmode="decimal" id="cu-saldo" value="${c ? escAttr(String(Number(c.saldo_inicial))) : '0'}"${saldoBloqueado ? ' disabled' : ''}>${saldoBloqueado ? `<div class="subtle" style="font-size:12px;">${ct('saldoInicialBloqueado')}</div>` : ''}</div>
     <div id="conta-error" class="subtle" style="display:none;color:var(--alert);font-weight:700;"></div>
     <button class="primary-btn" onclick="contaGuardarCuenta('${id || ''}')">${ct('guardar')}</button>
     <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="contaCerrarModal()">${ct('cancelar')}</button>`);
@@ -6963,7 +7387,8 @@ async function contaGuardarCuenta(id){
   if(!nombre) return contaErrorModal(ct('faltaNombre'));
   if(saldo == null) return contaErrorModal(ct('avisoImporte'));
   const c = id ? contaCuentaPorId(id) : null;
-  const fila = { nombre, tipo, saldo_inicial: contaRedondea(saldo) };
+  const fila = { nombre, tipo };
+  if(!(c && __conta.sqlNuevo && __conta.cierres.length)) fila.saldo_inicial = contaRedondea(saldo);
   if(!c || !__conta.movs.some(m => m.cuenta_id === c.id)) fila.moneda = contaV('cu-moneda') || __conta.ajustes.moneda_principal;
   const r = id ? await sb.from('conta_cuentas').update(fila).eq('id', id) : await sb.from('conta_cuentas').insert(Object.assign(fila, { orden: __conta.cuentas.length + 1 }));
   if(r.error) return contaErrorModal(ct('errorGuardar') + r.error.message);
@@ -6997,10 +7422,13 @@ function contaHtmlAjustes(){
       <div class="field" style="margin:0;"><label>${ct('tasa')}</label><input type="text" inputmode="decimal" id="ca-tasa" placeholder="655,957" style="max-width:130px;"></div>
       <button class="primary-btn" style="width:auto;margin:0;" onclick="contaGuardarTipoMes()">${ct('añadirTipo')}</button></div>
     <div id="conta-error" class="subtle" style="display:none;color:var(--alert);font-weight:700;"></div>
-    ${tipos.length ? tipos.map(t => `<div class="panel-stat-row" style="align-items:center;"><span>${escAttr(t.periodo)}</span><span style="display:flex;gap:10px;align-items:center;"><strong>${escAttr(String(Number(t.tasa)))}</strong><button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="contaBorrarTipoMes('${t.id}')">✕</button></span></div>`).join('') : `<div class="empty-note">${ct('sinTipos')}</div>`}` : '';
+    ${tipos.length ? tipos.map(t => `<div class="panel-stat-row" style="align-items:center;"><span>${escAttr(t.periodo)}${contaMesCerrado(t.periodo + '-01') ? ' 🔒' : ''}</span><span style="display:flex;gap:10px;align-items:center;"><strong>${escAttr(String(Number(t.tasa)))}</strong><button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="contaBorrarTipoMes('${t.id}')">✕</button></span></div>`).join('') : `<div class="empty-note">${ct('sinTipos')}</div>`}` : '';
+  const bloqueCierres = __conta.sqlNuevo ? `
+    <h3 style="margin-top:18px;">🔒 ${ct('mesesCerrados')}</h3>
+    ${__conta.cierres.length ? __conta.cierres.slice().sort((a, b) => b.periodo.localeCompare(a.periodo)).map(c => `<div class="panel-stat-row" style="align-items:center;"><span>${contaMayus(contaNombreMes(+c.periodo.slice(5)))} ${c.periodo.slice(0, 4)}</span><button class="link-btn" style="font-size:11.5px;" onclick="contaReabrirMes('${c.periodo}')">${ct('reabrirMes')}</button></div>`).join('') : `<div class="empty-note">${ct('ningunMesCerrado')}</div>`}` : '';
   const ayuda = ca
-    ? ['Cada moviment va amb un <strong>codi</strong> (ingrés o despesa). Tu crees els teus codis a la pestanya Codis.', 'Els <strong>traspassos</strong> mouen diners entre comptes (caixa, bancs…) i no compten com a ingrés ni com a despesa.', 'El <strong>saldo anterior</strong> d\'un any es calcula sol amb tot el que hi ha abans.', 'Una <strong>devolució</strong> es registra com una entrada en un codi de despesa (o una sortida en un d\'ingrés) i resta del total d\'aquest codi.', 'Només l\'administració veu aquesta secció.']
-    : ['Cada movimiento lleva un <strong>código</strong> (ingreso o gasto). Tú creas tus códigos en la pestaña Códigos.', 'Los <strong>traspasos</strong> mueven dinero entre cuentas (caja, bancos…) y no cuentan como ingreso ni como gasto.', 'El <strong>saldo anterior</strong> de un año se calcula solo con todo lo que hay antes.', 'Una <strong>devolución</strong> se registra como una entrada en un código de gasto (o una salida en uno de ingreso) y resta del total de ese código.', 'Solo la administración ve esta sección.'];
+    ? ['Cada moviment va amb un <strong>codi</strong> (ingrés o despesa) i un <strong>mitjà de pagament</strong>. Tu crees els teus codis a la pestanya Codis.', 'L\'<strong>efectiu</strong> mou una caixa. <strong>Targeta, transferència, Bizum i domiciliació</strong> mouen un compte de banc (o de targeta o moneder).', 'La <strong>targeta de crèdit</strong> és un compte a part que queda en negatiu fins que es liquida amb un traspàs des del banc.', 'Els <strong>traspassos</strong> mouen diners entre comptes i no compten com a ingrés ni com a despesa.', 'El <strong>saldo anterior</strong> d\'un any es calcula sol amb tot el que hi ha abans.', 'Una <strong>devolució</strong> es registra com una entrada en un codi de despesa (o una sortida en un d\'ingrés) i resta del total d\'aquest codi.', 'Amb l\'<strong>arqueig</strong> (caixa) o la <strong>conciliació</strong> (banc) comproves que el saldo real quadra amb el dels llibres.', 'En <strong>tancar un mes</strong> ningú pot canviar-ne els moviments fins que es reobri.', 'Només l\'administració veu aquesta secció.']
+    : ['Cada movimiento lleva un <strong>código</strong> (ingreso o gasto) y un <strong>medio de pago</strong>. Tú creas tus códigos en la pestaña Códigos.', 'El <strong>efectivo</strong> mueve una caja. <strong>Tarjeta, transferencia, Bizum y domiciliación</strong> mueven una cuenta de banco (o de tarjeta o monedero).', 'La <strong>tarjeta de crédito</strong> es una cuenta aparte que queda en negativo hasta que se liquida con un traspaso desde el banco.', 'Los <strong>traspasos</strong> mueven dinero entre cuentas y no cuentan como ingreso ni como gasto.', 'El <strong>saldo anterior</strong> de un año se calcula solo con todo lo que hay antes.', 'Una <strong>devolución</strong> se registra como una entrada en un código de gasto (o una salida en uno de ingreso) y resta del total de ese código.', 'Con el <strong>arqueo</strong> (caja) o la <strong>conciliación</strong> (banco) compruebas que el saldo real cuadra con el de los libros.', 'Al <strong>cerrar un mes</strong> nadie puede cambiar sus movimientos hasta que se reabra.', 'Solo la administración ve esta sección.'];
   return `<div class="panel-card">
     <div class="field"><label>${ct('nombreEntidad')}</label><input type="text" id="ca-nombre" value="${escAttr(aj.nombre_entidad)}"></div>
     <div class="field"><label>${ct('monedaPrincipal')}</label><input type="text" id="ca-moneda" maxlength="3" value="${escAttr(aj.moneda_principal)}" style="text-transform:uppercase;"${hayMovs ? ' disabled' : ''}>${hayMovs ? `<div class="subtle" style="font-size:12px;">${ct('monedaBloqueada')}</div>` : ''}</div>
@@ -7008,6 +7436,7 @@ function contaHtmlAjustes(){
     <div class="field"><label>${ct('tipoCambioDef')}</label><input type="text" inputmode="decimal" id="ca-cambio" value="${aj.tipo_cambio_defecto != null ? escAttr(String(Number(aj.tipo_cambio_defecto))) : ''}" placeholder="655,957"><div class="subtle" style="font-size:12px;">${ct('ayudaCambio')}</div></div>
     <button class="primary-btn" onclick="contaGuardarAjustes()">${ct('guardar')}</button>
     ${bloqueTipos}
+    ${bloqueCierres}
     <div id="conta-aviso-ajustes" class="subtle" style="font-weight:700;"></div></div>
     <div class="carpetas-lista" style="margin-top:12px;">${carpetaDesplegable({ clave: 'conta:ayuda', icono: 'ℹ️', titulo: ct('ayudaTitulo'), cuerpo: `<ul style="margin:8px 0 0 18px;padding:0;font-size:13px;">${ayuda.map(x => `<li style="margin-bottom:4px;">${x}</li>`).join('')}</ul>` })}</div>`;
 }
@@ -7032,15 +7461,398 @@ async function contaGuardarTipoMes(){
   const periodo = contaV('ca-mes'), tasa = contaNum(contaV('ca-tasa'), true);
   if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(periodo)) return contaErrorModal(ct('avisoFecha'));
   if(!(tasa > 0)) return contaErrorModal(ct('avisoCambio'));
+  if(contaMesCerrado(periodo + '-01')) return contaErrorModal(ct('mesCerrado'));
   const r = await sb.from('conta_tipos_cambio').upsert({ periodo, tasa }, { onConflict: 'periodo' });
   if(r.error) return contaErrorModal(ct('errorGuardar') + r.error.message);
   await contaRecargar();
 }
 async function contaBorrarTipoMes(id){
+  const t = __conta.tipos.find(x => x.id === id);
+  if(t && contaMesCerrado(t.periodo + '-01')){ alert(ct('mesCerrado')); return; }
   const r = await sb.from('conta_tipos_cambio').delete().eq('id', id);
   if(r.error){ alert(ct('errorGuardar') + r.error.message); return; }
   await contaRecargar();
 }
+
+
+function contaSaldoEnCent(cuenta, fechaIso){
+  let s = contaCent(cuenta.saldo_inicial);
+  __conta.movs.forEach(m => { if(m.cuenta_id === cuenta.id && String(m.fecha) <= fechaIso) s += contaCent(m.entrada) - contaCent(m.salida); });
+  return s;
+}
+function contaUltimoArqueo(cuentaId, hastaFecha){
+  return __conta.arqueos.filter(a => a.cuenta_id === cuentaId && (!hastaFecha || String(a.fecha) <= hastaFecha))
+    .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)) || String(b.creado_en || '').localeCompare(String(a.creado_en || '')))[0];
+}
+
+
+// Balance del periodo: por código y por cuenta (en la moneda de cada cuenta) + total en la moneda principal + por medio de pago
+
+function contaRellenarCuentasMov(seleccion){
+  const sel = document.getElementById('cm-cuenta'); if(!sel) return;
+  const medioEl = document.getElementById('cm-medio'), medio = medioEl ? medioEl.value : '';
+  const l = __conta.cuentas.filter(c => (c.activo || c.id === seleccion) && contaMedioCompatible(medio, c));
+  if(!l.length){ sel.innerHTML = '<option value="">—</option>'; contaErrorModal(ct('sinCuentaMedio')); return; }
+  contaErrorModal('');
+  const actual = l.some(c => c.id === seleccion) ? seleccion : l[0].id;
+  sel.innerHTML = l.map(c => `<option value="${c.id}"${c.id === actual ? ' selected' : ''}>${escAttr(c.nombre)} (${c.moneda})</option>`).join('');
+}
+function contaCambioMedioMov(){
+  contaRellenarCuentasMov(contaV('cm-cuenta')); contaCambioMov(true);
+}
+
+
+
+
+
+// ---------- DIARIO ----------
+
+// Las cuentas que se ofrecen dependen del medio de pago: efectivo → cajas; tarjeta, transferencia, Bizum, domiciliación → bancos, tarjetas y monederos
+
+// ---------- TRASPASOS ----------
+
+function contaPorMedioFilas(b){
+  return CONTA_MEDIOS.concat(['sin']).filter(k => b.porMedio[k]).map(k => ({ medio: k, ent: b.porMedio[k].ent, sal: b.porMedio[k].sal }));
+}
+function contaHtmlPorMedio(b){
+  const f = contaPorMedioFilas(b), prin = __conta.ajustes.moneda_principal;
+  if(!f.length) return '';
+  const te = f.reduce((s, x) => s + x.ent, 0), ts = f.reduce((s, x) => s + x.sal, 0);
+  return `<div class="panel-card" style="margin-top:10px;"><h3>${ct('porMedio')} (${escAttr(prin)})</h3>
+    <div style="overflow-x:auto;"><table class="conta-tabla simple"><thead><tr><th>${ct('medioPago')}</th><th>${ct('cobros')}</th><th>${ct('pagos')}</th><th>${ct('neto')}</th></tr></thead><tbody>
+    ${f.map(x => `<tr><td>${contaMedioTxt(x.medio === 'sin' ? '' : x.medio)}</td><td>${contaFmt(x.ent, prin)}</td><td>${contaFmt(x.sal, prin)}</td><td>${contaFmt(x.ent - x.sal, prin)}</td></tr>`).join('')}
+    <tr class="tot"><td>${ct('total')}</td><td>${contaFmt(te, prin)}</td><td>${contaFmt(ts, prin)}</td><td>${contaFmt(te - ts, prin)}</td></tr></tbody></table></div>
+    <p class="subtle" style="font-size:12px;margin:6px 0 0;">${ct('traspasosNoIncluidos')}</p></div>`;
+}
+function contaHtmlCierre(ym){
+  const loc = LANG_I === 'ca' ? 'ca-ES' : 'es-ES';
+  if(!ym){
+    const cs = __conta.cierres.filter(c => c.periodo.startsWith(String(__conta.anio)));
+    return `<div class="info-box" style="margin-bottom:10px;">🔒 ${ct('eligeMes')}${cs.length ? ` · ${ct('mesesCerrados')}: ${cs.map(c => contaMayus(contaNombreMes(+c.periodo.slice(5)))).join(', ')}` : ''}</div>`;
+  }
+  const c = __conta.cierres.find(x => x.periodo === ym);
+  if(c) return `<div class="info-box" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><span>🔒 ${ct('mesCerradoTxt')} · ${new Date(c.cerrado_en).toLocaleDateString(loc)}${c.cerrado_por_email ? ' · ' + escAttr(nombreTecnico(c.cerrado_por_email)) : ''}</span><button class="link-btn" onclick="contaReabrirMes('${ym}')">${ct('reabrirMes')}</button></div>`;
+  return `<div style="margin-bottom:10px;"><button class="link-btn" style="border:1px solid var(--line);border-radius:10px;padding:8px 12px;" onclick="contaCerrarMes('${ym}')">🔒 ${ct('cerrarMes')}</button></div>`;
+}
+function contaProblemasMes(ym){
+  const movs = __conta.movs.filter(m => String(m.fecha).slice(0, 7) === ym);
+  let sinTasa = 0;
+  movs.forEach(m => { if(contaTasa(m, contaCuentaPorId(m.cuenta_id)) == null) sinTasa++; });
+  const partes = {}; __conta.movs.forEach(m => { if(m.traspaso_id) partes[m.traspaso_id] = (partes[m.traspaso_id] || 0) + 1; });
+  const incompletos = new Set(movs.filter(m => m.traspaso_id && partes[m.traspaso_id] !== 2).map(m => m.traspaso_id)).size;
+  return { sinTasa, incompletos };
+}
+async function contaCerrarMes(ym){
+  const p = contaProblemasMes(ym), bloqueos = [];
+  if(p.sinTasa) bloqueos.push(`${p.sinTasa} ${ct('sinTasaAviso')}`);
+  if(p.incompletos) bloqueos.push(`${p.incompletos} ${ct('traspasoIncompleto')}`);
+  if(bloqueos.length){ alert(ct('cierreBloqueado') + '\n· ' + bloqueos.join('\n· ')); return; }
+  const fin = `${ym}-${contaPad(new Date(+ym.slice(0, 4), +ym.slice(5), 0).getDate())}`;
+  const lineas = [], avisos = [];
+  __conta.cuentas.filter(c => c.activo).forEach(c => {
+    const s = contaSaldoEnCent(c, fin);
+    lineas.push(`${c.nombre}: ${contaFmt(s, c.moneda)}`);
+    if(s < 0 && c.tipo !== 'tarjeta') avisos.push(`⚠ ${c.nombre}: ${ct('saldoNegativo')}`);
+    const aq = contaUltimoArqueo(c.id, fin);
+    if(aq && contaCent(aq.diferencia) !== 0) avisos.push(`⚠ ${c.nombre}: ${ct('descuadre')} (${aq.fecha})`);
+  });
+  if(!confirm(`${ct('cerrarMes')}: ${contaMayus(contaNombreMes(+ym.slice(5)))} ${ym.slice(0, 4)}\n\n${lineas.join('\n')}${avisos.length ? '\n\n' + avisos.join('\n') : ''}\n\n${ct('confirmarCierre')}`)) return;
+  const r = await sb.from('conta_cierres').insert({ periodo: ym, cerrado_por_email: CURRENT_USER.email });
+  if(r.error){ alert(ct('errorGuardar') + r.error.message); return; }
+  await contaRecargar();
+}
+async function contaReabrirMes(ym){
+  if(!confirm(ct('confirmarReabrir'))) return;
+  const r = await sb.from('conta_cierres').delete().eq('periodo', ym);
+  if(r.error){ alert(ct('errorGuardar') + r.error.message); return; }
+  await contaRecargar();
+}
+function contaDescargarLibro(hojas, nombre){
+  const libro = XLSX.utils.book_new();
+  hojas.forEach(h => XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet([h.cabecera, ...h.filas]), String(h.nombre).slice(0, 31)));
+  const buf = XLSX.write(libro, { bookType: 'xlsx', type: 'array' });
+  const url = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  const a = document.createElement('a'); a.href = url; a.download = nombre; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+function contaAbrirArqueo(cuentaId){
+  const cu = contaCuentaPorId(cuentaId); if(!cu) return;
+  const desglose = cu.moneda === 'EUR' && cu.tipo === 'caja';
+  window.__arqueoCuenta = cuentaId;
+  contaModal(`
+    <h3 style="margin-top:0;">${cu.tipo === 'caja' ? ct('arqueoTitulo') : ct('conciliacionTitulo')} · ${escAttr(cu.nombre)}</h3>
+    <div class="field"><label>${ct('fecha')}</label><input type="date" id="aq-fecha" value="${new Date().toISOString().slice(0, 10)}" onchange="contaCambioArqueo()"></div>
+    ${desglose
+      ? `<div class="field"><label>${ct('desgloseTxt')}</label><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:6px;">${CONTA_DENOM_EUR.map((d, i) => `<label style="font-size:12px;">${contaFmt(d, 'EUR')}<input type="text" inputmode="numeric" id="aq-d-${i}" oninput="contaCambioArqueo()" style="width:100%;"></label>`).join('')}</div></div>`
+      : `<div class="field"><label>${cu.tipo === 'caja' ? ct('totalContado') : ct('segunExtracto')}</label><input type="text" inputmode="decimal" id="aq-total" oninput="contaCambioArqueo()"></div>`}
+    <div class="panel-stat-row"><span>${ct('totalContado')}</span><strong id="aq-contado">—</strong></div>
+    <div class="panel-stat-row"><span>${ct('saldoLibros')}</span><strong id="aq-libros">—</strong></div>
+    <div class="panel-stat-row"><span>${ct('diferencia')}</span><strong id="aq-dif">—</strong></div>
+    <div class="field" style="margin-top:8px;"><label>${ct('nota')}</label><input type="text" id="aq-nota"></div>
+    <div id="conta-error" class="subtle" style="display:none;color:var(--alert);font-weight:700;"></div>
+    <button class="primary-btn" onclick="contaGuardarArqueo()">${ct('guardar')}</button>
+    <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="contaCerrarModal()">${ct('cancelar')}</button>`);
+  contaCambioArqueo();
+}
+function contaContadoArqueoCent(){
+  if(document.getElementById('aq-total')){ const v = contaNum(contaV('aq-total')); return v == null ? null : contaCent(v); }
+  let tot = 0, hay = false;
+  CONTA_DENOM_EUR.forEach((d, i) => { const n = parseInt(contaV('aq-d-' + i) || '0', 10); if(n > 0){ tot += n * d; hay = true; } else if(contaV('aq-d-' + i).trim() === '0') hay = true; });
+  return hay ? tot : null;
+}
+function contaCambioArqueo(){
+  const cu = contaCuentaPorId(window.__arqueoCuenta); if(!cu) return;
+  const libros = contaSaldoEnCent(cu, contaV('aq-fecha') || new Date().toISOString().slice(0, 10));
+  const contado = contaContadoArqueoCent();
+  document.getElementById('aq-libros').textContent = contaFmt(libros, cu.moneda);
+  document.getElementById('aq-contado').textContent = contado == null ? '—' : contaFmt(contado, cu.moneda);
+  const dif = document.getElementById('aq-dif');
+  if(contado == null){ dif.textContent = '—'; dif.style.color = ''; return; }
+  const d = contado - libros;
+  dif.textContent = d === 0 ? `✓ ${ct('cuadra')}` : contaFmt(d, cu.moneda);
+  dif.style.color = d === 0 ? 'var(--good)' : 'var(--alert)';
+}
+async function contaGuardarArqueo(){
+  const cu = contaCuentaPorId(window.__arqueoCuenta); if(!cu) return;
+  const fecha = contaV('aq-fecha'), contado = contaContadoArqueoCent();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || isNaN(new Date(fecha).getTime())) return contaErrorModal(ct('avisoFecha'));
+  if(contado == null) return contaErrorModal(ct('avisoImporte'));
+  const libros = contaSaldoEnCent(cu, fecha);
+  const fila = { cuenta_id: cu.id, fecha, contado: contado / 100, saldo_libros: libros / 100, diferencia: (contado - libros) / 100, nota: contaV('aq-nota').trim() || null, creado_por_email: CURRENT_USER.email };
+  if(!document.getElementById('aq-total')){
+    const d = {}; CONTA_DENOM_EUR.forEach((v, i) => { const n = parseInt(contaV('aq-d-' + i) || '0', 10); if(n > 0) d[String(v / 100)] = n; });
+    fila.desglose = d;
+  }
+  const r = await sb.from('conta_arqueos').insert(fila);
+  if(r.error) return contaErrorModal(ct('errorGuardar') + r.error.message);
+  contaCerrarModal(); await contaRecargar();
+}
+function contaVerArqueos(cuentaId){
+  const cu = contaCuentaPorId(cuentaId); if(!cu) return;
+  const l = __conta.arqueos.filter(a => a.cuenta_id === cuentaId).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha))).slice(0, 30);
+  contaModal(`<h3 style="margin-top:0;">${ct('historial')} · ${escAttr(cu.nombre)}</h3>
+    ${l.length ? l.map(a => `<div class="panel-stat-row" style="align-items:flex-start;"><span><strong>${escAttr(a.fecha)}</strong><br><span class="subtle" style="font-size:11.5px;margin:0;">${ct('totalContado')} ${contaFmt(contaCent(a.contado), cu.moneda)} · ${ct('saldoLibros')} ${contaFmt(contaCent(a.saldo_libros), cu.moneda)}${a.nota ? ' · ' + escAttr(a.nota) : ''}</span></span><strong class="${contaCent(a.diferencia) === 0 ? 'conta-pos' : 'conta-neg'}">${contaCent(a.diferencia) === 0 ? '✓ ' + ct('cuadra') : contaFmt(contaCent(a.diferencia), cu.moneda)}</strong></div>`).join('') : `<div class="empty-note">${ct('sinArqueos')}</div>`}
+    <button class="link-btn" style="display:block;margin:12px auto 0;" onclick="contaCerrarModal()">${ct('cancelar')}</button>`);
+}
+
+
+// ---------- BALANCE (con cierre de mes y desglose por medio de pago) ----------
+
+// ---------- EXPORTAR ----------
+
+// ---------- CUENTAS (caja, banco, tarjeta de crédito, monedero) ----------
+
+// ---------- ARQUEO DE CAJA / CONCILIACIÓN CON EL EXTRACTO ----------
+const CONTA_DENOM_EUR = [50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100, 50, 20, 10, 5, 2, 1];   // céntimos
+
+// ---------- AJUSTES ----------
+
+function contaPeriodosCuota(q, anio){
+  const paso = CONTA_PASO[q.periodicidad] || 1, d = String(q.desde).slice(0, 7).split('-').map(Number), res = [];
+  const hasta = q.hasta ? String(q.hasta).slice(0, 7) : null;
+  for(let k = 0; k < 3000; k++){
+    const total = d[0] * 12 + (d[1] - 1) + k * paso, y = Math.floor(total / 12), m = total % 12 + 1;
+    if(y > anio) break;
+    const ym = `${y}-${contaPad(m)}`;
+    if(y === anio && (!hasta || ym <= hasta)) res.push(ym);
+  }
+  return res;
+}
+function contaEstadoCuota(q, ym){
+  return contaPagoDe(q, ym) ? 'cobrada' : (ym <= new Date().toISOString().slice(0, 7) ? 'pendiente' : 'futura');
+}
+function contaCuotaPrincipal(q, ym){
+  const aj = __conta.ajustes;
+  if(q.moneda === aj.moneda_principal) return contaCent(q.importe);
+  const t = contaTasaSugerida(ym + '-01');
+  return t ? Math.round(contaCent(q.importe) / t) : null;
+}
+function contaResumenCuotas(){
+  const r = { previsto: 0, cobrado: 0, pendiente: 0, lista: [], sinTasa: 0 };
+  __conta.cuotistas.filter(q => q.activo).forEach(q => {
+    contaPeriodosCuota(q, __conta.anio).forEach(ym => {
+      const est = contaEstadoCuota(q, ym);
+      if(est === 'futura') return;
+      const imp = contaCuotaPrincipal(q, ym);
+      if(imp == null){ r.sinTasa++; return; }
+      r.previsto += imp;
+      if(est === 'cobrada'){
+        const p = contaPagoDe(q, ym), m = __conta.movs.find(x => x.id === p.movimiento_id), cu = m && contaCuentaPorId(m.cuenta_id);
+        const cob = m && cu ? contaAPrincipal(contaCent(m.entrada), m, cu) : null;
+        r.cobrado += cob == null ? imp : cob;
+      } else { r.pendiente += imp; r.lista.push({ q, ym, imp }); }
+    });
+  });
+  r.lista.sort((a, b) => a.ym.localeCompare(b.ym) || a.q.nombre.localeCompare(b.q.nombre));
+  return r;
+}
+function contaHtmlCuotas(){
+  const aj = __conta.ajustes, prin = aj.moneda_principal, loc = LANG_I === 'ca' ? 'ca-ES' : 'es-ES';
+  const todos = __conta.cuotistas.slice().sort((a, b) => a.nombre.localeCompare(b.nombre));
+  const act = todos.filter(q => q.activo);
+  const res = contaResumenCuotas();
+  const tile = (t, v, extra) => `<div style="flex:1;min-width:130px;background:var(--bg);border-radius:10px;padding:8px 10px;"><div class="subtle" style="margin:0;font-size:11px;">${t}</div><div style="font-weight:800;${extra || ''}">${contaFmt(v, prin)}</div></div>`;
+  const mesCab = Array.from({ length: 12 }, (_, i) => `<th>${contaMayus(contaNombreMes(i + 1)).slice(0, 3)}</th>`).join('');
+  const celda = (q, ym, periodos) => {
+    if(!periodos.includes(ym)) return '<td style="color:var(--ink-soft);">·</td>';
+    const est = contaEstadoCuota(q, ym);
+    if(est === 'cobrada') return `<td><button class="link-btn" style="font-size:15px;color:var(--good);" title="${escAttr(ct('cobrada'))}" onclick="contaVerCobro('${q.id}','${ym}')">✓</button></td>`;
+    return `<td><button class="link-btn" style="font-size:15px;${est === 'pendiente' ? '' : 'opacity:.45;'}" title="${escAttr(est === 'pendiente' ? ct('pendienteTxt') : ct('cobrar'))}" onclick="contaAbrirCobro('${q.id}','${ym}')">${est === 'pendiente' ? '⏳' : '○'}</button></td>`;
+  };
+  const filas = act.map(q => { const per = contaPeriodosCuota(q, __conta.anio); return `<tr><td>${escAttr(q.nombre)}<br><span class="subtle" style="font-size:11px;margin:0;">${contaFmt(contaCent(q.importe), q.moneda)} · ${ct(q.periodicidad)}</span></td>${Array.from({ length: 12 }, (_, i) => celda(q, `${__conta.anio}-${contaPad(i + 1)}`, per)).join('')}</tr>`; }).join('');
+  const pendientes = res.lista.length ? res.lista.map(x => `<div class="panel-stat-row" style="align-items:center;"><span><strong>${escAttr(x.q.nombre)}</strong> · ${contaMayus(contaNombreMes(+x.ym.slice(5)))} ${x.ym.slice(0, 4)}<br><span class="subtle" style="font-size:11.5px;margin:0;">${contaFmt(contaCent(x.q.importe), x.q.moneda)}</span></span><button class="primary-btn" style="width:auto;margin:0;padding:6px 12px;font-size:12.5px;" onclick="contaAbrirCobro('${x.q.id}','${x.ym}')">${ct('cobrar')}</button></div>`).join('') : `<div class="empty-note">${ct('nada')}</div>`;
+  const lista = todos.map(q => `<div class="panel-stat-row" style="align-items:center;gap:8px;"><span style="${q.activo ? '' : 'opacity:.55;'}"><strong>${escAttr(q.nombre)}</strong> <span class="chip" style="font-size:11px;">${contaFmt(contaCent(q.importe), q.moneda)} · ${ct(q.periodicidad)}</span>${q.activo ? '' : ` <span class="subtle" style="margin:0;font-size:11px;">(${ct('desactivado')})</span>`}</span><span style="white-space:nowrap;"><button class="link-btn" style="font-size:11.5px;" onclick="contaAbrirCuotista('${q.id}')">${ct('editar')}</button><button class="link-btn" style="font-size:11.5px;" onclick="contaActivarCuotista('${q.id}', ${q.activo ? 'false' : 'true'})">${q.activo ? ct('desactivar') : ct('activar')}</button><button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="contaBorrarCuotista('${q.id}')">🗑</button></span></div>`).join('');
+  return `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button class="primary-btn" style="width:auto;margin:0;" onclick="contaAbrirCuotista()">➕ ${ct('nuevoCuotista')}</button></div>
+    ${act.length ? `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">${tile(ct('previstoTot'), res.previsto)}${tile(ct('cobradoTot'), res.cobrado, 'color:var(--good);')}${tile(ct('pendienteTot'), res.pendiente, res.pendiente ? 'color:var(--alert);' : '')}</div>
+    ${res.sinTasa ? `<div class="info-box info-box-gold" style="margin-bottom:10px;">⚠️ ${res.sinTasa} ${ct('sinTasaAviso')}</div>` : ''}
+    <div style="overflow-x:auto;"><table class="conta-tabla cuotas"><thead><tr><th>${ct('nombre')}</th>${mesCab}</tr></thead><tbody>${filas}</tbody></table></div>
+    <div class="carpetas-lista" style="margin-top:12px;">${carpetaDesplegable({ clave: 'conta:cuotas:pend', icono: '⏳', titulo: ct('pendientesDeCobro'), cuenta: res.lista.length, abierta: res.lista.length > 0 && res.lista.length <= 8, cuerpo: pendientes })}</div>` : `<div class="empty-note">${ct('sinCuotistas')}</div>`}
+    ${todos.length ? `<div class="carpetas-lista" style="margin-top:12px;">${carpetaDesplegable({ clave: 'conta:cuotas:lista', icono: '👥', titulo: ct('cuotistas'), cuenta: todos.length, cuerpo: lista })}</div>` : ''}`;
+}
+function contaAbrirCuotista(id){
+  const q = id ? __conta.cuotistas.find(x => x.id === id) : null, aj = __conta.ajustes;
+  const monedas = [aj.moneda_principal].concat(aj.moneda_secundaria ? [aj.moneda_secundaria] : []);
+  const ingresos = __conta.codigos.filter(c => c.tipo === 'ingreso' && (c.activo || (q && c.id === q.codigo_id))).sort((a, b) => String(a.codigo).localeCompare(String(b.codigo), undefined, { numeric: true }));
+  const defCodigo = q ? q.codigo_id : ((ingresos.find(c => String(c.codigo).trim() === '710') || {}).id || '');
+  const cuentas = __conta.cuentas.filter(c => c.activo || (q && c.id === q.cuenta_id));
+  contaModal(`
+    <h3 style="margin-top:0;">${q ? ct('editar') : ct('nuevoCuotista')}</h3>
+    <div class="field"><label>${ct('nombre')} *</label><input type="text" id="cq-nombre" value="${escAttr(q ? q.nombre : '')}"><div class="subtle" style="font-size:12px;">${ct('soloNombre')}</div></div>
+    <div class="field"><label>${ct('importeCuota')} *</label><input type="text" inputmode="decimal" id="cq-importe" value="${q ? escAttr(String(Number(q.importe))) : ''}"></div>
+    <div class="field"><label>${ct('moneda')}</label><select id="cq-moneda">${monedas.map(m => `<option value="${m}"${q && q.moneda === m ? ' selected' : ''}>${m}</option>`).join('')}</select></div>
+    <div class="field"><label>${ct('periodicidad')}</label><select id="cq-per">${Object.keys(CONTA_PASO).map(k => `<option value="${k}"${(q ? q.periodicidad : 'mensual') === k ? ' selected' : ''}>${ct(k)}</option>`).join('')}</select></div>
+    <div class="field"><label>${ct('desde')} *</label><input type="month" id="cq-desde" value="${q ? String(q.desde).slice(0, 7) : new Date().toISOString().slice(0, 4) + '-01'}"></div>
+    <div class="field"><label>${ct('hasta')}</label><input type="month" id="cq-hasta" value="${q && q.hasta ? String(q.hasta).slice(0, 7) : ''}"></div>
+    <div class="field"><label>${ct('codigoIngreso')} *</label><select id="cq-codigo"><option value="">${ct('elegirCodigo')}</option>${ingresos.map(c => `<option value="${c.id}"${c.id === defCodigo ? ' selected' : ''}>${escAttr(c.codigo)} · ${escAttr(c.concepto)}</option>`).join('')}</select></div>
+    <div class="field"><label>${ct('cuentaHabitual')}</label><select id="cq-cuenta"><option value="">—</option>${cuentas.map(c => `<option value="${c.id}"${q && q.cuenta_id === c.id ? ' selected' : ''}>${escAttr(c.nombre)} (${c.moneda})</option>`).join('')}</select></div>
+    <div id="conta-error" class="subtle" style="display:none;color:var(--alert);font-weight:700;"></div>
+    <button class="primary-btn" onclick="contaGuardarCuotista('${id || ''}')">${ct('guardar')}</button>
+    <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="contaCerrarModal()">${ct('cancelar')}</button>`);
+}
+async function contaGuardarCuotista(id){
+  const nombre = contaV('cq-nombre').trim(), importe = contaNum(contaV('cq-importe')), desde = contaV('cq-desde'), hasta = contaV('cq-hasta'), codigo = contaV('cq-codigo');
+  if(!nombre) return contaErrorModal(ct('faltaNombre'));
+  if(importe == null || !(importe > 0)) return contaErrorModal(ct('avisoImporte'));
+  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(desde)) return contaErrorModal(ct('faltaDesde'));
+  if(hasta && (!/^\d{4}-(0[1-9]|1[0-2])$/.test(hasta) || hasta < desde)) return contaErrorModal(ct('avisoFecha'));
+  if(!codigo) return contaErrorModal(ct('faltaCodigoIngreso'));
+  const fila = { nombre, importe: contaRedondea(importe), moneda: contaV('cq-moneda'), periodicidad: contaV('cq-per'), desde: desde + '-01', hasta: hasta ? hasta + '-01' : null, codigo_id: codigo, cuenta_id: contaV('cq-cuenta') || null };
+  const r = id ? await sb.from('conta_cuotistas').update(fila).eq('id', id) : await sb.from('conta_cuotistas').insert(fila);
+  if(r.error) return contaErrorModal(ct('errorGuardar') + r.error.message);
+  contaCerrarModal(); await contaRecargar();
+}
+async function contaActivarCuotista(id, activo){
+  const r = await sb.from('conta_cuotistas').update({ activo }).eq('id', id);
+  if(r.error){ alert(ct('errorGuardar') + r.error.message); return; }
+  await contaRecargar();
+}
+async function contaBorrarCuotista(id){
+  const q = __conta.cuotistas.find(x => x.id === id); if(!q) return;
+  if(__conta.pagos.some(p => p.cuotista_id === id)){ alert(ct('cuotistaConCobros')); return; }
+  if(!confirm(`${ct('borrar')}: ${q.nombre}?`)) return;
+  const r = await sb.from('conta_cuotistas').delete().eq('id', id);
+  if(r.error){ alert(ct('errorGuardar') + r.error.message); return; }
+  await contaRecargar();
+}
+function contaAbrirCobro(qId, ym){
+  const q = __conta.cuotistas.find(x => x.id === qId); if(!q) return;
+  if(contaMesCerrado(new Date().toISOString().slice(0, 10))) { /* se avisa al guardar si la fecha cae en un mes cerrado */ }
+  const medioIni = q.cuenta_id && contaCuentaPorId(q.cuenta_id) && contaCuentaPorId(q.cuenta_id).tipo === 'caja' ? 'efectivo' : (__conta.ultimoMedio['cuota'] || 'transferencia');
+  window.__cobro = { qId, ym };
+  contaModal(`
+    <h3 style="margin-top:0;">${ct('cobrar')} · ${escAttr(q.nombre)}</h3>
+    <p class="subtle" style="margin:0 0 8px;">${contaMayus(contaNombreMes(+ym.slice(5)))} ${ym.slice(0, 4)} · ${contaFmt(contaCent(q.importe), q.moneda)}</p>
+    <div class="field"><label>${ct('fecha')} *</label><input type="date" id="cb-fecha" value="${new Date().toISOString().slice(0, 10)}" onchange="contaCambioCobro(true)"></div>
+    <div class="field"><label>${ct('medioPago')} *</label><select id="cb-medio" onchange="contaCambioMedioCobro()">${CONTA_MEDIOS.map(k => `<option value="${k}"${k === medioIni ? ' selected' : ''}>${contaMedioTxt(k)}</option>`).join('')}</select></div>
+    <div class="field"><label>${ct('cuentaCuota')}</label><select id="cb-cuenta" onchange="contaCambioCobro(true)"></select></div>
+    <div class="field"><label>${ct('importeCobrado')} *</label><input type="text" inputmode="decimal" id="cb-importe" oninput="this.dataset.tocado='1'"></div>
+    <div class="field" id="cb-cambio-wrap" style="display:none;"><label>${ct('tipoCambio')}</label><input type="text" inputmode="decimal" id="cb-cambio" oninput="this.dataset.tocado='1'"></div>
+    <div class="field"><label>${ct('referencia')}</label><input type="text" id="cb-ref"></div>
+    <div id="conta-error" class="subtle" style="display:none;color:var(--alert);font-weight:700;"></div>
+    <button class="primary-btn" onclick="contaGuardarCobro()">${ct('guardar')}</button>
+    <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="contaCerrarModal()">${ct('cancelar')}</button>`);
+  contaRellenarCuentasCobro(q.cuenta_id);
+  contaCambioCobro(true);
+}
+function contaRellenarCuentasCobro(seleccion){
+  const sel = document.getElementById('cb-cuenta'), medio = contaV('cb-medio');
+  const l = __conta.cuentas.filter(c => (c.activo || c.id === seleccion) && contaMedioCompatible(medio, c));
+  if(!l.length){ sel.innerHTML = '<option value="">—</option>'; contaErrorModal(ct('sinCuentaMedio')); return; }
+  contaErrorModal('');
+  const actual = l.some(c => c.id === seleccion) ? seleccion : l[0].id;
+  sel.innerHTML = l.map(c => `<option value="${c.id}"${c.id === actual ? ' selected' : ''}>${escAttr(c.nombre)} (${c.moneda})</option>`).join('');
+}
+function contaCambioMedioCobro(){
+  contaRellenarCuentasCobro(contaV('cb-cuenta')); contaCambioCobro(true);
+}
+function contaCambioCobro(recalcular){
+  const q = __conta.cuotistas.find(x => x.id === window.__cobro.qId), cu = contaCuentaPorId(contaV('cb-cuenta'));
+  const imp = document.getElementById('cb-importe'), tcw = document.getElementById('cb-cambio-wrap'), tci = document.getElementById('cb-cambio');
+  if(!q || !cu){ return; }
+  const sec = contaEsSecundaria(cu);
+  tcw.style.display = sec ? '' : 'none';
+  const tasa = contaTasaSugerida(contaV('cb-fecha'));
+  if(recalcular && sec && !tci.dataset.tocado) tci.value = tasa != null ? String(tasa) : '';
+  if(recalcular && !imp.dataset.tocado){
+    let v = Number(q.importe);
+    if(q.moneda !== cu.moneda){
+      const t = sec ? (contaNum(tci.value, true) || tasa) : tasa;
+      v = t ? (contaEsSecundaria(cu) ? v * t : v / t) : null;
+    }
+    imp.value = v == null ? '' : String(contaRedondea(v));
+  }
+}
+async function contaGuardarCobro(){
+  const { qId, ym } = window.__cobro, q = __conta.cuotistas.find(x => x.id === qId), cu = contaCuentaPorId(contaV('cb-cuenta'));
+  const fecha = contaV('cb-fecha'), medio = contaV('cb-medio'), imp = contaNum(contaV('cb-importe'));
+  const fechaOk = /^\d{4}-\d{2}-\d{2}$/.test(fecha) && !isNaN(new Date(fecha).getTime()) && new Date(fecha).toISOString().slice(0, 10) === fecha && +fecha.slice(0, 4) >= 2000 && +fecha.slice(0, 4) <= 2100;
+  if(!fechaOk) return contaErrorModal(ct('avisoFecha'));
+  if(!q || !cu) return contaErrorModal(ct('sinCuentaMedio'));
+  if(!contaMedioCompatible(medio, cu)) return contaErrorModal(medio === 'efectivo' ? ct('medioCajaAviso') : ct('medioBancoAviso'));
+  if(imp == null || !(imp > 0)) return contaErrorModal(ct('avisoImporte'));
+  if(contaMesCerrado(fecha)) return contaErrorModal(ct('mesCerrado'));
+  let tc = null;
+  if(contaEsSecundaria(cu)){ tc = contaNum(contaV('cb-cambio'), true); if(!(tc > 0)) return contaErrorModal(ct('avisoCambio')); }
+  if(contaPagoDe(q, ym)) return contaErrorModal(ct('cobrada'));
+  const fila = { cuenta_id: cu.id, fecha, codigo_id: q.codigo_id, detalle: `${q.nombre} · ${ct('tabCuotas')} ${contaNombreMes(+ym.slice(5))} ${ym.slice(0, 4)}`, entrada: contaRedondea(imp), salida: 0, tipo_cambio: tc, medio_pago: medio, referencia: contaV('cb-ref').trim() || null, creado_por_email: CURRENT_USER.email };
+  const r = await sb.from('conta_movimientos').insert(fila).select('id').single();
+  if(r.error || !r.data) return contaErrorModal(ct('errorGuardar') + (r.error ? r.error.message : ''));
+  const r2 = await sb.from('conta_cuotas_pagos').insert({ cuotista_id: q.id, periodo: ym, movimiento_id: r.data.id });
+  if(r2.error){
+    await sb.from('conta_movimientos').delete().eq('id', r.data.id);   // no dejar el cobro a medias
+    return contaErrorModal(ct('errorGuardar') + r2.error.message);
+  }
+  __conta.ultimoMedio['cuota'] = medio;
+  contaCerrarModal(); await contaRecargar();
+}
+function contaVerCobro(qId, ym){
+  const q = __conta.cuotistas.find(x => x.id === qId), p = q && contaPagoDe(q, ym), m = p && __conta.movs.find(x => x.id === p.movimiento_id), cu = m && contaCuentaPorId(m.cuenta_id);
+  if(!m || !cu) return;
+  contaModal(`<h3 style="margin-top:0;">✓ ${ct('cobrada')} · ${escAttr(q.nombre)}</h3>
+    <div class="panel-stat-row"><span>${ct('fecha')}</span><strong>${escAttr(m.fecha)}</strong></div>
+    <div class="panel-stat-row"><span>${ct('importe')}</span><strong>${contaFmt(contaCent(m.entrada), cu.moneda)}</strong></div>
+    <div class="panel-stat-row"><span>${ct('cuenta')}</span><strong>${escAttr(cu.nombre)}</strong></div>
+    <div class="panel-stat-row"><span>${ct('medioPago')}</span><strong>${contaMedioTxt(m.medio_pago)}</strong></div>
+    ${contaMesCerrado(m.fecha) ? `<p class="subtle">🔒 ${ct('mesCerradoTxt')}</p>` : `<button class="link-btn" style="color:var(--alert);display:block;margin:12px auto 0;" onclick="contaDeshacerCobro('${p.id}')">${ct('deshacerCobro')}</button>`}
+    <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="contaCerrarModal()">${ct('cancelar')}</button>`);
+}
+async function contaDeshacerCobro(pagoId){
+  const p = __conta.pagos.find(x => x.id === pagoId); if(!p) return;
+  if(!confirm(ct('confirmDeshacer'))) return;
+  const r = await sb.from('conta_movimientos').delete().eq('id', p.movimiento_id);
+  if(r.error){ alert(ct('errorGuardar') + r.error.message); return; }
+  await sb.from('conta_cuotas_pagos').delete().eq('id', pagoId);   // (en la base de datos ya se borra sola con el movimiento)
+  contaCerrarModal(); await contaRecargar();
+}
+
+
+// ---------- CUOTAS ----------
+const CONTA_PASO = { mensual: 1, bimestral: 2, trimestral: 3, semestral: 6, anual: 12 };
+// Meses de ese año en los que toca cobrar (cada periodo empieza en el mes "desde" y se repite según la periodicidad)
+const contaPagoDe = (q, ym) => __conta.pagos.find(p => p.cuotista_id === q.id && p.periodo === ym);
+
+// Registrar el cobro de una cuota: crea el movimiento de entrada en la cuenta elegida (con su medio de pago) y lo une a la cuota
 
 
 async function anadirProfesionalAProyecto(proyectoId){
@@ -7183,7 +7995,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-05 · v19 (contabilidad)';
+const APP_VERSION_INTRANET = '2026-10-06 · v21 (jóvenes: comunicación con familias)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
