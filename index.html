@@ -795,14 +795,25 @@ async function checkStaff(){
   CURRENT_USER_NOMBRE = (data && data.nombre) || null;
   document.getElementById('nav-admin-btn').style.display = IS_ADMIN ? '' : 'none';
   document.getElementById('nav-conta-btn').style.display = IS_ADMIN ? '' : 'none';
+  // Datos nuevos (contraseña propia y reparto de alertas). Si el SQL aún no está en Supabase se ignoran y todo sigue como antes.
+  CLAVE_CAMBIADA = true; REPARTO_OK = false;
+  if(IS_STAFF){
+    try {
+      const x = await sb.from('staff').select('clave_cambiada').eq('email', CURRENT_USER.email).maybeSingle();
+      if(!x.error) CLAVE_CAMBIADA = !!(x.data && x.data.clave_cambiada);
+      const r = await sb.from('notificaciones').select('asignada_a_email').limit(1);
+      REPARTO_OK = !r.error;
+    } catch(e) { CLAVE_CAMBIADA = true; REPARTO_OK = false; }
+  }
 }
 
 let __intervaloBadge = null;
 
 async function actualizarBadgePanel(){
   if(!IS_STAFF){ return; }
+  if(!(await comprobarSigueActiva())) return;
   const [notifs, consultas] = await Promise.all([
-    sb.from('notificaciones').select('id', { count: 'exact', head: true }).eq('leida', false),
+    filtrarAlertas(sb.from('notificaciones').select('id', { count: 'exact', head: true }).eq('leida', false), false),
     sb.from('consultas_orientacion').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente')
   ]);
   const total = (notifs.count || 0) + (consultas.count || 0);
@@ -844,6 +855,7 @@ function renderLogin(errorMsg){
     <p style="text-align:center;margin-top:14px;">
       <button class="link-btn" onclick="toggleAuthMode()">${AUTH_MODE === 'login' ? '¿Primera vez? Crear cuenta' : '¿Ya tienes cuenta? Entra'}</button>
     </p>
+    ${AUTH_MODE === 'login' ? `<p style="text-align:center;margin-top:2px;"><button class="link-btn" onclick="recuperarClave()">¿Has olvidado la contraseña?</button></p>` : ''}
   `;
 }
 
@@ -886,6 +898,7 @@ function toggleSidebarVisible(visible){
 }
 
 async function cerrarSesion(){
+  window.__claveAvisada = false;
   await sb.auth.signOut();
   IS_STAFF = false; IS_ADMIN = false;
   toggleSidebarVisible(false);
@@ -901,6 +914,7 @@ async function initAuth(){
   await checkStaff();
 
   sb.auth.onAuthStateChange(async (_event, session) => {
+    if(_event === 'PASSWORD_RECOVERY') window.__recuperandoClave = true;
     CURRENT_USER = session ? session.user : null;
     await checkStaff();
     if(!CURRENT_USER){
@@ -919,6 +933,7 @@ async function initAuth(){
     iniciarRefrescoBadge();
     showScreen('panel');
     renderPanelGeneral();
+    avisarClave();
   });
 
   if(!CURRENT_USER){
@@ -934,6 +949,13 @@ async function initAuth(){
   iniciarRefrescoBadge();
   showScreen('panel');
   renderPanelGeneral();
+  avisarClave();
+}
+
+// Si viene de "he olvidado la contraseña", la elige ya; si aún tiene la inicial, se le invita una vez por sesión
+function avisarClave(){
+  if(window.__recuperandoClave){ window.__recuperandoClave = false; window.__claveAvisada = true; setTimeout(() => abrirCambioClave(true), 500); return; }
+  if(!CLAVE_CAMBIADA && !window.__claveAvisada){ window.__claveAvisada = true; setTimeout(() => abrirCambioClave(false), 900); }
 }
 
 // ================= MI ESPACIO (personal por técnico) =================
@@ -2756,8 +2778,9 @@ async function guardarAtencion(){
 // ================= PANEL GENERAL =================
 
 async function marcarNotificacionLeida(id){
-  await sb.from('notificaciones').update({ leida: true }).eq('id', id);
+  await sb.from('notificaciones').update(REPARTO_OK ? { leida: true, atendida_por_email: CURRENT_USER.email } : { leida: true }).eq('id', id);
   renderPanelGeneral();
+  actualizarBadgePanel();
 }
 
 async function responderConsulta(id){
@@ -6311,6 +6334,196 @@ async function limpiarRegistrosAntiguos(tipo){
   renderAdministrador();
 }
 
+// ================= ACCESO DEL PERSONAL: contraseña propia, baja de personas y reparto de alertas =================
+const acL = (es, ca) => LANG_I === 'ca' ? ca : es;
+let CLAVE_CAMBIADA = true;    // true = no se le pide nada (también si el SQL nuevo aún no está en Supabase)
+let REPARTO_OK = false;       // true cuando la base de datos ya tiene el reparto de alertas
+window.__alertasTodas = false;
+
+// El equipo ve las alertas suyas, las de "todo el equipo" y las que nadie tiene asignadas; la administración ve todas.
+function filtrarAlertas(consulta, todas){
+  if(!REPARTO_OK || IS_ADMIN || todas) return consulta;
+  return consulta.or(`asignada_a_email.eq."${CURRENT_USER.email}",para_todos.eq.true,asignada_a_email.is.null`);
+}
+
+// ---------- contraseña propia ----------
+function claveModal(html, cerrable){
+  cerrarClaveModal();
+  const ov = document.createElement('div');
+  ov.id = 'clave-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,15,20,.6);z-index:600;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto;';
+  if(cerrable) ov.onclick = e => { if(e.target === ov) cerrarClaveModal(); };
+  ov.innerHTML = `<div class="panel-card" style="background:var(--paper);width:100%;max-width:440px;margin:auto;opacity:1;transform:none;animation:none;">${html}</div>`;
+  document.body.appendChild(ov);
+}
+function cerrarClaveModal(){ const o = document.getElementById('clave-overlay'); if(o) o.remove(); }
+
+// obligatorio = true cuando viene de "he olvidado la contraseña": no se puede cerrar sin elegirla
+function abrirCambioClave(obligatorio){
+  const primera = !CLAVE_CAMBIADA && !obligatorio;
+  claveModal(`
+    <h3 style="margin-top:0;">🔑 ${obligatorio ? acL('Elige tu nueva contraseña', 'Tria la teva nova contrasenya') : acL('Elige tu propia contraseña', 'Tria la teva pròpia contrasenya')}</h3>
+    ${primera ? `<p class="subtle" style="margin:0 0 10px;">${acL('Ahora entras con la contraseña inicial que te dio la administración. Elige una que solo conozcas tú.', 'Ara entres amb la contrasenya inicial que et va donar l\'administració. Tria\'n una que només coneguis tu.')}</p>` : ''}
+    <div class="field"><label>${acL('Nueva contraseña (mínimo 8 caracteres)', 'Nova contrasenya (mínim 8 caràcters)')}</label><input type="password" id="clave-nueva" autocomplete="new-password"></div>
+    <div class="field"><label>${acL('Repítela', 'Repeteix-la')}</label><input type="password" id="clave-repite" autocomplete="new-password"></div>
+    <div class="subtle" style="font-size:12px;">${acL('Mejor si mezcla letras y números. No la compartas con nadie.', 'Millor si barreja lletres i números. No la comparteixis amb ningú.')}</div>
+    <div id="clave-error" class="subtle" style="display:none;color:var(--alert);font-weight:700;margin:6px 0;"></div>
+    <button class="primary-btn" id="clave-btn" onclick="guardarNuevaClave()">${acL('Guardar mi contraseña', 'Desar la meva contrasenya')}</button>
+    ${obligatorio ? '' : `<button class="link-btn" style="display:block;margin:10px auto 0;" onclick="cerrarClaveModal()">${primera ? acL('Más tarde', 'Més tard') : acL('Cancelar', 'Cancel·lar')}</button>`}`, !obligatorio);
+  setTimeout(() => { const i = document.getElementById('clave-nueva'); if(i) i.focus(); }, 80);
+}
+async function guardarNuevaClave(){
+  const a = (document.getElementById('clave-nueva') || {}).value || '', b = (document.getElementById('clave-repite') || {}).value || '';
+  const falla = txt => { const e = document.getElementById('clave-error'); if(e){ e.textContent = txt; e.style.display = ''; } };
+  if(a.length < 8) return falla(acL('La contraseña tiene que tener al menos 8 caracteres.', 'La contrasenya ha de tenir almenys 8 caràcters.'));
+  if(/^(.)\1+$/.test(a) || a.toLowerCase() === String(CURRENT_USER.email || '').toLowerCase()) return falla(acL('Esa contraseña es demasiado fácil de adivinar. Elige otra.', 'Aquesta contrasenya és massa fàcil d\'endevinar. Tria\'n una altra.'));
+  if(a !== b) return falla(acL('Las dos contraseñas no coinciden.', 'Les dues contrasenyes no coincideixen.'));
+  const btn = document.getElementById('clave-btn'); if(btn) btn.disabled = true;
+  const { error } = await sb.auth.updateUser({ password: a });
+  if(error){
+    if(btn) btn.disabled = false;
+    const m = String(error.message || '');
+    return falla(/different from the old|same as the old/i.test(m) ? acL('Elige una contraseña distinta de la que tienes ahora.', 'Tria una contrasenya diferent de la que tens ara.')
+      : /weak|easy to guess|pwned|least/i.test(m) ? acL('Esa contraseña es demasiado débil. Prueba con más letras y números.', 'Aquesta contrasenya és massa dèbil. Prova amb més lletres i números.')
+      : acL('No se pudo cambiar: ', 'No s\'ha pogut canviar: ') + m);
+  }
+  try { await sb.rpc('marcar_mi_clave_cambiada'); } catch(e) { /* si el SQL aún no está, no pasa nada */ }
+  CLAVE_CAMBIADA = true;
+  claveModal(`<h3 style="margin-top:0;">✓ ${acL('Contraseña cambiada', 'Contrasenya canviada')}</h3><p>${acL('A partir de ahora entras con tu nueva contraseña.', 'A partir d\'ara entres amb la teva nova contrasenya.')}</p><button class="primary-btn" onclick="cerrarClaveModal()">${acL('Entendido', 'Entesos')}</button>`, true);
+}
+// "He olvidado mi contraseña": se envía un enlace al correo
+async function recuperarClave(){
+  const email = ((document.getElementById('login-email') || {}).value || '').trim();
+  if(!email){ renderLogin(acL('Escribe tu correo arriba y vuelve a pulsar «¿Has olvidado la contraseña?».', 'Escriu el teu correu a dalt i torna a prémer «Has oblidat la contrasenya?».')); return; }
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+  renderLogin(error ? error.message : '');
+  if(!error) document.getElementById('login-content').insertAdjacentHTML('afterbegin', `<div class="auth-ok">${acL('Si ese correo tiene acceso, te hemos enviado un enlace para elegir una contraseña nueva. Revisa también la carpeta de spam.', 'Si aquest correu té accés, t\'hem enviat un enllaç per triar una contrasenya nova. Revisa també la carpeta de correu brossa.')}</div>`);
+}
+async function enviarEnlaceClave(email){
+  if(!confirm(acL(`¿Enviar a ${email} un enlace para que elija una contraseña nueva?`, `Enviar a ${email} un enllaç perquè triï una contrasenya nova?`))) return;
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+  alert(error ? error.message : acL(`Enlace enviado a ${email}.`, `Enllaç enviat a ${email}.`));
+}
+
+// ---------- baja de personas: desactivar y quitar ----------
+function adminesActivos(){ return (window.__staffLista || []).filter(s => s.es_admin && s.activo !== false); }
+// Las alertas sin atender de quien deja el equipo quedan sin asignar para que las vea todo el mundo
+async function liberarAlertas(email){
+  if(REPARTO_OK) await sb.from('notificaciones').update({ asignada_a_email: null }).eq('asignada_a_email', email).eq('leida', false);
+}
+async function toggleActivoTecnico(email, nuevoEstadoActivo){
+  const s = (window.__staffLista || []).find(x => x.email === email), nombre = (s && s.nombre) || email;
+  if(!nuevoEstadoActivo){
+    if(email === CURRENT_USER.email){ alert(acL('No puedes desactivarte a ti mismo/a. Pide a otro administrador que lo haga si hace falta.', 'No et pots desactivar a tu mateix/a. Demana a un altre administrador que ho faci si cal.')); return; }
+    if(s && s.es_admin && adminesActivos().length <= 1){ alert(acL('No puedes desactivar a la única persona administradora activa.', 'No pots desactivar l\'única persona administradora activa.')); return; }
+    if(!confirm(acL(`¿Desactivar a ${nombre}?\n\nNo podrá entrar a la Intranet ni al panel de personal de Acompanya hasta que la reactives. Todo lo que hizo se conserva.`, `Desactivar ${nombre}?\n\nNo podrà entrar a la Intranet ni al panell de personal d'Acompanya fins que la reactivis. Tot el que va fer es conserva.`))) return;
+  }
+  const { error } = await sb.from('staff').update({ activo: nuevoEstadoActivo }).eq('email', email);
+  if(error){ alert(error.message); return; }
+  if(!nuevoEstadoActivo) await liberarAlertas(email);
+  renderAdministrador();
+}
+async function quitarTecnico(email){
+  const s = (window.__staffLista || []).find(x => x.email === email), nombre = (s && s.nombre) || email;
+  if(email === CURRENT_USER.email){ alert(acL('No puedes quitarte a ti mismo/a.', 'No et pots treure a tu mateix/a.')); return; }
+  if(s && s.es_admin && s.activo !== false && adminesActivos().length <= 1){ alert(acL('No puedes quitar a la única persona administradora activa.', 'No pots treure l\'única persona administradora activa.')); return; }
+  if(!confirm(acL(`¿Quitar a ${nombre} de la lista del personal?\n\nSu correo dejará de tener acceso. Todo lo que hizo (fichajes, actuaciones…) se conserva. Si solo se ausenta un tiempo, es mejor «Desactivar».`, `Treure ${nombre} de la llista del personal?\n\nEl seu correu deixarà de tenir accés. Tot el que va fer (fitxatges, actuacions…) es conserva. Si només s'absenta un temps, és millor «Desactivar».`))) return;
+  const { error } = await sb.from('staff').delete().eq('email', email);
+  if(error){ alert(error.message); return; }
+  await liberarAlertas(email);
+  renderAdministrador();
+}
+// Una persona desactivada con la sesión abierta se queda sin acceso en el siguiente refresco (cada minuto)
+async function comprobarSigueActiva(){
+  if(!CURRENT_USER || !IS_STAFF) return true;
+  const { data, error } = await sb.from('staff').select('activo').eq('email', CURRENT_USER.email).maybeSingle();
+  if(error) return true;                      // si falla la red, no se la echa
+  if(data && data.activo !== false) return true;
+  await sb.auth.signOut();
+  setTimeout(() => renderLogin(acL('Tu acceso al personal ya no está activo. Habla con la administración.', 'El teu accés al personal ja no està actiu. Parla amb l\'administració.')), 400);
+  return false;
+}
+
+// ---------- alertas: reasignar y ver las del equipo ----------
+async function reasignarAlerta(id, valor){
+  if(!valor) return;
+  const cambios = valor === '__todos__' ? { asignada_a_email: null, para_todos: true } : { asignada_a_email: valor, para_todos: false };
+  const { error } = await sb.from('notificaciones').update(cambios).eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderPanelGeneral(); actualizarBadgePanel();
+}
+function alternarAlertasTodas(){ window.__alertasTodas = !window.__alertasTodas; renderPanelGeneral(); }
+
+// ---------- Administrador: reparto de alertas ----------
+const ALERTA_TIPOS_TXT = {
+  cita_nueva: ['Nueva cita pedida', 'Nova cita demanada'],
+  consulta_orientacion: ['Consulta de orientación', 'Consulta d\'orientació'],
+  tramite_nuevo: ['Trámite empezado desde la app', 'Tràmit començat des de l\'app'],
+  autorizacion_nueva: ['Autorización firmada (Jóvenes en acción)', 'Autorització signada (Joves en acció)'],
+  autorizacion_salida: ['Salir solo/a: firmas y revocaciones', 'Sortir sol/a: signatures i revocacions'],
+  perfil_completado: ['Perfil completado o actualizado', 'Perfil completat o actualitzat'],
+  enlace_caido: ['Enlace caído (revisión automática)', 'Enllaç caigut (revisió automàtica)'],
+  fichaje_cerrado_automatico: ['Fichaje cerrado automáticamente', 'Fitxatge tancat automàticament']
+};
+function repartoHtmlAdmin(){
+  if(!REPARTO_OK) return `<div class="info-box info-box-gold">⚠️ ${acL('Falta ejecutar el SQL de personal y alertas en Supabase para activar el reparto.', 'Falta executar l\'SQL de personal i alertes a Supabase per activar el repartiment.')}</div>`;
+  const hoy = new Date().toISOString().slice(0, 10);
+  const activos = (window.__staffLista || []).filter(s => s.activo !== false);
+  const turno = activos.filter(s => s.orden_alertas != null).sort((a, b) => a.orden_alertas - b.orden_alertas || a.email.localeCompare(b.email));
+  const fuera = activos.filter(s => s.orden_alertas == null);
+  const nom = s => escAttr(s.nombre || s.email);
+  const filaTurno = (s, i) => `<div class="panel-stat-row" style="align-items:center;gap:8px;flex-wrap:wrap;">
+      <span><strong>${i + 1}.</strong> ${nom(s)}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}${s.ausente_hasta && s.ausente_hasta >= hoy ? ` <span class="chip off">${acL('ausente hasta', 'absent fins')} ${escAttr(s.ausente_hasta)}</span>` : ''}</span>
+      <span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <button class="link-btn" style="font-size:14px;" ${i === 0 ? 'disabled' : ''} onclick="repartoMover('${s.email}', -1)" title="${acL('Subir', 'Pujar')}">↑</button>
+        <button class="link-btn" style="font-size:14px;" ${i === turno.length - 1 ? 'disabled' : ''} onclick="repartoMover('${s.email}', 1)" title="${acL('Bajar', 'Baixar')}">↓</button>
+        <label style="font-size:11.5px;color:var(--ink-soft);display:flex;gap:4px;align-items:center;">${acL('Ausente hasta', 'Absent fins')} <input type="date" value="${escAttr(s.ausente_hasta || '')}" onchange="repartoAusente('${s.email}', this.value)" style="font-size:12px;padding:2px 4px;"></label>
+        <button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="repartoSalir('${s.email}')">${acL('Quitar del turno', 'Treure del torn')}</button>
+      </span></div>`;
+  const tipos = Object.assign({}, ...Object.keys(ALERTA_TIPOS_TXT).map(k => ({ [k]: 'reparto' })), ...(window.__alertasTipos || []).map(t => ({ [t.tipo]: t.modo })));
+  const modos = [['reparto', acL('Por turno', 'Per torn')], ['todos', acL('A todo el equipo', 'A tot l\'equip')], ['admin', acL('Solo administración', 'Només administració')]];
+  return `
+    <p class="subtle" style="margin:0 0 10px;">${acL('Cuando llega una alerta nueva, se asigna a una persona del equipo por turno, de arriba abajo y vuelta a empezar. La administración las ve todas. Quien está ausente se salta.', 'Quan arriba una alerta nova, s\'assigna a una persona de l\'equip per torn, de dalt a baix i tornar a començar. L\'administració les veu totes. Qui és absent se salta.')}</p>
+    <div class="subtle" style="font-weight:700;margin:6px 0;">${acL('Turno', 'Torn')} (${turno.length})</div>
+    ${turno.length ? turno.map(filaTurno).join('') : `<div class="empty-note">${acL('Nadie está en el turno: las alertas las verá todo el equipo.', 'Ningú és al torn: les alertes les veurà tot l\'equip.')}</div>`}
+    ${fuera.length ? `<div class="subtle" style="font-weight:700;margin:12px 0 6px;">${acL('Fuera del turno', 'Fora del torn')}</div>${fuera.map(s => `<div class="panel-stat-row" style="align-items:center;"><span>${nom(s)}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}</span><button class="link-btn" style="font-size:12px;" onclick="repartoEntrar('${s.email}')">➕ ${acL('Añadir al turno', 'Afegir al torn')}</button></div>`).join('')}` : ''}
+    <div class="subtle" style="font-weight:700;margin:14px 0 6px;">${acL('Qué pasa con cada tipo de alerta', 'Què passa amb cada tipus d\'alerta')}</div>
+    ${Object.entries(tipos).map(([tipo, modo]) => `<div class="panel-stat-row" style="align-items:center;gap:8px;"><span>${escAttr((ALERTA_TIPOS_TXT[tipo] || [tipo, tipo])[LANG_I === 'ca' ? 1 : 0])}</span><select style="font-size:12.5px;max-width:170px;" onchange="repartoModo('${tipo}', this.value)">${modos.map(([v, t]) => `<option value="${v}"${modo === v ? ' selected' : ''}>${t}</option>`).join('')}</select></div>`).join('')}`;
+}
+async function repartoRenumerar(lista){
+  await Promise.all(lista.map((s, i) => s.orden_alertas === i + 1 ? null : sb.from('staff').update({ orden_alertas: i + 1 }).eq('email', s.email)));
+}
+function repartoTurnoActual(){
+  return (window.__staffLista || []).filter(s => s.activo !== false && s.orden_alertas != null).sort((a, b) => a.orden_alertas - b.orden_alertas || a.email.localeCompare(b.email));
+}
+async function repartoMover(email, delta){
+  const l = repartoTurnoActual(), i = l.findIndex(s => s.email === email), j = i + delta;
+  if(i < 0 || j < 0 || j >= l.length) return;
+  [l[i], l[j]] = [l[j], l[i]];
+  await repartoRenumerar(l); renderAdministrador();
+}
+async function repartoEntrar(email){
+  const l = repartoTurnoActual();
+  const { error } = await sb.from('staff').update({ orden_alertas: l.length + 1 }).eq('email', email);
+  if(error){ alert(error.message); return; }
+  renderAdministrador();
+}
+async function repartoSalir(email){
+  const { error } = await sb.from('staff').update({ orden_alertas: null }).eq('email', email);
+  if(error){ alert(error.message); return; }
+  await repartoRenumerar(repartoTurnoActual().filter(s => s.email !== email)); renderAdministrador();
+}
+async function repartoAusente(email, fecha){
+  const { error } = await sb.from('staff').update({ ausente_hasta: fecha || null }).eq('email', email);
+  if(error){ alert(error.message); return; }
+  renderAdministrador();
+}
+async function repartoModo(tipo, modo){
+  const { error } = await sb.from('alertas_tipos').upsert({ tipo, modo }, { onConflict: 'tipo' });
+  if(error){ alert(error.message); return; }
+  renderAdministrador();
+}
+
 // ================= JÓVENES EN ACCIÓN · COMUNICACIÓN CON LAS FAMILIAS =================
 const JM_MARCADORES = ['familia', 'menor', 'actividad', 'cuando', 'donde', 'dias', 'llevar_frase', 'falta', 'plazo_frase'];
 const jmL = (es, ca) => LANG_I === 'ca' ? ca : es;
@@ -7995,7 +8208,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-06 · v21 (jóvenes: comunicación con familias)';
+const APP_VERSION_INTRANET = '2026-10-06 · v22 (personal: contraseña propia y reparto de alertas)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -8032,6 +8245,12 @@ function renderConfigScreen(){
         <input type="text" id="config-nombre-input" placeholder="${esCA?'Ex: Irene M.':'Ej: Irene M.'}" value="${CURRENT_USER_NOMBRE || ''}" style="flex:1;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-family:var(--font-body);font-size:14px;">
         <button class="link-btn" onclick="guardarMiNombreConfig()">${esCA?'Desar':'Guardar'}</button>
       </div>
+    </div>
+
+    <div class="panel-card" style="margin-top:14px;">
+      <h3>🔑 ${esCA?'La meva contrasenya':'Mi contraseña'}</h3>
+      <p class="subtle" style="margin:0 0 10px;">${CLAVE_CAMBIADA ? (esCA?'Pots canviar-la quan vulguis.':'Puedes cambiarla cuando quieras.') : (esCA?'Encara fas servir la contrasenya inicial. Tria\'n una de pròpia.':'Todavía usas la contraseña inicial. Elige una propia.')}</p>
+      <button class="link-btn" onclick="abrirCambioClave(false)">${esCA?'Canviar la meva contrasenya':'Cambiar mi contraseña'}</button>
     </div>
 
     <p class="subtle" style="margin:14px 0 0;font-size:11.5px;">${esCA?'Versió de l\'app':'Versión de la app'}: <strong>${APP_VERSION_INTRANET}</strong></p>
@@ -8234,7 +8453,7 @@ async function renderPanelGeneral(){
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
 
   const hoyIso = new Date().toISOString().slice(0,10);
-  const [total, porSexo, porNacionalidad, depDis, situFam, tramEstado, interesesForm, notifs, satisfaccion, consultasPend, prestaciones, tramitesBretxa, derivacion, emprendeduria, comoConocio, actTotal, actResultado, actCategoria, actDerivado, citasHoyRes, docsRecientesRes, tramitesEnCursoRes, revisionesPendRes, actuacionesLigeroRes, avisosRes] = await Promise.all([
+  const [total, porSexo, porNacionalidad, depDis, situFam, tramEstado, interesesForm, notifs, satisfaccion, consultasPend, prestaciones, tramitesBretxa, derivacion, emprendeduria, comoConocio, actTotal, actResultado, actCategoria, actDerivado, citasHoyRes, docsRecientesRes, tramitesEnCursoRes, revisionesPendRes, actuacionesLigeroRes, avisosRes, equipoRes] = await Promise.all([
     sb.from('stats_total_personas').select('*').maybeSingle(),
     sb.from('stats_por_sexo').select('*'),
     sb.from('stats_por_nacionalidad').select('*'),
@@ -8242,7 +8461,7 @@ async function renderPanelGeneral(){
     sb.from('stats_situaciones_familiares').select('*').maybeSingle(),
     sb.from('stats_tramites_por_estado').select('*'),
     sb.from('stats_intereses_formativos').select('*'),
-    sb.from('notificaciones').select('*').eq('leida', false).order('creado_en', { ascending:false }),
+    filtrarAlertas(sb.from('notificaciones').select('*').eq('leida', false).order('creado_en', { ascending:false }), window.__alertasTodas),
     sb.from('stats_satisfaccion').select('*').maybeSingle(),
     sb.from('consultas_orientacion').select('*').eq('estado', 'pendiente').order('creado_en', { ascending:true }),
     sb.from('stats_prestaciones').select('*'),
@@ -8259,7 +8478,8 @@ async function renderPanelGeneral(){
     sb.from('tramites').select('id', { count:'exact', head:true }).eq('estado', 'en_curso'),
     sb.from('actuaciones').select('*').not('fecha_proxima_revision', 'is', null).lte('fecha_proxima_revision', hoyIso),
     sb.from('actuaciones').select('usuario_id, fecha').order('fecha', { ascending:false }).limit(30),
-    sb.from('avisos_intranet').select('*').eq('activo', true).order('creado_en', { ascending:false }).limit(6)
+    sb.from('avisos_intranet').select('*').eq('activo', true).order('creado_en', { ascending:false }).limit(6),
+    sb.from('staff').select('email, nombre').eq('activo', true)
   ]);
 
   const totalPersonas = total.data ? total.data.total_personas : 0;
@@ -8362,13 +8582,21 @@ async function renderPanelGeneral(){
   const categoriaHtml = filaLista(actCategoria.data, 'categoria', 'total');
   const derivadoHtml = filaLista(actDerivado.data, 'derivado_a', 'total');
 
+  (equipoRes.data || []).forEach(x => { if(x.nombre) __mapaNombresTecnicos[x.email] = x.nombre; });
+  const nombreAlerta = e => e === 'administración' ? acL('Administración', 'Administració') : nombreTecnico(e);
+  const chipAlerta = n => !REPARTO_OK ? '' : n.para_todos ? `<span class="chip gold" style="font-size:10.5px;">👥 ${acL('Todo el equipo', 'Tot l\'equip')}</span>`
+    : n.asignada_a_email ? `<span class="chip ${n.asignada_a_email === CURRENT_USER.email ? 'good' : ''}" style="font-size:10.5px;">→ ${escAttr(nombreAlerta(n.asignada_a_email))}</span>`
+    : `<span class="chip" style="font-size:10.5px;">${acL('Sin asignar', 'Sense assignar')}</span>`;
+  const reasignarSel = n => REPARTO_OK ? `<select style="font-size:12px;max-width:140px;" onchange="reasignarAlerta('${n.id}', this.value)"><option value="">${acL('Pasar a…', 'Passar a…')}</option>${(equipoRes.data || []).filter(x => x.email !== n.asignada_a_email).map(x => `<option value="${escAttr(x.email)}">${escAttr(x.nombre || x.email)}</option>`).join('')}<option value="__todos__">${acL('Todo el equipo', 'Tot l\'equip')}</option></select>` : '';
+  const interruptorAlertas = (REPARTO_OK && !IS_ADMIN) ? `<div style="display:flex;gap:6px;margin-bottom:8px;">${[[false, acL('Mis alertas', 'Les meves alertes')], [true, acL('Todas', 'Totes')]].map(([v, txt]) => `<button class="link-btn" style="font-size:12px;border:1px solid ${!!window.__alertasTodas === v ? 'var(--gold)' : 'var(--line)'};background:${!!window.__alertasTodas === v ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:2px 11px;" onclick="if(!!window.__alertasTodas !== ${v}) alternarAlertasTodas()">${txt}</button>`).join('')}</div>` : '';
   const notifsHtml = (notifs.data && notifs.data.length)
     ? notifs.data.map(n => `
         <div class="panel-stat-row" style="align-items:flex-start;flex-direction:column;gap:8px;">
-          <span>${n.mensaje}<br><span class="subtle" style="font-size:11px;margin:0;">${new Date(n.creado_en).toLocaleString(t.localeFecha)}</span></span>
-          <span style="display:flex;gap:14px;">
+          <span>${n.mensaje}<br><span class="subtle" style="font-size:11px;margin:0;">${new Date(n.creado_en).toLocaleString(t.localeFecha)}</span> ${chipAlerta(n)}</span>
+          <span style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
             ${n.usuario_id ? `<button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${n.usuario_id}','panel')">${t.verInformacion}</button>` : ''}
             <button class="link-btn" style="font-size:12px;" onclick="marcarNotificacionLeida('${n.id}')">${t.marcarLeida}</button>
+            ${reasignarSel(n)}
           </span>
         </div>`).join('')
     : `<div class="empty-note">${t.noHayAlertas}</div>`;
@@ -8537,6 +8765,7 @@ async function renderPanelGeneral(){
         <div id="panel-alertas-anchor" class="cards-grid" style="margin-bottom:0;">
           <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
             <h3 style="color:#7A5A16;">${t.alertasNuevas}</h3>
+            ${interruptorAlertas}
             ${notifsHtml}
           </div>
           <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
@@ -9520,12 +9749,15 @@ async function renderAdministrador(){
   const maxCarga = cargaOrdenada.length ? cargaOrdenada[0][1] : 0;
   const totalAtenciones = (cargaRes.data || []).length;
 
+  window.__alertasTipos = REPARTO_OK ? ((await sb.from('alertas_tipos').select('*')).data || []) : [];
   const staffHtml = window.__staffLista.map(s => `
-    <div class="panel-stat-row">
-      <span>${s.nombre ? `<strong>${s.nombre}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${s.email}</span>` : s.email}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}</span>
-      <span style="display:flex;align-items:center;gap:8px;">
+    <div class="panel-stat-row" style="align-items:flex-start;gap:8px;flex-wrap:wrap;">
+      <span style="min-width:0;">${s.nombre ? `<strong>${escAttr(s.nombre)}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(s.email)}</span>` : escAttr(s.email)}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}${s.clave_cambiada === false ? ` <span class="chip" style="font-size:10.5px;">🔑 ${acL('contraseña inicial', 'contrasenya inicial')}</span>` : ''}</span>
+      <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
         <span class="chip ${s.activo === false ? 'off' : 'good'}">${s.activo === false ? t.inactivoLbl : t.activoLbl}</span>
         <button class="link-btn" style="font-size:12px;" onclick="toggleActivoTecnico('${s.email}', ${s.activo === false})">${s.activo === false ? t.reactivar : t.desactivar}</button>
+        <button class="link-btn" style="font-size:12px;" title="${acL('Enviar enlace para elegir contraseña', 'Enviar enllaç per triar contrasenya')}" onclick="enviarEnlaceClave('${s.email}')">🔑 ${acL('Enlace', 'Enllaç')}</button>
+        <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="quitarTecnico('${s.email}')">${acL('Quitar', 'Treure')}</button>
       </span>
     </div>`).join('');
 
@@ -9682,6 +9914,10 @@ async function renderAdministrador(){
         </div>
         <button class="link-btn" onclick="agregarTecnico()">${t.anadirPlataforma}</button>
       </div>
+    ${carpetaCierra()}
+
+    ${carpetaAbre({ clave: 'adm-sec:reparto', icono: '🔔', titulo: LANG_I==='ca' ? 'Repartiment d\'alertes' : 'Reparto de alertas', cuenta: '' })}
+    <div class="panel-card">${repartoHtmlAdmin()}</div>
     ${carpetaCierra()}
 
     ${carpetaAbre({ clave: 'adm-sec:oficina', icono: '📍', titulo: LANG_I==='ca' ? 'Ubicació de la oficina' : 'Ubicación de la oficina', cuenta: '' })}
@@ -10145,17 +10381,6 @@ async function agregarTecnico(){
   if(!email){ alert(t.escribeCorreo); return; }
   const { error } = await sb.from('staff').insert({ email, activo: true });
   if(error){ alert(error.message); return; }
-  renderAdministrador();
-}
-
-async function toggleActivoTecnico(email, nuevoEstadoActivo){
-  if(!nuevoEstadoActivo && email === CURRENT_USER.email){
-    alert(LANG_I==='ca'
-      ? 'No et pots desactivar a tu mateix/a. Demana a un altre administrador que ho faci si cal.'
-      : 'No puedes desactivarte a ti mismo/a. Pide a otro administrador que lo haga si hace falta.');
-    return;
-  }
-  await sb.from('staff').update({ activo: nuevoEstadoActivo }).eq('email', email);
   renderAdministrador();
 }
 
