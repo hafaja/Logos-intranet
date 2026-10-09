@@ -46,6 +46,7 @@
   .contenido-row:first-child{border-top:none;}
   .sidebar nav button{text-align:left;background:none;border:none;color:rgba(255,255,255,.75);font-family:var(--font-body);font-weight:700;font-size:12px;padding:8px 12px;border-radius:8px;cursor:pointer;transition:background .15s;width:100%;}
   .nav-grupo{display:flex;flex-direction:column;gap:2px;}
+  .rol-oculto{display:none !important;}
   .nav-grupo summary{cursor:pointer;list-style:none;color:rgba(255,255,255,.5);font-family:var(--font-body);font-weight:700;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;padding:10px 12px 4px;user-select:none;}
   .nav-grupo summary::-webkit-details-marker{display:none;}
   .nav-grupo summary::before{content:'▸ ';}
@@ -310,6 +311,7 @@
     <nav>
       <button class="active" data-target="panel" onclick="showScreen('panel');renderPanelGeneral()">Inicio</button>
       <button data-target="miespacio" onclick="showScreen('miespacio');renderMiEspacio()">Mi espacio</button>
+      <button data-target="gestionpersonal" id="nav-gp-btn" onclick="showScreen('gestionpersonal');renderGestionPersonal('inicio')">👤 Mi gestión personal</button>
 
       <details class="nav-grupo" open>
         <summary>📁 Personas y casos</summary>
@@ -517,6 +519,13 @@
     </div>
   </div>
 
+  <div class="screen" id="screen-gestionpersonal">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">👤 Mi gestión personal</span></div>
+      <div class="content" id="gestionpersonal-content"></div>
+    </div>
+  </div>
+
   <div class="screen" id="screen-config">
     <div class="main-content">
       <div class="topbar"><span class="brand">Configuración</span></div>
@@ -547,6 +556,8 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let CURRENT_USER = null;
 let IS_STAFF = false;
 let IS_ADMIN = false;
+let IS_JOVENES = false;      // persona del equipo de Jóvenes en acción: solo ve su propio espacio
+let JOVENES_OK = false;      // true cuando la base de datos ya tiene el SQL de profesionales de Jóvenes en acción
 let LANG_I = 'es';
 
 const TI = {
@@ -747,7 +758,18 @@ function aplicarTraduccionesSidebar(){
   if(heroSub) heroSub.textContent = t.intranetSub;
 }
 
+// Quien es de Jóvenes en acción solo entra a su espacio; el resto de la plataforma queda oculta (y cerrada también en la base de datos)
+const PANTALLAS_JOVENES = ['login', 'panel', 'miespacio', 'gestionpersonal', 'jovenes', 'config'];
+function aplicarMenuPorRol(){
+  document.querySelectorAll('.sidebar nav button[data-target]').forEach(b => {
+    b.classList.toggle('rol-oculto', IS_JOVENES && !PANTALLAS_JOVENES.includes(b.dataset.target));
+  });
+  document.querySelectorAll('.sidebar nav .nav-grupo').forEach(g => {
+    g.classList.toggle('rol-oculto', IS_JOVENES && !g.querySelector('button[data-target]:not(.rol-oculto)'));
+  });
+}
 function showScreen(name){
+  if(IS_JOVENES && !PANTALLAS_JOVENES.includes(name)) name = 'panel';
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.querySelectorAll('.sidebar nav button').forEach(b=>b.classList.remove('active'));
@@ -788,22 +810,31 @@ function activarBarras(){
 let CURRENT_USER_NOMBRE = null;
 
 async function checkStaff(){
-  if(!CURRENT_USER){ IS_STAFF = false; IS_ADMIN = false; CURRENT_USER_NOMBRE = null; return; }
-  const { data } = await sb.from('staff').select('email, es_admin, activo, nombre').eq('email', CURRENT_USER.email).maybeSingle();
+  if(!CURRENT_USER){ IS_STAFF = false; IS_ADMIN = false; IS_JOVENES = false; IS_RRHH = false; GP_OK = false; CURRENT_USER_NOMBRE = null; aplicarMenuPorRol(); return; }
+  const { data } = await sb.from('staff').select('*').eq('email', CURRENT_USER.email).maybeSingle();
   IS_STAFF = !!(data && data.activo !== false);
   IS_ADMIN = !!(data && data.es_admin && data.activo !== false);
+  IS_JOVENES = !!(IS_STAFF && !IS_ADMIN && data && data.ambito === 'jovenes');
+  IS_RRHH = !!(IS_STAFF && data && data.es_rrhh);
   CURRENT_USER_NOMBRE = (data && data.nombre) || null;
   document.getElementById('nav-admin-btn').style.display = IS_ADMIN ? '' : 'none';
   document.getElementById('nav-conta-btn').style.display = IS_ADMIN ? '' : 'none';
+  aplicarMenuPorRol();
   // Datos nuevos (contraseña propia y reparto de alertas). Si el SQL aún no está en Supabase se ignoran y todo sigue como antes.
-  CLAVE_CAMBIADA = true; REPARTO_OK = false;
+  CLAVE_CAMBIADA = true; REPARTO_OK = false; JOVENES_OK = false; GP_OK = false; HR_OK = false;
   if(IS_STAFF){
     try {
       const x = await sb.from('staff').select('clave_cambiada').eq('email', CURRENT_USER.email).maybeSingle();
       if(!x.error) CLAVE_CAMBIADA = !!(x.data && x.data.clave_cambiada);
       const r = await sb.from('notificaciones').select('asignada_a_email').limit(1);
       REPARTO_OK = !r.error;
-    } catch(e) { CLAVE_CAMBIADA = true; REPARTO_OK = false; }
+      const j = await sb.from('notificaciones').select('para_jovenes').limit(1);
+      JOVENES_OK = !j.error;
+      const g = await sb.from('personal_nominas').select('id').limit(1);
+      GP_OK = !g.error;
+      const hq = await sb.from('personal_horarios').select('id').limit(1);
+      HR_OK = !hq.error;
+    } catch(e) { CLAVE_CAMBIADA = true; REPARTO_OK = false; JOVENES_OK = false; GP_OK = false; HR_OK = false; }
   }
 }
 
@@ -900,7 +931,7 @@ function toggleSidebarVisible(visible){
 async function cerrarSesion(){
   window.__claveAvisada = false;
   await sb.auth.signOut();
-  IS_STAFF = false; IS_ADMIN = false;
+  IS_STAFF = false; IS_ADMIN = false; IS_JOVENES = false; IS_RRHH = false; GP_OK = false; aplicarMenuPorRol();
   toggleSidebarVisible(false);
   detenerRefrescoBadge();
   showScreen('login');
@@ -2240,9 +2271,11 @@ async function renderMiEspacio(){
       <span>${t.entradaLbl} ${horaFmtFichaje(f.entrada)}${f.salida ? ` · ${t.salidaLbl} ${horaFmtFichaje(f.salida)}` : ` · ${t.enCurso}`}${f.cerrado_automaticamente ? ` · <span class="chip alert" title="${f.nota||''}">⚠️ ${LANG_I==='ca'?'Tancat automàticament, revisa-ho':'Cerrado automático, revísalo'}</span>` : ''}</span>
       <span>${f.salida ? `<strong>${duracionFmtFichaje(f.entrada, f.salida)}</strong>` : `<span class="chip gold">${t.fichado}</span>`}</span>
     </div>`).join('');
+  const horarioInfoHtml = await hrInfoMiEspacio(email, fichadoAhora);
   const fichajeCardHtml = `
     <div class="panel-card" style="text-align:center;background:${fichadoAhora ? 'var(--good-soft)' : 'var(--gold-soft)'};border-color:${fichadoAhora ? 'var(--good)' : 'var(--gold)'};">
       <h3 style="text-align:left;">${t.fichajeHoy}</h3>
+      ${horarioInfoHtml}
       ${fichadoAhora
         ? `<p style="margin:0 0 12px;font-size:13.5px;">${t.fichadoDesde} <strong>${horaFmtFichaje(ultimoFichaje.entrada)}</strong></p>
            <button class="primary-btn" style="background:var(--alert);" onclick="ficharSalida('${ultimoFichaje.id}')">${t.ficharSalida}</button>`
@@ -6342,7 +6375,12 @@ window.__alertasTodas = false;
 
 // El equipo ve las alertas suyas, las de "todo el equipo" y las que nadie tiene asignadas; la administración ve todas.
 function filtrarAlertas(consulta, todas){
-  if(!REPARTO_OK || IS_ADMIN || todas) return consulta;
+  if(!REPARTO_OK || IS_ADMIN) return consulta;
+  // Jóvenes en acción: solo las alertas de su convocatoria y las que se le asignen directamente
+  if(IS_JOVENES) return consulta.or(`para_jovenes.eq.true,asignada_a_email.eq."${CURRENT_USER.email}"`);
+  if(todas) return consulta;
+  // El equipo general no recibe las alertas que van al panel de Jóvenes en acción
+  if(JOVENES_OK) return consulta.or(`asignada_a_email.eq."${CURRENT_USER.email}",para_todos.eq.true,and(asignada_a_email.is.null,para_jovenes.eq.false)`);
   return consulta.or(`asignada_a_email.eq."${CURRENT_USER.email}",para_todos.eq.true,asignada_a_email.is.null`);
 }
 
@@ -6468,7 +6506,7 @@ const ALERTA_TIPOS_TXT = {
 function repartoHtmlAdmin(){
   if(!REPARTO_OK) return `<div class="info-box info-box-gold">⚠️ ${acL('Falta ejecutar el SQL de personal y alertas en Supabase para activar el reparto.', 'Falta executar l\'SQL de personal i alertes a Supabase per activar el repartiment.')}</div>`;
   const hoy = new Date().toISOString().slice(0, 10);
-  const activos = (window.__staffLista || []).filter(s => s.activo !== false);
+  const activos = (window.__staffLista || []).filter(s => s.activo !== false && s.ambito !== 'jovenes');
   const turno = activos.filter(s => s.orden_alertas != null).sort((a, b) => a.orden_alertas - b.orden_alertas || a.email.localeCompare(b.email));
   const fuera = activos.filter(s => s.orden_alertas == null);
   const nom = s => escAttr(s.nombre || s.email);
@@ -6481,12 +6519,13 @@ function repartoHtmlAdmin(){
         <button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="repartoSalir('${s.email}')">${acL('Quitar del turno', 'Treure del torn')}</button>
       </span></div>`;
   const tipos = Object.assign({}, ...Object.keys(ALERTA_TIPOS_TXT).map(k => ({ [k]: 'reparto' })), ...(window.__alertasTipos || []).map(t => ({ [t.tipo]: t.modo })));
-  const modos = [['reparto', acL('Por turno', 'Per torn')], ['todos', acL('A todo el equipo', 'A tot l\'equip')], ['admin', acL('Solo administración', 'Només administració')]];
+  const modos = [['reparto', acL('Por turno', 'Per torn')], ['todos', acL('A todo el equipo', 'A tot l\'equip')], ['admin', acL('Solo administración', 'Només administració')]].concat(JOVENES_OK ? [['jovenes', '🌱 ' + acL('Panel de Jóvenes en acción', 'Panell de Joves en acció')]] : []);
   return `
     <p class="subtle" style="margin:0 0 10px;">${acL('Cuando llega una alerta nueva, se asigna a una persona del equipo por turno, de arriba abajo y vuelta a empezar. La administración las ve todas. Quien está ausente se salta.', 'Quan arriba una alerta nova, s\'assigna a una persona de l\'equip per torn, de dalt a baix i tornar a començar. L\'administració les veu totes. Qui és absent se salta.')}</p>
     <div class="subtle" style="font-weight:700;margin:6px 0;">${acL('Turno', 'Torn')} (${turno.length})</div>
     ${turno.length ? turno.map(filaTurno).join('') : `<div class="empty-note">${acL('Nadie está en el turno: las alertas las verá todo el equipo.', 'Ningú és al torn: les alertes les veurà tot l\'equip.')}</div>`}
     ${fuera.length ? `<div class="subtle" style="font-weight:700;margin:12px 0 6px;">${acL('Fuera del turno', 'Fora del torn')}</div>${fuera.map(s => `<div class="panel-stat-row" style="align-items:center;"><span>${nom(s)}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}</span><button class="link-btn" style="font-size:12px;" onclick="repartoEntrar('${s.email}')">➕ ${acL('Añadir al turno', 'Afegir al torn')}</button></div>`).join('')}` : ''}
+    ${JOVENES_OK ? `<p class="subtle" style="margin:12px 0 0;">🌱 ${acL('Las alertas marcadas «Panel de Jóvenes en acción» llegan al panel de las personas con ese perfil: ', 'Les alertes marcades «Panell de Joves en acció» arriben al panell de les persones amb aquest perfil: ')}<strong>${escAttr((window.__staffLista || []).filter(s => s.ambito === 'jovenes' && s.activo !== false).map(s => s.nombre || s.email).join(', ') || acL('nadie aún; mientras tanto se reparten por turno', 'ningú encara; mentrestant es reparteixen per torn'))}</strong>.</p>` : ''}
     <div class="subtle" style="font-weight:700;margin:14px 0 6px;">${acL('Qué pasa con cada tipo de alerta', 'Què passa amb cada tipus d\'alerta')}</div>
     ${Object.entries(tipos).map(([tipo, modo]) => `<div class="panel-stat-row" style="align-items:center;gap:8px;"><span>${escAttr((ALERTA_TIPOS_TXT[tipo] || [tipo, tipo])[LANG_I === 'ca' ? 1 : 0])}</span><select style="font-size:12.5px;max-width:170px;" onchange="repartoModo('${tipo}', this.value)">${modos.map(([v, t]) => `<option value="${v}"${modo === v ? ' selected' : ''}>${t}</option>`).join('')}</select></div>`).join('')}`;
 }
@@ -6494,7 +6533,7 @@ async function repartoRenumerar(lista){
   await Promise.all(lista.map((s, i) => s.orden_alertas === i + 1 ? null : sb.from('staff').update({ orden_alertas: i + 1 }).eq('email', s.email)));
 }
 function repartoTurnoActual(){
-  return (window.__staffLista || []).filter(s => s.activo !== false && s.orden_alertas != null).sort((a, b) => a.orden_alertas - b.orden_alertas || a.email.localeCompare(b.email));
+  return (window.__staffLista || []).filter(s => s.activo !== false && s.ambito !== 'jovenes' && s.orden_alertas != null).sort((a, b) => a.orden_alertas - b.orden_alertas || a.email.localeCompare(b.email));
 }
 async function repartoMover(email, delta){
   const l = repartoTurnoActual(), i = l.findIndex(s => s.email === email), j = i + delta;
@@ -6522,6 +6561,641 @@ async function repartoModo(tipo, modo){
   const { error } = await sb.from('alertas_tipos').upsert({ tipo, modo }, { onConflict: 'tipo' });
   if(error){ alert(error.message); return; }
   renderAdministrador();
+}
+
+// ================= MI GESTIÓN PERSONAL: nóminas, archivos, formaciones y comunicaciones =================
+// Todo lo privado va en un almacenamiento cerrado; cada persona ve solo lo suyo y RR. HH. gestiona. Los permisos están en la base de datos.
+let IS_RRHH = false;      // permiso "RR. HH." (nóminas y expedientes laborales)
+let GP_OK = false;        // true cuando la base de datos ya tiene el SQL de gestión personal
+window.__gpTab = 'inicio';
+window.__gpSub = 'nominas';
+window.__gpDatos = {};
+
+const GP_MESES = {
+  es: ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre', 'Paga de verano', 'Paga de Navidad'],
+  ca: ['', 'Gener', 'Febrer', 'Març', 'Abril', 'Maig', 'Juny', 'Juliol', 'Agost', 'Setembre', 'Octubre', 'Novembre', 'Desembre', 'Paga d\'estiu', 'Paga de Nadal']
+};
+const gpMes = m => (GP_MESES[LANG_I === 'ca' ? 'ca' : 'es'][m]) || String(m);
+const GP_CATEGORIAS = [
+  ['contrato', 'Contrato', 'Contracte'], ['certificado', 'Certificado', 'Certificat'], ['vida_laboral', 'Vida laboral', 'Vida laboral'],
+  ['identificacion', 'Identificación', 'Identificació'], ['otros', 'Otros', 'Altres']
+];
+const gpCat = c => { const x = GP_CATEGORIAS.find(k => k[0] === c) || GP_CATEGORIAS[4]; return LANG_I === 'ca' ? x[2] : x[1]; };
+const gpYo = () => String((CURRENT_USER && CURRENT_USER.email) || '').toLowerCase();
+const gpFecha = iso => iso ? new Date(iso).toLocaleDateString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES') : '';
+const GP_MAX_BYTES = 10 * 1024 * 1024;
+
+function gpPestanasHtml(){
+  const tabs = [['inicio', '🏠', acL('Resumen', 'Resum')], ['nominas', '🧾', acL('Nóminas', 'Nòmines')], ['archivos', '📁', acL('Mis archivos', 'Els meus arxius')],
+    ['formacion', '🎓', acL('Formación', 'Formació')], ['comunicaciones', '📣', acL('Comunicaciones', 'Comunicacions')]];
+  if(IS_RRHH || IS_ADMIN) tabs.push(['rrhh', '🗂️', IS_RRHH ? 'RR. HH.' : acL('Comunicados', 'Comunicats')]);
+  return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">${tabs.map(([k, ic, t]) =>
+    `<button class="link-btn" style="font-size:13px;border:1px solid ${window.__gpTab === k ? 'var(--gold)' : 'var(--line)'};background:${window.__gpTab === k ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:5px 13px;" onclick="renderGestionPersonal('${k}')">${ic} ${t}</button>`).join('')}</div>`;
+}
+function gpAviso(msg){ return `<div class="info-box info-box-gold">${msg}</div>`; }
+
+async function gpRegistrar(accion, objeto, persona, detalle){
+  try { await sb.from('personal_registro').insert({ quien_email: gpYo(), persona_email: persona || null, accion, objeto, detalle: detalle || null }); } catch(e) {}
+}
+async function gpAbrirArchivo(ruta, persona, objeto, nominaId){
+  const { data, error } = await sb.storage.from('personal').createSignedUrl(ruta, 60);
+  if(error || !data || !data.signedUrl){ alert(acL('No se ha podido abrir el archivo. Inténtalo de nuevo.', 'No s\'ha pogut obrir l\'arxiu. Torna-ho a provar.')); return; }
+  await gpRegistrar('descarga', objeto, persona, ruta);
+  if(nominaId && persona === gpYo()) { try { await sb.rpc('marcar_nomina_vista', { p_id: nominaId }); } catch(e) {} }
+  window.open(data.signedUrl, '_blank');
+}
+function gpArchivoValido(f){
+  if(!f) return acL('Elige un archivo.', 'Tria un arxiu.');
+  if(f.size > GP_MAX_BYTES) return acL('El archivo pesa más de 10 MB.', 'L\'arxiu pesa més de 10 MB.');
+  return '';
+}
+
+async function renderGestionPersonal(tab){
+  if(tab) window.__gpTab = tab;
+  const cont = document.getElementById('gestionpersonal-content');
+  if(!cont) return;
+  if(!GP_OK){
+    cont.innerHTML = gpAviso(acL('Esta parte aún no está activada. La administración debe ejecutar el SQL «gestion-personal-supabase» en Supabase.', 'Aquesta part encara no està activada. L\'administració ha d\'executar l\'SQL «gestion-personal-supabase» a Supabase.'));
+    return;
+  }
+  cont.innerHTML = gpPestanasHtml() + `<div id="gp-cuerpo"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`;
+  const cuerpo = document.getElementById('gp-cuerpo');
+  const t = window.__gpTab;
+  if(t === 'nominas') await gpRenderNominas(cuerpo);
+  else if(t === 'archivos') await gpRenderArchivos(cuerpo);
+  else if(t === 'formacion') await gpRenderFormacion(cuerpo);
+  else if(t === 'comunicaciones') await gpRenderComunicaciones(cuerpo);
+  else if(t === 'rrhh' && (IS_RRHH || IS_ADMIN)) await gpRenderRrhh(cuerpo);
+  else await gpRenderInicio(cuerpo);
+}
+
+// ---------- resumen y tarjetas ----------
+async function gpResumen(){
+  const yo = gpYo();
+  const [nom, com, lec, doc, form] = await Promise.all([
+    sb.from('personal_nominas').select('id, anio, mes, visto_en').eq('persona_email', yo).order('anio', { ascending: false }).order('mes', { ascending: false }).limit(1),
+    sb.from('personal_comunicados').select('id, requiere_lectura').or(`para_todos.eq.true,persona_email.eq."${yo}"`),
+    sb.from('personal_comunicados_lecturas').select('comunicado_id').eq('persona_email', yo),
+    sb.from('personal_documentos').select('id', { count: 'exact', head: true }).eq('persona_email', yo),
+    sb.from('personal_formaciones').select('id', { count: 'exact', head: true }).eq('persona_email', yo)
+  ]);
+  const leidos = new Set((lec.data || []).map(x => x.comunicado_id));
+  const sinLeer = (com.data || []).filter(c => !leidos.has(c.id));
+  return { nomina: (nom.data || [])[0] || null, sinLeer: sinLeer.length, pendientesConfirmar: sinLeer.filter(c => c.requiere_lectura).length, docs: doc.count || 0, forms: form.count || 0 };
+}
+function gpTarjetasHtml(r){
+  const card = (ic, titulo, valor, sub, tab) => `<div class="panel-card" style="margin:0;cursor:pointer;" onclick="showScreen('gestionpersonal');renderGestionPersonal('${tab}')">
+      <div class="subtle" style="margin:0;font-size:11.5px;">${ic} ${titulo}</div><div style="font-size:19px;font-weight:700;margin:4px 0 2px;">${valor}</div><div class="subtle" style="margin:0;font-size:11.5px;">${sub}</div></div>`;
+  const n = r.nomina;
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:14px;">
+    ${card('🧾', acL('Última nómina', 'Última nòmina'), n ? `${escAttr(gpMes(n.mes))} ${n.anio}` : '—', n ? (n.visto_en ? acL('Ya la has abierto', 'Ja l\'has oberta') : '🔵 ' + acL('Nueva, sin abrir', 'Nova, sense obrir')) : acL('Aún no hay ninguna', 'Encara no n\'hi ha cap'), 'nominas')}
+    ${card('📣', acL('Comunicaciones', 'Comunicacions'), r.sinLeer, r.sinLeer ? (r.pendientesConfirmar ? acL('Hay que confirmar lectura', 'Cal confirmar lectura') : acL('Sin leer', 'Sense llegir')) : acL('Todo al día', 'Tot al dia'), 'comunicaciones')}
+    ${card('📁', acL('Mis archivos', 'Els meus arxius'), r.docs, acL('Documentos guardados', 'Documents guardats'), 'archivos')}
+    ${card('🎓', acL('Formación', 'Formació'), r.forms, acL('Cursos y certificados', 'Cursos i certificats'), 'formacion')}
+  </div>`;
+}
+async function gpPintarTarjetas(cont){
+  if(!GP_OK || !cont) return;
+  try {
+    const r = await gpResumen();
+    if(!document.getElementById('gp-tarjetas-inicio')) cont.insertAdjacentHTML('afterbegin', `<div id="gp-tarjetas-inicio">${gpTarjetasHtml(r)}</div>`);
+  } catch(e) {}
+}
+async function gpRenderInicio(cuerpo){
+  const r = await gpResumen();
+  cuerpo.innerHTML = gpTarjetasHtml(r) + `<div class="panel-card"><h3 style="margin-top:0;">🔒 ${acL('Tu información es privada', 'La teva informació és privada')}</h3>
+    <p class="subtle" style="margin:0;font-size:13px;line-height:1.55;">${acL('Solo tú ves tus nóminas, tus archivos y tus formaciones; y quien lleva Recursos Humanos para poder gestionarlas. Cada apertura queda anotada.', 'Només tu veus les teves nòmines, els teus arxius i les teves formacions; i qui porta Recursos Humans per poder gestionar-les. Cada obertura queda anotada.')}</p></div>`;
+}
+
+// ---------- nóminas ----------
+async function gpRenderNominas(cuerpo){
+  const { data, error } = await sb.from('personal_nominas').select('*').eq('persona_email', gpYo()).order('anio', { ascending: false }).order('mes', { ascending: false });
+  if(error){ cuerpo.innerHTML = gpAviso(escAttr(error.message)); return; }
+  window.__gpDatos.nominas = data || [];
+  if(!data.length){ cuerpo.innerHTML = `<div class="empty-note">${acL('Todavía no tienes nóminas publicadas. Cuando RR. HH. las suba, aparecerán aquí.', 'Encara no tens nòmines publicades. Quan RR. HH. les pugi, apareixeran aquí.')}</div>`; return; }
+  const anios = [...new Set(data.map(n => n.anio))];
+  cuerpo.innerHTML = anios.map(a => `<div class="panel-card" style="margin-bottom:12px;"><h3 style="margin-top:0;">${a}</h3>${data.map((n, i) => n.anio !== a ? '' : `
+      <div class="panel-stat-row" style="align-items:center;gap:8px;flex-wrap:wrap;">
+        <span><strong>${escAttr(gpMes(n.mes))}</strong>${n.concepto ? ` · ${escAttr(n.concepto)}` : ''}${n.visto_en ? '' : ` <span class="chip good" style="font-size:10.5px;">${acL('Nueva', 'Nova')}</span>`}<br><span class="subtle" style="font-size:11px;margin:0;">${acL('Publicada el', 'Publicada el')} ${gpFecha(n.subido_en)}</span></span>
+        <button class="link-btn" onclick="gpAbrirNomina(${i})">⬇️ ${acL('Abrir', 'Obrir')}</button>
+      </div>`).join('')}</div>`).join('');
+}
+async function gpAbrirNomina(i){
+  const n = (window.__gpDatos.nominas || [])[i]; if(!n) return;
+  await gpAbrirArchivo(n.archivo_ruta, n.persona_email, 'nómina', n.id);
+  setTimeout(() => { if(window.__gpTab === 'nominas') renderGestionPersonal('nominas'); }, 600);
+}
+
+// ---------- archivos personales ----------
+async function gpRenderArchivos(cuerpo){
+  const { data, error } = await sb.from('personal_documentos').select('*').eq('persona_email', gpYo()).order('subido_en', { ascending: false });
+  if(error){ cuerpo.innerHTML = gpAviso(escAttr(error.message)); return; }
+  window.__gpDatos.docs = data || [];
+  cuerpo.innerHTML = `
+    <div class="panel-card" style="margin-bottom:12px;"><h3 style="margin-top:0;">${acL('Mis archivos', 'Els meus arxius')}</h3>
+    ${data.length ? data.map((d, i) => `<div class="panel-stat-row" style="align-items:center;gap:8px;flex-wrap:wrap;">
+      <span><strong>${escAttr(d.nombre)}</strong> <span class="chip" style="font-size:10.5px;">${escAttr(gpCat(d.categoria))}</span><br><span class="subtle" style="font-size:11px;margin:0;">${gpFecha(d.subido_en)} · ${d.subido_por_la_persona ? acL('subido por ti', 'pujat per tu') : acL('subido por RR. HH.', 'pujat per RR. HH.')}</span></span>
+      <span style="display:flex;gap:10px;"><button class="link-btn" onclick="gpAbrirDoc(${i})">⬇️ ${acL('Abrir', 'Obrir')}</button>${d.subido_por_la_persona ? `<button class="link-btn" style="color:var(--alert);" onclick="gpBorrarDoc(${i})">${acL('Borrar', 'Esborrar')}</button>` : ''}</span></div>`).join('')
+      : `<div class="empty-note">${acL('Aún no hay archivos.', 'Encara no hi ha arxius.')}</div>`}</div>
+    <div class="panel-card"><h3 style="margin-top:0;">${acL('Añadir un archivo', 'Afegir un arxiu')}</h3>
+      <div class="field"><label>${acL('Tipo', 'Tipus')}</label><select id="gp-doc-cat">${GP_CATEGORIAS.map(c => `<option value="${c[0]}">${LANG_I === 'ca' ? c[2] : c[1]}</option>`).join('')}</select></div>
+      <div class="field"><label>${acL('Nombre (opcional)', 'Nom (opcional)')}</label><input type="text" id="gp-doc-nombre"></div>
+      <div class="field"><label>${acL('Archivo (máx. 10 MB)', 'Arxiu (màx. 10 MB)')}</label><input type="file" id="gp-doc-file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"></div>
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="gpSubirDocPropio()">⬆️ ${acL('Subir', 'Pujar')}</button></div>`;
+}
+async function gpAbrirDoc(i){ const d = (window.__gpDatos.docs || [])[i]; if(d) await gpAbrirArchivo(d.archivo_ruta, d.persona_email, 'archivo'); }
+async function gpSubirDocPropio(){
+  const f = document.getElementById('gp-doc-file').files[0], err = gpArchivoValido(f);
+  if(err){ alert(err); return; }
+  const ruta = `${gpYo()}/archivos/${Date.now()}_${rutaSeguraArchivo(f.name)}`;
+  const up = await sb.storage.from('personal').upload(ruta, f);
+  if(up.error){ alert(up.error.message); return; }
+  const nombre = document.getElementById('gp-doc-nombre').value.trim() || f.name;
+  const ins = await sb.from('personal_documentos').insert({ persona_email: gpYo(), categoria: document.getElementById('gp-doc-cat').value, nombre, archivo_ruta: ruta, subido_por_email: gpYo(), subido_por_la_persona: true });
+  if(ins.error){ await sb.storage.from('personal').remove([ruta]); alert(ins.error.message); return; }
+  await gpRegistrar('subida', 'archivo', gpYo(), nombre);
+  renderGestionPersonal('archivos');
+}
+async function gpBorrarDoc(i){
+  const d = (window.__gpDatos.docs || [])[i]; if(!d) return;
+  if(!confirm(acL('¿Borrar este archivo?', 'Esborrar aquest arxiu?'))) return;
+  const r = await sb.from('personal_documentos').delete().eq('id', d.id);
+  if(r.error){ alert(r.error.message); return; }
+  await sb.storage.from('personal').remove([d.archivo_ruta]);
+  await gpRegistrar('borrado', 'archivo', d.persona_email, d.nombre);
+  renderGestionPersonal('archivos');
+}
+
+// ---------- formaciones ----------
+function gpFormacionFormHtml(prefijo, persona){
+  return `<div class="field"><label>${acL('Título del curso', 'Títol del curs')}</label><input type="text" id="${prefijo}-titulo"></div>
+    <div class="field"><label>${acL('Entidad', 'Entitat')}</label><input type="text" id="${prefijo}-entidad"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;"><div class="field" style="flex:1;min-width:130px;"><label>${acL('Fecha', 'Data')}</label><input type="date" id="${prefijo}-fecha"></div>
+      <div class="field" style="flex:1;min-width:100px;"><label>${acL('Horas', 'Hores')}</label><input type="number" min="0" step="0.5" id="${prefijo}-horas"></div></div>
+    <label style="display:flex;gap:8px;align-items:center;font-size:13px;margin:6px 0;"><input type="checkbox" id="${prefijo}-oblig"> ${acL('Formación obligatoria', 'Formació obligatòria')}</label>
+    <div class="field"><label>${acL('Certificado (opcional, máx. 10 MB)', 'Certificat (opcional, màx. 10 MB)')}</label><input type="file" id="${prefijo}-file" accept=".pdf,.jpg,.jpeg,.png"></div>`;
+}
+async function gpGuardarFormacion(prefijo, persona, carpeta, recargar){
+  const v = id => (document.getElementById(`${prefijo}-${id}`) || {}).value;
+  const titulo = (v('titulo') || '').trim();
+  if(!titulo){ alert(acL('Escribe el título del curso.', 'Escriu el títol del curs.')); return; }
+  const f = document.getElementById(`${prefijo}-file`).files[0];
+  let ruta = null;
+  if(f){
+    const err = gpArchivoValido(f); if(err){ alert(err); return; }
+    ruta = `${persona}/${carpeta}/${Date.now()}_${rutaSeguraArchivo(f.name)}`;
+    const up = await sb.storage.from('personal').upload(ruta, f);
+    if(up.error){ alert(up.error.message); return; }
+  }
+  const ins = await sb.from('personal_formaciones').insert({ persona_email: persona, titulo, entidad: (v('entidad') || '').trim() || null, fecha: v('fecha') || null,
+    horas: v('horas') ? Number(v('horas')) : null, obligatoria: !!document.getElementById(`${prefijo}-oblig`).checked, archivo_ruta: ruta, creado_por_email: gpYo() });
+  if(ins.error){ if(ruta) await sb.storage.from('personal').remove([ruta]); alert(ins.error.message); return; }
+  await gpRegistrar('subida', 'formación', persona, titulo);
+  recargar();
+}
+function gpListaFormacionesHtml(lista, clave){
+  if(!lista.length) return `<div class="empty-note">${acL('Aún no hay formaciones.', 'Encara no hi ha formacions.')}</div>`;
+  return lista.map((f, i) => `<div class="panel-stat-row" style="align-items:center;gap:8px;flex-wrap:wrap;">
+    <span><strong>${escAttr(f.titulo)}</strong>${f.obligatoria ? ` <span class="chip gold" style="font-size:10.5px;">${acL('obligatoria', 'obligatòria')}</span>` : ''}<br><span class="subtle" style="font-size:11px;margin:0;">${[f.entidad ? escAttr(f.entidad) : '', f.fecha ? gpFecha(f.fecha) : '', f.horas ? f.horas + ' h' : ''].filter(Boolean).join(' · ')}</span></span>
+    <span style="display:flex;gap:10px;">${f.archivo_ruta ? `<button class="link-btn" onclick="gpAbrirFormacion('${clave}', ${i})">⬇️ ${acL('Certificado', 'Certificat')}</button>` : ''}<button class="link-btn" style="color:var(--alert);" onclick="gpBorrarFormacion('${clave}', ${i})">${acL('Borrar', 'Esborrar')}</button></span></div>`).join('');
+}
+async function gpRenderFormacion(cuerpo){
+  const { data, error } = await sb.from('personal_formaciones').select('*').eq('persona_email', gpYo()).order('fecha', { ascending: false });
+  if(error){ cuerpo.innerHTML = gpAviso(escAttr(error.message)); return; }
+  window.__gpDatos.forms = data || [];
+  const horas = (data || []).reduce((s, f) => s + (Number(f.horas) || 0), 0);
+  cuerpo.innerHTML = `<div class="panel-card" style="margin-bottom:12px;"><h3 style="margin-top:0;">${acL('Mi historial de formación', 'El meu historial de formació')}${horas ? ` <span class="subtle" style="font-size:12px;">· ${horas} h</span>` : ''}</h3>
+      ${gpListaFormacionesHtml(data, 'forms')}
+      ${IS_JOVENES ? '' : `<p style="margin:12px 0 0;"><button class="link-btn" onclick="showScreen('aulavirtual');renderAulaVirtualScreen()">🎥 ${acL('Ir al Aula Virtual', 'Anar a l\'Aula Virtual')}</button></p>`}</div>
+    <div class="panel-card"><h3 style="margin-top:0;">${acL('Añadir una formación', 'Afegir una formació')}</h3>${gpFormacionFormHtml('gp-f', gpYo())}
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="gpGuardarFormacion('gp-f', gpYo(), 'archivos', () => renderGestionPersonal('formacion'))">➕ ${acL('Guardar', 'Desar')}</button></div>`;
+}
+async function gpAbrirFormacion(clave, i){ const f = (window.__gpDatos[clave] || [])[i]; if(f && f.archivo_ruta) await gpAbrirArchivo(f.archivo_ruta, f.persona_email, 'formación'); }
+async function gpBorrarFormacion(clave, i){
+  const f = (window.__gpDatos[clave] || [])[i]; if(!f) return;
+  if(!confirm(acL('¿Borrar esta formación?', 'Esborrar aquesta formació?'))) return;
+  const r = await sb.from('personal_formaciones').delete().eq('id', f.id);
+  if(r.error){ alert(r.error.message); return; }
+  if(f.archivo_ruta) await sb.storage.from('personal').remove([f.archivo_ruta]);
+  await gpRegistrar('borrado', 'formación', f.persona_email, f.titulo);
+  if(clave === 'forms') renderGestionPersonal('formacion'); else gpRrhhAbrirPersona();
+}
+
+// ---------- comunicaciones ----------
+async function gpRenderComunicaciones(cuerpo){
+  const yo = gpYo();
+  const [com, lec] = await Promise.all([
+    sb.from('personal_comunicados').select('*').or(`para_todos.eq.true,persona_email.eq."${yo}"`).order('creado_en', { ascending: false }).limit(60),
+    sb.from('personal_comunicados_lecturas').select('comunicado_id').eq('persona_email', yo)
+  ]);
+  if(com.error){ cuerpo.innerHTML = gpAviso(escAttr(com.error.message)); return; }
+  const leidos = new Set((lec.data || []).map(x => x.comunicado_id));
+  window.__gpDatos.com = com.data || [];
+  cuerpo.innerHTML = (com.data || []).length ? com.data.map((c, i) => {
+    const leido = leidos.has(c.id);
+    return `<div class="panel-card" style="margin-bottom:12px;${leido ? '' : 'border-left:3px solid var(--gold);'}">
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>${escAttr(c.titulo)}</strong><span class="subtle" style="margin:0;font-size:11.5px;">${gpFecha(c.creado_en)}${c.para_todos ? '' : ' · ' + acL('para ti', 'per a tu')}</span></div>
+      <p style="margin:8px 0;font-size:13.5px;line-height:1.55;white-space:pre-wrap;">${escAttr(c.texto)}</p>
+      ${leido ? `<span class="chip good" style="font-size:11px;">✔ ${acL('Leído', 'Llegit')}</span>` : `<button class="primary-btn" style="width:auto;margin:0;" onclick="gpConfirmarLectura(${i})">${c.requiere_lectura ? '✔ ' + acL('Confirmo que lo he leído', 'Confirmo que ho he llegit') : acL('Marcar como leído', 'Marcar com a llegit')}</button>`}</div>`;
+  }).join('') : `<div class="empty-note">${acL('No hay comunicaciones.', 'No hi ha comunicacions.')}</div>`;
+}
+async function gpConfirmarLectura(i){
+  const c = (window.__gpDatos.com || [])[i]; if(!c) return;
+  const r = await sb.from('personal_comunicados_lecturas').insert({ comunicado_id: c.id, persona_email: gpYo() });
+  if(r.error && !/duplicate/i.test(r.error.message)){ alert(r.error.message); return; }
+  renderGestionPersonal('comunicaciones');
+}
+
+// ---------- RR. HH. y comunicados ----------
+async function gpRenderRrhh(cuerpo){
+  const subs = IS_RRHH ? [['nominas', acL('Cargar nóminas', 'Carregar nòmines')], ['personas', acL('Por persona', 'Per persona')], ['comunicados', acL('Comunicados', 'Comunicats')], ['registro', acL('Registro', 'Registre')]] : [['comunicados', acL('Comunicados', 'Comunicats')]];
+  if(!subs.some(s => s[0] === window.__gpSub)) window.__gpSub = subs[0][0];
+  cuerpo.innerHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">${subs.map(([k, t]) => `<button class="link-btn" style="font-size:12.5px;border:1px solid ${window.__gpSub === k ? 'var(--gold)' : 'var(--line)'};background:${window.__gpSub === k ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:3px 12px;" onclick="window.__gpSub='${k}';renderGestionPersonal('rrhh')">${t}</button>`).join('')}</div><div id="gp-rrhh-cuerpo"></div>`;
+  const c = document.getElementById('gp-rrhh-cuerpo');
+  if(window.__gpSub === 'nominas') await gpRrhhNominas(c);
+  else if(window.__gpSub === 'personas') await gpRrhhPersonas(c);
+  else if(window.__gpSub === 'registro') await gpRrhhRegistro(c);
+  else await gpRrhhComunicados(c);
+}
+async function gpPersonasActivas(){
+  const { data } = await sb.from('staff').select('email, nombre, activo').eq('activo', true).order('nombre', { ascending: true });
+  window.__gpPersonas = (data || []).map(s => ({ email: String(s.email).toLowerCase(), nombre: s.nombre || s.email }));
+  return window.__gpPersonas;
+}
+const gpNorm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+// Adivina de quién es cada PDF por su nombre: cuenta cuántas palabras del nombre de la persona (o su correo) aparecen en el nombre del archivo
+function gpAdivinar(nombreArchivo, personas){
+  const f = ' ' + gpNorm(nombreArchivo.replace(/\.[^.]+$/, '')) + ' ';
+  let mejor = null, mejorN = 0, empate = false;
+  personas.forEach(p => {
+    const palabras = gpNorm(p.nombre).split(' ').filter(w => w.length >= 3);
+    let n = palabras.filter(w => f.includes(' ' + w + ' ')).length;
+    const local = gpNorm(p.email.split('@')[0]);
+    if(local.length >= 4 && f.includes(local)) n += 2;
+    if(n > mejorN){ mejor = p; mejorN = n; empate = false; } else if(n === mejorN && n > 0) empate = true;
+  });
+  return (mejor && !empate) ? mejor.email : '';
+}
+async function gpRrhhNominas(c){
+  const personas = await gpPersonasActivas();
+  const hoy = new Date(), anioAct = hoy.getFullYear();
+  const mesPrev = hoy.getMonth() === 0 ? 12 : hoy.getMonth();
+  c.innerHTML = `<div class="panel-card"><h3 style="margin-top:0;">${acL('Cargar nóminas', 'Carregar nòmines')}</h3>
+    <p class="subtle" style="margin:0 0 10px;font-size:12.5px;">${acL('Elige el mes, selecciona de una vez todos los PDF que te manda la gestoría (un PDF por persona) y revisa a quién corresponde cada uno. Para que se asignen solos, el nombre del archivo debe llevar el nombre de la persona.', 'Tria el mes, selecciona d\'una vegada tots els PDF que envia la gestoria (un PDF per persona) i revisa a qui correspon cadascun. Perquè s\'assignin sols, el nom de l\'arxiu ha de portar el nom de la persona.')}</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <div class="field" style="flex:1;min-width:110px;"><label>${acL('Año', 'Any')}</label><select id="gp-n-anio">${[anioAct + 1, anioAct, anioAct - 1, anioAct - 2].map(a => `<option value="${a}"${a === anioAct ? ' selected' : ''}>${a}</option>`).join('')}</select></div>
+      <div class="field" style="flex:2;min-width:150px;"><label>${acL('Mes o paga', 'Mes o paga')}</label><select id="gp-n-mes">${Array.from({ length: 14 }, (_, i) => i + 1).map(m => `<option value="${m}"${m === mesPrev ? ' selected' : ''}>${gpMes(m)}</option>`).join('')}</select></div></div>
+    <div class="field"><label>${acL('PDF de nóminas', 'PDF de nòmines')}</label><input type="file" id="gp-n-files" accept=".pdf" multiple onchange="gpPrepararNominas()"></div>
+    <div id="gp-n-previa"></div></div>`;
+}
+function gpPrepararNominas(){
+  const files = [...document.getElementById('gp-n-files').files];
+  window.__gpNomFiles = files;
+  const previa = document.getElementById('gp-n-previa');
+  if(!files.length){ previa.innerHTML = ''; return; }
+  const personas = window.__gpPersonas || [];
+  const opciones = sel => `<option value="">${acL('— elegir persona —', '— triar persona —')}</option>${personas.map(p => `<option value="${escAttr(p.email)}"${p.email === sel ? ' selected' : ''}>${escAttr(p.nombre)}</option>`).join('')}`;
+  previa.innerHTML = files.map((f, i) => {
+    const sel = gpAdivinar(f.name, personas), grande = f.size > GP_MAX_BYTES;
+    return `<div class="panel-stat-row" style="align-items:center;gap:8px;flex-wrap:wrap;"><span style="min-width:0;word-break:break-all;">📄 ${escAttr(f.name)}${grande ? ` <span class="chip" style="color:var(--alert);">&gt;10 MB</span>` : ''}</span>
+      <select class="gp-n-sel" data-i="${i}" style="font-size:12.5px;max-width:230px;">${opciones(sel)}</select></div>`;
+  }).join('') + `<p class="subtle" style="font-size:12px;">${acL('Los que queden sin persona no se subirán.', 'Els que quedin sense persona no es pujaran.')}</p>
+    <button class="primary-btn" style="width:auto;margin:0;" id="gp-n-subir" onclick="gpSubirNominas()">⬆️ ${acL('Subir y avisar', 'Pujar i avisar')}</button><div id="gp-n-res"></div>`;
+}
+async function gpSubirNominas(){
+  const files = window.__gpNomFiles || [], anio = Number(document.getElementById('gp-n-anio').value), mes = Number(document.getElementById('gp-n-mes').value);
+  const asign = [...document.querySelectorAll('.gp-n-sel')].map(s => ({ f: files[Number(s.dataset.i)], persona: s.value })).filter(x => x.persona && x.f && x.f.size <= GP_MAX_BYTES);
+  if(!asign.length){ alert(acL('No hay ninguna nómina con persona asignada.', 'No hi ha cap nòmina amb persona assignada.')); return; }
+  const dup = {};
+  asign.forEach(x => { dup[x.persona] = (dup[x.persona] || 0) + 1; });
+  const repetidas = Object.keys(dup).filter(k => dup[k] > 1);
+  if(repetidas.length && !confirm(acL(`Hay personas con más de una nómina en este mes (${repetidas.length}). ¿Subir todas igualmente?`, `Hi ha persones amb més d'una nòmina aquest mes (${repetidas.length}). Pujar-les totes igualment?`))) return;
+  const btn = document.getElementById('gp-n-subir'); btn.disabled = true;
+  const ok = [], fallo = [];
+  for(const x of asign){
+    const ruta = `${x.persona}/nominas/${anio}-${String(mes).padStart(2, '0')}_${Date.now()}_${rutaSeguraArchivo(x.f.name)}`;
+    const up = await sb.storage.from('personal').upload(ruta, x.f);
+    if(up.error){ fallo.push(`${x.f.name}: ${up.error.message}`); continue; }
+    const ins = await sb.from('personal_nominas').insert({ persona_email: x.persona, anio, mes, archivo_ruta: ruta, subido_por_email: gpYo() });
+    if(ins.error){ await sb.storage.from('personal').remove([ruta]); fallo.push(`${x.f.name}: ${ins.error.message}`); continue; }
+    ok.push(x.persona);
+  }
+  await gpRegistrar('subida', 'nóminas', null, `${gpMes(mes)} ${anio}: ${ok.length}`);
+  if(ok.length){
+    // Aviso interno a cada persona para que sepa que tiene una nómina nueva
+    try { await Promise.all(ok.map(p => sb.from('personal_comunicados').insert({ titulo: acL('Nueva nómina disponible', 'Nova nòmina disponible'), texto: acL(`Ya puedes consultar tu nómina de ${gpMes(mes)} ${anio} en Mi gestión personal › Nóminas.`, `Ja pots consultar la teva nòmina de ${gpMes(mes)} ${anio} a La meva gestió personal › Nòmines.`), para_todos: false, persona_email: p, requiere_lectura: false, creado_por_email: gpYo() }))); } catch(e) {}
+  }
+  document.getElementById('gp-n-res').innerHTML = `<div class="info-box info-box-gold" style="margin-top:10px;">✅ ${ok.length} ${acL('nóminas subidas.', 'nòmines pujades.')}${fallo.length ? '<br>⚠️ ' + fallo.map(escAttr).join('<br>') : ''}</div>`;
+  btn.disabled = false;
+}
+
+async function gpRrhhPersonas(c){
+  const personas = await gpPersonasActivas();
+  c.innerHTML = `<div class="panel-card"><div class="field"><label>${acL('Persona', 'Persona')}</label><select id="gp-p-sel" onchange="gpRrhhAbrirPersona()"><option value="">${acL('— elegir —', '— triar —')}</option>${personas.map(p => `<option value="${escAttr(p.email)}">${escAttr(p.nombre)}</option>`).join('')}</select></div></div><div id="gp-p-ficha"></div>`;
+}
+async function gpRrhhAbrirPersona(){
+  const sel = document.getElementById('gp-p-sel'); if(!sel) return;
+  const p = sel.value, ficha = document.getElementById('gp-p-ficha');
+  if(!p){ ficha.innerHTML = ''; return; }
+  ficha.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const [nom, doc, frm] = await Promise.all([
+    sb.from('personal_nominas').select('*').eq('persona_email', p).order('anio', { ascending: false }).order('mes', { ascending: false }),
+    sb.from('personal_documentos').select('*').eq('persona_email', p).order('subido_en', { ascending: false }),
+    sb.from('personal_formaciones').select('*').eq('persona_email', p).order('fecha', { ascending: false })
+  ]);
+  window.__gpDatos.rn = nom.data || []; window.__gpDatos.rd = doc.data || []; window.__gpDatos.rf = frm.data || [];
+  const fila = (txt, sub, abrir, borrar) => `<div class="panel-stat-row" style="align-items:center;gap:8px;flex-wrap:wrap;"><span><strong>${txt}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${sub}</span></span><span style="display:flex;gap:10px;"><button class="link-btn" onclick="${abrir}">⬇️ ${acL('Abrir', 'Obrir')}</button><button class="link-btn" style="color:var(--alert);" onclick="${borrar}">${acL('Borrar', 'Esborrar')}</button></span></div>`;
+  ficha.innerHTML = `
+    <div class="panel-card" style="margin-bottom:12px;"><h3 style="margin-top:0;">🧾 ${acL('Nóminas', 'Nòmines')}</h3>${(nom.data || []).length ? nom.data.map((n, i) => fila(`${escAttr(gpMes(n.mes))} ${n.anio}`, `${acL('Subida el', 'Pujada el')} ${gpFecha(n.subido_en)} · ${n.visto_en ? acL('abierta por la persona', 'oberta per la persona') : acL('aún sin abrir', 'encara sense obrir')}`, `gpRrhhAbrir('rn', ${i}, 'nómina')`, `gpRrhhBorrar('rn', ${i})`)).join('') : `<div class="empty-note">${acL('Sin nóminas.', 'Sense nòmines.')}</div>`}</div>
+    <div class="panel-card" style="margin-bottom:12px;"><h3 style="margin-top:0;">📁 ${acL('Archivos', 'Arxius')}</h3>${(doc.data || []).length ? doc.data.map((d, i) => fila(escAttr(d.nombre), `${escAttr(gpCat(d.categoria))} · ${gpFecha(d.subido_en)}`, `gpRrhhAbrir('rd', ${i}, 'archivo')`, `gpRrhhBorrar('rd', ${i})`)).join('') : `<div class="empty-note">${acL('Sin archivos.', 'Sense arxius.')}</div>`}
+      <div class="field" style="margin-top:12px;"><label>${acL('Subir un archivo a esta persona', 'Pujar un arxiu a aquesta persona')}</label>
+        <select id="gp-rd-cat" style="margin-bottom:6px;">${GP_CATEGORIAS.map(k => `<option value="${k[0]}">${LANG_I === 'ca' ? k[2] : k[1]}</option>`).join('')}</select>
+        <input type="text" id="gp-rd-nombre" placeholder="${acL('Nombre (opcional)', 'Nom (opcional)')}" style="margin-bottom:6px;"><input type="file" id="gp-rd-file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"></div>
+      <button class="link-btn" onclick="gpRrhhSubirDoc()">⬆️ ${acL('Subir', 'Pujar')}</button></div>
+    <div class="panel-card"><h3 style="margin-top:0;">🎓 ${acL('Formaciones', 'Formacions')}</h3>${gpListaFormacionesHtml(frm.data || [], 'rf')}
+      <h4 style="margin:14px 0 6px;">${acL('Añadir formación', 'Afegir formació')}</h4>${gpFormacionFormHtml('gp-rf', p)}
+      <button class="link-btn" onclick="gpGuardarFormacion('gp-rf', document.getElementById('gp-p-sel').value, 'formaciones', gpRrhhAbrirPersona)">➕ ${acL('Guardar', 'Desar')}</button></div>`;
+}
+async function gpRrhhAbrir(clave, i, objeto){ const x = (window.__gpDatos[clave] || [])[i]; if(x) await gpAbrirArchivo(x.archivo_ruta, x.persona_email, objeto); }
+async function gpRrhhBorrar(clave, i){
+  const x = (window.__gpDatos[clave] || [])[i]; if(!x) return;
+  if(!confirm(acL('¿Borrar definitivamente? No se puede deshacer.', 'Esborrar definitivament? No es pot desfer.'))) return;
+  const tabla = clave === 'rn' ? 'personal_nominas' : 'personal_documentos';
+  const r = await sb.from(tabla).delete().eq('id', x.id);
+  if(r.error){ alert(r.error.message); return; }
+  await sb.storage.from('personal').remove([x.archivo_ruta]);
+  await gpRegistrar('borrado', clave === 'rn' ? 'nómina' : 'archivo', x.persona_email, x.archivo_ruta);
+  gpRrhhAbrirPersona();
+}
+async function gpRrhhSubirDoc(){
+  const p = document.getElementById('gp-p-sel').value, f = document.getElementById('gp-rd-file').files[0], err = gpArchivoValido(f);
+  if(!p) return; if(err){ alert(err); return; }
+  const ruta = `${p}/documentos/${Date.now()}_${rutaSeguraArchivo(f.name)}`;
+  const up = await sb.storage.from('personal').upload(ruta, f);
+  if(up.error){ alert(up.error.message); return; }
+  const nombre = document.getElementById('gp-rd-nombre').value.trim() || f.name;
+  const ins = await sb.from('personal_documentos').insert({ persona_email: p, categoria: document.getElementById('gp-rd-cat').value, nombre, archivo_ruta: ruta, subido_por_email: gpYo(), subido_por_la_persona: false });
+  if(ins.error){ await sb.storage.from('personal').remove([ruta]); alert(ins.error.message); return; }
+  await gpRegistrar('subida', 'archivo', p, nombre);
+  gpRrhhAbrirPersona();
+}
+
+async function gpRrhhComunicados(c){
+  const personas = await gpPersonasActivas();
+  const [com, lec] = await Promise.all([
+    sb.from('personal_comunicados').select('*').order('creado_en', { ascending: false }).limit(40),
+    sb.from('personal_comunicados_lecturas').select('comunicado_id, persona_email')
+  ]);
+  const lecturas = {};
+  (lec.data || []).forEach(l => { (lecturas[l.comunicado_id] = lecturas[l.comunicado_id] || []).push(l.persona_email); });
+  window.__gpDatos.rc = com.data || [];
+  c.innerHTML = `<div class="panel-card" style="margin-bottom:12px;"><h3 style="margin-top:0;">${acL('Nuevo comunicado', 'Nou comunicat')}</h3>
+      <div class="field"><label>${acL('Título', 'Títol')}</label><input type="text" id="gp-c-titulo"></div>
+      <div class="field"><label>${acL('Mensaje', 'Missatge')}</label><textarea id="gp-c-texto" rows="4"></textarea></div>
+      <div class="field"><label>${acL('Para', 'Per a')}</label><select id="gp-c-dest"><option value="">${acL('Todo el personal', 'Tot el personal')}</option>${personas.map(p => `<option value="${escAttr(p.email)}">${escAttr(p.nombre)}</option>`).join('')}</select></div>
+      <label style="display:flex;gap:8px;align-items:center;font-size:13px;margin:6px 0 10px;"><input type="checkbox" id="gp-c-lect"> ${acL('Pedir confirmación de lectura', 'Demanar confirmació de lectura')}</label>
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="gpCrearComunicado()">📣 ${acL('Publicar', 'Publicar')}</button></div>
+    ${(com.data || []).map((x, i) => {
+      const leyeron = (lecturas[x.id] || []).length, total = x.para_todos ? personas.length : 1;
+      return `<div class="panel-card" style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>${escAttr(x.titulo)}</strong><span class="subtle" style="margin:0;font-size:11.5px;">${gpFecha(x.creado_en)} · ${x.para_todos ? acL('todo el personal', 'tot el personal') : escAttr(nombreTecnico(x.persona_email))}</span></div>
+        <p style="margin:6px 0;font-size:13px;white-space:pre-wrap;">${escAttr(x.texto)}</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><span class="chip ${leyeron >= total ? 'good' : ''}" style="font-size:11px;">${x.requiere_lectura ? acL('Confirmaciones', 'Confirmacions') : acL('Leído por', 'Llegit per')}: ${leyeron}/${total}</span>
+        <button class="link-btn" style="color:var(--alert);font-size:12px;" onclick="gpBorrarComunicado(${i})">${acL('Borrar', 'Esborrar')}</button></div></div>`;
+    }).join('')}`;
+}
+async function gpCrearComunicado(){
+  const titulo = document.getElementById('gp-c-titulo').value.trim(), texto = document.getElementById('gp-c-texto').value.trim(), dest = document.getElementById('gp-c-dest').value;
+  if(!titulo || !texto){ alert(acL('Escribe el título y el mensaje.', 'Escriu el títol i el missatge.')); return; }
+  const r = await sb.from('personal_comunicados').insert({ titulo, texto, para_todos: !dest, persona_email: dest || null, requiere_lectura: !!document.getElementById('gp-c-lect').checked, creado_por_email: gpYo() });
+  if(r.error){ alert(r.error.message); return; }
+  renderGestionPersonal('rrhh');
+}
+async function gpBorrarComunicado(i){
+  const x = (window.__gpDatos.rc || [])[i]; if(!x) return;
+  if(!confirm(acL('¿Borrar este comunicado?', 'Esborrar aquest comunicat?'))) return;
+  const r = await sb.from('personal_comunicados').delete().eq('id', x.id);
+  if(r.error){ alert(r.error.message); return; }
+  renderGestionPersonal('rrhh');
+}
+async function gpRrhhRegistro(c){
+  const { data, error } = await sb.from('personal_registro').select('*').order('cuando', { ascending: false }).limit(100);
+  if(error){ c.innerHTML = gpAviso(escAttr(error.message)); return; }
+  c.innerHTML = `<div class="panel-card"><h3 style="margin-top:0;">${acL('Registro de accesos (últimos 100)', 'Registre d\'accessos (últims 100)')}</h3>${(data || []).length ? data.map(r => `<div class="panel-stat-row" style="gap:8px;flex-wrap:wrap;font-size:12.5px;"><span><strong>${escAttr(r.accion)}</strong> · ${escAttr(r.objeto || '')}${r.persona_email ? ' · ' + escAttr(nombreTecnico(r.persona_email)) : ''}<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(nombreTecnico(r.quien_email))}</span></span><span class="subtle" style="margin:0;font-size:11px;">${new Date(r.cuando).toLocaleString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES')}</span></div>`).join('') : `<div class="empty-note">${acL('Sin movimientos.', 'Sense moviments.')}</div>`}</div>`;
+}
+
+// Permiso RR. HH.: lo da o quita la administración
+async function toggleRRHH(email, valor){
+  const s = (window.__staffLista || []).find(x => x.email === email), nombre = (s && s.nombre) || email;
+  if(!valor && !confirm(acL(`¿Quitar el permiso de RR. HH. a ${nombre}? Dejará de poder ver y gestionar nóminas y archivos del personal.`, `Treure el permís de RR. HH. a ${nombre}? Deixarà de poder veure i gestionar nòmines i arxius del personal.`))) return;
+  if(valor && !confirm(acL(`¿Dar a ${nombre} el permiso de RR. HH.? Podrá ver y gestionar las nóminas y los archivos de TODO el personal.`, `Donar a ${nombre} el permís de RR. HH.? Podrà veure i gestionar les nòmines i els arxius de TOT el personal.`))) return;
+  const { error } = await sb.from('staff').update({ es_rrhh: valor }).eq('email', email);
+  if(error){ alert(error.message); return; }
+  await gpRegistrar(valor ? 'permiso' : 'permiso', 'RR. HH.', email, valor ? 'concedido' : 'retirado');
+  renderAdministrador();
+}
+
+// ================= HORARIOS DEL PERSONAL =================
+// Horario general: lunes a jueves 8-14 y 16-20; viernes 8-14. La administración puede ajustar el de cada persona.
+// Si el SQL aún no está en Supabase, se usa el horario general de siempre y solo se oculta el editor.
+let HR_OK = false;
+const HR_DIAS = {
+  es: ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+  ca: ['', 'Dilluns', 'Dimarts', 'Dimecres', 'Dijous', 'Divendres', 'Dissabte', 'Diumenge']
+};
+const hrDia = d => HR_DIAS[LANG_I === 'ca' ? 'ca' : 'es'][d];
+const HR_GENERAL_BASE = [1, 2, 3, 4].flatMap(d => [{ dia: d, desde: '08:00', hasta: '14:00' }, { dia: d, desde: '16:00', hasta: '20:00' }]).concat([{ dia: 5, desde: '08:00', hasta: '14:00' }]);
+const HR_TOLERANCIA_MIN = 15;
+window.__hrTodos = [];
+window.__hrSel = '';
+
+const hrHM = t => String(t || '').slice(0, 5);
+const hrMin = t => { const [h, m] = hrHM(t).split(':').map(Number); return h * 60 + (m || 0); };
+const hrTxtMin = min => `${Math.floor(min / 60)} h${min % 60 ? ' ' + String(min % 60).padStart(2, '0') + ' min' : ''}`;
+const hrNormalizar = f => ({ dia: Number(f.dia), desde: hrHM(f.desde), hasta: hrHM(f.hasta) });
+
+// El horario de una persona: el suyo si la administración se lo ha puesto; si no, el general
+async function hrHorarioDe(email){
+  const mail = String(email || '').toLowerCase();
+  if(!HR_OK) return { propio: false, tramos: HR_GENERAL_BASE };
+  const r = await sb.from('personal_horarios').select('*').or(`persona_email.is.null,persona_email.eq."${mail}"`).order('desde', { ascending: true });
+  if(r.error) return { propio: false, tramos: HR_GENERAL_BASE };
+  const filas = r.data || [];
+  const propio = filas.filter(f => f.persona_email && String(f.persona_email).toLowerCase() === mail);
+  const general = filas.filter(f => !f.persona_email);
+  if(propio.length) return { propio: true, tramos: propio.map(hrNormalizar) };
+  return { propio: false, tramos: general.length ? general.map(hrNormalizar) : HR_GENERAL_BASE };
+}
+const hrTramosDia = (tramos, dia) => tramos.filter(t => t.dia === dia).sort((a, b) => hrMin(a.desde) - hrMin(b.desde));
+const hrTxtTramos = lista => lista.map(t => `${t.desde}–${t.hasta}`).join(' · ');
+const hrDiaSemanaJS = d => (d.getDay() === 0 ? 7 : d.getDay());
+
+// Bloque que se muestra dentro de la tarjeta de fichaje de «Mi espacio»
+async function hrInfoMiEspacio(email, fichadoAhora){
+  try {
+    const h = await hrHorarioDe(email);
+    const ahora = new Date(), dia = hrDiaSemanaJS(ahora);
+    const hoy = hrTramosDia(h.tramos, dia);
+    const lunes = new Date(ahora); lunes.setHours(0, 0, 0, 0); lunes.setDate(lunes.getDate() - (dia - 1));
+    const fr = await sb.from('fichajes').select('entrada, salida').eq('tecnico_email', email).gte('entrada', lunes.toISOString());
+    const fichados = (fr.data || []).reduce((s, f) => s + Math.max(0, Math.round(((f.salida ? new Date(f.salida) : ahora) - new Date(f.entrada)) / 60000)), 0);
+    const previstasSemana = h.tramos.reduce((s, t) => s + Math.max(0, hrMin(t.hasta) - hrMin(t.desde)), 0);
+    const previstasHastaAhora = h.tramos.filter(t => t.dia < dia).reduce((s, t) => s + (hrMin(t.hasta) - hrMin(t.desde)), 0)
+      + hrTramosDia(h.tramos, dia).reduce((s, t) => s + Math.max(0, Math.min(hrMin(t.hasta), ahora.getHours() * 60 + ahora.getMinutes()) - hrMin(t.desde)), 0);
+    const min = ahora.getHours() * 60 + ahora.getMinutes();
+    let aviso = '';
+    const tramoActual = hoy.find(t => min >= hrMin(t.desde) && min < hrMin(t.hasta));
+    if(!fichadoAhora && tramoActual && min > hrMin(tramoActual.desde) + HR_TOLERANCIA_MIN)
+      aviso = `⏰ ${acL('Tu horario empezó a las', 'El teu horari va començar a les')} ${tramoActual.desde}. ${acL('Si ya estás trabajando, ficha la entrada.', 'Si ja estàs treballant, fitxa l\'entrada.')}`;
+    const ultimo = hoy[hoy.length - 1];
+    if(!aviso && fichadoAhora && !tramoActual && ultimo && min > hrMin(ultimo.hasta) + HR_TOLERANCIA_MIN && !hoy.some(t => min < hrMin(t.desde)))
+      aviso = `⏰ ${acL('Tu horario terminó a las', 'El teu horari va acabar a les')} ${ultimo.hasta}. ${acL('Recuerda fichar la salida.', 'Recorda fitxar la sortida.')}`;
+    return `<div style="text-align:left;margin:0 0 12px;font-size:13px;line-height:1.6;">
+      <div>🕘 <strong>${acL('Tu horario de hoy', 'El teu horari d\'avui')}:</strong> ${hoy.length ? hrTxtTramos(hoy) : acL('hoy no tienes horario', 'avui no tens horari')}${h.propio ? ` <span class="chip" style="font-size:10.5px;">${acL('personal', 'personal')}</span>` : ''}</div>
+      <div class="subtle" style="margin:2px 0 0;font-size:12px;">${acL('Esta semana: previstas', 'Aquesta setmana: previstes')} ${hrTxtMin(previstasSemana)} · ${acL('fichadas hasta ahora', 'fitxades fins ara')} ${hrTxtMin(fichados)} ${acL('(previstas hasta ahora', '(previstes fins ara')} ${hrTxtMin(previstasHastaAhora)})</div>
+      ${aviso ? `<div class="info-box info-box-gold" style="margin:8px 0 0;">${aviso}</div>` : ''}</div>`;
+  } catch(e) { return ''; }
+}
+
+// ---------- editor para la administración ----------
+async function hrCargarAdmin(){
+  window.__hrTodos = [];
+  if(!HR_OK) return;
+  const r = await sb.from('personal_horarios').select('*').order('desde', { ascending: true });
+  window.__hrTodos = (r.data || []).map(f => Object.assign({}, f, { dia: Number(f.dia), desde: hrHM(f.desde), hasta: hrHM(f.hasta) }));
+}
+function hrTramosAmbito(sel){
+  const todos = window.__hrTodos || [];
+  const propios = sel ? todos.filter(f => f.persona_email && String(f.persona_email).toLowerCase() === sel) : todos.filter(f => !f.persona_email);
+  if(propios.length || !sel) return { tramos: propios.length ? propios : HR_GENERAL_BASE.map(t => Object.assign({}, t)), propio: !!propios.length };
+  const general = todos.filter(f => !f.persona_email);
+  return { tramos: general.length ? general : HR_GENERAL_BASE.map(t => Object.assign({}, t)), propio: false };
+}
+function hrEditorHtml(){
+  const sel = window.__hrSel || '';
+  const { tramos, propio } = hrTramosAmbito(sel);
+  const filas = [1, 2, 3, 4, 5, 6, 7].map(d => {
+    const t = hrTramosDia(tramos, d);
+    const celda = (i, k) => `<input type="time" class="hr-in" data-dia="${d}" data-i="${i}" data-k="${k}" value="${(t[i] && t[i][k]) || ''}" oninput="hrActualizarTotal()" style="font-size:13px;padding:3px 5px;width:100px;">`;
+    return `<div class="panel-stat-row" style="align-items:center;gap:8px;flex-wrap:wrap;"><span style="min-width:92px;font-weight:600;">${hrDia(d)}</span>
+      <span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${celda(0, 'desde')}–${celda(0, 'hasta')} <span class="subtle" style="margin:0 4px;">+</span> ${celda(1, 'desde')}–${celda(1, 'hasta')}</span></div>`;
+  }).join('');
+  const nota = sel ? (propio ? acL('Esta persona tiene un horario propio.', 'Aquesta persona té un horari propi.') : acL('Esta persona usa ahora el horario general. Si cambias algo y guardas, se creará uno propio para ella.', 'Aquesta persona fa servir ara l\'horari general. Si canvies alguna cosa i deses, se\'n crearà un de propi.'))
+    : acL('Es el horario que usa todo el personal que no tenga uno propio.', 'És l\'horari que fa servir tot el personal que no en tingui un de propi.');
+  return `<p class="subtle" style="margin:0 0 8px;font-size:12.5px;">${nota} ${acL('Cada día admite dos tramos (por ejemplo, mañana y tarde). Deja vacío lo que no se trabaja.', 'Cada dia admet dos trams (per exemple, matí i tarda). Deixa buit el que no es treballa.')}</p>
+    ${filas}
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;">
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="hrGuardar()">💾 ${acL('Guardar horario', 'Desar horari')}</button>
+      ${(sel && propio) ? `<button class="link-btn" style="color:var(--alert);" onclick="hrQuitarPropio()">${acL('Volver al horario general', 'Tornar a l\'horari general')}</button>` : ''}
+      <span id="hr-total" class="subtle" style="margin:0;font-size:12.5px;"></span></div>`;
+}
+function hrAdminHtml(){
+  if(!HR_OK) return `<div class="info-box info-box-gold">⚠️ ${acL('Falta ejecutar el SQL «horarios-supabase» en Supabase para poder editar los horarios.', 'Falta executar l\'SQL «horarios-supabase» a Supabase per poder editar els horaris.')}</div>`;
+  const personas = (window.__staffLista || []).filter(s => s.activo !== false);
+  return `<div class="field"><label>${acL('¿De quién es el horario?', 'De qui és l\'horari?')}</label>
+      <select id="hr-sel" onchange="window.__hrSel=this.value;document.getElementById('hr-editor').innerHTML=hrEditorHtml();hrActualizarTotal();">
+        <option value="">${acL('Horario general (todo el personal)', 'Horari general (tot el personal)')}</option>
+        ${personas.map(s => { const m = String(s.email).toLowerCase(); const tiene = (window.__hrTodos || []).some(f => f.persona_email && String(f.persona_email).toLowerCase() === m);
+          return `<option value="${escAttr(m)}"${window.__hrSel === m ? ' selected' : ''}>${escAttr(s.nombre || s.email)}${tiene ? ' ✎' : ''}</option>`; }).join('')}
+      </select></div>
+    <div id="hr-editor">${hrEditorHtml()}</div>`;
+}
+function hrLeerEditor(){
+  const porDia = {};
+  document.querySelectorAll('.hr-in').forEach(i => {
+    const d = Number(i.dataset.dia), n = Number(i.dataset.i);
+    porDia[d] = porDia[d] || [{}, {}];
+    porDia[d][n][i.dataset.k] = i.value;
+  });
+  const tramos = [], errores = [];
+  Object.entries(porDia).forEach(([d, pares]) => {
+    const validos = [];
+    pares.forEach(p => {
+      if(!p.desde && !p.hasta) return;
+      if(!p.desde || !p.hasta || hrMin(p.hasta) <= hrMin(p.desde)){ errores.push(`${hrDia(Number(d))}: ${acL('revisa las horas (la salida debe ser posterior a la entrada)', 'revisa les hores (la sortida ha de ser posterior a l\'entrada)')}`); return; }
+      validos.push({ dia: Number(d), desde: p.desde, hasta: p.hasta });
+    });
+    validos.sort((a, b) => hrMin(a.desde) - hrMin(b.desde));
+    if(validos.length === 2 && hrMin(validos[1].desde) < hrMin(validos[0].hasta)) errores.push(`${hrDia(Number(d))}: ${acL('los dos tramos se solapan', 'els dos trams se sobreposen')}`);
+    tramos.push(...validos);
+  });
+  return { tramos, errores };
+}
+function hrActualizarTotal(){
+  const el = document.getElementById('hr-total'); if(!el) return;
+  const { tramos } = hrLeerEditor();
+  el.textContent = `${acL('Total semanal', 'Total setmanal')}: ${hrTxtMin(tramos.reduce((s, t) => s + (hrMin(t.hasta) - hrMin(t.desde)), 0))}`;
+}
+async function hrGuardar(){
+  const sel = window.__hrSel || '';
+  const { tramos, errores } = hrLeerEditor();
+  if(errores.length){ alert(errores.join('\n')); return; }
+  if(!tramos.length && !confirm(acL('No hay ninguna hora. ¿Guardar un horario vacío?', 'No hi ha cap hora. Desar un horari buit?'))) return;
+  const antiguos = (window.__hrTodos || []).filter(f => sel ? (f.persona_email && String(f.persona_email).toLowerCase() === sel) : !f.persona_email).map(f => f.id);
+  // Primero se guarda lo nuevo y solo después se quita lo viejo, para no dejar nunca a nadie sin horario si algo falla
+  if(tramos.length){
+    const ins = await sb.from('personal_horarios').insert(tramos.map(t => ({ persona_email: sel || null, dia: t.dia, desde: t.desde, hasta: t.hasta })));
+    if(ins.error){ alert(ins.error.message); return; }
+  }
+  if(antiguos.length){
+    const del = await sb.from('personal_horarios').delete().in('id', antiguos);
+    if(del.error){ alert(del.error.message); return; }
+  }
+  await hrCargarAdmin();
+  document.getElementById('hr-admin-card').innerHTML = hrAdminHtml();
+  hrActualizarTotal();
+  alert(acL('Horario guardado.', 'Horari desat.'));
+}
+async function hrQuitarPropio(){
+  const sel = window.__hrSel; if(!sel) return;
+  if(!confirm(acL('¿Quitar el horario propio de esta persona? Volverá a usar el horario general.', 'Treure l\'horari propi d\'aquesta persona? Tornarà a fer servir l\'horari general.'))) return;
+  const ids = (window.__hrTodos || []).filter(f => f.persona_email && String(f.persona_email).toLowerCase() === sel).map(f => f.id);
+  const del = await sb.from('personal_horarios').delete().in('id', ids);
+  if(del.error){ alert(del.error.message); return; }
+  await hrCargarAdmin();
+  document.getElementById('hr-admin-card').innerHTML = hrAdminHtml();
+  hrActualizarTotal();
+}
+
+// ================= PANEL DE LAS PROFESIONALES DE JÓVENES EN ACCIÓN =================
+async function renderPanelJovenes(){
+  const cont = document.getElementById('panel-content');
+  const t = TI[LANG_I], ca = LANG_I === 'ca';
+  cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
+  const hoyIso = new Date().toISOString().slice(0, 10);
+  const [notifs, acts, auts] = await Promise.all([
+    filtrarAlertas(sb.from('notificaciones').select('*').eq('leida', false).order('creado_en', { ascending: false }), false),
+    sb.from('actividades_jovenes').select('*').eq('estado', 'abierta').gte('fecha_salida', hoyIso).order('fecha_salida', { ascending: true }).limit(8),
+    sb.from('autorizaciones_familiares').select('actividad_id, estado')
+  ]);
+  const hora = new Date().getHours();
+  const saludo = hora < 13 ? acL('Buenos días', 'Bon dia') : (hora < 20 ? acL('Buenas tardes', 'Bona tarda') : acL('Buenas noches', 'Bona nit'));
+  const primerNombre = (CURRENT_USER_NOMBRE || '').split(' ')[0];
+  const firmadas = {};
+  (auts.data || []).forEach(a => { if(a.estado === 'autorizada') firmadas[a.actividad_id] = (firmadas[a.actividad_id] || 0) + 1; });
+  const alertas = notifs.data || [];
+  const alertasHtml = alertas.length ? alertas.map(n => `
+      <div class="panel-stat-row" style="align-items:flex-start;flex-direction:column;gap:8px;">
+        <span>${escAttr(n.mensaje)}<br><span class="subtle" style="font-size:11px;margin:0;">${new Date(n.creado_en).toLocaleString(t.localeFecha)}</span></span>
+        <span style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+          <button class="link-btn" style="font-size:12px;" onclick="showScreen('jovenes');renderJovenesScreen()">🌱 ${acL('Abrir Jóvenes en acción', 'Obrir Joves en acció')}</button>
+          <button class="link-btn" style="font-size:12px;" onclick="marcarNotificacionLeida('${n.id}')">${t.marcarLeida}</button>
+        </span>
+      </div>`).join('') : `<div class="empty-note">${t.noHayAlertas}</div>`;
+  const actsHtml = (acts.data && acts.data.length) ? acts.data.map(a => `
+      <div class="panel-stat-row"><span><strong>${escAttr(a.titulo)}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${a.fecha_salida ? new Date(a.fecha_salida + 'T00:00:00').toLocaleDateString(t.localeFecha) : ''}${a.lugar ? ' · ' + escAttr(a.lugar) : ''}</span></span><span class="chip good">${firmadas[a.id] || 0} ${acL('autorizaciones', 'autoritzacions')}</span></div>`).join('')
+    : `<div class="empty-note">${acL('No hay actividades próximas abiertas.', 'No hi ha activitats pròximes obertes.')}</div>`;
+  cont.innerHTML = `
+    <div class="panel-card">
+      <h2 style="margin:0 0 4px;">${saludo}${primerNombre ? ', ' + escAttr(primerNombre) : ''}</h2>
+      <p class="subtle" style="margin:0 0 12px;">🌱 ${acL('Tu espacio de trabajo: Jóvenes en acción', 'El teu espai de treball: Joves en acció')}</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="primary-btn" style="width:auto;margin:0;" onclick="showScreen('jovenes');renderJovenesScreen()">🌱 ${acL('Jóvenes en acción', 'Joves en acció')}</button>
+        <button class="link-btn" onclick="showScreen('miespacio');renderMiEspacio()">${acL('Mi espacio (fichaje)', 'El meu espai (fitxatge)')}</button>
+      </div>
+    </div>
+    <div class="panel-card"><h3>🔔 ${acL('Alertas de la convocatoria', 'Alertes de la convocatòria')} (${alertas.length})</h3>${alertasHtml}</div>
+    <div class="panel-card"><h3>📅 ${acL('Próximas actividades', 'Properes activitats')}</h3>${actsHtml}</div>`;
+  gpPintarTarjetas(cont);
 }
 
 // ================= JÓVENES EN ACCIÓN · COMUNICACIÓN CON LAS FAMILIAS =================
@@ -8208,7 +8882,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-06 · v22 (personal: contraseña propia y reparto de alertas)';
+const APP_VERSION_INTRANET = '2026-10-10 · v25 (Mi gestión personal y horarios del personal)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -8448,6 +9122,7 @@ async function renderInformesScreen(){
 }
 
 async function renderPanelGeneral(){
+  if(IS_JOVENES) return renderPanelJovenes();
   const cont = document.getElementById('panel-content');
   const t = TI[LANG_I];
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
@@ -8479,7 +9154,7 @@ async function renderPanelGeneral(){
     sb.from('actuaciones').select('*').not('fecha_proxima_revision', 'is', null).lte('fecha_proxima_revision', hoyIso),
     sb.from('actuaciones').select('usuario_id, fecha').order('fecha', { ascending:false }).limit(30),
     sb.from('avisos_intranet').select('*').eq('activo', true).order('creado_en', { ascending:false }).limit(6),
-    sb.from('staff').select('email, nombre').eq('activo', true)
+    sb.from('staff').select('*').eq('activo', true)
   ]);
 
   const totalPersonas = total.data ? total.data.total_personas : 0;
@@ -8587,7 +9262,7 @@ async function renderPanelGeneral(){
   const chipAlerta = n => !REPARTO_OK ? '' : n.para_todos ? `<span class="chip gold" style="font-size:10.5px;">👥 ${acL('Todo el equipo', 'Tot l\'equip')}</span>`
     : n.asignada_a_email ? `<span class="chip ${n.asignada_a_email === CURRENT_USER.email ? 'good' : ''}" style="font-size:10.5px;">→ ${escAttr(nombreAlerta(n.asignada_a_email))}</span>`
     : `<span class="chip" style="font-size:10.5px;">${acL('Sin asignar', 'Sense assignar')}</span>`;
-  const reasignarSel = n => REPARTO_OK ? `<select style="font-size:12px;max-width:140px;" onchange="reasignarAlerta('${n.id}', this.value)"><option value="">${acL('Pasar a…', 'Passar a…')}</option>${(equipoRes.data || []).filter(x => x.email !== n.asignada_a_email).map(x => `<option value="${escAttr(x.email)}">${escAttr(x.nombre || x.email)}</option>`).join('')}<option value="__todos__">${acL('Todo el equipo', 'Tot l\'equip')}</option></select>` : '';
+  const reasignarSel = n => REPARTO_OK ? `<select style="font-size:12px;max-width:140px;" onchange="reasignarAlerta('${n.id}', this.value)"><option value="">${acL('Pasar a…', 'Passar a…')}</option>${(equipoRes.data || []).filter(x => x.email !== n.asignada_a_email && x.ambito !== 'jovenes').map(x => `<option value="${escAttr(x.email)}">${escAttr(x.nombre || x.email)}</option>`).join('')}<option value="__todos__">${acL('Todo el equipo', 'Tot l\'equip')}</option></select>` : '';
   const interruptorAlertas = (REPARTO_OK && !IS_ADMIN) ? `<div style="display:flex;gap:6px;margin-bottom:8px;">${[[false, acL('Mis alertas', 'Les meves alertes')], [true, acL('Todas', 'Totes')]].map(([v, txt]) => `<button class="link-btn" style="font-size:12px;border:1px solid ${!!window.__alertasTodas === v ? 'var(--gold)' : 'var(--line)'};background:${!!window.__alertasTodas === v ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:2px 11px;" onclick="if(!!window.__alertasTodas !== ${v}) alternarAlertasTodas()">${txt}</button>`).join('')}</div>` : '';
   const notifsHtml = (notifs.data && notifs.data.length)
     ? notifs.data.map(n => `
@@ -8813,6 +9488,7 @@ async function renderPanelGeneral(){
   animateNumber(document.getElementById('num-total-personas'), totalPersonas);
   actualizarBadgePanel();
   activarBarras();
+  gpPintarTarjetas(cont);
 }
 
 // ================= FICHA DE PERSONA =================
@@ -9749,13 +10425,17 @@ async function renderAdministrador(){
   const maxCarga = cargaOrdenada.length ? cargaOrdenada[0][1] : 0;
   const totalAtenciones = (cargaRes.data || []).length;
 
+  await hrCargarAdmin();
   window.__alertasTipos = REPARTO_OK ? ((await sb.from('alertas_tipos').select('*')).data || []) : [];
   const staffHtml = window.__staffLista.map(s => `
     <div class="panel-stat-row" style="align-items:flex-start;gap:8px;flex-wrap:wrap;">
-      <span style="min-width:0;">${s.nombre ? `<strong>${escAttr(s.nombre)}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(s.email)}</span>` : escAttr(s.email)}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}${s.clave_cambiada === false ? ` <span class="chip" style="font-size:10.5px;">🔑 ${acL('contraseña inicial', 'contrasenya inicial')}</span>` : ''}</span>
+      <span style="min-width:0;">${s.nombre ? `<strong>${escAttr(s.nombre)}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(s.email)}</span>` : escAttr(s.email)}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}${s.es_rrhh ? ' <span class="chip gold">RR. HH.</span>' : ''}${s.ambito === 'jovenes' ? ` <span class="chip good" style="font-size:10.5px;">🌱 ${acL('Jóvenes en acción', 'Joves en acció')}</span>` : ''}${s.clave_cambiada === false ? ` <span class="chip" style="font-size:10.5px;">🔑 ${acL('contraseña inicial', 'contrasenya inicial')}</span>` : ''}</span>
       <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
         <span class="chip ${s.activo === false ? 'off' : 'good'}">${s.activo === false ? t.inactivoLbl : t.activoLbl}</span>
         <button class="link-btn" style="font-size:12px;" onclick="toggleActivoTecnico('${s.email}', ${s.activo === false})">${s.activo === false ? t.reactivar : t.desactivar}</button>
+        ${(GP_OK && s.activo !== false) ? `<button class="link-btn" style="font-size:12px;" onclick="toggleRRHH('${s.email}', ${!s.es_rrhh})">${s.es_rrhh ? acL('Quitar RR. HH.', 'Treure RR. HH.') : acL('Dar RR. HH.', 'Donar RR. HH.')}</button>` : ''}
+        <button class="link-btn" style="font-size:12px;" onclick="editarNombreTecnico('${s.email}')">✏️ ${acL('Nombre', 'Nom')}</button>
+        ${(JOVENES_OK && !s.es_admin) ? `<select style="font-size:12px;max-width:150px;" title="${acL('Qué parte de la plataforma ve', 'Quina part de la plataforma veu')}" onchange="cambiarAmbitoTecnico('${s.email}', this.value)"><option value="general"${s.ambito !== 'jovenes' ? ' selected' : ''}>${acL('Equipo general', 'Equip general')}</option><option value="jovenes"${s.ambito === 'jovenes' ? ' selected' : ''}>🌱 ${acL('Solo Jóvenes en acción', 'Només Joves en acció')}</option></select>` : ''}
         <button class="link-btn" style="font-size:12px;" title="${acL('Enviar enlace para elegir contraseña', 'Enviar enllaç per triar contrasenya')}" onclick="enviarEnlaceClave('${s.email}')">🔑 ${acL('Enlace', 'Enllaç')}</button>
         <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="quitarTecnico('${s.email}')">${acL('Quitar', 'Treure')}</button>
       </span>
@@ -9912,8 +10592,20 @@ async function renderAdministrador(){
           <label>${t.anadirNuevoTecnico}</label>
           <input type="email" id="admin-nuevo-email" placeholder="tcnlogos15@gmail.com">
         </div>
+        <div class="field">
+          <label>${acL('Nombre (opcional)', 'Nom (opcional)')}</label>
+          <input type="text" id="admin-nuevo-nombre" placeholder="${acL('Nombre y apellidos', 'Nom i cognoms')}">
+        </div>
+        ${JOVENES_OK ? `<div class="field">
+          <label>${acL('¿Qué parte de la plataforma verá?', 'Quina part de la plataforma veurà?')}</label>
+          <select id="admin-nuevo-ambito"><option value="general">${acL('Equipo general (todo)', 'Equip general (tot)')}</option><option value="jovenes">🌱 ${acL('Solo Jóvenes en acción (panel propio)', 'Només Joves en acció (panell propi)')}</option></select>
+        </div>` : ''}
         <button class="link-btn" onclick="agregarTecnico()">${t.anadirPlataforma}</button>
       </div>
+    ${carpetaCierra()}
+
+    ${carpetaAbre({ clave: 'adm-sec:horarios', icono: '🕘', titulo: acL('Horarios del personal', 'Horaris del personal'), cuenta: '' })}
+    <div class="panel-card" id="hr-admin-card">${hrAdminHtml()}</div>
     ${carpetaCierra()}
 
     ${carpetaAbre({ clave: 'adm-sec:reparto', icono: '🔔', titulo: LANG_I==='ca' ? 'Repartiment d\'alertes' : 'Reparto de alertas', cuenta: '' })}
@@ -10379,8 +11071,32 @@ async function agregarTecnico(){
   const input = document.getElementById('admin-nuevo-email');
   const email = input.value.trim().toLowerCase();
   if(!email){ alert(t.escribeCorreo); return; }
-  const { error } = await sb.from('staff').insert({ email, activo: true });
+  const fila = { email, activo: true };
+  const nombre = (document.getElementById('admin-nuevo-nombre') || {}).value;
+  if(nombre && nombre.trim()) fila.nombre = nombre.trim();
+  const ambito = (document.getElementById('admin-nuevo-ambito') || {}).value;
+  if(JOVENES_OK && ambito === 'jovenes') fila.ambito = 'jovenes';
+  const { error } = await sb.from('staff').insert(fila);
   if(error){ alert(error.message); return; }
+  renderAdministrador();
+}
+async function editarNombreTecnico(email){
+  const s = (window.__staffLista || []).find(x => x.email === email);
+  const nuevo = prompt(acL('Nombre y apellidos de esta persona:', 'Nom i cognoms d\'aquesta persona:'), (s && s.nombre) || '');
+  if(nuevo === null) return;
+  const { error } = await sb.from('staff').update({ nombre: nuevo.trim() || null }).eq('email', email);
+  if(error){ alert(error.message); return; }
+  renderAdministrador();
+}
+async function cambiarAmbitoTecnico(email, ambito){
+  const s = (window.__staffLista || []).find(x => x.email === email), nombre = (s && s.nombre) || email;
+  if(s && s.es_admin){ alert(acL('La administración siempre ve toda la plataforma.', 'L\'administració sempre veu tota la plataforma.')); renderAdministrador(); return; }
+  if(ambito === 'jovenes' && !confirm(acL(`¿Dejar a ${nombre} solo con Jóvenes en acción?\n\nVerá únicamente su panel, la gestión de Jóvenes en acción y su fichaje. No verá personas usuarias, expedientes ni contabilidad, y las alertas de la convocatoria le llegarán a su panel.`, `Deixar ${nombre} només amb Joves en acció?\n\nVeurà únicament el seu panell, la gestió de Joves en acció i el seu fitxatge. No veurà persones usuàries, expedients ni comptabilitat, i les alertes de la convocatòria li arribaran al seu panell.`))){ renderAdministrador(); return; }
+  const cambios = { ambito };
+  if(ambito === 'jovenes') cambios.orden_alertas = null;     // sale del turno general
+  const { error } = await sb.from('staff').update(cambios).eq('email', email);
+  if(error){ alert(error.message); return; }
+  if(ambito === 'jovenes') await repartoRenumerar(repartoTurnoActual().filter(x => x.email !== email));
   renderAdministrador();
 }
 
