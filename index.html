@@ -275,6 +275,10 @@
   .chip.bad{background:#FBE3E0;color:#A32A1E;}
   /* ---- Jóvenes en acción ---- */
   .ja-resumen:not(:empty){margin-top:14px;}
+  .hist-ov{position:fixed;inset:0;background:rgba(20,30,50,.55);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:16px;}
+  .hist-ov-card{background:#fff;border-radius:16px;padding:18px;max-width:560px;width:100%;margin:auto;box-shadow:0 10px 40px rgba(0,0,0,.3);}
+  .hist-mapa{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  @media(max-width:480px){.hist-mapa{grid-template-columns:1fr;}}
   .plegable{background:#fff;border:1px solid var(--line);border-radius:14px;margin:0 0 12px;overflow:hidden;}
   .plegable>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 16px;font-weight:800;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--navy);}
   .plegable>summary::-webkit-details-marker{display:none;}
@@ -733,6 +737,7 @@ let IS_STAFF = false;
 let IS_ADMIN = false;
 let IS_JOVENES = false;      // persona del equipo de Jóvenes en acción: solo ve su propio espacio
 let IS_GESTOR = false;       // persona a la que la administración ha delegado el reparto de alertas
+let HISTORICAS_OK = false;    // true cuando la base de datos ya tiene personas_historicas (SQL 10)
 let IMPACTO_OK = false;      // true cuando la base de datos ya tiene el módulo de impacto
 let DELEGACION_OK = false;   // true cuando la base de datos ya tiene la delegación de alertas
 let JOVENES_OK = false;      // true cuando la base de datos ya tiene el SQL de profesionales de Jóvenes en acción
@@ -1018,7 +1023,8 @@ async function checkStaff(){
       DELEGACION_OK = !dq.error;
       const iq = await sb.from('impacto_fichas').select('id').limit(1);
       IMPACTO_OK = !iq.error;
-    } catch(e) { CLAVE_CAMBIADA = true; REPARTO_OK = false; JOVENES_OK = false; GP_OK = false; HR_OK = false; DELEGACION_OK = false; IMPACTO_OK = false; }
+      const hpq = await sb.from('personas_historicas').select('id').limit(1); HISTORICAS_OK = !hpq.error;
+    } catch(e) { CLAVE_CAMBIADA = true; REPARTO_OK = false; JOVENES_OK = false; GP_OK = false; HR_OK = false; DELEGACION_OK = false; IMPACTO_OK = false; HISTORICAS_OK = false; }
   }
 }
 
@@ -3313,21 +3319,48 @@ function irAHoyAgenda(){
 
 let __busquedaPersonasTimeout = null;
 let __personasUltimoTexto = '';
-
 let __personasTodas = [];
-async function cargarTodasLasPersonas(){
-  const todas = [];
-  for(let desde = 0; desde < 20000; desde += 1000){
-    const { data, error } = await sb.from('perfiles').select('id, nombre_completo, municipio, telefono').not('nombre_completo', 'is', null).order('nombre_completo', { ascending:true }).range(desde, desde + 999);
-    if(error) return { error };
-    todas.push(...(data || []));
+let __personasVista = null;          // 'fecha' | 'az' | 'hist'
+let FECHA_ALTA_OK = true;            // false si la base de datos aún no tiene perfiles.fecha_alta (SQL 10)
+const MESES_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const MESES_CA = ['gener','febrer','març','abril','maig','juny','juliol','agost','setembre','octubre','novembre','desembre'];
+const nombreMes = i => (LANG_I === 'ca' ? MESES_CA : MESES_ES)[i];
+const normTxt = x => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const fechaCorta = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES'); };
+
+// Trae todas las filas de una consulta paginando de 1000 en 1000 (el servidor no da más de golpe).
+async function traerTodoPaginado(fabrica){
+  const todo = [];
+  for(let desde = 0; desde < 50000; desde += 1000){
+    const { data, error } = await fabrica(desde, desde + 999);
+    if(error) return { error, data: todo };
+    todo.push(...(data || []));
     if(!data || data.length < 1000) break;
   }
-  return { data: todas };
+  return { data: todo };
+}
+
+async function cargarTodasLasPersonas(){
+  const cols = FECHA_ALTA_OK ? 'id, nombre_completo, municipio, telefono, fecha_alta' : 'id, nombre_completo, municipio, telefono';
+  const res = await traerTodoPaginado((a, b) => sb.from('perfiles').select(cols).not('nombre_completo', 'is', null).order('nombre_completo', { ascending:true }).range(a, b));
+  if(res.error && FECHA_ALTA_OK && /fecha_alta/i.test(res.error.message)){ FECHA_ALTA_OK = false; return cargarTodasLasPersonas(); }
+  return res.error ? { error: res.error } : { data: res.data };
 }
 function letraInicialPersona(nombre){
-  const l = String(nombre || '').trim().charAt(0).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+  const l = String(nombre || '').trim().charAt(0).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
   return /[A-Z]/.test(l) ? l : '#';
+}
+
+function personasPestanasHtml(){
+  const esCA = LANG_I === 'ca';
+  const b = (id, txt) => `<button class="imp-tab${__personasVista === id ? ' on' : ''}" onclick="personasCambiarVista('${id}')">${txt}</button>`;
+  return `<div class="imp-tabs" style="margin-bottom:10px;">${FECHA_ALTA_OK ? b('fecha', '📅 ' + (esCA?'Per data d\'alta':'Por fecha de alta')) : ''}${b('az', '🔤 A–Z')}${HISTORICAS_OK ? b('hist', '🗄️ ' + (esCA?'Històric':'Histórico')) : ''}</div>`;
+}
+function personasCambiarVista(v){
+  __personasVista = v;
+  const p = document.getElementById('personas-pestanas'); if(p) p.innerHTML = personasPestanasHtml();
+  const inp = document.getElementById('personas-buscar');
+  pintarListaPersonas(inp ? inp.value : '');
 }
 
 async function renderPersonasScreen(texto){
@@ -3337,37 +3370,74 @@ async function renderPersonasScreen(texto){
   const esCA = LANG_I === 'ca';
   // Al teclear solo se vuelve a pintar la lista (así el cuadro de búsqueda no pierde el cursor)
   if(texto === undefined || !document.getElementById('personas-lista')){
+    cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
+    const res = await cargarTodasLasPersonas();
+    if(res.error){ cont.innerHTML = `<div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);">⚠️ ${escAttr(res.error.message)}</div>`; return; }
+    __personasTodas = res.data;
+    if(!__personasVista || (__personasVista === 'fecha' && !FECHA_ALTA_OK) || (__personasVista === 'hist' && !HISTORICAS_OK)) __personasVista = FECHA_ALTA_OK ? 'fecha' : 'az';
     cont.innerHTML = `
-      <div class="field"><input type="text" id="personas-buscar" placeholder="${esCA?'Cerca per nom o telèfon...':'Buscar por nombre o teléfono...'}" value="${escAttr(texto || '')}" oninput="renderPersonasScreen(this.value)"></div>
-      <div style="display:flex;gap:10px;margin-bottom:10px;">
+      <div class="field"><input type="text" id="personas-buscar" placeholder="${esCA?'Cerca per nom, DNI o telèfon (també a l\'històric)...':'Buscar por nombre, DNI o teléfono (también en el histórico)...'}" value="${escAttr(texto || '')}" oninput="renderPersonasScreen(this.value)"></div>
+      <div id="personas-pestanas">${personasPestanasHtml()}</div>
+      <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
         <button class="link-btn" onclick="exportarPersonasExcel()">⬇️ Excel</button>
         <button class="link-btn" onclick="exportarPersonasPDF()">⬇️ PDF</button>
+        ${IS_ADMIN && HISTORICAS_OK ? `<button class="link-btn" style="margin-left:auto;" onclick="histAbrirImportador()">📥 ${esCA?'Importar històric':'Importar histórico'}</button>` : ''}
       </div>
-      <div id="personas-lista"><div class="placeholder">${t.cargando}</div></div>`;
-    const res = await cargarTodasLasPersonas();
-    if(res.error){ document.getElementById('personas-lista').innerHTML = `<div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);">⚠️ ${escAttr(res.error.message)}</div>`; return; }
-    __personasTodas = res.data;
+      ${!FECHA_ALTA_OK || !HISTORICAS_OK ? `<div class="subtle" style="font-size:12px;margin-bottom:8px;">${esCA?'Falta executar el SQL 10 (històric i data d\'alta) a Supabase per veure l\'organització per mesos i l\'històric.':'Falta ejecutar el SQL 10 (histórico y fecha de alta) en Supabase para ver la organización por meses y el histórico.'}</div>` : ''}
+      <div id="personas-lista"></div>`;
   }
   pintarListaPersonas(texto || '');
+}
+
+function filaPersonaActual(p){
+  const t = TI[LANG_I];
+  const alta = p.fecha_alta ? ' · ' + (LANG_I === 'ca' ? 'alta ' : 'alta ') + fechaCorta(p.fecha_alta) : '';
+  return `<div class="panel-stat-row"><span>${escAttr(p.nombre_completo)}<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(p.municipio || '')}${p.telefono ? ' · ' + escAttr(p.telefono) : ''}${alta}</span></span><button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${p.id}','personas')">${t.ver}</button></div>`;
 }
 
 function pintarListaPersonas(texto){
   const caja = document.getElementById('personas-lista');
   if(!caja) return;
-  const t = TI[LANG_I]; const esCA = LANG_I === 'ca';
-  const norm = x => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  const q = norm(texto.trim());
-  const fila = p => `<div class="panel-stat-row"><span>${escAttr(p.nombre_completo)}<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(p.municipio || '')}${p.telefono ? ' · ' + escAttr(p.telefono) : ''}</span></span><button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${p.id}','personas')">${t.ver}</button></div>`;
+  const esCA = LANG_I === 'ca';
+  const q = normTxt(texto.trim());
+  const fila = filaPersonaActual;
 
   if(q.length >= 2){
-    const encontradas = __personasTodas.filter(p => norm(p.nombre_completo).includes(q) || String(p.telefono || '').replace(/\s/g, '').includes(q.replace(/\s/g, '')));
+    const encontradas = __personasTodas.filter(p => normTxt(p.nombre_completo).includes(q) || String(p.telefono || '').replace(/\s/g, '').includes(q.replace(/\s/g, '')));
     const mostradas = encontradas.slice(0, 100);
-    caja.innerHTML = mostradas.length
-      ? `<div class="panel-card">${mostradas.map(fila).join('')}</div>${encontradas.length > 100 ? `<p class="subtle" style="font-size:12px;">${esCA?'Es mostren 100 de':'Se muestran 100 de'} ${encontradas.length}. ${esCA?'Afina la cerca.':'Afina la búsqueda.'}</p>` : ''}`
-      : `<div class="empty-note">${esCA ? 'Sense resultats.' : 'Sin resultados.'}</div>`;
+    caja.innerHTML = `<div class="section-label" style="margin-top:4px;">${esCA?'Persones actuals':'Personas actuales'} (${encontradas.length})</div>`
+      + (mostradas.length
+        ? `<div class="panel-card">${mostradas.map(fila).join('')}</div>${encontradas.length > 100 ? `<p class="subtle" style="font-size:12px;">${esCA?'Es mostren 100 de':'Se muestran 100 de'} ${encontradas.length}. ${esCA?'Afina la cerca.':'Afina la búsqueda.'}</p>` : ''}`
+        : `<div class="empty-note">${esCA ? 'Sense resultats.' : 'Sin resultados.'}</div>`)
+      + (HISTORICAS_OK ? `<div class="section-label" style="margin-top:14px;">🗄️ ${esCA?'Històric (anys anteriors)':'Histórico (años anteriores)'}</div><div id="personas-hist-res"><div class="placeholder">${TI[LANG_I].cargando}</div></div>` : '');
+    if(HISTORICAS_OK) histBuscar(texto.trim());
     return;
   }
+  if(__personasVista === 'hist'){ histPintarVista(caja); return; }
   if(!__personasTodas.length){ caja.innerHTML = `<div class="empty-note">${esCA ? 'Encara no hi ha persones.' : 'Todavía no hay personas.'}</div>`; return; }
+
+  if(__personasVista === 'fecha' && FECHA_ALTA_OK){
+    // Año → mes de alta. Lo más reciente primero.
+    const anios = {};
+    __personasTodas.forEach(p => {
+      const d = p.fecha_alta ? new Date(p.fecha_alta) : null;
+      const a = d && !isNaN(d) ? d.getFullYear() : 0, m = a ? d.getMonth() : 0;
+      ((anios[a] = anios[a] || {})[m] = (anios[a][m] || [])).push(p);
+    });
+    const hoy = new Date();
+    const claves = Object.keys(anios).map(Number).sort((x, y) => (x === 0 ? -1 : y === 0 ? 1 : y - x)).filter(a => a !== 0).concat(anios[0] ? [0] : []);
+    caja.innerHTML = `<div class="carpetas-lista">${carpetasBarra(`${__personasTodas.length} ${esCA?'persones':'personas'}`)}${claves.map(a => {
+      const meses = anios[a];
+      const total = Object.values(meses).reduce((s, l) => s + l.length, 0);
+      const cuerpo = Object.keys(meses).map(Number).sort((x, y) => y - x).map(m => carpetaDesplegable({
+        clave: `persf:${a}-${m}`, icono: '🗓️', titulo: a ? `${nombreMes(m)} ${a}` : (esCA?'Sense data d\'alta':'Sin fecha de alta'), cuenta: meses[m].length,
+        abierta: a === hoy.getFullYear() && m === hoy.getMonth(),
+        cuerpo: meses[m].map(fila).join('')
+      })).join('');
+      return carpetaDesplegable({ clave: 'persf:' + a, icono: '📅', titulo: a || (esCA?'Sense data':'Sin fecha'), cuenta: total, abierta: a === hoy.getFullYear(), cuerpo });
+    }).join('')}</div>`;
+    return;
+  }
   const porLetra = {};
   __personasTodas.forEach(p => { const l = letraInicialPersona(p.nombre_completo); (porLetra[l] = porLetra[l] || []).push(p); });
   const letras = Object.keys(porLetra).sort((a, b) => a === '#' ? 1 : b === '#' ? -1 : a.localeCompare(b));
@@ -3376,23 +3446,350 @@ function pintarListaPersonas(texto){
   })).join('')}</div>`;
 }
 
+// ================= HISTÓRICO (años anteriores) =================
+let __histCache = {};
+let __histBuscarTurno = 0;
+function histFila(p){
+  const esCA = LANG_I === 'ca';
+  __histCache[p.id] = p;
+  const serv = p.servicio || p.tipo || p.proyecto || '';
+  const sub = [p.municipio, p.telefono, serv, p.fecha_alta ? (esCA?'alta ':'alta ') + fechaCorta(p.fecha_alta) : ''].filter(Boolean).map(escAttr).join(' · ');
+  return `<div class="panel-stat-row"><span>${escAttr(p.nombre_completo)} <span class="chip off" style="font-size:10px;">${escAttr(p.codigo || '')}</span><br><span class="subtle" style="font-size:11px;margin:0;">${sub}</span></span><button class="link-btn" style="font-size:12px;" onclick="histVer('${p.id}')">${TI[LANG_I].ver}</button></div>`;
+}
+async function histBuscar(texto){
+  const turno = ++__histBuscarTurno;
+  const esCA = LANG_I === 'ca';
+  const s = texto.replace(/[,()*%\\]/g, ' ').trim();
+  const { data, error } = await sb.from('personas_historicas').select('*')
+    .or(`nombre_completo.ilike.%${s}%,dni_nie.ilike.%${s}%,telefono.ilike.%${s}%`).order('nombre_completo', { ascending:true }).limit(50);
+  if(turno !== __histBuscarTurno) return;
+  const host = document.getElementById('personas-hist-res'); if(!host) return;
+  host.innerHTML = error ? `<div class="empty-note">⚠️ ${escAttr(error.message)}</div>`
+    : (data && data.length ? `<div class="panel-card">${data.map(histFila).join('')}</div>${data.length === 50 ? `<p class="subtle" style="font-size:12px;">${esCA?'Es mostren 50. Afina la cerca.':'Se muestran 50. Afina la búsqueda.'}</p>` : ''}` : `<div class="empty-note">${esCA?'Sense resultats a l\'històric.':'Sin resultados en el histórico.'}</div>`);
+}
+async function histPintarVista(caja){
+  const esCA = LANG_I === 'ca';
+  caja.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const { data, error } = await sb.rpc('historicos_resumen');
+  if(error){ caja.innerHTML = `<div class="empty-note">⚠️ ${escAttr(error.message)}</div>`; return; }
+  const anios = ((data && data.por_anio) || []).slice().sort((a, b) => b.anio - a.anio);
+  if(!anios.length){
+    caja.innerHTML = `<div class="empty-note">${esCA?'Encara no s\'ha importat cap persona d\'anys anteriors.':'Todavía no se ha importado ninguna persona de años anteriores.'}${IS_ADMIN ? `<br><button class="link-btn" onclick="histAbrirImportador()">📥 ${esCA?'Importar ara':'Importar ahora'}</button>` : ''}</div>`;
+    return;
+  }
+  caja.innerHTML = `<p class="subtle" style="margin:0 0 8px;">${(data.total || 0).toLocaleString()} ${esCA?'persones d\'anys anteriors':'personas de años anteriores'}.</p>` + anios.map(a => `
+    <details class="plegable" ontoggle="if(this.open) histCargarAnio(${a.anio}, 0)">
+      <summary><span>🗄️ ${a.anio}</span><span class="plegable-n">${a.total.toLocaleString()}</span></summary>
+      <div class="plegable-c" id="hist-anio-${a.anio}"><div class="placeholder">${TI[LANG_I].cargando}</div></div>
+    </details>`).join('');
+}
+async function histCargarAnio(anio, desde){
+  const esCA = LANG_I === 'ca', PAG = 200;
+  const host = document.getElementById('hist-anio-' + anio); if(!host) return;
+  if(desde === 0 && host.dataset.cargado) return;
+  const { data, error } = await sb.from('personas_historicas').select('*').eq('anio', anio).order('nombre_completo', { ascending:true }).range(desde, desde + PAG - 1);
+  if(error){ host.innerHTML = `<div class="empty-note">⚠️ ${escAttr(error.message)}</div>`; return; }
+  host.dataset.cargado = '1';
+  const prev = host.querySelector('.hist-mas'); if(prev) prev.remove();
+  if(desde === 0) host.innerHTML = '';
+  host.insertAdjacentHTML('beforeend', (data || []).map(histFila).join('') + ((data || []).length === PAG ? `<div class="hist-mas" style="text-align:center;margin-top:8px;"><button class="link-btn" onclick="histCargarAnio(${anio}, ${desde + PAG})">${esCA?'Carregar-ne més':'Cargar más'}</button></div>` : ''));
+}
+
+// Ventana flotante sencilla
+function histOverlay(html){
+  let ov = document.getElementById('hist-overlay');
+  if(!ov){ ov = document.createElement('div'); ov.id = 'hist-overlay'; ov.className = 'hist-ov'; ov.onclick = e => { if(e.target === ov) histCerrar(); }; document.body.appendChild(ov); }
+  ov.innerHTML = `<div class="hist-ov-card">${html}</div>`;
+}
+function histCerrar(){ const ov = document.getElementById('hist-overlay'); if(ov) ov.remove(); }
+
+function tramoEdadDe(p){
+  let e = null;
+  if(p.fecha_nacimiento){ const n = new Date(p.fecha_nacimiento), ref = p.fecha_alta ? new Date(p.fecha_alta) : new Date(); e = ref.getFullYear() - n.getFullYear() - ((ref.getMonth() < n.getMonth() || (ref.getMonth() === n.getMonth() && ref.getDate() < n.getDate())) ? 1 : 0); }
+  else if(p.edad_alta != null) e = p.edad_alta;
+  if(e === null || isNaN(e)) return '';
+  return e < 18 ? '<18' : e < 30 ? '18-29' : e < 45 ? '30-44' : e < 65 ? '45-64' : '65+';
+}
+function histVer(id){
+  const p = __histCache[id]; if(!p) return;
+  const esCA = LANG_I === 'ca';
+  const dato = (e, v) => v ? `<div class="ja-dato"><span>${escAttr(e)}</span>${escAttr(v)}</div>` : '';
+  histOverlay(`<h3 style="margin:0 0 4px;">${escAttr(p.nombre_completo)}</h3>
+    <p class="subtle" style="margin:0 0 10px;">${esCA?'Històric':'Histórico'} · ${escAttr(p.codigo || '')} · ${p.anio}</p>
+    ${dato(esCA?'Data d\'alta':'Fecha de alta', p.fecha_alta ? fechaCorta(p.fecha_alta) : '')}${dato('DNI/NIE', p.dni_nie)}${dato(esCA?'Telèfon':'Teléfono', p.telefono)}${dato(esCA?'Correu':'Correo', p.email)}
+    ${dato(esCA?'Municipi':'Municipio', p.municipio)}${dato(esCA?'Sexe':'Sexo', p.sexo)}${dato(esCA?'Naixement':'Nacimiento', p.fecha_nacimiento ? fechaCorta(p.fecha_nacimiento) : (p.edad_alta != null ? p.edad_alta + (esCA?' anys':' años') : ''))}
+    ${dato(esCA?'Nacionalitat':'Nacionalidad', p.nacionalidad)}${dato(esCA?'Tipus':'Tipo', p.tipo)}${dato(esCA?'Servei':'Servicio', p.servicio)}${dato(esCA?'Projecte':'Proyecto', p.proyecto)}${dato(esCA?'Notes':'Notas', p.notas)}${dato(esCA?'Lot':'Lote', p.origen)}
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;align-items:center;">
+      ${IMPACTO_OK ? `<button class="primary-btn" style="width:auto;margin:0;" onclick="histAImpacto('${p.id}')">📊 ${esCA?'Crear fitxa d\'impacte':'Crear ficha de impacto'}</button>` : ''}
+      ${IS_ADMIN ? `<button class="link-btn" style="color:var(--alert);" onclick="histBorrar('${p.id}')">${esCA?'Esborrar':'Borrar'}</button>` : ''}
+      <button class="link-btn" style="margin-left:auto;" onclick="histCerrar()">${esCA?'Tancar':'Cerrar'}</button>
+    </div>
+    ${IMPACTO_OK ? `<p class="subtle" style="font-size:11.5px;margin:10px 0 0;">${esCA?'La fitxa d\'impacte només guarda el codi ('+escAttr(p.codigo||'')+'), el gènere i el tram d\'edat; mai el nom.':'La ficha de impacto solo guarda el código ('+escAttr(p.codigo||'')+'), el género y el tramo de edad; nunca el nombre.'}</p>` : ''}`);
+}
+async function histBorrar(id){
+  const esCA = LANG_I === 'ca';
+  if(!confirm(esCA ? 'Segur que vols esborrar aquesta persona de l\'històric?' : '¿Seguro que quieres borrar a esta persona del histórico?')) return;
+  const { error } = await sb.from('personas_historicas').delete().eq('id', id);
+  if(error){ alert(error.message); return; }
+  histCerrar(); delete __histCache[id]; renderPersonasScreen();
+}
+// Pasa a Impacto con la ficha preparada: referencia = código del histórico (sin nombre), género y tramo de edad.
+async function histAImpacto(id){
+  const p = __histCache[id]; if(!p) return;
+  window.__impPrefill = { ref: p.codigo || '', gen: ['mujer', 'hombre', 'otro'].includes(p.sexo) ? p.sexo : '', edad: tramoEdadDe(p) };
+  histCerrar();
+  showScreen('impacto');
+  await renderImpacto('fichas');
+  impFormFicha();
+}
+
+// ---------- Importador (solo administración) ----------
+const HIST_CAMPOS = [
+  ['nombre', 'Nombre', 'Nom', ['nombre', 'nom', 'name', 'nombre completo']],
+  ['apellidos', 'Apellidos', 'Cognoms', ['apellido', 'cognom']],
+  ['fecha_alta', 'Fecha de alta / primera atención', 'Data d\'alta / primera atenció', ['fecha de alta', 'fecha alta', 'data alta', 'data d alta', 'alta', 'primera', 'fecha atencion', 'fecha']],
+  ['anio', 'Año', 'Any', ['ano', 'any', 'ejercicio']],
+  ['dni_nie', 'DNI/NIE', 'DNI/NIE', ['dni', 'nie', 'documento', 'document']],
+  ['telefono', 'Teléfono', 'Telèfon', ['telefono', 'telefon', 'movil', 'mobil', 'tel']],
+  ['email', 'Correo', 'Correu', ['correo', 'email', 'e-mail', 'mail']],
+  ['municipio', 'Municipio', 'Municipi', ['municipio', 'municipi', 'poblacion', 'localidad', 'ciudad']],
+  ['sexo', 'Sexo', 'Sexe', ['sexo', 'sexe', 'genero', 'genere']],
+  ['fecha_nacimiento', 'Fecha de nacimiento', 'Data de naixement', ['nacimiento', 'naixement']],
+  ['edad', 'Edad', 'Edat', ['edad', 'edat']],
+  ['nacionalidad', 'Nacionalidad', 'Nacionalitat', ['nacionalidad', 'nacionalitat', 'pais', 'nacionalitat']],
+  ['tipo', 'Tipo de trámite / servicio / proyecto', 'Tipus de tràmit / servei / projecte', ['tipo', 'tramite', 'tipus', 'tramit']],
+  ['servicio', 'Servicio', 'Servei', ['servicio', 'servei', 'prestacion', 'atencion']],
+  ['proyecto', 'Proyecto', 'Projecte', ['proyecto', 'projecte', 'programa']],
+  ['notas', 'Notas', 'Notes', ['nota', 'observ', 'comentario', 'comentari']]
+];
+let __histImp = null;
+
+function histAbrirImportador(){
+  const esCA = LANG_I === 'ca';
+  __histImp = null;
+  histOverlay(`<h3 style="margin:0 0 6px;">📥 ${esCA?'Importar persones d\'anys anteriors':'Importar personas de años anteriores'}</h3>
+    <p class="subtle" style="margin:0 0 10px;">${esCA?'Tria un Excel (.xlsx/.xls) o CSV. Només el nom és obligatori; la resta de columnes les assignes al pas següent. Les persones importades no tenen compte d\'accés: queden com a històric, consultables i incloses a les estadístiques.':'Elige un Excel (.xlsx/.xls) o CSV. Solo el nombre es obligatorio; el resto de columnas las asignas en el paso siguiente. Las personas importadas no tienen cuenta de acceso: quedan como histórico, consultables e incluidas en las estadísticas.'}</p>
+    <input type="file" id="hist-archivo" accept=".xlsx,.xls,.csv" onchange="histLeerArchivo(this)">
+    <div id="hist-paso2"></div>
+    <div id="hist-lotes" style="margin-top:14px;"></div>
+    <div style="display:flex;gap:12px;margin-top:14px;"><button class="link-btn" onclick="histVerLotes()">${esCA?'Veure lots importats':'Ver lotes importados'}</button><button class="link-btn" style="margin-left:auto;" onclick="histCerrar()">${esCA?'Tancar':'Cerrar'}</button></div>`);
+}
+async function histLeerArchivo(input){
+  const esCA = LANG_I === 'ca';
+  const f = input.files && input.files[0]; if(!f) return;
+  const paso = document.getElementById('hist-paso2');
+  paso.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  try {
+    const libro = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+    __histImp = { archivo: f.name, libro, hoja: libro.SheetNames[0] };
+    histCargarHoja();
+  } catch(e){ paso.innerHTML = `<div class="auth-error">${esCA?'No s\'ha pogut llegir l\'arxiu: ':'No se pudo leer el archivo: '}${escAttr(e.message)}</div>`; }
+}
+function histCargarHoja(nombreHoja){
+  const esCA = LANG_I === 'ca';
+  const st = __histImp; if(nombreHoja) st.hoja = nombreHoja;
+  const aoa = XLSX.utils.sheet_to_json(st.libro.Sheets[st.hoja], { header: 1, defval: '', raw: true });
+  const iCab = aoa.findIndex(r => r.filter(c => String(c).trim() !== '').length >= 2);
+  if(iCab < 0){ document.getElementById('hist-paso2').innerHTML = `<div class="auth-error">${esCA?'La fulla és buida.':'La hoja está vacía.'}</div>`; return; }
+  st.cab = aoa[iCab].map(c => String(c).trim());
+  st.filas = aoa.slice(iCab + 1).filter(r => r.some(c => String(c).trim() !== ''));
+  // Adivina qué columna es cada campo por el título
+  const usadas = new Set(); st.mapa = {};
+  const cn = st.cab.map(normTxt);
+  HIST_CAMPOS.forEach(([k, , , sin]) => {
+    let idx = cn.findIndex((c, i) => !usadas.has(i) && sin.some(s => c === s));
+    if(idx < 0) idx = cn.findIndex((c, i) => !usadas.has(i) && sin.some(s => s.length > 3 && c.includes(s)));
+    if(idx >= 0){ st.mapa[k] = idx; usadas.add(idx); }
+  });
+  histPintarMapeo();
+}
+function histPintarMapeo(){
+  const esCA = LANG_I === 'ca', st = __histImp;
+  const opts = sel => `<option value="">— ${esCA?'no importar':'no importar'} —</option>` + st.cab.map((c, i) => `<option value="${i}" ${sel === i ? 'selected' : ''}>${escAttr(c || ('(' + (esCA?'columna':'columna') + ' ' + (i + 1) + ')'))}</option>`).join('');
+  const hojas = st.libro.SheetNames.length > 1 ? `<div class="field"><label>${esCA?'Fulla':'Hoja'}</label><select onchange="histCargarHoja(this.value)">${st.libro.SheetNames.map(n => `<option ${n === st.hoja ? 'selected' : ''}>${escAttr(n)}</option>`).join('')}</select></div>` : '';
+  document.getElementById('hist-paso2').innerHTML = `
+    <p style="margin:10px 0 6px;"><strong>${st.filas.length.toLocaleString()}</strong> ${esCA?'files trobades. Comprova quina columna és cada dada:':'filas encontradas. Comprueba qué columna es cada dato:'}</p>
+    ${hojas}
+    <div class="hist-mapa">${HIST_CAMPOS.map(([k, es, ca]) => `<div class="field" style="margin:0;"><label>${esCA?ca:es}${k === 'nombre' ? ' *' : ''}</label><select onchange="__histImp.mapa['${k}']=this.value===''?undefined:Number(this.value);histPreview()">${opts(st.mapa[k])}</select></div>`).join('')}</div>
+    <div class="field" style="margin-top:8px;"><label>${esCA?'Any per defecte (si no hi ha data d\'alta ni columna d\'any)':'Año por defecto (si no hay fecha de alta ni columna de año)'}</label><input type="number" id="hist-anio-def" min="1990" max="${new Date().getFullYear()}" value="${new Date().getFullYear() - 1}" oninput="histPreview()"></div>
+    <label class="checkbox-row" style="margin:6px 0;"><input type="checkbox" id="hist-dedup" checked onchange="histPreview()"> ${esCA?'Ometre duplicats dins de l\'arxiu (mateix DNI, o mateix nom i telèfon/naixement)':'Omitir duplicados dentro del archivo (mismo DNI, o mismo nombre y teléfono/nacimiento)'}</label>
+    <div id="hist-preview"></div>`;
+  histPreview();
+}
+
+// ---- conversión de valores ----
+function histFecha(v){
+  if(v === '' || v === null || v === undefined) return null;
+  if(typeof v === 'number' && v > 20000 && v < 80000) return new Date(Math.round((v - 25569) * 86400000)).toISOString().slice(0, 10);
+  if(v instanceof Date) return isNaN(v) ? null : v.toISOString().slice(0, 10);
+  const s = String(v).trim();
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if(m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+  m = s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);
+  if(m){ let y = Number(m[3]); if(y < 100) y += y > 30 ? 1900 : 2000; const d = Number(m[1]), mo = Number(m[2]); if(mo >= 1 && mo <= 12 && d >= 1 && d <= 31) return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`; }
+  return null;
+}
+function histSexo(v){
+  const s = normTxt(v).trim(); if(!s) return null;
+  if(/^(mujer|dona|femen|female|woman|f$)/.test(s)) return 'mujer';
+  if(/^(hombre|home|masc|varon|male|man|h$)/.test(s)) return 'hombre';
+  if(/(otro|altre|no binar|nobinar)/.test(s)) return 'otro';
+  return null;
+}
+const histTxt = v => { const s = String(v ?? '').trim(); return s === '' ? null : s; };
+function histConvertir(){
+  const st = __histImp, m = st.mapa, esCA = LANG_I === 'ca';
+  const get = (r, k) => m[k] === undefined ? '' : r[m[k]];
+  const anioDef = Number((document.getElementById('hist-anio-def') || {}).value) || (new Date().getFullYear() - 1);
+  const dedup = !!(document.getElementById('hist-dedup') || {}).checked;
+  const salida = [], vistos = new Set(); let sinNombre = 0, duplicados = 0;
+  st.filas.forEach(r => {
+    const nombre = [histTxt(get(r, 'nombre')), histTxt(get(r, 'apellidos'))].filter(Boolean).join(' ').trim();
+    if(!nombre){ sinNombre++; return; }
+    const fecha_alta = histFecha(get(r, 'fecha_alta'));
+    let anio = Number(String(get(r, 'anio')).match(/\d{4}/) ? String(get(r, 'anio')).match(/\d{4}/)[0] : NaN);
+    if(!(anio >= 1990 && anio <= new Date().getFullYear() + 1)) anio = fecha_alta ? Number(fecha_alta.slice(0, 4)) : anioDef;
+    const fecha_nacimiento = histFecha(get(r, 'fecha_nacimiento'));
+    const edadN = parseInt(get(r, 'edad'), 10);
+    const fila = { anio, fecha_alta, nombre_completo: nombre, dni_nie: histTxt(get(r, 'dni_nie')), telefono: histTxt(get(r, 'telefono')), email: histTxt(get(r, 'email')),
+      municipio: histTxt(get(r, 'municipio')), sexo: histSexo(get(r, 'sexo')), fecha_nacimiento, edad_alta: (!fecha_nacimiento && edadN >= 0 && edadN < 110) ? edadN : null,
+      nacionalidad: histTxt(get(r, 'nacionalidad')), tipo: histTxt(get(r, 'tipo')), servicio: histTxt(get(r, 'servicio')), proyecto: histTxt(get(r, 'proyecto')), notas: histTxt(get(r, 'notas')) };
+    if(dedup){
+      const k = fila.dni_nie ? 'd:' + normTxt(fila.dni_nie).replace(/\s/g, '') : 'n:' + normTxt(nombre) + '|' + (fila.fecha_nacimiento || fila.telefono || '');
+      if(vistos.has(k)){ duplicados++; return; }
+      vistos.add(k);
+    }
+    salida.push(fila);
+  });
+  return { filas: salida, sinNombre, duplicados };
+}
+function histPreview(){
+  const esCA = LANG_I === 'ca', host = document.getElementById('hist-preview'); if(!host) return;
+  if(__histImp.mapa.nombre === undefined){ host.innerHTML = `<div class="auth-error">${esCA?'Cal assignar la columna del nom.':'Hay que asignar la columna del nombre.'}</div>`; return; }
+  const c = histConvertir();
+  const porAnio = {}; c.filas.forEach(f => { porAnio[f.anio] = (porAnio[f.anio] || 0) + 1; });
+  host.innerHTML = `<div class="panel-card" style="margin:8px 0;"><strong>${c.filas.length.toLocaleString()}</strong> ${esCA?'persones s\'importaran':'personas se importarán'}${c.duplicados ? ` · ${c.duplicados.toLocaleString()} ${esCA?'duplicades omeses':'duplicadas omitidas'}` : ''}${c.sinNombre ? ` · ${c.sinNombre.toLocaleString()} ${esCA?'sense nom (omeses)':'sin nombre (omitidas)'}` : ''}
+      <div class="subtle" style="font-size:12px;margin:4px 0 0;">${esCA?'Per any':'Por año'}: ${Object.keys(porAnio).sort().map(a => `${a}: ${porAnio[a].toLocaleString()}`).join(' · ')}</div>
+      <div class="subtle" style="font-size:12px;margin:6px 0 0;">${esCA?'Exemples':'Ejemplos'}: ${c.filas.slice(0, 3).map(f => escAttr(f.nombre_completo) + (f.fecha_alta ? ' (' + f.fecha_alta + ')' : '')).join(' · ')}</div></div>
+    <button class="primary-btn" id="hist-btn-importar" style="width:auto;margin:0;" onclick="histImportar()">📥 ${esCA?'Importar':'Importar'} ${c.filas.length.toLocaleString()}</button>
+    <span id="hist-progreso" class="subtle" style="margin-left:10px;"></span>`;
+}
+async function histImportar(){
+  const esCA = LANG_I === 'ca', st = __histImp;
+  const c = histConvertir(); if(!c.filas.length) return;
+  if(!confirm(esCA ? `Importar ${c.filas.length} persones a l'històric?` : `¿Importar ${c.filas.length} personas al histórico?`)) return;
+  const btn = document.getElementById('hist-btn-importar'), prog = document.getElementById('hist-progreso'); btn.disabled = true;
+  const origen = `${st.archivo} · ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`;
+  const filas = c.filas.map(f => Object.assign(f, { origen, importado_por: CURRENT_USER.email }));
+  for(let i = 0; i < filas.length; i += 500){
+    const { error } = await sb.from('personas_historicas').insert(filas.slice(i, i + 500));
+    if(error){ prog.innerHTML = `<span style="color:var(--alert);">⚠️ ${escAttr(error.message)} (${esCA?'importades':'importadas'}: ${i.toLocaleString()})</span>`; btn.disabled = false; return; }
+    prog.textContent = `${Math.min(i + 500, filas.length).toLocaleString()} / ${filas.length.toLocaleString()}`;
+  }
+  prog.innerHTML = `<strong style="color:var(--good);">✅ ${filas.length.toLocaleString()} ${esCA?'persones importades':'personas importadas'}</strong>`;
+  __personasVista = 'hist'; const p = document.getElementById('personas-pestanas'); if(p) p.innerHTML = personasPestanasHtml();
+  const caja = document.getElementById('personas-lista'); if(caja) histPintarVista(caja);
+}
+async function histVerLotes(){
+  const esCA = LANG_I === 'ca', host = document.getElementById('hist-lotes'); if(!host) return;
+  host.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const res = await traerTodoPaginado((a, b) => sb.from('personas_historicas').select('origen, anio').range(a, b));
+  if(res.error){ host.innerHTML = `<div class="auth-error">${escAttr(res.error.message)}</div>`; return; }
+  const lotes = {}; res.data.forEach(r => { lotes[r.origen || '—'] = (lotes[r.origen || '—'] || 0) + 1; });
+  host.innerHTML = Object.keys(lotes).length ? Object.entries(lotes).map(([o, n]) => `<div class="panel-stat-row"><span>${escAttr(o)}<br><span class="subtle" style="font-size:11px;margin:0;">${n.toLocaleString()} ${esCA?'persones':'personas'}</span></span><button class="link-btn" style="color:var(--alert);font-size:12px;" onclick="histBorrarLote(decodeURIComponent('${encodeURIComponent(o)}'))">${esCA?'Desfer el lot':'Deshacer el lote'}</button></div>`).join('') : `<div class="empty-note">${esCA?'Cap lot importat.':'Ningún lote importado.'}</div>`;
+}
+async function histBorrarLote(origen){
+  const esCA = LANG_I === 'ca';
+  if(!confirm(esCA ? `Esborrar TOTES les persones del lot «${origen}»? No es pot desfer.` : `¿Borrar TODAS las personas del lote «${origen}»? No se puede deshacer.`)) return;
+  const q = origen === '—' ? sb.from('personas_historicas').delete().is('origen', null) : sb.from('personas_historicas').delete().eq('origen', origen);
+  const { error } = await q;
+  if(error){ alert(error.message); return; }
+  histVerLotes(); const caja = document.getElementById('personas-lista'); if(caja && __personasVista === 'hist') histPintarVista(caja);
+}
+
+// ================= EXPORTAR (Excel / PDF) =================
 async function obtenerPersonasParaExport(){
-  const q = sb.from('perfiles').select('nombre_completo, dni_nie, telefono, municipio, calle').not('nombre_completo', 'is', null).order('nombre_completo', { ascending:true });
-  const { data } = __personasUltimoTexto && __personasUltimoTexto.trim().length >= 2
-    ? await q.ilike('nombre_completo', `%${__personasUltimoTexto.trim()}%`)
-    : await q;
-  const cabecera = ['Nombre', 'DNI/NIE', 'Teléfono', 'Municipio', 'Dirección'];
-  const filas = (data || []).map(p => [p.nombre_completo || '', p.dni_nie || '', p.telefono || '', p.municipio || '', p.calle || '']);
-  return { cabecera, filas };
+  const texto = (__personasUltimoTexto || '').trim(), hayTexto = texto.length >= 2, q = normTxt(texto);
+  if(__personasVista === 'hist' && HISTORICAS_OK){
+    const res = await traerTodoPaginado((a, b) => sb.from('personas_historicas').select('*').order('anio', { ascending:true }).order('nombre_completo', { ascending:true }).range(a, b));
+    const datos = (res.data || []).filter(p => !hayTexto || normTxt(p.nombre_completo).includes(q));
+    return { cabecera: ['Código', 'Año', 'Fecha de alta', 'Nombre', 'DNI/NIE', 'Teléfono', 'Correo', 'Municipio', 'Sexo', 'Fecha de nacimiento', 'Nacionalidad', 'Tipo (trámite/servicio/proyecto)', 'Servicio', 'Proyecto', 'Notas', 'Lote de importación'],
+      filas: datos.map(p => [p.codigo || '', p.anio || '', p.fecha_alta || '', p.nombre_completo || '', p.dni_nie || '', p.telefono || '', p.email || '', p.municipio || '', p.sexo || '', p.fecha_nacimiento || '', p.nacionalidad || '', p.tipo || '', p.servicio || '', p.proyecto || '', p.notas || '', p.origen || '']) };
+  }
+  const cols = 'id, nombre_completo, dni_nie, telefono, municipio, calle' + (FECHA_ALTA_OK ? ', fecha_alta' : '');
+  const [perfRes, trRes, atRes, acRes, pyRes] = await Promise.all([
+    traerTodoPaginado((a, b) => sb.from('perfiles').select(cols).not('nombre_completo', 'is', null).order('nombre_completo', { ascending:true }).range(a, b)),
+    traerTodoPaginado((a, b) => sb.from('tramites').select('usuario_id, nombre_servicio').range(a, b)),
+    traerTodoPaginado((a, b) => sb.from('atenciones').select('usuario_id, prestaciones, tramites_bretxa, emprendeduria').not('usuario_id', 'is', null).range(a, b)),
+    traerTodoPaginado((a, b) => sb.from('actuaciones').select('usuario_id, categoria, proyecto_id').range(a, b)),
+    sb.from('proyectos').select('id, nombre')
+  ]);
+  const nombreProy = {}; ((pyRes.data) || []).forEach(p => { nombreProy[p.id] = p.nombre; });
+  const juntar = () => ({ tr: new Set(), sv: new Set(), py: new Set() });
+  const porPersona = {};
+  const de = id => (porPersona[id] = porPersona[id] || juntar());
+  (trRes.data || []).forEach(r => { if(r.usuario_id && r.nombre_servicio) de(r.usuario_id).tr.add(r.nombre_servicio); });
+  (atRes.data || []).forEach(r => { if(!r.usuario_id) return; [...(r.prestaciones || []), ...(r.tramites_bretxa || []), ...(r.emprendeduria || [])].forEach(s => s && de(r.usuario_id).sv.add(s)); });
+  (acRes.data || []).forEach(r => { if(!r.usuario_id) return; if(r.categoria) de(r.usuario_id).sv.add(r.categoria); if(r.proyecto_id && nombreProy[r.proyecto_id]) de(r.usuario_id).py.add(nombreProy[r.proyecto_id]); });
+  let perfiles = perfRes.data || [];
+  if(hayTexto) perfiles = perfiles.filter(p => normTxt(p.nombre_completo).includes(q));
+  const lista = s => [...s].join('; ');
+  return {
+    cabecera: ['Nombre', 'DNI/NIE', 'Teléfono', 'Municipio', 'Dirección', 'Fecha de alta (primer registro)', 'Año de alta', 'Mes de alta', 'Trámites', 'Servicios', 'Proyectos'],
+    filas: perfiles.map(p => { const x = porPersona[p.id] || juntar(); const d = p.fecha_alta ? new Date(p.fecha_alta) : null; const ok = d && !isNaN(d);
+      return [p.nombre_completo || '', p.dni_nie || '', p.telefono || '', p.municipio || '', p.calle || '',
+        ok ? d.toISOString().slice(0, 10) : '', ok ? d.getFullYear() : '', ok ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` : '', lista(x.tr), lista(x.sv), lista(x.py)]; })
+  };
 }
 
 async function exportarPersonasExcel(){
   const { cabecera, filas } = await obtenerPersonasParaExport();
-  descargarXLSX(cabecera, filas, 'Personas-usuarias.xlsx', 'Personas');
+  descargarXLSX(cabecera, filas, __personasVista === 'hist' ? 'Personas-historico.xlsx' : 'Personas-usuarias.xlsx', __personasVista === 'hist' ? 'Histórico' : 'Personas');
 }
 async function exportarPersonasPDF(){
   const { cabecera, filas } = await obtenerPersonasParaExport();
-  descargarPDFTabla('Personas usuarias — Logos Intranet', cabecera, filas, 'Personas-usuarias.pdf');
+  descargarPDFTabla(__personasVista === 'hist' ? 'Personas usuarias · Histórico — Logos Intranet' : 'Personas usuarias — Logos Intranet', cabecera, filas, __personasVista === 'hist' ? 'Personas-historico.pdf' : 'Personas-usuarias.pdf');
+}
+
+// ================= PERSONAS ATENDIDAS POR AÑO Y MES (histórico + actuales) =================
+async function alcancePersonasPintar(idHost){
+  const host = document.getElementById(idHost); if(!host) return;
+  const esCA = LANG_I === 'ca';
+  try {
+    const [h, perf] = await Promise.all([
+      HISTORICAS_OK ? sb.rpc('historicos_resumen') : Promise.resolve({ data: null }),
+      traerTodoPaginado((a, b) => sb.from('perfiles').select('fecha_alta').not('nombre_completo', 'is', null).range(a, b))
+    ]);
+    const hist = (h.data && h.data.por_anio) || [];
+    const porAnio = {}, mesesAct = {}; let sinFecha = 0;
+    hist.forEach(x => { (porAnio[x.anio] = porAnio[x.anio] || { h: 0, a: 0 }).h += x.total; });
+    if(!perf.error){
+      (perf.data || []).forEach(p => {
+        const d = p.fecha_alta ? new Date(p.fecha_alta) : null;
+        if(!d || isNaN(d)){ sinFecha++; return; }
+        (porAnio[d.getFullYear()] = porAnio[d.getFullYear()] || { h: 0, a: 0 }).a++;
+        mesesAct[d.getFullYear() + '-' + d.getMonth()] = (mesesAct[d.getFullYear() + '-' + d.getMonth()] || 0) + 1;
+      });
+    }
+    const anios = Object.keys(porAnio).map(Number).sort((a, b) => b - a);
+    if(!anios.length){ host.innerHTML = ''; return; }
+    const max = Math.max(...anios.map(a => porAnio[a].h + porAnio[a].a));
+    const total = anios.reduce((s, a) => s + porAnio[a].h + porAnio[a].a, 0);
+    const anioAct = new Date().getFullYear();
+    const meses = Array.from({ length: 12 }, (_, m) => [m, mesesAct[anioAct + '-' + m] || 0]).filter(([m, n], i, arr) => n > 0 || m <= new Date().getMonth());
+    const maxMes = Math.max(1, ...meses.map(x => x[1]));
+    const servicios = {};
+    ((h.data && h.data.por_servicio) || []).forEach(x => { servicios[x.servicio] = (servicios[x.servicio] || 0) + x.total; });
+    const topServ = Object.entries(servicios).filter(([s]) => s !== 'sin dato').sort((a, b) => b[1] - a[1]).slice(0, 8);
+    host.innerHTML = `<div class="panel-card">
+      <h3>👥 ${esCA?'Persones ateses per any':'Personas atendidas por año'} <span class="plegable-n" style="font-size:12px;">${total.toLocaleString()}</span></h3>
+      <p class="subtle" style="margin:0 0 8px;font-size:12px;">${esCA?'Històric importat + persones registrades a la plataforma.':'Histórico importado + personas registradas en la plataforma.'}${sinFecha ? ` ${sinFecha} ${esCA?'sense data d\'alta no compten.':'sin fecha de alta no cuentan.'}` : ''}</p>
+      ${anios.map(a => barRow(`${a}${porAnio[a].a && porAnio[a].h ? ` <span class="subtle" style="font-size:11px;">(${porAnio[a].h.toLocaleString()} ${esCA?'històric':'histórico'} + ${porAnio[a].a.toLocaleString()})</span>` : ''}`, porAnio[a].h + porAnio[a].a, max)).join('')}
+      <h4 style="margin:14px 0 6px;font-size:13px;">${esCA?'Altes per mes':'Altas por mes'} · ${anioAct}</h4>
+      ${meses.map(([m, n]) => barRow(nombreMes(m), n, maxMes)).join('')}
+      ${topServ.length ? `<h4 style="margin:14px 0 6px;font-size:13px;">${esCA?'Històric per servei / tràmit / projecte':'Histórico por servicio / trámite / proyecto'}</h4>${topServ.map(([s, n]) => barRow(escAttr(s), n, topServ[0][1])).join('')}` : ''}
+    </div>`;
+    activarBarras();
+  } catch(e){ host.innerHTML = ''; }
 }
 
 let __seguimientoPersonasOrdenadas = [];
@@ -7742,7 +8139,8 @@ async function impRenderPanel(cuerpo){
     + (vacio ? `<div class="imp-vacio"><strong>${acL('Todavía no hay fichas en este periodo.', 'Encara no hi ha fitxes en aquest període.')}</strong><br>${acL('Cada técnico crea sus fichas en la pestaña «Mis fichas». En cuanto haya 5 personas con situación inicial y cierre, aparecerán aquí los cambios.', 'Cada tècnic crea les seves fitxes a la pestanya «Les meves fitxes». Quan hi hagi 5 persones amb situació inicial i tancament, hi apareixeran els canvis.')}<br><button class="primary-btn" style="width:auto;margin-top:10px;" onclick="renderImpacto('fichas')">📝 ${acL('Crear mi primera ficha', 'Crear la meva primera fitxa')}</button></div>` : '')
     + impDimsHtml(r) + impAntesDespuesHtml(r) + impEmpleoFormacionHtml(r) + impCoberturaHtml(r) + impSerieHtml(r) + impEquidadHtml(r) + impActividadHtml(act)
     + `<p class="imp-pie">${acL('Periodo', 'Període')}: ${desde ? impFecha(desde) : acL('inicio', 'inici')} – ${impFecha(hasta || new Date().toISOString())} · ${st.programa ? impProg(st.programa) : acL('Todo Logos', 'Tot Logos')} · ${acL('Los grupos de menos de 5 personas se ocultan para proteger la privacidad.', 'Els grups de menys de 5 persones s\'oculten per protegir la privadesa.')}</p></div>`
-    + `<div id="imp-carga"></div>`;
+    + `<div id="imp-alcance"></div><div id="imp-carga"></div>`;
+  alcancePersonasPintar('imp-alcance');
   if(IS_ADMIN) impCargaAdmin();
 }
 function impIndicadoresCsv(r){
@@ -7859,6 +8257,8 @@ function impFormFicha(){
     <div class="field"><label>${acL('¿Qué cambios vas a medir?', 'Quins canvis mesuraràs?')}</label><div class="imp-opts">${IMP_AREAS.map(a => `<label class="imp-pill"><input type="checkbox" name="imp-area" value="${a[0]}"${areasDe('general').includes(a[0]) ? ' checked' : ''}><span>${a[1]} ${acL(a[2], a[3])}</span></label>`).join('')}</div></div>
     <div class="field"><label style="display:flex;gap:8px;align-items:flex-start;font-weight:500;color:var(--ink);"><input type="checkbox" id="imp-cons" style="margin-top:3px;"> <span>${acL('La persona ha sido informada y acepta que se registren, de forma confidencial y solo para medir el cambio, sus respuestas sobre bienestar emocional y soledad. Es voluntario y puede retirarlo cuando quiera. <em>Sin este consentimiento no se mide el bienestar.</em>', "La persona ha estat informada i accepta que es registrin, de forma confidencial i només per mesurar el canvi, les seves respostes sobre benestar emocional i solitud. És voluntari i ho pot retirar quan vulgui. <em>Sense aquest consentiment no es mesura el benestar.</em>")}</span></label></div>
     <div style="display:flex;gap:10px;"><button class="primary-btn" style="width:auto;margin:0;" onclick="impGuardarFicha()">${acL('Crear y pasar a la situación inicial', 'Crear i passar a la situació inicial')}</button><button class="link-btn" onclick="document.getElementById('imp-form-host').innerHTML=''">${acL('Cancelar', 'Cancel·lar')}</button></div></div>`;
+  const pf = window.__impPrefill; window.__impPrefill = null;
+  if(pf){ const g = id => document.getElementById(id); if(g('imp-ref')) g('imp-ref').value = pf.ref || ''; if(g('imp-gen') && pf.gen) g('imp-gen').value = pf.gen; if(g('imp-edad') && pf.edad) g('imp-edad').value = pf.edad; }
   host.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function impMarcarAreas(p){
@@ -9791,7 +10191,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-11 · v35 (Inicio y Mi espacio con secciones plegables)';
+const APP_VERSION_INTRANET = '2026-10-11 · v36 (Personas por fecha de alta, histórico, importador)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -9966,6 +10366,7 @@ async function renderInformesScreen(){
     || `<div class="empty-note">${t.sinDatos}</div>`;
 
   cont.innerHTML = `
+    <div id="inf-alcance"></div>
     <div class="section-label">📁 ${LANG_I==='ca'?'Projectes':'Proyectos'}</div>
     <div class="panel-card" style="margin-bottom:20px;">
       <div class="panel-stat-row"><span>${LANG_I==='ca'?'Projectes actius':'Proyectos activos'}</span><span><strong>${proyectosActivos}</strong> / ${proyectosLista.length}</span></div>
@@ -10027,6 +10428,7 @@ async function renderInformesScreen(){
       <div class="panel-card"><h3>${t.derivacionesDeActuaciones}</h3>${derivadoHtml}</div>
     </div>
   `;
+  alcancePersonasPintar('inf-alcance');
   activarBarras();
 }
 
