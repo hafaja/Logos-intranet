@@ -47,6 +47,98 @@
   .sidebar nav button{text-align:left;background:none;border:none;color:rgba(255,255,255,.75);font-family:var(--font-body);font-weight:700;font-size:12px;padding:8px 12px;border-radius:8px;cursor:pointer;transition:background .15s;width:100%;}
   .nav-grupo{display:flex;flex-direction:column;gap:2px;}
   .rol-oculto{display:none !important;}
+  /* ===== Impacto ===== */
+  #screen-impacto{--imp-ante:#B4B8C0; --imp-desp:#2A78D6;}
+  .imp-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+  .imp-tab{font-family:var(--font-body);font-weight:800;font-size:13px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:7px 15px;cursor:pointer;}
+  .imp-tab.on{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .imp-filtros{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;}
+  .imp-filtros label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;font-weight:700;color:var(--ink-soft);}
+  .imp-filtros select,.imp-busca{border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;font-family:var(--font-body);font-size:13px;background:var(--paper);color:var(--ink);}
+  .imp-busca{min-width:170px;}
+  .imp-chip{font-family:var(--font-body);font-weight:700;font-size:12px;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--ink);}
+  .imp-chip.on{background:var(--gold-soft);border-color:var(--gold);}
+  .imp-hero{background:linear-gradient(135deg,#17181C 0%,#2B2E36 100%);color:#fff;border-radius:20px;padding:26px 28px;margin-bottom:22px;box-shadow:var(--shadow);}
+  .imp-eyebrow{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--gold);}
+  .imp-frase{font-family:var(--font-display);font-weight:600;font-size:23px;line-height:1.3;margin:8px 0 20px;max-width:760px;}
+  .imp-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:18px;}
+  .imp-stat{border-left:2px solid rgba(255,255,255,.2);padding-left:14px;}
+  .imp-big{font-family:var(--font-display);font-weight:600;font-size:40px;line-height:1.05;}
+  .imp-big.sm{font-size:30px;color:var(--ink);}
+  .imp-hero .imp-big{color:#fff;}
+  .imp-stat-t{font-size:13px;font-weight:700;margin-top:4px;}
+  .imp-stat-s{font-size:11.5px;color:rgba(255,255,255,.6);}
+  .imp-nota{font-size:11.5px;color:rgba(255,255,255,.6);margin:18px 0 0;}
+  .imp-seccion{font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:800;color:var(--ink-soft);margin:24px 0 10px;}
+  .imp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;}
+  .imp-card{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:16px 18px;box-shadow:var(--shadow);}
+  .imp-card-h{display:flex;align-items:center;gap:8px;font-size:14px;margin-bottom:8px;}
+  .imp-ic{font-size:20px;}
+  .imp-card-v{min-height:38px;display:flex;align-items:center;}
+  .imp-card-s{font-size:12px;color:var(--ink-soft);margin-top:2px;font-weight:700;}
+  .imp-crit{font-size:11.5px;color:var(--ink-soft);margin-top:8px;line-height:1.45;}
+  .imp-na{font-size:11.5px;font-weight:700;color:var(--ink-soft);background:#F0F0EC;border-radius:999px;padding:3px 10px;}
+  .imp-leyenda{display:flex;gap:16px;font-size:12px;font-weight:700;margin-bottom:12px;color:var(--ink-soft);}
+  .imp-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;}
+  .imp-dot.ante,.imp-bar.ante,.imp-col-b i.ante{background:var(--imp-ante);}
+  .imp-dot.desp,.imp-bar.desp,.imp-col-b i.desp{background:var(--imp-desp);}
+  .imp-ab{display:grid;grid-template-columns:minmax(150px,230px) 1fr;gap:14px;align-items:center;padding:10px 0;border-top:1px solid var(--line);}
+  .imp-ab-l{font-size:13px;font-weight:700;}
+  .imp-ab-n{display:block;font-size:11px;color:var(--ink-soft);font-weight:600;}
+  .imp-bar-row{display:flex;align-items:center;gap:8px;margin:3px 0;}
+  .imp-bar{height:10px;border-radius:0 4px 4px 0;min-width:2px;}
+  .imp-bar-row span{font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;}
+  .imp-mini{font-size:12px;color:var(--ink-soft);line-height:1.5;margin-top:10px;}
+  .imp-cob{display:grid;grid-template-columns:minmax(130px,200px) 1fr 40px;gap:12px;align-items:center;padding:6px 0;}
+  .imp-cob-l{font-size:12.5px;font-weight:700;}
+  .imp-cob-b{background:#F0F0EC;border-radius:0 6px 6px 0;height:12px;}
+  .imp-cob-b .imp-bar{height:12px;}
+  .imp-cob-v{font-size:13px;font-weight:800;text-align:right;}
+  .imp-serie{display:flex;gap:6px;align-items:flex-end;height:150px;}
+  .imp-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;}
+  .imp-col-b{flex:1;width:100%;display:flex;gap:2px;align-items:flex-end;justify-content:center;}
+  .imp-col-b i{display:block;width:42%;max-width:16px;border-radius:3px 3px 0 0;min-height:0;}
+  .imp-col-l{font-size:10.5px;color:var(--ink-soft);margin-top:4px;}
+  .imp-tabla-w{overflow-x:auto;}
+  .imp-tabla{width:100%;border-collapse:collapse;font-size:13px;}
+  .imp-tabla th{text-align:left;font-size:11.5px;color:var(--ink-soft);font-weight:800;padding:6px 8px;border-bottom:1.5px solid var(--line);}
+  .imp-tabla td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top;}
+  .imp-tabla tr.imp-grp td{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);background:#FAFAF8;padding:6px 8px;}
+  .imp-vacio{background:var(--gold-soft);border-radius:14px;padding:16px 18px;font-size:13.5px;line-height:1.55;margin-bottom:18px;}
+  .imp-pie{font-size:11.5px;color:var(--ink-soft);margin-top:22px;}
+  .imp-ficha{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
+  .imp-ficha-h{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+  .imp-sub{font-size:12px;color:var(--ink-soft);}
+  .imp-pasos{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;}
+  .imp-paso{font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 10px;background:#F0F0EC;color:var(--ink-soft);}
+  .imp-paso.ok{background:var(--good-soft);color:var(--good);}
+  .imp-acc{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .imp-form{margin-bottom:16px;}
+  .imp-fila2{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;}
+  .imp-sec{border-top:1px solid var(--line);padding-top:12px;margin-top:14px;}
+  .imp-sec-h{font-weight:800;font-size:14px;margin-bottom:10px;}
+  .imp-opts{display:flex;gap:8px;flex-wrap:wrap;}
+  .imp-pill{cursor:pointer;}
+  .imp-pill input{position:absolute;opacity:0;pointer-events:none;}
+  .imp-pill span{display:inline-block;border:1.5px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:700;background:var(--paper);transition:background .12s,border-color .12s;}
+  .imp-pill:hover span{border-color:var(--gold);}
+  .imp-pill input:checked + span{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .imp-pill input:focus-visible + span{outline:3px solid var(--gold-soft);}
+  .imp-det{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;margin-bottom:10px;}
+  .imp-det summary{cursor:pointer;font-weight:800;font-size:14px;padding:14px 18px;}
+  .imp-det-c{padding:0 18px 16px;font-size:13.5px;line-height:1.6;}
+  @media (max-width:640px){
+    .imp-hero{padding:20px 18px;} .imp-frase{font-size:19px;} .imp-big{font-size:32px;}
+    .imp-ab{grid-template-columns:1fr;gap:6px;} .imp-cob{grid-template-columns:1fr 36px;} .imp-cob-l{grid-column:1 / -1;}
+  }
+  @media print{
+    .sidebar,.topbar,.imp-noprint,.mobile-menu-overlay,.mobile-menu-btn,.bottom-nav{display:none !important;}
+    .screen{display:none !important;} #screen-impacto{display:block !important;}
+    body{background:#fff;} .main-content{margin:0 !important;padding:0 !important;}
+    .imp-hero,.imp-bar,.imp-dot,.imp-col-b i,.imp-paso{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .imp-card,.imp-ab{break-inside:avoid;}
+  }
+
   .nav-grupo summary{cursor:pointer;list-style:none;color:rgba(255,255,255,.5);font-family:var(--font-body);font-weight:700;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;padding:10px 12px 4px;user-select:none;}
   .nav-grupo summary::-webkit-details-marker{display:none;}
   .nav-grupo summary::before{content:'▸ ';}
@@ -312,6 +404,7 @@
       <button class="active" data-target="panel" onclick="showScreen('panel');renderPanelGeneral()">Inicio</button>
       <button data-target="miespacio" onclick="showScreen('miespacio');renderMiEspacio()">Mi espacio</button>
       <button data-target="gestionpersonal" id="nav-gp-btn" onclick="showScreen('gestionpersonal');renderGestionPersonal('inicio')">👤 Mi gestión personal</button>
+      <button data-target="impacto" id="nav-impacto-btn" onclick="showScreen('impacto');renderImpacto()">📊 Impacto</button>
 
       <details class="nav-grupo" open>
         <summary>📁 Personas y casos</summary>
@@ -526,6 +619,13 @@
     </div>
   </div>
 
+  <div class="screen" id="screen-impacto">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">📊 Impacto</span></div>
+      <div class="content" id="impacto-content"></div>
+    </div>
+  </div>
+
   <div class="screen" id="screen-config">
     <div class="main-content">
       <div class="topbar"><span class="brand">Configuración</span></div>
@@ -557,6 +657,9 @@ let CURRENT_USER = null;
 let IS_STAFF = false;
 let IS_ADMIN = false;
 let IS_JOVENES = false;      // persona del equipo de Jóvenes en acción: solo ve su propio espacio
+let IS_GESTOR = false;       // persona a la que la administración ha delegado el reparto de alertas
+let IMPACTO_OK = false;      // true cuando la base de datos ya tiene el módulo de impacto
+let DELEGACION_OK = false;   // true cuando la base de datos ya tiene la delegación de alertas
 let JOVENES_OK = false;      // true cuando la base de datos ya tiene el SQL de profesionales de Jóvenes en acción
 let LANG_I = 'es';
 
@@ -810,18 +913,20 @@ function activarBarras(){
 let CURRENT_USER_NOMBRE = null;
 
 async function checkStaff(){
-  if(!CURRENT_USER){ IS_STAFF = false; IS_ADMIN = false; IS_JOVENES = false; IS_RRHH = false; GP_OK = false; CURRENT_USER_NOMBRE = null; aplicarMenuPorRol(); return; }
-  const { data } = await sb.from('staff').select('*').eq('email', CURRENT_USER.email).maybeSingle();
+  if(!CURRENT_USER){ IS_STAFF = false; IS_ADMIN = false; IS_JOVENES = false; IS_RRHH = false; IS_GESTOR = false; GP_OK = false; CURRENT_USER_NOMBRE = null; aplicarMenuPorRol(); return; }
+  let { data, error: errStaff } = await sb.from('staff').select('*').eq('email', CURRENT_USER.email).maybeSingle();
+  if(errStaff){ const r2 = await sb.from('staff').select('email, es_admin, activo, nombre').eq('email', CURRENT_USER.email).maybeSingle(); data = r2.data; }
   IS_STAFF = !!(data && data.activo !== false);
   IS_ADMIN = !!(data && data.es_admin && data.activo !== false);
   IS_JOVENES = !!(IS_STAFF && !IS_ADMIN && data && data.ambito === 'jovenes');
   IS_RRHH = !!(IS_STAFF && data && data.es_rrhh);
+  IS_GESTOR = !!(IS_STAFF && !IS_JOVENES && data && data.gestiona_alertas);
   CURRENT_USER_NOMBRE = (data && data.nombre) || null;
   document.getElementById('nav-admin-btn').style.display = IS_ADMIN ? '' : 'none';
   document.getElementById('nav-conta-btn').style.display = IS_ADMIN ? '' : 'none';
   aplicarMenuPorRol();
   // Datos nuevos (contraseña propia y reparto de alertas). Si el SQL aún no está en Supabase se ignoran y todo sigue como antes.
-  CLAVE_CAMBIADA = true; REPARTO_OK = false; JOVENES_OK = false; GP_OK = false; HR_OK = false;
+  CLAVE_CAMBIADA = true; REPARTO_OK = false; JOVENES_OK = false; GP_OK = false; HR_OK = false; DELEGACION_OK = false;
   if(IS_STAFF){
     try {
       const x = await sb.from('staff').select('clave_cambiada').eq('email', CURRENT_USER.email).maybeSingle();
@@ -834,7 +939,11 @@ async function checkStaff(){
       GP_OK = !g.error;
       const hq = await sb.from('personal_horarios').select('id').limit(1);
       HR_OK = !hq.error;
-    } catch(e) { CLAVE_CAMBIADA = true; REPARTO_OK = false; JOVENES_OK = false; GP_OK = false; HR_OK = false; }
+      const dq = await sb.from('staff').select('gestiona_alertas').limit(1);
+      DELEGACION_OK = !dq.error;
+      const iq = await sb.from('impacto_fichas').select('id').limit(1);
+      IMPACTO_OK = !iq.error;
+    } catch(e) { CLAVE_CAMBIADA = true; REPARTO_OK = false; JOVENES_OK = false; GP_OK = false; HR_OK = false; DELEGACION_OK = false; IMPACTO_OK = false; }
   }
 }
 
@@ -931,7 +1040,7 @@ function toggleSidebarVisible(visible){
 async function cerrarSesion(){
   window.__claveAvisada = false;
   await sb.auth.signOut();
-  IS_STAFF = false; IS_ADMIN = false; IS_JOVENES = false; IS_RRHH = false; GP_OK = false; aplicarMenuPorRol();
+  IS_STAFF = false; IS_ADMIN = false; IS_JOVENES = false; IS_RRHH = false; IS_GESTOR = false; GP_OK = false; aplicarMenuPorRol();
   toggleSidebarVisible(false);
   detenerRefrescoBadge();
   showScreen('login');
@@ -6373,9 +6482,16 @@ let CLAVE_CAMBIADA = true;    // true = no se le pide nada (también si el SQL n
 let REPARTO_OK = false;       // true cuando la base de datos ya tiene el reparto de alertas
 window.__alertasTodas = false;
 
+// Cambios en el personal: si la base tiene la función segura se usa; si no, el cambio directo de siempre
+async function staffCambiar(email, cambios){
+  const r = await sb.rpc('staff_cambiar', { p_email: email, p_cambios: cambios });
+  if(!r.error) return { error: null };
+  if(/staff_cambiar|schema cache|could not find/i.test(r.error.message || '')) return await sb.from('staff').update(cambios).eq('email', email);
+  return { error: r.error };
+}
 // El equipo ve las alertas suyas, las de "todo el equipo" y las que nadie tiene asignadas; la administración ve todas.
 function filtrarAlertas(consulta, todas){
-  if(!REPARTO_OK || IS_ADMIN) return consulta;
+  if(!REPARTO_OK || IS_ADMIN || IS_GESTOR) return consulta;
   // Jóvenes en acción: solo las alertas de su convocatoria y las que se le asignen directamente
   if(IS_JOVENES) return consulta.or(`para_jovenes.eq.true,asignada_a_email.eq."${CURRENT_USER.email}"`);
   if(todas) return consulta;
@@ -6530,7 +6646,7 @@ function repartoHtmlAdmin(){
     ${Object.entries(tipos).map(([tipo, modo]) => `<div class="panel-stat-row" style="align-items:center;gap:8px;"><span>${escAttr((ALERTA_TIPOS_TXT[tipo] || [tipo, tipo])[LANG_I === 'ca' ? 1 : 0])}</span><select style="font-size:12.5px;max-width:170px;" onchange="repartoModo('${tipo}', this.value)">${modos.map(([v, t]) => `<option value="${v}"${modo === v ? ' selected' : ''}>${t}</option>`).join('')}</select></div>`).join('')}`;
 }
 async function repartoRenumerar(lista){
-  await Promise.all(lista.map((s, i) => s.orden_alertas === i + 1 ? null : sb.from('staff').update({ orden_alertas: i + 1 }).eq('email', s.email)));
+  await Promise.all(lista.map((s, i) => s.orden_alertas === i + 1 ? null : staffCambiar(s.email, { orden_alertas: i + 1 })));
 }
 function repartoTurnoActual(){
   return (window.__staffLista || []).filter(s => s.activo !== false && s.ambito !== 'jovenes' && s.orden_alertas != null).sort((a, b) => a.orden_alertas - b.orden_alertas || a.email.localeCompare(b.email));
@@ -6543,17 +6659,17 @@ async function repartoMover(email, delta){
 }
 async function repartoEntrar(email){
   const l = repartoTurnoActual();
-  const { error } = await sb.from('staff').update({ orden_alertas: l.length + 1 }).eq('email', email);
+  const { error } = await staffCambiar(email, { orden_alertas: l.length + 1 });
   if(error){ alert(error.message); return; }
   renderAdministrador();
 }
 async function repartoSalir(email){
-  const { error } = await sb.from('staff').update({ orden_alertas: null }).eq('email', email);
+  const { error } = await staffCambiar(email, { orden_alertas: null });
   if(error){ alert(error.message); return; }
   await repartoRenumerar(repartoTurnoActual().filter(s => s.email !== email)); renderAdministrador();
 }
 async function repartoAusente(email, fecha){
-  const { error } = await sb.from('staff').update({ ausente_hasta: fecha || null }).eq('email', email);
+  const { error } = await staffCambiar(email, { ausente_hasta: fecha || null });
   if(error){ alert(error.message); return; }
   renderAdministrador();
 }
@@ -6988,7 +7104,7 @@ async function toggleRRHH(email, valor){
   const s = (window.__staffLista || []).find(x => x.email === email), nombre = (s && s.nombre) || email;
   if(!valor && !confirm(acL(`¿Quitar el permiso de RR. HH. a ${nombre}? Dejará de poder ver y gestionar nóminas y archivos del personal.`, `Treure el permís de RR. HH. a ${nombre}? Deixarà de poder veure i gestionar nòmines i arxius del personal.`))) return;
   if(valor && !confirm(acL(`¿Dar a ${nombre} el permiso de RR. HH.? Podrá ver y gestionar las nóminas y los archivos de TODO el personal.`, `Donar a ${nombre} el permís de RR. HH.? Podrà veure i gestionar les nòmines i els arxius de TOT el personal.`))) return;
-  const { error } = await sb.from('staff').update({ es_rrhh: valor }).eq('email', email);
+  const { error } = await staffCambiar(email, { es_rrhh: valor });
   if(error){ alert(error.message); return; }
   await gpRegistrar(valor ? 'permiso' : 'permiso', 'RR. HH.', email, valor ? 'concedido' : 'retirado');
   renderAdministrador();
@@ -7154,6 +7270,508 @@ async function hrQuitarPropio(){
   await hrCargarAdmin();
   document.getElementById('hr-admin-card').innerHTML = hrAdminHtml();
   hrActualizarTotal();
+}
+
+// ================= IMPACTO: ficha de cambio por persona + panel de indicadores =================
+// Cada técnico rellena sus fichas (situación inicial, cierre y seguimientos). El panel solo recibe cifras agregadas
+// desde la base de datos: nunca filas de personas, y los grupos de menos de 5 personas se ocultan.
+const IMP_PROGRAMAS = [
+  ['general', 'Logos en general', 'Logos en general'], ['insercion', 'Inserción sociolaboral', 'Inserció sociolaboral'],
+  ['formacion', 'Formación', 'Formació'], ['inclusion', 'Inclusión y acción social', 'Inclusió i acció social'],
+  ['digital', 'Brecha y capacitación digital', 'Bretxa i capacitació digital'], ['igualdad', 'Igualdad y comunidad', 'Igualtat i comunitat'],
+  ['juventud', 'Jóvenes en acción', 'Joves en acció'], ['psicologico', 'Apoyo psicológico y emocional', 'Suport psicològic i emocional'], ['otro', 'Otro', 'Altre']];
+const IMP_AREAS = [
+  ['empleo', '💼', 'Económica · empleo', 'Econòmica · ocupació'], ['aprendizaje', '🎓', 'Aprendizaje', 'Aprenentatge'],
+  ['autonomia', '🧭', 'Autonomía', 'Autonomia'], ['bienestar', '💚', 'Bienestar emocional', 'Benestar emocional']];
+const IMP_AREAS_POR_PROGRAMA = { insercion: ['empleo', 'aprendizaje'], formacion: ['aprendizaje'], digital: ['aprendizaje', 'autonomia'], psicologico: ['bienestar'],
+  inclusion: ['autonomia', 'bienestar'], igualdad: ['empleo', 'bienestar'], juventud: ['aprendizaje', 'autonomia', 'bienestar'], general: ['empleo', 'aprendizaje', 'autonomia'], otro: [] };
+const IMP_MOMENTOS = [['inicio', 'Situación inicial', 'Situació inicial'], ['final', 'Cierre', 'Tancament'], ['seg6', 'Seguimiento 6 meses', 'Seguiment 6 mesos'], ['seg12', 'Seguimiento 12 meses', 'Seguiment 12 mesos']];
+const IMP_EMPLEO = [['sin_empleo', 'Sin empleo', 'Sense feina'], ['temporal', 'Empleo temporal', 'Feina temporal'], ['autonomo', 'Autónomo/a', 'Autònom/a'], ['indefinido', 'Empleo indefinido', 'Feina indefinida']];
+const IMP_INGRESOS = [['0', 'Sin ingresos', 'Sense ingressos'], ['1', 'Hasta 700 €', 'Fins a 700 €'], ['2', '700 – 1.100 €', '700 – 1.100 €'], ['3', '1.100 – 1.600 €', '1.100 – 1.600 €'], ['4', 'Más de 1.600 €', 'Més de 1.600 €']];
+const IMP_WHO5 = [
+  ['Me he sentido alegre y de buen humor', "M'he sentit alegre i de bon humor"],
+  ['Me he sentido tranquilo/a y relajado/a', "M'he sentit tranquil·l/a i relaxat/da"],
+  ['Me he sentido activo/a y enérgico/a', "M'he sentit actiu/iva i enèrgic/a"],
+  ['Me he despertado sintiéndome fresco/a y descansado/a', "M'he despertat sentint-me fresc/a i descansat/da"],
+  ['Mi vida diaria ha estado llena de cosas que me interesan', 'La meva vida diària ha estat plena de coses que m\'interessen']];
+const IMP_WHO5_OPC = [['0', 'En ningún momento', 'En cap moment'], ['1', 'Algunas veces', 'Algunes vegades'], ['2', 'Menos de la mitad del tiempo', 'Menys de la meitat del temps'],
+  ['3', 'Más de la mitad del tiempo', 'Més de la meitat del temps'], ['4', 'La mayor parte del tiempo', 'La major part del temps'], ['5', 'Todo el tiempo', 'Tot el temps']];
+const IMP_UCLA3 = [
+  ['¿Con qué frecuencia sientes que te falta compañía?', 'Amb quina freqüència sents que et falta companyia?'],
+  ['¿Con qué frecuencia te sientes excluido/a?', 'Amb quina freqüència et sents exclòs/a?'],
+  ['¿Con qué frecuencia te sientes aislado/a de los demás?', 'Amb quina freqüència et sents aïllat/da dels altres?']];
+const IMP_UCLA3_OPC = [['1', 'Casi nunca', 'Gairebé mai'], ['2', 'A veces', 'De vegades'], ['3', 'A menudo', 'Sovint']];
+
+window.__imp = window.__imp || { tab: 'panel', periodo: 'anio', programa: '', filtro: 'pendientes', busca: '' };
+
+function impYo(){ return String((CURRENT_USER && CURRENT_USER.email) || '').toLowerCase(); }
+function impProg(k){ const p = IMP_PROGRAMAS.find(x => x[0] === k); return p ? acL(p[1], p[2]) : k; }
+function impMomento(k){ const m = IMP_MOMENTOS.find(x => x[0] === k); return m ? acL(m[1], m[2]) : k; }
+function impNum(v, dec){
+  if(v === null || v === undefined || v === '') return '–';
+  const d = dec === undefined ? 1 : dec;
+  const n = Number(v); if(!isFinite(n)) return '–';
+  return (d === 0 ? String(Math.round(n)) : (Math.round(n * 10 ** d) / 10 ** d).toFixed(d)).replace('.', ',');
+}
+function impPct(v){ return (v === null || v === undefined) ? '–' : impNum(v, 1).replace(/,0$/, '') + ' %'; }
+function impPoco(n){ return `<span class="imp-na" title="${escAttr(acL('Se muestra a partir de 5 personas, para proteger la privacidad', 'Es mostra a partir de 5 persones, per protegir la privadesa'))}">${acL('pocos datos', 'poques dades')}${n || n === 0 ? ' · n=' + n : ''}</span>`; }
+function impFecha(iso){ return iso ? new Date(String(iso).slice(0, 10) + 'T00:00:00').toLocaleDateString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES') : ''; }
+
+// ---------- pantalla y pestañas ----------
+async function renderImpacto(tab){
+  const st = window.__imp;
+  if(tab) st.tab = tab;
+  const cont = document.getElementById('impacto-content');
+  if(!cont) return;
+  if(!IMPACTO_OK){
+    cont.innerHTML = gpAviso(acL('Esta parte aún no está activada. La administración debe ejecutar el SQL «impacto-supabase» en Supabase.', "Aquesta part encara no està activada. L'administració ha d'executar l'SQL «impacto-supabase» a Supabase."));
+    return;
+  }
+  cont.innerHTML = impPestanasHtml() + `<div id="imp-cuerpo"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`;
+  const cuerpo = document.getElementById('imp-cuerpo');
+  if(st.tab === 'fichas') await impRenderFichas(cuerpo);
+  else if(st.tab === 'metodo') impRenderMetodo(cuerpo);
+  else await impRenderPanel(cuerpo);
+}
+function impPestanasHtml(){
+  const st = window.__imp;
+  const tabs = [['panel', '📊', acL('Panel de impacto', "Panell d'impacte")], ['fichas', '📝', acL('Mis fichas', 'Les meves fitxes')], ['metodo', '🧭', acL('Método', 'Mètode')]];
+  return `<div class="imp-tabs imp-noprint">${tabs.map(([k, ic, t]) => `<button class="imp-tab${st.tab === k ? ' on' : ''}" onclick="renderImpacto('${k}')">${ic} ${t}</button>`).join('')}</div>`;
+}
+
+// ---------- PANEL ----------
+function impRango(){
+  const p = window.__imp.periodo, hoy = new Date(), iso = d => d.toISOString().slice(0, 10);
+  if(p === 'anio') return { desde: hoy.getFullYear() + '-01-01', hasta: iso(hoy) };
+  if(p === '12m'){ const d = new Date(hoy); d.setFullYear(d.getFullYear() - 1); return { desde: iso(d), hasta: iso(hoy) }; }
+  return { desde: null, hasta: null };
+}
+async function impActividad(desde, hasta){
+  const sig = hasta ? new Date(new Date(hasta + 'T00:00:00').getTime() + 86400000).toISOString().slice(0, 10) : null;
+  const q = (tabla, col) => { let c = sb.from(tabla).select('id', { count: 'exact', head: true }); if(desde) c = c.gte(col, desde); if(sig) c = c.lt(col, sig); return c; };
+  try {
+    const [a, ac, t, ce] = await Promise.all([q('atenciones', 'creado_en'), q('actuaciones', 'fecha'), q('tramites', 'creado_en'), q('certificados_curso', 'creado_en')]);
+    const v = x => (x && !x.error && typeof x.count === 'number') ? x.count : null;
+    return { atenciones: v(a), actuaciones: v(ac), tramites: v(t), certificados: v(ce) };
+  } catch(e) { return {}; }
+}
+function impFiltrosHtml(){
+  const st = window.__imp;
+  const per = [['anio', acL('Este año', 'Aquest any')], ['12m', acL('Últimos 12 meses', 'Últims 12 mesos')], ['todo', acL('Todo el histórico', "Tot l'històric")]];
+  return `<div class="imp-filtros imp-noprint">
+    <label>${acL('Periodo', 'Període')}<select onchange="window.__imp.periodo=this.value;renderImpacto('panel')">${per.map(([k, t]) => `<option value="${k}"${st.periodo === k ? ' selected' : ''}>${t}</option>`).join('')}</select></label>
+    <label>${acL('Programa', 'Programa')}<select onchange="window.__imp.programa=this.value;renderImpacto('panel')"><option value="">${acL('Todo Logos', 'Tot Logos')}</option>${IMP_PROGRAMAS.filter(p => p[0] !== 'general').map(p => `<option value="${p[0]}"${st.programa === p[0] ? ' selected' : ''}>${acL(p[1], p[2])}</option>`).join('')}</select></label>
+    <span style="flex:1"></span>
+    <button class="link-btn" onclick="impExportarCsv()">⬇ CSV</button>
+    <button class="link-btn" onclick="window.print()">🖨️ ${acL('Informe (imprimir / PDF)', 'Informe (imprimir / PDF)')}</button></div>`;
+}
+function impHeroHtml(r){
+  const g = r.global || {};
+  const frase = g.mejora === null || g.mejora === undefined
+    ? acL('Aún no hay datos suficientes para mostrar el cambio. Hacen falta al menos 5 personas con situación inicial y cierre.', 'Encara no hi ha dades suficients per mostrar el canvi. Calen almenys 5 persones amb situació inicial i tancament.')
+    : acL(`De ${g.n} personas con situación inicial y cierre, el ${impPct(g.mejora)} mejoró en al menos una dimensión.`, `De ${g.n} persones amb situació inicial i tancament, el ${impPct(g.mejora)} ha millorat en almenys una dimensió.`);
+  const stat = (v, t, sub) => `<div class="imp-stat"><div class="imp-big">${v}</div><div class="imp-stat-t">${t}</div><div class="imp-stat-s">${sub}</div></div>`;
+  return `<section class="imp-hero"><div class="imp-eyebrow">${acL('Cambio observado en las personas', 'Canvi observat en les persones')}</div>
+    <h2 class="imp-frase">${frase}</h2>
+    <div class="imp-stats">
+      ${stat(impPct(g.mejora), acL('mejoró en alguna dimensión', 'ha millorat en alguna dimensió'), 'n = ' + (g.n || 0))}
+      ${stat(impPct(g.mantenida), acL('mantiene la mejora a los 6 meses', 'manté la millora als 6 mesos'), 'n = ' + (g.mantenida_n || 0))}
+      ${stat(r.fichas || 0, acL('personas con ficha', 'persones amb fitxa'), (r.con_final || 0) + ' ' + acL('con cierre', 'amb tancament'))}
+    </div>
+    <p class="imp-nota">${acL('Estas cifras muestran asociación entre el servicio y el cambio, no causalidad: otros factores también influyen.', 'Aquestes xifres mostren associació entre el servei i el canvi, no causalitat: altres factors també hi influeixen.')}</p></section>`;
+}
+function impDimsHtml(r){
+  const d = r.dims || {};
+  const defs = [
+    ['empleo', '💼', acL('Económica', 'Econòmica'), acL('Consigue empleo, mejora su contrato o sube de tramo de ingresos', 'Aconsegueix feina, millora el contracte o puja de tram d\'ingressos')],
+    ['aprendizaje', '🎓', acL('Aprendizaje', 'Aprenentatge'), acL('Gana al menos 1 punto de competencia (escala 1-5)', 'Guanya almenys 1 punt de competència (escala 1-5)')],
+    ['autonomia', '🧭', acL('Autonomía', 'Autonomia'), acL('Gana al menos 1 punto de autonomía o de competencia digital', 'Guanya almenys 1 punt d\'autonomia o de competència digital')],
+    ['bienestar', '💚', acL('Bienestar emocional', 'Benestar emocional'), acL('WHO-5 sube 10 puntos o más, o la soledad baja 1 punto o más', 'El WHO-5 puja 10 punts o més, o la solitud baixa 1 punt o més')]];
+  return `<div class="imp-seccion">${acL('Cambio por dimensión', 'Canvi per dimensió')}</div><div class="imp-grid">${defs.map(([k, ic, t, crit]) => {
+    const x = d[k] || {}, n = x.n || 0;
+    return `<div class="imp-card"><div class="imp-card-h"><span class="imp-ic">${ic}</span><strong>${t}</strong></div>
+      <div class="imp-card-v">${x.mejora === null || x.mejora === undefined ? impPoco(n) : `<span class="imp-big sm">${impPct(x.mejora)}</span>`}</div>
+      <div class="imp-card-s">${acL('con mejora', 'amb millora')} · n = ${n}</div><div class="imp-crit">${crit}</div></div>`;
+  }).join('')}</div>`;
+}
+function impFilaAntesDespues(etq, a, b, max, n, menosMejor, dec){
+  if(a === null || a === undefined || b === null || b === undefined) return `<div class="imp-ab"><div class="imp-ab-l">${etq}</div><div class="imp-ab-b">${impPoco(n)}</div></div>`;
+  const w = v => Math.max(2, Math.min(100, Number(v) / max * 100));
+  return `<div class="imp-ab"><div class="imp-ab-l">${etq}<span class="imp-ab-n">n = ${n}${menosMejor ? ' · ' + acL('menos es mejor', 'menys és millor') : ''}</span></div>
+    <div class="imp-ab-b"><div class="imp-bar-row" title="${acL('Inicio', 'Inici')}: ${impNum(a, dec)}"><div class="imp-bar ante" style="width:${w(a)}%"></div><span>${impNum(a, dec)}</span></div>
+    <div class="imp-bar-row" title="${acL('Cierre', 'Tancament')}: ${impNum(b, dec)}"><div class="imp-bar desp" style="width:${w(b)}%"></div><span>${impNum(b, dec)}</span></div></div></div>`;
+}
+function impAntesDespuesHtml(r){
+  const m = r.medias || {};
+  const f = (k, etq, max, menos, dec) => { const x = m[k] || {}; return impFilaAntesDespues(etq, x.inicio, x.final, max, x.n || 0, menos, dec); };
+  const bajo = m.who5 || {}, alta = m.ucla3 || {};
+  return `<div class="imp-seccion">${acL('Antes y después (medias de las mismas personas)', 'Abans i després (mitjanes de les mateixes persones)')}</div>
+    <div class="imp-card"><div class="imp-leyenda"><span><i class="imp-dot ante"></i>${acL('Situación inicial', 'Situació inicial')}</span><span><i class="imp-dot desp"></i>${acL('Cierre', 'Tancament')}</span></div>
+    ${f('who5', acL('Bienestar (WHO-5, 0-100)', 'Benestar (WHO-5, 0-100)'), 100, false, 1)}
+    ${f('ucla3', acL('Soledad percibida (3-9)', 'Solitud percebuda (3-9)'), 9, true, 1)}
+    ${f('competencia', acL('Competencia trabajada (1-5)', 'Competència treballada (1-5)'), 5, false, 1)}
+    ${f('autonomia', acL('Autonomía en trámites (1-5)', 'Autonomia en tràmits (1-5)'), 5, false, 1)}
+    ${f('digital', acL('Competencia digital (1-5)', 'Competència digital (1-5)'), 5, false, 1)}
+    <div class="imp-mini">${(bajo.bajo_inicio !== null && bajo.bajo_inicio !== undefined) ? `${acL('Bienestar bajo (WHO-5 < 50)', 'Benestar baix (WHO-5 < 50)')}: <strong>${impPct(bajo.bajo_inicio)}</strong> → <strong>${impPct(bajo.bajo_final)}</strong> · ` : ''}${(alta.alta_inicio !== null && alta.alta_inicio !== undefined) ? `${acL('Soledad alta (≥ 6)', 'Solitud alta (≥ 6)')}: <strong>${impPct(alta.alta_inicio)}</strong> → <strong>${impPct(alta.alta_final)}</strong>` : ''}</div></div>`;
+}
+function impEmpleoFormacionHtml(r){
+  const ins = r.insercion || {}, fo = r.formacion || {}, sa = (r.medias || {}).satisfaccion || {};
+  const k = (v, t, sub) => `<div class="imp-card"><div class="imp-card-s" style="margin:0 0 6px">${t}</div><div class="imp-big sm">${v}</div><div class="imp-crit">${sub}</div></div>`;
+  return `<div class="imp-seccion">${acL('Empleo, aprendizaje y experiencia', 'Ocupació, aprenentatge i experiència')}</div><div class="imp-grid">
+    ${k(ins.tasa === null || ins.tasa === undefined ? impPoco(ins.base || 0) : impPct(ins.tasa), acL('Inserción laboral', 'Inserció laboral'), acL(`${ins.insertadas || 0} de ${ins.base || 0} personas que empezaron sin empleo`, `${ins.insertadas || 0} de ${ins.base || 0} persones que van començar sense feina`))}
+    ${k(ins.sostenida === null || ins.sostenida === undefined ? impPoco(ins.sostenida_n || 0) : impPct(ins.sostenida), acL('Inserción sostenida a 6 meses', 'Inserció sostinguda als 6 mesos'), acL('Siguen con empleo a los 6 meses', 'Continuen amb feina als 6 mesos'))}
+    ${k(impNum(fo.horas || 0, 0) + ' h', acL('Horas de formación', 'Hores de formació'), acL(`${fo.certificaciones || 0} certificados o titulaciones · ${fo.personas || 0} personas`, `${fo.certificaciones || 0} certificats o titulacions · ${fo.personas || 0} persones`))}
+    ${k(sa.media === null || sa.media === undefined ? impPoco(sa.n || 0) : impNum(sa.media, 1) + ' / 5', acL('Satisfacción con el servicio', 'Satisfacció amb el servei'), 'n = ' + (sa.n || 0))}</div>`;
+}
+function impCoberturaHtml(r){
+  const tot = r.fichas || 0;
+  const filas = [[acL('Personas con ficha', 'Persones amb fitxa'), tot], [acL('Con situación inicial', 'Amb situació inicial'), r.con_inicio || 0], [acL('Con cierre', 'Amb tancament'), r.con_final || 0], [acL('Seguimiento 6 meses', 'Seguiment 6 mesos'), r.con_seg6 || 0], [acL('Seguimiento 12 meses', 'Seguiment 12 mesos'), r.con_seg12 || 0]];
+  return `<div class="imp-seccion">${acL('Cobertura del seguimiento', 'Cobertura del seguiment')}</div><div class="imp-card">
+    ${filas.map(([t, v]) => `<div class="imp-cob" title="${t}: ${v}"><div class="imp-cob-l">${t}</div><div class="imp-cob-b"><div class="imp-bar desp" style="width:${tot ? Math.max(v ? 2 : 0, v / tot * 100) : 0}%"></div></div><div class="imp-cob-v">${v}</div></div>`).join('')}
+    <div class="imp-mini">${acL('Cuantas más personas llegan al cierre y al seguimiento, más fiables son las cifras de arriba.', 'Com més persones arriben al tancament i al seguiment, més fiables són les xifres de dalt.')}</div></div>`;
+}
+function impSerieHtml(r){
+  const s = r.serie || [];
+  if(!s.length) return '';
+  const max = Math.max(1, ...s.map(x => Math.max(x.altas || 0, x.cierres || 0)));
+  const mes = x => { const [a, m] = String(x).split('-'); return new Date(Number(a), Number(m) - 1, 1).toLocaleDateString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES', { month: 'short' }); };
+  return `<div class="imp-seccion">${acL('Fichas por mes (últimos 12 meses)', 'Fitxes per mes (últims 12 mesos)')}</div><div class="imp-card">
+    <div class="imp-leyenda"><span><i class="imp-dot ante"></i>${acL('Altas', 'Altes')}</span><span><i class="imp-dot desp"></i>${acL('Cierres', 'Tancaments')}</span></div>
+    <div class="imp-serie">${s.map(x => `<div class="imp-col" title="${mes(x.mes)} ${String(x.mes).slice(0, 4)} · ${acL('altas', 'altes')}: ${x.altas} · ${acL('cierres', 'tancaments')}: ${x.cierres}">
+      <div class="imp-col-b"><i class="ante" style="height:${(x.altas || 0) / max * 100}%"></i><i class="desp" style="height:${(x.cierres || 0) / max * 100}%"></i></div><div class="imp-col-l">${mes(x.mes)}</div></div>`).join('')}</div></div>`;
+}
+function impEquidadHtml(r){
+  const e = r.equidad || {}, nom = { mujer: acL('Mujeres', 'Dones'), hombre: acL('Hombres', 'Homes'), otro: acL('Otro / no indica', 'Altre / no indica') };
+  const fila = (t, x) => `<tr><td>${t}</td><td>${x.n}</td><td>${x.mejora === null || x.mejora === undefined ? impPoco() : `<div class="imp-bar-row"><div class="imp-bar desp" style="width:${Math.max(2, x.mejora)}%"></div><span>${impPct(x.mejora)}</span></div>`}</td></tr>`;
+  const g = (e.genero || []).map(x => fila(nom[x.clave] || x.clave, x)).join(''), a = (e.edad || []).map(x => fila(x.clave + ' ' + acL('años', 'anys'), x)).join('');
+  const p = (r.por_programa || []).map(x => fila(impProg(x.clave), { n: x.n, mejora: x.mejora })).join('');
+  if(!g && !a && !p) return '';
+  return `<div class="imp-seccion">${acL('Mejora por grupo y programa', 'Millora per grup i programa')}</div><div class="imp-card"><div class="imp-tabla-w"><table class="imp-tabla"><thead><tr><th>${acL('Grupo', 'Grup')}</th><th>n</th><th>${acL('% con mejora', '% amb millora')}</th></tr></thead><tbody>${g ? `<tr class="imp-grp"><td colspan="3">${acL('Género', 'Gènere')}</td></tr>` + g : ''}${a ? `<tr class="imp-grp"><td colspan="3">${acL('Edad', 'Edat')}</td></tr>` + a : ''}${p ? `<tr class="imp-grp"><td colspan="3">${acL('Programa', 'Programa')}</td></tr>` + p : ''}</tbody></table></div>
+    <div class="imp-mini">${acL('Si un grupo queda por debajo de otro, es una pregunta que investigar (¿acceso?, ¿adaptación del servicio?), no una clasificación.', 'Si un grup queda per sota d\'un altre, és una pregunta a investigar (accés?, adaptació del servei?), no una classificació.')}</div></div>`;
+}
+function impActividadHtml(a){
+  const it = [['atenciones', '👥', acL('Atenciones', 'Atencions')], ['actuaciones', '🗂️', acL('Actuaciones', 'Actuacions')], ['tramites', '📋', acL('Trámites iniciados', 'Tràmits iniciats')], ['certificados', '🏅', acL('Certificados del Aula Virtual', "Certificats de l'Aula Virtual")]].filter(([k]) => a && a[k] !== null && a[k] !== undefined);
+  if(!it.length) return '';
+  return `<div class="imp-seccion">${acL('Actividad registrada en la plataforma (volumen, no cambio)', 'Activitat registrada a la plataforma (volum, no canvi)')}</div><div class="imp-grid">${it.map(([k, ic, t]) => `<div class="imp-card"><div class="imp-card-s" style="margin:0 0 6px">${ic} ${t}</div><div class="imp-big sm">${a[k]}</div></div>`).join('')}</div>`;
+}
+async function impRenderPanel(cuerpo){
+  const st = window.__imp, { desde, hasta } = impRango();
+  const [res, act] = await Promise.all([sb.rpc('impacto_resumen', { p_desde: desde, p_hasta: hasta, p_programa: st.programa || null }), impActividad(desde, hasta)]);
+  if(res.error || !res.data){ cuerpo.innerHTML = impFiltrosHtml() + gpAviso(escAttr((res.error && res.error.message) || 'Sin datos')); return; }
+  const r = res.data; st.resumen = r;
+  const vacio = !r.fichas;
+  cuerpo.innerHTML = impFiltrosHtml() + `<div id="imp-informe">` + impHeroHtml(r)
+    + (vacio ? `<div class="imp-vacio"><strong>${acL('Todavía no hay fichas en este periodo.', 'Encara no hi ha fitxes en aquest període.')}</strong><br>${acL('Cada técnico crea sus fichas en la pestaña «Mis fichas». En cuanto haya 5 personas con situación inicial y cierre, aparecerán aquí los cambios.', 'Cada tècnic crea les seves fitxes a la pestanya «Les meves fitxes». Quan hi hagi 5 persones amb situació inicial i tancament, hi apareixeran els canvis.')}<br><button class="primary-btn" style="width:auto;margin-top:10px;" onclick="renderImpacto('fichas')">📝 ${acL('Crear mi primera ficha', 'Crear la meva primera fitxa')}</button></div>` : '')
+    + impDimsHtml(r) + impAntesDespuesHtml(r) + impEmpleoFormacionHtml(r) + impCoberturaHtml(r) + impSerieHtml(r) + impEquidadHtml(r) + impActividadHtml(act)
+    + `<p class="imp-pie">${acL('Periodo', 'Període')}: ${desde ? impFecha(desde) : acL('inicio', 'inici')} – ${impFecha(hasta || new Date().toISOString())} · ${st.programa ? impProg(st.programa) : acL('Todo Logos', 'Tot Logos')} · ${acL('Los grupos de menos de 5 personas se ocultan para proteger la privacidad.', 'Els grups de menys de 5 persones s\'oculten per protegir la privadesa.')}</p></div>`
+    + `<div id="imp-carga"></div>`;
+  if(IS_ADMIN) impCargaAdmin();
+}
+function impIndicadoresCsv(r){
+  const g = r.global || {}, d = r.dims || {}, m = r.medias || {}, ins = r.insercion || {}, fo = r.formacion || {};
+  const filas = [['Dimensión', 'Indicador', 'Valor', 'n'],
+    ['General', 'Personas con ficha', r.fichas, r.fichas], ['General', 'Con situación inicial', r.con_inicio, ''], ['General', 'Con cierre', r.con_final, ''], ['General', 'Con seguimiento 6 meses', r.con_seg6, ''], ['General', 'Con seguimiento 12 meses', r.con_seg12, ''],
+    ['General', '% con mejora en alguna dimensión', g.mejora, g.n], ['General', '% que mantiene la mejora a 6 meses', g.mantenida, g.mantenida_n], ['General', '% que mantiene la mejora a 12 meses', g.mantenida12, g.mantenida12_n],
+    ['Económica', '% con mejora', (d.empleo || {}).mejora, (d.empleo || {}).n], ['Económica', 'Tasa de inserción laboral (%)', ins.tasa, ins.base], ['Económica', 'Inserción sostenida a 6 meses (%)', ins.sostenida, ins.sostenida_n],
+    ['Aprendizaje', '% con mejora', (d.aprendizaje || {}).mejora, (d.aprendizaje || {}).n], ['Aprendizaje', 'Horas de formación', fo.horas, fo.personas], ['Aprendizaje', 'Certificados o titulaciones', fo.certificaciones, fo.personas],
+    ['Autonomía', '% con mejora', (d.autonomia || {}).mejora, (d.autonomia || {}).n],
+    ['Bienestar', '% con mejora', (d.bienestar || {}).mejora, (d.bienestar || {}).n],
+    ['Bienestar', 'WHO-5 medio al inicio', (m.who5 || {}).inicio, (m.who5 || {}).n], ['Bienestar', 'WHO-5 medio al cierre', (m.who5 || {}).final, (m.who5 || {}).n],
+    ['Bienestar', 'Soledad media al inicio (3-9)', (m.ucla3 || {}).inicio, (m.ucla3 || {}).n], ['Bienestar', 'Soledad media al cierre (3-9)', (m.ucla3 || {}).final, (m.ucla3 || {}).n],
+    ['Experiencia', 'Satisfacción media (1-5)', (m.satisfaccion || {}).media, (m.satisfaccion || {}).n]];
+  return filas.map(f => f.map(c => { const s = (c === null || c === undefined) ? '' : String(c); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(';')).join('\n');
+}
+function impExportarCsv(){
+  const r = window.__imp.resumen; if(!r) return;
+  const blob = new Blob(['﻿' + impIndicadoresCsv(r)], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'impacto-logos-' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+// Carga de fichas por persona y traspaso (solo administración)
+async function impCargaAdmin(){
+  const host = document.getElementById('imp-carga'); if(!host) return;
+  const [c, s] = await Promise.all([sb.rpc('impacto_carga'), sb.from('staff').select('email, nombre, activo, ambito')]);
+  if(c.error || !Array.isArray(c.data)) return;
+  const nombre = e => { const x = (s.data || []).find(y => String(y.email).toLowerCase() === String(e).toLowerCase()); return (x && x.nombre) || e; };
+  const activos = (s.data || []).filter(x => x.activo !== false && x.ambito !== 'jovenes');
+  host.innerHTML = `<div class="imp-seccion imp-noprint">${acL('Administración · reparto de fichas', 'Administració · repartiment de fitxes')}</div><div class="imp-card imp-noprint">
+    <table class="imp-tabla"><thead><tr><th>${acL('Técnico', 'Tècnic')}</th><th>${acL('Abiertas', 'Obertes')}</th><th>${acL('Cerradas', 'Tancades')}</th></tr></thead><tbody>${c.data.map(x => `<tr><td>${escAttr(nombre(x.tecnico_email))}</td><td>${x.abiertas}</td><td>${x.cerradas}</td></tr>`).join('') || `<tr><td colspan="3">${acL('Aún no hay fichas.', 'Encara no hi ha fitxes.')}</td></tr>`}</tbody></table>
+    <p class="imp-mini" style="margin-top:12px;">${acL('Si alguien no puede trabajar, pasa sus fichas abiertas a otra persona. La administración no ve el contenido de las fichas.', "Si algú no pot treballar, passa les seves fitxes obertes a una altra persona. L'administració no veu el contingut de les fitxes.")}</p>
+    <div class="imp-filtros" style="margin:0"><label>${acL('De', 'De')}<select id="imp-de">${c.data.map(x => `<option value="${escAttr(x.tecnico_email)}">${escAttr(nombre(x.tecnico_email))}</option>`).join('')}</select></label>
+    <label>${acL('A', 'A')}<select id="imp-a">${activos.map(x => `<option value="${escAttr(x.email)}">${escAttr(x.nombre || x.email)}</option>`).join('')}</select></label>
+    <button class="link-btn" onclick="impReasignar()">${acL('Pasar fichas abiertas', 'Passar fitxes obertes')}</button></div></div>`;
+}
+async function impReasignar(){
+  const de = document.getElementById('imp-de'), a = document.getElementById('imp-a');
+  if(!de || !a || !de.value || !a.value || de.value.toLowerCase() === a.value.toLowerCase()) return;
+  if(!confirm(acL(`¿Pasar las fichas abiertas de ${de.value} a ${a.value}?`, `Passar les fitxes obertes de ${de.value} a ${a.value}?`))) return;
+  const r = await sb.rpc('impacto_reasignar', { p_desde: de.value, p_hacia: a.value });
+  if(r.error){ alert(r.error.message); return; }
+  alert(acL(`Fichas pasadas: ${r.data}`, `Fitxes passades: ${r.data}`));
+  impCargaAdmin();
+}
+
+// ---------- MIS FICHAS ----------
+async function impRenderFichas(cuerpo){
+  const st = window.__imp, yo = impYo();
+  const fr = await sb.from('impacto_fichas').select('*').eq('tecnico_email', yo).order('creado_en', { ascending: false }).limit(400);
+  if(fr.error){ cuerpo.innerHTML = gpAviso(escAttr(fr.error.message)); return; }
+  const fichas = fr.data || [], ids = fichas.map(f => f.id);
+  let medidas = [];
+  if(ids.length){ const mr = await sb.from('impacto_medidas').select('ficha_id, momento, fecha').in('ficha_id', ids).limit(3000); medidas = mr.data || []; }
+  const por = {};
+  medidas.forEach(m => { (por[m.ficha_id] = por[m.ficha_id] || {})[m.momento] = m.fecha; });
+  st.fichas = fichas; st.medidasPor = por;
+  const pend = f => { const m = por[f.id] || {}; return f.estado === 'abierta' || (m.final && !m.seg6 && impVence(m.final, 6)) || (m.final && m.seg6 && !m.seg12 && impVence(m.final, 12)); };
+  let lista = fichas;
+  if(st.filtro === 'pendientes') lista = lista.filter(pend);
+  else if(st.filtro === 'cerradas') lista = lista.filter(f => f.estado === 'cerrada');
+  const q = (st.busca || '').trim().toLowerCase();
+  if(q) lista = lista.filter(f => String(f.referencia).toLowerCase().includes(q));
+  const fil = [['pendientes', acL('Pendientes', 'Pendents')], ['todas', acL('Todas', 'Totes')], ['cerradas', acL('Cerradas', 'Tancades')]];
+  cuerpo.innerHTML = `<div class="imp-filtros"><button class="primary-btn" style="width:auto;margin:0;" onclick="impFormFicha()">➕ ${acL('Nueva ficha', 'Nova fitxa')}</button><span style="flex:1"></span>
+      ${fil.map(([k, t]) => `<button class="imp-chip${st.filtro === k ? ' on' : ''}" onclick="window.__imp.filtro='${k}';renderImpacto('fichas')">${t}</button>`).join('')}
+      <input class="imp-busca" id="imp-busca" placeholder="${escAttr(acL('Buscar por código…', 'Cercar per codi…'))}" value="${escAttr(st.busca || '')}" oninput="window.__imp.busca=this.value;impRefrescarLista()"></div>
+    <div id="imp-form-host"></div><div id="imp-lista">${impListaFichasHtml(lista)}</div>
+    <p class="imp-mini">${acL('Cada ficha pertenece a una persona atendida, identificada solo por un código o iniciales. Tus fichas solo las ves tú.', 'Cada fitxa pertany a una persona atesa, identificada només per un codi o inicials. Les teves fitxes només les veus tu.')}</p>`;
+}
+function impRefrescarLista(){
+  const st = window.__imp, q = (st.busca || '').trim().toLowerCase(), por = st.medidasPor || {};
+  let lista = st.fichas || [];
+  if(st.filtro === 'pendientes') lista = lista.filter(f => { const m = por[f.id] || {}; return f.estado === 'abierta' || (m.final && !m.seg6 && impVence(m.final, 6)) || (m.final && m.seg6 && !m.seg12 && impVence(m.final, 12)); });
+  else if(st.filtro === 'cerradas') lista = lista.filter(f => f.estado === 'cerrada');
+  if(q) lista = lista.filter(f => String(f.referencia).toLowerCase().includes(q));
+  const h = document.getElementById('imp-lista'); if(h) h.innerHTML = impListaFichasHtml(lista);
+}
+function impVence(fechaFinal, meses){
+  const d = new Date(String(fechaFinal).slice(0, 10) + 'T00:00:00'); d.setMonth(d.getMonth() + meses);
+  return d.getTime() <= Date.now();
+}
+function impListaFichasHtml(lista){
+  if(!lista.length) return `<div class="empty-note">${acL('No hay fichas en esta vista.', 'No hi ha fitxes en aquesta vista.')}</div>`;
+  const por = window.__imp.medidasPor || {};
+  return lista.map(f => {
+    const m = por[f.id] || {};
+    const paso = (k, etq) => `<span class="imp-paso${m[k] ? ' ok' : ''}" title="${m[k] ? impFecha(m[k]) : ''}">${m[k] ? '✔' : '○'} ${etq}</span>`;
+    const acciones = [];
+    if(!m.inicio) acciones.push(['inicio', acL('Situación inicial', 'Situació inicial'), true]);
+    else if(!m.final) acciones.push(['final', acL('Cerrar', 'Tancar'), true]);
+    if(m.final && !m.seg6) acciones.push(['seg6', acL('Seguimiento 6 m', 'Seguiment 6 m'), impVence(m.final, 6)]);
+    if(m.final && !m.seg12) acciones.push(['seg12', acL('Seguimiento 12 m', 'Seguiment 12 m'), impVence(m.final, 12)]);
+    const areas = (f.areas || []).map(a => { const x = IMP_AREAS.find(y => y[0] === a); return x ? x[1] : ''; }).join(' ');
+    return `<div class="imp-ficha"><div class="imp-ficha-h"><div><strong>${escAttr(f.referencia)}</strong> <span class="imp-sub">${impProg(f.programa)} ${areas}</span></div>
+      <div class="imp-sub">${impFecha(f.creado_en)}${f.consentimiento ? '' : ' · ' + acL('sin consentimiento emocional', 'sense consentiment emocional')}</div></div>
+      <div class="imp-pasos">${paso('inicio', acL('Inicio', 'Inici'))}${paso('final', acL('Cierre', 'Tancament'))}${paso('seg6', '6 m')}${paso('seg12', '12 m')}</div>
+      <div class="imp-acc">${acciones.map(([k, t, ya]) => `<button class="${ya ? 'primary-btn' : 'link-btn'}" style="${ya ? 'width:auto;margin:0;padding:8px 16px;font-size:13px;' : ''}" onclick="impFormMedida('${f.id}','${k}')">${ya ? '' : '🕒 '}${t}</button>`).join('')}
+        ${['inicio', 'final', 'seg6', 'seg12'].filter(k => m[k]).map(k => `<button class="link-btn" onclick="impFormMedida('${f.id}','${k}')">✏️ ${impMomento(k)}</button>`).join('')}
+        <button class="link-btn" onclick="impAjustesFicha('${f.id}')">⚙️</button></div></div>`;
+  }).join('');
+}
+
+// Nueva ficha
+function impFormFicha(){
+  const host = document.getElementById('imp-form-host'); if(!host) return;
+  const areasDe = p => IMP_AREAS_POR_PROGRAMA[p] || [];
+  host.innerHTML = `<div class="imp-card imp-form"><h3 style="margin:0 0 12px;">➕ ${acL('Nueva ficha de cambio', 'Nova fitxa de canvi')}</h3>
+    <div class="field"><label>${acL('Código o iniciales de la persona (no pongas el nombre completo)', 'Codi o inicials de la persona (no posis el nom complet)')}</label><input id="imp-ref" maxlength="40" placeholder="${escAttr(acL('p. ej. M.G.-2026-014', 'p. ex. M.G.-2026-014'))}"></div>
+    <div class="imp-fila2"><div class="field"><label>${acL('Programa', 'Programa')}</label><select id="imp-prog" onchange="impMarcarAreas(this.value)">${IMP_PROGRAMAS.map(p => `<option value="${p[0]}">${acL(p[1], p[2])}</option>`).join('')}</select></div>
+    <div class="field"><label>${acL('Género', 'Gènere')}</label><select id="imp-gen"><option value="">${acL('No indicado', 'No indicat')}</option><option value="mujer">${acL('Mujer', 'Dona')}</option><option value="hombre">${acL('Hombre', 'Home')}</option><option value="otro">${acL('Otro', 'Altre')}</option></select></div>
+    <div class="field"><label>${acL('Edad', 'Edat')}</label><select id="imp-edad"><option value="">${acL('No indicada', 'No indicada')}</option>${['<18', '18-29', '30-44', '45-64', '65+'].map(x => `<option value="${x}">${x}</option>`).join('')}</select></div></div>
+    <div class="field"><label>${acL('¿Qué cambios vas a medir?', 'Quins canvis mesuraràs?')}</label><div class="imp-opts">${IMP_AREAS.map(a => `<label class="imp-pill"><input type="checkbox" name="imp-area" value="${a[0]}"${areasDe('general').includes(a[0]) ? ' checked' : ''}><span>${a[1]} ${acL(a[2], a[3])}</span></label>`).join('')}</div></div>
+    <div class="field"><label style="display:flex;gap:8px;align-items:flex-start;font-weight:500;color:var(--ink);"><input type="checkbox" id="imp-cons" style="margin-top:3px;"> <span>${acL('La persona ha sido informada y acepta que se registren, de forma confidencial y solo para medir el cambio, sus respuestas sobre bienestar emocional y soledad. Es voluntario y puede retirarlo cuando quiera. <em>Sin este consentimiento no se mide el bienestar.</em>', "La persona ha estat informada i accepta que es registrin, de forma confidencial i només per mesurar el canvi, les seves respostes sobre benestar emocional i solitud. És voluntari i ho pot retirar quan vulgui. <em>Sense aquest consentiment no es mesura el benestar.</em>")}</span></label></div>
+    <div style="display:flex;gap:10px;"><button class="primary-btn" style="width:auto;margin:0;" onclick="impGuardarFicha()">${acL('Crear y pasar a la situación inicial', 'Crear i passar a la situació inicial')}</button><button class="link-btn" onclick="document.getElementById('imp-form-host').innerHTML=''">${acL('Cancelar', 'Cancel·lar')}</button></div></div>`;
+  host.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function impMarcarAreas(p){
+  const sel = IMP_AREAS_POR_PROGRAMA[p] || [];
+  document.querySelectorAll('input[name="imp-area"]').forEach(c => { c.checked = sel.includes(c.value); });
+}
+async function impGuardarFicha(){
+  const ref = (document.getElementById('imp-ref').value || '').trim();
+  if(!ref){ alert(acL('Pon un código o iniciales.', 'Posa un codi o inicials.')); return; }
+  if(ref.length > 40 || ref.split(/\s+/).length > 3){ alert(acL('Usa un código o iniciales, no el nombre completo.', 'Fes servir un codi o inicials, no el nom complet.')); return; }
+  const cons = document.getElementById('imp-cons').checked;
+  let areas = [...document.querySelectorAll('input[name="imp-area"]:checked')].map(c => c.value);
+  if(!cons && areas.includes('bienestar')){ areas = areas.filter(a => a !== 'bienestar'); alert(acL('Sin consentimiento no se medirá el bienestar emocional en esta ficha.', 'Sense consentiment no es mesurarà el benestar emocional en aquesta fitxa.')); }
+  if(!areas.length){ alert(acL('Marca al menos un cambio que vayas a medir.', 'Marca almenys un canvi que mesuraràs.')); return; }
+  const fila = { referencia: ref, tecnico_email: impYo(), programa: document.getElementById('imp-prog').value, genero: document.getElementById('imp-gen').value || null, tramo_edad: document.getElementById('imp-edad').value || null,
+    areas, consentimiento: cons, consentimiento_fecha: cons ? new Date().toISOString().slice(0, 10) : null };
+  const r = await sb.from('impacto_fichas').insert(fila).select();
+  if(r.error){ alert(r.error.message); return; }
+  const f = Array.isArray(r.data) ? r.data[0] : r.data;
+  window.__imp.filtro = 'pendientes';
+  if(f && f.id){ await impRenderFichas(document.getElementById('imp-cuerpo')); impFormMedida(f.id, 'inicio'); } else renderImpacto('fichas');
+}
+
+// Ajustes de una ficha: consentimiento, borrado
+async function impAjustesFicha(id){
+  const f = (window.__imp.fichas || []).find(x => x.id === id); if(!f) return;
+  const host = document.getElementById('imp-form-host'); if(!host) return;
+  host.innerHTML = `<div class="imp-card imp-form"><h3 style="margin:0 0 6px;">⚙️ ${escAttr(f.referencia)}</h3>
+    <p class="imp-mini" style="margin:0 0 12px;">${f.consentimiento ? acL('Hay consentimiento para medir el bienestar emocional.', 'Hi ha consentiment per mesurar el benestar emocional.') : acL('No hay consentimiento para medir el bienestar emocional.', "No hi ha consentiment per mesurar el benestar emocional.")}</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    ${f.consentimiento ? `<button class="link-btn" onclick="impConsentimiento('${id}',false)">${acL('Retirar consentimiento (borra las respuestas emocionales)', 'Retirar consentiment (esborra les respostes emocionals)')}</button>` : `<button class="link-btn" onclick="impConsentimiento('${id}',true)">${acL('La persona da su consentimiento', 'La persona dona el seu consentiment')}</button>`}
+    <button class="link-btn" style="color:var(--alert);" onclick="impBorrarFicha('${id}')">🗑️ ${acL('Borrar ficha', 'Esborrar fitxa')}</button>
+    <button class="link-btn" onclick="document.getElementById('imp-form-host').innerHTML=''">${acL('Cerrar', 'Tancar')}</button></div></div>`;
+  host.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+async function impConsentimiento(id, valor){
+  if(!valor && !confirm(acL('Se borrarán las respuestas de bienestar y soledad de esta ficha. ¿Continuar?', 'S\'esborraran les respostes de benestar i solitud d\'aquesta fitxa. Continuar?'))) return;
+  const f = (window.__imp.fichas || []).find(x => x.id === id);
+  const areas = (f && f.areas) || [];
+  const cambios = { consentimiento: valor, consentimiento_fecha: valor ? new Date().toISOString().slice(0, 10) : null };
+  if(!valor) cambios.areas = areas.filter(a => a !== 'bienestar');
+  else if(!areas.includes('bienestar')) cambios.areas = areas.concat(['bienestar']);
+  const r = await sb.from('impacto_fichas').update(cambios).eq('id', id);
+  if(r.error){ alert(r.error.message); return; }
+  renderImpacto('fichas');
+}
+async function impBorrarFicha(id){
+  if(!confirm(acL('¿Borrar esta ficha y todas sus medidas? No se puede deshacer.', 'Esborrar aquesta fitxa i totes les seves mesures? No es pot desfer.'))) return;
+  const r = await sb.from('impacto_fichas').delete().eq('id', id);
+  if(r.error){ alert(r.error.message); return; }
+  renderImpacto('fichas');
+}
+
+// Formulario de una medida (inicio, cierre, seguimientos)
+function impOpciones(nombre, opciones, actual, esAcL){
+  return `<div class="imp-opts">${opciones.map(o => `<label class="imp-pill"><input type="radio" name="${nombre}" value="${o[0]}"${String(actual) === String(o[0]) ? ' checked' : ''}><span>${esAcL ? acL(o[1], o[2]) : o[1]}</span></label>`).join('')}</div>`;
+}
+const IMP_ESCALA_5 = ['1', '2', '3', '4', '5'].map(x => [x, x]);
+async function impFormMedida(fichaId, momento){
+  const f = (window.__imp.fichas || []).find(x => x.id === fichaId); if(!f) return;
+  const ex = await sb.from('impacto_medidas').select('*').eq('ficha_id', fichaId).eq('momento', momento).maybeSingle();
+  const m = (ex && ex.data) || {};
+  window.__impMedida = { fichaId, momento, id: m.id || null };
+  const areas = f.areas || [], cons = f.consentimiento;
+  const sec = (ic, t, cuerpo) => `<div class="imp-sec"><div class="imp-sec-h">${ic} ${t}</div>${cuerpo}</div>`;
+  let h = `<button class="link-btn" onclick="renderImpacto('fichas')">← ${acL('Volver a mis fichas', 'Tornar a les meves fitxes')}</button>
+    <div class="imp-card imp-form"><h3 style="margin:0 0 2px;">${impMomento(momento)} · ${escAttr(f.referencia)}</h3><p class="imp-mini" style="margin:0 0 14px;">${impProg(f.programa)} · ${acL('Rellena solo lo que sepas; puedes completar el resto más tarde.', 'Omple només el que sàpigues; pots completar la resta més tard.')}</p>
+    <div class="field" style="max-width:220px;"><label>${acL('Fecha', 'Data')}</label><input type="date" id="imp-fecha" value="${escAttr(m.fecha || new Date().toISOString().slice(0, 10))}"></div>`;
+  if(areas.includes('empleo')){
+    h += sec('💼', acL('Situación económica', 'Situació econòmica'),
+      `<div class="field"><label>${acL('Situación laboral', 'Situació laboral')}</label>${impOpciones('imp-empleo', IMP_EMPLEO, m.empleo, true)}</div>
+       <div class="field"><label>${acL('Ingresos mensuales aproximados', 'Ingressos mensuals aproximats')}</label>${impOpciones('imp-ingresos', IMP_INGRESOS, m.ingresos_tramo, true)}</div>`);
+  }
+  if(areas.includes('aprendizaje')){
+    h += sec('🎓', acL('Aprendizaje', 'Aprenentatge'),
+      `<div class="field"><label>${acL('Competencia que se trabaja (1 = muy baja · 5 = muy alta)', 'Competència que es treballa (1 = molt baixa · 5 = molt alta)')}</label>${impOpciones('imp-comp', IMP_ESCALA_5, m.competencia, false)}</div>` +
+      (momento === 'inicio' ? '' : `<div class="imp-fila2"><div class="field"><label>${acL('Horas de formación desde la medida anterior', 'Hores de formació des de la mesura anterior')}</label><input type="number" min="0" step="0.5" id="imp-horas" value="${m.horas_formacion ?? ''}"></div>
+       <div class="field"><label>${acL('Certificados o titulaciones logrados', 'Certificats o titulacions assolits')}</label><input type="number" min="0" step="1" id="imp-cert" value="${m.certificaciones ?? ''}"></div></div>`));
+  }
+  if(areas.includes('autonomia')){
+    h += sec('🧭', acL('Autonomía', 'Autonomia'),
+      `<div class="field"><label>${acL('Autonomía para gestionar sus trámites (1 = necesita ayuda siempre · 5 = lo hace sola)', 'Autonomia per gestionar els seus tràmits (1 = necessita ajuda sempre · 5 = ho fa sola)')}</label>${impOpciones('imp-aut', IMP_ESCALA_5, m.autonomia, false)}</div>
+       <div class="field"><label>${acL('Competencia digital (1 = ninguna · 5 = muy buena)', 'Competència digital (1 = cap · 5 = molt bona)')}</label>${impOpciones('imp-dig', IMP_ESCALA_5, m.competencia_digital, false)}</div>`);
+  }
+  if(areas.includes('bienestar') && cons){
+    const w = m.who5_items || [], u = m.ucla3_items || [];
+    h += sec('💚', acL('Bienestar emocional (confidencial)', 'Benestar emocional (confidencial)'),
+      `<p class="imp-mini" style="margin:0 0 8px;"><strong>${acL('Durante las últimas dos semanas…', 'Durant les últimes dues setmanes…')}</strong></p>` +
+      IMP_WHO5.map((q, i) => `<div class="field"><label>${i + 1}. ${acL(q[0], q[1])}</label>${impOpciones('imp-w' + i, IMP_WHO5_OPC, w[i], true)}</div>`).join('') +
+      `<p class="imp-mini" style="margin:14px 0 8px;"><strong>${acL('Compañía y soledad', 'Companyia i solitud')}</strong></p>` +
+      IMP_UCLA3.map((q, i) => `<div class="field"><label>${i + 1}. ${acL(q[0], q[1])}</label>${impOpciones('imp-u' + i, IMP_UCLA3_OPC, u[i], true)}</div>`).join(''));
+  } else if(areas.includes('bienestar')){
+    h += sec('💚', acL('Bienestar emocional', 'Benestar emocional'), `<div class="imp-mini">${acL('Esta ficha no tiene consentimiento; usa ⚙️ si la persona lo concede.', 'Aquesta fitxa no té consentiment; fes servir ⚙️ si la persona el concedeix.')}</div>`);
+  }
+  if(momento === 'final'){
+    h += sec('⭐', acL('Experiencia', 'Experiència'), `<div class="field"><label>${acL('¿Cómo valora la persona el servicio recibido? (1 = muy mal · 5 = muy bien)', 'Com valora la persona el servei rebut? (1 = molt malament · 5 = molt bé)')}</label>${impOpciones('imp-sat', IMP_ESCALA_5, m.satisfaccion, false)}</div>`);
+  }
+  h += `<div style="display:flex;gap:10px;margin-top:14px;"><button class="primary-btn" style="width:auto;margin:0;" onclick="impGuardarMedida()">💾 ${momento === 'final' ? acL('Guardar y cerrar la ficha', 'Desar i tancar la fitxa') : acL('Guardar', 'Desar')}</button><button class="link-btn" onclick="renderImpacto('fichas')">${acL('Cancelar', 'Cancel·lar')}</button></div></div>`;
+  document.getElementById('imp-cuerpo').innerHTML = h;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+async function impGuardarMedida(){
+  const ctx = window.__impMedida; if(!ctx) return;
+  const f = (window.__imp.fichas || []).find(x => x.id === ctx.fichaId); if(!f) return;
+  const v = n => { const e = document.querySelector(`input[name="${n}"]:checked`); return e ? e.value : null; };
+  const num = (id, ent) => { const e = document.getElementById(id); if(!e || e.value === '') return null; const x = Number(e.value); return isFinite(x) && x >= 0 ? (ent ? Math.round(x) : x) : null; };
+  const nul = x => x === null ? null : Number(x);
+  const fila = { ficha_id: ctx.fichaId, momento: ctx.momento, tecnico_email: impYo(), fecha: document.getElementById('imp-fecha').value || new Date().toISOString().slice(0, 10),
+    empleo: v('imp-empleo'), ingresos_tramo: nul(v('imp-ingresos')), competencia: nul(v('imp-comp')), autonomia: nul(v('imp-aut')), competencia_digital: nul(v('imp-dig')),
+    horas_formacion: num('imp-horas', false), certificaciones: num('imp-cert', true), satisfaccion: nul(v('imp-sat')) };
+  if(f.consentimiento && (f.areas || []).includes('bienestar')){
+    const w = [0, 1, 2, 3, 4].map(i => v('imp-w' + i)), u = [0, 1, 2].map(i => v('imp-u' + i));
+    const wc = w.filter(x => x !== null).length, uc = u.filter(x => x !== null).length;
+    if((wc && wc < 5) || (uc && uc < 3)){ alert(acL('Faltan respuestas en el cuestionario de bienestar: complétalo o déjalo en blanco.', 'Falten respostes al qüestionari de benestar: completa\'l o deixa\'l en blanc.')); return; }
+    fila.who5_items = wc === 5 ? w.map(Number) : null; fila.ucla3_items = uc === 3 ? u.map(Number) : null;
+  }
+  const buit = ['empleo', 'ingresos_tramo', 'competencia', 'autonomia', 'competencia_digital', 'who5_items', 'ucla3_items', 'satisfaccion', 'horas_formacion', 'certificaciones'].every(k => fila[k] === null || fila[k] === undefined);
+  if(buit){ alert(acL('Rellena al menos un dato.', 'Omple almenys una dada.')); return; }
+  let r;
+  if(ctx.id){ const { ficha_id, momento, ...cambios } = fila; r = await sb.from('impacto_medidas').update(cambios).eq('id', ctx.id); }
+  else r = await sb.from('impacto_medidas').insert(fila);
+  if(r.error){ alert(r.error.message); return; }
+  if(ctx.momento === 'final' && f.estado !== 'cerrada'){
+    const c = await sb.from('impacto_fichas').update({ estado: 'cerrada', cerrado_en: new Date().toISOString() }).eq('id', ctx.fichaId);
+    if(c.error){ alert(c.error.message); return; }
+  }
+  window.__impMedida = null;
+  renderImpacto('fichas');
+}
+
+// ---------- MÉTODO ----------
+function impRenderMetodo(cuerpo){
+  const bloque = (t, html, abierto) => `<details class="imp-det"${abierto ? ' open' : ''}><summary>${t}</summary><div class="imp-det-c">${html}</div></details>`;
+  const tabla = (cab, filas) => `<div class="imp-tabla-w"><table class="imp-tabla"><thead><tr>${cab.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${filas.map(f => `<tr>${f.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  cuerpo.innerHTML = `<div class="imp-hero" style="padding-bottom:18px;"><div class="imp-eyebrow">${acL('Cómo medimos el impacto de Logos', "Com mesurem l'impacte de Logos")}</div>
+    <h2 class="imp-frase">${acL('Medimos a las mismas personas al empezar, al terminar y meses después. Así distinguimos lo que hacemos de lo que cambia en sus vidas.', 'Mesurem les mateixes persones en començar, en acabar i mesos després. Així distingim el que fem del que canvia en les seves vides.')}</h2></div>
+    ${bloque(acL('1. Los cuatro niveles', '1. Els quatre nivells'), tabla([acL('Nivel', 'Nivell'), acL('Pregunta', 'Pregunta'), acL('Dónde lo vemos', 'On ho veiem')], [
+      [acL('Recursos', 'Recursos'), acL('¿Qué invertimos?', 'Què invertim?'), acL('Contabilidad y fichajes', 'Comptabilitat i fitxatges')],
+      [acL('Actividad', 'Activitat'), acL('¿Qué hacemos y a cuántas personas llegamos?', 'Què fem i a quantes persones arribem?'), acL('Bloque «Actividad registrada» del panel', 'Bloc «Activitat registrada» del panell')],
+      [acL('Resultados', 'Resultats'), acL('¿Qué ha cambiado en las personas?', 'Què ha canviat en les persones?'), acL('Fichas de cambio: panel de impacto', "Fitxes de canvi: panell d'impacte")],
+      [acL('Impacto', 'Impacte'), acL('¿Qué cambio sostenido hemos contribuido a generar?', 'Quin canvi sostingut hem contribuït a generar?'), acL('Seguimiento a 6 y 12 meses', 'Seguiment a 6 i 12 mesos')]]), true)}
+    ${bloque(acL('2. Qué es «mejorar» en cada dimensión', '2. Què és «millorar» en cada dimensió'), tabla([acL('Dimensión', 'Dimensió'), acL('Se cuenta como mejora si…', 'Es compta com a millora si…')], [
+      ['💼 ' + acL('Económica', 'Econòmica'), acL('Pasa de sin empleo a empleo, mejora su tipo de contrato (temporal o autónomo → indefinido) o sube de tramo de ingresos.', "Passa de sense feina a feina, millora el tipus de contracte (temporal o autònom → indefinit) o puja de tram d'ingressos.")],
+      ['🎓 ' + acL('Aprendizaje', 'Aprenentatge'), acL('La competencia trabajada sube al menos 1 punto (escala 1-5). Además se suman horas de formación y certificados.', "La competència treballada puja almenys 1 punt (escala 1-5). A més se sumen hores de formació i certificats.")],
+      ['🧭 ' + acL('Autonomía', 'Autonomia'), acL('La autonomía en trámites o la competencia digital suben al menos 1 punto (escala 1-5).', "L'autonomia en tràmits o la competència digital pugen almenys 1 punt (escala 1-5).")],
+      ['💚 ' + acL('Bienestar', 'Benestar'), acL('El WHO-5 sube 10 puntos o más, o la soledad (3-9) baja 1 punto o más. Solo con consentimiento.', 'El WHO-5 puja 10 punts o més, o la solitud (3-9) baixa 1 punt o més. Només amb consentiment.')]]))}
+    ${bloque(acL('3. Indicadores principales', '3. Indicadors principals'), tabla([acL('Indicador', 'Indicador'), acL('Cómo se calcula', 'Com es calcula')], [
+      [acL('% con mejora', '% amb millora'), acL('personas que mejoran en al menos una dimensión ÷ personas con situación inicial y cierre comparables', 'persones que milloren en almenys una dimensió ÷ persones amb situació inicial i tancament comparables')],
+      [acL('% mejora mantenida', '% millora mantinguda'), acL('de quienes mejoraron al cierre, las que siguen mejor que al inicio a los 6 (o 12) meses ÷ las que tienen seguimiento', 'de les que van millorar en el tancament, les que continuen millor que a l\'inici als 6 (o 12) mesos ÷ les que tenen seguiment')],
+      [acL('Inserción laboral', 'Inserció laboral'), acL('personas sin empleo al inicio que tienen empleo al cierre ÷ personas sin empleo al inicio', 'persones sense feina a l\'inici que tenen feina al tancament ÷ persones sense feina a l\'inici')],
+      [acL('Inserción sostenida', 'Inserció sostinguda'), acL('de las insertadas, las que siguen con empleo a los 6 meses', 'de les inserides, les que continuen amb feina als 6 mesos')],
+      [acL('Cobertura', 'Cobertura'), acL('fichas que llegan al cierre y al seguimiento ÷ fichas abiertas', 'fitxes que arriben al tancament i al seguiment ÷ fitxes obertes')]]))}
+    ${bloque(acL('4. Escalas breves (propuesta pendiente de validar por Logos)', '4. Escales breus (proposta pendent de validar per Logos)'),
+      `<p>${acL('<strong>WHO-5</strong> (Organización Mundial de la Salud): 5 afirmaciones sobre las últimas dos semanas, cada una de 0 a 5. Se suman y se multiplican por 4 (0-100). Es de uso gratuito. Un cambio de 10 puntos o más se considera relevante y por debajo de 50 se suele revisar el bienestar; son criterios orientativos, no un diagnóstico.', '<strong>WHO-5</strong> (Organització Mundial de la Salut): 5 afirmacions sobre les últimes dues setmanes, cadascuna de 0 a 5. Se sumen i es multipliquen per 4 (0-100). És d\'ús gratuït. Un canvi de 10 punts o més es considera rellevant i per sota de 50 se sol revisar el benestar; són criteris orientatius, no un diagnòstic.')}</p>
+       <p>${acL('<strong>Escala de soledad de 3 ítems</strong> (versión breve de la escala UCLA, Hughes 2004; la usa la oficina estadística británica como indicador nacional): 3 preguntas de 1 a 3 que se suman (3-9). Desde 6 se habla de soledad alta, también como criterio orientativo.', "<strong>Escala de solitud de 3 ítems</strong> (versió breu de l'escala UCLA, Hughes 2004; l'utilitza l'oficina estadística britànica com a indicador nacional): 3 preguntes d'1 a 3 que se sumen (3-9). A partir de 6 es parla de solitud alta, també com a criteri orientatiu.")}</p>
+       <p class="imp-mini">${acL('La redacción en castellano y catalán es una propuesta de trabajo: conviene que el equipo de psicología de Logos la revise y la fije antes de usarla de forma continuada.', "La redacció en castellà i català és una proposta de treball: convé que l'equip de psicologia de Logos la revisi i la fixi abans d'utilitzar-la de forma continuada.")}</p>`)}
+    ${bloque(acL('5. Cuándo se rellena la ficha', '5. Quan s\'omple la fitxa'), `<ol><li>${acL('<strong>Situación inicial:</strong> en las primeras sesiones, junto con el consentimiento.', '<strong>Situació inicial:</strong> en les primeres sessions, juntament amb el consentiment.')}</li><li>${acL('<strong>Cierre:</strong> al terminar el servicio. Aquí se recoge también la satisfacción.', '<strong>Tancament:</strong> en acabar el servei. Aquí es recull també la satisfacció.')}</li><li>${acL('<strong>Seguimiento a 6 y 12 meses:</strong> una llamada o cita breve. La ficha avisa cuando toca.', '<strong>Seguiment als 6 i 12 mesos:</strong> una trucada o cita breu. La fitxa avisa quan toca.')}</li></ol>`)}
+    ${bloque(acL('6. Privacidad y límites', '6. Privadesa i límits'), `<ul><li>${acL('Cada técnico ve solo sus fichas. Ni la administración ve el contenido: solo cifras agregadas.', "Cada tècnic veu només les seves fitxes. Ni l'administració en veu el contingut: només xifres agregades.")}</li><li>${acL('Las fichas llevan un código o iniciales, nunca el nombre completo.', 'Les fitxes porten un codi o inicials, mai el nom complet.')}</li><li>${acL('Las respuestas emocionales requieren consentimiento y se borran si se retira.', 'Les respostes emocionals requereixen consentiment i s\'esborren si es retira.')}</li><li>${acL('Los grupos de menos de 5 personas no se muestran.', 'Els grups de menys de 5 persones no es mostren.')}</li><li>${acL('Los números muestran que el cambio va asociado al servicio, no que lo cause: otros factores influyen. En los informes se escribe «contribuimos a».', 'Els números mostren que el canvi va associat al servei, no que el causi: altres factors hi influeixen. En els informes s\'escriu «contribuïm a».')}</li></ul>`)}`;
+}
+
+// ================= DELEGACIÓN DEL REPARTO DE ALERTAS =================
+// La administración puede nombrar a quien quiera del equipo para repartir las alertas, de modo que no dependa de una sola persona.
+async function toggleGestorAlertas(email, valor){
+  const s = (window.__staffLista || []).find(x => x.email === email), nombre = (s && s.nombre) || email;
+  const msg = valor
+    ? acL(`¿Delegar en ${nombre} el reparto de alertas?\n\nVerá todas las alertas, podrá pasarlas a cualquier persona del equipo y marcar quién está ausente. No tendrá más permisos.`, `Delegar en ${nombre} el repartiment d'alertes?\n\nVeurà totes les alertes, podrà passar-les a qualsevol persona de l'equip i marcar qui és absent. No tindrà cap altre permís.`)
+    : acL(`¿Quitar a ${nombre} el reparto de alertas?`, `Treure a ${nombre} el repartiment d'alertes?`);
+  if(!confirm(msg)) return;
+  const { error } = await staffCambiar(email, { gestiona_alertas: valor });
+  if(error){ alert(error.message); return; }
+  renderAdministrador();
+}
+// Para quien tiene la delegación: quién está de turno y quién ausente, en su panel
+async function gestorPintarTarjeta(cont){
+  if(!IS_GESTOR || IS_ADMIN || !DELEGACION_OK || !cont) return;
+  try {
+    const r = await sb.from('staff').select('*').order('email', { ascending: true });
+    const hoy = new Date().toISOString().slice(0, 10);
+    const lista = (r.data || []).filter(x => x.activo !== false && x.ambito !== 'jovenes' && !x.es_admin);
+    if(!lista.length || document.getElementById('gestor-tarjeta')) return;
+    cont.insertAdjacentHTML('afterbegin', `<div class="panel-card" id="gestor-tarjeta" style="margin-bottom:14px;">
+      <h3 style="margin-top:0;">🔔 ${acL('Reparto de alertas (delegado por la administración)', 'Repartiment d\'alertes (delegat per l\'administració)')}</h3>
+      <p class="subtle" style="margin:0 0 8px;font-size:12.5px;">${acL('Ves todas las alertas y puedes pasarlas a quien quieras. Si alguien no puede trabajar (baja, ausencia), márcalo aquí y no recibirá alertas en el reparto automático.', 'Veus totes les alertes i pots passar-les a qui vulguis. Si algú no pot treballar (baixa, absència), marca-ho aquí i no rebrà alertes en el repartiment automàtic.')}</p>
+      ${lista.map(x => `<div class="panel-stat-row" style="align-items:center;gap:8px;flex-wrap:wrap;"><span>${escAttr(x.nombre || x.email)}${(x.ausente_hasta && x.ausente_hasta >= hoy) ? ` <span class="chip off">${acL('ausente hasta', 'absent fins')} ${escAttr(x.ausente_hasta)}</span>` : ''}</span>
+        <label style="font-size:11.5px;color:var(--ink-soft);display:flex;gap:4px;align-items:center;">${acL('Ausente hasta', 'Absent fins')} <input type="date" value="${escAttr(x.ausente_hasta || '')}" onchange="gestorAusente('${escAttr(x.email)}', this.value)" style="font-size:12px;padding:2px 4px;"></label></div>`).join('')}</div>`);
+  } catch(e) {}
+}
+async function gestorAusente(email, fecha){
+  const { error } = await staffCambiar(email, { ausente_hasta: fecha || null });
+  if(error){ alert(error.message); return; }
+  renderPanelGeneral();
 }
 
 // ================= PANEL DE LAS PROFESIONALES DE JÓVENES EN ACCIÓN =================
@@ -8797,6 +9415,14 @@ async function enviarAvisoProyecto(proyectoId){
   await verProyecto(proyectoId, { silencioso: true });
 }
 
+// Quién ha fichado hoy: la base entrega a todo el personal solo la hora de entrada y salida de cada persona (nunca la ubicación)
+async function equipoFichajesHoy(hoyIso){
+  try {
+    const r = await sb.rpc('equipo_fichajes_hoy');
+    if(!r.error && Array.isArray(r.data)) return { data: r.data, error: null };
+  } catch(e) {}
+  return await sb.from('fichajes').select('tecnico_email, entrada, salida').gte('entrada', hoyIso);
+}
 async function renderEquipoScreen(){
   const cont = document.getElementById('equipo-content');
   cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
@@ -8807,8 +9433,8 @@ async function renderEquipoScreen(){
   const enPeriodoVacaciones = hoy.getMonth() === 7 && hoy.getDate() <= 15;
 
   const [staffRes, fichajesHoyRes, ocupacionesRes] = await Promise.all([
-    sb.from('staff').select('email, nombre, es_admin').eq('activo', true).order('email', { ascending:true }),
-    sb.from('fichajes').select('tecnico_email, entrada, salida').gte('entrada', hoyIso),
+    sb.from('staff').select('*').order('email', { ascending:true }),
+    equipoFichajesHoy(hoyIso),
     sb.from('fichajes_sala').select('*').is('fin', null)
   ]);
 
@@ -8862,7 +9488,9 @@ async function renderEquipoScreen(){
     return { base: { color:'var(--alert)', texto: LANG_I==='ca' ? '🔴 No disponible' : '🔴 No disponible' }, actividades };
   };
 
-  const data = staffRes.data;
+  // Activa = no marcada como inactiva (una persona con el campo vacío también cuenta como activa, igual que al entrar)
+  const data = (staffRes.data || []).filter(s => s.activo !== false);
+  const soloUna = !!(CURRENT_USER && data.length === 1 && String(data[0].email).toLowerCase() === String(CURRENT_USER.email).toLowerCase());
   const listaHtml = (data && data.length)
     ? data.map(s => {
         const estado = estadoDe(s.email, s.es_admin);
@@ -8879,10 +9507,11 @@ async function renderEquipoScreen(){
   cont.innerHTML = `
     <p class="subtle">${LANG_I==='ca' ? 'El teu equip de Logos.' : 'Tu equipo de Logos.'}</p>
     <div class="panel-card">${listaHtml}</div>
+    ${soloUna ? `<div class="info-box info-box-gold" style="margin-top:12px;">${LANG_I==='ca' ? 'Només et veus a tu. Si hi ha més persones actives, falta executar l\'SQL «equipo-visible» a Supabase perquè tot el personal vegi l\'equip.' : 'Solo te ves a ti. Si hay más personas activas, falta ejecutar el SQL «equipo-visible» en Supabase para que todo el personal vea al equipo.'}</div>` : ''}
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-10 · v25 (Mi gestión personal y horarios del personal)';
+const APP_VERSION_INTRANET = '2026-10-11 · v28 (impacto: ficha de cambio y panel de indicadores)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -9154,7 +9783,7 @@ async function renderPanelGeneral(){
     sb.from('actuaciones').select('*').not('fecha_proxima_revision', 'is', null).lte('fecha_proxima_revision', hoyIso),
     sb.from('actuaciones').select('usuario_id, fecha').order('fecha', { ascending:false }).limit(30),
     sb.from('avisos_intranet').select('*').eq('activo', true).order('creado_en', { ascending:false }).limit(6),
-    sb.from('staff').select('*').eq('activo', true)
+    sb.from('staff').select('*')
   ]);
 
   const totalPersonas = total.data ? total.data.total_personas : 0;
@@ -9262,8 +9891,8 @@ async function renderPanelGeneral(){
   const chipAlerta = n => !REPARTO_OK ? '' : n.para_todos ? `<span class="chip gold" style="font-size:10.5px;">👥 ${acL('Todo el equipo', 'Tot l\'equip')}</span>`
     : n.asignada_a_email ? `<span class="chip ${n.asignada_a_email === CURRENT_USER.email ? 'good' : ''}" style="font-size:10.5px;">→ ${escAttr(nombreAlerta(n.asignada_a_email))}</span>`
     : `<span class="chip" style="font-size:10.5px;">${acL('Sin asignar', 'Sense assignar')}</span>`;
-  const reasignarSel = n => REPARTO_OK ? `<select style="font-size:12px;max-width:140px;" onchange="reasignarAlerta('${n.id}', this.value)"><option value="">${acL('Pasar a…', 'Passar a…')}</option>${(equipoRes.data || []).filter(x => x.email !== n.asignada_a_email && x.ambito !== 'jovenes').map(x => `<option value="${escAttr(x.email)}">${escAttr(x.nombre || x.email)}</option>`).join('')}<option value="__todos__">${acL('Todo el equipo', 'Tot l\'equip')}</option></select>` : '';
-  const interruptorAlertas = (REPARTO_OK && !IS_ADMIN) ? `<div style="display:flex;gap:6px;margin-bottom:8px;">${[[false, acL('Mis alertas', 'Les meves alertes')], [true, acL('Todas', 'Totes')]].map(([v, txt]) => `<button class="link-btn" style="font-size:12px;border:1px solid ${!!window.__alertasTodas === v ? 'var(--gold)' : 'var(--line)'};background:${!!window.__alertasTodas === v ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:2px 11px;" onclick="if(!!window.__alertasTodas !== ${v}) alternarAlertasTodas()">${txt}</button>`).join('')}</div>` : '';
+  const reasignarSel = n => REPARTO_OK ? `<select style="font-size:12px;max-width:140px;" onchange="reasignarAlerta('${n.id}', this.value)"><option value="">${acL('Pasar a…', 'Passar a…')}</option>${(equipoRes.data || []).filter(x => x.activo !== false && x.email !== n.asignada_a_email && x.ambito !== 'jovenes').map(x => `<option value="${escAttr(x.email)}">${escAttr(x.nombre || x.email)}</option>`).join('')}<option value="__todos__">${acL('Todo el equipo', 'Tot l\'equip')}</option></select>` : '';
+  const interruptorAlertas = (REPARTO_OK && !IS_ADMIN && !IS_GESTOR) ? `<div style="display:flex;gap:6px;margin-bottom:8px;">${[[false, acL('Mis alertas', 'Les meves alertes')], [true, acL('Todas', 'Totes')]].map(([v, txt]) => `<button class="link-btn" style="font-size:12px;border:1px solid ${!!window.__alertasTodas === v ? 'var(--gold)' : 'var(--line)'};background:${!!window.__alertasTodas === v ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:2px 11px;" onclick="if(!!window.__alertasTodas !== ${v}) alternarAlertasTodas()">${txt}</button>`).join('')}</div>` : '';
   const notifsHtml = (notifs.data && notifs.data.length)
     ? notifs.data.map(n => `
         <div class="panel-stat-row" style="align-items:flex-start;flex-direction:column;gap:8px;">
@@ -9489,6 +10118,7 @@ async function renderPanelGeneral(){
   actualizarBadgePanel();
   activarBarras();
   gpPintarTarjetas(cont);
+  gestorPintarTarjeta(cont);
 }
 
 // ================= FICHA DE PERSONA =================
@@ -10429,10 +11059,11 @@ async function renderAdministrador(){
   window.__alertasTipos = REPARTO_OK ? ((await sb.from('alertas_tipos').select('*')).data || []) : [];
   const staffHtml = window.__staffLista.map(s => `
     <div class="panel-stat-row" style="align-items:flex-start;gap:8px;flex-wrap:wrap;">
-      <span style="min-width:0;">${s.nombre ? `<strong>${escAttr(s.nombre)}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(s.email)}</span>` : escAttr(s.email)}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}${s.es_rrhh ? ' <span class="chip gold">RR. HH.</span>' : ''}${s.ambito === 'jovenes' ? ` <span class="chip good" style="font-size:10.5px;">🌱 ${acL('Jóvenes en acción', 'Joves en acció')}</span>` : ''}${s.clave_cambiada === false ? ` <span class="chip" style="font-size:10.5px;">🔑 ${acL('contraseña inicial', 'contrasenya inicial')}</span>` : ''}</span>
+      <span style="min-width:0;">${s.nombre ? `<strong>${escAttr(s.nombre)}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(s.email)}</span>` : escAttr(s.email)}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}${s.es_rrhh ? ' <span class="chip gold">RR. HH.</span>' : ''}${s.gestiona_alertas ? ` <span class="chip good" style="font-size:10.5px;">🔔 ${acL('reparte alertas', 'reparteix alertes')}</span>` : ''}${s.ambito === 'jovenes' ? ` <span class="chip good" style="font-size:10.5px;">🌱 ${acL('Jóvenes en acción', 'Joves en acció')}</span>` : ''}${s.clave_cambiada === false ? ` <span class="chip" style="font-size:10.5px;">🔑 ${acL('contraseña inicial', 'contrasenya inicial')}</span>` : ''}</span>
       <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
         <span class="chip ${s.activo === false ? 'off' : 'good'}">${s.activo === false ? t.inactivoLbl : t.activoLbl}</span>
         <button class="link-btn" style="font-size:12px;" onclick="toggleActivoTecnico('${s.email}', ${s.activo === false})">${s.activo === false ? t.reactivar : t.desactivar}</button>
+        ${(DELEGACION_OK && s.activo !== false && !s.es_admin && s.ambito !== 'jovenes') ? `<button class="link-btn" style="font-size:12px;" onclick="toggleGestorAlertas('${s.email}', ${!s.gestiona_alertas})">${s.gestiona_alertas ? acL('Quitar reparto de alertas', 'Treure repartiment d\'alertes') : acL('Delegar reparto de alertas', 'Delegar repartiment d\'alertes')}</button>` : ''}
         ${(GP_OK && s.activo !== false) ? `<button class="link-btn" style="font-size:12px;" onclick="toggleRRHH('${s.email}', ${!s.es_rrhh})">${s.es_rrhh ? acL('Quitar RR. HH.', 'Treure RR. HH.') : acL('Dar RR. HH.', 'Donar RR. HH.')}</button>` : ''}
         <button class="link-btn" style="font-size:12px;" onclick="editarNombreTecnico('${s.email}')">✏️ ${acL('Nombre', 'Nom')}</button>
         ${(JOVENES_OK && !s.es_admin) ? `<select style="font-size:12px;max-width:150px;" title="${acL('Qué parte de la plataforma ve', 'Quina part de la plataforma veu')}" onchange="cambiarAmbitoTecnico('${s.email}', this.value)"><option value="general"${s.ambito !== 'jovenes' ? ' selected' : ''}>${acL('Equipo general', 'Equip general')}</option><option value="jovenes"${s.ambito === 'jovenes' ? ' selected' : ''}>🌱 ${acL('Solo Jóvenes en acción', 'Només Joves en acció')}</option></select>` : ''}
@@ -11094,7 +11725,7 @@ async function cambiarAmbitoTecnico(email, ambito){
   if(ambito === 'jovenes' && !confirm(acL(`¿Dejar a ${nombre} solo con Jóvenes en acción?\n\nVerá únicamente su panel, la gestión de Jóvenes en acción y su fichaje. No verá personas usuarias, expedientes ni contabilidad, y las alertas de la convocatoria le llegarán a su panel.`, `Deixar ${nombre} només amb Joves en acció?\n\nVeurà únicament el seu panell, la gestió de Joves en acció i el seu fitxatge. No veurà persones usuàries, expedients ni comptabilitat, i les alertes de la convocatòria li arribaran al seu panell.`))){ renderAdministrador(); return; }
   const cambios = { ambito };
   if(ambito === 'jovenes') cambios.orden_alertas = null;     // sale del turno general
-  const { error } = await sb.from('staff').update(cambios).eq('email', email);
+  const { error } = await staffCambiar(email, cambios);
   if(error){ alert(error.message); return; }
   if(ambito === 'jovenes') await repartoRenumerar(repartoTurnoActual().filter(x => x.email !== email));
   renderAdministrador();
