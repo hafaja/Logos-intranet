@@ -7,14 +7,14 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon-180x180.png">
-<meta name="theme-color" content="#17181C">
+<meta name="theme-color" content="#1E3F66">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Mulish:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#F7F7F5; --paper:#FFFFFF; --ink:#17181C; --ink-soft:#6B6E76; --line:#E7E7E3;
-    --navy:#17181C; --navy-dark:#000000; --gold:#F4B400; --gold-soft:#FDF0CC;
+    --bg:#FAF8F2; --paper:#FFFFFF; --ink:#262A33; --ink-soft:#6A675E; --line:#E6E0CF;
+    --navy:#1E3F66; --navy-dark:#16304F; --gold:#F2BC2C; --gold-soft:#FDF0C2;
     --alert:#C0392B; --alert-soft:#FBE4E1;
     --good:#2E8B47; --good-soft:#DFF3E3;
     --shadow:0 1px 2px rgba(0,0,0,.04), 0 12px 26px -12px rgba(0,0,0,.14);
@@ -47,8 +47,43 @@
   .sidebar nav button{text-align:left;background:none;border:none;color:rgba(255,255,255,.75);font-family:var(--font-body);font-weight:700;font-size:12px;padding:8px 12px;border-radius:8px;cursor:pointer;transition:background .15s;width:100%;}
   .nav-grupo{display:flex;flex-direction:column;gap:2px;}
   .rol-oculto{display:none !important;}
+
+  /* ===== Nóminas ===== */
+  .nom-hero{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:linear-gradient(135deg,#1E3F66 0%,#2A5182 100%);color:#fff;border-radius:20px;padding:24px 28px;margin-bottom:18px;box-shadow:var(--shadow);}
+  .nom-eyebrow{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--gold);}
+  .nom-nueva{background:var(--gold);color:#16304F;border-radius:999px;padding:2px 9px;font-size:10.5px;letter-spacing:0;margin-left:6px;}
+  .nom-titulo{font-family:var(--font-display);font-weight:600;font-size:32px;line-height:1.1;margin:6px 0 4px;}
+  .nom-sub{font-size:12.5px;color:rgba(255,255,255,.75);}
+  .nom-abrir{background:var(--gold);color:#16304F;border:none;border-radius:999px;padding:13px 24px;font-family:var(--font-body);font-weight:800;font-size:14.5px;cursor:pointer;}
+  .nom-abrir:hover{background:#E5AC12;}
+  .nom-anios{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+  .nom-anio{font-family:var(--font-body);font-weight:800;font-size:13px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:7px 16px;cursor:pointer;}
+  .nom-anio.on{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .nom-cuenta{font-size:12px;color:var(--ink-soft);margin-left:6px;}
+  .nom-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px;}
+  .nom-mes{position:relative;border-radius:14px;padding:12px 12px 10px;text-align:left;font-family:var(--font-body);border:1.5px solid var(--line);background:var(--paper);}
+  .nom-mes-n{font-weight:800;font-size:14px;color:var(--ink);}
+  .nom-mes-e{font-size:11.5px;font-weight:700;color:var(--ink-soft);margin-top:4px;min-height:16px;}
+  .nom-mes.ok{cursor:pointer;box-shadow:var(--shadow);transition:transform .12s,border-color .12s;}
+  .nom-mes.ok:hover{transform:translateY(-2px);border-color:var(--navy);}
+  .nom-mes.ok .nom-mes-e{color:var(--good);}
+  .nom-mes.nueva{background:var(--gold-soft);border-color:var(--gold);}
+  .nom-mes.nueva .nom-mes-e{color:#6E5000;}
+  .nom-punto{display:inline-block;width:8px;height:8px;border-radius:50%;background:#E2A812;margin-right:6px;}
+  .nom-mes.vacio{background:transparent;border-style:dashed;}
+  .nom-mes.vacio .nom-mes-n{color:var(--ink-soft);font-weight:700;}
+  .nom-mes.futuro{opacity:.5;}
+  .nom-mas{position:absolute;top:8px;right:10px;font-size:11px;font-weight:800;color:var(--navy);}
+  .nom-det{margin-top:16px;background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:4px 16px;}
+  .nom-det summary{cursor:pointer;font-weight:800;font-size:13px;padding:10px 0;}
+  .nom-fila{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px;}
+  .nom-fila-s{font-size:11.5px;color:var(--ink-soft);}
+  .nom-priv{font-size:11.5px;color:var(--ink-soft);margin-top:16px;line-height:1.5;}
+  .nom-vacio{background:var(--gold-soft);border-radius:16px;padding:28px;text-align:center;font-size:14px;line-height:1.6;}
+  @media (max-width:640px){ .nom-hero{padding:20px 18px;} .nom-titulo{font-size:26px;} .nom-grid{grid-template-columns:repeat(3,1fr);} .nom-abrir{width:100%;} }
+
   /* ===== Impacto ===== */
-  #screen-impacto{--imp-ante:#B4B8C0; --imp-desp:#2A78D6;}
+  #screen-impacto{--imp-ante:#B3AC96; --imp-desp:#2A5182;}
   .imp-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
   .imp-tab{font-family:var(--font-body);font-weight:800;font-size:13px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:7px 15px;cursor:pointer;}
   .imp-tab.on{background:var(--navy);border-color:var(--navy);color:#fff;}
@@ -58,7 +93,7 @@
   .imp-busca{min-width:170px;}
   .imp-chip{font-family:var(--font-body);font-weight:700;font-size:12px;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--ink);}
   .imp-chip.on{background:var(--gold-soft);border-color:var(--gold);}
-  .imp-hero{background:linear-gradient(135deg,#17181C 0%,#2B2E36 100%);color:#fff;border-radius:20px;padding:26px 28px;margin-bottom:22px;box-shadow:var(--shadow);}
+  .imp-hero{background:linear-gradient(135deg,#1E3F66 0%,#2A5182 100%);color:#fff;border-radius:20px;padding:26px 28px;margin-bottom:22px;box-shadow:var(--shadow);}
   .imp-eyebrow{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--gold);}
   .imp-frase{font-family:var(--font-display);font-weight:600;font-size:23px;line-height:1.3;margin:8px 0 20px;max-width:760px;}
   .imp-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:18px;}
@@ -77,7 +112,7 @@
   .imp-card-v{min-height:38px;display:flex;align-items:center;}
   .imp-card-s{font-size:12px;color:var(--ink-soft);margin-top:2px;font-weight:700;}
   .imp-crit{font-size:11.5px;color:var(--ink-soft);margin-top:8px;line-height:1.45;}
-  .imp-na{font-size:11.5px;font-weight:700;color:var(--ink-soft);background:#F0F0EC;border-radius:999px;padding:3px 10px;}
+  .imp-na{font-size:11.5px;font-weight:700;color:var(--ink-soft);background:#EFEBDD;border-radius:999px;padding:3px 10px;}
   .imp-leyenda{display:flex;gap:16px;font-size:12px;font-weight:700;margin-bottom:12px;color:var(--ink-soft);}
   .imp-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;}
   .imp-dot.ante,.imp-bar.ante,.imp-col-b i.ante{background:var(--imp-ante);}
@@ -91,7 +126,7 @@
   .imp-mini{font-size:12px;color:var(--ink-soft);line-height:1.5;margin-top:10px;}
   .imp-cob{display:grid;grid-template-columns:minmax(130px,200px) 1fr 40px;gap:12px;align-items:center;padding:6px 0;}
   .imp-cob-l{font-size:12.5px;font-weight:700;}
-  .imp-cob-b{background:#F0F0EC;border-radius:0 6px 6px 0;height:12px;}
+  .imp-cob-b{background:#EFEBDD;border-radius:0 6px 6px 0;height:12px;}
   .imp-cob-b .imp-bar{height:12px;}
   .imp-cob-v{font-size:13px;font-weight:800;text-align:right;}
   .imp-serie{display:flex;gap:6px;align-items:flex-end;height:150px;}
@@ -110,7 +145,7 @@
   .imp-ficha-h{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;}
   .imp-sub{font-size:12px;color:var(--ink-soft);}
   .imp-pasos{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;}
-  .imp-paso{font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 10px;background:#F0F0EC;color:var(--ink-soft);}
+  .imp-paso{font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 10px;background:#EFEBDD;color:var(--ink-soft);}
   .imp-paso.ok{background:var(--good-soft);color:var(--good);}
   .imp-acc{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
   .imp-form{margin-bottom:16px;}
@@ -151,7 +186,7 @@
   .sidebar-logout:hover{border-color:var(--alert);color:#fff;}
 
   /* Área principal */
-  .main{flex:1;min-width:0;display:flex;flex-direction:column;min-height:100vh;border-top:6px solid;border-image:linear-gradient(to right, #16151A 55%, var(--gold)) 1;}
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;min-height:100vh;border-top:6px solid;border-image:linear-gradient(to right, var(--navy) 55%, var(--gold)) 1;}
   .main-content{max-width:1080px;width:100%;margin:0 auto;padding:44px 56px 70px;flex:1;}
   #screen-login .main-content{max-width:440px;padding-top:8vh;}
 
@@ -237,6 +272,36 @@
   .chip.gold{background:var(--gold-soft);color:#7A5A16;}
   .chip.good{background:var(--good-soft);color:var(--good);}
   .chip.off{background:#EEE;color:#888;}
+  .chip.bad{background:#FBE3E0;color:#A32A1E;}
+  /* ---- Jóvenes en acción ---- */
+  .ja-resumen:not(:empty){margin-top:14px;}
+  .ja-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 14px;}
+  .ja-kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px 13px;border-top:3px solid var(--gold);}
+  .ja-kpi-t{font-size:11.5px;font-weight:700;color:var(--ink-soft);}
+  .ja-kpi-v{font-family:var(--font-display);font-size:26px;font-weight:700;color:var(--navy,#1E3F66);line-height:1.15;margin:2px 0;}
+  .ja-kpi-s{font-size:11.5px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ja-barra{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 12px;}
+  .ja-act{display:flex;gap:12px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;}
+  .ja-act.cerrada{opacity:.72;background:#FAF8F2;}
+  .ja-fecha{flex:0 0 54px;height:58px;border-radius:12px;background:var(--navy,#1E3F66);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;}
+  .ja-fecha b{font-family:var(--font-display);font-size:22px;} .ja-fecha span{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#F2BC2C;}
+  .ja-act.cerrada .ja-fecha{background:#8C97A6;}
+  .ja-act-c{flex:1;min-width:0;}
+  .ja-act-h{display:flex;gap:6px;align-items:center;flex-wrap:wrap;} .ja-act-h strong{font-size:15.5px;margin-right:2px;}
+  .ja-act-m{font-size:12.5px;color:var(--ink-soft);margin:4px 0 6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  .ja-prog{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;}
+  .ja-prog-b{flex:1 1 120px;max-width:260px;height:8px;border-radius:999px;background:#E6E0CF;overflow:hidden;} .ja-prog-b i{display:block;height:100%;background:#1E3F66;border-radius:999px;}
+  .ja-mas{margin-top:8px;font-size:13px;} .ja-mas summary{cursor:pointer;color:var(--navy,#1E3F66);font-weight:700;font-size:12.5px;}
+  .ja-dato{margin-top:4px;} .ja-dato span{display:inline-block;min-width:130px;color:var(--ink-soft);font-weight:700;font-size:12px;}
+  .ja-acc{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);}
+  .ja-intro{margin-top:14px;background:#FDF0C2;border-radius:12px;padding:10px 14px;font-size:13px;} .ja-intro summary{cursor:pointer;font-weight:700;} .ja-intro p{margin:8px 0 0;}
+  .ja-fam{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;}
+  .ja-fam-h{display:flex;gap:10px;align-items:center;margin-bottom:6px;flex-wrap:wrap;} .ja-fam-a{display:flex;gap:10px;align-items:center;}
+  .ja-av{flex:0 0 38px;height:38px;border-radius:50%;background:#FDF0C2;color:#1E3F66;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px;}
+  .ja-hijo{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 0 7px 48px;border-top:1px solid var(--line);}
+  .ja-hijo-c{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  @media(max-width:560px){.ja-hijo{padding-left:0;}.ja-fecha{flex-basis:46px;height:52px;}}
+
   .resultado-btn{flex:1;border:1.5px solid var(--line);background:var(--paper);border-radius:10px;padding:9px 6px;font-family:var(--font-body);font-weight:700;font-size:12px;cursor:pointer;color:var(--ink-soft);}
   .resultado-btn.sel-good{background:var(--good);color:#fff;border-color:var(--good);}
   .resultado-btn.sel-gold{background:var(--gold);color:#fff;border-color:var(--gold);}
@@ -1472,8 +1537,55 @@ function jaiError(cont, err){
 
 function jaiTabsHtml(){
   const esCA = LANG_I === 'ca';
-  const b = (id, txt) => `<button class="link-btn" style="${__jaiTab===id?'font-weight:700;text-decoration:underline;':''}" onclick="renderJovenesScreen('${id}')">${txt}</button>`;
-  return `<div style="display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap;">${b('actividades', '🗓️ ' + (esCA?'Activitats':'Actividades'))}${b('salida', '🚪 ' + (esCA?'Sortir sol/a':'Salir solo/a'))}${b('menores', '👨‍👩‍👧 ' + (esCA?'Famílies i menors':'Familias y menores'))}</div>`;
+  const b = (id, txt) => `<button class="imp-tab${__jaiTab === id ? ' on' : ''}" onclick="renderJovenesScreen('${id}')">${txt}</button>`;
+  return `<div class="imp-tabs">${b('actividades', '🗓️ ' + (esCA?'Activitats':'Actividades'))}${b('menores', '👨‍👩‍👧 ' + (esCA?'Famílies i menors':'Familias y menores'))}${b('salida', '🚪 ' + (esCA?'Sortir sol/a':'Salir solo/a'))}</div><div id="ja-resumen" class="ja-resumen"></div>`;
+}
+
+// ---------- resumen con cifras (arriba en todas las pestañas y en el inicio de las profesionales) ----------
+function jaiDiasHasta(iso){
+  if(!iso) return null;
+  const f = new Date(String(iso).slice(0, 10) + 'T00:00:00'), h = new Date(); h.setHours(0, 0, 0, 0);
+  return Math.round((f.getTime() - h.getTime()) / 86400000);
+}
+function jaiCuenta(dias, esCA){
+  if(dias === null) return '';
+  if(dias === 0) return esCA ? 'avui' : 'hoy';
+  if(dias === 1) return esCA ? 'demà' : 'mañana';
+  if(dias < 0) return esCA ? `fa ${-dias} dies` : `hace ${-dias} días`;
+  return esCA ? `d'aquí ${dias} dies` : `en ${dias} días`;
+}
+async function jaiResumenDatos(){
+  const [act, aut, men, sal] = await Promise.all([
+    sb.from('actividades_jovenes').select('id, titulo, fecha_salida, estado'),
+    sb.from('autorizaciones_familiares').select('actividad_id, menor_id, estado'),
+    sb.from('menores_familia').select('id, familiar_usuario_id'),
+    sb.from('autorizaciones_salida').select('menor_id, estado, fecha_inicio')
+  ]);
+  if(act.error || aut.error || men.error || sal.error) return null;
+  const hoy = new Date().toISOString().slice(0, 10);
+  const abiertas = (act.data || []).filter(a => a.estado === 'abierta' && (!a.fecha_salida || a.fecha_salida >= hoy)).sort((a, b) => String(a.fecha_salida || '9').localeCompare(String(b.fecha_salida || '9')));
+  const prox = abiertas.find(a => a.fecha_salida) || null;
+  const menores = men.data || [];
+  const autProx = prox ? new Set((aut.data || []).filter(x => x.actividad_id === prox.id && x.estado === 'autorizada').map(x => x.menor_id)).size : 0;
+  const solos = new Set((sal.data || []).filter(s => s.estado === 'vigente' && jaSalidaEstado(s) === 'vigente').map(s => s.menor_id)).size;
+  return { abiertas: abiertas.length, prox, autProx, menores: menores.length, familias: new Set(menores.map(m => m.familiar_usuario_id)).size, solos };
+}
+function jaiResumenHtml(d){
+  const esCA = LANG_I === 'ca';
+  if(!d) return '';
+  const k = (ic, t, v, sub) => `<div class="ja-kpi"><div class="ja-kpi-t">${ic} ${t}</div><div class="ja-kpi-v">${v}</div><div class="ja-kpi-s">${sub}</div></div>`;
+  const dias = d.prox ? jaiDiasHasta(d.prox.fecha_salida) : null;
+  const pend = d.prox ? Math.max(0, d.menores - d.autProx) : 0;
+  return `<div class="ja-kpis">
+    ${k('🗓️', esCA ? 'Activitats obertes' : 'Actividades abiertas', d.abiertas, esCA ? 'amb data per venir' : 'con fecha por venir')}
+    ${k('⏭️', esCA ? 'Propera sortida' : 'Próxima salida', d.prox ? jaFecha(d.prox.fecha_salida, esCA).slice(0, 5) : '—', d.prox ? escAttr(d.prox.titulo) + ' · ' + jaiCuenta(dias, esCA) : (esCA ? 'cap de programada' : 'ninguna programada'))}
+    ${k('✅', esCA ? 'Autoritzacions' : 'Autorizaciones', d.prox ? d.autProx + ' / ' + d.menores : '—', d.prox ? (pend ? `${pend} ${esCA ? 'menors pendents' : 'menores pendientes'}` : (esCA ? 'tot signat' : 'todo firmado')) : (esCA ? 'de la propera sortida' : 'de la próxima salida'))}
+    ${k('👨‍👩‍👧', esCA ? 'Famílies' : 'Familias', d.familias, `${d.menores} ${esCA ? 'menors registrats' : 'menores registrados'}`)}
+    ${k('🚪', esCA ? 'Poden sortir sols/soles' : 'Pueden salir solos/as', d.solos + ' / ' + d.menores, esCA ? 'amb autorització vigent' : 'con autorización vigente')}</div>`;
+}
+async function jaiResumenPintar(){
+  const host = document.getElementById('ja-resumen'); if(!host) return;
+  try { host.innerHTML = jaiResumenHtml(await jaiResumenDatos()); } catch(e) {}
 }
 
 async function renderJovenesScreen(tab){
@@ -1483,23 +1595,78 @@ async function renderJovenesScreen(tab){
   if(__jaiTab === 'menores') await renderJovenesMenores(cont);
   else if(__jaiTab === 'salida') await renderJovenesSalida(cont);
   else await renderJovenesActividades(cont);
+  jaiResumenPintar();
 }
 
+let __jaiFiltro = 'abiertas';
+function jaiPlazoChip(a, esCA){
+  if(!a.plazo_autorizacion || a.estado !== 'abierta') return '';
+  const d = jaiDiasHasta(a.plazo_autorizacion);
+  if(d === null) return '';
+  const txt = d < 0 ? (esCA ? 'Termini vençut' : 'Plazo vencido') : (esCA ? `Termini: ${jaFecha(a.plazo_autorizacion, esCA).slice(0, 5)} · ${jaiCuenta(d, esCA)}` : `Plazo: ${jaFecha(a.plazo_autorizacion, esCA).slice(0, 5)} · ${jaiCuenta(d, esCA)}`);
+  return `<span class="chip ${d < 0 ? 'bad' : (d <= 3 ? 'gold' : 'off')}">⏳ ${txt}</span>`;
+}
+function jaiDetallesHtml(a, esCA){
+  const D = JA_DOC[esCA ? 'ca' : 'es'];
+  const dato = (etq, val) => val ? `<div class="ja-dato"><span>${escAttr(etq)}</span>${escAttr(val)}</div>` : '';
+  return `${dato(D.puntoSalida, a.punto_salida)}${dato(D.puntoRegreso, a.punto_regreso)}${dato(D.transporte, a.transporte)}${dato(D.queLlevar, a.que_llevar)}${dato(D.plazoAut, a.plazo_autorizacion ? jaFecha(a.plazo_autorizacion, esCA) : '')}${a.descripcion ? `<div class="ja-dato" style="display:block;margin-top:6px;">${escAttr(a.descripcion)}</div>` : ''}`;
+}
+function jaiTarjetaActividad(a, c, totalMenores, esCA){
+  const D = JA_DOC[esCA ? 'ca' : 'es'];
+  const abierta = a.estado === 'abierta';
+  const f = a.fecha_salida ? new Date(a.fecha_salida + 'T00:00:00') : null;
+  const dia = f ? f.getDate() : '—', mes = f ? f.toLocaleDateString(esCA ? 'ca-ES' : 'es-ES', { month: 'short' }).replace('.', '') : '';
+  const dias = f ? jaiDiasHasta(a.fecha_salida) : null;
+  const horario = (a.hora_salida || a.hora_regreso) ? `${a.hora_salida || '—'} → ${a.hora_regreso || '—'}` : '';
+  const pct = totalMenores ? Math.min(100, Math.round(c.ok / totalMenores * 100)) : 0;
+  const detalles = jaiDetallesHtml(a, esCA);
+  return `<div class="ja-act${abierta ? '' : ' cerrada'}">
+    <div class="ja-fecha"><b>${dia}</b><span>${mes}</span></div>
+    <div class="ja-act-c">
+      <div class="ja-act-h"><strong>${escAttr(a.titulo)}</strong>
+        <span class="chip gold">${escAttr(jaTipoLabel(a.tipo, a.tipo_otro, esCA))}</span>
+        <span class="chip ${abierta ? 'good' : 'off'}">${abierta ? (esCA ? 'Oberta' : 'Abierta') : (esCA ? 'Tancada' : 'Cerrada')}</span>
+        ${a.formulario_completo ? `<span class="chip gold">${esCA ? 'Formulari complet' : 'Formulario completo'}</span>` : ''}</div>
+      <div class="ja-act-m">${a.lugar ? '📍 ' + escAttr(a.lugar) : ''}${horario ? ' · 🕘 ' + escAttr(horario) : ''}${(abierta && dias !== null && dias >= 0) ? ' · <strong>' + jaiCuenta(dias, esCA) + '</strong>' : ''} ${jaiPlazoChip(a, esCA)}</div>
+      <div class="ja-prog" title="${c.ok} ${esCA ? 'autoritzades' : 'autorizadas'}"><div class="ja-prog-b"><i style="width:${pct}%"></i></div>
+        <span>${totalMenores ? `<strong>${c.ok}</strong> ${esCA ? 'de' : 'de'} ${totalMenores} ${esCA ? 'menors han autoritzat' : 'menores han autorizado'}` : `<strong>${c.ok}</strong> ${esCA ? 'autoritzades' : 'autorizadas'}`}${c.rev ? ` · ${c.rev} ${esCA ? 'revocades' : 'revocadas'}` : ''}</span></div>
+      ${detalles ? `<details class="ja-mas"><summary>${esCA ? 'Veure detalls' : 'Ver detalles'}</summary>${detalles}</details>` : ''}
+      <div class="ja-acc">
+        <button class="link-btn" onclick="verAutorizacionesActividad('${a.id}')">📋 ${esCA ? 'Veure autoritzacions' : 'Ver autorizaciones'}</button>
+        <button class="link-btn" onclick="abrirFormActividad('${a.id}')">✏️ ${esCA ? 'Editar' : 'Editar'}</button>
+        <button class="link-btn" onclick="cambiarEstadoActividad('${a.id}','${abierta ? 'cerrada' : 'abierta'}')">${abierta ? (esCA ? 'Tancar' : 'Cerrar') : (esCA ? 'Reobrir' : 'Reabrir')}</button>
+        <button class="link-btn" style="color:var(--alert);" onclick="borrarActividadJovenes('${a.id}',${c.ok + c.rev})">${esCA ? 'Esborrar' : 'Borrar'}</button>
+      </div></div></div>`;
+}
+function jaiPintarActividades(){
+  const esCA = LANG_I === 'ca', box = document.getElementById('ja-lista'); if(!box) return;
+  const todas = __jaiActividades || [], conteo = window.__jaiConteo || {}, total = window.__jaiTotalMenores || 0;
+  let lista = todas.slice();
+  if(__jaiFiltro === 'abiertas') lista = lista.filter(a => a.estado === 'abierta');
+  else if(__jaiFiltro === 'cerradas') lista = lista.filter(a => a.estado !== 'abierta');
+  lista.sort((a, b) => {
+    const ao = a.estado === 'abierta', bo = b.estado === 'abierta';
+    if(ao !== bo) return ao ? -1 : 1;
+    const x = String(a.fecha_salida || '9999'), y = String(b.fecha_salida || '9999');
+    return ao ? x.localeCompare(y) : y.localeCompare(x);
+  });
+  box.innerHTML = lista.length ? lista.map(a => jaiTarjetaActividad(a, conteo[a.id] || { ok: 0, rev: 0 }, total, esCA)).join('')
+    : `<div class="empty-note">${todas.length ? (esCA ? 'Cap activitat en aquesta vista.' : 'Ninguna actividad en esta vista.') : (esCA ? 'Encara no hi ha activitats. Crea la primera amb el botó de dalt.' : 'Todavía no hay actividades. Crea la primera con el botón de arriba.')}</div>`;
+}
 async function renderJovenesActividades(cont){
   const esCA = LANG_I === 'ca'; const T = JA_TEXTOS[esCA ? 'ca' : 'es'];
-  const [act, aut] = await Promise.all([
+  const [act, aut, men] = await Promise.all([
     sb.from('actividades_jovenes').select('*').order('fecha_salida', { ascending:false }),
-    sb.from('autorizaciones_familiares').select('actividad_id, estado')
+    sb.from('autorizaciones_familiares').select('actividad_id, estado'),
+    sb.from('menores_familia').select('id')
   ]);
+  const fil = [['abiertas', esCA ? 'Obertes' : 'Abiertas'], ['cerradas', esCA ? 'Tancades' : 'Cerradas'], ['todas', esCA ? 'Totes' : 'Todas']];
   cont.innerHTML = jaiTabsHtml() + `
-    <div class="panel-card">
-      <h3 style="margin-top:0;">🌱 ${T.jovenesTitulo}</h3>
-      <p style="margin:0 0 8px;font-size:13.5px;line-height:1.55;">${T.jovenesTexto}</p>
-      <p class="subtle" style="margin:0;"><strong>${T.enPocas}:</strong> ${T.lema}</p>
-    </div>
-    <div style="margin:14px 0;"><button class="primary-btn" style="width:auto;margin:0;" onclick="abrirFormActividad()">➕ ${esCA?'Nova activitat':'Nueva actividad'}</button></div>
+    <div class="ja-barra"><button class="primary-btn" style="width:auto;margin:0;" onclick="abrirFormActividad()">➕ ${esCA?'Nova activitat':'Nueva actividad'}</button><span style="flex:1"></span>
+      ${fil.map(([k, t]) => `<button class="imp-chip${__jaiFiltro === k ? ' on' : ''}" onclick="__jaiFiltro='${k}';jaiPintarActividades();document.querySelectorAll('.ja-barra .imp-chip').forEach(b => b.classList.toggle('on', b.dataset.k === '${k}'))" data-k="${k}">${t}</button>`).join('')}</div>
     <div id="ja-form-wrap"></div>
-    <div id="ja-lista"></div>`;
+    <div id="ja-lista"></div>
+    <details class="ja-intro"><summary>🌱 ${esCA ? 'Què és Joves en acció' : 'Qué es Jóvenes en acción'}</summary><p>${T.jovenesTexto}</p><p class="subtle" style="margin:0;"><strong>${T.enPocas}:</strong> ${T.lema}</p></details>`;
   const err = act.error || aut.error;
   if(err){ jaiError(document.getElementById('ja-lista'), err); return; }
   __jaiActividades = act.data || [];
@@ -1508,24 +1675,8 @@ async function renderJovenesActividades(cont){
     if(!conteo[x.actividad_id]) conteo[x.actividad_id] = { ok:0, rev:0 };
     if(x.estado === 'autorizada') conteo[x.actividad_id].ok++; else conteo[x.actividad_id].rev++;
   });
-  document.getElementById('ja-lista').innerHTML = __jaiActividades.length ? __jaiActividades.map(a => {
-    const c = conteo[a.id] || { ok:0, rev:0 };
-    const abierta = a.estado === 'abierta';
-    return `<div class="panel-card" style="margin-bottom:12px;">
-      ${tarjetaActividadHtml(a, esCA)}
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0;">
-        <span style="background:${abierta?'var(--good-soft)':'#EEE'};color:${abierta?'var(--good)':'#777'};border-radius:999px;padding:2px 10px;font-size:11.5px;font-weight:700;">${abierta ? (esCA?'Oberta':'Abierta') : (esCA?'Tancada':'Cerrada')}</span>
-        ${a.formulario_completo ? `<span style="background:var(--gold-soft);border-radius:999px;padding:2px 10px;font-size:11.5px;font-weight:700;">${esCA?'Formulari complet':'Formulario completo'}</span>` : ''}
-        <span class="subtle" style="margin:0;font-size:12px;">✓ ${c.ok} ${esCA?'autoritzades':'autorizadas'}${c.rev ? ` · ${c.rev} ${esCA?'revocades':'revocadas'}` : ''}</span>
-      </div>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;">
-        <button class="link-btn" onclick="verAutorizacionesActividad('${a.id}')">📋 ${esCA?'Veure autoritzacions':'Ver autorizaciones'}</button>
-        <button class="link-btn" onclick="abrirFormActividad('${a.id}')">✏️ ${esCA?'Editar':'Editar'}</button>
-        <button class="link-btn" onclick="cambiarEstadoActividad('${a.id}','${abierta?'cerrada':'abierta'}')">${abierta ? (esCA?'Tancar':'Cerrar') : (esCA?'Reobrir':'Reabrir')}</button>
-        <button class="link-btn" style="color:var(--alert);" onclick="borrarActividadJovenes('${a.id}',${c.ok + c.rev})">${esCA?'Esborrar':'Borrar'}</button>
-      </div>
-    </div>`;
-  }).join('') : `<div class="empty-note">${esCA?'Encara no hi ha activitats. Crea la primera amb el botó de dalt.':'Todavía no hay actividades. Crea la primera con el botón de arriba.'}</div>`;
+  window.__jaiConteo = conteo; window.__jaiTotalMenores = men.error ? 0 : (men.data || []).length;
+  jaiPintarActividades();
 }
 
 function abrirFormActividad(id){
@@ -1695,9 +1846,9 @@ async function renderJovenesMenores(cont){
   if(men.error || aut.error || sal.error){ jaiError(box, men.error || aut.error || sal.error); return; }
   const salidaDe = {};
   (sal.data || []).forEach(s => { salidaDe[s.menor_id] = s; });
-  const chipSalida = id => { const s = salidaDe[id]; if(!s) return `<span style="background:#EEE;color:#777;border-radius:999px;padding:1px 9px;font-size:11px;">🚪 ${esCA?'No pot sortir sol/a':'No puede salir solo/a'}</span>`;
-    return jaSalidaEstado(s) === 'futura' ? `<span style="background:var(--gold-soft);color:#7A4A1F;border-radius:999px;padding:1px 9px;font-size:11px;">🚪 ${esCA?'A partir del':'A partir del'} ${jaFecha(s.fecha_inicio, esCA)}</span>`
-      : `<span style="background:var(--good-soft);color:var(--good);border-radius:999px;padding:1px 9px;font-size:11px;font-weight:700;">🚪 ${esCA?'Pot sortir sol/a':'Puede salir solo/a'}</span>`; };
+  const chipSalida = id => { const s = salidaDe[id]; if(!s) return `<span class="chip off">🚪 ${esCA?'No pot sortir sol/a':'No puede salir solo/a'}</span>`;
+    return jaSalidaEstado(s) === 'futura' ? `<span class="chip gold">🚪 ${esCA?'A partir del':'A partir del'} ${jaFecha(s.fecha_inicio, esCA)}</span>`
+      : `<span class="chip good">🚪 ${esCA?'Pot sortir sol/a':'Puede salir solo/a'}</span>`; };
   const lista = men.data || [];
   const ids = [...new Set(lista.map(m => m.familiar_usuario_id))];
   let fam = {};
@@ -1709,17 +1860,28 @@ async function renderJovenesMenores(cont){
   (aut.data || []).forEach(x => { if(x.estado === 'autorizada') nAut[x.menor_id] = (nAut[x.menor_id] || 0) + 1; });
   const porFamilia = {};
   lista.forEach(m => { (porFamilia[m.familiar_usuario_id] = porFamilia[m.familiar_usuario_id] || []).push(m); });
-  box.innerHTML = (lista.length ? `<div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><button class="primary-btn" style="width:auto;margin:0;" onclick="jmAbrir({audiencia:'todas'})">💬 ${esCA?'Escriure a les famílies':'Escribir a las familias'}</button></div>` : '') + (lista.length ? Object.entries(porFamilia).map(([fid, ms]) => {
+  window.__jaiFam = { porFamilia, fam, nAut, chipSalida, esCA };
+  box.innerHTML = lista.length ? `<div class="ja-barra"><div class="field" style="flex:1;min-width:200px;margin:0;"><input type="text" placeholder="🔎 ${esCA?'Cerca família o menor…':'Buscar familia o menor…'}" oninput="jaiPintarFamilias(this.value)"></div>
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="jmAbrir({audiencia:'todas'})">💬 ${esCA?'Escriure a les famílies':'Escribir a las familias'}</button></div><div id="ja-fam-lista"></div>`
+    : `<div class="empty-note">${esCA?'Encara no hi ha cap família amb menors registrats.':'Todavía no hay ninguna familia con menores registrados.'}</div>`;
+  if(lista.length) jaiPintarFamilias('');
+}
+function jaiPintarFamilias(texto){
+  const { porFamilia, fam, nAut, chipSalida, esCA } = window.__jaiFam || {};
+  const host = document.getElementById('ja-fam-lista'); if(!host) return;
+  const q = (texto || '').trim().toLowerCase();
+  const ini = n => (String(n || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('') || '?').toUpperCase();
+  const filas = Object.entries(porFamilia).filter(([fid, ms]) => !q || String((fam[fid] || {}).nombre_completo || '').toLowerCase().includes(q) || ms.some(m => String(m.nombre_completo || '').toLowerCase().includes(q)))
+    .sort((x, y) => String((fam[x[0]] || {}).nombre_completo || 'zzz').localeCompare(String((fam[y[0]] || {}).nombre_completo || 'zzz')));
+  host.innerHTML = filas.length ? filas.map(([fid, ms]) => {
     const f = fam[fid] || {};
-    return `<div class="panel-card" style="margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-        <h3 style="margin:0;">${escAttr(f.nombre_completo || (esCA?'Sense nom':'Sin nombre'))}</h3>
-        <span style="display:flex;gap:10px;align-items:center;"><button class="link-btn" style="font-size:12px;color:#1E9E52;" onclick="jmAbrir({familiaId:'${fid}',audiencia:'una'})">💬 ${esCA?'Escriure':'Escribir'}</button><button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${fid}','jovenes')">${TI[LANG_I].verInfoCompleta}</button></span>
-      </div>
-      ${f.telefono ? `<div class="subtle" style="margin:2px 0 6px;">📞 ${escAttr(f.telefono)}</div>` : ''}
-      ${ms.map(m => `<div class="panel-stat-row"><span><strong>${escAttr(m.nombre_completo)}</strong>${m.fecha_nacimiento ? ` <span class="subtle" style="font-size:12px;">· ${jaEdad(m.fecha_nacimiento)} ${esCA?'anys':'años'}</span>` : ''}</span><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">${chipSalida(m.id)}<span class="subtle" style="font-size:12px;">${nAut[m.id] || 0} ${esCA?'activitats':'actividades'}</span></span></div>`).join('')}
+    return `<div class="ja-fam">
+      <div class="ja-fam-h"><span class="ja-av">${escAttr(ini(f.nombre_completo))}</span>
+        <div style="flex:1;min-width:0;"><strong>${escAttr(f.nombre_completo || (esCA?'Sense nom':'Sin nombre'))}</strong>${f.telefono ? `<div class="subtle" style="margin:0;font-size:12px;">📞 ${escAttr(f.telefono)}</div>` : ''}</div>
+        <span class="ja-fam-a"><button class="link-btn" style="font-size:12px;color:#1E9E52;" onclick="jmAbrir({familiaId:'${fid}',audiencia:'una'})">💬 ${esCA?'Escriure':'Escribir'}</button><button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${fid}','jovenes')">${TI[LANG_I].verInfoCompleta}</button></span></div>
+      ${ms.map(m => `<div class="ja-hijo"><span class="ja-hijo-n"><strong>${escAttr(m.nombre_completo)}</strong>${m.fecha_nacimiento ? ` <span class="subtle" style="font-size:12px;">· ${jaEdad(m.fecha_nacimiento)} ${esCA?'anys':'años'}</span>` : ''}</span><span class="ja-hijo-c">${chipSalida(m.id)}<span class="subtle" style="font-size:12px;margin:0;">${nAut[m.id] || 0} ${esCA?'activitats':'actividades'}</span></span></div>`).join('')}
     </div>`;
-  }).join('') : `<div class="empty-note">${esCA?'Encara no hi ha cap família amb menors registrats.':'Todavía no hay ninguna familia con menores registrados.'}</div>`);
+  }).join('') : `<div class="empty-note">${esCA?'Cap resultat.':'Sin resultados.'}</div>`;
 }
 
 // ---- Pestaña "Salir solo/a": quién puede salir solo/a del centro ----
@@ -1776,7 +1938,7 @@ function renderListaSalida(texto){
         ${botonesContacto(s.telefono, s.familiar_nombre)}
       </div>
       <div style="font-size:13px;margin-top:4px;">${esCA?'Des del':'Desde el'} <strong>${jaFecha(s.fecha_inicio, esCA)}</strong> · ${escAttr(s.familiar_nombre)} · 📞 ${escAttr(s.telefono || '—')}</div>
-      <div class="subtle" style="font-size:11.5px;margin:3px 0 0;">${esCA?'Signada el':'Firmada el'} ${new Date(s.firmado_en).toLocaleString(esCA?'ca-ES':'es-ES')}${s.estado === 'revocada' ? ` · ${s.revocacion_motivo === 'sustituida' ? (esCA?'substituïda per una de nova':'sustituida por una nueva') : (esCA?'revocada':'revocada')} ${s.revocado_en ? jaFecha(s.revocado_en, esCA) : ''}` : ''}</div>
+      <div class="subtle" style="font-size:11.5px;margin:3px 0 0;">${esCA?'Signada el':'Firmada el'} ${s.firmado_en && !isNaN(new Date(s.firmado_en)) ? new Date(s.firmado_en).toLocaleString(esCA?'ca-ES':'es-ES') : '—'}${s.estado === 'revocada' ? ` · ${s.revocacion_motivo === 'sustituida' ? (esCA?'substituïda per una de nova':'sustituida por una nueva') : (esCA?'revocada':'revocada')} ${s.revocado_en ? jaFecha(s.revocado_en, esCA) : ''}` : ''}</div>
       <button class="link-btn" style="font-size:12px;margin-top:4px;" onclick="descargarSalidaStaff('${s.id}')">📄 PDF</button>
     </div>`;
   const seccion = (titulo, color, items, render) => items.length ? `<div class="section-label" style="margin-top:16px;color:${color};">${titulo} (${items.length})</div>${items.map(render).join('')}` : '';
@@ -6788,13 +6950,38 @@ async function gpRenderNominas(cuerpo){
   const { data, error } = await sb.from('personal_nominas').select('*').eq('persona_email', gpYo()).order('anio', { ascending: false }).order('mes', { ascending: false });
   if(error){ cuerpo.innerHTML = gpAviso(escAttr(error.message)); return; }
   window.__gpDatos.nominas = data || [];
-  if(!data.length){ cuerpo.innerHTML = `<div class="empty-note">${acL('Todavía no tienes nóminas publicadas. Cuando RR. HH. las suba, aparecerán aquí.', 'Encara no tens nòmines publicades. Quan RR. HH. les pugi, apareixeran aquí.')}</div>`; return; }
-  const anios = [...new Set(data.map(n => n.anio))];
-  cuerpo.innerHTML = anios.map(a => `<div class="panel-card" style="margin-bottom:12px;"><h3 style="margin-top:0;">${a}</h3>${data.map((n, i) => n.anio !== a ? '' : `
-      <div class="panel-stat-row" style="align-items:center;gap:8px;flex-wrap:wrap;">
-        <span><strong>${escAttr(gpMes(n.mes))}</strong>${n.concepto ? ` · ${escAttr(n.concepto)}` : ''}${n.visto_en ? '' : ` <span class="chip good" style="font-size:10.5px;">${acL('Nueva', 'Nova')}</span>`}<br><span class="subtle" style="font-size:11px;margin:0;">${acL('Publicada el', 'Publicada el')} ${gpFecha(n.subido_en)}</span></span>
-        <button class="link-btn" onclick="gpAbrirNomina(${i})">⬇️ ${acL('Abrir', 'Obrir')}</button>
-      </div>`).join('')}</div>`).join('');
+  if(!data.length){ cuerpo.innerHTML = `<div class="nom-vacio"><div style="font-size:34px;">🧾</div><strong>${acL('Todavía no tienes nóminas publicadas', 'Encara no tens nòmines publicades')}</strong><br>${acL('Cuando RR. HH. las suba, aparecerán aquí y te avisaremos.', 'Quan RR. HH. les pugi, apareixeran aquí i t\'avisarem.')}</div>`; return; }
+  const anios = [...new Set(data.map(n => n.anio))].sort((a, b) => b - a);
+  if(!window.__gpAnio || !anios.includes(window.__gpAnio)) window.__gpAnio = anios[0];
+  const anio = window.__gpAnio, ultima = data[0], nuevas = data.filter(n => !n.visto_en).length;
+  const corto = m => ({ es: ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic', 'Paga verano', 'Paga Navidad'], ca: ['', 'Gen', 'Febr', 'Març', 'Abr', 'Maig', 'Juny', 'Jul', 'Ag', 'Set', 'Oct', 'Nov', 'Des', 'Paga estiu', 'Paga Nadal'] })[LANG_I === 'ca' ? 'ca' : 'es'][m] || String(m);
+  const delAnio = data.filter(n => n.anio === anio);
+  const porMes = {}; delAnio.forEach(n => { (porMes[n.mes] = porMes[n.mes] || []).push(n); });
+  const meses = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].concat([13, 14].filter(m => porMes[m]));
+  const hoy = new Date(), esteAnio = hoy.getFullYear(), mesActual = hoy.getMonth() + 1;
+  const idx = n => data.indexOf(n);
+  const baldosa = m => {
+    const lista = porMes[m];
+    if(!lista) {
+      const futuro = anio > esteAnio || (anio === esteAnio && m > mesActual && m <= 12);
+      return `<div class="nom-mes vacio${futuro ? ' futuro' : ''}" title="${futuro ? '' : escAttr(acL('Aún no publicada', 'Encara no publicada'))}"><div class="nom-mes-n">${corto(m)}</div><div class="nom-mes-e">${futuro ? '' : '—'}</div></div>`;
+    }
+    const n = lista[0], nueva = lista.some(x => !x.visto_en);
+    return `<button class="nom-mes ok${nueva ? ' nueva' : ''}" onclick="gpAbrirNomina(${idx(n)})" title="${escAttr(acL('Abrir la nómina de ', 'Obrir la nòmina de ') + gpMes(m) + ' ' + anio)}">
+      <div class="nom-mes-n">${corto(m)}</div><div class="nom-mes-e">${nueva ? `<span class="nom-punto"></span>${acL('Nueva', 'Nova')}` : '✔ ' + acL('Vista', 'Vista')}</div>${lista.length > 1 ? `<div class="nom-mas">+${lista.length - 1}</div>` : ''}</button>`;
+  };
+  const hayVarias = Object.values(porMes).some(l => l.length > 1) || delAnio.some(n => n.concepto);
+  cuerpo.innerHTML = `
+    <section class="nom-hero"><div>
+      <div class="nom-eyebrow">${acL('Tu última nómina', 'La teva darrera nòmina')}${ultima.visto_en ? '' : ` <span class="nom-nueva">${acL('Nueva', 'Nova')}</span>`}</div>
+      <div class="nom-titulo">${escAttr(gpMes(ultima.mes))} ${ultima.anio}</div>
+      <div class="nom-sub">${acL('Publicada el', 'Publicada el')} ${gpFecha(ultima.subido_en)}${nuevas > 1 ? ' · ' + acL(`${nuevas} nóminas sin abrir`, `${nuevas} nòmines sense obrir`) : ''}</div></div>
+      <button class="nom-abrir" onclick="gpAbrirNomina(0)">⬇️ ${acL('Abrir PDF', 'Obrir PDF')}</button></section>
+    <div class="nom-anios">${anios.map(a => `<button class="nom-anio${a === anio ? ' on' : ''}" onclick="window.__gpAnio=${a};renderGestionPersonal('nominas')">${a}</button>`).join('')}<span class="nom-cuenta">${delAnio.length} ${acL(delAnio.length === 1 ? 'nómina' : 'nóminas', delAnio.length === 1 ? 'nòmina' : 'nòmines')}</span></div>
+    <div class="nom-grid">${meses.map(baldosa).join('')}</div>
+    ${hayVarias ? `<details class="nom-det" ${Object.values(porMes).some(l => l.length > 1) ? 'open' : ''}><summary>${acL('Ver detalle de', 'Veure detall de')} ${anio}</summary>${delAnio.map(n => `<div class="nom-fila"><span><strong>${escAttr(gpMes(n.mes))}</strong>${n.concepto ? ' · ' + escAttr(n.concepto) : ''}<br><span class="nom-fila-s">${acL('Publicada el', 'Publicada el')} ${gpFecha(n.subido_en)}${n.visto_en ? ' · ' + acL('vista el', 'vista el') + ' ' + gpFecha(n.visto_en) : ''}</span></span>
+      <button class="link-btn" onclick="gpAbrirNomina(${idx(n)})">⬇️ ${acL('Abrir', 'Obrir')}</button></div>`).join('')}</details>` : ''}
+    <p class="nom-priv">🔒 ${acL('Solo tú ves tus nóminas. Los PDF se abren con un enlace que caduca al minuto y cada apertura queda anotada en un registro que consulta RR. HH.', 'Només tu veus les teves nòmines. Els PDF s\'obren amb un enllaç que caduca al minut i cada obertura queda anotada en un registre que consulta RR. HH.')}</p>`;
 }
 async function gpAbrirNomina(i){
   const n = (window.__gpDatos.nominas || [])[i]; if(!n) return;
@@ -7800,7 +7987,7 @@ async function renderPanelJovenes(){
         </span>
       </div>`).join('') : `<div class="empty-note">${t.noHayAlertas}</div>`;
   const actsHtml = (acts.data && acts.data.length) ? acts.data.map(a => `
-      <div class="panel-stat-row"><span><strong>${escAttr(a.titulo)}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${a.fecha_salida ? new Date(a.fecha_salida + 'T00:00:00').toLocaleDateString(t.localeFecha) : ''}${a.lugar ? ' · ' + escAttr(a.lugar) : ''}</span></span><span class="chip good">${firmadas[a.id] || 0} ${acL('autorizaciones', 'autoritzacions')}</span></div>`).join('')
+      <div class="panel-stat-row"><span><strong>${escAttr(a.titulo)}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${a.fecha_salida ? new Date(a.fecha_salida + 'T00:00:00').toLocaleDateString(t.localeFecha) : ''}${a.lugar ? ' · ' + escAttr(a.lugar) : ''}</span></span><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;"><span class="chip good">${firmadas[a.id] || 0} ${(firmadas[a.id] || 0) === 1 ? acL('autorización', 'autorització') : acL('autorizaciones', 'autoritzacions')}</span><span class="chip gold">${jaiCuenta(jaiDiasHasta(a.fecha_salida), ca)}</span></span></div>`).join('')
     : `<div class="empty-note">${acL('No hay actividades próximas abiertas.', 'No hi ha activitats pròximes obertes.')}</div>`;
   cont.innerHTML = `
     <div class="panel-card">
@@ -7811,9 +7998,11 @@ async function renderPanelJovenes(){
         <button class="link-btn" onclick="showScreen('miespacio');renderMiEspacio()">${acL('Mi espacio (fichaje)', 'El meu espai (fitxatge)')}</button>
       </div>
     </div>
+    <div id="ja-resumen" class="ja-resumen"></div>
     <div class="panel-card"><h3>🔔 ${acL('Alertas de la convocatoria', 'Alertes de la convocatòria')} (${alertas.length})</h3>${alertasHtml}</div>
     <div class="panel-card"><h3>📅 ${acL('Próximas actividades', 'Properes activitats')}</h3>${actsHtml}</div>`;
   gpPintarTarjetas(cont);
+  jaiResumenPintar();
 }
 
 // ================= JÓVENES EN ACCIÓN · COMUNICACIÓN CON LAS FAMILIAS =================
@@ -9511,7 +9700,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-11 · v28 (impacto: ficha de cambio y panel de indicadores)';
+const APP_VERSION_INTRANET = '2026-10-11 · v30 (panel Jóvenes en acción retocado)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
