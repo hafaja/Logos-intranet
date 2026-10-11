@@ -275,6 +275,13 @@
   .chip.bad{background:#FBE3E0;color:#A32A1E;}
   /* ---- Jóvenes en acción ---- */
   .ja-resumen:not(:empty){margin-top:14px;}
+  .plegable{background:#fff;border:1px solid var(--line);border-radius:14px;margin:0 0 12px;overflow:hidden;}
+  .plegable>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 16px;font-weight:800;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--navy);}
+  .plegable>summary::-webkit-details-marker{display:none;}
+  .plegable>summary::after{content:'▾';font-size:14px;color:var(--ink-soft);transition:transform .15s;margin-left:auto;}
+  .plegable[open]>summary::after{transform:rotate(180deg);}
+  .plegable-n{background:var(--gold-soft);color:#7A5A16;border-radius:999px;padding:2px 10px;font-size:11.5px;letter-spacing:0;}
+  .plegable-c{padding:0 14px 12px;}
   .sala-resv{margin-top:8px;padding:5px 8px;border-radius:8px;background:#EAF1F8;border:1px solid #BCD0E6;font-size:11.5px;color:var(--ink);line-height:1.35;}
   .ja-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 14px;}
   .ja-kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px 13px;border-top:3px solid var(--gold);}
@@ -2777,11 +2784,15 @@ async function renderMiEspacio(){
       ${topServicios.map(([s,v]) => barRow(s, v, maxServicio)).join('')}
     </div>` : ''}
 
-    <div class="section-label">${t.tusUltimasActuaciones}</div>
-    ${actuacionesRecientesHtml}
+    <details class="plegable" ${plegableAbierto('mi-actuaciones') ? 'open' : ''} ontoggle="plegableGuardar('mi-actuaciones', this.open)">
+      <summary><span>${t.tusUltimasActuaciones}</span><span class="plegable-n">${totalCountAct}</span></summary>
+      <div class="plegable-c">${actuacionesRecientesHtml}</div>
+    </details>
 
-    <div class="section-label" style="margin-top:16px;">${t.tusUltimasAtenciones}</div>
-    ${recientesHtml}
+    <details class="plegable" ${plegableAbierto('mi-atenciones') ? 'open' : ''} ontoggle="plegableGuardar('mi-atenciones', this.open)">
+      <summary><span>${t.tusUltimasAtenciones}</span><span class="plegable-n">${totalCount}</span></summary>
+      <div class="plegable-c">${recientesHtml}</div>
+    </details>
 
     <button class="primary-btn" style="background:none;border:1.5px solid var(--alert);color:var(--alert);margin-top:20px;" onclick="cerrarSesion()">${t.cerrarSesion}</button>
   `;
@@ -2794,6 +2805,10 @@ async function renderMiEspacio(){
   animateNumber(document.getElementById('num-total-act'), totalCountAct);
   activarBarras();
 }
+
+// Secciones plegables: se recuerda en este navegador si la persona las dejó abiertas (si no se puede guardar, quedan cerradas).
+function plegableAbierto(clave){ try { return localStorage.getItem('plegable:' + clave) === '1'; } catch(e){ return false; } }
+function plegableGuardar(clave, abierto){ try { localStorage.setItem('plegable:' + clave, abierto ? '1' : '0'); } catch(e){} }
 
 // ================= REGISTRAR ATENCIÓN =================
 
@@ -9774,7 +9789,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-11 · v32 (salas: reservas por franja y plazas exclusivas)';
+const APP_VERSION_INTRANET = '2026-10-11 · v33 (Mi espacio: actuaciones y atenciones plegables)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
