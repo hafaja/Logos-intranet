@@ -275,6 +275,7 @@
   .chip.bad{background:#FBE3E0;color:#A32A1E;}
   /* ---- Jóvenes en acción ---- */
   .ja-resumen:not(:empty){margin-top:14px;}
+  .sala-resv{margin-top:8px;padding:5px 8px;border-radius:8px;background:#EAF1F8;border:1px solid #BCD0E6;font-size:11.5px;color:var(--ink);line-height:1.35;}
   .ja-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 14px;}
   .ja-kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px 13px;border-top:3px solid var(--gold);}
   .ja-kpi-t{font-size:11.5px;font-weight:700;color:var(--ink-soft);}
@@ -1235,11 +1236,27 @@ async function ficharSalida(id){
   renderMiEspacio();
 }
 
-const PLAZAS_ATENCION = [
-  { id:'1A', label:'1A' }, { id:'1B', label:'1B' }, { id:'1C', label:'1C' }, { id:'1D', label:'1D' },
-  { id:'2', label:'2' },
-  { id:'3', label:'3' }
+// Salas de Logos. "plazas" son los puestos que se pueden ocupar por separado; las salas con una sola plaza
+// se ocupan enteras. Para cambiar una sala (añadir una plaza, renombrarla) solo hay que tocar esta lista.
+const SALAS_LOGOS = [
+  { id:'1', es:'Sala 1',                      ca:'Sala 1',                    plazas:['1A','1B','1C','1D'] },
+  { id:'2', es:'Sala 2',                      ca:'Sala 2',                    plazas:['2A','2B','2C','2D'] },
+  { id:'3', es:'Sala 3',                      ca:'Sala 3',                    plazas:['3'] },
+  { id:'4', es:'Sala 4',                      ca:'Sala 4',                    plazas:['4A','4B'] },
+  { id:'5', es:'Sala 5 · Dirección',          ca:'Sala 5 · Direcció',         plazas:['5A','5B'] },
+  { id:'6', es:'Sala 6 · Reuniones',          ca:'Sala 6 · Reunions',         plazas:['6'] },
+  { id:'7', es:'Sala 7 · Informática',        ca:'Sala 7 · Informàtica',      plazas:['7'] },
+  { id:'8', es:'Sala 8 · Jóvenes en acción',  ca:'Sala 8 · Joves en acció',   plazas:['8'] }
 ];
+const PLAZAS_ATENCION = SALAS_LOGOS.flatMap(sl => sl.plazas.map(id => ({ id, label:id, sala:sl.id })));
+const salaDePlaza = id => SALAS_LOGOS.find(sl => sl.plazas.includes(id));
+const nombreSala = sl => LANG_I === 'ca' ? sl.ca : sl.es;
+// "2B" → "Sala 2 · plaza 2B"; una sala de una sola plaza se muestra solo con el nombre de la sala.
+function nombrePlaza(id){
+  const sl = salaDePlaza(id);
+  if(!sl) return id;
+  return sl.plazas.length === 1 ? nombreSala(sl) : `${nombreSala(sl)} · ${LANG_I === 'ca' ? 'plaça' : 'plaza'} ${id}`;
+}
 
 // ================= JÓVENES EN ACCIÓN · FAMILIAS (bloque común a Acompanya e Intranet) =================
 // Si Logos cambia el modelo de autorización, solo hay que tocar JA_DOC (textos) y autorizacionDocHtml() (maquetación).
@@ -2068,6 +2085,7 @@ const HORAS_MAX_OCUPACION = 12;
 function ocupacionObsoleta(o){
   if(!SALAS_VALIDAS.includes(o.sala)) return true;
   const horas = (Date.now() - new Date(o.inicio).getTime()) / 3600000;
+  if(!o.fin && o.fin_previsto && new Date(o.fin_previsto).getTime() < Date.now()) return true; // la franja reservada ya terminó
   return horas >= HORAS_MAX_OCUPACION; // una reserva futura da horas negativas: no es obsoleta
 }
 
@@ -2084,6 +2102,7 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
   (staffList || []).forEach(s => { if(s.nombre) __mapaNombresTecnicos[s.email] = s.nombre; });
 
   const ocupacionPorPlaza = {};
+  const reservasPorPlaza = {};
   let reunionMia = null;
   let ocupacionMiaActual = null; // algo que YA está en curso ahora mismo (impide empezar otra cosa AHORA)
   const misObsoletas = [];
@@ -2098,88 +2117,110 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
       if(o.tecnico_email === CURRENT_USER.email && enCursoYa) reunionMia = o;
     } else {
       // Si hay más de una fila para la misma plaza (no debería), nos quedamos con la que ya está en curso.
-      if(!ocupacionPorPlaza[o.sala] || enCursoYa) ocupacionPorPlaza[o.sala] = o;
+      if(enCursoYa) ocupacionPorPlaza[o.sala] = o;
+      else (reservasPorPlaza[o.sala] = reservasPorPlaza[o.sala] || []).push(o);   // reservas futuras: pueden ser varias por plaza
     }
     if(o.tecnico_email === CURRENT_USER.email && enCursoYa) ocupacionMiaActual = o;
   });
   window.__ocupacionMiaActual = ocupacionMiaActual;
   window.__misOcupacionesObsoletas = misObsoletas;
   window.__ocupacionPorPlaza = ocupacionPorPlaza;
+  window.__reservasPorPlaza = reservasPorPlaza;
 
   const horaFmt = iso => new Date(iso).toLocaleTimeString(esCA?'ca-ES':'es-ES', { hour:'2-digit', minute:'2-digit' });
   const fechaHoraFmt = iso => new Date(iso).toLocaleString(esCA?'ca-ES':'es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
 
-  // Sala 1 se puede bloquear entera (reunión/evento) en vez de plaza por plaza: si las 4 plazas
-  // pertenecen al mismo bloqueo (mismo técnico, mismo inicio, mismo motivo), se muestra como una sola tarjeta.
-  const plazasSala1 = ['1A','1B','1C','1D'];
-  const ocupacionesSala1 = plazasSala1.map(id => ocupacionPorPlaza[id]).filter(Boolean);
-  const bloqueSala1Completo = ocupacionesSala1.length === 4 && ocupacionesSala1.every(o =>
-    (o.motivo || '') === (ocupacionesSala1[0].motivo || '') &&
-    o.tecnico_email === ocupacionesSala1[0].tecnico_email &&
-    o.inicio === ocupacionesSala1[0].inicio
-  );
+  // Cualquier sala con varias plazas se puede bloquear entera (reunión/evento) en vez de plaza por plaza: si todas sus
+  // plazas pertenecen al mismo bloqueo (mismo técnico, mismo inicio, mismo motivo), se muestra como una sola tarjeta.
+  const bloqueDe = sl => {
+    if(sl.plazas.length < 2) return null;
+    const oc = sl.plazas.map(id => ocupacionPorPlaza[id]).filter(Boolean);
+    if(oc.length !== sl.plazas.length) return null;
+    const ok = oc.every(o => (o.motivo || '') === (oc[0].motivo || '') && o.tecnico_email === oc[0].tecnico_email && o.inicio === oc[0].inicio);
+    return ok ? oc[0] : null;
+  };
+  const bloques = {};
+  SALAS_LOGOS.forEach(sl => { bloques[sl.id] = bloqueDe(sl); });
+  // Bloqueos futuros de sala entera: todas las plazas reservadas con el mismo técnico, franja y motivo.
+  const bloquesFuturos = {}, filasDeBloque = new Set();
+  SALAS_LOGOS.filter(sl => sl.plazas.length > 1).forEach(sl => {
+    const grupos = {};
+    sl.plazas.forEach(id => (reservasPorPlaza[id] || []).filter(r => r.motivo).forEach(r => {
+      const k = [r.tecnico_email, r.inicio, r.fin_previsto || '', r.motivo].join('|');
+      (grupos[k] = grupos[k] || []).push(r);
+    }));
+    bloquesFuturos[sl.id] = Object.values(grupos).filter(g => g.length === sl.plazas.length).map(g => { g.forEach(r => filasDeBloque.add(r.id)); return g[0]; })
+      .sort((a, b) => a.inicio.localeCompare(b.inicio));
+  });
+  const reservasPlaza = id => (reservasPorPlaza[id] || []).filter(r => !filasDeBloque.has(r.id)).sort((a, b) => a.inicio.localeCompare(b.inicio));
+  const franja = r => `${fechaHoraFmt(r.inicio)}${r.fin_previsto ? '–' + horaFmt(r.fin_previsto) : ''}`;
+  const reservasHtmlPlaza = id => reservasPlaza(id).map(r => `<div class="sala-resv">🔵 ${franja(r)}<br>${nombreTecnico(r.tecnico_email)}${r.tecnico_email === CURRENT_USER.email ? ` · <a href="#" onclick="cancelarReservaPlaza('${r.id}');return false;" style="color:var(--alert);">${esCA?'cancel·lar':'cancelar'}</a>` : ''}</div>`).join('');
+  const reservasHtmlSala = sl => (bloquesFuturos[sl.id] || []).map(r => `
+      <div class="panel-card" style="background:#EAF1F8;border-color:#2E5A8F;margin-bottom:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span>🔵 <strong>${esCA?'Sala completa reservada':'Sala completa reservada'}</strong> · ${franja(r)} · ${escAttr(r.motivo || '')} · ${nombreTecnico(r.tecnico_email)}</span>
+        ${r.tecnico_email === CURRENT_USER.email ? `<button class="link-btn" style="color:var(--alert);" onclick="cancelarBloqueoFuturo('${sl.id}','${r.inicio}')">${esCA?'Cancel·lar reserva':'Cancelar reserva'}</button>` : ''}
+      </div>`).join('');
+  const tituloPlaza = id => { const sl = salaDePlaza(id); return `<h3 style="text-align:center;">${sl && sl.plazas.length === 1 ? nombreSala(sl) : id}</h3>`; };
 
   const tarjetaPlaza = (plazaId) => {
     const ocup = ocupacionPorPlaza[plazaId];
     if(!ocup){
       return `
       <div class="panel-card" style="text-align:center;background:var(--good-soft);border-color:var(--good);">
-        <h3 style="text-align:center;">${plazaId}</h3>
+        ${tituloPlaza(plazaId)}
         <p style="margin:0 0 12px;font-size:13.5px;">🟢 ${esCA?'Lliure':'Libre'}</p>
         <button class="primary-btn" style="margin-bottom:6px;" onclick="iniciarAtencionSala('${plazaId}')">${esCA?'Començar ara':'Empezar ahora'}</button>
         <button class="link-btn" onclick="abrirReservaPlaza('${plazaId}')">📅 ${esCA?'Reservar per a més tard':'Reservar para más tarde'}</button>
+        ${reservasHtmlPlaza(plazaId)}
       </div>`;
     }
     const esMia = ocup.tecnico_email === CURRENT_USER.email;
-    const esReserva = ocup.inicio > ahoraIso;
-    if(esReserva){
-      return `
-      <div class="panel-card" style="text-align:center;background:#EAF1F8;border-color:#2E5A8F;">
-        <h3 style="text-align:center;">${plazaId}</h3>
-        <p style="margin:0 0 4px;font-size:13.5px;">🔵 ${esCA?'Reservada':'Reservada'}</p>
-        <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-soft);">${nombreTecnico(ocup.tecnico_email)}${esCA?' · per a ':' · para '}${fechaHoraFmt(ocup.inicio)}</p>
-        ${esMia ? `<button class="link-btn" style="color:var(--alert);" onclick="cancelarReservaPlaza('${ocup.id}')">${esCA?'Cancel·lar reserva':'Cancelar reserva'}</button>` : ''}
-      </div>`;
-    }
     return `
       <div class="panel-card" style="text-align:center;background:${esMia?'var(--gold-soft)':'var(--alert-soft)'};border-color:${esMia?'var(--gold)':'var(--alert)'};">
-        <h3 style="text-align:center;">${plazaId}</h3>
+        ${tituloPlaza(plazaId)}
         <p style="margin:0 0 4px;font-size:13.5px;">🔴 ${esCA?'Ocupada':'Ocupada'}</p>
         <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-soft);">${nombreTecnico(ocup.tecnico_email)}${esCA?' · des de les ':' · desde las '}${horaFmt(ocup.inicio)}</p>
         ${esMia
           ? `<button class="primary-btn" style="background:var(--alert);" onclick="abrirNotaAtencion('${ocup.id}','${plazaId}')">${esCA?'Finalitzar atenció':'Finalizar atención'}</button>`
           : `<p class="subtle" style="margin:0;">${esCA?'En ús per un altre tècnic':'En uso por otro técnico'}</p>`}
+        ${reservasHtmlPlaza(plazaId)}
       </div>`;
   };
 
-  const sala1Html = bloqueSala1Completo
-    ? (() => {
-        const o = ocupacionesSala1[0];
-        const esMio = o.tecnico_email === CURRENT_USER.email;
-        const esFuturo = o.inicio > ahoraIso;
-        return `
-        <div class="panel-card" style="text-align:center;background:${esFuturo?'#EAF1F8':'var(--alert-soft)'};border-color:${esFuturo?'#2E5A8F':'var(--alert)'};">
-          <h3 style="text-align:center;">${esCA?'Sala 1 completa':'Sala 1 completa'}</h3>
-          <p style="margin:0 0 4px;font-size:13.5px;">${esFuturo ? '🔵 '+(esCA?'Reservada':'Reservada') : '🔴 '+(esCA?'Ocupada':'Ocupada')} — ${o.motivo || (esCA?'Reunió / esdeveniment':'Reunión / evento')}</p>
-          <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-soft);">${nombreTecnico(o.tecnico_email)} · ${esFuturo ? fechaHoraFmt(o.inicio) : horaFmt(o.inicio)}</p>
-          ${esMio
-            ? `<button class="primary-btn" style="background:var(--alert);" onclick="finalizarBloqueoSala1()">${esCA?'Finalitzar bloqueig':'Finalizar bloqueo'}</button>`
-            : `<p class="subtle" style="margin:0;">${esCA?'Bloquejada per un altre tècnic':'Bloqueada por otro técnico'}</p>`}
-        </div>`;
-      })()
-    : PLAZAS_ATENCION.filter(p => p.id.startsWith('1')).map(p => tarjetaPlaza(p.id)).join('');
-
-  // Este aviso siempre ocupa su propia fila entera, fuera de la tira horizontal de tarjetas.
-  const sala1BloqueoPromptHtml = bloqueSala1Completo ? '' : `
+  const tarjetaBloqueo = sl => {
+    const o = bloques[sl.id];
+    const esMio = o.tecnico_email === CURRENT_USER.email;
+    const esFuturo = o.inicio > ahoraIso;
+    return `
+      <div class="panel-card" style="text-align:center;background:${esFuturo?'#EAF1F8':'var(--alert-soft)'};border-color:${esFuturo?'#2E5A8F':'var(--alert)'};">
+        <h3 style="text-align:center;">${esCA?'Sala completa':'Sala completa'} · ${nombreSala(sl)}</h3>
+        <p style="margin:0 0 4px;font-size:13.5px;">${esFuturo ? '🔵 '+(esCA?'Reservada':'Reservada') : '🔴 '+(esCA?'Ocupada':'Ocupada')} — ${o.motivo || (esCA?'Reunió / esdeveniment':'Reunión / evento')}</p>
+        <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-soft);">${nombreTecnico(o.tecnico_email)} · ${esFuturo ? fechaHoraFmt(o.inicio) : horaFmt(o.inicio)}</p>
+        ${esMio
+          ? `<button class="primary-btn" style="background:var(--alert);" onclick="finalizarBloqueoSala('${sl.id}')">${esCA?'Finalitzar bloqueig':'Finalizar bloqueo'}</button>`
+          : `<p class="subtle" style="margin:0;">${esCA?'Bloquejada per un altre tècnic':'Bloqueada por otro técnico'}</p>`}
+      </div>`;
+  };
+  // Tarjetas de una sala: el bloqueo entero si lo hay, o una tarjeta por plaza.
+  const tarjetasSala = sl => bloques[sl.id] ? tarjetaBloqueo(sl) : sl.plazas.map(tarjetaPlaza).join('');
+  // Este aviso siempre ocupa su propia fila entera, fuera de la tira horizontal de tarjetas. Solo en salas con varias plazas.
+  const promptBloqueoSala = sl => (sl.plazas.length < 2 || bloques[sl.id]) ? '' : `
       <div class="panel-card" style="text-align:center;margin-bottom:14px;">
-        <p style="margin:0 0 8px;font-size:12.5px;color:var(--ink-soft);">${esCA?'Reunió o esdeveniment que ocupi tota la Sala 1:':'Reunión o evento que ocupe toda la Sala 1:'}</p>
+        <p style="margin:0 0 8px;font-size:12.5px;color:var(--ink-soft);">${esCA?'Reunió o esdeveniment que ocupi tota la sala:':'Reunión o evento que ocupe toda la sala:'} <strong>${nombreSala(sl)}</strong></p>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-          <button class="primary-btn" style="width:auto;margin:0;" onclick="bloquearSala1Ahora()">🔒 ${esCA?'Bloquejar ara':'Bloquear ahora'}</button>
-          <button class="link-btn" onclick="abrirBloqueoSala1(false)">📅 ${esCA?'Reservar per a més tard':'Reservar para más tarde'}</button>
+          <button class="primary-btn" style="width:auto;margin:0;" onclick="bloquearSalaAhora('${sl.id}')">🔒 ${esCA?'Bloquejar ara':'Bloquear ahora'}</button>
+          <button class="link-btn" onclick="abrirBloqueoSala('${sl.id}')">📅 ${esCA?'Reservar per a més tard':'Reservar para más tarde'}</button>
         </div>
       </div>`;
-  const sala2Html = tarjetaPlaza('2');
-  const sala3Html = tarjetaPlaza('3');
+  const hint = `<p class="hint-deslizar">${esCA?'← llisca per veure més →':'← desliza para ver más →'}</p>`;
+  const bloqueSalaHtml = sl => `
+    <p style="font-weight:700;font-size:13px;margin:14px 0 6px;">${nombreSala(sl)}</p>
+    ${reservasHtmlSala(sl)}
+    <div class="salas-grid-uniforme">${tarjetasSala(sl)}</div>${sl.plazas.length > 2 ? hint : ''}
+    ${promptBloqueoSala(sl)}`;
+  const salaUno = SALAS_LOGOS[0];
+  const salasVarias = SALAS_LOGOS.slice(1).filter(sl => sl.plazas.length > 1);
+  const salasUnaPlaza = SALAS_LOGOS.filter(sl => sl.plazas.length === 1);
 
   const reunionHtml = reunionMia
     ? `<div class="panel-card" style="text-align:center;background:var(--gold-soft);border-color:var(--gold);">
@@ -2201,12 +2242,12 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
   const historialHoySalaHtml = (miHistorialHoy && miHistorialHoy.length)
     ? miHistorialHoy.map(h => `
         <div class="panel-stat-row">
-          <span>${h.sala === 'reunion' ? (esCA?'📅 Reunió':'📅 Reunión') : (esCA?'🚪 Plaça ':'🚪 Plaza ') + h.sala} · ${horaFmt(h.inicio)} – ${horaFmt(h.fin)}</span>
+          <span>${h.sala === 'reunion' ? (esCA?'📅 Reunió':'📅 Reunión') : '🚪 ' + nombrePlaza(h.sala)} · ${horaFmt(h.inicio)} – ${horaFmt(h.fin)}</span>
           <span><strong>${duracionFmtSala(h.inicio, h.fin)}</strong></span>
         </div>`).join('')
     : '';
 
-  const etiquetaOcup = o => o.sala === 'reunion' ? (esCA?'reunió':'reunión') : (esCA?'plaça ':'plaza ') + o.sala;
+  const etiquetaOcup = o => o.sala === 'reunion' ? (esCA?'reunió':'reunión') : nombrePlaza(o.sala);
   const avisoObsoletasHtml = misObsoletas.length ? `
     <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);margin-bottom:14px;">
       <strong>🧹 ${esCA?'Tens ocupacions antigues sense tancar':'Tienes ocupaciones antiguas sin cerrar'}</strong>
@@ -2216,9 +2257,9 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
 
   const avisoEnCursoHtml = ocupacionMiaActual ? (() => {
     const o = ocupacionMiaActual;
-    const esBloqueo = bloqueSala1Completo && ocupacionesSala1[0].tecnico_email === CURRENT_USER.email;
-    const donde = esBloqueo ? (esCA?'Sala 1 completa':'Sala 1 completa') : etiquetaOcup(o);
-    const accion = o.sala === 'reunion' ? `finalizarReunion('${o.id}')` : (esBloqueo ? `finalizarBloqueoSala1()` : `abrirNotaAtencion('${o.id}','${o.sala}')`);
+    const slBloq = SALAS_LOGOS.find(sl => bloques[sl.id] && bloques[sl.id].tecnico_email === CURRENT_USER.email && bloques[sl.id].inicio <= ahoraIso);
+    const donde = slBloq ? (esCA?'sala completa ':'sala completa ') + nombreSala(slBloq) : etiquetaOcup(o);
+    const accion = o.sala === 'reunion' ? `finalizarReunion('${o.id}')` : (slBloq ? `finalizarBloqueoSala('${slBloq.id}')` : `abrirNotaAtencion('${o.id}','${o.sala}')`);
     return `<div class="panel-card" style="background:var(--good-soft);border-color:var(--good);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
       <span>⏱ ${esCA?'Ara tens en curs:':'Ahora tienes en curso:'} <strong>${donde}</strong> ${esCA?'des de les':'desde las'} ${horaFmt(o.inicio)}</span>
       <button class="link-btn" onclick="${accion}">${esCA?'Finalitzar':'Finalizar'}</button>
@@ -2239,28 +2280,62 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
       : 'Marca dónde estás ahora mismo, o reserva una plaza para más tarde, para que el resto del equipo lo vea en "Trabajo en equipo".'}</p>
 
     <p style="font-weight:700;font-size:13px;margin:14px 0 6px;">${esCA?'Fitxatge i Sala 1':'Fichaje y Sala 1'}</p>
-    <div class="salas-grid-uniforme">${fichajeCardHtml || ''}${sala1Html}</div>
-    <p class="hint-deslizar">${esCA?'← llisca per veure més →':'← desliza para ver más →'}</p>
-    ${sala1BloqueoPromptHtml}
+    ${reservasHtmlSala(salaUno)}
+    <div class="salas-grid-uniforme">${fichajeCardHtml || ''}${tarjetasSala(salaUno)}</div>
+    ${hint}
+    ${promptBloqueoSala(salaUno)}
 
-    <p style="font-weight:700;font-size:13px;margin:14px 0 6px;">${esCA?'Sala 2, sala 3 i reunió':'Sala 2, sala 3 y reunión'}</p>
-    <div class="salas-grid-uniforme">${sala2Html}${sala3Html}${reunionHtml}</div>
-    <p class="hint-deslizar">${esCA?'← llisca per veure més →':'← desliza para ver más →'}</p>
+    ${salasVarias.map(bloqueSalaHtml).join('')}
+
+    <p style="font-weight:700;font-size:13px;margin:14px 0 6px;">${esCA?'Altres sales (una plaça) i reunió':'Otras salas (una plaza) y reunión'}</p>
+    <div class="salas-grid-uniforme">${salasUnaPlaza.map(tarjetasSala).join('')}${reunionHtml}</div>
+    ${hint}
 
     <div id="reserva-plaza-form-wrap"></div>
     ${historialHoySalaHtml ? `<div class="panel-card" style="margin-bottom:20px;"><h3>${esCA?'El teu historial d\'avui':'Tu historial de hoy'}</h3>${historialHoySalaHtml}</div>` : ''}
   `;
 }
 
-function abrirReservaPlaza(plazaId){
+function camposFranjaHtml(){
   const esCA = LANG_I === 'ca';
   const manana = new Date(); manana.setDate(manana.getDate() + 1);
-  const fechaDefecto = manana.toISOString().slice(0,10);
+  return `<div class="field"><label>${esCA?'Dia':'Día'}</label><input type="date" id="reserva-fecha" value="${manana.toISOString().slice(0,10)}"></div>
+      <div style="display:flex;gap:10px;"><div class="field" style="flex:1;"><label>${esCA?'Des de':'Desde'}</label><input type="time" id="reserva-hora" value="09:00"></div>
+      <div class="field" style="flex:1;"><label>${esCA?'Fins a':'Hasta'}</label><input type="time" id="reserva-hasta" value="10:00"></div></div>`;
+}
+// Lee y valida la franja del formulario: devuelve { inicio, fin } (Date) o null si hay algún error.
+function leerFranjaForm(){
+  const esCA = LANG_I === 'ca';
+  const fecha = document.getElementById('reserva-fecha').value;
+  const hora = document.getElementById('reserva-hora').value;
+  const hasta = document.getElementById('reserva-hasta').value;
+  if(!fecha || !hora || !hasta){ alert(esCA?'Tria dia, hora d\'inici i hora de final.':'Elige día, hora de inicio y hora de fin.'); return null; }
+  const inicio = new Date(`${fecha}T${hora}:00`), fin = new Date(`${fecha}T${hasta}:00`);
+  if(inicio <= new Date()){ alert(esCA?'Tria un moment futur.':'Elige un momento futuro.'); return null; }
+  if(fin <= inicio){ alert(esCA?'L\'hora de final ha de ser posterior a la d\'inici.':'La hora de fin debe ser posterior a la de inicio.'); return null; }
+  return { inicio, fin };
+}
+// Inserta filas con franja; si la base de datos aún no tiene "fin_previsto" (no se ha ejecutado el SQL de salas), avisa.
+async function insertarReservas(filas){
+  const esCA = LANG_I === 'ca';
+  let { error } = await sb.from('fichajes_sala').insert(filas);
+  if(error && /motivo/i.test(error.message) && !/fin_previsto/i.test(error.message)){
+    ({ error } = await sb.from('fichajes_sala').insert(filas.map(({ motivo: _m, ...resto }) => resto)));
+  }
+  if(error && /fin_previsto/i.test(error.message)){
+    alert(esCA ? 'Falta executar el SQL de sales (9-salas.sql) a Supabase per poder reservar amb franja horària.' : 'Falta ejecutar el SQL de salas (9-salas.sql) en Supabase para poder reservar con franja horaria.');
+    return false;
+  }
+  if(error){ alert(error.message); return false; }
+  return true;
+}
+
+function abrirReservaPlaza(plazaId){
+  const esCA = LANG_I === 'ca';
   document.getElementById('reserva-plaza-form-wrap').innerHTML = `
     <div class="panel-card" style="background:#EAF1F8;border-color:#2E5A8F;">
-      <h3>📅 ${esCA?'Reservar':'Reservar'} ${plazaId}</h3>
-      <div class="field"><label>${esCA?'Dia':'Día'}</label><input type="date" id="reserva-fecha" value="${fechaDefecto}"></div>
-      <div class="field"><label>${esCA?'Hora':'Hora'}</label><input type="time" id="reserva-hora" value="09:00"></div>
+      <h3>📅 ${esCA?'Reservar':'Reservar'} ${nombrePlaza(plazaId)}</h3>
+      ${camposFranjaHtml()}
       <button class="primary-btn" onclick="confirmarReservaPlaza('${plazaId}')">${esCA?'Confirmar reserva':'Confirmar reserva'}</button>
       <button class="link-btn" style="display:block;margin-top:8px;" onclick="document.getElementById('reserva-plaza-form-wrap').innerHTML='';">${esCA?'Cancel·lar':'Cancelar'}</button>
     </div>`;
@@ -2268,80 +2343,78 @@ function abrirReservaPlaza(plazaId){
 }
 
 async function confirmarReservaPlaza(plazaId){
-  const esCA = LANG_I === 'ca';
-  const fecha = document.getElementById('reserva-fecha').value;
-  const hora = document.getElementById('reserva-hora').value;
-  if(!fecha || !hora){ alert(esCA?'Tria dia i hora.':'Elige día y hora.'); return; }
-  const inicio = new Date(`${fecha}T${hora}:00`);
-  if(inicio <= new Date()){ alert(esCA?'Tria un moment futur.':'Elige un momento futuro.'); return; }
-  const { error } = await sb.from('fichajes_sala').insert({ sala: plazaId, tecnico_email: CURRENT_USER.email, inicio: inicio.toISOString() });
-  if(error){ alert(error.message); return; }
-  renderMiEspacio();
+  const f = leerFranjaForm(); if(!f) return;
+  if(await insertarReservas([{ sala: plazaId, tecnico_email: CURRENT_USER.email, inicio: f.inicio.toISOString(), fin_previsto: f.fin.toISOString() }])) renderMiEspacio();
 }
 
-async function bloquearSala1Ahora(){
+// Si hay una reserva que empieza en la próxima hora, se avisa antes de ocupar la plaza ahora.
+function confirmarSiHayReservaProxima(plazas){
   const esCA = LANG_I === 'ca';
+  const limite = new Date(Date.now() + 3600000).toISOString();
+  const prox = plazas.flatMap(id => (window.__reservasPorPlaza || {})[id] || []).filter(r => r.inicio <= limite).sort((a, b) => a.inicio.localeCompare(b.inicio))[0];
+  if(!prox) return true;
+  const h = new Date(prox.inicio).toLocaleTimeString(esCA?'ca-ES':'es-ES', { hour:'2-digit', minute:'2-digit' });
+  return confirm(esCA ? `Hi ha una reserva de ${nombreTecnico(prox.tecnico_email)} a les ${h}. Hauràs d'alliberar-ho abans. Vols continuar?` : `Hay una reserva de ${nombreTecnico(prox.tecnico_email)} a las ${h}. Tendrás que liberarlo antes. ¿Continuar?`);
+}
+
+async function bloquearSalaAhora(salaId){
+  const esCA = LANG_I === 'ca';
+  const sl = SALAS_LOGOS.find(x => x.id === salaId); if(!sl) return;
   if(!(await puedeEmpezarAhora())) return;
   const ahoraIso = new Date().toISOString();
-  const ocupadas = ['1A','1B','1C','1D'].filter(id => { const o = (window.__ocupacionPorPlaza || {})[id]; return o && o.inicio <= ahoraIso; });
+  const ocupadas = sl.plazas.filter(id => { const o = (window.__ocupacionPorPlaza || {})[id]; return o && o.inicio <= ahoraIso; });
   if(ocupadas.length){
-    alert(esCA ? `No es pot bloquejar tota la Sala 1: ara hi ha atenció a ${ocupadas.join(', ')}.` : `No se puede bloquear toda la Sala 1: ahora hay atención en ${ocupadas.join(', ')}.`);
+    alert(esCA ? `No es pot bloquejar tota la ${nombreSala(sl)}: ara hi ha atenció a ${ocupadas.join(', ')}.` : `No se puede bloquear toda la ${nombreSala(sl)}: ahora hay atención en ${ocupadas.join(', ')}.`);
     return;
   }
-  await guardarBloqueoSala1(ahoraIso, esCA ? 'Reunió / esdeveniment' : 'Reunión / evento');
+  if(!confirmarSiHayReservaProxima(sl.plazas)) return;
+  await guardarBloqueoSala(salaId, ahoraIso, esCA ? 'Reunió / esdeveniment' : 'Reunión / evento');
 }
 
-async function guardarBloqueoSala1(inicioIso, motivo){
-  const esCA = LANG_I === 'ca';
-  const filas = ['1A','1B','1C','1D'].map(sala => ({ sala, tecnico_email: CURRENT_USER.email, inicio: inicioIso, motivo }));
-  let { error } = await sb.from('fichajes_sala').insert(filas);
-  if(error && /motivo/i.test(error.message)){
-    // La base de datos todavía no tiene la columna "motivo": se guarda el bloqueo igualmente, sin el texto del motivo.
-    ({ error } = await sb.from('fichajes_sala').insert(filas.map(({ motivo: _m, ...resto }) => resto)));
-  }
-  if(error){ alert((esCA?'No s\'ha pogut guardar: ':'No se pudo guardar: ') + error.message); return; }
-  renderMiEspacio();
+async function guardarBloqueoSala(salaId, inicioIso, motivo, finIso){
+  const sl = SALAS_LOGOS.find(x => x.id === salaId); if(!sl) return;
+  const filas = sl.plazas.map(sala => Object.assign({ sala, tecnico_email: CURRENT_USER.email, inicio: inicioIso, motivo }, finIso ? { fin_previsto: finIso } : {}));
+  if(await insertarReservas(filas)) renderMiEspacio();
 }
 
-function abrirBloqueoSala1(esAhora){
-  if(esAhora){ bloquearSala1Ahora(); return; }
+function abrirBloqueoSala(salaId){
   const esCA = LANG_I === 'ca';
+  const sl = SALAS_LOGOS.find(x => x.id === salaId); if(!sl) return;
   const manana = new Date(); manana.setDate(manana.getDate() + 1);
   document.getElementById('reserva-plaza-form-wrap').innerHTML = `
     <div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);">
-      <h3>🔒 ${esAhora ? (esCA?'Bloquejar tota la Sala 1 ara':'Bloquear toda la Sala 1 ahora') : (esCA?'Reservar el bloqueig de la Sala 1':'Reservar el bloqueo de la Sala 1')}</h3>
-      <p class="subtle" style="margin:0 0 8px;">${esCA?'Les 4 places quedaran ocupades a la vegada.':'Las 4 plazas quedarán ocupadas a la vez.'}</p>
+      <h3>🔒 ${esCA?'Reservar el bloqueig de':'Reservar el bloqueo de'} ${nombreSala(sl)}</h3>
+      <p class="subtle" style="margin:0 0 8px;">${esCA?`Les ${sl.plazas.length} places quedaran ocupades a la vegada.`:`Las ${sl.plazas.length} plazas quedarán ocupadas a la vez.`}</p>
       <div class="field"><label>${esCA?'Motiu':'Motivo'}</label><input type="text" id="bloqueo-motivo" placeholder="${esCA?"Ex: Reunió d'equip":'Ej: Reunión de equipo'}"></div>
-      <input type="hidden" id="bloqueo-es-ahora" value="${esAhora ? '1' : '0'}">
-      ${esAhora ? '' : `
-      <div class="field"><label>${esCA?'Dia':'Día'}</label><input type="date" id="bloqueo-fecha" value="${manana.toISOString().slice(0,10)}"></div>
-      <div class="field"><label>${esCA?'Hora':'Hora'}</label><input type="time" id="bloqueo-hora" value="09:00"></div>`}
-      <button class="primary-btn" style="background:var(--alert);" onclick="confirmarBloqueoSala1()">${esCA?'Confirmar':'Confirmar'}</button>
+      <input type="hidden" id="bloqueo-sala" value="${sl.id}">
+      ${camposFranjaHtml()}
+      <button class="primary-btn" style="background:var(--alert);" onclick="confirmarBloqueoSala()">${esCA?'Confirmar':'Confirmar'}</button>
       <button class="link-btn" style="display:block;margin-top:8px;" onclick="document.getElementById('reserva-plaza-form-wrap').innerHTML='';">${esCA?'Cancel·lar':'Cancelar'}</button>
     </div>`;
   document.getElementById('reserva-plaza-form-wrap').scrollIntoView({ behavior:'smooth', block:'center' });
 }
 
-async function confirmarBloqueoSala1(){
+async function confirmarBloqueoSala(){
   const esCA = LANG_I === 'ca';
   const motivo = document.getElementById('bloqueo-motivo').value.trim() || (esCA?'Reunió / esdeveniment':'Reunión / evento');
-  const esAhora = document.getElementById('bloqueo-es-ahora').value === '1';
-  let inicio;
-  if(esAhora){
-    inicio = new Date();
-  } else {
-    const fecha = document.getElementById('bloqueo-fecha').value;
-    const hora = document.getElementById('bloqueo-hora').value;
-    if(!fecha || !hora){ alert(esCA?'Tria dia i hora.':'Elige día y hora.'); return; }
-    inicio = new Date(`${fecha}T${hora}:00`);
-    if(inicio <= new Date()){ alert(esCA?'Tria un moment futur.':'Elige un momento futuro.'); return; }
-  }
-  await guardarBloqueoSala1(inicio.toISOString(), motivo);
+  const salaId = document.getElementById('bloqueo-sala').value;
+  const f = leerFranjaForm(); if(!f) return;
+  await guardarBloqueoSala(salaId, f.inicio.toISOString(), motivo, f.fin.toISOString());
 }
 
-async function finalizarBloqueoSala1(){
+async function cancelarBloqueoFuturo(salaId, inicioIso){
+  const esCA = LANG_I === 'ca';
+  const sl = SALAS_LOGOS.find(x => x.id === salaId); if(!sl) return;
+  if(!confirm(esCA ? 'Segur que vols cancel·lar aquesta reserva de sala?' : '¿Seguro que quieres cancelar esta reserva de sala?')) return;
+  const { error } = await sb.from('fichajes_sala').delete().eq('tecnico_email', CURRENT_USER.email).is('fin', null).eq('inicio', inicioIso).in('sala', sl.plazas);
+  if(error){ alert(error.message); return; }
+  renderMiEspacio();
+}
+
+async function finalizarBloqueoSala(salaId){
+  const sl = SALAS_LOGOS.find(x => x.id === salaId); if(!sl) return;
   const { error } = await sb.from('fichajes_sala').update({ fin: new Date().toISOString() })
-    .eq('tecnico_email', CURRENT_USER.email).is('fin', null).in('sala', ['1A','1B','1C','1D']);
+    .eq('tecnico_email', CURRENT_USER.email).is('fin', null).in('sala', sl.plazas);
   if(error){ alert(error.message); return; }
   renderMiEspacio();
 }
@@ -2350,7 +2423,7 @@ async function puedeEmpezarAhora(){
   const o = window.__ocupacionMiaActual;
   if(!o) return true;
   const esCA = LANG_I === 'ca';
-  const donde = o.sala === 'reunion' ? (esCA?'una reunió':'una reunión') : (esCA?'la plaça ':'la plaza ') + o.sala;
+  const donde = o.sala === 'reunion' ? (esCA?'una reunió':'una reunión') : nombrePlaza(o.sala);
   const desde = new Date(o.inicio).toLocaleTimeString(esCA?'ca-ES':'es-ES', { hour:'2-digit', minute:'2-digit' });
   alert(esCA ? `Ja tens ${donde} en curs des de les ${desde}. Finalitza-ho primer.` : `Ya tienes ${donde} en curso desde las ${desde}. Finalízalo primero.`);
   return false;
@@ -2365,7 +2438,7 @@ async function cerrarMisOcupacionesObsoletas(){
     if(inicio > ahora){
       ({ error } = await sb.from('fichajes_sala').delete().eq('id', o.id));          // reserva futura de una plaza que ya no existe
     } else {
-      const tope = new Date(inicio.getTime() + HORAS_MAX_OCUPACION * 3600000);        // como en el fichaje: se cierra a las 12 h como máximo
+      const tope = o.fin_previsto ? new Date(o.fin_previsto) : new Date(inicio.getTime() + HORAS_MAX_OCUPACION * 3600000);        // como en el fichaje: se cierra a las 12 h como máximo
       ({ error } = await sb.from('fichajes_sala').update({ fin: (tope < ahora ? tope : ahora).toISOString() }).eq('id', o.id));
     }
     if(error){ alert((LANG_I==='ca'?'No s\'ha pogut tancar: ':'No se pudo cerrar: ') + error.message); return; }
@@ -2375,6 +2448,7 @@ async function cerrarMisOcupacionesObsoletas(){
 
 async function iniciarAtencionSala(plazaId){
   if(!(await puedeEmpezarAhora())) return;
+  if(!confirmarSiHayReservaProxima([plazaId])) return;
   const { error } = await sb.from('fichajes_sala').insert({ sala: plazaId, tecnico_email: CURRENT_USER.email, inicio: new Date().toISOString() });
   if(error){ alert((LANG_I==='ca'?'No s\'ha pogut guardar: ':'No se pudo guardar: ') + error.message); return; }
   renderMiEspacio();
@@ -6613,7 +6687,7 @@ async function limpiarRegistrosAntiguos(tipo){
   const cabecera = tipo === 'fichajes' ? ['Técnico','Entrada','Salida','Duración (min)','Cerrado automático','Nota'] : ['Técnico','Sala/Plaza','Motivo','Inicio','Fin','Duración (min)'];
   const filas = registros.map(r => tipo === 'fichajes'
     ? [nombreTecnico(r.tecnico_email), f(r.entrada), f(r.salida), minutos(r.entrada, r.salida), r.cerrado_automaticamente ? 'Sí' : 'No', r.nota || '']
-    : [nombreTecnico(r.tecnico_email), r.sala === 'reunion' ? 'Reunión' : ('Plaza ' + r.sala), r.motivo || '', f(r.inicio), f(r.fin), minutos(r.inicio, r.fin)]);
+    : [nombreTecnico(r.tecnico_email), r.sala === 'reunion' ? 'Reunión' : nombrePlaza(r.sala), r.motivo || '', f(r.inicio), f(r.fin), minutos(r.inicio, r.fin)]);
   try {
     await descargarXLSX(cabecera, filas, `${cfg.archivo}-anteriores-${new Date().toISOString().slice(0,10)}.xlsx`, cfg.hoja);
   } catch(e) {
@@ -9655,9 +9729,9 @@ async function renderEquipoScreen(){
         return { color:'#7A3FA0', texto: LANG_I==='ca' ? '📅 En reunió' : '📅 En reunión' };
       }
       if(ocup.inicio > ahoraIsoEquipo){
-        return { color:'#2E5A8F', texto: (LANG_I==='ca' ? '🔵 Reserva (' : '🔵 Reserva (') + ocup.sala + ') ' + new Date(ocup.inicio).toLocaleString(LANG_I==='ca'?'ca-ES':'es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) };
+        return { color:'#2E5A8F', texto: (LANG_I==='ca' ? '🔵 Reserva (' : '🔵 Reserva (') + nombrePlaza(ocup.sala) + ') ' + new Date(ocup.inicio).toLocaleString(LANG_I==='ca'?'ca-ES':'es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) };
       }
-      return { color:'var(--gold)', texto: (LANG_I==='ca' ? '🟡 Atenent (' : '🟡 Atendiendo (') + ocup.sala + ')' };
+      return { color:'var(--gold)', texto: (LANG_I==='ca' ? '🟡 Atenent (' : '🟡 Atendiendo (') + nombrePlaza(ocup.sala) + ')' };
     });
 
     if(fichajes.length){
@@ -9700,7 +9774,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-11 · v30 (panel Jóvenes en acción retocado)';
+const APP_VERSION_INTRANET = '2026-10-11 · v32 (salas: reservas por franja y plazas exclusivas)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -11633,7 +11707,7 @@ function renderFilasSalas(lista){
   return lista.length
     ? lista.map(f => `
         <div class="panel-stat-row">
-          <span>${nombreTecnico(f.tecnico_email)} · ${f.sala === 'reunion' ? (esCA?'📅 Reunió':'📅 Reunión') : (esCA?'🚪 Plaça ':'🚪 Plaza ') + f.sala}${f.inicio > new Date().toISOString() ? ` <span class="chip" style="background:#2E5A8F;color:#fff;">${esCA?'reserva':'reserva'}</span>` : ''} · ${fechaFmt(f.inicio)}</span>
+          <span>${nombreTecnico(f.tecnico_email)} · ${f.sala === 'reunion' ? (esCA?'📅 Reunió':'📅 Reunión') : '🚪 ' + nombrePlaza(f.sala)}${f.inicio > new Date().toISOString() ? ` <span class="chip" style="background:#2E5A8F;color:#fff;">${esCA?'reserva':'reserva'}</span>` : ''} · ${fechaFmt(f.inicio)}</span>
           <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             ${horaFmt(f.inicio)}
             ${f.fin ? `– ${horaFmt(f.fin)} (${duracionFmt(f.inicio, f.fin)})` : `<span class="chip gold">${LANG_I==='ca'?'En curs':'En curso'}</span>`}
@@ -11764,7 +11838,7 @@ async function exportarFichajesSalaExcel(){
   const { data } = await sb.from('fichajes_sala').select('*').order('inicio', { ascending:false });
   const cabecera = ['Técnico','Sala/Plaza','Motivo','Inicio','Fin','Duración (min)'];
   const filas = (data||[]).map(f => [
-    nombreTecnico(f.tecnico_email), f.sala === 'reunion' ? 'Reunión' : ('Plaza ' + f.sala), f.motivo || '',
+    nombreTecnico(f.tecnico_email), f.sala === 'reunion' ? 'Reunión' : nombrePlaza(f.sala), f.motivo || '',
     new Date(f.inicio).toLocaleString('es-ES'), f.fin ? new Date(f.fin).toLocaleString('es-ES') : 'En curso',
     f.fin ? Math.round((new Date(f.fin)-new Date(f.inicio))/60000) : ''
   ]);
@@ -11774,7 +11848,7 @@ async function exportarFichajesSalaPDF(){
   const { data } = await sb.from('fichajes_sala').select('*').order('inicio', { ascending:false });
   const cabecera = ['Técnico','Sala/Plaza','Motivo','Inicio','Fin'];
   const filas = (data||[]).map(f => [
-    nombreTecnico(f.tecnico_email), f.sala === 'reunion' ? 'Reunión' : ('Plaza ' + f.sala), f.motivo || '',
+    nombreTecnico(f.tecnico_email), f.sala === 'reunion' ? 'Reunión' : nombrePlaza(f.sala), f.motivo || '',
     new Date(f.inicio).toLocaleString('es-ES'), f.fin ? new Date(f.fin).toLocaleString('es-ES') : 'En curso'
   ]);
   descargarPDFTabla('Salas y reuniones — Logos Intranet', cabecera, filas, 'Salas-y-reuniones.pdf');
