@@ -2773,16 +2773,16 @@ async function renderMiEspacio(){
     <button class="primary-btn" style="background:var(--gold);margin-bottom:10px;" onclick="showScreen('buscarpersona');renderBuscarPersonaActuacion()">${t.registrarActuacion}</button>
     <button class="primary-btn" style="background:var(--good);margin-bottom:18px;" onclick="showScreen('altapresencial');renderAltaPresencial()">🖊️ ${LANG_I==='ca'?'Alta presencial':'Alta presencial'}</button>
 
-    <div class="panel-card">
-      <h3>${t.tusProximasRevisiones}</h3>
-      ${revisionesHtml}
-    </div>
+    <details class="plegable" ${plegableAbierto('mi-revisiones') ? 'open' : ''} ontoggle="plegableGuardar('mi-revisiones', this.open)">
+      <summary><span>${t.tusProximasRevisiones}</span><span class="plegable-n">${misRevisiones.length}</span></summary>
+      <div class="plegable-c">${revisionesHtml}</div>
+    </details>
 
     ${topServicios.length ? `
-    <div class="panel-card">
-      <h3>${t.tusServiciosFrecuentes}</h3>
-      ${topServicios.map(([s,v]) => barRow(s, v, maxServicio)).join('')}
-    </div>` : ''}
+    <details class="plegable" ${plegableAbierto('mi-servicios') ? 'open' : ''} ontoggle="plegableGuardar('mi-servicios', this.open); if(this.open) activarBarras();">
+      <summary><span>${t.tusServiciosFrecuentes}</span><span class="plegable-n">${topServicios.length}</span></summary>
+      <div class="plegable-c">${topServicios.map(([s,v]) => barRow(s, v, maxServicio)).join('')}</div>
+    </details>` : ''}
 
     <details class="plegable" ${plegableAbierto('mi-actuaciones') ? 'open' : ''} ontoggle="plegableGuardar('mi-actuaciones', this.open)">
       <summary><span>${t.tusUltimasActuaciones}</span><span class="plegable-n">${totalCountAct}</span></summary>
@@ -9789,7 +9789,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-11 · v33 (Mi espacio: actuaciones y atenciones plegables)';
+const APP_VERSION_INTRANET = '2026-10-11 · v34 (Mi espacio: revisiones, servicios, actuaciones y atenciones plegables)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
