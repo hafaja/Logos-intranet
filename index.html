@@ -951,6 +951,12 @@ function aplicarMenuPorRol(){
     g.classList.toggle('rol-oculto', IS_JOVENES && !g.querySelector('button[data-target]:not(.rol-oculto)'));
   });
 }
+// Las funciones del servidor comprueban quién llama a partir de la sesión: se envía el token de la persona.
+// Sin sesión (modo anónimo de Acompanya) se envía la clave pública.
+async function tokenParaFunciones(){
+  try { const { data } = await sb.auth.getSession(); return (data && data.session && data.session.access_token) || SUPABASE_KEY; }
+  catch(e){ return SUPABASE_KEY; }
+}
 function showScreen(name){
   if(IS_JOVENES && !PANTALLAS_JOVENES.includes(name)) name = 'panel';
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -2973,14 +2979,13 @@ async function guardarAltaPresencial(){
   try {
     const res = await fetch('https://foxtlpyfedwsvttzorql.supabase.co/functions/v1/alta-presencial', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await tokenParaFunciones()), 'apikey': SUPABASE_KEY },
       body: JSON.stringify({
         nombre_completo: nombre, telefono, dni_nie: dni, email, municipio,
         firma_base64: firma,
         cons_cesion: document.getElementById('ap-cons-cesion').checked,
         cons_contacto: document.getElementById('ap-cons-contacto').checked,
         cons_imagen: document.getElementById('ap-cons-imagen').checked,
-        creado_por_email: CURRENT_USER.email,
       }),
     });
     const data = await res.json();
@@ -10191,7 +10196,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-11 · v36 (Personas por fecha de alta, histórico, importador)';
+const APP_VERSION_INTRANET = '2026-10-13 · v37 (Las funciones comprueban la sesión)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -12432,12 +12437,11 @@ async function enviarMensajeAsistente(){
   try {
     const res = await fetch('https://foxtlpyfedwsvttzorql.supabase.co/functions/v1/asistente', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await tokenParaFunciones()), 'apikey': SUPABASE_KEY },
       body: JSON.stringify({
         mensaje,
         historial: historialPrevio,
-        ambito: 'personal',
-        tecnico_email: CURRENT_USER ? CURRENT_USER.email : null
+        ambito: 'personal'
       })
     });
     const data = await res.json();
