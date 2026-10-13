@@ -49,13 +49,13 @@
   .rol-oculto{display:none !important;}
 
   /* ===== Nóminas ===== */
-  .nom-hero{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:linear-gradient(135deg,#1E3F66 0%,#2A5182 100%);color:#fff;border-radius:20px;padding:24px 28px;margin-bottom:18px;box-shadow:var(--shadow);}
-  .nom-eyebrow{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--gold);}
-  .nom-nueva{background:var(--gold);color:#16304F;border-radius:999px;padding:2px 9px;font-size:10.5px;letter-spacing:0;margin-left:6px;}
+  .nom-hero{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:linear-gradient(135deg,#FDF0C2 0%,#FBE39A 100%);color:var(--navy);border:1.5px solid #F2BC2C;border-radius:20px;padding:24px 28px;margin-bottom:18px;box-shadow:var(--shadow);}
+  .nom-eyebrow{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:#6E5000;}
+  .nom-nueva{background:var(--navy);color:#fff;border-radius:999px;padding:2px 9px;font-size:10.5px;letter-spacing:0;margin-left:6px;}
   .nom-titulo{font-family:var(--font-display);font-weight:600;font-size:32px;line-height:1.1;margin:6px 0 4px;}
-  .nom-sub{font-size:12.5px;color:rgba(255,255,255,.75);}
-  .nom-abrir{background:var(--gold);color:#16304F;border:none;border-radius:999px;padding:13px 24px;font-family:var(--font-body);font-weight:800;font-size:14.5px;cursor:pointer;}
-  .nom-abrir:hover{background:#E5AC12;}
+  .nom-sub{font-size:12.5px;color:var(--ink-soft);}
+  .nom-abrir{background:var(--navy);color:#fff;border:none;border-radius:999px;padding:13px 24px;font-family:var(--font-body);font-weight:800;font-size:14.5px;cursor:pointer;}
+  .nom-abrir:hover{background:#16304F;}
   .nom-anios{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
   .nom-anio{font-family:var(--font-body);font-weight:800;font-size:13px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:7px 16px;cursor:pointer;}
   .nom-anio.on{background:var(--navy);border-color:var(--navy);color:#fff;}
@@ -417,7 +417,11 @@
     #app{flex-direction:column;}
     .sidebar{width:100%;height:56px;position:sticky;bottom:0;top:auto;order:2;flex-direction:row;align-items:center;justify-content:center;padding:0;border-top:1.5px solid rgba(255,255,255,.1);z-index:150;}
     .brand-logo-sidebar,.sidebar-brand,.sidebar-sub,.sidebar-logout,.sidebar-quote{display:none;}
-    .mobile-menu-toggle{display:flex;width:100%;height:100%;align-items:center;justify-content:center;gap:8px;background:none;border:none;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font-body);}
+    .sidebar{background:var(--paper);color:var(--navy);border-top:3px solid var(--gold);box-shadow:0 -4px 14px rgba(30,63,102,.10);padding:0 12px;gap:10px;justify-content:space-between;}
+    .sidebar .ilang-toggle{margin:0;flex:0 0 auto;}
+    .sidebar .ilang-btn{background:#fff;border:1.5px solid var(--line);color:var(--navy);padding:7px 11px;font-size:12px;}
+    .sidebar .ilang-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+    .mobile-menu-toggle{display:flex;flex:1;height:38px;align-items:center;justify-content:center;gap:8px;background:var(--navy);border:none;border-radius:999px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font-body);}
     .mobile-menu-overlay{display:none;}
     .sidebar.menu-open .mobile-menu-overlay{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:56px;background:var(--navy);z-index:160;}
     .mobile-menu-header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1.5px solid rgba(255,255,255,.12);font-family:var(--font-display);font-weight:700;font-size:17px;flex-shrink:0;color:var(--gold);}
@@ -7145,14 +7149,22 @@ async function staffCambiar(email, cambios){
   return { error: r.error };
 }
 // El equipo ve las alertas suyas, las de "todo el equipo" y las que nadie tiene asignadas; la administración ve todas.
+// Si nadie se encarga de una alerta en este tiempo, la ve todo el equipo aunque fuera de otra persona
+const ALERTA_ESCALA_HORAS = 3;
+function alertaSinAtender(n){
+  if(!n || n.leida || n.tomada_por_email) return false;
+  const t = new Date(n.creado_en).getTime();
+  return !!t && (Date.now() - t) > ALERTA_ESCALA_HORAS * 3600 * 1000;
+}
 function filtrarAlertas(consulta, todas){
   if(!REPARTO_OK || IS_ADMIN || IS_GESTOR) return consulta;
+  const corte = new Date(Date.now() - ALERTA_ESCALA_HORAS * 3600 * 1000).toISOString();
   // Jóvenes en acción: solo las alertas de su convocatoria y las que se le asignen directamente
   if(IS_JOVENES) return consulta.or(`para_jovenes.eq.true,asignada_a_email.eq."${CURRENT_USER.email}"`);
   if(todas) return consulta;
   // El equipo general no recibe las alertas que van al panel de Jóvenes en acción
-  if(JOVENES_OK) return consulta.or(`asignada_a_email.eq."${CURRENT_USER.email}",para_todos.eq.true,and(asignada_a_email.is.null,para_jovenes.eq.false)`);
-  return consulta.or(`asignada_a_email.eq."${CURRENT_USER.email}",para_todos.eq.true,asignada_a_email.is.null`);
+  if(JOVENES_OK) return consulta.or(`asignada_a_email.eq."${CURRENT_USER.email}",para_todos.eq.true,and(asignada_a_email.is.null,para_jovenes.eq.false),and(creado_en.lt.${corte},para_jovenes.eq.false)`);
+  return consulta.or(`asignada_a_email.eq."${CURRENT_USER.email}",para_todos.eq.true,asignada_a_email.is.null,creado_en.lt.${corte}`);
 }
 
 // ---------- contraseña propia ----------
@@ -7256,8 +7268,21 @@ async function comprobarSigueActiva(){
 // ---------- alertas: reasignar y ver las del equipo ----------
 async function reasignarAlerta(id, valor){
   if(!valor) return;
-  const cambios = valor === '__todos__' ? { asignada_a_email: null, para_todos: true } : { asignada_a_email: valor, para_todos: false };
-  const { error } = await sb.from('notificaciones').update(cambios).eq('id', id);
+  // Cualquier persona activa del equipo puede pasar una alerta (función de la base de datos); si el SQL 11 aún no está, se usa el método anterior
+  let { error } = await sb.rpc('alerta_pasar', { p_id: String(id), p_email: valor === '__todos__' ? '' : valor });
+  if(error && /alerta_pasar|schema cache|could not find/i.test(error.message || '')){
+    const cambios = valor === '__todos__' ? { asignada_a_email: null, para_todos: true } : { asignada_a_email: valor, para_todos: false };
+    ({ error } = await sb.from('notificaciones').update(cambios).eq('id', id));
+  }
+  if(error){ alert(error.message); return; }
+  renderPanelGeneral(); actualizarBadgePanel();
+}
+// «Me encargo yo»: la alerta pasa a mi nombre y el resto del equipo ve que ya la atiende alguien
+async function tomarAlerta(id){
+  let { error } = await sb.rpc('alerta_tomar', { p_id: String(id) });
+  if(error && /alerta_tomar|schema cache|could not find/i.test(error.message || '')){
+    ({ error } = await sb.from('notificaciones').update({ asignada_a_email: CURRENT_USER.email, para_todos: false }).eq('id', id));
+  }
   if(error){ alert(error.message); return; }
   renderPanelGeneral(); actualizarBadgePanel();
 }
@@ -10196,7 +10221,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-13 · v37 (Las funciones comprueban la sesión)';
+const APP_VERSION_INTRANET = '2026-10-13 · v40 (Alertas sin atender suben al equipo)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -10220,6 +10245,95 @@ function cargarColorFondoGuardadoIntranet(){
   } catch(e){}
 }
 
+// ================= GUÍA DE USO Y PRIVACIDAD (dentro de Configuración) =================
+function guiaUsoHtml(){
+  const L = acL;
+  const filaGuia = (a, b) => `<div class="panel-stat-row"><span>${a}</span><span style="text-align:right;max-width:55%;">${b}</span></div>`;
+  const pasos = [
+    [L('Ficha la entrada y elige sala.', 'Fitxa l\'entrada i tria sala.'), L('En «Mi espacio» ves tu horario, el botón de fichar y las salas: Empezar ahora, Reservar para más tarde o Bloquear toda la sala.', 'A «El meu espai» veus el teu horari, el botó de fitxar i les sales: Començar ara, Reservar per més tard o Bloquejar tota la sala.')],
+    [L('Revisa el Inicio.', 'Revisa l\'Inici.'), L('Alertas nuevas, consultas de orientación pendientes y próximas revisiones. Cada bloque se pliega.', 'Alertes noves, consultes d\'orientació pendents i properes revisions. Cada bloc es plega.')],
+    [L('Atiende a la persona.', 'Atén la persona.'), L('Búscala en «Personas usuarias» por nombre, DNI o teléfono. Si viene sin cuenta, usa «Alta presencial».', 'Cerca-la a «Persones usuàries» per nom, DNI o telèfon. Si ve sense compte, fes servir «Alta presencial».')],
+    [L('Registra lo que haces.', 'Registra el que fas.'), L('Desde «Mi espacio»: «Registrar atención» o «Registrar actuación». Los trámites, en «Expedientes»; las citas, en «Citas y calendario».', 'Des de «El meu espai»: «Registrar atenció» o «Registrar actuació». Els tràmits, a «Expedients»; les cites, a «Cites i calendari».')],
+    [L('Mide el cambio.', 'Mesura el canvi.'), L('En «Impacto» → «Mis fichas», crea la ficha con un código o iniciales, nunca con el nombre.', 'A «Impacte» → «Les meves fitxes», crea la fitxa amb un codi o inicials, mai amb el nom.')],
+    [L('Cierra bien.', 'Tanca bé.'), L('Ficha la salida y cierra la sesión si el equipo es compartido.', 'Fitxa la sortida i tanca la sessió si l\'equip és compartit.')]
+  ];
+  const quiero = [
+    [L('Fichar entrada o salida', 'Fitxar entrada o sortida'), L('Mi espacio', 'El meu espai')],
+    [L('Ver mi horario y mis nóminas', 'Veure el meu horari i les meves nòmines'), L('Mi gestión personal', 'La meva gestió personal')],
+    [L('Buscar a una persona', 'Cercar una persona'), L('Personas usuarias (por fecha de alta, A–Z o histórico)', 'Persones usuàries (per data d\'alta, A–Z o històric)')],
+    [L('Dar de alta a quien viene sin cuenta', 'Donar d\'alta qui ve sense compte'), L('Mi espacio → Alta presencial', 'El meu espai → Alta presencial')],
+    [L('Contestar una consulta de orientación', 'Respondre una consulta d\'orientació'), L('Inicio → Consultas de orientación pendientes', 'Inici → Consultes d\'orientació pendents')],
+    [L('Revisar o crear una cita', 'Revisar o crear una cita'), L('Citas y calendario', 'Cites i calendari')],
+    [L('Seguir un trámite', 'Seguir un tràmit'), L('Expedientes', 'Expedients')],
+    [L('Trabajar con jóvenes y familias', 'Treballar amb joves i famílies'), L('Jóvenes en acción', 'Joves en acció')],
+    [L('Subir o consultar un documento', 'Pujar o consultar un document'), L('Gestión documental', 'Gestió documental')],
+    [L('Saber quién está disponible', 'Saber qui està disponible'), L('Trabajo en equipo', 'Treball en equip')]
+  ];
+  const oro = [
+    L('No envíes datos de personas por WhatsApp ni por correo personal.', 'No enviïs dades de persones per WhatsApp ni per correu personal.'),
+    L('Un Excel o PDF descargado contiene datos personales: guárdalo en un lugar seguro y bórralo al terminar.', 'Un Excel o PDF descarregat conté dades personals: desa\'l en un lloc segur i esborra\'l en acabar.'),
+    L('No pegues datos de salud ni de menores en el asistente de IA.', 'No enganxis dades de salut ni de menors a l\'assistent d\'IA.'),
+    L('En Impacto usa un código o iniciales, no el nombre.', 'A Impacte fes servir un codi o inicials, no el nom.'),
+    L('Si sospechas que algo ha salido mal, avisa de inmediato a administración.', 'Si sospites que alguna cosa ha anat malament, avisa de seguida l\'administració.')
+  ];
+  const admin = IS_ADMIN ? `
+    <h4 style="margin:16px 0 6px;">${L('Administración', 'Administració')}</h4>
+    ${filaGuia(L('Gestionar el equipo: activar y desactivar, ámbito Jóvenes, alertas', 'Gestionar l\'equip: activar i desactivar, àmbit Joves, alertes'), L('Administrador', 'Administrador'))}
+    ${filaGuia(L('Importar o deshacer un lote del histórico', 'Importar o desfer un lot de l\'històric'), L('Personas usuarias → Importar histórico', 'Persones usuàries → Importar històric'))}
+    ${filaGuia(L('Personas atendidas por año y por mes', 'Persones ateses per any i per mes'), L('Informes y datos, e Impacto', 'Informes i dades, i Impacte'))}
+    ${filaGuia(L('Contabilidad y cuotas', 'Comptabilitat i quotes'), L('Contabilidad', 'Comptabilitat'))}
+    ${filaGuia(L('Nóminas, comunicados y documentos del personal', 'Nòmines, comunicats i documents del personal'), L('Mi gestión personal (rol de RR. HH.)', 'La meva gestió personal (rol de RR. HH.)'))}
+    ${filaGuia(L('Comprobar la versión instalada', 'Comprovar la versió instal·lada'), L('Configuración → Versión de la app', 'Configuració → Versió de l\'app'))}
+    <p class="subtle" style="font-size:12px;margin:8px 0 0;">${L('Por diseño, administración no puede leer las fichas individuales de impacto: solo ve cifras agregadas.', 'Per disseny, l\'administració no pot llegir les fitxes individuals d\'impacte: només veu xifres agregades.')}</p>
+    <h4 style="margin:14px 0 6px;">${L('Revisión mensual de seguridad (15 minutos)', 'Revisió mensual de seguretat (15 minuts)')}</h4>
+    <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.7;">
+      <li>${L('Las personas que han dejado el equipo están desactivadas.', 'Les persones que han deixat l\'equip estan desactivades.')}</li>
+      <li>${L('Solo las personas necesarias tienen rol de administración o de RR. HH.', 'Només les persones necessàries tenen rol d\'administració o de RR. HH.')}</li>
+      <li>${L('Se han borrado las exportaciones que ya no hacen falta.', 'S\'han esborrat les exportacions que ja no calen.')}</li>
+      <li>${L('No hay incidentes sin cerrar.', 'No hi ha incidents sense tancar.')}</li>
+      <li>${L('Existe una copia de seguridad reciente.', 'Hi ha una còpia de seguretat recent.')}</li>
+    </ul>` : '';
+  return `
+    <h4 style="margin:0 0 6px;">${L('Tu jornada en seis pasos', 'La teva jornada en sis passos')}</h4>
+    <ol style="margin:0;padding-left:20px;font-size:13px;line-height:1.6;display:flex;flex-direction:column;gap:6px;">
+      ${pasos.map(p => `<li><strong>${p[0]}</strong> ${p[1]}</li>`).join('')}
+    </ol>
+    <h4 style="margin:16px 0 6px;">${L('Quiero… → voy a…', 'Vull… → vaig a…')}</h4>
+    ${quiero.map(q => filaGuia(q[0], q[1])).join('')}
+    <h4 style="margin:16px 0 6px;">${L('Reglas de oro con los datos', 'Regles d\'or amb les dades')}</h4>
+    <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.7;">${oro.map(o => `<li>${o}</li>`).join('')}</ul>
+    ${admin}`;
+}
+
+function privacidadPersonalHtml(){
+  const L = acL;
+  const li = (a) => `<li>${a}</li>`;
+  const ul = items => `<ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.7;">${items.map(li).join('')}</ul>`;
+  return `
+    <p style="font-size:13px;margin:0 0 10px;">${L('En Logos se tratan datos de personas en situación de vulnerabilidad: contacto, situación social y, a veces, de salud o de menores. Cuidarlos es parte del trabajo de todo el equipo.', 'A Logos es tracten dades de persones en situació de vulnerabilitat: contacte, situació social i, de vegades, de salut o de menors. Cuidar-les és part de la feina de tot l\'equip.')}</p>
+    <h4 style="margin:0 0 6px;">${L('Cómo se protegen los datos', 'Com es protegeixen les dades')}</h4>
+    ${ul([
+      L('Cada persona del equipo solo accede a lo que su función necesita. Lo hace cumplir la propia base de datos.', 'Cada persona de l\'equip només accedeix al que la seva funció necessita. Ho fa complir la mateixa base de dades.'),
+      L('Quien deja el equipo se desactiva y pierde el acceso.', 'Qui deixa l\'equip es desactiva i perd l\'accés.'),
+      L('Los archivos del personal están en un almacén privado, con carpeta por persona.', 'Els arxius del personal són en un magatzem privat, amb carpeta per persona.'),
+      L('Las fichas de impacto no llevan nombre y la administración no puede leerlas una a una.', 'Les fitxes d\'impacte no porten nom i l\'administració no les pot llegir una a una.'),
+      L('La conexión va cifrada y la contraseña se guarda protegida, nunca en claro.', 'La connexió va xifrada i la contrasenya es desa protegida, mai en clar.')
+    ])}
+    <h4 style="margin:16px 0 6px;">${L('Tus responsabilidades', 'Les teves responsabilitats')}</h4>
+    ${ul([
+      L('Tu cuenta y tu contraseña son personales: no las compartas.', 'El teu compte i la teva contrasenya són personals: no els comparteixis.'),
+      L('Cierra la sesión en equipos compartidos y bloquea la pantalla cuando te alejes.', 'Tanca la sessió en equips compartits i bloqueja la pantalla quan t\'allunyis.'),
+      L('Accede solo a las fichas que necesitas para tu trabajo.', 'Accedeix només a les fitxes que necessites per a la teva feina.'),
+      L('Descarga listados solo cuando sea imprescindible y bórralos al terminar.', 'Descarrega llistats només quan sigui imprescindible i esborra\'ls en acabar.'),
+      L('No uses WhatsApp ni el correo personal para datos de personas.', 'No facis servir WhatsApp ni el correu personal per a dades de persones.')
+    ])}
+    <h4 style="margin:16px 0 6px;">${L('Si una persona pide sus derechos', 'Si una persona demana els seus drets')}</h4>
+    <p style="font-size:13px;margin:0;">${L('Acceso, rectificación, supresión, oposición, limitación, portabilidad o retirar el consentimiento: no los resuelvas tú. Pásalo a administración o a info@logostgn.cat el mismo día. Hay un mes para responder.', 'Accés, rectificació, supressió, oposició, limitació, portabilitat o retirar el consentiment: no els resolguis tu. Passa-ho a l\'administració o a info@logostgn.cat el mateix dia. Hi ha un mes per respondre.')}</p>
+    <h4 style="margin:16px 0 6px;">${L('Si algo sale mal', 'Si alguna cosa va malament')}</h4>
+    <p style="font-size:13px;margin:0;">${L('Pérdida o robo de un equipo, un correo enviado a la persona equivocada, una cuenta que no reconoces o un listado que no encuentras: avisa de inmediato a administración. Si hay riesgo para las personas, Logos debe notificarlo a la Agencia Española de Protección de Datos en un máximo de 72 horas.', 'Pèrdua o robatori d\'un equip, un correu enviat a la persona equivocada, un compte que no reconeixes o un llistat que no trobes: avisa de seguida l\'administració. Si hi ha risc per a les persones, Logos ha de notificar-ho a l\'Agència Espanyola de Protecció de Dades en un màxim de 72 hores.')}</p>
+    <p class="subtle" style="font-size:12px;margin:14px 0 0;">${L('El texto completo de la política de privacidad se está revisando y se añadirá aquí cuando se publique.', 'El text complet de la política de privacitat s\'està revisant i s\'afegirà aquí quan es publiqui.')}</p>`;
+}
+
 function renderConfigScreen(){
   const cont = document.getElementById('config-content');
   const esCA = LANG_I === 'ca';
@@ -10240,6 +10354,15 @@ function renderConfigScreen(){
       <p class="subtle" style="margin:0 0 10px;">${CLAVE_CAMBIADA ? (esCA?'Pots canviar-la quan vulguis.':'Puedes cambiarla cuando quieras.') : (esCA?'Encara fas servir la contrasenya inicial. Tria\'n una de pròpia.':'Todavía usas la contraseña inicial. Elige una propia.')}</p>
       <button class="link-btn" onclick="abrirCambioClave(false)">${esCA?'Canviar la meva contrasenya':'Cambiar mi contraseña'}</button>
     </div>
+
+    <details class="plegable" style="margin-top:14px;" ${plegableAbierto('cfg-guia') ? 'open' : ''} ontoggle="plegableGuardar('cfg-guia', this.open)">
+      <summary><span>📘 ${esCA ? 'Guia d\'ús' : 'Guía de uso'}</span></summary>
+      <div class="plegable-c">${guiaUsoHtml()}</div>
+    </details>
+    <details class="plegable" ${plegableAbierto('cfg-priv') ? 'open' : ''} ontoggle="plegableGuardar('cfg-priv', this.open)">
+      <summary><span>🔒 ${esCA ? 'Privacitat i seguretat' : 'Privacidad y seguridad'}</span></summary>
+      <div class="plegable-c">${privacidadPersonalHtml()}</div>
+    </details>
 
     <p class="subtle" style="margin:14px 0 0;font-size:11.5px;">${esCA?'Versió de l\'app':'Versión de la app'}: <strong>${APP_VERSION_INTRANET}</strong></p>
 
@@ -10575,7 +10698,7 @@ async function renderPanelGeneral(){
 
   (equipoRes.data || []).forEach(x => { if(x.nombre) __mapaNombresTecnicos[x.email] = x.nombre; });
   const nombreAlerta = e => e === 'administración' ? acL('Administración', 'Administració') : nombreTecnico(e);
-  const chipAlerta = n => !REPARTO_OK ? '' : n.para_todos ? `<span class="chip gold" style="font-size:10.5px;">👥 ${acL('Todo el equipo', 'Tot l\'equip')}</span>`
+  const chipAlerta = n => !REPARTO_OK ? '' : (alertaSinAtender(n) && n.asignada_a_email !== CURRENT_USER.email) ? `<span class="chip" style="font-size:10.5px;background:#FBE5C8;color:#7A3E00;">⏰ ${acL('Sin atender · la ve todo el equipo', 'Sense atendre · la veu tot l\'equip')}</span>` : (n.tomada_por_email && n.asignada_a_email === n.tomada_por_email) ? `<span class="chip good" style="font-size:10.5px;">✋ ${acL('Lo atiende', 'Ho atén')} ${escAttr(n.tomada_por_email === CURRENT_USER.email ? acL('tú', 'tu') : nombreAlerta(n.tomada_por_email))}</span>` : n.para_todos ? `<span class="chip gold" style="font-size:10.5px;">👥 ${acL('Todo el equipo', 'Tot l\'equip')}</span>`
     : n.asignada_a_email ? `<span class="chip ${n.asignada_a_email === CURRENT_USER.email ? 'good' : ''}" style="font-size:10.5px;">→ ${escAttr(nombreAlerta(n.asignada_a_email))}</span>`
     : `<span class="chip" style="font-size:10.5px;">${acL('Sin asignar', 'Sense assignar')}</span>`;
   const reasignarSel = n => REPARTO_OK ? `<select style="font-size:12px;max-width:140px;" onchange="reasignarAlerta('${n.id}', this.value)"><option value="">${acL('Pasar a…', 'Passar a…')}</option>${(equipoRes.data || []).filter(x => x.activo !== false && x.email !== n.asignada_a_email && x.ambito !== 'jovenes').map(x => `<option value="${escAttr(x.email)}">${escAttr(x.nombre || x.email)}</option>`).join('')}<option value="__todos__">${acL('Todo el equipo', 'Tot l\'equip')}</option></select>` : '';
@@ -10586,6 +10709,7 @@ async function renderPanelGeneral(){
           <span>${n.mensaje}<br><span class="subtle" style="font-size:11px;margin:0;">${new Date(n.creado_en).toLocaleString(t.localeFecha)}</span> ${chipAlerta(n)}</span>
           <span style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
             ${n.usuario_id ? `<button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${n.usuario_id}','panel')">${t.verInformacion}</button>` : ''}
+            ${(REPARTO_OK && n.asignada_a_email !== CURRENT_USER.email) ? `<button class="link-btn" style="font-size:12px;font-weight:800;" onclick="tomarAlerta('${n.id}')">✋ ${acL('Me encargo yo', 'Me n\'encarrego jo')}</button>` : ''}
             <button class="link-btn" style="font-size:12px;" onclick="marcarNotificacionLeida('${n.id}')">${t.marcarLeida}</button>
             ${reasignarSel(n)}
           </span>
