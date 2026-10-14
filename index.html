@@ -3694,7 +3694,11 @@ function histCargarHoja(nombreHoja){
   const esCA = LANG_I === 'ca';
   const st = __histImp; if(nombreHoja) st.hoja = nombreHoja;
   const aoa = XLSX.utils.sheet_to_json(st.libro.Sheets[st.hoja], { header: 1, defval: '', raw: true });
-  const iCab = aoa.findIndex(r => r.filter(c => String(c).trim() !== '').length >= 2);
+  // La fila de títulos es la que más se parece a nombres de campos (hay Excels con una fila de rótulos genéricos encima).
+  const sinonimos = HIST_CAMPOS.flatMap(c => c[3]);
+  const puntos = r => r.filter(c => { const n = normTxt(String(c)); return n && sinonimos.some(x => n === x || (x.length > 3 && n.includes(x))); }).length;
+  let iCab = -1, mejor = 0;
+  aoa.slice(0, 15).forEach((r, i) => { if(r.filter(c => String(c).trim() !== '').length < 2) return; const pt = puntos(r); if(iCab < 0 || pt > mejor){ iCab = i; mejor = pt; } });
   if(iCab < 0){ document.getElementById('hist-paso2').innerHTML = `<div class="auth-error">${esCA?'La fulla és buida.':'La hoja está vacía.'}</div>`; return; }
   st.cab = aoa[iCab].map(c => String(c).trim());
   st.filas = aoa.slice(iCab + 1).filter(r => r.some(c => String(c).trim() !== ''));
@@ -3749,7 +3753,7 @@ function histConvertir(){
   const dedup = !!(document.getElementById('hist-dedup') || {}).checked;
   const guardarExtra = !!(document.getElementById('hist-extra') || {}).checked;
   const usadasIdx = new Set(Object.values(m).filter(v => v !== undefined));
-  const salida = [], vistos = new Set(); let sinNombre = 0, duplicados = 0;
+  const salida = [], vistos = new Map(); let sinNombre = 0, duplicados = 0;
   st.filas.forEach(r => {
     const nombre = [histTxt(get(r, 'nombre')), histTxt(get(r, 'apellidos'))].filter(Boolean).join(' ').trim();
     if(!nombre){ sinNombre++; return; }
@@ -3764,8 +3768,8 @@ function histConvertir(){
     if(guardarExtra){ const ex = {}; st.cab.forEach((h, i) => { if(!h || usadasIdx.has(i)) return; let v = r[i]; if(v instanceof Date) v = histFecha(v); const t = histTxt(v); if(t !== null) ex[h] = t; }); if(Object.keys(ex).length) fila.datos = ex; }
     if(dedup){
       const k = fila.dni_nie ? 'd:' + normTxt(fila.dni_nie).replace(/\s/g, '') : 'n:' + normTxt(nombre) + '|' + (fila.fecha_nacimiento || fila.telefono || '');
-      if(vistos.has(k)){ duplicados++; return; }
-      vistos.add(k);
+      if(vistos.has(k)){ duplicados++; const ya = vistos.get(k); if(fila.fecha_alta && (!ya.fecha_alta || fila.fecha_alta < ya.fecha_alta)){ ya.fecha_alta = fila.fecha_alta; ya.anio = Number(fila.fecha_alta.slice(0, 4)); } return; }
+      vistos.set(k, fila);
     }
     salida.push(fila);
   });
@@ -10350,7 +10354,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-14 · v49 (Botón borrar histórico)';
+const APP_VERSION_INTRANET = '2026-10-14 · v51 (Importador: detecta títulos y une visitas repetidas)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
