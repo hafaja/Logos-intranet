@@ -741,6 +741,7 @@ let IS_STAFF = false;
 let IS_ADMIN = false;
 let IS_JOVENES = false;      // persona del equipo de Jóvenes en acción: solo ve su propio espacio
 let IS_GESTOR = false;       // persona a la que la administración ha delegado el reparto de alertas
+let HIST_V2 = false;          // true cuando existe cp/datos en personas_historicas (SQL 14)
 let HISTORICAS_OK = false;    // true cuando la base de datos ya tiene personas_historicas (SQL 10)
 let IMPACTO_OK = false;      // true cuando la base de datos ya tiene el módulo de impacto
 let DELEGACION_OK = false;   // true cuando la base de datos ya tiene la delegación de alertas
@@ -1034,6 +1035,7 @@ async function checkStaff(){
       const iq = await sb.from('impacto_fichas').select('id').limit(1);
       IMPACTO_OK = !iq.error;
       const hpq = await sb.from('personas_historicas').select('id').limit(1); HISTORICAS_OK = !hpq.error;
+      if(HISTORICAS_OK){ const h2 = await sb.from('personas_historicas').select('cp, datos').limit(1); HIST_V2 = !h2.error; }
     } catch(e) { CLAVE_CAMBIADA = true; REPARTO_OK = false; JOVENES_OK = false; GP_OK = false; HR_OK = false; DELEGACION_OK = false; IMPACTO_OK = false; HISTORICAS_OK = false; }
   }
 }
@@ -3526,8 +3528,9 @@ function histVer(id){
   histOverlay(`<h3 style="margin:0 0 4px;">${escAttr(p.nombre_completo)}</h3>
     <p class="subtle" style="margin:0 0 10px;">${esCA?'Històric':'Histórico'} · ${escAttr(p.codigo || '')} · ${p.anio}</p>
     ${dato(esCA?'Data d\'alta':'Fecha de alta', p.fecha_alta ? fechaCorta(p.fecha_alta) : '')}${dato('DNI/NIE', p.dni_nie)}${dato(esCA?'Telèfon':'Teléfono', p.telefono)}${dato(esCA?'Correu':'Correo', p.email)}
-    ${dato(esCA?'Municipi':'Municipio', p.municipio)}${dato(esCA?'Sexe':'Sexo', p.sexo)}${dato(esCA?'Naixement':'Nacimiento', p.fecha_nacimiento ? fechaCorta(p.fecha_nacimiento) : (p.edad_alta != null ? p.edad_alta + (esCA?' anys':' años') : ''))}
+    ${dato(esCA?'Municipi':'Municipio', p.municipio)}${dato(esCA?'Codi postal':'Código postal', p.cp)}${dato(esCA?'Sexe':'Sexo', p.sexo)}${dato(esCA?'Naixement':'Nacimiento', p.fecha_nacimiento ? fechaCorta(p.fecha_nacimiento) : (p.edad_alta != null ? p.edad_alta + (esCA?' anys':' años') : ''))}
     ${dato(esCA?'Nacionalitat':'Nacionalidad', p.nacionalidad)}${dato(esCA?'Tipus':'Tipo', p.tipo)}${dato(esCA?'Servei':'Servicio', p.servicio)}${dato(esCA?'Projecte':'Proyecto', p.proyecto)}${dato(esCA?'Notes':'Notas', p.notas)}${dato(esCA?'Lot':'Lote', p.origen)}
+    ${p.datos && typeof p.datos === 'object' ? `<details style="margin-top:8px;" open><summary style="cursor:pointer;font-weight:600;">${esCA?'Altres dades de l\'arxiu':'Otros datos del archivo'} <span class="chip off" style="font-size:10px;">${esCA?'sensible':'sensible'}</span></summary>${Object.entries(p.datos).map(([k, v]) => dato(k, String(v))).join('')}</details>` : ''}
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;align-items:center;">
       ${IMPACTO_OK ? `<button class="primary-btn" style="width:auto;margin:0;" onclick="histAImpacto('${p.id}')">📊 ${esCA?'Crear fitxa d\'impacte':'Crear ficha de impacto'}</button>` : ''}
       ${IS_ADMIN ? `<button class="link-btn" style="color:var(--alert);" onclick="histBorrar('${p.id}')">${esCA?'Esborrar':'Borrar'}</button>` : ''}
@@ -3554,13 +3557,14 @@ async function histAImpacto(id){
 
 // ---------- Importador (solo administración) ----------
 const HIST_CAMPOS = [
-  ['nombre', 'Nombre', 'Nom', ['nombre', 'nom', 'name', 'nombre completo']],
+  ['nombre', 'Nombre', 'Nom', ['nombre', 'nom', 'name', 'nombre completo', 'nom i cognom', 'nom i cognoms', 'nombre y apellidos']],
   ['apellidos', 'Apellidos', 'Cognoms', ['apellido', 'cognom']],
-  ['fecha_alta', 'Fecha de alta / primera atención', 'Data d\'alta / primera atenció', ['fecha de alta', 'fecha alta', 'data alta', 'data d alta', 'alta', 'primera', 'fecha atencion', 'fecha']],
+  ['fecha_alta', 'Fecha de alta / primera atención', 'Data d\'alta / primera atenció', ['fecha de alta', 'fecha alta', 'data alta', 'data d alta', 'alta', 'primera', 'fecha atencion', 'fecha', 'data']],
   ['anio', 'Año', 'Any', ['ano', 'any', 'ejercicio']],
-  ['dni_nie', 'DNI/NIE', 'DNI/NIE', ['dni', 'nie', 'documento', 'document']],
+  ['dni_nie', 'DNI/NIE', 'DNI/NIE', ['dni', 'nie', 'dni/nie', 'dni nie', 'documento', 'document']],
   ['telefono', 'Teléfono', 'Telèfon', ['telefono', 'telefon', 'movil', 'mobil', 'tel']],
-  ['email', 'Correo', 'Correu', ['correo', 'email', 'e-mail', 'mail']],
+  ['email', 'Correo', 'Correu', ['correo', 'email', 'e-mail', 'mail', 'correu']],
+  ['cp', 'Código postal', 'Codi postal', ['cp', 'c p', 'codigo postal', 'codi postal']],
   ['municipio', 'Municipio', 'Municipi', ['municipio', 'municipi', 'poblacion', 'localidad', 'ciudad']],
   ['sexo', 'Sexo', 'Sexe', ['sexo', 'sexe', 'genero', 'genere']],
   ['fecha_nacimiento', 'Fecha de nacimiento', 'Data de naixement', ['nacimiento', 'naixement']],
@@ -3622,6 +3626,7 @@ function histPintarMapeo(){
     <div class="hist-mapa">${HIST_CAMPOS.map(([k, es, ca]) => `<div class="field" style="margin:0;"><label>${esCA?ca:es}${k === 'nombre' ? ' *' : ''}</label><select onchange="__histImp.mapa['${k}']=this.value===''?undefined:Number(this.value);histPreview()">${opts(st.mapa[k])}</select></div>`).join('')}</div>
     <div class="field" style="margin-top:8px;"><label>${esCA?'Any per defecte (si no hi ha data d\'alta ni columna d\'any)':'Año por defecto (si no hay fecha de alta ni columna de año)'}</label><input type="number" id="hist-anio-def" min="1990" max="${new Date().getFullYear()}" value="${new Date().getFullYear() - 1}" oninput="histPreview()"></div>
     <label class="checkbox-row" style="margin:6px 0;"><input type="checkbox" id="hist-dedup" checked onchange="histPreview()"> ${esCA?'Ometre duplicats dins de l\'arxiu (mateix DNI, o mateix nom i telèfon/naixement)':'Omitir duplicados dentro del archivo (mismo DNI, o mismo nombre y teléfono/nacimiento)'}</label>
+    <label class="checkbox-row" style="margin:6px 0;"><input type="checkbox" id="hist-extra" ${HIST_V2 ? 'checked' : 'disabled'} onchange="histPreview()"> ${esCA?'Guardar també la resta de columnes a la fitxa (tot el que no has assignat)':'Guardar también el resto de columnas en la ficha (todo lo que no hayas asignado)'}${HIST_V2 ? '' : ` · <em>${esCA?'cal executar el SQL 14':'falta ejecutar el SQL 14'}</em>`}</label>
     <div id="hist-preview"></div>`;
   histPreview();
 }
@@ -3650,6 +3655,8 @@ function histConvertir(){
   const get = (r, k) => m[k] === undefined ? '' : r[m[k]];
   const anioDef = Number((document.getElementById('hist-anio-def') || {}).value) || (new Date().getFullYear() - 1);
   const dedup = !!(document.getElementById('hist-dedup') || {}).checked;
+  const guardarExtra = !!(document.getElementById('hist-extra') || {}).checked;
+  const usadasIdx = new Set(Object.values(m).filter(v => v !== undefined));
   const salida = [], vistos = new Set(); let sinNombre = 0, duplicados = 0;
   st.filas.forEach(r => {
     const nombre = [histTxt(get(r, 'nombre')), histTxt(get(r, 'apellidos'))].filter(Boolean).join(' ').trim();
@@ -3659,9 +3666,10 @@ function histConvertir(){
     if(!(anio >= 1990 && anio <= new Date().getFullYear() + 1)) anio = fecha_alta ? Number(fecha_alta.slice(0, 4)) : anioDef;
     const fecha_nacimiento = histFecha(get(r, 'fecha_nacimiento'));
     const edadN = parseInt(get(r, 'edad'), 10);
-    const fila = { anio, fecha_alta, nombre_completo: nombre, dni_nie: histTxt(get(r, 'dni_nie')), telefono: histTxt(get(r, 'telefono')), email: histTxt(get(r, 'email')),
+    const fila = { cp: histTxt(get(r, 'cp')), anio, fecha_alta, nombre_completo: nombre, dni_nie: histTxt(get(r, 'dni_nie')), telefono: histTxt(get(r, 'telefono')), email: histTxt(get(r, 'email')),
       municipio: histTxt(get(r, 'municipio')), sexo: histSexo(get(r, 'sexo')), fecha_nacimiento, edad_alta: (!fecha_nacimiento && edadN >= 0 && edadN < 110) ? edadN : null,
       nacionalidad: histTxt(get(r, 'nacionalidad')), tipo: histTxt(get(r, 'tipo')), servicio: histTxt(get(r, 'servicio')), proyecto: histTxt(get(r, 'proyecto')), notas: histTxt(get(r, 'notas')) };
+    if(guardarExtra){ const ex = {}; st.cab.forEach((h, i) => { if(!h || usadasIdx.has(i)) return; let v = r[i]; if(v instanceof Date) v = histFecha(v); const t = histTxt(v); if(t !== null) ex[h] = t; }); if(Object.keys(ex).length) fila.datos = ex; }
     if(dedup){
       const k = fila.dni_nie ? 'd:' + normTxt(fila.dni_nie).replace(/\s/g, '') : 'n:' + normTxt(nombre) + '|' + (fila.fecha_nacimiento || fila.telefono || '');
       if(vistos.has(k)){ duplicados++; return; }
@@ -3685,16 +3693,33 @@ function histPreview(){
 async function histImportar(){
   const esCA = LANG_I === 'ca', st = __histImp;
   const c = histConvertir(); if(!c.filas.length) return;
-  if(!confirm(esCA ? `Importar ${c.filas.length} persones a l'històric?` : `¿Importar ${c.filas.length} personas al histórico?`)) return;
+  if(!confirm(esCA ? `Importar ${c.filas.length} persones a l'històric? (les que ja hi són pel DNI s'ometran)` : `¿Importar ${c.filas.length} personas al histórico? (las que ya estén por DNI se omitirán)`)) return;
   const btn = document.getElementById('hist-btn-importar'), prog = document.getElementById('hist-progreso'); btn.disabled = true;
   const origen = `${st.archivo} · ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`;
-  const filas = c.filas.map(f => Object.assign(f, { origen, importado_por: CURRENT_USER.email }));
+  prog.textContent = esCA ? 'Comprovant qui ja hi és…' : 'Comprobando quién ya está…';
+  const normD = d => normTxt(d || '').replace(/[\s.\-]/g, '');
+  const ya = new Set();
+  const ex1 = await traerTodoPaginado((a, b) => sb.from('personas_historicas').select('dni_nie').not('dni_nie', 'is', null).range(a, b));
+  (ex1.data || []).forEach(r => ya.add(normD(r.dni_nie)));
+  const perf = new Map();
+  const ex2 = await traerTodoPaginado((a, b) => sb.from('perfiles').select('id, dni_nie').not('dni_nie', 'is', null).range(a, b));
+  (ex2.data || []).forEach(r => { if(normD(r.dni_nie)) perf.set(normD(r.dni_nie), r.id); });
+  let omitidas = 0, enlazadas = 0;
+  const filas = [];
+  c.filas.forEach(f => {
+    const k = normD(f.dni_nie);
+    if(k && ya.has(k)){ omitidas++; return; }
+    if(k){ ya.add(k); if(perf.has(k)){ f.perfil_id = perf.get(k); enlazadas++; } }
+    if(!HIST_V2){ delete f.cp; delete f.datos; }
+    filas.push(Object.assign(f, { origen, importado_por: CURRENT_USER.email }));
+  });
+  if(!filas.length){ prog.innerHTML = `<strong>${esCA?'Totes ja hi eren (cap duplicat creat).':'Todas ya estaban (no se ha creado ningún duplicado).'}</strong>`; btn.disabled = false; return; }
   for(let i = 0; i < filas.length; i += 500){
     const { error } = await sb.from('personas_historicas').insert(filas.slice(i, i + 500));
     if(error){ prog.innerHTML = `<span style="color:var(--alert);">⚠️ ${escAttr(error.message)} (${esCA?'importades':'importadas'}: ${i.toLocaleString()})</span>`; btn.disabled = false; return; }
     prog.textContent = `${Math.min(i + 500, filas.length).toLocaleString()} / ${filas.length.toLocaleString()}`;
   }
-  prog.innerHTML = `<strong style="color:var(--good);">✅ ${filas.length.toLocaleString()} ${esCA?'persones importades':'personas importadas'}</strong>`;
+  prog.innerHTML = `<strong style="color:var(--good);">✅ ${filas.length.toLocaleString()} ${esCA?'persones importades':'personas importadas'}</strong>${omitidas ? ` · ${omitidas} ${esCA?'ja hi eren (omeses)':'ya estaban (omitidas)'}` : ''}${enlazadas ? ` · ${enlazadas} ${esCA?'enllaçades amb un compte':'enlazadas con una cuenta'}` : ''}`;
   __personasVista = 'hist'; const p = document.getElementById('personas-pestanas'); if(p) p.innerHTML = personasPestanasHtml();
   const caja = document.getElementById('personas-lista'); if(caja) histPintarVista(caja);
 }
@@ -10221,7 +10246,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-13 · v40 (Alertas sin atender suben al equipo)';
+const APP_VERSION_INTRANET = '2026-10-14 · v47 (Importador Observatori)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
