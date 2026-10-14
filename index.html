@@ -3585,7 +3585,8 @@ function histAbrirImportador(){
     <input type="file" id="hist-archivo" accept=".xlsx,.xls,.csv" onchange="histLeerArchivo(this)">
     <div id="hist-paso2"></div>
     <div id="hist-lotes" style="margin-top:14px;"></div>
-    <div style="display:flex;gap:12px;margin-top:14px;"><button class="link-btn" onclick="histVerLotes()">${esCA?'Veure lots importats':'Ver lotes importados'}</button><button class="link-btn" style="margin-left:auto;" onclick="histCerrar()">${esCA?'Tancar':'Cerrar'}</button></div>`);
+    <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;"><button class="link-btn" onclick="histVerLotes()">${esCA?'Veure lots importats':'Ver lotes importados'}</button><button class="link-btn" style="color:var(--alert);" onclick="histBorrarTodo()">🗑️ ${esCA?'Esborrar tot l\'històric':'Borrar todo el histórico'}</button><button class="link-btn" style="margin-left:auto;" onclick="histCerrar()">${esCA?'Tancar':'Cerrar'}</button></div>`);
+  histVerLotes();
 }
 async function histLeerArchivo(input){
   const esCA = LANG_I === 'ca';
@@ -3731,6 +3732,15 @@ async function histVerLotes(){
   const lotes = {}; res.data.forEach(r => { lotes[r.origen || '—'] = (lotes[r.origen || '—'] || 0) + 1; });
   host.innerHTML = Object.keys(lotes).length ? Object.entries(lotes).map(([o, n]) => `<div class="panel-stat-row"><span>${escAttr(o)}<br><span class="subtle" style="font-size:11px;margin:0;">${n.toLocaleString()} ${esCA?'persones':'personas'}</span></span><button class="link-btn" style="color:var(--alert);font-size:12px;" onclick="histBorrarLote(decodeURIComponent('${encodeURIComponent(o)}'))">${esCA?'Desfer el lot':'Deshacer el lote'}</button></div>`).join('') : `<div class="empty-note">${esCA?'Cap lot importat.':'Ningún lote importado.'}</div>`;
 }
+async function histBorrarTodo(){
+  const esCA = LANG_I === 'ca';
+  if(!IS_ADMIN){ alert(esCA ? 'Només l\'administració pot esborrar.' : 'Solo la administración puede borrar.'); return; }
+  if(!confirm(esCA ? 'Esborrar TOT l\'històric (totes les persones importades)? No es pot desfer.' : '¿Borrar TODO el histórico (todas las personas importadas)? No se puede deshacer.')) return;
+  if((prompt(esCA ? 'Escriu BORRAR per confirmar:' : 'Escribe BORRAR para confirmar:') || '').trim().toUpperCase() !== 'BORRAR') return;
+  const { error } = await sb.from('personas_historicas').delete().not('id', 'is', null);
+  if(error){ alert(error.message); return; }
+  histVerLotes(); const caja = document.getElementById('personas-lista'); if(caja && __personasVista === 'hist') histPintarVista(caja);
+}
 async function histBorrarLote(origen){
   const esCA = LANG_I === 'ca';
   if(!confirm(esCA ? `Esborrar TOTES les persones del lot «${origen}»? No es pot desfer.` : `¿Borrar TODAS las personas del lote «${origen}»? No se puede deshacer.`)) return;
@@ -3746,8 +3756,9 @@ async function obtenerPersonasParaExport(){
   if(__personasVista === 'hist' && HISTORICAS_OK){
     const res = await traerTodoPaginado((a, b) => sb.from('personas_historicas').select('*').order('anio', { ascending:true }).order('nombre_completo', { ascending:true }).range(a, b));
     const datos = (res.data || []).filter(p => !hayTexto || normTxt(p.nombre_completo).includes(q));
-    return { cabecera: ['Código', 'Año', 'Fecha de alta', 'Nombre', 'DNI/NIE', 'Teléfono', 'Correo', 'Municipio', 'Sexo', 'Fecha de nacimiento', 'Nacionalidad', 'Tipo (trámite/servicio/proyecto)', 'Servicio', 'Proyecto', 'Notas', 'Lote de importación'],
-      filas: datos.map(p => [p.codigo || '', p.anio || '', p.fecha_alta || '', p.nombre_completo || '', p.dni_nie || '', p.telefono || '', p.email || '', p.municipio || '', p.sexo || '', p.fecha_nacimiento || '', p.nacionalidad || '', p.tipo || '', p.servicio || '', p.proyecto || '', p.notas || '', p.origen || '']) };
+    const extra = []; datos.forEach(p => { if(p.datos && typeof p.datos === 'object') Object.keys(p.datos).forEach(k => { if(!extra.includes(k)) extra.push(k); }); });
+    return { cabecera: ['Código', 'Año', 'Fecha de alta', 'Nombre', 'DNI/NIE', 'Teléfono', 'Correo', 'Código postal', 'Municipio', 'Sexo', 'Fecha de nacimiento', 'Edad en el alta', 'Nacionalidad', 'Tipo (trámite/servicio/proyecto)', 'Servicio', 'Proyecto', 'Notas', 'Lote de importación'].concat(extra),
+      filas: datos.map(p => [p.codigo || '', p.anio || '', p.fecha_alta || '', p.nombre_completo || '', p.dni_nie || '', p.telefono || '', p.email || '', p.cp || '', p.municipio || '', p.sexo || '', p.fecha_nacimiento || '', p.edad_alta != null ? p.edad_alta : '', p.nacionalidad || '', p.tipo || '', p.servicio || '', p.proyecto || '', p.notas || '', p.origen || ''].concat(extra.map(k => (p.datos && p.datos[k]) || ''))) };
   }
   const cols = 'id, nombre_completo, dni_nie, telefono, municipio, calle' + (FECHA_ALTA_OK ? ', fecha_alta' : '');
   const [perfRes, trRes, atRes, acRes, pyRes] = await Promise.all([
@@ -10246,7 +10257,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-14 · v47 (Importador Observatori)';
+const APP_VERSION_INTRANET = '2026-10-14 · v49 (Botón borrar histórico)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
