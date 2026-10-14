@@ -211,6 +211,22 @@
   .field label:has(> input[type=radio]),.field label:has(> input[type=checkbox]){font-weight:500;color:var(--ink);}
   .checkbox-row{display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:13px;cursor:pointer;}
   .checkbox-row input{margin-top:3px;flex-shrink:0;}
+  /* Formulario «Registrar atención»: cada bloque separado, cabecera de color y opciones en columnas */
+  .at-sec{padding:0 !important;overflow:hidden;margin-bottom:16px !important;}
+  .panel-card.at-sec>h3{margin:0;padding:12px 20px;background:var(--navy);color:#fff;font-size:14px;letter-spacing:.01em;display:flex;align-items:center;gap:8px;}
+  .panel-card.at-sec>h3::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+  .at-sec .at-opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px 12px;padding:16px 20px 18px;}
+  .at-sec .checkbox-row{margin:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;line-height:1.35;transition:border-color .15s,background .15s;}
+  .at-sec .checkbox-row:hover{border-color:var(--gold);}
+  .at-sec .checkbox-row:has(input:checked){border-color:var(--navy);background:var(--gold-soft);font-weight:600;}
+  .at-form .field{margin-bottom:16px;}
+  .at-obs{margin-top:4px;}
+  .at-obs li{margin:0 0 8px;line-height:1.45;font-size:13.5px;}
+  .at-barras .ab-fila{display:grid;grid-template-columns:minmax(120px,1.3fr) 2fr 44px;gap:10px;align-items:center;margin:7px 0;font-size:13px;}
+  .at-barras .ab-bar{height:10px;border-radius:99px;background:var(--line);overflow:hidden;}
+  .at-barras .ab-bar i{display:block;height:100%;background:var(--navy);border-radius:99px;}
+  .at-barras .ab-fila:nth-child(even) .ab-bar i{background:var(--gold);}
+  .at-barras .ab-v{text-align:right;font-weight:700;}
 
   .primary-btn{background:var(--navy);color:#fff;border:none;border-radius:999px;padding:14px 24px;font-family:var(--font-body);font-weight:800;font-size:14.5px;cursor:pointer;margin-top:4px;transition:transform .15s ease, box-shadow .2s ease, background .2s ease;}
   .primary-btn:hover{background:var(--navy-dark);transform:translateY(-2px);box-shadow:0 12px 24px -10px rgba(11,21,38,.5);}
@@ -779,7 +795,7 @@ const TI = {
     conHijosCargo:'Con hijos a cargo', enDesempleo:'En desempleo', violenciaGenero:'Violencia de género', dificultadesEmocionales:'Dificultades emocionales',
     satisfaccionTitulo:'Satisfacción', mediaGlobal:'Media global', respuestasRecibidas:'Respuestas recibidas',
     tramitesPorEstado:'Trámites por estado', interesesFormativos:'Intereses formativos más demandados',
-    prestacionesEconomicas:'Prestaciones económicas', tramitesBretxaTitulo:'Trámites de Bretxa Digital',
+    prestacionesEconomicas:'Prestaciones económicas', tramitesBretxaTitulo:'Trámites / proyectos dentro de Bretxa Logos',
     derivacionRecursos:'Derivación a recursos sociales', emprendeduriaTitulo:'Emprendeduría', comoConocioTitulo:'Cómo conoció Logos',
     resultadosActuaciones:'Resultados de las actuaciones', actuacionesRegistradasTotal:'actuaciones registradas en total.',
     actuacionesPorCategoria:'Actuaciones por proyecto/formación/categoría', derivacionesDeActuaciones:'Derivaciones (de actuaciones)',
@@ -864,7 +880,7 @@ const TI = {
     conHijosCargo:'Amb fills a càrrec', enDesempleo:'En atur', violenciaGenero:'Violència de gènere', dificultadesEmocionales:'Dificultats emocionals',
     satisfaccionTitulo:'Satisfacció', mediaGlobal:'Mitjana global', respuestasRecibidas:'Respostes rebudes',
     tramitesPorEstado:'Tràmits per estat', interesesFormativos:'Interessos formatius més demandats',
-    prestacionesEconomicas:'Prestacions econòmiques', tramitesBretxaTitulo:'Tràmits de Bretxa Digital',
+    prestacionesEconomicas:'Prestacions econòmiques', tramitesBretxaTitulo:'Tràmits / projectes dins de Bretxa Logos',
     derivacionRecursos:'Derivació a recursos socials', emprendeduriaTitulo:'Emprenedoria', comoConocioTitulo:'Com va conèixer Logos',
     resultadosActuaciones:'Resultats de les actuacions', actuacionesRegistradasTotal:'actuacions registrades en total.',
     actuacionesPorCategoria:'Actuacions per projecte/formació/categoria', derivacionesDeActuaciones:'Derivacions (d\'actuacions)',
@@ -2852,8 +2868,70 @@ const EMPRENDEDURIA_OPTS = [
   ['emprenedoria_social','Emprendeduría social'], ['compatibilitzacio_atur_emprenedoria','Compatibilización paro/emprendeduría'],
   ['constitucio_cooperatives','Constitución cooperativas'], ['microcredits','Microcréditos'], ['ajuts_soc','Ayudas SOC'],
   ['preacceleracio','Preaceleración'], ['mentoria','Mentoría'], ['assessorament_pla_empresa','Plan de empresa'],
-  ['formacio_gestio','Formación gestión'], ['coworking','Coworking'], ['networking','Networking']
+  ['formacio_gestio','Formación gestión'], ['coworking','Coworking'], ['networking','Networking'],
+  ['intrepids_filials','Intrèpids (filiales)']
 ];
+const ETHOS_OPTS = [
+  ['no_escau','No procede'], ['ethos1','ETHOS 1 – Sin techo'], ['ethos2','ETHOS 2 – Sin vivienda'],
+  ['ethos3','ETHOS 3 – Vivienda insegura'], ['ethos4','ETHOS 4 – Vivienda inadecuada'], ['no_consta','No consta']
+];
+const TALLERES_OPTS = [
+  ['cap','Ninguno'], ['recerca_feina','Búsqueda de empleo'], ['competencies_digitals','Competencias digitales'], ['altres','Otros']
+];
+const PROGRAMAS_OPTS = [
+  ['nomes_bretxa','Solo Bretxa Logos'], ['convo','CONVO – Mirada Endavant'], ['raices','Raíces – Reconnexió Familiar'],
+  ['la_caixa','La Caixa – Futur en Xarxa'], ['job_club','Diputació – JOB CLUB A3'], ['ibercaja','Ibercaja – Autonomia Digital Activa'],
+  ['red_arana','Red Araña – Ruraliza-T / YoEmprendo / Impulsa-T'], ['cuidem','Cuidem en igualtat']
+];
+// Traduce un código guardado a su etiqueta visible (si no está en la lista, se muestra tal cual).
+function etiquetaOpt(opts, v){ const f = opts.find(o => o[0] === v); return f ? f[1] : v; }
+function etiquetasOpt(opts, arr){ return (arr || []).map(v => etiquetaOpt(opts, v)).join(', '); }
+
+// Datos de los campos nuevos de «Registrar atención» para Estadísticas e Impacto.
+async function statsAtencionNuevos(desde, hasta){
+  const sig = hasta ? new Date(new Date(hasta + 'T00:00:00').getTime() + 86400000).toISOString().slice(0, 10) : null;
+  const r = await traerTodoPaginado((a, b) => { let q = sb.from('atenciones').select('derivacion_programas, talleres, ethos, creado_en'); if(desde) q = q.gte('creado_en', desde); if(sig) q = q.lt('creado_en', sig); return q.range(a, b); });
+  if(r.error) return { error: r.error };
+  const filas = r.data || [], cuenta = (arr) => { const m = {}; arr.forEach(v => { if(v) m[v] = (m[v] || 0) + 1; }); return m; };
+  const aLista = (m, opts) => Object.entries(m).map(([k, v]) => ({ label: etiquetaOpt(opts, k), value: v, k })).sort((x, y) => y.value - x.value);
+  const conProg = filas.filter(f => (f.derivacion_programas || []).length), conTall = filas.filter(f => (f.talleres || []).length), conEthos = filas.filter(f => f.ethos);
+  return {
+    total: filas.length,
+    programas: aLista(cuenta(conProg.flatMap(f => f.derivacion_programas)), PROGRAMAS_OPTS), nProg: conProg.length,
+    talleres: aLista(cuenta(conTall.flatMap(f => f.talleres)), TALLERES_OPTS), nTall: conTall.length,
+    ethos: aLista(cuenta(conEthos.map(f => f.ethos)), ETHOS_OPTS), nEthos: conEthos.length
+  };
+}
+function barrasAtencion(items){
+  if(!items || !items.length) return `<div class="empty-note">${LANG_I==='ca' ? 'Encara no hi ha dades.' : 'Todavía no hay datos.'}</div>`;
+  const max = Math.max(...items.map(i => i.value));
+  return `<div class="at-barras">${items.map(i => `<div class="ab-fila"><span>${i.label}</span><div class="ab-bar"><i style="width:${Math.max(4, i.value / max * 100)}%"></i></div><span class="ab-v">${i.value}</span></div>`).join('')}</div>`;
+}
+// Observaciones automáticas: frases cortas que resumen lo que dicen los datos.
+function observacionesAtencion(d){
+  const ca = LANG_I === 'ca', pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '0%', obs = [];
+  if(!d || d.error) return `<div class="empty-note">${ca ? "Cal executar l'SQL «intranet-atencion-campos» a Supabase per veure aquestes dades." : 'Hay que ejecutar el SQL «intranet-atencion-campos» en Supabase para ver estos datos.'}</div>`;
+  if(!d.total) return `<div class="empty-note">${ca ? 'Encara no hi ha atencions registrades en aquest període.' : 'Todavía no hay atenciones registradas en este periodo.'}</div>`;
+  const solo = (d.programas.find(p => p.k === 'nomes_bretxa') || {}).value || 0;
+  const prog = d.programas.filter(p => p.k !== 'nomes_bretxa');
+  if(d.nProg) obs.push(ca ? `De ${d.nProg} atencions amb derivació indicada, <strong>${pct(solo, d.nProg)}</strong> es resolen només a Bretxa Logos.` : `De ${d.nProg} atenciones con derivación indicada, <strong>${pct(solo, d.nProg)}</strong> se resuelven solo en Bretxa Logos.`);
+  if(prog.length) obs.push(ca ? `El programa que rep més derivacions és <strong>${prog[0].label}</strong> (${prog[0].value}).` : `El programa que recibe más derivaciones es <strong>${prog[0].label}</strong> (${prog[0].value}).`);
+  const excl = d.ethos.filter(e => /^ethos/.test(e.k)).reduce((a, e) => a + e.value, 0);
+  if(d.nEthos) obs.push(ca ? `<strong>${excl}</strong> persones ateses (${pct(excl, d.nEthos)}) estan en situació d'exclusió residencial (ETHOS 1-4).` : `<strong>${excl}</strong> personas atendidas (${pct(excl, d.nEthos)}) están en situación de exclusión residencial (ETHOS 1-4).`);
+  const tall = d.talleres.filter(x => x.k !== 'cap');
+  if(tall.length) obs.push(ca ? `El taller més demandat és <strong>${tall[0].label}</strong> (${tall[0].value}).` : `El taller más demandado es <strong>${tall[0].label}</strong> (${tall[0].value}).`);
+  const sinDatos = d.total - Math.max(d.nProg, d.nEthos);
+  if(sinDatos > 0) obs.push(ca ? `${sinDatos} atencions no tenen aquests camps omplerts: com més complets, més fiables seran els informes.` : `${sinDatos} atenciones no tienen estos campos rellenados: cuanto más completos, más fiables serán los informes.`);
+  return `<ul class="at-obs">${obs.map(o => `<li>${o}</li>`).join('')}</ul>`;
+}
+function bloqueAtencionNuevos(d){
+  const ca = LANG_I === 'ca';
+  const ok = d && !d.error;
+  return `<div class="panel-card" style="grid-column:1/-1;border-color:var(--gold);background:var(--gold-soft);"><h3>💡 ${ca ? 'Observacions' : 'Observaciones'}</h3>${observacionesAtencion(d)}</div>`
+    + (ok ? `<div class="panel-card"><h3>${ca ? 'Derivació als programes' : 'Derivación a los programas'}</h3>${barrasAtencion(d.programas)}</div>
+    <div class="panel-card"><h3>${ca ? 'Situació residencial (ETHOS)' : 'Situación residencial (ETHOS)'}</h3>${barrasAtencion(d.ethos)}</div>
+    <div class="panel-card"><h3>${ca ? 'Tallers' : 'Talleres'}</h3>${barrasAtencion(d.talleres)}</div>` : '');
+}
 const COMO_CONOCIO_OPTS = [
   ['vei_port','Vecino/a del Port'], ['imsst','IMSST'], ['sepe','SEPE'], ['usuari_logos','Usuario/a Logos'],
   ['terceres_persones','Terceras personas'], ['pere_mata','Pere Mata'], ['actic','ACTIC'], ['siad','SIAD'], ['pass','PASS'],
@@ -3022,6 +3100,7 @@ async function guardarAltaPresencial(){
 function renderAtencionForm(){
   window.__atencionUsuarioVinculado = null;
   document.getElementById('atencion-content').innerHTML = `
+    <div class="at-form">
     <h2 class="screen-title">Registrar atención</h2>
     <p class="subtle">Se guardará vinculada a tu correo (${CURRENT_USER.email}).</p>
 
@@ -3046,23 +3125,27 @@ function renderAtencionForm(){
       <input type="number" id="at-duracion" min="1" placeholder="Ej: 20">
     </div>
 
-    <div class="panel-card"><h3>Prestaciones económicas básicas</h3>${checkboxGroup('at-prestaciones', PRESTACIONES_OPTS)}</div>
-    <div class="panel-card"><h3>Trámites dentro de Bretxa Digital</h3>${checkboxGroup('at-tramites', TRAMITES_BRETXA_OPTS)}</div>
-    <div class="panel-card"><h3>Derivación</h3>${radioGroup('at-derivacion', DERIVACION_OPTS)}</div>
-    <div class="panel-card"><h3>Emprendeduría</h3>${checkboxGroup('at-emprendeduria', EMPRENDEDURIA_OPTS)}</div>
-    <div class="panel-card"><h3>¿Cómo nos conoció / quién derivó?</h3>${radioGroup('at-conocio', COMO_CONOCIO_OPTS)}</div>
+    <div class="panel-card at-sec"><h3>Prestaciones económicas básicas</h3><div class="at-opts">${checkboxGroup('at-prestaciones', PRESTACIONES_OPTS)}</div></div>
+    <div class="panel-card at-sec"><h3>Trámites / proyectos dentro de Bretxa Logos</h3><div class="at-opts">${checkboxGroup('at-tramites', TRAMITES_BRETXA_OPTS)}</div></div>
+    <div class="panel-card at-sec"><h3>Derivación a los programas</h3><div class="at-opts">${checkboxGroup('at-programas', PROGRAMAS_OPTS)}</div></div>
+    <div class="panel-card at-sec"><h3>Talleres</h3><div class="at-opts">${checkboxGroup('at-talleres', TALLERES_OPTS)}</div></div>
+    <div class="panel-card at-sec"><h3>Situación residencial (ETHOS)</h3><div class="at-opts">${radioGroup('at-ethos', ETHOS_OPTS)}</div></div>
+    <div class="panel-card at-sec"><h3>Derivación</h3><div class="at-opts">${radioGroup('at-derivacion', DERIVACION_OPTS)}</div></div>
+    <div class="panel-card at-sec"><h3>Emprendeduría</h3><div class="at-opts">${checkboxGroup('at-emprendeduria', EMPRENDEDURIA_OPTS)}</div></div>
+    <div class="panel-card at-sec"><h3>¿Cómo nos conoció / quién derivó?</h3><div class="at-opts">${radioGroup('at-conocio', COMO_CONOCIO_OPTS)}</div></div>
 
-    <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);">
+    <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);margin-bottom:16px;">
       <h3 style="color:#7A5A16;">Necesidades detectadas que no están en el catálogo</h3>
       <textarea id="at-necesidades-nuevas" rows="2"></textarea>
     </div>
 
     <div class="field">
-      <label>Notas (opcional)</label>
-      <textarea id="at-notas" rows="3"></textarea>
+      <label>Observaciones (opcional)</label>
+      <textarea id="at-notas" rows="3" placeholder="Cualquier detalle útil: cómo llega la persona, qué le preocupa, próximos pasos…"></textarea>
     </div>
 
     <button class="primary-btn" id="at-save-btn" onclick="guardarAtencion()" style="margin-bottom:24px;">Guardar atención</button>
+    </div>
   `;
 }
 
@@ -3173,11 +3256,19 @@ async function guardarAtencion(){
     derivacion: getRadio('at-derivacion'),
     emprendeduria: getChecked('at-emprendeduria'),
     como_conocio: getRadio('at-conocio'),
+    derivacion_programas: getChecked('at-programas'),
+    talleres: getChecked('at-talleres'),
+    ethos: getRadio('at-ethos'),
     necesidades_no_catalogadas: document.getElementById('at-necesidades-nuevas').value.trim() || null,
     notas: document.getElementById('at-notas').value.trim() || null
   };
 
-  const { error } = await sb.from('atenciones').insert(payload);
+  let { error } = await sb.from('atenciones').insert(payload);
+  // Si la base de datos aún no tiene las columnas nuevas, se guarda igualmente sin ellas.
+  if(error && /derivacion_programas|talleres|ethos/.test(error.message || '')){
+    const { derivacion_programas, talleres, ethos, ...resto } = payload;
+    ({ error } = await sb.from('atenciones').insert(resto));
+  }
   if(error){
     document.getElementById('atencion-content').insertAdjacentHTML('afterbegin', `<div class="auth-error">${error.message}</div>`);
     btn.disabled = false; btn.textContent = 'Guardar atención';
@@ -8205,7 +8296,9 @@ async function impRenderPanel(cuerpo){
     + (vacio ? `<div class="imp-vacio"><strong>${acL('Todavía no hay fichas en este periodo.', 'Encara no hi ha fitxes en aquest període.')}</strong><br>${acL('Cada técnico crea sus fichas en la pestaña «Mis fichas». En cuanto haya 5 personas con situación inicial y cierre, aparecerán aquí los cambios.', 'Cada tècnic crea les seves fitxes a la pestanya «Les meves fitxes». Quan hi hagi 5 persones amb situació inicial i tancament, hi apareixeran els canvis.')}<br><button class="primary-btn" style="width:auto;margin-top:10px;" onclick="renderImpacto('fichas')">📝 ${acL('Crear mi primera ficha', 'Crear la meva primera fitxa')}</button></div>` : '')
     + impDimsHtml(r) + impAntesDespuesHtml(r) + impEmpleoFormacionHtml(r) + impCoberturaHtml(r) + impSerieHtml(r) + impEquidadHtml(r) + impActividadHtml(act)
     + `<p class="imp-pie">${acL('Periodo', 'Període')}: ${desde ? impFecha(desde) : acL('inicio', 'inici')} – ${impFecha(hasta || new Date().toISOString())} · ${st.programa ? impProg(st.programa) : acL('Todo Logos', 'Tot Logos')} · ${acL('Los grupos de menos de 5 personas se ocultan para proteger la privacidad.', 'Els grups de menys de 5 persones s\'oculten per protegir la privadesa.')}</p></div>`
+    + `<div class="imp-seccion">${acL('Atención en Bretxa Logos', 'Atenció a Bretxa Logos')}</div><div id="imp-atencion" class="cards-grid"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`
     + `<div id="imp-alcance"></div><div id="imp-carga"></div>`;
+  statsAtencionNuevos(desde, hasta).then(d => { const h = document.getElementById('imp-atencion'); if(h) h.innerHTML = bloqueAtencionNuevos(d); });
   alcancePersonasPintar('imp-alcance');
   if(IS_ADMIN) impCargaAdmin();
 }
@@ -10422,6 +10515,7 @@ async function renderInformesScreen(){
   const cont = document.getElementById('informes-content');
   const t = TI[LANG_I];
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
+  const atNuevos = await statsAtencionNuevos(null, null);
 
   const [porSexo, porNacionalidad, depDis, situFam, tramEstado, interesesForm, satisfaccion, prestaciones, tramitesBretxa, derivacion, emprendeduria, comoConocio, actTotal, actResultado, actCategoria, actDerivado, proyectosRes, proyectoParticipantesRes, cursosStatsRes, inscripcionesCountRes, entregasEstadoRes] = await Promise.all([
     sb.from('stats_por_sexo').select('*'),
@@ -10582,11 +10676,12 @@ async function renderInformesScreen(){
         <div class="panel-stat-row"><span>${t.respuestasRecibidas}</span><span><strong>${sat.total_respuestas || 0}</strong></span></div>
       </div>
       <div class="panel-card"><h3>${t.tramitesPorEstado}</h3>${graficoCircular((tramEstado.data||[]).map(r => ({label: r.estado || '—', value: r.total})), ['var(--gold)', 'var(--navy)', 'var(--good)'])}</div>
-      <div class="panel-card"><h3>${t.prestacionesEconomicas}</h3>${graficoCircular((prestaciones.data||[]).map(r => ({label: r.prestacion || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
-      <div class="panel-card"><h3>${t.tramitesBretxaTitulo}</h3>${graficoCircular((tramitesBretxa.data||[]).map(r => ({label: r.tramite || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
-      <div class="panel-card"><h3>${t.derivacionRecursos}</h3>${graficoCircular((derivacion.data||[]).map(r => ({label: r.derivacion || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
-      <div class="panel-card"><h3>${t.emprendeduriaTitulo}</h3>${graficoCircular((emprendeduria.data||[]).map(r => ({label: r.accion || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
-      <div class="panel-card"><h3>${t.comoConocioTitulo}</h3>${graficoCircular((comoConocio.data||[]).map(r => ({label: r.como_conocio || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
+      <div class="panel-card"><h3>${t.prestacionesEconomicas}</h3>${graficoCircular((prestaciones.data||[]).map(r => ({label: etiquetaOpt(PRESTACIONES_OPTS, r.prestacion) || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
+      <div class="panel-card"><h3>${t.tramitesBretxaTitulo}</h3>${graficoCircular((tramitesBretxa.data||[]).map(r => ({label: etiquetaOpt(TRAMITES_BRETXA_OPTS, r.tramite) || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
+      <div class="panel-card"><h3>${t.derivacionRecursos}</h3>${graficoCircular((derivacion.data||[]).map(r => ({label: etiquetaOpt(DERIVACION_OPTS, r.derivacion) || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
+      <div class="panel-card"><h3>${t.emprendeduriaTitulo}</h3>${graficoCircular((emprendeduria.data||[]).map(r => ({label: etiquetaOpt(EMPRENDEDURIA_OPTS, r.accion) || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
+      <div class="panel-card"><h3>${t.comoConocioTitulo}</h3>${graficoCircular((comoConocio.data||[]).map(r => ({label: etiquetaOpt(COMO_CONOCIO_OPTS, r.como_conocio) || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
+      ${bloqueAtencionNuevos(atNuevos)}
       <div class="panel-card"><h3>${t.resultadosActuaciones}</h3><p class="subtle" style="margin:0 0 8px;">${totalActStats} ${t.actuacionesRegistradasTotal}</p>${resultadosHtml}</div>
       <div class="panel-card"><h3>${t.actuacionesPorCategoria}</h3>${categoriaHtml}</div>
       <div class="panel-card"><h3>${t.derivacionesDeActuaciones}</h3>${derivadoHtml}</div>
@@ -11198,8 +11293,13 @@ async function verPersonaStaff(usuarioId, origen){
           <div class="panel-stat-row"><span>${t.tecnicoLbl}</span><span><strong>${nombreTecnico(a.creado_por_email)}</strong></span></div>
           <div class="panel-stat-row"><span>${t.fechaLbl}</span><span><strong>${new Date(a.creado_en).toLocaleString(t.localeFecha)}</strong></span></div>
           ${a.duracion_minutos ? `<div class="panel-stat-row"><span>${t.duracionLbl}</span><span><strong>${a.duracion_minutos} min</strong></span></div>` : ''}
-          ${a.prestaciones && a.prestaciones.length ? `<div class="panel-stat-row"><span>${t.prestacionesLbl}</span><span>${a.prestaciones.join(', ')}</span></div>` : ''}
-          ${a.tramites_bretxa && a.tramites_bretxa.length ? `<div class="panel-stat-row"><span>${t.tramitesGenLbl}</span><span>${a.tramites_bretxa.join(', ')}</span></div>` : ''}
+          ${a.prestaciones && a.prestaciones.length ? `<div class="panel-stat-row"><span>${t.prestacionesLbl}</span><span>${etiquetasOpt(PRESTACIONES_OPTS, a.prestaciones)}</span></div>` : ''}
+          ${a.tramites_bretxa && a.tramites_bretxa.length ? `<div class="panel-stat-row"><span>${t.tramitesGenLbl}</span><span>${etiquetasOpt(TRAMITES_BRETXA_OPTS, a.tramites_bretxa)}</span></div>` : ''}
+          ${a.derivacion_programas && a.derivacion_programas.length ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Derivació als programes':'Derivación a los programas'}</span><span>${etiquetasOpt(PROGRAMAS_OPTS, a.derivacion_programas)}</span></div>` : ''}
+          ${a.talleres && a.talleres.length ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Tallers':'Talleres'}</span><span>${etiquetasOpt(TALLERES_OPTS, a.talleres)}</span></div>` : ''}
+          ${a.ethos ? `<div class="panel-stat-row"><span>ETHOS</span><span>${etiquetaOpt(ETHOS_OPTS, a.ethos)}</span></div>` : ''}
+          ${a.derivacion ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Derivació':'Derivación'}</span><span>${etiquetaOpt(DERIVACION_OPTS, a.derivacion)}</span></div>` : ''}
+          ${a.emprendeduria && a.emprendeduria.length ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Emprenedoria':'Emprendeduría'}</span><span>${etiquetasOpt(EMPRENDEDURIA_OPTS, a.emprendeduria)}</span></div>` : ''}
           ${a.notas ? `<div class="panel-stat-row"><span>${t.notasLbl}</span><span>${a.notas}</span></div>` : ''}
         </div>`).join('')
     : `<div class="empty-note">${t.nadieHaAtendido}</div>`;
