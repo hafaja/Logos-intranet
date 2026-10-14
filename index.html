@@ -3721,7 +3721,7 @@ function histPintarMapeo(){
     ${hojas}
     <div class="hist-mapa">${HIST_CAMPOS.map(([k, es, ca]) => `<div class="field" style="margin:0;"><label>${esCA?ca:es}${k === 'nombre' ? ' *' : ''}</label><select onchange="__histImp.mapa['${k}']=this.value===''?undefined:Number(this.value);histPreview()">${opts(st.mapa[k])}</select></div>`).join('')}</div>
     <div class="field" style="margin-top:8px;"><label>${esCA?'Any per defecte (si no hi ha data d\'alta ni columna d\'any)':'Año por defecto (si no hay fecha de alta ni columna de año)'}</label><input type="number" id="hist-anio-def" min="1990" max="${new Date().getFullYear()}" value="${new Date().getFullYear() - 1}" oninput="histPreview()"></div>
-    <label class="checkbox-row" style="margin:6px 0;"><input type="checkbox" id="hist-dedup" checked onchange="histPreview()"> ${esCA?'Ometre duplicats dins de l\'arxiu (mateix DNI, o mateix nom i telèfon/naixement)':'Omitir duplicados dentro del archivo (mismo DNI, o mismo nombre y teléfono/nacimiento)'}</label>
+    <label class="checkbox-row" style="margin:6px 0;"><input type="checkbox" id="hist-dedup" onchange="histPreview()"> ${esCA?'Ometre duplicats (mateix DNI): una sola fitxa per persona, dins de l\'arxiu i respecte a l\'històric ja existent. Si no el marques, es manté cada fila tal com ve (una per visita).':'Omitir duplicados (mismo DNI): una sola ficha por persona, dentro del archivo y respecto al histórico ya existente. Si no lo marcas, se mantiene cada fila tal como viene (una por visita).'}</label>
     <label class="checkbox-row" style="margin:6px 0;"><input type="checkbox" id="hist-extra" ${HIST_V2 ? 'checked' : 'disabled'} onchange="histPreview()"> ${esCA?'Guardar també la resta de columnes a la fitxa (tot el que no has assignat)':'Guardar también el resto de columnas en la ficha (todo lo que no hayas asignado)'}${HIST_V2 ? '' : ` · <em>${esCA?'cal executar el SQL 14':'falta ejecutar el SQL 14'}</em>`}</label>
     <div id="hist-preview"></div>`;
   histPreview();
@@ -3789,10 +3789,11 @@ function histPreview(){
 async function histImportar(){
   const esCA = LANG_I === 'ca', st = __histImp;
   const c = histConvertir(); if(!c.filas.length) return;
-  if(!confirm(esCA ? `Importar ${c.filas.length} persones a l'històric? (les que ja hi són pel DNI s'ometran)` : `¿Importar ${c.filas.length} personas al histórico? (las que ya estén por DNI se omitirán)`)) return;
+  if(!confirm(esCA ? `Importar ${c.filas.length} persones a l'històric? (segons la casella de duplicats)` : `¿Importar ${c.filas.length} personas al histórico? (según tengas marcada la casilla de duplicados)`)) return;
   const btn = document.getElementById('hist-btn-importar'), prog = document.getElementById('hist-progreso'); btn.disabled = true;
   const origen = `${st.archivo} · ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`;
   prog.textContent = esCA ? 'Comprovant qui ja hi és…' : 'Comprobando quién ya está…';
+  const dedupBD = !!(document.getElementById('hist-dedup') || {}).checked;
   const normD = d => normTxt(d || '').replace(/[\s.\-]/g, '');
   const ya = new Set();
   const ex1 = await traerTodoPaginado((a, b) => sb.from('personas_historicas').select('dni_nie').not('dni_nie', 'is', null).range(a, b));
@@ -3804,7 +3805,7 @@ async function histImportar(){
   const filas = [];
   c.filas.forEach(f => {
     const k = normD(f.dni_nie);
-    if(k && ya.has(k)){ omitidas++; return; }
+    if(dedupBD && k && ya.has(k)){ omitidas++; return; }
     if(k){ ya.add(k); if(perf.has(k)){ f.perfil_id = perf.get(k); enlazadas++; } }
     if(!HIST_V2){ delete f.cp; delete f.datos; }
     filas.push(Object.assign(f, { origen, importado_por: CURRENT_USER.email }));
@@ -10354,7 +10355,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-14 · v51 (Importador: detecta títulos y une visitas repetidas)';
+const APP_VERSION_INTRANET = '2026-10-14 · v52 (Importador: duplicados opcionales, una fila por visita)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
