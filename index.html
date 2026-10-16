@@ -1194,11 +1194,20 @@ async function initAuth(){
   CURRENT_USER = data.session ? data.session.user : null;
   await checkStaff();
 
+  // Supabase vuelve a avisar de la sesión cada vez que se regresa a la pestaña (por ejemplo, tras enviar un WhatsApp)
+  // y cada vez que renueva el token. Si es la misma persona, NO se toca la pantalla: así no se pierde lo que se estaba escribiendo.
+  let __usuarioYaEntro = (CURRENT_USER && IS_STAFF) ? CURRENT_USER.id : null;
   sb.auth.onAuthStateChange(async (_event, session) => {
     if(_event === 'PASSWORD_RECOVERY') window.__recuperandoClave = true;
+    const idNuevo = session && session.user ? session.user.id : null;
+    if(idNuevo && idNuevo === __usuarioYaEntro && _event !== 'PASSWORD_RECOVERY'){
+      CURRENT_USER = session.user;
+      return;
+    }
     CURRENT_USER = session ? session.user : null;
     await checkStaff();
     if(!CURRENT_USER){
+      __usuarioYaEntro = null;
       toggleSidebarVisible(false);
       detenerRefrescoBadge();
       showScreen('login'); renderLogin();
@@ -1210,6 +1219,7 @@ async function initAuth(){
       await sb.auth.signOut();
       return;
     }
+    __usuarioYaEntro = CURRENT_USER.id;
     toggleSidebarVisible(true);
     iniciarRefrescoBadge();
     showScreen('panel');
