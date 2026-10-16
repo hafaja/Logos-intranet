@@ -538,6 +538,7 @@
       <details class="nav-grupo" open>
         <summary>📁 Personas y casos</summary>
         <button data-target="personas" onclick="showScreen('personas');renderPersonasScreen()">Personas usuarias</button>
+        <button onclick="abrirEscanerQR()">📷 Escanear QR</button>
         <button data-target="seguimiento" onclick="showScreen('seguimiento');renderSeguimientoScreen()">Expedientes</button>
         <button data-target="agenda" onclick="showScreen('agenda');renderAgendaCitas()">Citas y calendario</button>
       </details>
@@ -777,6 +778,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 const SUPABASE_URL = 'https://foxtlpyfedwsvttzorql.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Ght82ml0pvg0_nQvunlXVA_u0WjRscq';
@@ -1010,6 +1012,89 @@ async function tokenParaFunciones(){
   try { const { data } = await sb.auth.getSession(); return (data && data.session && data.session.access_token) || SUPABASE_KEY; }
   catch(e){ return SUPABASE_KEY; }
 }
+// ===== Tarjeta QR imprimible =====
+function imprimirTarjetaQR(nombre, token){
+  if(!token){ alert('Esta persona aún no tiene código QR (falta ejecutar el SQL 17 en Supabase).'); return; }
+  if(typeof qrcode === 'undefined'){ alert('No se ha podido cargar el generador de QR. Revisa la conexión e inténtalo de nuevo.'); return; }
+  const q = qrcode(0, 'M'); q.addData('LOGOS-QR:' + token); q.make();
+  const svg = q.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const w = window.open('', '_blank');
+  if(!w){ alert('El navegador ha bloqueado la ventana de impresión. Permite las ventanas emergentes para esta página.'); return; }
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Tarjeta QR</title><style>
+    body{font-family:Arial,sans-serif;margin:24px}
+    .t{width:8.6cm;border:1.5px solid #333;border-radius:10px;padding:12px;text-align:center;page-break-inside:avoid}
+    .t svg{width:5.2cm;height:5.2cm} h1{font-size:13px;margin:0 0 6px} p{font-size:11px;margin:6px 0 0}
+    .n{font-size:15px;font-weight:700;margin-top:6px}
+    @media print{.no{display:none}}
+  </style></head><body><div class="t"><h1>Associació Logos · Projectes Socials</h1>${svg}<div class="n">${esc(nombre || '')}</div><p>Enseña este código al personal de Logos / Ensenya aquest codi al personal de Logos.</p></div>
+  <p class="no"><button onclick="window.print()">🖨️ Imprimir</button></p><script>setTimeout(function(){window.print()},400)<\/script></body></html>`);
+  w.document.close();
+}
+
+// ===== Escanear el QR de una persona =====
+let __qrStream = null, __qrActivo = false;
+function cerrarEscanerQR(){
+  __qrActivo = false;
+  if(__qrStream){ __qrStream.getTracks().forEach(t => t.stop()); __qrStream = null; }
+  const m = document.getElementById('qr-escaner'); if(m) m.remove();
+}
+async function abrirEscanerQR(){
+  cerrarEscanerQR();
+  const m = document.createElement('div'); m.id = 'qr-escaner';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  m.innerHTML = `<div style="background:#fff;border-radius:14px;max-width:420px;width:100%;padding:16px;">
+    <h3 style="margin:0 0 8px;">📷 Escanear QR de una persona</h3>
+    <video id="qr-video" playsinline muted style="width:100%;border-radius:10px;background:#000;max-height:50vh;"></video>
+    <p id="qr-estado" style="font-size:13px;margin:8px 0;">Apunta la cámara al QR que muestra la persona en su móvil.</p>
+    <div style="display:flex;gap:6px;"><input id="qr-manual" placeholder="o pega/escribe el código" style="flex:1;padding:8px;border:1px solid #ccc;border-radius:8px;"><button class="primary-btn" style="margin:0;" onclick="qrBuscarCodigo(document.getElementById('qr-manual').value)">Buscar</button></div>
+    <button class="primary-btn" style="margin:10px 0 0;background:#8a8a8a;width:100%;" onclick="cerrarEscanerQR()">Cerrar</button></div>`;
+  document.body.appendChild(m);
+  const estado = t => { const e = document.getElementById('qr-estado'); if(e) e.textContent = t; };
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ estado('Este navegador no permite usar la cámara aquí. Escribe el código a mano.'); return; }
+  try {
+    __qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+  } catch(e){ estado('No se ha podido abrir la cámara (¿permiso denegado?). Escribe el código a mano.'); return; }
+  const video = document.getElementById('qr-video'); if(!video){ cerrarEscanerQR(); return; }
+  video.srcObject = __qrStream; await video.play().catch(() => {});
+  let detector = null;
+  if('BarcodeDetector' in window){ try { detector = new BarcodeDetector({ formats: ['qr_code'] }); } catch(e){} }
+  if(!detector && typeof jsQR === 'undefined'){
+    await new Promise(res => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js'; sc.onload = res; sc.onerror = res; document.head.appendChild(sc); });
+  }
+  const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d', { willReadFrequently: true });
+  __qrActivo = true;
+  const ciclo = async () => {
+    if(!__qrActivo) return;
+    let texto = null;
+    try {
+      if(video.videoWidth){
+        if(detector){ const r = await detector.detect(video); if(r.length) texto = r[0].rawValue; }
+        else if(typeof jsQR !== 'undefined'){
+          canvas.width = video.videoWidth; canvas.height = video.videoHeight; ctx.drawImage(video, 0, 0);
+          const r = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+          if(r) texto = r.data;
+        }
+      }
+    } catch(e){}
+    if(texto && /^LOGOS-QR:/.test(texto)){ qrBuscarCodigo(texto); return; }
+    setTimeout(ciclo, 250);
+  };
+  ciclo();
+}
+async function qrBuscarCodigo(texto){
+  const token = String(texto || '').trim().replace(/^LOGOS-QR:/, '');
+  const estado = t => { const e = document.getElementById('qr-estado'); if(e) e.textContent = t; };
+  if(!/^[0-9a-f]{32}$/i.test(token)){ estado('Ese código no es válido.'); return; }
+  __qrActivo = false;
+  estado('Buscando…');
+  const { data, error } = await sb.rpc('qr_resolver', { p_token: token });
+  if(error){ estado(/qr_resolver|schema cache|could not find/i.test(error.message || '') ? 'Falta ejecutar el SQL 17 en Supabase.' : 'No se ha podido buscar ahora mismo.'); return; }
+  if(!data){ estado('No se ha encontrado a nadie con ese código (puede que la persona lo haya cambiado).'); return; }
+  cerrarEscanerQR();
+  verPersonaStaff(data, 'personas');
+}
+
 // ===== Recordar dónde estaba la persona y lo que escribía =====
 // En el móvil, al saltar a WhatsApp el sistema puede cerrar la pestaña y recargarla al volver. Se guarda (solo en esta pestaña)
 // la pantalla y lo escrito, para volver exactamente al mismo punto en lugar de empezar en el Panel.
@@ -1017,7 +1102,9 @@ const RECUERDO_KEY = 'logos_recuerdo_v1';
 function recuerdoLeer(){ try { const r = JSON.parse(sessionStorage.getItem(RECUERDO_KEY) || 'null'); return (r && Date.now() - r.t < 6 * 3600 * 1000) ? r : null; } catch(e){ return null; } }
 function recuerdoGuardar(parcial){ try { const r = recuerdoLeer() || { pantalla: null, persona: null, origen: null, borradores: {} }; Object.assign(r, parcial); r.t = Date.now(); sessionStorage.setItem(RECUERDO_KEY, JSON.stringify(r)); } catch(e){} }
 function recuerdoBorrar(){ try { sessionStorage.removeItem(RECUERDO_KEY); } catch(e){} }
-window.__recuerdoInicial = recuerdoLeer();   // lo que había antes de cargar esta página
+window.__recuerdoInicial = recuerdoLeer();
+// Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v65'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -11810,6 +11897,7 @@ async function verPersonaStaff(usuarioId, origen){
     <div class="ptab-content" id="ptab-citas">
       <div class="panel-card">${citasHtml}</div>
       <button class="primary-btn" style="width:auto;margin:10px 0 0;" data-id="${p.id}" data-nombre="${escAttr(p.nombre_completo || '')}" onclick="abrirNuevaCitaStaff(this.dataset.id, this.dataset.nombre)">➕ ${acL('Nueva cita para esta persona', 'Nova cita per a aquesta persona')}</button>
+      <button class="primary-btn" style="width:auto;margin:10px 0 0 6px;background:#8a8a8a;" data-token="${escAttr(p.qr_token || '')}" data-nombre="${escAttr(p.nombre_completo || '')}" onclick="imprimirTarjetaQR(this.dataset.nombre, this.dataset.token)">🖨️ ${acL('Tarjeta QR', 'Targeta QR')}</button>
     </div>
 
     <div class="ptab-content" id="ptab-derivaciones">
