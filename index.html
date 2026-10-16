@@ -1010,6 +1010,51 @@ async function tokenParaFunciones(){
   try { const { data } = await sb.auth.getSession(); return (data && data.session && data.session.access_token) || SUPABASE_KEY; }
   catch(e){ return SUPABASE_KEY; }
 }
+// ===== Recordar dónde estaba la persona y lo que escribía =====
+// En el móvil, al saltar a WhatsApp el sistema puede cerrar la pestaña y recargarla al volver. Se guarda (solo en esta pestaña)
+// la pantalla y lo escrito, para volver exactamente al mismo punto en lugar de empezar en el Panel.
+const RECUERDO_KEY = 'logos_recuerdo_v1';
+function recuerdoLeer(){ try { const r = JSON.parse(sessionStorage.getItem(RECUERDO_KEY) || 'null'); return (r && Date.now() - r.t < 6 * 3600 * 1000) ? r : null; } catch(e){ return null; } }
+function recuerdoGuardar(parcial){ try { const r = recuerdoLeer() || { pantalla: null, persona: null, origen: null, borradores: {} }; Object.assign(r, parcial); r.t = Date.now(); sessionStorage.setItem(RECUERDO_KEY, JSON.stringify(r)); } catch(e){} }
+function recuerdoBorrar(){ try { sessionStorage.removeItem(RECUERDO_KEY); } catch(e){} }
+window.__recuerdoInicial = recuerdoLeer();   // lo que había antes de cargar esta página
+document.addEventListener('input', e => {
+  const el = e.target;
+  if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
+  if(['password', 'file', 'checkbox', 'radio', 'button', 'submit'].includes(el.type) || String(el.value).length > 20000) return;
+  clearTimeout(window.__borradorT);
+  window.__borradorT = setTimeout(() => { const r = recuerdoLeer() || {}; const b = r.borradores || {}; b[el.id] = el.value; recuerdoGuardar({ borradores: b }); }, 400);
+});
+// Tras una recarga, los campos que reaparecen vacíos recuperan lo que se estaba escribiendo (una sola vez, durante el primer minuto).
+(function(){
+  const r = window.__recuerdoInicial;
+  if(!r || !r.borradores || !Object.keys(r.borradores).length) return;
+  let pendientes = Object.assign({}, r.borradores);
+  recuerdoGuardar({ borradores: {} });
+  const intentar = () => {
+    Object.keys(pendientes).forEach(id => {
+      const el = document.getElementById(id);
+      if(el && !el.value && /^(INPUT|TEXTAREA)$/.test(el.tagName)){ el.value = pendientes[id]; delete pendientes[id]; }
+    });
+  };
+  const obs = new MutationObserver(intentar);
+  const arrancar = () => { obs.observe(document.body, { childList: true, subtree: true }); };
+  if(document.body) arrancar(); else document.addEventListener('DOMContentLoaded', arrancar);
+  setTimeout(() => obs.disconnect(), 60000);
+})();
+function irAPantallaInicial(){
+  const r = window.__recuerdoInicial; window.__recuerdoInicial = null;
+  if(r && r.pantalla && r.pantalla !== 'panel' && r.pantalla !== 'login'){
+    try {
+      if(r.pantalla === 'persona' && r.persona){ verPersonaStaff(r.persona, r.origen || 'panel'); return; }
+      const b = document.querySelector('.sidebar nav button[data-target="' + r.pantalla + '"]');
+      if(b && !b.classList.contains('rol-oculto')){ b.click(); return; }
+    } catch(e){}
+  }
+  showScreen('panel');
+  renderPanelGeneral();
+}
+
 function showScreen(name){
   if(IS_JOVENES && !PANTALLAS_JOVENES.includes(name)) name = 'panel';
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -1019,6 +1064,7 @@ function showScreen(name){
   const target = group[name] || name;
   const btn = document.querySelector('.sidebar nav button[data-target="'+target+'"]');
   if(btn) btn.classList.add('active');
+  if(name !== 'login' && CURRENT_USER) recuerdoGuardar({ pantalla: name, persona: name === 'persona' ? (window.__usuarioIdVisto || null) : null, origen: window.__origenPersonaVista || null });
 }
 
 function animateNumber(el, target){
@@ -1180,6 +1226,7 @@ function toggleSidebarVisible(visible){
 
 async function cerrarSesion(){
   window.__claveAvisada = false;
+  recuerdoBorrar(); window.__recuerdoInicial = null;
   await sb.auth.signOut();
   IS_STAFF = false; IS_ADMIN = false; IS_JOVENES = false; IS_RRHH = false; IS_GESTOR = false; GP_OK = false; aplicarMenuPorRol();
   toggleSidebarVisible(false);
@@ -1208,6 +1255,7 @@ async function initAuth(){
     await checkStaff();
     if(!CURRENT_USER){
       __usuarioYaEntro = null;
+      if(_event === 'SIGNED_OUT'){ recuerdoBorrar(); window.__recuerdoInicial = null; }
       toggleSidebarVisible(false);
       detenerRefrescoBadge();
       showScreen('login'); renderLogin();
@@ -1222,8 +1270,7 @@ async function initAuth(){
     __usuarioYaEntro = CURRENT_USER.id;
     toggleSidebarVisible(true);
     iniciarRefrescoBadge();
-    showScreen('panel');
-    renderPanelGeneral();
+    irAPantallaInicial();
     avisarClave(); guiaPrimeraVezIntranet();
   });
 
@@ -1238,8 +1285,7 @@ async function initAuth(){
   }
   toggleSidebarVisible(true);
   iniciarRefrescoBadge();
-  showScreen('panel');
-  renderPanelGeneral();
+  irAPantallaInicial();
   avisarClave(); guiaPrimeraVezIntranet();
 }
 
