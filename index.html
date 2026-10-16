@@ -993,10 +993,12 @@ function aplicarTraduccionesSidebar(){
 }
 
 // Quien es de Jóvenes en acción solo entra a su espacio; el resto de la plataforma queda oculta (y cerrada también en la base de datos)
+// Jóvenes en acción (y su pestaña de Familias) queda oculto del menú para el equipo general. Para volver a mostrarlo: MOSTRAR_JOVENES = true.
+const MOSTRAR_JOVENES = false;
 const PANTALLAS_JOVENES = ['login', 'panel', 'miespacio', 'gestionpersonal', 'jovenes', 'config'];
 function aplicarMenuPorRol(){
   document.querySelectorAll('.sidebar nav button[data-target]').forEach(b => {
-    b.classList.toggle('rol-oculto', IS_JOVENES && !PANTALLAS_JOVENES.includes(b.dataset.target));
+    b.classList.toggle('rol-oculto', (IS_JOVENES && !PANTALLAS_JOVENES.includes(b.dataset.target)) || (!MOSTRAR_JOVENES && !IS_JOVENES && b.dataset.target === 'jovenes'));
   });
   document.querySelectorAll('.sidebar nav .nav-grupo').forEach(g => {
     g.classList.toggle('rol-oculto', IS_JOVENES && !g.querySelector('button[data-target]:not(.rol-oculto)'));
@@ -3343,6 +3345,7 @@ function tabsAgendaHtml(){
   return `<div style="display:flex;gap:8px;margin-bottom:14px;">
     <button class="link-btn" style="${__agendaVista==='dia'?'font-weight:700;text-decoration:underline;':''}" onclick="__agendaVista='dia';renderAgendaCitas()">${LANG_I==='ca'?'Per dia':'Por día'}</button>
     <button class="link-btn" style="${__agendaVista==='proximas'?'font-weight:700;text-decoration:underline;':''}" onclick="__agendaVista='proximas';renderProximasCitas()">${LANG_I==='ca'?'Properes cites':'Próximas citas'}</button>
+    <button class="link-btn" style="margin-left:auto;font-weight:700;" onclick="abrirNuevaCitaStaff()">➕ ${LANG_I==='ca'?'Nova cita':'Nueva cita'}</button>
   </div>`;
 }
 
@@ -3393,6 +3396,123 @@ async function renderAgendaCitas(fecha){
     <input type="date" id="agenda-selector-fecha" value="${__agendaFechaActual}" onchange="renderAgendaCitas(this.value)" style="width:100%;margin-bottom:16px;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-family:var(--font-body);font-size:14px;">
     <div class="cards-grid">${citasHtml}</div>
   `;
+}
+
+
+// ================= NUEVA CITA PUESTA POR UN TÉCNICO =================
+// El técnico crea la cita a nombre de la persona (con las mismas horas y topes que usa la ciudadanía).
+let __NC = { uid: null, nombre: '', fecha: '', hora: '', horario: null };
+function abrirNuevaCitaStaff(usuarioId, nombre){
+  __NC = { uid: usuarioId || null, nombre: nombre || '', fecha: '', hora: '', horario: null };
+  let ov = document.getElementById('nc-ov');
+  if(!ov){
+    ov = document.createElement('div'); ov.id = 'nc-ov';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:16px;';
+    ov.addEventListener('click', e => { if(e.target === ov) cerrarNuevaCitaStaff(); });
+    document.body.appendChild(ov);
+  }
+  ov.style.display = 'flex';
+  pintarNuevaCitaStaff();
+}
+function cerrarNuevaCitaStaff(){ const ov = document.getElementById('nc-ov'); if(ov) ov.style.display = 'none'; }
+function pintarNuevaCitaStaff(){
+  const ov = document.getElementById('nc-ov'); if(!ov) return;
+  const hoy = new Date().toISOString().slice(0, 10);
+  const persona = __NC.uid
+    ? `<div class="panel-stat-row"><span>${acL('Persona', 'Persona')}</span><span><strong>${escAttr(__NC.nombre || '')}</strong>${''}</span></div>
+       <button class="link-btn" style="font-size:12px;" onclick="__NC.uid=null;__NC.nombre='';pintarNuevaCitaStaff()">${acL('Cambiar persona', 'Canviar persona')}</button>`
+    : `<div class="field"><label>${acL('Buscar persona (nombre, DNI/NIE o teléfono)', 'Cercar persona (nom, DNI/NIE o telèfon)')}</label>
+         <input type="text" id="nc-buscar" oninput="buscarPersonaNuevaCita(this.value)" placeholder="${acL('Escribe al menos 2 letras', 'Escriu almenys 2 lletres')}" autocomplete="off"></div>
+       <div id="nc-resultados"></div>
+       <p class="subtle" style="font-size:12px;">${acL('Si la persona aún no tiene cuenta, primero hay que darla de alta (Alta presencial) y después ya se le puede crear la cita.', 'Si la persona encara no té compte, primer cal donar-la d\'alta (Alta presencial) i després ja se li pot crear la cita.')}</p>`;
+  ov.innerHTML = `<div class="panel-card" style="width:100%;max-width:520px;margin:20px 0;background:var(--card, #fff);">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <h3 style="margin:0;">➕ ${acL('Nueva cita', 'Nova cita')}</h3>
+      <button class="link-btn" onclick="cerrarNuevaCitaStaff()">✕</button>
+    </div>
+    <div style="margin-top:10px;">${persona}</div>
+    ${__NC.uid ? `
+    <div class="field" style="margin-top:12px;"><label>${acL('Día', 'Dia')}</label>
+      <input type="date" id="nc-fecha" min="${hoy}" value="${__NC.fecha}" onchange="elegirDiaNuevaCita(this.value)"></div>
+    <div id="nc-horas"></div>
+    <div class="field" style="margin-top:12px;"><label>${acL('Motivo (opcional)', 'Motiu (opcional)')}</label>
+      <textarea id="nc-motivo" rows="2" placeholder="${acL('Para qué es la cita', 'Per a què és la cita')}"></textarea></div>
+    <div id="nc-msg"></div>
+    <button class="primary-btn" id="nc-guardar" style="margin-top:10px;" onclick="guardarNuevaCitaStaff()" ${__NC.hora ? '' : 'disabled'}>${acL('Crear cita', 'Crear cita')}</button>` : ''}
+  </div>`;
+  if(__NC.uid && __NC.fecha) elegirDiaNuevaCita(__NC.fecha, true);
+}
+let __ncTimeout = null;
+function buscarPersonaNuevaCita(texto){
+  clearTimeout(__ncTimeout);
+  const cont = document.getElementById('nc-resultados');
+  const q = (texto || '').trim().replace(/[,()%*]/g, ' ').trim();
+  if(q.length < 2){ cont.innerHTML = ''; return; }
+  __ncTimeout = setTimeout(async () => {
+    const { data, error } = await sb.from('perfiles').select('id, nombre_completo, municipio, dni_nie, telefono')
+      .or(`nombre_completo.ilike.%${q}%,dni_nie.ilike.%${q}%,telefono.ilike.%${q}%`).limit(8);
+    if(error || !data || !data.length){ cont.innerHTML = `<div class="empty-note">${acL('Sin resultados con cuenta en Logos Acompanya.', 'Sense resultats amb compte a Logos Acompanya.')}</div>`; return; }
+    cont.innerHTML = data.map(p => `
+      <div class="list-row" style="cursor:pointer;" data-id="${p.id}" data-nombre="${escAttr(p.nombre_completo || '')}" onclick="elegirPersonaNuevaCita(this.dataset.id, this.dataset.nombre)">
+        <span>${escAttr(p.nombre_completo || '—')}</span><span class="subtle" style="margin:0;">${escAttr(p.dni_nie || p.municipio || '')}</span>
+      </div>`).join('');
+  }, 300);
+}
+function elegirPersonaNuevaCita(id, nombre){ __NC.uid = id; __NC.nombre = nombre; pintarNuevaCitaStaff(); }
+async function elegirDiaNuevaCita(fechaIso, mantener){
+  const cont = document.getElementById('nc-horas'); if(!cont) return;
+  if(!mantener){ __NC.hora = ''; const g = document.getElementById('nc-guardar'); if(g) g.disabled = true; }
+  __NC.fecha = fechaIso;
+  if(!fechaIso){ cont.innerHTML = ''; return; }
+  cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  if(!__NC.horario){
+    const { data } = await sb.from('horario_atencion').select('*').eq('id', 1).maybeSingle();
+    __NC.horario = data || null;
+  }
+  const h = __NC.horario;
+  if(!h){ cont.innerHTML = `<div class="auth-error">${acL('No se ha podido cargar el horario de atención.', 'No s\'ha pogut carregar l\'horari d\'atenció.')}</div>`; return; }
+  const d = new Date(fechaIso + 'T00:00:00');
+  const iso = d.getDay() === 0 ? 7 : d.getDay();
+  if(!(h.dias_semana || []).includes(iso)){ cont.innerHTML = `<div class="empty-note">${acL('Ese día no hay atención. Elige otro.', 'Aquest dia no hi ha atenció. Tria\'n un altre.')}</div>`; return; }
+  const { data: ocup } = await sb.rpc('citas_disponibilidad', { p_fecha: fechaIso });
+  const ocupadas = {}; (ocup || []).forEach(o => { ocupadas[String(o.hora).slice(0, 5)] = o.ocupadas; });
+  const slots = [];
+  const bloque = (ini, fin) => {
+    if(!ini || !fin) return;
+    let c = Number(ini.slice(0, 2)) * 60 + Number(ini.slice(3, 5)); const f = Number(fin.slice(0, 2)) * 60 + Number(fin.slice(3, 5));
+    while(c < f){ slots.push(String(Math.floor(c / 60)).padStart(2, '0') + ':' + String(c % 60).padStart(2, '0')); c += h.duracion_cita_minutos; }
+  };
+  bloque(h.hora_inicio, h.hora_fin); bloque(h.hora_inicio_2, h.hora_fin_2);
+  const ahora = new Date(); const esHoy = fechaIso === ahora.toISOString().slice(0, 10);
+  const minAhora = ahora.getHours() * 60 + ahora.getMinutes();
+  cont.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">` + slots.map(s => {
+    const lleno = (ocupadas[s] || 0) >= h.tecnicos_simultaneos;
+    const pasada = esHoy && (Number(s.slice(0, 2)) * 60 + Number(s.slice(3, 5)) <= minAhora);
+    const sel = s === __NC.hora;
+    return `<button class="link-btn" style="border:1.5px solid ${sel ? 'var(--primary,#1E3A8A)' : 'var(--line)'};border-radius:10px;padding:6px 12px;${sel ? 'font-weight:800;background:var(--primary-soft,#E8EEFB);' : ''}${(lleno || pasada) ? 'opacity:.4;' : ''}" ${(lleno || pasada) ? 'disabled' : `onclick="__NC.hora='${s}';elegirDiaNuevaCita('${fechaIso}', true);document.getElementById('nc-guardar').disabled=false;"`}>${s}${lleno ? ' ✕' : ''}</button>`;
+  }).join('') + `</div>` + (slots.length ? '' : `<div class="empty-note">${acL('Sin horas ese día.', 'Sense hores aquest dia.')}</div>`);
+}
+async function guardarNuevaCitaStaff(){
+  const btn = document.getElementById('nc-guardar'), msg = document.getElementById('nc-msg');
+  if(!__NC.uid || !__NC.fecha || !__NC.hora) return;
+  btn.disabled = true; msg.innerHTML = '';
+  const motivo = (document.getElementById('nc-motivo').value || '').trim();
+  const fila = { usuario_id: __NC.uid, fecha: __NC.fecha, hora: __NC.hora, creada_por_email: CURRENT_USER.email };
+  if(motivo) fila.motivo = motivo;
+  let { error } = await sb.from('citas').insert(fila);
+  if(error && /creada_por_email/.test(error.message || '')){ delete fila.creada_por_email; ({ error } = await sb.from('citas').insert(fila)); }
+  if(error){
+    const lleno = /complet/i.test(error.message || '');
+    const permiso = /row-level security|permission/i.test(error.message || '');
+    msg.innerHTML = `<div class="auth-error">${lleno ? acL('Esa hora se acaba de ocupar. Elige otra.', 'Aquesta hora s\'acaba d\'ocupar. Tria\'n una altra.') : (permiso ? acL('Falta dar permiso en Supabase: ejecuta el SQL 16 (citas por técnico).', 'Falta donar permís a Supabase: executa l\'SQL 16 (cites per tècnic).') : escAttr(error.message))}</div>`;
+    btn.disabled = false;
+    if(lleno){ __NC.hora = ''; elegirDiaNuevaCita(__NC.fecha); }
+    return;
+  }
+  cerrarNuevaCitaStaff();
+  const uid = __NC.uid, fecha = __NC.fecha;
+  if(document.getElementById('screen-persona') && document.getElementById('screen-persona').classList.contains('active') && window.__usuarioIdVisto === uid) verPersonaStaff(uid, window.__origenPersonaVista);
+  else { __agendaVista = 'dia'; __agendaFechaActual = fecha; showScreen('agenda'); renderAgendaCitas(fecha); }
 }
 
 async function renderProximasCitas(){
@@ -11633,6 +11753,7 @@ async function verPersonaStaff(usuarioId, origen){
 
     <div class="ptab-content" id="ptab-citas">
       <div class="panel-card">${citasHtml}</div>
+      <button class="primary-btn" style="width:auto;margin:10px 0 0;" data-id="${p.id}" data-nombre="${escAttr(p.nombre_completo || '')}" onclick="abrirNuevaCitaStaff(this.dataset.id, this.dataset.nombre)">➕ ${acL('Nueva cita para esta persona', 'Nova cita per a aquesta persona')}</button>
     </div>
 
     <div class="ptab-content" id="ptab-derivaciones">
@@ -12739,6 +12860,7 @@ async function enviarMensajeAsistente(){
   const pensando = agregarMensajeAsistente('…', 'bot');
   try {
     const res = await fetch('https://foxtlpyfedwsvttzorql.supabase.co/functions/v1/asistente', {
+      signal: AbortSignal.timeout(60000),
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await tokenParaFunciones()), 'apikey': SUPABASE_KEY },
       body: JSON.stringify({
@@ -12854,11 +12976,10 @@ function guiaSlidesIntranet(){
       go: { txt: L('Registrar una atención', 'Registrar una atenció'), run: ir('atencion', renderAtencionForm) } },
     { e: '📂', t: L('Expedientes y citas', 'Expedients i cites'),
       l: [L('<strong>Expedientes</strong>: los trámites agrupados por persona. Usa <strong>📄 Mostrar solo trámites en curso</strong> para ver lo pendiente.', '<strong>Expedients</strong>: els tràmits agrupats per persona. Fes servir <strong>📄 Mostrar només tràmits en curs</strong> per veure el pendent.'),
-          L('<strong>Citas y calendario</strong>: mira el día o las próximas citas. Cambia de día con las flechas.', '<strong>Cites i calendari</strong>: mira el dia o les properes cites. Canvia de dia amb les fletxes.')],
+          L('<strong>Citas y calendario</strong>: mira el día o las próximas citas. Cambia de día con las flechas. Con «➕ Nueva cita» (o desde la ficha de la persona) creas una cita a su nombre.', '<strong>Cites i calendari</strong>: mira el dia o les properes cites. Canvia de dia amb les fletxes. Amb «➕ Nova cita» (o des de la fitxa de la persona) crees una cita al seu nom.')],
       go: { txt: L('Ir a Expedientes', 'Anar a Expedients'), run: ir('seguimiento', renderSeguimientoScreen) } },
     { e: '🌱', t: L('Formación y proyectos', 'Formació i projectes'),
-      l: [L('<strong>Jóvenes en acción</strong>: actividades, familias y menores, autorizaciones y «Salir solo/a».', '<strong>Joves en acció</strong>: activitats, famílies i menors, autoritzacions i «Sortir sol/a».'),
-          L('<strong>Aula Virtual</strong>: cursos, clases con enlace de videollamada y asistencia.', '<strong>Aula Virtual</strong>: cursos, classes amb enllaç de videotrucada i assistència.'),
+      l: [L('<strong>Aula Virtual</strong>: cursos, clases con enlace de videollamada y asistencia.', '<strong>Aula Virtual</strong>: cursos, classes amb enllaç de videotrucada i assistència.'),
           L('<strong>Proyectos</strong> y <strong>Crea un proyecto de Logos</strong>: método guiado de la idea al proyecto en marcha.', '<strong>Projectes</strong> i <strong>Crea un projecte de Logos</strong>: mètode guiat de la idea al projecte en marxa.'),
           L('<strong>Emprendimiento</strong>: el itinerario de las personas que emprenden desde Logos Acompanya.', '<strong>Emprenedoria</strong>: l\'itinerari de les persones que emprenen des de Logos Acompanya.')],
       go: { txt: L('Ir a Proyectos', 'Anar a Projectes'), run: ir('proyectos', renderProyectosScreen) } },
