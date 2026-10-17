@@ -1016,7 +1016,7 @@ async function tokenParaFunciones(){
 function imprimirTarjetaQR(nombre, token){
   if(!token){ alert('Esta persona aún no tiene código QR (falta ejecutar el SQL 17 en Supabase).'); return; }
   if(typeof qrcode === 'undefined'){ alert('No se ha podido cargar el generador de QR. Revisa la conexión e inténtalo de nuevo.'); return; }
-  const q = qrcode(0, 'M'); q.addData('https://intranet.logostgn.cat/?qr=' + token); q.make();
+  const q = qrcode(0, 'L'); q.addData('https://intranet.logostgn.cat/?qr=' + token); q.make();
   const svg = q.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const w = window.open('', '_blank');
@@ -1046,17 +1046,18 @@ async function abrirEscanerQR(){
   m.innerHTML = `<div style="background:#fff;border-radius:14px;max-width:420px;width:100%;padding:16px;">
     <h3 style="margin:0 0 8px;">📷 Escanear QR de una persona</h3>
     <video id="qr-video" playsinline muted style="width:100%;border-radius:10px;background:#000;max-height:50vh;"></video>
-    <p id="qr-estado" style="font-size:13px;margin:8px 0;">Apunta la cámara al QR que muestra la persona en su móvil.</p>
+    <p id="qr-estado" style="font-size:13px;margin:8px 0;">Apunta la cámara al QR de la persona. Si no lo lee, acércalo, evita reflejos o escribe el código abajo.</p>
     <div style="display:flex;gap:6px;"><input id="qr-manual" placeholder="o pega/escribe el código" style="flex:1;padding:8px;border:1px solid #ccc;border-radius:8px;"><button class="primary-btn" style="margin:0;" onclick="qrBuscarCodigo(document.getElementById('qr-manual').value)">Buscar</button></div>
     <button class="primary-btn" style="margin:10px 0 0;background:#8a8a8a;width:100%;" onclick="cerrarEscanerQR()">Cerrar</button></div>`;
   document.body.appendChild(m);
   const estado = t => { const e = document.getElementById('qr-estado'); if(e) e.textContent = t; };
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ estado('Este navegador no permite usar la cámara aquí. Escribe el código a mano.'); return; }
   try {
-    __qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    __qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } });
   } catch(e){ estado('No se ha podido abrir la cámara (¿permiso denegado?). Escribe el código a mano.'); return; }
   const video = document.getElementById('qr-video'); if(!video){ cerrarEscanerQR(); return; }
   video.srcObject = __qrStream; await video.play().catch(() => {});
+  try { const tr = __qrStream.getVideoTracks()[0]; const caps = tr.getCapabilities ? tr.getCapabilities() : {}; if(caps.focusMode && caps.focusMode.includes('continuous')) await tr.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch(e){}
   let detector = null;
   if('BarcodeDetector' in window){ try { detector = new BarcodeDetector({ formats: ['qr_code'] }); } catch(e){} }
   if(!detector && typeof jsQR === 'undefined'){
@@ -1077,8 +1078,9 @@ async function abrirEscanerQR(){
         }
       }
     } catch(e){}
-    if(texto && (/^LOGOS-QR:/.test(texto) || /[?&]qr=[0-9a-f]{32}/i.test(texto))){ qrBuscarCodigo(texto); return; }
-    setTimeout(ciclo, 250);
+    if(texto && (/^LOGOS-QR:/.test(texto) || /[?&]qr=[0-9a-f]{32}/i.test(texto))){ estado('✔ Código leído. Buscando a la persona…'); qrBuscarCodigo(texto); return; }
+    if(texto){ estado('Se ha leído un QR, pero no es un código de una persona de Logos.'); }
+    setTimeout(ciclo, 120);
   };
   ciclo();
 }
@@ -1107,7 +1109,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v66'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v72'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -1143,6 +1145,7 @@ function irAPantallaInicial(){
       if(b && !b.classList.contains('rol-oculto')){ b.click(); return; }
     } catch(e){}
   }
+  if(!IS_ADMIN && !IS_JOVENES){ showScreen('miespacio'); renderMiEspacio(); return; }   // el personal técnico entra directamente en su página de trabajo
   showScreen('panel');
   renderPanelGeneral();
 }
@@ -2854,6 +2857,7 @@ async function renderMiEspacio(){
   `;
 
   const salasAtencionHtml = await construirSalasAtencionHtml(fichajeCardHtml);
+  const misCitasHtml = await construirMisCitasHtml(email);
 
   const { data: misActuacionesRaw } = await sb.from('actuaciones').select('*').eq('tecnico_email', email).order('fecha', { ascending:false }).limit(300);
   const misActuaciones = misActuacionesRaw || [];
@@ -2960,16 +2964,19 @@ async function renderMiEspacio(){
       </div>
     </div>
 
-    <div class="panel-card">
-      <h3>${t.tuNombre}</h3>
-      <p class="subtle" style="margin:0 0 10px;">${CURRENT_USER_NOMBRE ? `${t.apareceComo} <strong>${CURRENT_USER_NOMBRE}</strong> ${t.enVezCorreo}` : t.todaviaCorreo}</p>
-      <div style="display:flex;gap:8px;">
-        <input type="text" id="mi-nombre-input" placeholder="${t.placeholderNombre}" value="${CURRENT_USER_NOMBRE || ''}" style="flex:1;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-family:var(--font-body);font-size:14px;">
-        <button class="link-btn" onclick="guardarMiNombre()">${t.guardar}</button>
-      </div>
+    <div class="acciones-rapidas" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 14px;">
+      <button class="primary-btn" style="margin:0;background:var(--navy,#1d3557);" onclick="abrirEscanerQR()">📷 ${LANG_I==='ca'?'Escanejar QR':'Escanear QR'}</button>
+      <button class="primary-btn" style="margin:0;" onclick="showScreen('personas');renderPersonasScreen()">🔎 ${LANG_I==='ca'?'Cercar persona':'Buscar persona'}</button>
+      <button class="primary-btn" style="margin:0;" onclick="showScreen('atencion');renderAtencionForm()">➕ ${LANG_I==='ca'?'Atenció':'Atención'}</button>
+      <button class="primary-btn" style="margin:0;background:var(--gold);" onclick="showScreen('buscarpersona');renderBuscarPersonaActuacion()">📝 ${LANG_I==='ca'?'Actuació':'Actuación'}</button>
+      <button class="primary-btn" style="margin:0;background:var(--good);" onclick="showScreen('altapresencial');renderAltaPresencial()">🖊️ Alta presencial</button>
+      <button class="primary-btn" style="margin:0;background:#8a8a8a;" onclick="abrirNuevaCitaStaff()">📅 ${LANG_I==='ca'?'Nova cita':'Nueva cita'}</button>
     </div>
 
+    ${misCitasHtml}
+
     ${salasAtencionHtml}
+
 
     <div class="section-label" style="margin-bottom:6px;">${t.tusUltimasAtenciones}</div>
     <div class="stat-grid">
@@ -2985,9 +2992,16 @@ async function renderMiEspacio(){
       <div class="stat-card"><div class="stat-num" id="num-total-act">0</div><div class="stat-label">${t.totalLbl}</div></div>
     </div>
 
-    <button class="primary-btn" onclick="showScreen('atencion');renderAtencionForm()" style="margin-bottom:10px;margin-top:18px;">${t.registrarAtencion}</button>
-    <button class="primary-btn" style="background:var(--gold);margin-bottom:10px;" onclick="showScreen('buscarpersona');renderBuscarPersonaActuacion()">${t.registrarActuacion}</button>
-    <button class="primary-btn" style="background:var(--good);margin-bottom:18px;" onclick="showScreen('altapresencial');renderAltaPresencial()">🖊️ ${LANG_I==='ca'?'Alta presencial':'Alta presencial'}</button>
+
+    <div class="panel-card">
+      <h3>${t.tuNombre}</h3>
+      <p class="subtle" style="margin:0 0 10px;">${CURRENT_USER_NOMBRE ? `${t.apareceComo} <strong>${CURRENT_USER_NOMBRE}</strong> ${t.enVezCorreo}` : t.todaviaCorreo}</p>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="mi-nombre-input" placeholder="${t.placeholderNombre}" value="${CURRENT_USER_NOMBRE || ''}" style="flex:1;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-family:var(--font-body);font-size:14px;">
+        <button class="link-btn" onclick="guardarMiNombre()">${t.guardar}</button>
+      </div>
+    </div>
+
 
     <details class="plegable" ${plegableAbierto('mi-revisiones') ? 'open' : ''} ontoggle="plegableGuardar('mi-revisiones', this.open)">
       <summary><span>${t.tusProximasRevisiones}</span><span class="plegable-n">${misRevisiones.length}</span></summary>
@@ -3585,6 +3599,7 @@ function pintarNuevaCitaStaff(){
     <div id="nc-horas"></div>
     <div class="field" style="margin-top:12px;"><label>${acL('Motivo (opcional)', 'Motiu (opcional)')}</label>
       <textarea id="nc-motivo" rows="2" placeholder="${acL('Para qué es la cita', 'Per a què és la cita')}"></textarea></div>
+    <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px;"><input type="checkbox" id="nc-urgente"> 🔴 ${acL('Urgente: la persona verá un aviso destacado', 'Urgent: la persona veurà un avís destacat')}</label>
     <div id="nc-msg"></div>
     <button class="primary-btn" id="nc-guardar" style="margin-top:10px;" onclick="guardarNuevaCitaStaff()" ${__NC.hora ? '' : 'disabled'}>${acL('Crear cita', 'Crear cita')}</button>` : ''}
   </div>`;
@@ -3647,7 +3662,10 @@ async function guardarNuevaCitaStaff(){
   const motivo = (document.getElementById('nc-motivo').value || '').trim();
   const fila = { usuario_id: __NC.uid, fecha: __NC.fecha, hora: __NC.hora, creada_por_email: CURRENT_USER.email };
   if(motivo) fila.motivo = motivo;
+  const urgente = !!(document.getElementById('nc-urgente') && document.getElementById('nc-urgente').checked);
+  if(urgente) fila.urgente = true;
   let { error } = await sb.from('citas').insert(fila);
+  if(error && /urgente/.test(error.message || '')){ delete fila.urgente; ({ error } = await sb.from('citas').insert(fila)); if(!error && urgente) alert(acL('La cita se ha creado, pero falta ejecutar el SQL 18 para marcarla como urgente.', 'La cita s\'ha creat, però falta executar l\'SQL 18 per marcar-la com a urgent.')); }
   if(error && /creada_por_email/.test(error.message || '')){ delete fila.creada_por_email; ({ error } = await sb.from('citas').insert(fila)); }
   if(error){
     const lleno = /complet/i.test(error.message || '');
@@ -3658,9 +3676,67 @@ async function guardarNuevaCitaStaff(){
     return;
   }
   cerrarNuevaCitaStaff();
-  const uid = __NC.uid, fecha = __NC.fecha;
+  const uid = __NC.uid, fecha = __NC.fecha, horaC = __NC.hora, nombreC = __NC.nombre || '';
+  avisarCitaCreada(uid, nombreC, fecha, horaC, motivo, urgente);
   if(document.getElementById('screen-persona') && document.getElementById('screen-persona').classList.contains('active') && window.__usuarioIdVisto === uid) verPersonaStaff(uid, window.__origenPersonaVista);
   else { __agendaVista = 'dia'; __agendaFechaActual = fecha; showScreen('agenda'); renderAgendaCitas(fecha); }
+}
+
+// Mi espacio: mis citas de hoy y de los próximos 7 días (las que he creado yo o son de personas que tengo asignadas)
+async function construirMisCitasHtml(email){
+  const ca = LANG_I === 'ca';
+  try {
+    const desde = new Date().toISOString().slice(0, 10);
+    const hasta = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+    const { data: asignadas } = await sb.from('perfiles').select('id').eq('tecnico_responsable_email', email).limit(500);
+    const ids = (asignadas || []).map(x => x.id);
+    let q = sb.from('citas').select('*').gte('fecha', desde).lte('fecha', hasta).neq('estado', 'cancelada').order('fecha', { ascending: true }).order('hora', { ascending: true });
+    const { data: todas } = await q;
+    const mias = (todas || []).filter(c => c.creada_por_email === email || ids.includes(c.usuario_id));
+    const nom = {}; const uids = [...new Set(mias.map(c => c.usuario_id))];
+    if(uids.length){ const { data: ps } = await sb.from('perfiles').select('id, nombre_completo').in('id', uids); (ps || []).forEach(x => { nom[x.id] = x.nombre_completo; }); }
+    const hoy = desde;
+    const fila = c => `<div class="panel-stat-row" style="cursor:pointer;" data-id="${escAttr(c.usuario_id)}" onclick="verPersonaStaff(this.dataset.id, 'miespacio')"><span><strong>${c.fecha === hoy ? (ca ? 'Avui' : 'Hoy') : new Date(c.fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha)}</strong> · ${String(c.hora || '').slice(0, 5)} · ${escAttr(nom[c.usuario_id] || '—')}${c.motivo ? `<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(c.motivo)}</span>` : ''}</span>${c.urgente ? '<span class="chip" style="background:#fde2e2;color:#b00020;">🔴 ' + (ca ? 'Urgent' : 'Urgente') + '</span>' : ''}</div>`;
+    return `<div class="panel-card" style="margin-top:14px;"><h3 style="margin:0 0 8px;">📅 ${ca ? 'Les meves cites (7 dies)' : 'Mis citas (7 días)'}</h3>${mias.length ? mias.map(fila).join('') : `<div class="empty-note">${ca ? 'No tens cites aquests dies.' : 'No tienes citas en estos días.'}</div>`}<button class="link-btn" style="font-size:12px;margin-top:6px;" onclick="showScreen('agenda');renderAgendaCitas()">${ca ? 'Veure tota l\'agenda' : 'Ver toda la agenda'}</button></div>`;
+  } catch(e){ return ''; }
+}
+
+// Tras crear la cita, el técnico puede avisar a la persona (él revisa y envía el mensaje)
+async function avisarCitaCreada(uid, nombre, fecha, hora, motivo, urgente){
+  const ca = LANG_I === 'ca';
+  const { data: p } = await sb.from('perfiles').select('telefono, email, nombre_completo').eq('id', uid).maybeSingle();
+  if(!p || (!p.telefono && !p.email)) return;
+  const f = new Date(fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha);
+  const h = String(hora || '').slice(0, 5);
+  const primer = String(nombre || p.nombre_completo || '').split(' ')[0];
+  const texto = ca
+    ? `Hola${primer ? ' ' + primer : ''}, ${urgente ? 'tenim una cita important per a tu a Logos' : 't\'hem donat cita a Logos'}: ${f} a les ${h}.${motivo ? ' Motiu: ' + motivo + '.' : ''} Si no pots venir, cancel·la-la a Logos Acompanya o truca\'ns.`
+    : `Hola${primer ? ' ' + primer : ''}, ${urgente ? 'tenemos una cita importante para ti en Logos' : 'te hemos dado cita en Logos'}: ${f} a las ${h}.${motivo ? ' Motivo: ' + motivo + '.' : ''} Si no puedes venir, cancélala en Logos Acompanya o llámanos.`;
+  window.__avisoCita = { uid, texto, tel: p.telefono || '', email: p.email || '' };
+  const ov = document.createElement('div'); ov.id = 'aviso-cita-ov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML = `<div style="background:#fff;border-radius:14px;max-width:440px;width:100%;padding:18px;max-height:90vh;overflow:auto;">
+    <h3 style="margin:0 0 6px;">✅ ${ca ? 'Cita creada' : 'Cita creada'}</h3>
+    <p style="font-size:13px;margin:0 0 8px;">${ca ? 'Vols avisar la persona? Revisa el missatge i envia\'l.' : '¿Quieres avisar a la persona? Revisa el mensaje y envíalo.'}</p>
+    <textarea id="aviso-cita-texto" rows="5" style="width:100%;box-sizing:border-box;">${escAttr(texto)}</textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+      ${p.telefono ? `<button class="primary-btn" style="margin:0;width:auto;" onclick="enviarAvisoCita('whatsapp')">📲 WhatsApp</button>` : ''}
+      ${p.email ? `<button class="primary-btn" style="margin:0;width:auto;background:#8a8a8a;" onclick="enviarAvisoCita('correo')">✉️ ${ca ? 'Correu' : 'Correo'}</button>` : ''}
+      <button class="primary-btn" style="margin:0;width:auto;background:#bbb;" onclick="document.getElementById('aviso-cita-ov').remove()">${ca ? 'Ara no' : 'Ahora no'}</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+}
+async function enviarAvisoCita(canal){
+  const a = window.__avisoCita; if(!a) return;
+  const texto = (document.getElementById('aviso-cita-texto') || {}).value || a.texto;
+  if(canal === 'whatsapp'){
+    let limpio = a.tel.replace(/[^\d+]/g, '').replace(/^\+/, ''); if(limpio.length === 9) limpio = '34' + limpio;
+    window.open('https://wa.me/' + limpio + '?text=' + encodeURIComponent(texto), '_blank');
+  } else {
+    window.location.href = 'mailto:' + a.email + '?subject=' + encodeURIComponent('Cita en Logos') + '&body=' + encodeURIComponent(texto);
+  }
+  await sb.from('mensajes_enviados').insert({ usuario_id: a.uid, tecnico_email: CURRENT_USER.email, plantilla_titulo: 'Aviso de cita', contenido_final: texto, canal: canal === 'whatsapp' ? 'whatsapp' : 'email' });
+  const ov = document.getElementById('aviso-cita-ov'); if(ov) ov.remove();
 }
 
 async function renderProximasCitas(){
@@ -11434,6 +11510,78 @@ function renderActuacionCard(ac){
   </div>`;
 }
 
+function construirVistaUnica(p, d, cardAtencion, extra){
+  extra = extra || {};
+  const ca = LANG_I === 'ca', t = TI[LANG_I];
+  const h = x => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const corto = (x, n) => { x = String(x || '').replace(/\s+/g, ' ').trim(); return x.length > n ? x.slice(0, n - 1) + '…' : x; };
+  const fmt = f => f ? new Date(f).toLocaleDateString(t.localeFecha) : '—';
+  const ev = [];
+  d.atenciones.forEach(a => ev.push({ tipo: 'atencion', fecha: a.creado_en, icono: '🧑‍💼', titulo: ca ? 'Atenció' : 'Atención', resumen: nombreTecnico(a.creado_por_email) + (a.notas ? ' · ' + corto(a.notas, 90) : ''), cuerpo: cardAtencion(a) }));
+  d.actuaciones.forEach(ac => ev.push({ tipo: 'actuacion', fecha: ac.fecha, icono: '📝', titulo: ca ? 'Actuació' : 'Actuación', resumen: [ac.categoria, corto(ac.descripcion || ac.objetivo, 90)].filter(Boolean).join(' · '), cuerpo: renderActuacionCard(ac) }));
+  d.tramites.forEach(tr => ev.push({ tipo: 'tramite', fecha: tr.fecha_inicio || tr.creado_en, icono: '🗂️', titulo: ca ? 'Tràmit' : 'Trámite', resumen: tr.nombre_servicio + ' · ' + tr.estado, cuerpo: renderTramiteCardExpediente(tr) }));
+  d.citas.forEach(c => ev.push({ tipo: 'cita', fecha: c.fecha, icono: '📅', titulo: ca ? 'Cita' : 'Cita', resumen: [c.hora ? String(c.hora).slice(0, 5) : '', c.motivo, c.estado].filter(Boolean).join(' · '), cuerpo: `<div class="panel-card"><div class="panel-stat-row"><span>${t.fechaLbl}</span><span><strong>${fmt(c.fecha)}${c.hora ? ' · ' + String(c.hora).slice(0, 5) : ''}</strong></span></div>${c.motivo ? `<div class="panel-stat-row"><span>${ca ? 'Motiu' : 'Motivo'}</span><span>${h(c.motivo)}</span></div>` : ''}${c.estado ? `<div class="panel-stat-row"><span>${ca ? 'Estat' : 'Estado'}</span><span><strong>${h(c.estado)}</strong></span></div>` : ''}</div>` }));
+  d.mensajes.forEach(m => ev.push({ tipo: 'mensaje', fecha: m.fecha, icono: '✉️', titulo: ca ? 'Missatge enviat' : 'Mensaje enviado', resumen: (m.plantilla_titulo || '') + ' · ' + nombreTecnico(m.tecnico_email), cuerpo: '' }));
+  d.documentos.forEach(x => ev.push({ tipo: 'documento', fecha: x.subido_en, icono: '📎', titulo: ca ? 'Document' : 'Documento', resumen: x.nombre_archivo, cuerpo: x.ruta_storage ? `<div class="panel-card"><button class="link-btn" data-ruta="${escAttr(x.ruta_storage)}" onclick="verDocumentoStaff(this.dataset.ruta)">${t.ver}</button></div>` : '' }));
+  ev.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const proxima = d.citas.filter(c => c.fecha && new Date(c.fecha) >= hoy && !/cancel/i.test(c.estado || '')).sort((a, b) => new Date(a.fecha) - new Date(b.fecha))[0];
+  const tramAbiertos = d.tramites.filter(tr => tr.estado !== 'hecho').length;
+  const dir = [p.calle, p.codigo_postal, p.municipio].filter(Boolean).join(', ');
+  const fila = (l, v) => v ? `<div class="panel-stat-row"><span>${l}</span><span><strong>${h(v)}</strong></span></div>` : '';
+  const chips = [['atencion', ca ? 'Atencions' : 'Atenciones', d.atenciones.length], ['actuacion', ca ? 'Actuacions' : 'Actuaciones', d.actuaciones.length], ['tramite', ca ? 'Tràmits' : 'Trámites', d.tramites.length], ['cita', 'Citas', d.citas.length], ['mensaje', ca ? 'Missatges' : 'Mensajes', d.mensajes.length], ['documento', ca ? 'Documents' : 'Documentos', d.documentos.length]];
+  return `
+    <div class="panel-card">
+      <h3 style="margin:0 0 8px;">${ca ? 'Resum' : 'Resumen'}</h3>
+      ${fila(ca ? 'Telèfon' : 'Teléfono', p.telefono)}${fila('DNI/NIE', p.dni_nie)}${fila(t.correoLbl, p.email)}${fila(ca ? 'Adreça' : 'Dirección', dir)}
+      ${fila(t.tecnicoResponsableLbl, p.tecnico_responsable_email ? nombreTecnico(p.tecnico_responsable_email) : '')}
+      <div class="panel-stat-row"><span>${ca ? 'Consentiment' : 'Consentimiento'}</span><span><strong>${p.consentimiento_firmado ? '✅ ' + (ca ? 'Signat' : 'Firmado') : '⚠️ ' + (ca ? 'Pendent' : 'Pendiente')}</strong></span></div>
+      ${proxima ? fila(ca ? 'Propera cita' : 'Próxima cita', fmt(proxima.fecha) + (proxima.hora ? ' · ' + String(proxima.hora).slice(0, 5) : '')) : ''}
+      ${tramAbiertos ? fila(ca ? 'Tràmits oberts' : 'Trámites abiertos', String(tramAbiertos)) : ''}
+    </div>
+    <details class="panel-card" open>
+      <summary style="cursor:pointer;font-weight:700;">📋 ${ca ? 'Dades personals completes' : 'Datos personales completos'}</summary>
+      <div style="margin-top:8px;">
+        ${fila(ca ? 'Data de naixement' : 'Fecha de nacimiento', p.fecha_nacimiento)}${fila(ca ? 'Sexe' : 'Sexo', p.sexo)}${fila('Provincia', p.provincia)}
+        ${fila(ca ? 'Convivència' : 'Convivencia', p.convivencia)}${fila(ca ? 'Persones a la llar' : 'Personas en el hogar', p.personas_hogar)}${fila(ca ? 'Nombre de fills' : 'Número de hijos', p.numero_hijos)}
+        ${fila(ca ? 'Situació laboral' : 'Situación laboral', p.situacion_laboral)}${fila(ca ? 'Nivell d\'ingressos' : 'Nivel de ingresos', p.nivel_ingresos)}
+        ${p.discapacidad_reconocida === true ? fila(ca ? 'Discapacitat reconeguda' : 'Discapacidad reconocida', (ca ? 'Sí' : 'Sí') + (p.porcentaje_discapacidad ? ' · ' + p.porcentaje_discapacidad + '%' : '')) : ''}
+        ${p.dependencia_reconocida === true ? fila(ca ? 'Dependència reconeguda' : 'Dependencia reconocida', 'Sí') : ''}
+        ${fila(t.fechaAltaLbl, p.creado_en ? fmt(p.creado_en) : '')}
+      </div>
+    </details>
+    <details class="panel-card" ${(extra.proyectos || []).length ? 'open' : ''}>
+      <summary style="cursor:pointer;font-weight:700;">📁 ${ca ? 'Projectes' : 'Proyectos'} <span class="subtle" style="font-size:12px;">(${(extra.proyectos || []).length})</span></summary>
+      <div style="margin-top:8px;">${(extra.proyectos || []).length ? extra.proyectos.map(pr => `<div class="panel-stat-row"><span>${h(pr.nombre)}</span><span class="subtle" style="margin:0;">${h(pr.estado || '')}</span></div>`).join('') : `<div class="empty-note">${ca ? 'Encara no participa en cap projecte.' : 'Todavía no participa en ningún proyecto.'}</div>`}</div>
+    </details>
+    ${extra.emprendimientoHtml ? `<details class="panel-card"><summary style="cursor:pointer;font-weight:700;">🚀 ${ca ? 'Emprenedoria' : 'Emprendimiento'}</summary><div style="margin-top:8px;">${extra.emprendimientoHtml}</div></details>` : ''}
+    <details class="panel-card">
+      <summary style="cursor:pointer;font-weight:700;">✅ ${ca ? 'Consentiment de protecció de dades' : 'Consentimiento de protección de datos'}</summary>
+      <div style="margin-top:8px;">${p.consentimiento_firmado
+        ? `<p style="margin:0 0 8px;">${ca ? 'Signat el' : 'Firmado el'} <strong>${fmt(p.consentimiento_fecha)}</strong>.</p><button class="primary-btn" style="width:auto;margin:0;" data-id="${escAttr(p.id)}" data-nombre="${escAttr(p.nombre_completo || '')}" data-dni="${escAttr(p.dni_nie || '')}" data-fecha="${escAttr(p.consentimiento_fecha || '')}" onclick="descargarConsentimientoPDF(this.dataset.id, this.dataset.nombre, this.dataset.dni, this.dataset.fecha)">⬇️ ${ca ? 'Descarrega el consentiment' : 'Descargar el consentimiento'}</button>`
+        : `<div class="empty-note">${ca ? 'Encara no l\'ha signat.' : 'Todavía no lo ha firmado.'}</div>`}</div>
+    </details>
+    <div class="panel-card">
+      <h3 style="margin:0 0 8px;">${ca ? 'Historial complet' : 'Historial completo'} <span class="subtle" style="font-size:12px;">(${ev.length})</span></h3>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+        <button class="chip gold vu-filtro" data-vu="todo" onclick="filtrarVistaUnica('todo')" style="cursor:pointer;border:none;">${ca ? 'Tot' : 'Todo'} ${ev.length}</button>
+        ${chips.filter(c => c[2]).map(c => `<button class="chip vu-filtro" data-vu="${c[0]}" onclick="filtrarVistaUnica('${c[0]}')" style="cursor:pointer;border:none;">${c[1]} ${c[2]}</button>`).join('')}
+      </div>
+      ${ev.length ? ev.map(e => `
+        <details class="vu-ev" data-tipo="${e.tipo}" style="border-top:1px solid var(--line);padding:6px 0;">
+          <summary style="cursor:pointer;list-style:none;display:flex;gap:8px;align-items:baseline;">
+            <span class="subtle" style="font-size:11.5px;min-width:76px;margin:0;">${fmt(e.fecha)}</span>
+            <span style="flex:1;"><strong>${e.icono} ${e.titulo}</strong> <span class="subtle" style="font-size:12px;margin:0;">${h(e.resumen)}</span></span>
+          </summary>
+          ${e.cuerpo ? `<div style="margin-top:6px;">${e.cuerpo}</div>` : ''}
+        </details>`).join('') : `<div class="empty-note">${t.sinActividad}</div>`}
+    </div>`;
+}
+function filtrarVistaUnica(tipo){
+  document.querySelectorAll('.vu-ev').forEach(e => { e.style.display = (tipo === 'todo' || e.dataset.tipo === tipo) ? '' : 'none'; });
+  document.querySelectorAll('.vu-filtro').forEach(b => b.classList.toggle('gold', b.dataset.vu === tipo));
+}
+
 function construirHistorial(actuaciones, tramites, documentos, citas, mensajes){
   const t = TI[LANG_I];
   const eventos = [];
@@ -11598,8 +11746,7 @@ async function verPersonaStaff(usuarioId, origen){
         </div>`).join('')
     : `<div class="empty-note">${t.sinTramitesLbl}</div>`;
 
-  const atencionesHtml = (atencionesRes.data && atencionesRes.data.length)
-    ? atencionesRes.data.map(a => `
+  const cardAtencion = a => `
         <div class="panel-card">
           <div class="panel-stat-row"><span>${t.tecnicoLbl}</span><span><strong>${nombreTecnico(a.creado_por_email)}</strong></span></div>
           <div class="panel-stat-row"><span>${t.fechaLbl}</span><span><strong>${new Date(a.creado_en).toLocaleString(t.localeFecha)}</strong></span></div>
@@ -11612,7 +11759,9 @@ async function verPersonaStaff(usuarioId, origen){
           ${a.derivacion ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Derivació':'Derivación'}</span><span>${etiquetaOpt(DERIVACION_OPTS, a.derivacion)}</span></div>` : ''}
           ${a.emprendeduria && a.emprendeduria.length ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Emprenedoria':'Emprendeduría'}</span><span>${etiquetasOpt(EMPRENDEDURIA_OPTS, a.emprendeduria)}</span></div>` : ''}
           ${a.notas ? `<div class="panel-stat-row"><span>${t.notasLbl}</span><span>${a.notas}</span></div>` : ''}
-        </div>`).join('')
+        </div>`;
+  const atencionesHtml = (atencionesRes.data && atencionesRes.data.length)
+    ? atencionesRes.data.map(cardAtencion).join('')
     : `<div class="empty-note">${t.nadieHaAtendido}</div>`;
 
   const actuacionesLista = actuacionesRes.data || [];
@@ -11693,6 +11842,7 @@ async function verPersonaStaff(usuarioId, origen){
 
   const staffOptions = (staffListRes.data || []).filter(s => s.activo !== false).map(s => `<option value="${s.email}" ${p.tecnico_responsable_email===s.email?'selected':''}>${s.nombre || s.email}</option>`).join('');
 
+  const vistaUnicaHtml = construirVistaUnica(p, { atenciones: atencionesRes.data || [], actuaciones: actuacionesLista, tramites: tramitesRes.data || [], citas: citasRes.data || [], mensajes: mensajesRes.data || [], documentos: docsRes.data || [] }, cardAtencion, { proyectos: (misProyectosRes.data || []).map(pp => pp.proyectos).filter(Boolean), emprendimientoHtml: (typeof emprendimientoHtml === 'string' ? emprendimientoHtml : '') });
   cont.innerHTML = `
     <h2 class="screen-title">${p.nombre_completo || t.sinNombre}</h2>
     <div class="panel-card">
@@ -11744,7 +11894,8 @@ async function verPersonaStaff(usuarioId, origen){
     </div>
 
     <div class="persona-tabs">
-      <button class="ptab-btn active" data-tab="datos" onclick="mostrarTabPersona('datos')">📋 ${LANG_I==='ca'?'Dades personals':'Datos personales'}</button>
+      <button class="ptab-btn active" data-tab="vista" onclick="mostrarTabPersona('vista')">🔎 ${LANG_I==='ca'?'Visió única':'Vista única'}</button>
+      <button class="ptab-btn" data-tab="datos" onclick="mostrarTabPersona('datos')">📋 ${LANG_I==='ca'?'Dades personals':'Datos personales'}</button>
       <button class="ptab-btn" data-tab="proyectos" onclick="mostrarTabPersona('proyectos')">${t.tabProyectos}</button>
       <button class="ptab-btn" data-tab="formaciones" onclick="mostrarTabPersona('formaciones')">${t.tabFormaciones}</button>
       <button class="ptab-btn" data-tab="actuaciones" onclick="mostrarTabPersona('actuaciones')">${LANG_I==='ca'?'Expedient':'Expediente'}</button>
@@ -11755,7 +11906,9 @@ async function verPersonaStaff(usuarioId, origen){
       <button class="ptab-btn" data-tab="quienatendio" onclick="mostrarTabPersona('quienatendio')">${t.tabQuienAtendio}</button>
     </div>
 
-    <div class="ptab-content active" id="ptab-datos">
+    <div class="ptab-content active" id="ptab-vista">${vistaUnicaHtml}</div>
+
+    <div class="ptab-content" id="ptab-datos">
       <div class="panel-card">
         <h3>📋 ${LANG_I==='ca'?'Dades personals':'Datos personales'}</h3>
         <p class="subtle" style="margin:0 0 14px;">${LANG_I==='ca'
