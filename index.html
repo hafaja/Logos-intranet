@@ -1109,7 +1109,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v72'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v76'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -2870,6 +2870,7 @@ async function renderMiEspacio(){
 
   const { data: misRevisionesRaw } = await sb.from('actuaciones').select('*').eq('tecnico_email', email).not('fecha_proxima_revision', 'is', null).order('fecha_proxima_revision', { ascending:true });
   const misRevisiones = misRevisionesRaw || [];
+  const avisosMiEspacioHtml = await construirAvisosMiEspacioHtml(misRevisiones);
   let nombresRevision = {};
   if(misRevisiones.length){
     const ids = [...new Set(misRevisiones.map(r => r.usuario_id))];
@@ -2972,6 +2973,8 @@ async function renderMiEspacio(){
       <button class="primary-btn" style="margin:0;background:var(--good);" onclick="showScreen('altapresencial');renderAltaPresencial()">🖊️ Alta presencial</button>
       <button class="primary-btn" style="margin:0;background:#8a8a8a;" onclick="abrirNuevaCitaStaff()">📅 ${LANG_I==='ca'?'Nova cita':'Nueva cita'}</button>
     </div>
+
+    ${avisosMiEspacioHtml}
 
     ${misCitasHtml}
 
@@ -3682,6 +3685,43 @@ async function guardarNuevaCitaStaff(){
   else { __agendaVista = 'dia'; __agendaFechaActual = fecha; showScreen('agenda'); renderAgendaCitas(fecha); }
 }
 
+// Mi espacio: avisos con contador y accesos directos a lo importante
+async function irAAlertas(){
+  showScreen('panel'); await renderPanelGeneral();
+  const a = document.getElementById('panel-alertas-anchor'); if(a) a.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+async function construirAvisosMiEspacioHtml(misRevisiones){
+  const ca = LANG_I === 'ca';
+  let nAlertas = 0, ultimas = [], nConsultas = 0;
+  try {
+    const r = await filtrarAlertas(sb.from('notificaciones').select('id, mensaje, usuario_id, creado_en', { count: 'exact' }).eq('leida', false).order('creado_en', { ascending: false }).limit(3), false);
+    nAlertas = r.count || (r.data || []).length; ultimas = r.data || [];
+  } catch(e){}
+  try { const r = await sb.from('consultas_orientacion').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente'); nConsultas = r.count || 0; } catch(e){}
+  const limite = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+  const nRev = (misRevisiones || []).filter(x => x.fecha_proxima_revision && String(x.fecha_proxima_revision).slice(0, 10) <= limite).length;
+  const visible = t => { const b = document.querySelector('.sidebar nav button[data-target="' + t + '"]'); return b && !b.classList.contains('rol-oculto') && b.style.display !== 'none'; };
+  const tile = (icono, texto, n, onclick, rojo) => `<button class="quick-tile" onclick="${onclick}" style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;text-align:left;font-family:var(--font-body);${rojo ? 'border-color:#e3a3a3;background:#fff5f5;' : ''}"><span style="font-size:20px;">${icono}</span><span style="font-weight:700;font-size:13px;">${texto}</span>${n ? `<span class="chip ${rojo ? '' : 'gold'}" style="${rojo ? 'background:#fde2e2;color:#b00020;' : ''}">${n}</span>` : ''}</button>`;
+  const tiles = [
+    tile('🔔', ca ? 'Alertes' : 'Alertas', nAlertas, 'irAAlertas()', nAlertas > 0),
+    tile('💬', ca ? 'Consultes pendents' : 'Consultas pendientes', nConsultas, 'irAAlertas()', false),
+    tile('🔁', ca ? 'Revisions (7 dies)' : 'Revisiones (7 días)', nRev, "mostrarSeccionMiEspacio('mi-revisiones')", false),
+    visible('seguimiento') ? tile('🗂️', ca ? 'Expedients' : 'Expedientes', 0, "showScreen('seguimiento');renderSeguimientoScreen()") : '',
+    visible('agenda') ? tile(window.__misCitasResumen && window.__misCitasResumen.urgentes ? '🔴' : '📅', (ca ? 'Agenda' : 'Agenda') + (window.__misCitasResumen && window.__misCitasResumen.hoy ? (ca ? ' · avui' : ' · hoy') : ''), (window.__misCitasResumen || {}).hoy || 0, "showScreen('agenda');renderAgendaCitas()", !!(window.__misCitasResumen && window.__misCitasResumen.urgentes)) : '',
+    visible('proyectos') ? tile('📁', ca ? 'Projectes' : 'Proyectos', 0, "showScreen('proyectos');renderProyectosScreen()") : '',
+    visible('comunicacion') ? tile('✉️', ca ? 'Comunicació' : 'Comunicación', 0, "showScreen('comunicacion');renderComunicacionScreen()") : '',
+    visible('equipo') ? tile('👥', ca ? 'Treball en equip' : 'Trabajo en equipo', 0, "showScreen('equipo');renderEquipoScreen()") : '',
+    visible('docsglobal') ? tile('📎', ca ? 'Gestió documental' : 'Gestión documental', 0, "showScreen('docsglobal');renderDocsGlobalScreen()") : '',
+    tile('📖', ca ? 'Guia ràpida' : 'Guía rápida', 0, 'guiaAbrirIntranet()')
+  ].join('');
+  const ultimasHtml = ultimas.length ? `<div style="margin-top:10px;">${ultimas.map(n => `<div class="panel-stat-row" style="align-items:flex-start;"><span style="font-size:13px;">🔔 ${escAttr(n.mensaje || '')}<br><span class="subtle" style="font-size:11px;margin:0;">${new Date(n.creado_en).toLocaleString(TI[LANG_I].localeFecha)}</span></span>${n.usuario_id ? `<button class="link-btn" style="font-size:12px;" data-id="${escAttr(n.usuario_id)}" onclick="verPersonaStaff(this.dataset.id,'miespacio')">${ca ? 'Veure' : 'Ver'}</button>` : ''}</div>`).join('')}${nAlertas > ultimas.length ? `<button class="link-btn" style="font-size:12px;margin-top:4px;" onclick="irAAlertas()">${ca ? `Veure les ${nAlertas} alertes` : `Ver las ${nAlertas} alertas`}</button>` : ''}</div>` : '';
+  return `<div class="panel-card" style="margin-bottom:14px;"><h3 style="margin:0 0 10px;">🔔 ${ca ? 'Avisos i accessos' : 'Avisos y accesos'}</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;">${tiles}</div>${ultimasHtml}</div>`;
+}
+function mostrarSeccionMiEspacio(clave){
+  const d = [...document.querySelectorAll('#screen-miespacio details.plegable')].find(x => (x.getAttribute('ontoggle') || '').includes("'" + clave + "'"));
+  if(d){ d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+
 // Mi espacio: mis citas de hoy y de los próximos 7 días (las que he creado yo o son de personas que tengo asignadas)
 async function construirMisCitasHtml(email){
   const ca = LANG_I === 'ca';
@@ -3697,6 +3737,7 @@ async function construirMisCitasHtml(email){
     if(uids.length){ const { data: ps } = await sb.from('perfiles').select('id, nombre_completo').in('id', uids); (ps || []).forEach(x => { nom[x.id] = x.nombre_completo; }); }
     const hoy = desde;
     const fila = c => `<div class="panel-stat-row" style="cursor:pointer;" data-id="${escAttr(c.usuario_id)}" onclick="verPersonaStaff(this.dataset.id, 'miespacio')"><span><strong>${c.fecha === hoy ? (ca ? 'Avui' : 'Hoy') : new Date(c.fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha)}</strong> · ${String(c.hora || '').slice(0, 5)} · ${escAttr(nom[c.usuario_id] || '—')}${c.motivo ? `<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(c.motivo)}</span>` : ''}</span>${c.urgente ? '<span class="chip" style="background:#fde2e2;color:#b00020;">🔴 ' + (ca ? 'Urgent' : 'Urgente') + '</span>' : ''}</div>`;
+    window.__misCitasResumen = { hoy: mias.filter(c => c.fecha === hoy).length, urgentes: mias.filter(c => c.urgente).length };
     return `<div class="panel-card" style="margin-top:14px;"><h3 style="margin:0 0 8px;">📅 ${ca ? 'Les meves cites (7 dies)' : 'Mis citas (7 días)'}</h3>${mias.length ? mias.map(fila).join('') : `<div class="empty-note">${ca ? 'No tens cites aquests dies.' : 'No tienes citas en estos días.'}</div>`}<button class="link-btn" style="font-size:12px;margin-top:6px;" onclick="showScreen('agenda');renderAgendaCitas()">${ca ? 'Veure tota l\'agenda' : 'Ver toda la agenda'}</button></div>`;
   } catch(e){ return ''; }
 }
@@ -10658,10 +10699,13 @@ async function renderEquipoScreen(){
   // Vacaciones de Logos: 15 días en agosto (del 1 al 15). Si hace falta otro rango, se ajusta aquí.
   const enPeriodoVacaciones = hoy.getMonth() === 7 && hoy.getDate() <= 15;
 
-  const [staffRes, fichajesHoyRes, ocupacionesRes] = await Promise.all([
+  const [staffRes, fichajesHoyRes, ocupacionesRes, salasHoyRes, actividadHoyRes, atendidosHoyRes] = await Promise.all([
     sb.from('staff').select('*').order('email', { ascending:true }),
     equipoFichajesHoy(hoyIso),
-    sb.from('fichajes_sala').select('*').is('fin', null)
+    sb.from('fichajes_sala').select('*').is('fin', null),
+    sb.from('fichajes_sala').select('*').gte('inicio', hoyIso).order('inicio', { ascending:true }),
+    (async () => { try { const r = await sb.rpc('equipo_actividad_hoy'); return (!r.error && Array.isArray(r.data)) ? r.data : null; } catch(e){ return null; } })(),
+    (async () => { try { const r = await sb.rpc('equipo_atendidos_hoy'); return (!r.error && Array.isArray(r.data)) ? r.data : []; } catch(e){ return []; } })()
   ]);
 
   const fichajesPorEmail = {};
@@ -10730,9 +10774,43 @@ async function renderEquipoScreen(){
       }).join('')
     : `<div class="empty-note">—</div>`;
 
+  // Resumen del día en texto: quién ha entrado y salido, qué salas ha ocupado y cuántas atenciones/actuaciones ha registrado (solo cifras)
+  const esCAeq = LANG_I === 'ca';
+  const nombreCorto = s => (s.nombre && s.nombre.trim()) ? s.nombre.trim() : String(s.email).split('@')[0];
+  const ahoraEq = Date.now();
+  const frases = data.map(s => {
+    const em = String(s.email).toLowerCase();
+    const fich = (fichajesPorEmail[s.email] || fichajesPorEmail[em] || []).slice().sort((a, b) => new Date(a.entrada) - new Date(b.entrada));
+    const salas = (salasHoyRes.data || []).filter(o => String(o.tecnico_email).toLowerCase() === em && o.sala !== 'reunion' && new Date(o.inicio).getTime() <= ahoraEq && !(o.fin == null && ocupacionObsoleta(o)));
+    const act = (actividadHoyRes || []).find(x => String(x.tecnico_email).toLowerCase() === em);
+    if(!fich.length && !salas.length && !(act && (act.atenciones || act.actuaciones))) return '';
+    const partes = [];
+    if(fich.length){
+      const primera = fich[0], ultima = fich[fich.length - 1];
+      partes.push(ultima.salida
+        ? (esCAeq ? `ha entrat a les ${horaFmtEquipo(primera.entrada)} i ha sortit a les ${horaFmtEquipo(ultima.salida)}` : `ha entrado a las ${horaFmtEquipo(primera.entrada)} y ha salido a las ${horaFmtEquipo(ultima.salida)}`)
+        : (esCAeq ? `ha entrat a les ${horaFmtEquipo(primera.entrada)} i continua al centre` : `ha entrado a las ${horaFmtEquipo(primera.entrada)} y sigue en el centro`));
+    }
+    if(salas.length){
+      const txt = salas.map(o => `${nombrePlaza(o.sala)} (${horaFmtEquipo(o.inicio)}${o.fin ? '–' + horaFmtEquipo(o.fin) : (esCAeq ? '–ara' : '–ahora')})`).join(', ');
+      partes.push((esCAeq ? 'ha ocupat ' : 'ha ocupado ') + txt);
+    }
+    if(act && (act.atenciones || act.actuaciones)){
+      const tr = [];
+      if(act.atenciones) tr.push(`${act.atenciones} ` + (act.atenciones === 1 ? (esCAeq ? 'atenció' : 'atención') : (esCAeq ? 'atencions' : 'atenciones')));
+      if(act.actuaciones) tr.push(`${act.actuaciones} ` + (act.actuaciones === 1 ? (esCAeq ? 'actuació' : 'actuación') : (esCAeq ? 'actuacions' : 'actuaciones')));
+      partes.push((esCAeq ? 'ha registrat ' : 'ha registrado ') + tr.join(esCAeq ? ' i ' : ' y '));
+    }
+    const atendidos = (atendidosHoyRes || []).filter(x => String(x.tecnico_email).toLowerCase() === em);
+    const detalleHtml = atendidos.length ? `<details style="margin:4px 0 0;"><summary style="cursor:pointer;font-size:12.5px;color:var(--navy,#1d3557);">${esCAeq ? `Veure amb qui ha treballat (${atendidos.length})` : `Ver con quién ha trabajado (${atendidos.length})`}</summary><div style="margin-top:6px;">${atendidos.map(x => `<div class="panel-stat-row" style="font-size:13px;"><span>${escAttr(x.hora || '')} · ${x.tipo === 'atencion' ? (esCAeq ? 'Atenció' : 'Atención') : (esCAeq ? 'Actuació' : 'Actuación')}${x.detalle ? ' · ' + escAttr(x.detalle) : ''} · <strong>${escAttr(x.nombre || '—')}</strong></span>${x.usuario_id ? `<button class="link-btn" style="font-size:12px;" data-id="${escAttr(x.usuario_id)}" onclick="verPersonaStaff(this.dataset.id,'equipo')">${esCAeq ? 'Veure fitxa' : 'Ver ficha'}</button>` : ''}</div>`).join('')}</div></details>` : '';
+    return `<div style="margin:0 0 10px;"><p style="margin:0;font-size:13.5px;line-height:1.5;"><strong>${escAttr(nombreCorto(s))}</strong> ${partes.join('; ')}.</p>${detalleHtml}</div>`;
+  }).filter(Boolean);
+  const resumenDiaHtml = `<div class="panel-card" style="margin-top:14px;"><h3 style="margin:0 0 8px;">📝 ${esCAeq ? 'Resum d\'avui' : 'Resumen de hoy'}</h3>${frases.length ? frases.join('') : `<div class="empty-note">${esCAeq ? 'Encara no hi ha activitat registrada avui.' : 'Todavía no hay actividad registrada hoy.'}</div>`}${actividadHoyRes === null ? `<p class="subtle" style="font-size:11px;margin:6px 0 0;">${esCAeq ? 'Per veure les atencions i actuacions de cada persona cal executar l\'SQL 19 a Supabase.' : 'Para ver las atenciones y actuaciones de cada persona hay que ejecutar el SQL 19 en Supabase.'}</p>` : ''}</div>`;
+
   cont.innerHTML = `
     <p class="subtle">${LANG_I==='ca' ? 'El teu equip de Logos.' : 'Tu equipo de Logos.'}</p>
     <div class="panel-card">${listaHtml}</div>
+    ${resumenDiaHtml}
     ${soloUna ? `<div class="info-box info-box-gold" style="margin-top:12px;">${LANG_I==='ca' ? 'Només et veus a tu. Si hi ha més persones actives, falta executar l\'SQL «equipo-visible» a Supabase perquè tot el personal vegi l\'equip.' : 'Solo te ves a ti. Si hay más personas activas, falta ejecutar el SQL «equipo-visible» en Supabase para que todo el personal vea al equipo.'}</div>` : ''}
   `;
 }
@@ -10776,6 +10854,9 @@ function guiaUsoHtml(){
   const quiero = [
     [L('Fichar entrada o salida', 'Fitxar entrada o sortida'), L('Mi espacio', 'El meu espai')],
     [L('Ver mi horario y mis nóminas', 'Veure el meu horari i les meves nòmines'), L('Mi gestión personal', 'La meva gestió personal')],
+    [L('Abrir la ficha de alguien con su QR', 'Obrir la fitxa d\'algú amb el seu QR'), L('Cámara del móvil, o Mi espacio → 📷 Escanear QR', 'Càmera del mòbil, o El meu espai → 📷 Escanejar QR')],
+    [L('Ver mis alertas y avisos de un vistazo', 'Veure les meves alertes i avisos d\'un cop d\'ull'), L('Mi espacio → 🔔 Avisos y accesos', 'El meu espai → 🔔 Avisos i accessos')],
+    [L('Dar una cita urgente y avisar a la persona', 'Donar una cita urgent i avisar la persona'), L('➕ Nueva cita → 🔴 Urgente → WhatsApp o correo', '➕ Nova cita → 🔴 Urgent → WhatsApp o correu')],
     [L('Buscar a una persona', 'Cercar una persona'), L('Personas usuarias (por fecha de alta, A–Z o histórico)', 'Persones usuàries (per data d\'alta, A–Z o històric)')],
     [L('Dar de alta a quien viene sin cuenta', 'Donar d\'alta qui ve sense compte'), L('Mi espacio → Alta presencial', 'El meu espai → Alta presencial')],
     [L('Contestar una consulta de orientación', 'Respondre una consulta d\'orientació'), L('Inicio → Consultas de orientación pendientes', 'Inici → Consultes d\'orientació pendents')],
@@ -11693,6 +11774,7 @@ async function verPersonaStaff(usuarioId, origen){
   const destinos = {
     admin: "showScreen('admin');renderAdministrador()",
     miespacio: "showScreen('miespacio');renderMiEspacio()",
+    equipo: "showScreen('equipo');renderEquipoScreen()",
     agenda: "showScreen('agenda');renderAgendaCitas()",
     personas: "showScreen('personas');renderPersonasScreen()",
     seguimiento: "showScreen('seguimiento');renderSeguimientoScreen()",
@@ -13254,10 +13336,11 @@ function guiaSlidesIntranet(){
       l: [L('El <strong>menú</strong> está a la izquierda. En el móvil, pulsa <strong>☰ Menú</strong>.', 'El <strong>menú</strong> és a l\'esquerra. Al mòbil, prem <strong>☰ Menú</strong>.'),
           L('🔔 arriba: tus <strong>alertas</strong>.', '🔔 a dalt: les teves <strong>alertes</strong>.'),
           L('💬 abajo a la derecha: el <strong>asistente</strong>, que te orienta si te pierdes.', '💬 a baix a la dreta: l\'<strong>assistent</strong>, que t\'orienta si et perds.')] },
-    { e: '🕘', t: L('Empieza el día en «Mi espacio»', 'Comença el dia a «El meu espai»'),
-      l: [L('Pulsa <strong>🕐 Fichar entrada</strong> al llegar, y ficha la salida al terminar.', 'Prem <strong>🕐 Fitxar entrada</strong> en arribar, i fitxa la sortida en acabar.'),
-          L('Elige sala: <strong>Empezar ahora</strong>, <strong>Reservar para más tarde</strong> o <strong>Bloquear</strong> toda la sala.', 'Tria sala: <strong>Començar ara</strong>, <strong>Reservar per més tard</strong> o <strong>Bloquejar</strong> tota la sala.'),
-          L('Pon tu <strong>nombre</strong> para que salga bien en todos los registros.', 'Posa el teu <strong>nom</strong> perquè surti bé a tots els registres.')],
+    { e: '🕘', t: L('Tu página de trabajo: «Mi espacio»', 'La teva pàgina de feina: «El meu espai»'),
+      l: [L('Al entrar, el equipo técnico llega directamente aquí. Pulsa <strong>🕐 Fichar entrada</strong> al llegar y ficha la salida al terminar.', 'En entrar, l\'equip tècnic arriba directament aquí. Prem <strong>🕐 Fitxar entrada</strong> en arribar i fitxa la sortida en acabar.'),
+          L('Arriba tienes los <strong>botones rápidos</strong>: 📷 Escanear QR, 🔎 Buscar persona, ➕ Atención, 📝 Actuación, 🖊️ Alta presencial y 📅 Nueva cita.', 'A dalt tens els <strong>botons ràpids</strong>: 📷 Escanejar QR, 🔎 Cercar persona, ➕ Atenció, 📝 Actuació, 🖊️ Alta presencial i 📅 Nova cita.'),
+          L('<strong>🔔 Avisos y accesos</strong>: cuántas alertas, consultas y revisiones tienes, y atajos a Expedientes, Agenda, Proyectos, Comunicación, Trabajo en equipo y Gestión documental.', '<strong>🔔 Avisos i accessos</strong>: quantes alertes, consultes i revisions tens, i dreceres a Expedients, Agenda, Projectes, Comunicació, Treball en equip i Gestió documental.'),
+          L('<strong>📅 Mis citas (7 días)</strong>, con las urgentes en rojo, y debajo el fichaje y las salas: <strong>Empezar ahora</strong>, <strong>Reservar</strong> o <strong>Bloquear</strong>.', '<strong>📅 Les meves cites (7 dies)</strong>, amb les urgents en vermell, i a sota el fitxatge i les sales: <strong>Començar ara</strong>, <strong>Reservar</strong> o <strong>Bloquejar</strong>.')],
       go: { txt: L('Ir a Mi espacio', 'Anar a El meu espai'), run: ir('miespacio', renderMiEspacio) } },
     { e: '🏠', t: L('Inicio: lo que te espera', 'Inici: el que t\'espera'),
       l: [L('<strong>Alertas nuevas</strong>: pulsa <strong>✋ Me encargo yo</strong>, <strong>Marcar leída</strong> o <strong>Pasar a…</strong> otro técnico.', '<strong>Alertes noves</strong>: prem <strong>✋ Me n\'encarrego</strong>, <strong>Marcar llegida</strong> o <strong>Passar a…</strong> un altre tècnic.'),
@@ -13268,7 +13351,8 @@ function guiaSlidesIntranet(){
       l: [L('Búscala por <strong>nombre, DNI o teléfono</strong>.', 'Cerca-la per <strong>nom, DNI o telèfon</strong>.'),
           L('Ordena por <strong>fecha de alta</strong>, <strong>A–Z</strong> o mira el <strong>🗄️ Histórico</strong>.', 'Ordena per <strong>data d\'alta</strong>, <strong>A–Z</strong> o mira l\'<strong>🗄️ Històric</strong>.'),
           L('Si viene <strong>sin cuenta</strong>: <strong>🖊️ Alta presencial</strong>, desde «Mi espacio».', 'Si ve <strong>sense compte</strong>: <strong>🖊️ Alta presencial</strong>, des d\'«El meu espai».'),
-          L('Abre su ficha para ver su historial, trámites y documentos.', 'Obre la seva fitxa per veure el seu historial, tràmits i documents.')],
+          L('Abre su ficha: se abre en <strong>🔎 Vista única</strong>, con el resumen y todo el historial (atenciones, actuaciones, trámites, citas, mensajes y documentos) en una sola pantalla.', 'Obre la seva fitxa: s\'obre a <strong>🔎 Visió única</strong>, amb el resum i tot l\'historial (atencions, actuacions, tràmits, cites, missatges i documents) en una sola pantalla.'),
+          L('<strong>Código QR</strong>: la persona enseña su «Mi QR»; lo lees con la cámara del móvil o con <strong>📷 Escanear QR</strong> y se abre su ficha. Para quien no lleve el móvil, <strong>🖨️ Tarjeta QR</strong> en la ficha.', '<strong>Codi QR</strong>: la persona ensenya el seu «El meu QR»; el llegeixes amb la càmera del mòbil o amb <strong>📷 Escanejar QR</strong> i s\'obre la seva fitxa. Per a qui no porti el mòbil, <strong>🖨️ Targeta QR</strong> a la fitxa.')],
       go: { txt: L('Ir a Personas usuarias', 'Anar a Persones usuàries'), run: ir('personas', renderPersonasScreen) } },
     { e: '📝', t: L('Registra lo que haces', 'Registra el que fas'),
       p: L('Cada atención cuenta: así Logos puede mostrar su trabajo.', 'Cada atenció compta: així Logos pot mostrar la seva feina.'),
@@ -13288,7 +13372,7 @@ function guiaSlidesIntranet(){
     { e: '🛠️', t: L('Herramientas del equipo', 'Eines de l\'equip'),
       l: [L('<strong>Gestión documental</strong>: documentos generales, de proyectos y de personas, en un solo sitio.', '<strong>Gestió documental</strong>: documents generals, de projectes i de persones, en un sol lloc.'),
           L('<strong>Comunicación</strong>: WhatsApp de Logos, plantillas de mensajes (con {nombre}) y mensajes internos al equipo.', '<strong>Comunicació</strong>: WhatsApp de Logos, plantilles de missatges (amb {nombre}) i missatges interns a l\'equip.'),
-          L('<strong>Trabajo en equipo</strong>: quién está disponible ahora.', '<strong>Treball en equip</strong>: qui està disponible ara.'),
+          L('<strong>Trabajo en equipo</strong>: quién está disponible ahora y, abajo, el <strong>resumen de hoy</strong> (quién ha entrado y salido, qué salas ha ocupado y cuántas atenciones y actuaciones ha registrado).', '<strong>Treball en equip</strong>: qui està disponible ara i, a sota, el <strong>resum d\'avui</strong> (qui ha entrat i sortit, quines sales ha ocupat i quantes atencions i actuacions ha registrat).'),
           L('<strong>Portales del día</strong>: enlaces de interés; cualquiera puede añadir uno.', '<strong>Portals del dia</strong>: enllaços d\'interès; qualsevol pot afegir-ne un.')],
       go: { txt: L('Ir a Comunicación', 'Anar a Comunicació'), run: ir('comunicacion', renderComunicacionScreen) } },
     { e: '📊', t: L('Impacto e informes', 'Impacte i informes'),
