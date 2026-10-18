@@ -1117,7 +1117,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v81'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v82'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -3361,14 +3361,39 @@ async function guardarAltaPresencial(){
   }
 }
 
-function renderAtencionForm(){
-  window.__atencionUsuarioVinculado = null;
-  document.getElementById('atencion-content').innerHTML = `
+// Contenedor activo del formulario de atención: dentro de la ficha de la persona, o la pantalla suelta
+function atContenedor(){
+  return document.getElementById(window.__atencionEnFicha ? 'atencion-en-ficha' : 'atencion-content');
+}
+// Abre el formulario de atención DENTRO de la ficha de la persona (ya vinculado a ella, sin buscar ni escribir su nombre)
+function abrirAtencionEnFicha(){
+  const uid = window.__usuarioIdVisto;
+  if(!uid) return;
+  mostrarTabPersona('atencion');
+  // Si ya hay un formulario abierto en la ficha, se conserva lo escrito
+  if(window.__atencionEnFicha && document.querySelector('#atencion-en-ficha .at-form')) return;
+  renderAtencionForm({ usuarioId: uid, nombre: window.__nombrePersonaVista || '' });
+  const c = document.getElementById('atencion-en-ficha');
+  if(c && c.scrollIntoView) c.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function cerrarAtencionEnFicha(){
+  window.__atencionEnFicha = false;
+  const c = document.getElementById('atencion-en-ficha'); if(c) c.innerHTML = '';
+  mostrarTabPersona('vista');
+}
+function renderAtencionForm(opts){
+  opts = opts || {};
+  const enFicha = !!(opts.usuarioId && document.getElementById('atencion-en-ficha'));
+  window.__atencionEnFicha = enFicha;
+  window.__atencionUsuarioVinculado = enFicha ? opts.usuarioId : null;
+  // Evita ids duplicados: solo un formulario de atención existe a la vez
+  const otro = document.getElementById(enFicha ? 'atencion-content' : 'atencion-en-ficha'); if(otro) otro.innerHTML = '';
+  atContenedor().innerHTML = `
     <div class="at-form">
-    <h2 class="screen-title">Registrar atención</h2>
-    <p class="subtle">Se guardará vinculada a tu correo (${CURRENT_USER.email}).</p>
+    <h2 class="screen-title">${enFicha ? 'Registrar atención' + (opts.nombre ? ' · ' + escAttr(opts.nombre) : '') : 'Registrar atención'}</h2>
+    <p class="subtle">${enFicha ? 'Se guardará en la ficha de esta persona y a tu nombre' : 'Se guardará vinculada a tu correo'} (${CURRENT_USER.email}).</p>
 
-    <div class="field">
+    ${enFicha ? '' : `<div class="field">
       <label>Buscar la persona por cuenta (opcional)</label>
       <input type="text" id="at-buscar-usuario" placeholder="Escribe el nombre para buscar su cuenta" oninput="buscarUsuarioAtencion(this.value)">
       <div id="at-resultados-busqueda"></div>
@@ -3377,11 +3402,11 @@ function renderAtencionForm(){
         <button class="link-btn" style="margin-left:8px;font-size:11px;" onclick="desvincularUsuarioAtencion()">Quitar</button>
       </div>
       <button class="link-btn" id="at-ver-ficha-btn" style="display:none;margin-top:6px;" onclick="showScreen('personas');verPersonaStaff(window.__atencionUsuarioVinculado,'personas')">📋 Ver/completar su ficha completa</button>
-    </div>
+    </div>`}
 
-    <div class="field">
+    <div class="field" ${enFicha ? 'style="display:none;"' : ''}>
       <label>Nombre o referencia de la persona</label>
-      <input type="text" id="at-nombre" placeholder="Ej: María G., o iniciales">
+      <input type="text" id="at-nombre" placeholder="Ej: María G., o iniciales" value="${enFicha ? escAttr(opts.nombre || '') : ''}">
     </div>
 
     <div class="field">
@@ -3408,7 +3433,8 @@ function renderAtencionForm(){
       <textarea id="at-notas" rows="3" placeholder="Cualquier detalle útil: cómo llega la persona, qué le preocupa, próximos pasos…"></textarea>
     </div>
 
-    <button class="primary-btn" id="at-save-btn" onclick="guardarAtencion()" style="margin-bottom:24px;">Guardar atención</button>
+    <button class="primary-btn" id="at-save-btn" onclick="guardarAtencion()" style="margin-bottom:${enFicha ? '8' : '24'}px;">Guardar atención</button>
+    ${enFicha ? `<button class="link-btn" style="display:block;margin:0 auto 24px;" onclick="cerrarAtencionEnFicha()">Cancelar</button>` : ''}
     </div>
   `;
 }
@@ -3482,7 +3508,15 @@ function buscarUsuarioAtencion(texto){
       </div>`).join('');
   }, 300);
 }
-function vincularUsuarioAtencion(usuarioId, nombre){
+async function vincularUsuarioAtencion(usuarioId, nombre){
+  // Con la persona elegida, la atención se registra dentro de su ficha: todo queda junto
+  try {
+    showScreen('personas');
+    await verPersonaStaff(usuarioId, 'personas');
+    window.__nombrePersonaVista = nombre;
+    abrirAtencionEnFicha();
+    return;
+  } catch(e){ console.error(e); showScreen('atencion'); }
   window.__atencionUsuarioVinculado = usuarioId;
   document.getElementById('at-nombre').value = nombre;
   document.getElementById('at-buscar-usuario').value = '';
@@ -3502,7 +3536,7 @@ async function guardarAtencion(){
   const btn = document.getElementById('at-save-btn');
   const nombre = document.getElementById('at-nombre').value.trim();
   if(!nombre){
-    document.getElementById('atencion-content').insertAdjacentHTML('afterbegin', `<div class="auth-error">Escribe un nombre o referencia para la persona.</div>`);
+    atContenedor().insertAdjacentHTML('afterbegin', `<div class="auth-error">Escribe un nombre o referencia para la persona.</div>`);
     return;
   }
   btn.disabled = true; btn.textContent = 'Guardando…';
@@ -3534,11 +3568,19 @@ async function guardarAtencion(){
     ({ error } = await sb.from('atenciones').insert(resto));
   }
   if(error){
-    document.getElementById('atencion-content').insertAdjacentHTML('afterbegin', `<div class="auth-error">${error.message}</div>`);
+    atContenedor().insertAdjacentHTML('afterbegin', `<div class="auth-error">${error.message}</div>`);
     btn.disabled = false; btn.textContent = 'Guardar atención';
     return;
   }
   if(PERFIL_ETHOS && window.__atencionUsuarioVinculado && /^ethos[1-4]$/.test(payload.ethos || '')){ try { await sb.from('perfiles').update({ ethos: payload.ethos }).eq('id', window.__atencionUsuarioVinculado); } catch(e){} }
+  if(window.__atencionEnFicha && window.__atencionUsuarioVinculado){
+    // Vuelve a la ficha de la persona, ya con la atención en su expediente
+    const uid = window.__atencionUsuarioVinculado;
+    window.__atencionEnFicha = false;
+    await verPersonaStaff(uid, window.__origenPersonaVista);
+    mostrarTabPersona('actuaciones');
+    return;
+  }
   showScreen('miespacio');
   renderMiEspacio();
 }
@@ -7750,7 +7792,7 @@ function pintarExpedientePersona(){
   const filtro = window.__expedienteFiltro || 'todo';
   const cuenta = tipo => todos.filter(i => i.tipo === tipo).length;
   const chip = (id, txt, n) => `<button class="link-btn" style="font-size:12px;border:1px solid ${filtro === id ? 'var(--gold)' : 'var(--line)'};background:${filtro === id ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:3px 11px;" onclick="window.__expedienteFiltro='${id}';pintarExpedientePersona()">${txt} (${n})</button>`;
-  const chips = todos.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">${chip('todo', esCA?'Tot':'Todo', todos.length)}${chip('actuacion', esCA?'Actuacions':'Actuaciones', cuenta('actuacion'))}${chip('tramite', esCA?'Tràmits':'Trámites', cuenta('tramite'))}</div>` : '';
+  const chips = todos.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">${chip('todo', esCA?'Tot':'Todo', todos.length)}${cuenta('atencion') ? chip('atencion', esCA?'Atencions':'Atenciones', cuenta('atencion')) : ''}${chip('actuacion', esCA?'Actuacions':'Actuaciones', cuenta('actuacion'))}${chip('tramite', esCA?'Tràmits':'Trámites', cuenta('tramite'))}</div>` : '';
   const items = todos.filter(i => filtro === 'todo' || i.tipo === filtro);
   if(!items.length){ cont.innerHTML = chips + `<div class="empty-note">${t.sinActuacionesRegistradas}</div>`; return; }
   if(items.length <= 6){ cont.innerHTML = chips + items.map(i => i.html).join(''); return; }
@@ -12002,6 +12044,7 @@ async function verPersonaStaff(usuarioId, origen){
 
   const actuacionesLista = actuacionesRes.data || [];
   const expedienteItems = [
+    ...(atencionesRes.data || []).map(a => ({ fecha: a.creado_en, tipo: 'atencion', html: `<div class="panel-card" style="padding-bottom:4px;"><div class="panel-stat-row"><span style="font-weight:700;">🧑‍💼 ${LANG_I==='ca'?'Atenció':'Atención'}</span></div>${cardAtencion(a).replace('<div class="panel-card">','<div>')}</div>` })),
     ...actuacionesLista.map(ac => ({ fecha: ac.fecha, tipo: 'actuacion', html: renderActuacionCard(ac) })),
     ...(tramitesRes.data || []).map(tr => ({ fecha: tr.fecha_inicio, tipo: 'tramite', html: renderTramiteCardExpediente(tr) }))
   ].sort((a, b) => new Date(a.fecha || 0) - new Date(b.fecha || 0));
@@ -12079,8 +12122,14 @@ async function verPersonaStaff(usuarioId, origen){
   const staffOptions = (staffListRes.data || []).filter(s => s.activo !== false).map(s => `<option value="${s.email}" ${p.tecnico_responsable_email===s.email?'selected':''}>${s.nombre || s.email}</option>`).join('');
 
   const vistaUnicaHtml = construirVistaUnica(p, { atenciones: atencionesRes.data || [], actuaciones: actuacionesLista, tramites: tramitesRes.data || [], citas: citasRes.data || [], mensajes: mensajesRes.data || [], documentos: docsRes.data || [] }, cardAtencion, { proyectos: (misProyectosRes.data || []).map(pp => pp.proyectos).filter(Boolean), emprendimientoHtml: (typeof emprendimientoHtml === 'string' ? emprendimientoHtml : '') });
+  window.__nombrePersonaVista = p.nombre_completo || '';
+  window.__atencionEnFicha = false;
   cont.innerHTML = `
     <h2 class="screen-title">${p.nombre_completo || t.sinNombre}</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 12px;">
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="abrirAtencionEnFicha()">➕ ${LANG_I==='ca'?'Registrar atenció':'Registrar atención'}</button>
+      <button class="primary-btn" style="width:auto;margin:0;background:var(--gold);" onclick="mostrarTabPersona('actuaciones');document.getElementById('act-descripcion').scrollIntoView({behavior:'smooth',block:'center'})">📝 ${LANG_I==='ca'?'Nova actuació':'Nueva actuación'}</button>
+    </div>
     <div class="panel-card">
       ${campo(t.correoLbl, p.email)} ${campo(t.fechaAltaLbl, p.creado_en ? new Date(p.creado_en).toLocaleDateString(t.localeFecha) : '')}
       <div class="panel-stat-row" style="align-items:center;">
@@ -12131,6 +12180,7 @@ async function verPersonaStaff(usuarioId, origen){
 
     <div class="persona-tabs">
       <button class="ptab-btn active" data-tab="vista" onclick="mostrarTabPersona('vista')">🔎 ${LANG_I==='ca'?'Visió única':'Vista única'}</button>
+      <button class="ptab-btn" data-tab="atencion" onclick="abrirAtencionEnFicha()">➕ ${LANG_I==='ca'?'Atenció':'Atención'}</button>
       <button class="ptab-btn" data-tab="datos" onclick="mostrarTabPersona('datos')">📋 ${LANG_I==='ca'?'Dades personals':'Datos personales'}</button>
       <button class="ptab-btn" data-tab="proyectos" onclick="mostrarTabPersona('proyectos')">${t.tabProyectos}</button>
       <button class="ptab-btn" data-tab="formaciones" onclick="mostrarTabPersona('formaciones')">${t.tabFormaciones}</button>
@@ -12143,6 +12193,8 @@ async function verPersonaStaff(usuarioId, origen){
     </div>
 
     <div class="ptab-content active" id="ptab-vista">${vistaUnicaHtml}</div>
+
+    <div class="ptab-content" id="ptab-atencion"><div id="atencion-en-ficha"></div></div>
 
     <div class="ptab-content" id="ptab-datos">
       <div class="panel-card">
