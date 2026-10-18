@@ -476,7 +476,13 @@
   .gi-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 0;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft,#5b6677);}
   .gi-x{background:none;border:none;font-size:20px;cursor:pointer;color:inherit;padding:4px 8px;border-radius:8px;}
   .gi-body{padding:8px 24px 6px;overflow-y:auto;flex:1;animation:giIn .28s ease;}
-  @keyframes giIn{from{opacity:0;transform:translateX(14px);}to{opacity:1;transform:none;}}
+  @keyframes giIn{from{opacity:0;transform:translateX(34px);}to{opacity:1;transform:none;}}
+  @keyframes giInL{from{opacity:0;transform:translateX(-34px);}to{opacity:1;transform:none;}}
+  @keyframes giProg{from{width:0;}to{width:100%;}}
+  .gi-prog{height:4px;background:var(--line,#e6e1d3);margin:8px 16px 0;border-radius:4px;overflow:hidden;}
+  .gi-prog i{display:block;height:100%;width:0;background:var(--gold,#F2BC2C);border-radius:4px;}
+  .gi-pp{background:var(--bg,#f4f1ea);border:none;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:800;cursor:pointer;color:inherit;margin-left:8px;}
+  @media (prefers-reduced-motion:reduce){.gi-body{animation:none !important;}}
   .gi-emoji{font-size:54px;line-height:1.1;margin:6px 0 4px;}
   .gi-t{font-family:var(--font-display,inherit);font-size:23px;line-height:1.2;margin:0 0 8px;color:var(--navy,#1E3F66);}
   .gi-p{font-size:15px;line-height:1.5;margin:0 0 10px;color:var(--ink-soft,#46505f);}
@@ -790,6 +796,8 @@ let IS_ADMIN = false;
 let IS_JOVENES = false;      // persona del equipo de Jóvenes en acción: solo ve su propio espacio
 let IS_GESTOR = false;       // persona a la que la administración ha delegado el reparto de alertas
 let HIST_V2 = false;          // true cuando existe cp/datos en personas_historicas (SQL 14)
+let HIST_ETHOS = false;       // true cuando existe ethos en personas_historicas (SQL 21)
+let PERFIL_ETHOS = false;     // true cuando existe ethos en perfiles (SQL 21)
 let HISTORICAS_OK = false;    // true cuando la base de datos ya tiene personas_historicas (SQL 10)
 let IMPACTO_OK = false;      // true cuando la base de datos ya tiene el módulo de impacto
 let DELEGACION_OK = false;   // true cuando la base de datos ya tiene la delegación de alertas
@@ -1109,7 +1117,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v78'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v81'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -1224,7 +1232,8 @@ async function checkStaff(){
       const iq = await sb.from('impacto_fichas').select('id').limit(1);
       IMPACTO_OK = !iq.error;
       const hpq = await sb.from('personas_historicas').select('id').limit(1); HISTORICAS_OK = !hpq.error;
-      if(HISTORICAS_OK){ const h2 = await sb.from('personas_historicas').select('cp, datos').limit(1); HIST_V2 = !h2.error; }
+      if(HISTORICAS_OK){ const h2 = await sb.from('personas_historicas').select('cp, datos').limit(1); HIST_V2 = !h2.error; const h3 = await sb.from('personas_historicas').select('ethos').limit(1); HIST_ETHOS = !h3.error; }
+      const pe = await sb.from('perfiles').select('ethos').limit(1); PERFIL_ETHOS = !pe.error;
     } catch(e) { CLAVE_CAMBIADA = true; REPARTO_OK = false; JOVENES_OK = false; GP_OK = false; HR_OK = false; DELEGACION_OK = false; IMPACTO_OK = false; HISTORICAS_OK = false; }
   }
 }
@@ -3070,6 +3079,19 @@ const EMPRENDEDURIA_OPTS = [
   ['formacio_gestio','Formación gestión'], ['coworking','Coworking'], ['networking','Networking'],
   ['intrepids_filials','Intrèpids (filiales)']
 ];
+// ETHOS en la ficha y en el Excel: texto largo igual que el Excel de Logos
+const ETHOS_LARGO = {
+  ca: { ethos1: 'ETHOS 1 – Sense sostre (viu al carrer o en espais públics)', ethos2: 'ETHOS 2 – Sense habitatge (recursos d\'emergència, albergs, allotjament temporal)', ethos3: 'ETHOS 3 – Habitatge insegur (amenaça de desnonament, violència, sense contracte estable)', ethos4: 'ETHOS 4 – Habitatge inadequat (infrahabitatge, sobreocupació, condicions no habitables)', no_escau: 'No s\'escau / No consta', no_consta: 'No s\'escau / No consta' },
+  es: { ethos1: 'ETHOS 1 – Sin techo (vive en la calle o en espacios públicos)', ethos2: 'ETHOS 2 – Sin vivienda (recursos de emergencia, albergues, alojamiento temporal)', ethos3: 'ETHOS 3 – Vivienda insegura (amenaza de desahucio, violencia, sin contrato estable)', ethos4: 'ETHOS 4 – Vivienda inadecuada (infravivienda, sobreocupación, condiciones no habitables)', no_escau: 'No procede / No consta', no_consta: 'No procede / No consta' }
+};
+function ethosLargo(cod){ return cod ? ((ETHOS_LARGO[LANG_I === 'ca' ? 'ca' : 'es'] || {})[cod] || '') : ''; }
+function ethosDesdeTexto(v){
+  const t = String(v == null ? '' : v).toLowerCase(); if(!t.trim()) return null;
+  let m = t.match(/ethos\s*([1-4])/); if(m) return 'ethos' + m[1];
+  if(/escau|procede|procedeix/.test(t)) return 'no_escau';
+  if(/consta/.test(t)) return 'no_consta';
+  return null;
+}
 const ETHOS_OPTS = [
   ['no_escau','No procede'], ['ethos1','ETHOS 1 – Sin techo'], ['ethos2','ETHOS 2 – Sin vivienda'],
   ['ethos3','ETHOS 3 – Vivienda insegura'], ['ethos4','ETHOS 4 – Vivienda inadecuada'], ['no_consta','No consta']
@@ -3516,6 +3538,7 @@ async function guardarAtencion(){
     btn.disabled = false; btn.textContent = 'Guardar atención';
     return;
   }
+  if(PERFIL_ETHOS && window.__atencionUsuarioVinculado && /^ethos[1-4]$/.test(payload.ethos || '')){ try { await sb.from('perfiles').update({ ethos: payload.ethos }).eq('id', window.__atencionUsuarioVinculado); } catch(e){} }
   showScreen('miespacio');
   renderMiEspacio();
 }
@@ -4155,7 +4178,7 @@ function histVer(id){
     <p class="subtle" style="margin:0 0 10px;">${esCA?'Històric':'Histórico'} · ${escAttr(p.codigo || '')} · ${p.anio}</p>
     ${dato(esCA?'Data d\'alta':'Fecha de alta', p.fecha_alta ? fechaCorta(p.fecha_alta) : '')}${dato('DNI/NIE', p.dni_nie)}${dato(esCA?'Telèfon':'Teléfono', p.telefono)}${dato(esCA?'Correu':'Correo', p.email)}
     ${dato(esCA?'Municipi':'Municipio', p.municipio)}${dato(esCA?'Codi postal':'Código postal', p.cp)}${dato(esCA?'Sexe':'Sexo', p.sexo)}${dato(esCA?'Naixement':'Nacimiento', p.fecha_nacimiento ? fechaCorta(p.fecha_nacimiento) : (p.edad_alta != null ? p.edad_alta + (esCA?' anys':' años') : ''))}
-    ${dato(esCA?'Nacionalitat':'Nacionalidad', p.nacionalidad)}${dato(esCA?'Tipus':'Tipo', p.tipo)}${dato(esCA?'Servei':'Servicio', p.servicio)}${dato(esCA?'Projecte':'Proyecto', p.proyecto)}${dato(esCA?'Notes':'Notas', p.notas)}${dato(esCA?'Lot':'Lote', p.origen)}
+    ${dato(esCA?'Nacionalitat':'Nacionalidad', p.nacionalidad)}${dato(esCA?'Tipus':'Tipo', p.tipo)}${dato(esCA?'Servei':'Servicio', p.servicio)}${dato(esCA?'Projecte':'Proyecto', p.proyecto)}${dato(esCA?'Notes':'Notas', p.notas)}${HIST_ETHOS ? (IS_ADMIN ? `<div class="ja-dato"><span>ETHOS</span><select onchange="histGuardarEthos('${p.id}', this.value)"><option value="">—</option>${ETHOS_OPTS.map(o => `<option value="${o[0]}" ${p.ethos===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div>` : dato('ETHOS', p.ethos ? etiquetaOpt(ETHOS_OPTS, p.ethos) : '')) : ''}${dato(esCA?'Lot':'Lote', p.origen)}
     ${p.datos && typeof p.datos === 'object' ? `<details style="margin-top:8px;" open><summary style="cursor:pointer;font-weight:600;">${esCA?'Altres dades de l\'arxiu':'Otros datos del archivo'} <span class="chip off" style="font-size:10px;">${esCA?'sensible':'sensible'}</span></summary>${Object.entries(p.datos).map(([k, v]) => dato(k, String(v))).join('')}</details>` : ''}
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;align-items:center;">
       ${IMPACTO_OK ? `<button class="primary-btn" style="width:auto;margin:0;" onclick="histAImpacto('${p.id}')">📊 ${esCA?'Crear fitxa d\'impacte':'Crear ficha de impacto'}</button>` : ''}
@@ -4163,6 +4186,11 @@ function histVer(id){
       <button class="link-btn" style="margin-left:auto;" onclick="histCerrar()">${esCA?'Tancar':'Cerrar'}</button>
     </div>
     ${IMPACTO_OK ? `<p class="subtle" style="font-size:11.5px;margin:10px 0 0;">${esCA?'La fitxa d\'impacte només guarda el codi ('+escAttr(p.codigo||'')+'), el gènere i el tram d\'edat; mai el nom.':'La ficha de impacto solo guarda el código ('+escAttr(p.codigo||'')+'), el género y el tramo de edad; nunca el nombre.'}</p>` : ''}`);
+}
+async function histGuardarEthos(id, valor){
+  const { error } = await sb.from('personas_historicas').update({ ethos: valor || null }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  if(__histCache[id]) __histCache[id].ethos = valor || null;
 }
 async function histBorrar(id){
   const esCA = LANG_I === 'ca';
@@ -4199,7 +4227,8 @@ const HIST_CAMPOS = [
   ['tipo', 'Tipo de trámite / servicio / proyecto', 'Tipus de tràmit / servei / projecte', ['tipo', 'tramite', 'tipus', 'tramit']],
   ['servicio', 'Servicio', 'Servei', ['servicio', 'servei', 'prestacion', 'atencion']],
   ['proyecto', 'Proyecto', 'Projecte', ['proyecto', 'projecte', 'programa']],
-  ['notas', 'Notas', 'Notes', ['nota', 'observ', 'comentario', 'comentari']]
+  ['notas', 'Notas', 'Notes', ['nota', 'observ', 'comentario', 'comentari']],
+  ['ethos', 'ETHOS (situación residencial)', 'ETHOS (situació residencial)', ['ethos']]
 ];
 let __histImp = null;
 
@@ -4307,7 +4336,7 @@ function histConvertir(){
     const edadN = parseInt(get(r, 'edad'), 10);
     const fila = { cp: histTxt(get(r, 'cp')), anio, fecha_alta, nombre_completo: nombre, dni_nie: histTxt(get(r, 'dni_nie')), telefono: histTxt(get(r, 'telefono')), email: histTxt(get(r, 'email')),
       municipio: histTxt(get(r, 'municipio')), sexo: histSexo(get(r, 'sexo')), fecha_nacimiento, edad_alta: (!fecha_nacimiento && edadN >= 0 && edadN < 110) ? edadN : null,
-      nacionalidad: histTxt(get(r, 'nacionalidad')), tipo: histTxt(get(r, 'tipo')), servicio: histTxt(get(r, 'servicio')), proyecto: histTxt(get(r, 'proyecto')), notas: histTxt(get(r, 'notas')) };
+      nacionalidad: histTxt(get(r, 'nacionalidad')), tipo: histTxt(get(r, 'tipo')), servicio: histTxt(get(r, 'servicio')), proyecto: histTxt(get(r, 'proyecto')), notas: histTxt(get(r, 'notas')), ethos: ethosDesdeTexto(get(r, 'ethos')) };
     if(guardarExtra){ const ex = {}; st.cab.forEach((h, i) => { if(!h || usadasIdx.has(i)) return; let v = r[i]; if(v instanceof Date) v = histFecha(v); const t = histTxt(v); if(t !== null) ex[h] = t; }); if(Object.keys(ex).length) fila.datos = ex; }
     if(dedup){
       const k = fila.dni_nie ? 'd:' + normTxt(fila.dni_nie).replace(/\s/g, '') : 'n:' + normTxt(nombre) + '|' + (fila.fecha_nacimiento || fila.telefono || '');
@@ -4351,6 +4380,7 @@ async function histImportar(){
     if(dedupBD && k && ya.has(k)){ omitidas++; return; }
     if(k){ ya.add(k); if(perf.has(k)){ f.perfil_id = perf.get(k); enlazadas++; } }
     if(!HIST_V2){ delete f.cp; delete f.datos; }
+    if(!HIST_ETHOS) delete f.ethos;
     filas.push(Object.assign(f, { origen, importado_por: CURRENT_USER.email }));
   });
   if(!filas.length){ prog.innerHTML = `<strong>${esCA?'Totes ja hi eren (cap duplicat creat).':'Todas ya estaban (no se ha creado ningún duplicado).'}</strong>`; btn.disabled = false; return; }
@@ -4395,11 +4425,11 @@ async function obtenerPersonasParaExport(){
   if(__personasVista === 'hist' && HISTORICAS_OK){
     const res = await traerTodoPaginado((a, b) => sb.from('personas_historicas').select('*').order('anio', { ascending:true }).order('nombre_completo', { ascending:true }).range(a, b));
     const datos = (res.data || []).filter(p => !hayTexto || normTxt(p.nombre_completo).includes(q));
-    const extra = []; datos.forEach(p => { if(p.datos && typeof p.datos === 'object') Object.keys(p.datos).forEach(k => { if(!extra.includes(k)) extra.push(k); }); });
-    return { cabecera: ['Código', 'Año', 'Fecha de alta', 'Nombre', 'DNI/NIE', 'Teléfono', 'Correo', 'Código postal', 'Municipio', 'Sexo', 'Fecha de nacimiento', 'Edad en el alta', 'Nacionalidad', 'Tipo (trámite/servicio/proyecto)', 'Servicio', 'Proyecto', 'Notas', 'Lote de importación'].concat(extra),
-      filas: datos.map(p => [p.codigo || '', p.anio || '', p.fecha_alta || '', p.nombre_completo || '', p.dni_nie || '', p.telefono || '', p.email || '', p.cp || '', p.municipio || '', p.sexo || '', p.fecha_nacimiento || '', p.edad_alta != null ? p.edad_alta : '', p.nacionalidad || '', p.tipo || '', p.servicio || '', p.proyecto || '', p.notas || '', p.origen || ''].concat(extra.map(k => (p.datos && p.datos[k]) || ''))) };
+    const extra = []; datos.forEach(p => { if(p.datos && typeof p.datos === 'object') Object.keys(p.datos).forEach(k => { if(!extra.includes(k) && !/^ethos$/i.test(k)) extra.push(k); }); });
+    return { cabecera: ['Código', 'Año', 'Fecha de alta', 'Nombre', 'DNI/NIE', 'Teléfono', 'Correo', 'Código postal', 'Municipio', 'Sexo', 'Fecha de nacimiento', 'Edad en el alta', 'Nacionalidad', 'Tipo (trámite/servicio/proyecto)', 'Servicio', 'Proyecto', 'Notas', 'ETHOS', 'Lote de importación'].concat(extra),
+      filas: datos.map(p => [p.codigo || '', p.anio || '', p.fecha_alta || '', p.nombre_completo || '', p.dni_nie || '', p.telefono || '', p.email || '', p.cp || '', p.municipio || '', p.sexo || '', p.fecha_nacimiento || '', p.edad_alta != null ? p.edad_alta : '', p.nacionalidad || '', p.tipo || '', p.servicio || '', p.proyecto || '', p.notas || '', ethosLargo(p.ethos) || ((p.datos && (p.datos.ETHOS || p.datos.Ethos || p.datos.ethos)) || ''), p.origen || ''].concat(extra.map(k => (p.datos && p.datos[k]) || ''))) };
   }
-  const cols = 'id, nombre_completo, dni_nie, telefono, municipio, calle' + (FECHA_ALTA_OK ? ', fecha_alta' : '');
+  const cols = 'id, nombre_completo, dni_nie, telefono, municipio, calle' + (FECHA_ALTA_OK ? ', fecha_alta' : '') + (PERFIL_ETHOS ? ', ethos' : '');
   const [perfRes, trRes, atRes, acRes, pyRes] = await Promise.all([
     traerTodoPaginado((a, b) => sb.from('perfiles').select(cols).not('nombre_completo', 'is', null).order('nombre_completo', { ascending:true }).range(a, b)),
     traerTodoPaginado((a, b) => sb.from('tramites').select('usuario_id, nombre_servicio').range(a, b)),
@@ -4418,10 +4448,10 @@ async function obtenerPersonasParaExport(){
   if(hayTexto) perfiles = perfiles.filter(p => normTxt(p.nombre_completo).includes(q));
   const lista = s => [...s].join('; ');
   return {
-    cabecera: ['Nombre', 'DNI/NIE', 'Teléfono', 'Municipio', 'Dirección', 'Fecha de alta (primer registro)', 'Año de alta', 'Mes de alta', 'Trámites', 'Servicios', 'Proyectos'],
+    cabecera: ['Nombre', 'DNI/NIE', 'Teléfono', 'Municipio', 'Dirección', 'Fecha de alta (primer registro)', 'Año de alta', 'Mes de alta', 'ETHOS', 'Trámites', 'Servicios', 'Proyectos'],
     filas: perfiles.map(p => { const x = porPersona[p.id] || juntar(); const d = p.fecha_alta ? new Date(p.fecha_alta) : null; const ok = d && !isNaN(d);
       return [p.nombre_completo || '', p.dni_nie || '', p.telefono || '', p.municipio || '', p.calle || '',
-        ok ? d.toISOString().slice(0, 10) : '', ok ? d.getFullYear() : '', ok ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` : '', lista(x.tr), lista(x.sv), lista(x.py)]; })
+        ok ? d.toISOString().slice(0, 10) : '', ok ? d.getFullYear() : '', ok ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` : '', ethosLargo(p.ethos), lista(x.tr), lista(x.sv), lista(x.py)]; })
   };
 }
 
@@ -10978,6 +11008,8 @@ function guiaUsoHtml(){
     [L('Ver mis alertas y avisos de un vistazo', 'Veure les meves alertes i avisos d\'un cop d\'ull'), L('Mi espacio → 🔔 Avisos y accesos', 'El meu espai → 🔔 Avisos i accessos')],
     [L('Dar una cita urgente y avisar a la persona', 'Donar una cita urgent i avisar la persona'), L('➕ Nueva cita → 🔴 Urgente → WhatsApp o correo', '➕ Nova cita → 🔴 Urgent → WhatsApp o correu')],
     [L('Buscar a una persona', 'Cercar una persona'), L('Personas usuarias (por fecha de alta, A–Z o histórico)', 'Persones usuàries (per data d\'alta, A–Z o històric)')],
+    [L('Cifras de personas atendidas para la web (administración)', 'Xifres de persones ateses per a la web (administració)'), L('Administración → 🏛️ Nuestra historia (web): cifra por año, cifra manual para años sin registrar y código para pegar en la web.', 'Administració → 🏛️ La nostra història (web): xifra per any, xifra manual per a anys sense registrar i codi per enganxar a la web.')],
+    [L('Indicar el ETHOS de una persona', 'Indicar l\'ETHOS d\'una persona'), L('Su ficha → Datos personales → Situación residencial (ETHOS). También se guarda al registrar una atención vinculada.', 'La seva fitxa → Dades personals → Situació residencial (ETHOS). També es desa en registrar una atenció vinculada.')],
     [L('Avisar a quien espera', 'Avisar qui espera'), L('Mi espacio → 🕓 En espera → Avisar (o en su ficha, pestaña Citas)', 'El meu espai → 🕓 En espera → Avisar (o a la seva fitxa, pestanya Cites)')],
     [L('Dar de alta a quien viene sin cuenta', 'Donar d\'alta qui ve sense compte'), L('Mi espacio → Alta presencial', 'El meu espai → Alta presencial')],
     [L('Contestar una consulta de orientación', 'Respondre una consulta d\'orientació'), L('Inicio → Consultas de orientación pendientes', 'Inici → Consultes d\'orientació pendents')],
@@ -11737,6 +11769,7 @@ function construirVistaUnica(p, d, cardAtencion, extra){
       <h3 style="margin:0 0 8px;">${ca ? 'Resum' : 'Resumen'}</h3>
       ${fila(ca ? 'Telèfon' : 'Teléfono', p.telefono)}${fila('DNI/NIE', p.dni_nie)}${fila(t.correoLbl, p.email)}${fila(ca ? 'Adreça' : 'Dirección', dir)}
       ${fila(t.tecnicoResponsableLbl, p.tecnico_responsable_email ? nombreTecnico(p.tecnico_responsable_email) : '')}
+      ${p.ethos && p.ethos !== 'no_escau' && p.ethos !== 'no_consta' ? `<div class="panel-stat-row"><span>ETHOS</span><span><strong>${escAttr(etiquetaOpt(ETHOS_OPTS, p.ethos))}</strong></span></div>` : ''}
       <div class="panel-stat-row"><span>${ca ? 'Consentiment' : 'Consentimiento'}</span><span><strong>${p.consentimiento_firmado ? '✅ ' + (ca ? 'Signat' : 'Firmado') : '⚠️ ' + (ca ? 'Pendent' : 'Pendiente')}</strong></span></div>
       ${proxima ? fila(ca ? 'Propera cita' : 'Próxima cita', fmt(proxima.fecha) + (proxima.hora ? ' · ' + String(proxima.hora).slice(0, 5) : '')) : ''}
       ${tramAbiertos ? fila(ca ? 'Tràmits oberts' : 'Trámites abiertos', String(tramAbiertos)) : ''}
@@ -12157,6 +12190,9 @@ async function verPersonaStaff(usuarioId, origen){
           </select>
         </div>
         <div class="field"><label>${LANG_I==='ca'?'Nivell d\'ingressos':'Nivel de ingresos'}</label><input type="text" id="pds-ingresos" value="${p.nivel_ingresos||''}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Situació residencial (ETHOS)':'Situación residencial (ETHOS)'}</label>
+          <select id="pds-ethos"><option value="">—</option>${ETHOS_OPTS.map(o => `<option value="${o[0]}" ${p.ethos===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>
+          ${PERFIL_ETHOS ? '' : `<p class="subtle" style="font-size:11px;margin:4px 0 0;">${LANG_I==='ca'?'Cal executar el SQL 21 per desar-ho.':'Falta ejecutar el SQL 21 para guardarlo.'}</p>`}</div>
         <button class="primary-btn" onclick="guardarDatosPersonaStaff('${p.id}')">💾 ${LANG_I==='ca'?'Desar dades':'Guardar datos'}</button>
       </div>
     </div>
@@ -12497,6 +12533,7 @@ async function guardarDatosPersonaStaff(usuarioId){
     dependencia_reconocida: boolOrNull(document.getElementById('pds-dependencia').value),
     nivel_ingresos: val('pds-ingresos') || null
   };
+  if(PERFIL_ETHOS) payload.ethos = val('pds-ethos') || null;
   const { error } = await sb.from('perfiles').update(payload).eq('id', usuarioId);
   if(error){ alert(error.message); return; }
   alert(LANG_I==='ca' ? 'Dades desades correctament.' : 'Datos guardados correctamente.');
@@ -12763,6 +12800,8 @@ async function renderAdministrador(){
     : `<div class="empty-note">${esCAadm?'Encara no hi ha projectes.':'Todavía no hay proyectos.'}</div>`;
 
   cont.innerHTML = `
+    ${carpetaDesplegable({ clave: 'adm-sec:historia', icono: '🏛️', titulo: LANG_I==='ca'?'La nostra història (web)':'Nuestra historia (web)', cuenta: '', cuerpo: '<div id="historia-admin"><div class="placeholder">…</div></div>' })}
+
     ${carpetaDesplegable({ clave: 'adm-sec:proyectos', icono: '📁', titulo: LANG_I==='ca'?'Projectes':'Proyectos', cuenta: proyectosAdminLista.length, cuerpo: proyectosAdminHtml })}
 
     ${carpetaAbre({ clave: 'adm-sec:revisiones', icono: '📅', titulo: t.proximasRevisionesPendientes, cuenta: '' })}
@@ -12949,6 +12988,85 @@ async function renderAdministrador(){
   `;
 
   activarBarras();
+  historiaPintar();
+}
+
+// ================= NUESTRA HISTORIA: cifras de personas atendidas para la web =================
+const hsN = n => Number(n || 0).toLocaleString(TI[LANG_I].localeFecha);
+function historiaFrase(d, ca){
+  const t = (d || []).filter(x => x.visible && x.publicado > 0);
+  if(!t.length) return ca ? 'Encara no hi ha cap xifra per publicar.' : 'Todavía no hay ninguna cifra para publicar.';
+  const total = t.reduce((a, x) => a + x.publicado, 0), desde = t[0].anio;
+  return ca ? `Des de ${desde}, Logos ha acompanyat ${hsN(total)} persones.` : `Desde ${desde}, Logos ha acompañado a ${hsN(total)} personas.`;
+}
+function historiaCodigoWeb(){
+  const cierre = '<' + '/script>';
+  return [
+    '<div id="logos-historia"></div>',
+    '<script>',
+    '(async()=>{const U=\'' + SUPABASE_URL + '\',K=\'' + SUPABASE_KEY + '\';',
+    'const ca=(document.documentElement.lang||\'\').toLowerCase().indexOf(\'ca\')===0;',
+    'try{const r=await fetch(U+\'/rest/v1/rpc/historia_publica\',{method:\'POST\',headers:{apikey:K,Authorization:\'Bearer \'+K,\'Content-Type\':\'application/json\'},body:\'{}\'});',
+    'const d=await r.json();if(!d.por_anio||!d.por_anio.length)return;',
+    'const f=n=>Number(n).toLocaleString(ca?\'ca-ES\':\'es-ES\');const m=Math.max.apply(null,d.por_anio.map(x=>x.personas));',
+    'const t=ca?\'Des de \'+d.desde+\', hem acompanyat <strong>\'+f(d.total)+\'</strong> persones.\':\'Desde \'+d.desde+\', hemos acompañado a <strong>\'+f(d.total)+\'</strong> personas.\';',
+    'document.getElementById(\'logos-historia\').innerHTML=\'<p style="font-size:1.25em;margin:0 0 12px">\'+t+\'</p>\'+d.por_anio.map(x=>\'<div style="display:flex;align-items:center;gap:10px;margin:4px 0"><span style="width:44px">\'+x.anio+\'</span><span style="flex:1;background:#eee;border-radius:6px;height:12px"><i style="display:block;height:12px;border-radius:6px;background:#F2BC2C;width:\'+Math.max(3,Math.round(x.personas/m*100))+\'%"></i></span><strong style="min-width:56px;text-align:right">\'+f(x.personas)+\'</strong></div>\').join(\'\');',
+    '}catch(e){}})();',
+    cierre].join('\n');
+}
+async function historiaPintar(){
+  const host = document.getElementById('historia-admin'); if(!host) return;
+  const ca = LANG_I === 'ca';
+  const { data, error } = await sb.rpc('historia_admin');
+  if(error){ host.innerHTML = `<div class="empty-note">⚠️ ${escAttr(error.message)} · ${ca ? 'Cal executar el SQL 22.' : 'Falta ejecutar el SQL 22.'}</div>`; return; }
+  const d = data || []; window.__historia = d;
+  const tarjeta = x => `<div class="panel-card" style="margin-bottom:8px;">
+    <div class="panel-stat-row"><strong style="font-size:16px;">${x.anio}</strong><span class="chip ${x.visible ? 'gold' : ''}">${x.visible ? (ca ? 'Publicat' : 'Publicado') : (ca ? 'Amagat' : 'Oculto')}: ${hsN(x.publicado)}</span></div>
+    <p class="subtle" style="font-size:12px;margin:2px 0 8px;">${ca ? 'Històric' : 'Histórico'} ${hsN(x.historico)} · ${ca ? 'Amb compte' : 'Con cuenta'} ${hsN(x.cuentas)} · ${ca ? 'Sense compte' : 'Sin cuenta'} ${hsN(x.sin_cuenta)} = ${ca ? 'calculat' : 'calculado'} <strong>${hsN(x.calculado)}</strong></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <label style="font-size:12.5px;">${ca ? 'Xifra manual' : 'Cifra manual'} <input type="number" min="0" id="hs-m-${x.anio}" value="${x.manual != null ? x.manual : ''}" style="width:110px;"></label>
+      <label class="checkbox-row" style="margin:0;"><input type="checkbox" id="hs-f-${x.anio}" ${x.fijar ? 'checked' : ''}> ${ca ? 'Fer servir exactament aquesta xifra' : 'Usar exactamente esta cifra'}</label>
+      <label class="checkbox-row" style="margin:0;"><input type="checkbox" id="hs-v-${x.anio}" ${x.visible ? 'checked' : ''}> ${ca ? 'Mostrar a la web' : 'Mostrar en la web'}</label>
+    </div>
+    <input type="text" id="hs-n-${x.anio}" value="${escAttr(x.nota || '')}" placeholder="${ca ? 'Nota (opcional): d\'on surt la xifra' : 'Nota (opcional): de dónde sale la cifra'}" style="width:100%;box-sizing:border-box;margin-top:8px;">
+    <button class="link-btn" style="margin-top:6px;" onclick="historiaGuardar(${x.anio})">💾 ${ca ? 'Desar' : 'Guardar'}</button>
+  </div>`;
+  host.innerHTML = `
+    <p class="subtle" style="margin:0 0 10px;">${ca
+      ? 'Persones ateses per any, que es poden mostrar a la web de Logos. Es calcula sol (històric + persones amb compte + atencions sense compte). Si un any no està registrat, posa-hi la xifra manual: si després puges més dades, la xifra es posa al dia (la més alta guanya, llevat que marquis «exactament»).'
+      : 'Personas atendidas por año, que se pueden mostrar en la web de Logos. Se calcula solo (histórico + personas con cuenta + atenciones sin cuenta). Si un año no está registrado, pon aquí la cifra manual: cuando después subas más datos, la cifra se pone al día (gana la más alta, salvo que marques «exactamente»). A la web solo llegan año y número, nunca nombres.'}</p>
+    <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);margin-bottom:10px;"><strong>${ca ? 'Així es veurà:' : 'Así se verá:'}</strong><br>${historiaFrase(d, ca)}<br><span class="subtle" style="font-size:12px;">${historiaFrase(d, !ca)}</span></div>
+    ${d.length ? d.map(tarjeta).join('') : `<div class="empty-note">${ca ? 'Encara no hi ha anys.' : 'Todavía no hay años.'}</div>`}
+    <button class="link-btn" onclick="historiaNuevoAnio()">➕ ${ca ? 'Afegir un any sense registrar' : 'Añadir un año sin registrar'}</button>
+    <details style="margin-top:12px;"><summary style="cursor:pointer;font-weight:700;">🌐 ${ca ? 'Codi per enganxar a la web' : 'Código para pegar en la web'}</summary>
+      <p class="subtle" style="font-size:12px;margin:6px 0;">${ca ? 'Enganxa\'l en un bloc «HTML» de la pàgina on vulguis mostrar-ho. S\'actualitza sol cada vegada que algú obre la pàgina.' : 'Pégalo en un bloque «HTML» de la página donde quieras mostrarlo. Se actualiza solo cada vez que alguien abre la página.'}</p>
+      <textarea readonly rows="8" id="hs-codigo" style="width:100%;box-sizing:border-box;font-family:monospace;font-size:11px;" onclick="this.select()">${escAttr(historiaCodigoWeb())}</textarea>
+      <button class="link-btn" onclick="historiaCopiar()">📋 ${ca ? 'Copiar el codi' : 'Copiar el código'}</button>
+    </details>`;
+}
+async function historiaGuardar(anio){
+  const ca = LANG_I === 'ca';
+  const m = document.getElementById('hs-m-' + anio).value.trim();
+  const fila = { anio, personas_manual: m === '' ? null : Math.max(0, parseInt(m, 10) || 0), fijar: document.getElementById('hs-f-' + anio).checked, visible: document.getElementById('hs-v-' + anio).checked, nota: document.getElementById('hs-n-' + anio).value.trim() || null, actualizado_en: new Date().toISOString(), actualizado_por: CURRENT_USER.email };
+  if(fila.fijar && fila.personas_manual === null){ alert(ca ? 'Per fer servir exactament una xifra, cal escriure-la.' : 'Para usar exactamente una cifra, hay que escribirla.'); return; }
+  const { error } = await sb.from('historia_cifras').upsert(fila);
+  if(error){ alert(error.message); return; }
+  historiaPintar();
+}
+async function historiaNuevoAnio(){
+  const ca = LANG_I === 'ca';
+  const a = parseInt(prompt(ca ? 'Any (p. ex. 2023):' : 'Año (por ejemplo 2023):') || '', 10);
+  if(!(a >= 1990 && a <= new Date().getFullYear())) return;
+  const n = parseInt(prompt((ca ? 'Persones ateses el ' : 'Personas atendidas en ') + a + ':') || '', 10);
+  if(isNaN(n) || n < 0) return;
+  const { error } = await sb.from('historia_cifras').upsert({ anio: a, personas_manual: n, fijar: true, visible: true, nota: ca ? 'Xifra manual (any no registrat)' : 'Cifra manual (año no registrado)', actualizado_en: new Date().toISOString(), actualizado_por: CURRENT_USER.email });
+  if(error){ alert(error.message); return; }
+  historiaPintar();
+}
+function historiaCopiar(){
+  const t = document.getElementById('hs-codigo'); if(!t) return; t.select();
+  try { navigator.clipboard.writeText(t.value); } catch(e){ document.execCommand('copy'); }
+  alert(LANG_I === 'ca' ? 'Codi copiat.' : 'Código copiado.');
 }
 
 function renderFilasActuacionesAdmin(lista){
@@ -13411,15 +13529,18 @@ const GI_IMGS = {casa:'data:image/webp;base64,UklGRuBtAABXRUJQVlA4INRtAABw9gGdAS
 let __GI = { i: 0, slides: [], clave: '', L: (a) => a };
 function giStore(op, k, v){ try { return op === 'get' ? localStorage.getItem(k) : localStorage.setItem(k, v); } catch(e){ return null; } }
 function guiaAbrir(slides, clave, L, desde){
-  __GI = { i: desde || 0, slides, clave, L };
+  clearTimeout(__GI.t);
+  const quieto = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  __GI = { i: desde || 0, slides, clave, L, auto: !quieto, pausa: false, dir: 1, t: null };
   let ov = document.getElementById('guia-ov');
   if(!ov){
     ov = document.createElement('div'); ov.id = 'guia-ov';
     ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
     ov.addEventListener('click', e => { if(e.target === ov) guiaCerrar(); });
     let x0 = null;
-    ov.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
-    ov.addEventListener('touchend', e => { if(x0 === null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if(Math.abs(dx) > 60) guiaIr(__GI.i + (dx < 0 ? 1 : -1)); }, { passive: true });
+    ov.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; giPausar(true); }, { passive: true });
+    ov.addEventListener('touchend', e => { giPausar(false, 5000); if(x0 === null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if(Math.abs(dx) > 60) guiaIr(__GI.i + (dx < 0 ? 1 : -1)); }, { passive: true });
+    ov.addEventListener('pointerdown', e => { if(e.pointerType === 'mouse' && e.target.closest('.gi-body')) giPausar(false, 8000); });
     document.body.appendChild(ov);
   }
   ov.classList.add('open'); guiaPintar();
@@ -13432,14 +13553,40 @@ function giTecla(e){
   else if(e.key === 'ArrowLeft') guiaIr(__GI.i - 1);
 }
 function guiaCerrar(){
+  clearTimeout(__GI.t);
   const ov = document.getElementById('guia-ov'); if(ov) ov.classList.remove('open');
   document.removeEventListener('keydown', giTecla);
   giStore('set', __GI.clave, '1');
 }
-function guiaIr(n){
+function guiaIr(n, auto){
   if(n < 0) return;
-  if(n >= __GI.slides.length){ guiaCerrar(); return; }
+  if(n >= __GI.slides.length){ if(auto){ n = 0; } else { guiaCerrar(); return; } }
+  __GI.dir = n >= __GI.i ? 1 : -1;
   __GI.i = n; guiaPintar();
+}
+// Avance automático: el tiempo de cada diapositiva depende de lo que hay que leer; se detiene al tocar, pasar el ratón o con el botón de pausa
+function giTemporizar(){
+  clearTimeout(__GI.t);
+  const ov = document.getElementById('guia-ov'); if(!ov || !ov.classList.contains('open')) return;
+  const barra = ov.querySelector('.gi-prog i'); if(!barra) return;
+  barra.style.animation = 'none'; void barra.offsetWidth;
+  if(!__GI.auto || __GI.pausa){ barra.style.width = '0'; return; }
+  const s = __GI.slides[__GI.i] || {};
+  const n = String(JSON.stringify([s.t, s.p, s.l, s.hero]) || '').replace(/<[^>]+>/g, '').length;
+  const ms = Math.min(18000, Math.max(6000, 3500 + n * 24));
+  barra.style.animation = 'giProg ' + ms + 'ms linear forwards';
+  __GI.t = setTimeout(() => guiaIr(__GI.i + 1, true), ms);
+}
+function giPausar(si, reanudarEn){
+  clearTimeout(__GI.rt);
+  __GI.pausa = !!si;
+  if(!si && reanudarEn){ __GI.pausa = true; __GI.rt = setTimeout(() => { __GI.pausa = false; giTemporizar(); }, reanudarEn); }
+  giTemporizar();
+}
+function guiaAuto(){
+  __GI.auto = !__GI.auto; __GI.pausa = false;
+  const b = document.querySelector('#guia-ov .gi-pp'); if(b) b.textContent = __GI.auto ? '⏸ ' + __GI.L('Pausa', 'Pausa') : '▶ ' + __GI.L('Automático', 'Automàtic');
+  giTemporizar();
 }
 function guiaIrA(n){
   const s = __GI.slides[__GI.i]; const go = s && s.go;
@@ -13450,8 +13597,9 @@ function guiaPintar(){
   const { i, slides, L } = __GI; const s = slides[i]; const ult = i === slides.length - 1;
   const ov = document.getElementById('guia-ov');
   ov.innerHTML = `<div class="gi-card">
-    <div class="gi-top"><span>${i + 1} / ${slides.length}</span><button class="gi-x" onclick="guiaCerrar()" aria-label="${L('Cerrar', 'Tancar')}">✕</button></div>
-    <div class="gi-body" id="gi-body">
+    <div class="gi-top"><span>${i + 1} / ${slides.length}<button class="gi-pp" onclick="guiaAuto()">${__GI.auto ? '⏸ ' + L('Pausa', 'Pausa') : '▶ ' + L('Automático', 'Automàtic')}</button></span><button class="gi-x" onclick="guiaCerrar()" aria-label="${L('Cerrar', 'Tancar')}">✕</button></div>
+    <div class="gi-prog"><i></i></div>
+    <div class="gi-body" id="gi-body" style="${__GI.dir < 0 ? 'animation-name:giInL;' : ''}" onscroll="giPausar(false, 12000)">
       ${s.hero ? `<div class="gi-hero"><img class="gi-av" src="${GI_IMGS.av}" alt=""><div class="gi-bub">${s.hero}</div></div>` : (s.img ? `<img class="gi-pic" src="${GI_IMGS[s.img]}" alt="">` : `<div class="gi-emoji">${s.e}</div>`)}
       <h3 class="gi-t">${s.t}</h3>
       ${s.p ? `<p class="gi-p">${s.p}</p>` : ''}
@@ -13464,6 +13612,7 @@ function guiaPintar(){
       <button class="gi-next" onclick="guiaIr(${i + 1})">${ult ? L('¡Listo!', 'Fet!') : L('Siguiente', 'Següent') + ' →'}</button>
     </div>
   </div>`;
+  giTemporizar();
 }
 
 // ----- Contenido de la guía de Logos Intranet -----
