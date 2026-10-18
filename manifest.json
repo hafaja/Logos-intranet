@@ -1,14 +1,16 @@
 {
-  "name": "Logos Intranet",
-  "short_name": "Logos Intranet",
-  "description": "Intranet de personal — Associació Logos, Tarragona",
+  "name": "Logos Acompanya",
+  "short_name": "Logos Acompanya",
+  "description": "Plataforma digital de acompañamiento ciudadano — Associació Logos, Tarragona",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#FAF8F2",
-  "theme_color": "#1E3F66",
+  "background_color": "#F5F3EC",
+  "theme_color": "#16233F",
   "lang": "es",
   "icons": [
-    { "src": "icon-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
