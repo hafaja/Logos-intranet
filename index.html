@@ -1117,7 +1117,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v87'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v91'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -1286,7 +1286,7 @@ function renderLogin(errorMsg){
     <p style="text-align:center;margin-top:14px;">
       <button class="link-btn" onclick="toggleAuthMode()">${AUTH_MODE === 'login' ? '¿Primera vez? Crear cuenta' : '¿Ya tienes cuenta? Entra'}</button>
     </p>
-    ${AUTH_MODE === 'login' ? `<p style="text-align:center;margin-top:2px;"><button class="link-btn" onclick="recuperarClave()">¿Has olvidado la contraseña?</button></p>` : ''}
+    <p style="text-align:center;margin-top:6px;"><button class="link-btn" style="font-weight:700;" onclick="recuperarClave()">🔑 ¿Has olvidado la contraseña?</button></p>
   `;
 }
 
@@ -3587,9 +3587,21 @@ async function guardarAtencion(){
 
 // ================= PANEL GENERAL =================
 
+// Vuelve a pintar una pantalla sin que la página salte al principio: se mantiene la altura y la posición en la que estabas
+async function recargarSinSaltar(contId, fn){
+  const cont = document.getElementById(contId);
+  const y = window.scrollY;
+  if(cont) cont.style.minHeight = cont.offsetHeight + 'px';
+  try { await fn(); }
+  finally {
+    if(cont) cont.style.minHeight = '';
+    window.scrollTo(0, y);
+    requestAnimationFrame(() => window.scrollTo(0, y));
+  }
+}
 async function marcarNotificacionLeida(id){
   await sb.from('notificaciones').update(REPARTO_OK ? { leida: true, atendida_por_email: CURRENT_USER.email } : { leida: true }).eq('id', id);
-  renderPanelGeneral();
+  await recargarSinSaltar('panel-content', renderPanelGeneral);
   actualizarBadgePanel();
 }
 
@@ -3800,8 +3812,8 @@ async function elegirDiaNuevaCita(fechaIso, mantener){
   if(!h){ cont.innerHTML = `<div class="auth-error">${acL('No se ha podido cargar el horario de atención.', 'No s\'ha pogut carregar l\'horari d\'atenció.')}</div>`; return; }
   const d = new Date(fechaIso + 'T00:00:00');
   const iso = d.getDay() === 0 ? 7 : d.getDay();
-  const hd = LOGOS_HORARIO[iso];
-  if(hd && !hd.cita){ cont.innerHTML = `<div class="empty-note">${acL('Los miércoles se atiende de 9 a 13:30 h sin cita previa: no se dan citas ese día. Elige otro día.', 'Els dimecres s\'atén de 9 a 13:30 h sense cita prèvia: no es donen cites aquest dia. Tria un altre dia.')}</div>`; return; }
+  // El personal puede dar cita cualquier día de lunes a viernes (también el miércoles), salvo el viernes por la tarde
+  const hd = (iso >= 1 && iso <= 5) ? { m:['08:00','14:00'], t: iso === 5 ? null : ['16:00','20:00'], cita:true } : null;
   if(!hd){ cont.innerHTML = `<div class="empty-note">${acL('Ese día Logos está cerrado. Elige otro.', 'Aquest dia Logos és tancat. Tria\'n un altre.')}</div><p class="subtle" style="font-size:12px;">${logosHorarioTexto()}</p>`; return; }
 
   const { data: ocup } = await sb.rpc('citas_disponibilidad', { p_fecha: fechaIso });
@@ -3812,7 +3824,7 @@ async function elegirDiaNuevaCita(fechaIso, mantener){
     let c = Number(ini.slice(0, 2)) * 60 + Number(ini.slice(3, 5)); const f = Number(fin.slice(0, 2)) * 60 + Number(fin.slice(3, 5));
     while(c < f){ slots.push(String(Math.floor(c / 60)).padStart(2, '0') + ':' + String(c % 60).padStart(2, '0')); c += h.duracion_cita_minutos; }
   };
-  { const dur = h.duracion_cita_minutos || 30; const bl = (ini, fin) => { let c = logosMin(ini); const f = logosMin(fin); while(c < f){ slots.push(String(Math.floor(c / 60)).padStart(2, '0') + ':' + String(c % 60).padStart(2, '0')); c += dur; } }; logosTramosDia(iso).forEach(t => bl(t[0], t[1])); if(hd.sinCita){ const a = logosMin(hd.sinCita[0]), z = logosMin(hd.sinCita[1]); for(let i = slots.length - 1; i >= 0; i--){ const m = logosMin(slots[i]); if(m >= a && m < z) slots.splice(i, 1); } } }
+  { const dur = h.duracion_cita_minutos || 30; const bl = (ini, fin) => { let c = logosMin(ini); const f = logosMin(fin); while(c < f){ slots.push(String(Math.floor(c / 60)).padStart(2, '0') + ':' + String(c % 60).padStart(2, '0')); c += dur; } }; [hd.m, hd.t].filter(Boolean).forEach(t => bl(t[0], t[1])); if(hd.sinCita){ const a = logosMin(hd.sinCita[0]), z = logosMin(hd.sinCita[1]); for(let i = slots.length - 1; i >= 0; i--){ const m = logosMin(slots[i]); if(m >= a && m < z) slots.splice(i, 1); } } }
   const ahora = new Date(); const esHoy = fechaIso === ahora.toISOString().slice(0, 10);
   const minAhora = ahora.getHours() * 60 + ahora.getMinutes();
   cont.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">` + slots.map(s => {
@@ -3859,7 +3871,7 @@ async function irAAlertas(){
 async function marcarAlertaMiEspacio(id){
   try { await sb.from('notificaciones').update(REPARTO_OK ? { leida: true, atendida_por_email: CURRENT_USER.email } : { leida: true }).eq('id', id); } catch(e){}
   try { actualizarBadgePanel(); } catch(e){}
-  renderMiEspacio();
+  await recargarSinSaltar('miespacio-content', renderMiEspacio);
 }
 async function construirAvisosMiEspacioHtml(misRevisiones){
   const ca = LANG_I === 'ca';
@@ -8190,7 +8202,7 @@ async function reasignarAlerta(id, valor){
     ({ error } = await sb.from('notificaciones').update(cambios).eq('id', id));
   }
   if(error){ alert(error.message); return; }
-  renderPanelGeneral(); actualizarBadgePanel();
+  await recargarSinSaltar('panel-content', renderPanelGeneral); actualizarBadgePanel();
 }
 // «Me encargo yo»: la alerta pasa a mi nombre y el resto del equipo ve que ya la atiende alguien
 async function tomarAlerta(id){
@@ -8199,14 +8211,15 @@ async function tomarAlerta(id){
     ({ error } = await sb.from('notificaciones').update({ asignada_a_email: CURRENT_USER.email, para_todos: false }).eq('id', id));
   }
   if(error){ alert(error.message); return; }
-  renderPanelGeneral(); actualizarBadgePanel();
+  await recargarSinSaltar('panel-content', renderPanelGeneral); actualizarBadgePanel();
 }
-function alternarAlertasTodas(){ window.__alertasTodas = !window.__alertasTodas; renderPanelGeneral(); }
+function alternarAlertasTodas(){ window.__alertasTodas = !window.__alertasTodas; recargarSinSaltar('panel-content', renderPanelGeneral); }
 
 // ---------- Administrador: reparto de alertas ----------
 const ALERTA_TIPOS_TXT = {
   cita_nueva: ['Nueva cita pedida', 'Nova cita demanada'],
   cita_respuesta: ['La persona ha contestado a su cita', 'La persona ha contestat la seva cita'],
+  cita_cancelada: ['La persona ha cancelado su cita', 'La persona ha cancel·lat la seva cita'],
   consulta_orientacion: ['Consulta de orientación', 'Consulta d\'orientació'],
   tramite_nuevo: ['Trámite empezado desde la app', 'Tràmit començat des de l\'app'],
   autorizacion_nueva: ['Autorización firmada (Jóvenes en acción)', 'Autorització signada (Joves en acció)'],
@@ -11891,28 +11904,53 @@ async function verDocumentoStaff(rutaStorage){
   window.open(data.signedUrl, '_blank');
 }
 
-async function subirDocumentoStaff(){
-  const usuarioId = window.__usuarioIdVisto;
-  const input = document.getElementById('staff-doc-input');
-  if(!input.files.length) return;
-  const file = input.files[0];
-  const esCV = document.getElementById('staff-doc-es-cv').checked;
-  const path = `${usuarioId}/${Date.now()}_${rutaSeguraArchivo(file.name)}`;
-  const esCA = LANG_I === 'ca';
-
-  const { error: uploadError } = await sb.storage.from('documentos').upload(path, file);
-  if(uploadError){ alert((esCA?'No s\'ha pogut pujar el fitxer: ':'No se pudo subir el archivo: ') + uploadError.message); return; }
-
-  const { error: errorRegistro } = await sb.from('documentos').insert({
-    usuario_id: usuarioId, nombre_archivo: file.name, ruta_storage: path,
-    tipo_documento: esCV ? 'curriculum' : null
+function procesarImagenComoEscaneoStaff(file){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height;
+      const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0);
+      const datos = ctx.getImageData(0, 0, canvas.width, canvas.height); const d = datos.data;
+      for(let i = 0; i < d.length; i += 4){
+        const gris = d[i]*0.34 + d[i+1]*0.5 + d[i+2]*0.16;
+        d[i] = d[i+1] = d[i+2] = Math.min(255, Math.max(0, (gris - 128) * 1.55 + 128 + 18));
+      }
+      ctx.putImageData(datos, 0, 0);
+      canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.9);
+    };
+    img.onerror = reject; img.src = URL.createObjectURL(file);
   });
-  if(errorRegistro){
-    await sb.storage.from('documentos').remove([path]);   // antes el archivo se quedaba subido sin que se viera en ninguna lista
-    alert((esCA?'No s\'ha pogut desar el document: ':'No se pudo guardar el documento: ') + errorRegistro.message);
-    return;
+}
+// Sube uno o varios documentos a la ficha de la persona, igual que ella lo hace desde su espacio
+async function guardarDocumentosStaff(lista){
+  const usuarioId = window.__usuarioIdVisto;
+  const esCA = LANG_I === 'ca';
+  const tipo = (document.getElementById('staff-doc-tipo') || {}).value || null;
+  const pref = window.__docParaTramite ? `[${window.__docParaTramite}] ` : '';
+  const fallos = [];
+  for(const x of lista){
+    const nombre = pref + x.nombre;
+    const path = `${usuarioId}/${Date.now()}_${rutaSeguraArchivo(x.nombre)}`;
+    const up = await sb.storage.from('documentos').upload(path, x.blob, x.tipoMime ? { contentType: x.tipoMime } : undefined);
+    if(up.error){ fallos.push(`${x.nombre}: ${up.error.message}`); continue; }
+    const ins = await sb.from('documentos').insert({ usuario_id: usuarioId, nombre_archivo: nombre, ruta_storage: path, tipo_documento: tipo });
+    if(ins.error){ await sb.storage.from('documentos').remove([path]); fallos.push(`${x.nombre}: ${ins.error.message}`); }
   }
-  verPersonaStaff(usuarioId, window.__origenPersonaVista);
+  window.__docParaTramite = '';
+  if(fallos.length) alert((esCA?'No s\'han pogut pujar:\n':'No se pudieron subir:\n') + fallos.join('\n'));
+  await verPersonaStaff(usuarioId, window.__origenPersonaVista);
+  mostrarTabPersona('documentos');
+}
+async function subirDocumentoStaff(){
+  const input = document.getElementById('staff-doc-input');
+  if(!input || !input.files.length){ alert(acL('Elige primero uno o varios archivos.', 'Tria primer un o diversos fitxers.')); return; }
+  await guardarDocumentosStaff([...input.files].map(f => ({ nombre: f.name, blob: f })));
+}
+async function subirDocumentoStaffEscaneo(){
+  const input = document.getElementById('staff-doc-cam');
+  if(!input || !input.files.length) return;
+  let blob; try { blob = await procesarImagenComoEscaneoStaff(input.files[0]); } catch(e){ blob = input.files[0]; }
+  await guardarDocumentosStaff([{ nombre: 'escaneo_' + Date.now() + '.jpg', blob, tipoMime: 'image/jpeg' }]);
 }
 
 const PROYECTOS_LOGOS = [
@@ -12153,7 +12191,7 @@ async function verPersonaStaff(usuarioId, origen){
   showScreen('persona');
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
 
-  const [perfilRes, docsRes, tramitesRes, atencionesRes, actuacionesRes, staffListRes, citasRes, mensajesRes, misProyectosRes, todosProyectosRes, emprendimientoRes] = await Promise.all([
+  const [perfilRes, docsRes, tramitesRes, atencionesRes, actuacionesRes, staffListRes, citasRes, mensajesRes, misProyectosRes, todosProyectosRes, emprendimientoRes, consultasRes] = await Promise.all([
     sb.from('perfiles').select('*').eq('id', usuarioId).maybeSingle(),
     sb.from('documentos').select('*').eq('usuario_id', usuarioId).order('subido_en', { ascending:false }),
     sb.from('tramites').select('*').eq('usuario_id', usuarioId).order('creado_en', { ascending:false }),
@@ -12164,7 +12202,8 @@ async function verPersonaStaff(usuarioId, origen){
     sb.from('mensajes_enviados').select('*').eq('usuario_id', usuarioId).order('fecha', { ascending:false }),
     sb.from('proyecto_participantes').select('*, proyectos(id, nombre, estado)').eq('usuario_id', usuarioId).eq('rol', 'beneficiario'),
     sb.from('proyectos').select('id, nombre').order('nombre', { ascending:true }),
-    sb.from('emprendimiento').select('*').eq('usuario_id', usuarioId).maybeSingle()
+    sb.from('emprendimiento').select('*').eq('usuario_id', usuarioId).maybeSingle(),
+    sb.from('consultas_orientacion').select('*').eq('usuario_id', usuarioId).order('creado_en', { ascending:false })
   ]);
 
   (staffListRes.data || []).forEach(s => { if(s.nombre) __mapaNombresTecnicos[s.email] = s.nombre; });
@@ -12179,7 +12218,8 @@ async function verPersonaStaff(usuarioId, origen){
     ? docsRes.data.map(d => `
         <div class="panel-stat-row">
           <span>${d.nombre_archivo}${d.tipo_documento==='curriculum' ? ` <span class="chip gold">${t.cvChip}</span>` : ''}${d.tipo_documento==='consentimiento' ? ` <span class="chip good">${t.consentimientoChip}</span>` : ''}</span>
-          <button class="link-btn" style="font-size:12px;" onclick="verDocumentoStaff('${d.ruta_storage}')">${t.ver}</button>
+          <span style="display:flex;gap:10px;"><button class="link-btn" style="font-size:12px;" onclick="verDocumentoStaff('${d.ruta_storage}')">${t.ver}</button>
+          <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="borrarDocumentoStaff('${d.id}','${d.ruta_storage}')">${acL('Eliminar','Eliminar')}</button></span>
         </div>`).join('')
     : `<div class="empty-note">${t.sinDocumentos}</div>`;
 
@@ -12188,8 +12228,9 @@ async function verPersonaStaff(usuarioId, origen){
         <div class="panel-stat-row" style="align-items:flex-start;">
           <span>${tr.nombre_servicio}<br><span class="subtle" style="font-size:11px;margin:0;">${t.inicioLbl}: ${tr.fecha_inicio ? new Date(tr.fecha_inicio).toLocaleDateString(t.localeFecha) : '—'}${tr.fecha_fin ? ' · ' + t.finLbl + ': ' + new Date(tr.fecha_fin).toLocaleDateString(t.localeFecha) : ''}</span></span>
           <span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-            <span class="chip ${tr.estado==='hecho'?'good':'gold'}">${tr.estado}</span>
-            ${tr.estado !== 'hecho' ? `<button class="link-btn" style="font-size:11px;" onclick="marcarTramiteHecho('${tr.id}')">${t.marcarHecho}</button>` : ''}
+            <span class="chip ${tr.estado==='hecho'?'good':'gold'}">${estadoTramiteTxt(tr.estado)}</span>
+            ${tr.estado !== 'hecho' ? `<button class="link-btn" style="font-size:11px;" onclick="marcarTramiteHecho('${tr.id}')">${t.marcarHecho}</button>` : `<button class="link-btn" style="font-size:11px;" onclick="reabrirTramite('${tr.id}')">${acL('Reabrir','Reobrir')}</button>`}
+            <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="eliminarTramite('${tr.id}')">${acL('Eliminar','Eliminar')}</button>
           </span>
         </div>`).join('')
     : `<div class="empty-note">${t.sinTramitesLbl}</div>`;
@@ -12294,12 +12335,15 @@ async function verPersonaStaff(usuarioId, origen){
   const vistaUnicaHtml = construirVistaUnica(p, { atenciones: atencionesRes.data || [], actuaciones: actuacionesLista, tramites: tramitesRes.data || [], citas: citasRes.data || [], mensajes: mensajesRes.data || [], documentos: docsRes.data || [] }, cardAtencion, { proyectos: (misProyectosRes.data || []).map(pp => pp.proyectos).filter(Boolean), emprendimientoHtml: (typeof emprendimientoHtml === 'string' ? emprendimientoHtml : '') });
   window.__nombrePersonaVista = p.nombre_completo || '';
   window.__atencionEnFicha = false;
+  window.__tramitesFicha = {}; (tramitesRes.data || []).forEach(tr => { window.__tramitesFicha[tr.id] = tr.nombre_servicio || ''; });
+  const necesidadesHtml = construirNecesidadesFicha(tramitesRes.data || [], consultasRes.data || [], p);
   cont.innerHTML = `
     <h2 class="screen-title">${p.nombre_completo || t.sinNombre}</h2>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 12px;">
       <button class="primary-btn" style="width:auto;margin:0;" onclick="abrirAtencionEnFicha()">➕ ${LANG_I==='ca'?'Registrar atenció':'Registrar atención'}</button>
       <button class="primary-btn" style="width:auto;margin:0;background:var(--gold);" onclick="mostrarTabPersona('actuaciones');document.getElementById('act-descripcion').scrollIntoView({behavior:'smooth',block:'center'})">📝 ${LANG_I==='ca'?'Nova actuació':'Nueva actuación'}</button>
     </div>
+    ${necesidadesHtml}
     <div class="panel-card">
       ${campo(t.correoLbl, p.email)} ${campo(t.fechaAltaLbl, p.creado_en ? new Date(p.creado_en).toLocaleDateString(t.localeFecha) : '')}
       <div class="panel-stat-row" style="align-items:center;">
@@ -12505,10 +12549,16 @@ async function verPersonaStaff(usuarioId, origen){
     <div class="ptab-content" id="ptab-documentos">
       <div class="panel-card">
         ${docsHtml}
-        <div class="doc-upload-row" style="margin-top:10px;">
-          <input type="file" id="staff-doc-input">
-          <label class="checkbox-row" style="justify-content:center;"><input type="checkbox" id="staff-doc-es-cv"> ${t.esCurriculumLbl}</label>
-          <button class="link-btn" style="margin-top:8px;" onclick="subirDocumentoStaff()">${t.subirDocumentoBtn}</button>
+        <div class="doc-upload-row" id="staff-doc-zona" style="margin-top:10px;">
+          <div id="staff-doc-tramite" class="subtle" style="display:none;margin:0 0 8px;"></div>
+          <div class="field" style="margin-bottom:8px;"><label>${acL('Tipo de documento', 'Tipus de document')}</label>
+            <select id="staff-doc-tipo"><option value="">${acL('Documento', 'Document')}</option><option value="curriculum">${acL('Currículum', 'Currículum')}</option></select></div>
+          <input type="file" id="staff-doc-input" multiple accept="image/*,application/pdf,.doc,.docx,.odt,.xls,.xlsx">
+          <input type="file" id="staff-doc-cam" accept="image/*" capture="environment" style="display:none;" onchange="subirDocumentoStaffEscaneo()">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+            <button class="primary-btn" style="width:auto;margin:0;" onclick="subirDocumentoStaff()">⬆️ ${t.subirDocumentoBtn}</button>
+            <button class="primary-btn" style="width:auto;margin:0;background:var(--gold);" onclick="document.getElementById('staff-doc-cam').click()">📷 ${acL('Escanear con la cámara', 'Escanejar amb la càmera')}</button>
+          </div>
         </div>
       </div>
     </div>
@@ -12865,6 +12915,92 @@ async function marcarTramiteHecho(tramiteId){
     fecha_fin: new Date().toISOString().slice(0,10)
   }).eq('id', tramiteId);
   if(error){ alert(error.message); return; }
+  verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
+}
+
+function estadoTramiteTxt(e){
+  const m = { derivado_logos: acL('🙋 Pide ayuda a Logos', '🙋 Demana ajuda a Logos'), en_curso: acL('En curso', 'En curs'), hecho: acL('Hecho', 'Fet') };
+  return m[e] || e;
+}
+// Todo lo que la persona necesita, a la vista y con las acciones a un toque
+function construirNecesidadesFicha(tramites, consultas, p){
+  const abiertos = tramites.filter(tr => tr.estado !== 'hecho');
+  const ayuda = abiertos.filter(tr => tr.estado === 'derivado_logos');
+  const enCurso = abiertos.filter(tr => tr.estado !== 'derivado_logos');
+  const pendientes = consultas.filter(c => c.estado !== 'respondida');
+  const fila = (tr, destacar) => `
+    <div style="border:1.5px solid ${destacar ? 'var(--ochre)' : 'var(--line)'};border-radius:12px;padding:10px 12px;margin-bottom:8px;${destacar ? 'background:var(--ochre-soft);' : ''}">
+      <div style="font-weight:700;font-size:14px;">${escAttr(tr.nombre_servicio || '')}</div>
+      <div class="subtle" style="font-size:11.5px;margin:2px 0 8px;">${estadoTramiteTxt(tr.estado)}${tr.fecha_inicio ? ' · ' + new Date(tr.fecha_inicio).toLocaleDateString(TI[LANG_I].localeFecha) : ''}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="link-btn" style="border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:12px;" onclick="subirDocumentoParaTramite('${tr.id}')">⬆️ ${acL('Subir documento', 'Pujar document')}</button>
+        ${tr.estado === 'derivado_logos' ? `<button class="link-btn" style="border:1px solid var(--primary,#1E3A8A);border-radius:999px;padding:4px 11px;font-size:12px;" onclick="empezarAyudaTramite('${tr.id}')">🤝 ${acL('Empiezo a ayudarle', 'Començo a ajudar-la')}</button>` : ''}
+        <button class="link-btn" style="border:1px solid var(--good,#2E7D32);color:var(--good,#2E7D32);border-radius:999px;padding:4px 11px;font-size:12px;" onclick="marcarTramiteHecho('${tr.id}')">✔ ${acL('Hecho', 'Fet')}</button>
+      </div>
+    </div>`;
+  const consultaHtml = c => `
+    <div style="border:1.5px solid var(--ochre);background:var(--ochre-soft);border-radius:12px;padding:10px 12px;margin-bottom:8px;">
+      <div class="subtle" style="font-size:11.5px;margin:0 0 4px;">❓ ${acL('Ha pedido orientación', 'Ha demanat orientació')} · ${c.creado_en ? new Date(c.creado_en).toLocaleDateString(TI[LANG_I].localeFecha) : ''}</div>
+      <div style="font-size:13.5px;margin-bottom:8px;"><em>${escAttr(c.texto_consulta || '')}</em></div>
+      <textarea id="ficha-resp-${c.id}" rows="2" placeholder="${acL('Escribe la respuesta…', 'Escriu la resposta…')}" style="width:100%;border:1.5px solid var(--line);border-radius:8px;padding:8px;font-family:var(--font-body);"></textarea>
+      <button class="primary-btn" style="width:auto;margin:6px 0 0;padding:7px 14px;font-size:13px;" onclick="responderConsultaFicha('${c.id}')">📨 ${acL('Responder', 'Respondre')}</button>
+    </div>`;
+  const total = ayuda.length + enCurso.length + pendientes.length;
+  return `<div class="panel-card" id="bloque-necesidades" style="margin-bottom:12px;border-color:${total ? 'var(--ochre)' : 'var(--line)'};">
+    <h3>🆘 ${acL('Qué necesita esta persona', 'Què necessita aquesta persona')}${total ? ` <span class="chip gold">${total}</span>` : ''}</h3>
+    ${pendientes.map(consultaHtml).join('')}
+    ${ayuda.map(tr => fila(tr, true)).join('')}
+    ${enCurso.map(tr => fila(tr, false)).join('')}
+    ${total ? '' : `<div class="empty-note">${acL('Ahora mismo no tiene trámites ni consultas abiertos.', 'Ara mateix no té tràmits ni consultes oberts.')}</div>`}
+    <div style="display:flex;gap:6px;margin-top:6px;">
+      <input type="text" id="necesidad-rapida" placeholder="${acL('Añadir un trámite o necesidad (ej.: empadronamiento)', 'Afegir un tràmit o necessitat (ex.: empadronament)')}" style="flex:1;border:1.5px solid var(--line);border-radius:8px;padding:8px;font-family:var(--font-body);">
+      <button class="primary-btn" style="width:auto;margin:0;padding:7px 14px;" onclick="anadirNecesidadRapida()">➕</button>
+    </div>
+  </div>`;
+}
+function subirDocumentoParaTramite(id){
+  const nombre = (window.__tramitesFicha || {})[id] || '';
+  window.__docParaTramite = nombre;
+  mostrarTabPersona('documentos');
+  const av = document.getElementById('staff-doc-tramite');
+  if(av){ av.style.display = nombre ? 'block' : 'none'; av.textContent = nombre ? '📎 ' + acL('El documento se guardará para el trámite: ', 'El document es desarà per al tràmit: ') + nombre : ''; }
+  const z = document.getElementById('staff-doc-zona'); if(z) z.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+async function empezarAyudaTramite(id){
+  const { data, error } = await sb.from('tramites').update({ estado:'en_curso' }).eq('id', id).select();
+  if(error || !data || !data.length){ alert(error ? error.message : acL('No se ha podido actualizar el trámite (falta ejecutar el SQL 24).', 'No s\'ha pogut actualitzar el tràmit (cal executar l\'SQL 24).')); return; }
+  verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
+}
+async function responderConsultaFicha(id){
+  const el = document.getElementById('ficha-resp-' + id); const texto = el ? el.value.trim() : '';
+  if(!texto){ alert(acL('Escribe una respuesta antes de enviar.', 'Escriu una resposta abans d\'enviar.')); return; }
+  const { data, error } = await sb.from('consultas_orientacion').update({ respuesta: texto, estado:'respondida', respondido_por_email: CURRENT_USER.email, respondido_en: new Date().toISOString() }).eq('id', id).select();
+  if(error || !data || !data.length){ alert(error ? error.message : acL('No se ha podido enviar la respuesta.', 'No s\'ha pogut enviar la resposta.')); return; }
+  verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
+}
+async function anadirNecesidadRapida(){
+  const el = document.getElementById('necesidad-rapida'); const nombre = el ? el.value.trim() : '';
+  if(!nombre){ alert(acL('Escribe el trámite o la necesidad.', 'Escriu el tràmit o la necessitat.')); return; }
+  const { error } = await sb.from('tramites').insert({ usuario_id: window.__usuarioIdVisto, nombre_servicio: nombre, estado:'en_curso', fecha_inicio: new Date().toISOString().slice(0,10) });
+  if(error){ alert(error.message); return; }
+  verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
+}
+async function reabrirTramite(id){
+  const { data, error } = await sb.from('tramites').update({ estado:'en_curso', fecha_fin:null }).eq('id', id).select();
+  if(error || !data || !data.length){ alert(error ? error.message : acL('No se ha podido reabrir el trámite.', 'No s\'ha pogut reobrir el tràmit.')); return; }
+  verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
+}
+async function eliminarTramite(id){
+  if(!confirm(acL('¿Eliminar este trámite? No se puede deshacer.', 'Eliminar aquest tràmit? No es pot desfer.'))) return;
+  const { data, error } = await sb.from('tramites').delete().eq('id', id).select();
+  if(error || !data || !data.length){ alert(error ? error.message : acL('No se ha podido eliminar el trámite (falta ejecutar el SQL 24).', 'No s\'ha pogut eliminar el tràmit (cal executar l\'SQL 24).')); return; }
+  verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
+}
+async function borrarDocumentoStaff(id, ruta){
+  if(!confirm(acL('¿Eliminar este documento de la persona? No se puede deshacer.', 'Eliminar aquest document de la persona? No es pot desfer.'))) return;
+  const { data, error } = await sb.from('documentos').delete().eq('id', id).select();
+  if(error || !data || !data.length){ alert(error ? error.message : acL('No se ha podido eliminar el documento (falta ejecutar el SQL 24).', 'No s\'ha pogut eliminar el document (cal executar l\'SQL 24).')); return; }
+  try { await sb.storage.from('documentos').remove([ruta]); } catch(e){}
   verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
 }
 
