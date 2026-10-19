@@ -554,6 +554,7 @@
         <button data-target="jovenes" onclick="showScreen('jovenes');renderJovenesScreen()">🌱 Jóvenes en acción</button>
         <button data-target="aulavirtual" onclick="showScreen('aulavirtual');renderAulaVirtualScreen()">🎥 Aula Virtual · Hub Logos</button>
         <button data-target="formaciones" onclick="showScreen('formaciones');renderFormacionesScreen()">🎓 Formaciones</button>
+        <button data-target="subvenciones" onclick="showScreen('subvenciones');renderSubvencionesScreen()">💶 Subvenciones</button>
         <button data-target="proyectos" onclick="showScreen('proyectos');renderProyectosScreen()">📁 Proyectos</button>
         <button data-target="ideasproyecto" onclick="showScreen('ideasproyecto');renderEmprendimientoListaStaff()">🚀 Emprendimiento</button>
         <button data-target="mipropioproyecto" onclick="showScreen('mipropioproyecto');renderMiPropioProyectoEntrada()">🏛️ Crea un proyecto de Logos</button>
@@ -697,6 +698,13 @@
     <div class="main-content">
       <div class="topbar"><span class="brand">🌱 Jóvenes en acción</span></div>
       <div class="content" id="jovenes-content"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-subvenciones">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Subvenciones</span></div>
+      <div class="content" id="subvenciones-content"></div>
     </div>
   </div>
 
@@ -1015,10 +1023,10 @@ function aplicarTraduccionesSidebar(){
 // Jóvenes en acción (y su pestaña de Familias) queda oculto del menú para el equipo general. Para volver a mostrarlo: MOSTRAR_JOVENES = true.
 const MOSTRAR_JOVENES = false;
 const PANTALLAS_JOVENES = ['login', 'panel', 'miespacio', 'gestionpersonal', 'jovenes', 'config'];
-const PANTALLAS_RRHH_SOLO = ['login', 'miespacio', 'gestionpersonal', 'config'];
+const PANTALLAS_RRHH_SOLO = ['login', 'miespacio', 'gestionpersonal', 'subvenciones', 'config'];
 function aplicarMenuPorRol(){
   document.querySelectorAll('.sidebar nav button[data-target]').forEach(b => {
-    b.classList.toggle('rol-oculto', (IS_JOVENES && !PANTALLAS_JOVENES.includes(b.dataset.target)) || (IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(b.dataset.target)) || (!MOSTRAR_JOVENES && !IS_JOVENES && b.dataset.target === 'jovenes'));
+    b.classList.toggle('rol-oculto', (IS_JOVENES && !PANTALLAS_JOVENES.includes(b.dataset.target)) || (IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(b.dataset.target)) || (!MOSTRAR_JOVENES && !IS_JOVENES && b.dataset.target === 'jovenes') || (b.dataset.target === 'subvenciones' && !(IS_ADMIN || IS_RRHH)));
   });
   document.querySelectorAll('.sidebar nav .nav-grupo').forEach(g => {
     g.classList.toggle('rol-oculto', (IS_JOVENES || IS_RRHH_SOLO) && !g.querySelector('button[data-target]:not(.rol-oculto)'));
@@ -1127,7 +1135,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v98'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v99'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -5455,6 +5463,130 @@ async function renderFormacionesScreen(){
       <button class="primary-btn" style="width:auto;margin:0;background:var(--gold);" onclick="formacionAnadirVarias()">${acL('Añadir todas', 'Afegir-les totes')}</button>
     </div>` : ''}`;
 }
+// ---------- Subvenciones: seguimiento y avisos de plazos (solo David y Recursos Humanos) ----------
+const SUBV_ESTADOS = { seguimiento: ['En seguimiento', 'En seguiment'], abierta: ['Abierta', 'Oberta'], presentada: ['Presentada', 'Presentada'], concedida: ['Concedida', 'Concedida'], denegada: ['Denegada', 'Denegada'], cerrada: ['Cerrada', 'Tancada'] };
+function subvDias(iso){ if(!iso) return null; const h = new Date(); h.setHours(0,0,0,0); return Math.round((new Date(iso + 'T00:00:00') - h) / 86400000); }
+function subvFecha(iso){ return iso ? new Date(iso + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha) : '—'; }
+// Calcula qué hay que avisar: plazos que se acercan y páginas que llevan tiempo sin revisarse
+function subvCalcularAvisos(filas){
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const plazos = [], revisar = [];
+  (filas || []).filter(f => f.activo !== false).forEach(f => {
+    if(f.tipo === 'convocatoria'){
+      if(!['seguimiento', 'abierta'].includes(f.estado)) return;
+      const d = subvDias(f.fecha_limite);
+      if(d !== null && d <= 30) plazos.push({ f, d });
+    } else {
+      const ult = f.ultima_revision ? new Date(f.ultima_revision + 'T00:00:00') : null;
+      const dias = ult ? Math.round((hoy - ult) / 86400000) : 9999;
+      if(dias >= (f.revisar_cada_dias || 15)) revisar.push({ f, dias });
+    }
+  });
+  plazos.sort((a, b) => a.d - b.d);
+  return { plazos, revisar };
+}
+function subvAvisosHtml(av){
+  const p = av.plazos.map(o => `<div class="panel-stat-row"><span><strong>${escAttr(o.f.titulo)}</strong><br><span class="subtle" style="font-size:11.5px;margin:0;">${escAttr(o.f.organismo || '')}</span></span><span class="chip ${o.d < 0 ? '' : (o.d <= 7 ? 'off' : 'gold')}" style="font-size:11px;">${o.d < 0 ? acL('Plazo vencido', 'Termini vençut') : (o.d === 0 ? acL('Termina hoy', 'Acaba avui') : acL(`Quedan ${o.d} días`, `Queden ${o.d} dies`))}</span></div>`).join('');
+  const r = av.revisar.length ? `<div class="subtle" style="font-size:12.5px;margin:8px 0 0;">🔎 ${acL('Toca revisar:', 'Toca revisar:')} ${av.revisar.map(o => escAttr(o.f.organismo ? o.f.organismo.split(' (')[0] + ' · ' + o.f.titulo : o.f.titulo)).join(' · ')}</div>` : '';
+  return (p || '') + r || `<div class="empty-note" style="margin:0;">✅ ${acL('No hay plazos próximos ni páginas por revisar.', 'No hi ha terminis propers ni pàgines per revisar.')}</div>`;
+}
+async function subvencionesResumenHtml(){
+  if(!(IS_ADMIN || IS_RRHH)) return { html: '', n: 0 };
+  const { data, error } = await sb.from('subvenciones').select('*');
+  if(error) return { html: '', n: 0 };
+  const av = subvCalcularAvisos(data);
+  return { html: subvAvisosHtml(av), n: av.plazos.length + av.revisar.length };
+}
+async function renderSubvencionesScreen(){
+  const cont = document.getElementById('subvenciones-content'); if(!cont) return;
+  if(!(IS_ADMIN || IS_RRHH)){ cont.innerHTML = `<div class="empty-note">${acL('Esta pantalla es solo para la dirección y Recursos Humanos.', 'Aquesta pantalla és només per a la direcció i Recursos Humans.')}</div>`; return; }
+  cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const { data, error } = await sb.from('subvenciones').select('*').order('fecha_limite', { ascending: true, nullsFirst: false }).order('creado_en', { ascending: true });
+  if(error){
+    cont.innerHTML = `<div class="auth-error">${/subvenciones|schema cache|does not exist/i.test(error.message || '') ? acL('Falta ejecutar el SQL 27 en Supabase para activar las subvenciones.', 'Cal executar l\'SQL 27 a Supabase per activar les subvencions.') : escAttr(error.message)}</div>`;
+    return;
+  }
+  const filas = data || [];
+  const conv = filas.filter(f => f.tipo === 'convocatoria'), fuentes = filas.filter(f => f.tipo === 'fuente');
+  const av = subvCalcularAvisos(filas);
+  const estadoOpts = sel => Object.entries(SUBV_ESTADOS).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${acL(v[0], v[1])}</option>`).join('');
+  const tarjetaConv = f => { const d = subvDias(f.fecha_limite); return `<div class="panel-card" style="margin:0 0 8px;${f.activo === false ? 'opacity:.55;' : ''}">
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:flex-start;">
+        <div style="min-width:0;"><strong>${escAttr(f.titulo)}</strong>${f.organismo ? `<div class="subtle" style="font-size:12.5px;margin:2px 0 0;">${escAttr(f.organismo)}${f.importe ? ' · ' + escAttr(f.importe) : ''}</div>` : ''}
+          <div class="subtle" style="font-size:12.5px;margin:2px 0 0;">${acL('Plazo:', 'Termini:')} <strong>${subvFecha(f.fecha_limite)}</strong>${d !== null && ['seguimiento','abierta'].includes(f.estado) ? ` <span class="chip ${d < 0 ? '' : (d <= 7 ? 'off' : 'gold')}" style="font-size:11px;">${d < 0 ? acL('vencido', 'vençut') : acL(d + ' días', d + ' dies')}</span>` : ''}</div>
+          ${f.notas ? `<div class="subtle" style="font-size:12.5px;margin:3px 0 0;">${escAttr(f.notas)}</div>` : ''}</div>
+        <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <select onchange="subvEstado('${f.id}', this.value)" style="width:auto;padding:5px 8px;font-size:12.5px;">${estadoOpts(f.estado)}</select>
+          ${f.url ? `<a class="primary-btn" style="width:auto;margin:0;padding:6px 12px;text-decoration:none;font-size:12.5px;" href="${escAttr(f.url)}" target="_blank" rel="noopener noreferrer">${acL('Abrir', 'Obrir')} ↗</a>` : ''}
+          <button class="link-btn" style="font-size:11.5px;" onclick="subvEditarPlazo('${f.id}')">${acL('Cambiar plazo', 'Canviar termini')}</button>
+          <button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="subvBorrar('${f.id}')">${acL('Borrar', 'Esborrar')}</button></span></div></div>`; };
+  const tarjetaFuente = f => { const ult = f.ultima_revision; const dias = ult ? Math.round((new Date() - new Date(ult + 'T00:00:00')) / 86400000) : null; const toca = dias === null || dias >= (f.revisar_cada_dias || 15); return `<div class="panel-card" style="margin:0 0 8px;${f.activo === false ? 'opacity:.55;' : ''}">
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:flex-start;">
+        <div style="min-width:0;"><strong>${escAttr(f.titulo)}</strong><div class="subtle" style="font-size:12.5px;margin:2px 0 0;">${escAttr(f.organismo || '')}</div>
+          <div class="subtle" style="font-size:12px;margin:2px 0 0;">${ult ? acL('Última revisión:', 'Última revisió:') + ' ' + subvFecha(ult) : acL('Todavía sin revisar', 'Encara sense revisar')} <span class="chip ${toca ? 'gold' : ''}" style="font-size:11px;">${toca ? acL('toca revisar', 'toca revisar') : acL('al día', 'al dia')}</span></div></div>
+        <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          ${f.url ? `<a class="primary-btn" style="width:auto;margin:0;padding:6px 12px;text-decoration:none;font-size:12.5px;" href="${escAttr(f.url)}" target="_blank" rel="noopener noreferrer">${acL('Abrir', 'Obrir')} ↗</a>` : ''}
+          <button class="link-btn" style="font-size:12px;" onclick="subvRevisada('${f.id}')">✔ ${acL('Revisada hoy', 'Revisada avui')}</button>
+          <button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="subvBorrar('${f.id}')">${acL('Borrar', 'Esborrar')}</button></span></div></div>`; };
+  cont.innerHTML = `
+    <h2 class="screen-title">💶 ${acL('Subvenciones', 'Subvencions')}</h2>
+    <p class="subtle" style="margin:0 0 14px;">${acL('Para la dirección y Recursos Humanos. Aquí se apuntan las convocatorias y se avisa cuando se acerca un plazo o hace tiempo que no se mira una página. Los avisos también salen en el Inicio.', 'Per a la direcció i Recursos Humans. Aquí s\'apunten les convocatòries i s\'avisa quan s\'acosta un termini o fa temps que no es mira una pàgina. Els avisos també surten a l\'Inici.')}</p>
+    <div class="panel-card" style="border-color:var(--ochre);margin-bottom:14px;"><h3 style="margin-top:0;">🔔 ${acL('Avisos', 'Avisos')}</h3>${subvAvisosHtml(av)}</div>
+    <h3>${acL('Convocatorias', 'Convocatòries')} <span class="chip">${conv.length}</span></h3>
+    ${conv.length ? conv.map(tarjetaConv).join('') : `<div class="empty-note">${acL('Todavía no hay convocatorias apuntadas.', 'Encara no hi ha convocatòries apuntades.')}</div>`}
+    <div class="panel-card" style="margin:10px 0 18px;background:var(--ochre-soft);border-color:var(--ochre);">
+      <h3 style="margin-top:0;color:#7A4A1F;">➕ ${acL('Apuntar una convocatoria', 'Apuntar una convocatòria')}</h3>
+      <input type="text" id="sv-titulo" placeholder="${acL('Nombre de la convocatoria', 'Nom de la convocatòria')}" style="margin-bottom:6px;">
+      <input type="text" id="sv-org" placeholder="${acL('Organismo (Generalitat, Diputació, SOC…)', 'Organisme (Generalitat, Diputació, SOC…)')}" style="margin-bottom:6px;">
+      <input type="url" id="sv-url" placeholder="https://… (${acL('enlace, opcional', 'enllaç, opcional')})" style="margin-bottom:6px;">
+      <label class="subtle" style="font-size:12px;">${acL('Fecha límite para presentarla', 'Data límit per presentar-la')}</label>
+      <input type="date" id="sv-limite" style="margin-bottom:6px;">
+      <input type="text" id="sv-importe" placeholder="${acL('Importe (opcional)', 'Import (opcional)')}" style="margin-bottom:6px;">
+      <input type="text" id="sv-notas" placeholder="${acL('Notas (opcional)', 'Notes (opcional)')}" style="margin-bottom:8px;">
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="subvAnadir()">${acL('Añadir', 'Afegir')}</button></div>
+    <h3>${acL('Páginas que vigilamos', 'Pàgines que vigilem')} <span class="chip">${fuentes.length}</span></h3>
+    <p class="subtle" style="margin:0 0 10px;font-size:12.5px;">${acL('Cada una se marca como "revisada" cuando alguien la mira. Si pasan 15 días, sale un aviso.', 'Cadascuna es marca com a "revisada" quan algú la mira. Si passen 15 dies, surt un avís.')}</p>
+    ${fuentes.map(tarjetaFuente).join('')}
+    <div class="panel-card" style="margin-top:10px;"><div class="field"><label>${acL('Añadir una página para vigilar', 'Afegir una pàgina per vigilar')}</label>
+      <input type="text" id="sv-f-titulo" placeholder="${acL('Título', 'Títol')}" style="margin-bottom:6px;"><input type="text" id="sv-f-org" placeholder="${acL('Organismo', 'Organisme')}" style="margin-bottom:6px;"><input type="url" id="sv-f-url" placeholder="https://…"></div>
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="subvAnadirFuente()">${acL('Añadir página', 'Afegir pàgina')}</button></div>`;
+}
+async function subvInsertar(fila){
+  const { error } = await sb.from('subvenciones').insert(Object.assign({ creado_por_email: CURRENT_USER.email }, fila));
+  if(error){ alert(error.message); return false; } return true;
+}
+async function subvAnadir(){
+  const v = id => ((document.getElementById(id) || {}).value || '').trim();
+  const titulo = v('sv-titulo'); if(!titulo){ alert(acL('Escribe el nombre de la convocatoria.', 'Escriu el nom de la convocatòria.')); return; }
+  const url = v('sv-url'); if(url && !formacionUrlValida(url)){ alert(acL('El enlace debe empezar por https://', 'L\'enllaç ha de començar per https://')); return; }
+  if(await subvInsertar({ tipo: 'convocatoria', titulo, organismo: v('sv-org') || null, url: url || null, fecha_limite: v('sv-limite') || null, importe: v('sv-importe') || null, notas: v('sv-notas') || null, estado: 'seguimiento' })) renderSubvencionesScreen();
+}
+async function subvAnadirFuente(){
+  const v = id => ((document.getElementById(id) || {}).value || '').trim();
+  const url = v('sv-f-url'); if(!formacionUrlValida(url)){ alert(acL('Escribe un enlace válido que empiece por https://', 'Escriu un enllaç vàlid que comenci per https://')); return; }
+  if(await subvInsertar({ tipo: 'fuente', titulo: v('sv-f-titulo') || url, organismo: v('sv-f-org') || null, url })) renderSubvencionesScreen();
+}
+async function subvActualizar(id, cambios){
+  const { data, error } = await sb.from('subvenciones').update(cambios).eq('id', id).select();
+  if(error){ alert(error.message); return false; }
+  if(!data || !data.length){ alert(acL('No se pudo guardar el cambio (permisos).', 'No s\'ha pogut desar el canvi (permisos).')); return false; }
+  return true;
+}
+async function subvEstado(id, estado){ if(await subvActualizar(id, { estado })) renderSubvencionesScreen(); }
+async function subvRevisada(id){ if(await subvActualizar(id, { ultima_revision: new Date().toISOString().slice(0, 10) })) renderSubvencionesScreen(); }
+async function subvEditarPlazo(id){
+  const nuevo = prompt(acL('Nueva fecha límite (AAAA-MM-DD). Déjalo vacío para quitarla:', 'Nova data límit (AAAA-MM-DD). Deixa-ho buit per treure-la:'));
+  if(nuevo === null) return;
+  const f = nuevo.trim();
+  if(f && !/^\d{4}-\d{2}-\d{2}$/.test(f)){ alert(acL('Formato: AAAA-MM-DD, por ejemplo 2026-12-15.', 'Format: AAAA-MM-DD, per exemple 2026-12-15.')); return; }
+  if(await subvActualizar(id, { fecha_limite: f || null })) renderSubvencionesScreen();
+}
+async function subvBorrar(id){
+  if(!confirm(acL('¿Borrar esta entrada?', 'Esborrar aquesta entrada?'))) return;
+  const { error } = await sb.from('subvenciones').delete().eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderSubvencionesScreen();
+}
 function formacionUrlValida(u){ try { const x = new URL(u); return x.protocol === 'https:' || x.protocol === 'http:'; } catch(e){ return false; } }
 async function formacionInsertar(filas){
   const { error } = await sb.from('formaciones_enlaces').insert(filas.map(f => Object.assign({ creado_por_email: CURRENT_USER.email }, f)));
@@ -8727,6 +8859,7 @@ async function gpRrhhResumen(c){
   window.__gpPend = pendCom;
   const limite = new Date(hoy.getTime() + 7 * 86400000).toISOString().slice(0, 10), hoyIso = hoy.toISOString().slice(0, 10);
   const proximos = (avi.data || []).filter(a => a.fecha_limite <= limite);
+  const subvR = await subvencionesResumenHtml();
   const bloque = (titulo, cuerpo, ok) => `<div class="panel-card" style="margin-bottom:12px;${ok ? '' : 'border-color:var(--ochre);'}"><h3 style="margin-top:0;">${titulo}</h3>${cuerpo}</div>`;
   c.innerHTML = `<p class="subtle" style="margin:0 0 12px;">${acL('Esto se calcula solo cada vez que abres este panel: no tienes que acordarte de nada.', 'Això es calcula sol cada cop que obres aquest panell: no t\'has de recordar de res.')}</p>
     ${bloque(`🧾 ${acL('Nóminas de', 'Nòmines de')} ${escAttr(gpMes(mes))} ${anio}`, sinNomina.length
@@ -8735,6 +8868,7 @@ async function gpRrhhResumen(c){
     ${bloque(`📣 ${acL('Comunicados sin confirmar', 'Comunicats sense confirmar')}`, pendCom.length
       ? pendCom.map((o, i) => `<div class="panel-stat-row" style="align-items:flex-start;gap:8px;flex-wrap:wrap;"><span><strong>${escAttr(o.x.titulo)}</strong><br><span class="subtle" style="font-size:11.5px;margin:0;">${acL('Sin confirmar:', 'Sense confirmar:')} ${o.faltan.map(p => escAttr(p.nombre)).join(', ')}</span></span><button class="link-btn" onclick="gpRecordarComunicado(${i})">🔔 ${acL('Recordar a quien falta', 'Recordar a qui falta')}</button></div>`).join('')
       : `<div class="empty-note" style="margin:0;">✅ ${acL('Nadie tiene confirmaciones pendientes.', 'Ningú té confirmacions pendents.')}</div>`, !pendCom.length)}
+    ${subvR.html ? bloque(`💶 ${acL('Subvenciones: plazos y páginas por revisar', 'Subvencions: terminis i pàgines per revisar')}`, subvR.html + `<div style="margin-top:8px;"><span class="link-btn" onclick="showScreen('subvenciones');renderSubvencionesScreen()">${acL('Abrir subvenciones →', 'Obrir subvencions →')}</span></div>`, !subvR.n) : ''}
     ${bloque(`📢 ${acL('Avisos que caducan pronto', 'Avisos que caduquen aviat')}`, proximos.length
       ? proximos.map(a => `<div class="panel-stat-row"><span><strong>${escAttr(a.titulo)}</strong></span><span class="chip ${a.fecha_limite < hoyIso ? '' : 'gold'}" style="font-size:11px;">${a.fecha_limite < hoyIso ? acL('Caducado', 'Caducat') : acL('Hasta', 'Fins')} ${gpFecha(a.fecha_limite)}</span></div>`).join('')
       : `<div class="empty-note" style="margin:0;">${acL('No hay avisos que caduquen esta semana.', 'No hi ha avisos que caduquin aquesta setmana.')}</div>`, !proximos.length)}`;
@@ -11950,6 +12084,7 @@ async function renderPanelGeneral(){
   const nombreTopbar = CURRENT_USER_NOMBRE || (CURRENT_USER && CURRENT_USER.email) || '';
   const inicialesTopbar = nombreTopbar.trim().split(/\s+/).map(p=>p[0]).filter(Boolean).slice(0,2).join('').toUpperCase() || '?';
   const notifsCount = (notifs.data || []).length;
+  const subvResumen = await subvencionesResumenHtml();
   const plg = (clave, cuenta, titulo, cuerpo, extra = {}) => `
     <details class="plegable${extra.gold ? ' gold' : ''}" id="plg-${clave}" ${plegableAbierto('inicio-' + clave, extra.abierto) ? 'open' : ''} ontoggle="plegableGuardar('inicio-${clave}', this.open)">
       <summary><span>${titulo}</span>${cuenta === null ? '' : `<span class="plegable-n">${cuenta}</span>`}</summary>
@@ -12115,6 +12250,7 @@ async function renderPanelGeneral(){
     <div class="cards-grid" style="margin-bottom:24px;">
       ${plg('documentos', (docsRecientesRes.data || []).length, LANG_I==='ca' ? 'Documents recents' : 'Documentos recientes', docsRecientesHtml)}
       ${plg('noticias', (avisosRes.data || []).length, LANG_I==='ca'?'Notícies i recordatoris':'Noticias y recordatorios', avisosHtml, { gold:true })}
+      ${subvResumen.html ? plg('subvenciones', subvResumen.n, LANG_I==='ca'?'Subvencions · avisos':'Subvenciones · avisos', subvResumen.html + `<div style="margin-top:8px;"><span class="link-btn" onclick="showScreen('subvenciones');renderSubvencionesScreen()">${LANG_I==='ca'?'Obrir subvencions →':'Abrir subvenciones →'}</span></div>`, { gold:true, abierto: subvResumen.n > 0 }) : ''}
     </div>
 
     <div class="section-label">${LANG_I==='ca' ? 'Estadístiques' : 'Estadísticas'}</div>
