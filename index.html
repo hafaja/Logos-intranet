@@ -793,6 +793,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let CURRENT_USER = null;
 let IS_STAFF = false;
 let IS_ADMIN = false;
+let IS_RRHH_SOLO = false;    // persona de Recursos Humanos sin acceso a las fichas de personas atendidas
 let IS_JOVENES = false;      // persona del equipo de Jóvenes en acción: solo ve su propio espacio
 let IS_GESTOR = false;       // persona a la que la administración ha delegado el reparto de alertas
 let HIST_V2 = false;          // true cuando existe cp/datos en personas_historicas (SQL 14)
@@ -1006,12 +1007,13 @@ function aplicarTraduccionesSidebar(){
 // Jóvenes en acción (y su pestaña de Familias) queda oculto del menú para el equipo general. Para volver a mostrarlo: MOSTRAR_JOVENES = true.
 const MOSTRAR_JOVENES = false;
 const PANTALLAS_JOVENES = ['login', 'panel', 'miespacio', 'gestionpersonal', 'jovenes', 'config'];
+const PANTALLAS_RRHH_SOLO = ['login', 'miespacio', 'gestionpersonal', 'config'];
 function aplicarMenuPorRol(){
   document.querySelectorAll('.sidebar nav button[data-target]').forEach(b => {
-    b.classList.toggle('rol-oculto', (IS_JOVENES && !PANTALLAS_JOVENES.includes(b.dataset.target)) || (!MOSTRAR_JOVENES && !IS_JOVENES && b.dataset.target === 'jovenes'));
+    b.classList.toggle('rol-oculto', (IS_JOVENES && !PANTALLAS_JOVENES.includes(b.dataset.target)) || (IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(b.dataset.target)) || (!MOSTRAR_JOVENES && !IS_JOVENES && b.dataset.target === 'jovenes'));
   });
   document.querySelectorAll('.sidebar nav .nav-grupo').forEach(g => {
-    g.classList.toggle('rol-oculto', IS_JOVENES && !g.querySelector('button[data-target]:not(.rol-oculto)'));
+    g.classList.toggle('rol-oculto', (IS_JOVENES || IS_RRHH_SOLO) && !g.querySelector('button[data-target]:not(.rol-oculto)'));
   });
 }
 // Las funciones del servidor comprueban quién llama a partir de la sesión: se envía el token de la persona.
@@ -1117,7 +1119,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v91'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v95'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -1153,6 +1155,7 @@ function irAPantallaInicial(){
       if(b && !b.classList.contains('rol-oculto')){ b.click(); return; }
     } catch(e){}
   }
+  if(IS_RRHH_SOLO){ showScreen('gestionpersonal'); renderGestionPersonal('rrhh'); return; }   // Recursos Humanos entra directamente en su panel
   if(!IS_ADMIN && !IS_JOVENES){ showScreen('miespacio'); renderMiEspacio(); return; }   // el personal técnico entra directamente en su página de trabajo
   showScreen('panel');
   renderPanelGeneral();
@@ -1160,6 +1163,7 @@ function irAPantallaInicial(){
 
 function showScreen(name){
   if(IS_JOVENES && !PANTALLAS_JOVENES.includes(name)) name = 'panel';
+  if(IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(name)) name = 'gestionpersonal';
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.querySelectorAll('.sidebar nav button').forEach(b=>b.classList.remove('active'));
@@ -1201,14 +1205,15 @@ function activarBarras(){
 let CURRENT_USER_NOMBRE = null;
 
 async function checkStaff(){
-  if(!CURRENT_USER){ IS_STAFF = false; IS_ADMIN = false; IS_JOVENES = false; IS_RRHH = false; IS_GESTOR = false; GP_OK = false; CURRENT_USER_NOMBRE = null; aplicarMenuPorRol(); return; }
+  if(!CURRENT_USER){ IS_STAFF = false; IS_ADMIN = false; IS_JOVENES = false; IS_RRHH_SOLO = false; IS_RRHH = false; IS_GESTOR = false; GP_OK = false; CURRENT_USER_NOMBRE = null; aplicarMenuPorRol(); return; }
   let { data, error: errStaff } = await sb.from('staff').select('*').eq('email', CURRENT_USER.email).maybeSingle();
   if(errStaff){ const r2 = await sb.from('staff').select('email, es_admin, activo, nombre').eq('email', CURRENT_USER.email).maybeSingle(); data = r2.data; }
   IS_STAFF = !!(data && data.activo !== false);
   IS_ADMIN = !!(data && data.es_admin && data.activo !== false);
   IS_JOVENES = !!(IS_STAFF && !IS_ADMIN && data && data.ambito === 'jovenes');
   IS_RRHH = !!(IS_STAFF && data && data.es_rrhh);
-  IS_GESTOR = !!(IS_STAFF && !IS_JOVENES && data && data.gestiona_alertas);
+  IS_RRHH_SOLO = !!(IS_STAFF && !IS_ADMIN && data && data.ambito === 'rrhh');
+  IS_GESTOR = !!(IS_STAFF && !IS_JOVENES && !IS_RRHH_SOLO && data && data.gestiona_alertas);
   CURRENT_USER_NOMBRE = (data && data.nombre) || null;
   document.getElementById('nav-admin-btn').style.display = IS_ADMIN ? '' : 'none';
   document.getElementById('nav-conta-btn').style.display = IS_ADMIN ? '' : 'none';
@@ -1332,7 +1337,7 @@ async function cerrarSesion(){
   window.__claveAvisada = false;
   recuerdoBorrar(); window.__recuerdoInicial = null;
   await sb.auth.signOut();
-  IS_STAFF = false; IS_ADMIN = false; IS_JOVENES = false; IS_RRHH = false; IS_GESTOR = false; GP_OK = false; aplicarMenuPorRol();
+  IS_STAFF = false; IS_ADMIN = false; IS_JOVENES = false; IS_RRHH_SOLO = false; IS_RRHH = false; IS_GESTOR = false; GP_OK = false; aplicarMenuPorRol();
   toggleSidebarVisible(false);
   detenerRefrescoBadge();
   showScreen('login');
@@ -8293,7 +8298,7 @@ async function repartoModo(tipo, modo){
 let IS_RRHH = false;      // permiso "RR. HH." (nóminas y expedientes laborales)
 let GP_OK = false;        // true cuando la base de datos ya tiene el SQL de gestión personal
 window.__gpTab = 'inicio';
-window.__gpSub = 'nominas';
+window.__gpSub = 'resumen';
 window.__gpDatos = {};
 
 const GP_MESES = {
@@ -8558,11 +8563,14 @@ async function gpConfirmarLectura(i){
 
 // ---------- RR. HH. y comunicados ----------
 async function gpRenderRrhh(cuerpo){
-  const subs = IS_RRHH ? [['nominas', acL('Cargar nóminas', 'Carregar nòmines')], ['personas', acL('Por persona', 'Per persona')], ['comunicados', acL('Comunicados', 'Comunicats')], ['registro', acL('Registro', 'Registre')]] : [['comunicados', acL('Comunicados', 'Comunicats')]];
+  const subs = IS_RRHH ? [['resumen', '🔔 ' + acL('Pendientes', 'Pendents')], ['nominas', acL('Cargar nóminas', 'Carregar nòmines')], ['personas', acL('Por persona', 'Per persona')], ['comunicados', acL('Comunicados', 'Comunicats')], ['avisos', acL('Noticias y recordatorios', 'Notícies i recordatoris')], ['docgen', acL('Documentos generales', 'Documents generals')], ['registro', acL('Registro', 'Registre')]] : [['comunicados', acL('Comunicados', 'Comunicats')]];
   if(!subs.some(s => s[0] === window.__gpSub)) window.__gpSub = subs[0][0];
   cuerpo.innerHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">${subs.map(([k, t]) => `<button class="link-btn" style="font-size:12.5px;border:1px solid ${window.__gpSub === k ? 'var(--gold)' : 'var(--line)'};background:${window.__gpSub === k ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:3px 12px;" onclick="window.__gpSub='${k}';renderGestionPersonal('rrhh')">${t}</button>`).join('')}</div><div id="gp-rrhh-cuerpo"></div>`;
   const c = document.getElementById('gp-rrhh-cuerpo');
-  if(window.__gpSub === 'nominas') await gpRrhhNominas(c);
+  if(window.__gpSub === 'resumen') await gpRrhhResumen(c);
+  else if(window.__gpSub === 'avisos') await gpRrhhAvisos(c);
+  else if(window.__gpSub === 'docgen') await gpRrhhDocGen(c);
+  else if(window.__gpSub === 'nominas') await gpRrhhNominas(c);
   else if(window.__gpSub === 'personas') await gpRrhhPersonas(c);
   else if(window.__gpSub === 'registro') await gpRrhhRegistro(c);
   else await gpRrhhComunicados(c);
@@ -8586,6 +8594,101 @@ function gpAdivinar(nombreArchivo, personas){
   });
   return (mejor && !empate) ? mejor.email : '';
 }
+// ---------- Pendientes automáticos: se calculan solos cada vez que se abre el panel ----------
+async function gpRrhhResumen(c){
+  const personas = await gpPersonasActivas();
+  const hoy = new Date();
+  const mes = hoy.getMonth() === 0 ? 12 : hoy.getMonth(), anio = hoy.getMonth() === 0 ? hoy.getFullYear() - 1 : hoy.getFullYear();
+  const [nom, com, lec, avi] = await Promise.all([
+    sb.from('personal_nominas').select('persona_email').eq('anio', anio).eq('mes', mes),
+    sb.from('personal_comunicados').select('*').eq('requiere_lectura', true).order('creado_en', { ascending: false }).limit(20),
+    sb.from('personal_comunicados_lecturas').select('comunicado_id, persona_email'),
+    sb.from('avisos_intranet').select('*').eq('activo', true).not('fecha_limite', 'is', null).order('fecha_limite', { ascending: true })
+  ]);
+  const con = new Set((nom.data || []).map(x => String(x.persona_email).toLowerCase()));
+  const sinNomina = personas.filter(p => !con.has(p.email));
+  window.__gpSinNomina = sinNomina;
+  const lecturas = {}; (lec.data || []).forEach(l => { (lecturas[l.comunicado_id] = lecturas[l.comunicado_id] || new Set()).add(String(l.persona_email).toLowerCase()); });
+  window.__gpPend = [];
+  const pendCom = (com.data || []).map(x => {
+    const destino = x.para_todos ? personas : personas.filter(p => p.email === String(x.persona_email || '').toLowerCase());
+    const faltan = destino.filter(p => !(lecturas[x.id] || new Set()).has(p.email));
+    return { x, faltan };
+  }).filter(o => o.faltan.length);
+  window.__gpPend = pendCom;
+  const limite = new Date(hoy.getTime() + 7 * 86400000).toISOString().slice(0, 10), hoyIso = hoy.toISOString().slice(0, 10);
+  const proximos = (avi.data || []).filter(a => a.fecha_limite <= limite);
+  const bloque = (titulo, cuerpo, ok) => `<div class="panel-card" style="margin-bottom:12px;${ok ? '' : 'border-color:var(--ochre);'}"><h3 style="margin-top:0;">${titulo}</h3>${cuerpo}</div>`;
+  c.innerHTML = `<p class="subtle" style="margin:0 0 12px;">${acL('Esto se calcula solo cada vez que abres este panel: no tienes que acordarte de nada.', 'Això es calcula sol cada cop que obres aquest panell: no t\'has de recordar de res.')}</p>
+    ${bloque(`🧾 ${acL('Nóminas de', 'Nòmines de')} ${escAttr(gpMes(mes))} ${anio}`, sinNomina.length
+      ? `<p style="margin:0 0 8px;">${acL(`Faltan ${sinNomina.length} de ${personas.length} personas:`, `Falten ${sinNomina.length} de ${personas.length} persones:`)} <strong>${sinNomina.map(p => escAttr(p.nombre)).join(', ')}</strong></p><button class="primary-btn" style="width:auto;margin:0;" onclick="window.__gpSub='nominas';renderGestionPersonal('rrhh')">⬆️ ${acL('Cargar nóminas', 'Carregar nòmines')}</button>`
+      : `<div class="empty-note" style="margin:0;">✅ ${acL('Todas las nóminas del mes están subidas.', 'Totes les nòmines del mes estan pujades.')}</div>`, !sinNomina.length)}
+    ${bloque(`📣 ${acL('Comunicados sin confirmar', 'Comunicats sense confirmar')}`, pendCom.length
+      ? pendCom.map((o, i) => `<div class="panel-stat-row" style="align-items:flex-start;gap:8px;flex-wrap:wrap;"><span><strong>${escAttr(o.x.titulo)}</strong><br><span class="subtle" style="font-size:11.5px;margin:0;">${acL('Sin confirmar:', 'Sense confirmar:')} ${o.faltan.map(p => escAttr(p.nombre)).join(', ')}</span></span><button class="link-btn" onclick="gpRecordarComunicado(${i})">🔔 ${acL('Recordar a quien falta', 'Recordar a qui falta')}</button></div>`).join('')
+      : `<div class="empty-note" style="margin:0;">✅ ${acL('Nadie tiene confirmaciones pendientes.', 'Ningú té confirmacions pendents.')}</div>`, !pendCom.length)}
+    ${bloque(`📢 ${acL('Avisos que caducan pronto', 'Avisos que caduquen aviat')}`, proximos.length
+      ? proximos.map(a => `<div class="panel-stat-row"><span><strong>${escAttr(a.titulo)}</strong></span><span class="chip ${a.fecha_limite < hoyIso ? '' : 'gold'}" style="font-size:11px;">${a.fecha_limite < hoyIso ? acL('Caducado', 'Caducat') : acL('Hasta', 'Fins')} ${gpFecha(a.fecha_limite)}</span></div>`).join('')
+      : `<div class="empty-note" style="margin:0;">${acL('No hay avisos que caduquen esta semana.', 'No hi ha avisos que caduquin aquesta setmana.')}</div>`, !proximos.length)}`;
+}
+async function gpRecordarComunicado(i){
+  const o = (window.__gpPend || [])[i]; if(!o) return;
+  if(!confirm(acL(`¿Enviar un recordatorio a ${o.faltan.length} persona(s)?`, `Enviar un recordatori a ${o.faltan.length} persona(es)?`))) return;
+  const r = await Promise.all(o.faltan.map(p => sb.from('personal_comunicados').insert({ titulo: acL('Recordatorio: ', 'Recordatori: ') + o.x.titulo, texto: acL('Todavía no has confirmado la lectura de este comunicado. Búscalo en Mi gestión personal › Comunicados y confírmalo.\n\n', 'Encara no has confirmat la lectura d\'aquest comunicat. Cerca\'l a La meva gestió personal › Comunicats i confirma\'l.\n\n') + (o.x.texto || ''), para_todos: false, persona_email: p.email, requiere_lectura: false, creado_por_email: gpYo() })));
+  const fallo = r.find(x => x.error);
+  if(fallo){ alert(fallo.error.message); return; }
+  alert(acL('Recordatorios enviados.', 'Recordatoris enviats.'));
+}
+// ---------- Noticias y recordatorios (antes solo en Administrador) ----------
+async function gpRrhhAvisos(c){
+  const { data } = await sb.from('avisos_intranet').select('*').order('creado_en', { ascending: false }).limit(60);
+  const ca = LANG_I === 'ca';
+  c.innerHTML = `<div class="panel-card"><h3 style="margin-top:0;">${ca ? 'Notícies i recordatoris' : 'Noticias y recordatorios'}</h3>
+    <p class="subtle" style="margin:0 0 10px;">${ca ? 'Els avisos actius es veuen al Panell general de tot el personal.' : 'Los avisos activos se ven en el Panel general de todo el personal.'}</p>
+    ${(data && data.length) ? data.map(a => `<div class="panel-stat-row"><span><strong>${escAttr(a.titulo)}</strong>${a.descripcion ? `<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(a.descripcion)}</span>` : ''}${a.fecha_limite ? `<br><span class="subtle" style="font-size:11px;margin:0;">${acL('Hasta', 'Fins')} ${gpFecha(a.fecha_limite)}</span>` : ''}</span>
+      <span style="display:flex;align-items:center;gap:8px;"><span class="chip ${a.activo ? 'good' : 'off'}">${a.activo ? (ca ? 'Actiu' : 'Activo') : (ca ? 'Ocult' : 'Oculto')}</span>
+      <button class="link-btn" style="font-size:11px;" onclick="toggleAvisoActivo('${a.id}', ${!a.activo})">${a.activo ? 'Ocultar' : 'Mostrar'}</button>
+      <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="borrarAviso('${a.id}')">${ca ? 'Esborrar' : 'Borrar'}</button></span></div>`).join('') : `<div class="empty-note">${ca ? 'Encara no hi ha avisos.' : 'Todavía no hay avisos.'}</div>`}
+    <div style="margin-top:12px;">
+      <div class="field"><input type="text" id="aviso-titulo" placeholder="${ca ? "Títol de l'avís" : 'Título del aviso'}"></div>
+      <div class="field"><textarea id="aviso-descripcion" rows="2" placeholder="${ca ? 'Descripció (opcional)' : 'Descripción (opcional)'}"></textarea></div>
+      <div class="field"><label>${ca ? 'Tipus' : 'Tipo'}</label><select id="aviso-tipo"><option value="info">${ca ? 'Informació' : 'Información'}</option><option value="convocatoria">${ca ? 'Convocatòria' : 'Convocatoria'}</option><option value="curso">${ca ? 'Curs' : 'Curso'}</option><option value="recordatorio">${ca ? 'Recordatori' : 'Recordatorio'}</option></select></div>
+      <div class="field"><label>${ca ? 'Data límit (opcional)' : 'Fecha límite (opcional)'}</label><input type="date" id="aviso-fecha-limite"></div>
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="crearAviso()">${ca ? '➕ Publicar avís' : '➕ Publicar aviso'}</button></div></div>`;
+}
+// ---------- Documentos generales de la entidad (plantillas, formularios, protocolos…) ----------
+async function gpRrhhDocGen(c){
+  const { data } = await sb.from('documentos_generales').select('*').order('subido_en', { ascending: false }).limit(80);
+  window.__gpDocGen = data || [];
+  c.innerHTML = `<div class="panel-card"><h3 style="margin-top:0;">${acL('Documentos generales', 'Documents generals')}</h3>
+    <p class="subtle" style="margin:0 0 10px;">${acL('Plantillas, formularios, protocolos… para todo el equipo. Los ve todo el personal en Gestión documental.', 'Plantilles, formularis, protocols… per a tot l\'equip. Els veu tot el personal a Gestió documental.')}</p>
+    <div class="field"><label>${acL('Categoría', 'Categoria')}</label><select id="gp-dg-cat">${CATEGORIAS_DOC_GENERAL.map(k => `<option value="${k}">${k}</option>`).join('')}</select></div>
+    <div class="field"><input type="file" id="gp-dg-file" multiple></div>
+    <button class="primary-btn" style="width:auto;margin:0 0 12px;" onclick="gpSubirDocGen()">⬆️ ${acL('Subir', 'Pujar')}</button>
+    ${(data || []).length ? data.map((d, i) => `<div class="panel-stat-row" style="align-items:center;gap:8px;"><span><strong>${escAttr(d.nombre_archivo)}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(d.categoria || '')} · ${gpFecha(d.subido_en)}</span></span><span style="display:flex;gap:10px;"><button class="link-btn" onclick="verDocumentoStaff(window.__gpDocGen[${i}].ruta_storage)">⬇️ ${acL('Abrir', 'Obrir')}</button><button class="link-btn" style="color:var(--alert);" onclick="gpBorrarDocGen(${i})">${acL('Borrar', 'Esborrar')}</button></span></div>`).join('') : `<div class="empty-note">${acL('Todavía no hay documentos generales.', 'Encara no hi ha documents generals.')}</div>`}</div>`;
+}
+async function gpSubirDocGen(){
+  const input = document.getElementById('gp-dg-file');
+  if(!input || !input.files.length){ alert(acL('Elige uno o varios archivos.', 'Tria un o diversos fitxers.')); return; }
+  const categoria = document.getElementById('gp-dg-cat').value, fallos = [];
+  for(const f of [...input.files]){
+    if(f.size > GP_MAX_BYTES){ fallos.push(`${f.name}: >10 MB`); continue; }
+    const path = `generales/${Date.now()}_${rutaSeguraArchivo(f.name)}`;
+    const up = await sb.storage.from('documentos').upload(path, f);
+    if(up.error){ fallos.push(`${f.name}: ${up.error.message}`); continue; }
+    const ins = await sb.from('documentos_generales').insert({ nombre_archivo: f.name, ruta_storage: path, categoria, subido_por_email: gpYo() });
+    if(ins.error){ await sb.storage.from('documentos').remove([path]); fallos.push(`${f.name}: ${ins.error.message}`); }
+  }
+  if(fallos.length) alert(acL('No se pudieron subir:\n', 'No s\'han pogut pujar:\n') + fallos.join('\n'));
+  renderGestionPersonal('rrhh');
+}
+async function gpBorrarDocGen(i){
+  const d = (window.__gpDocGen || [])[i]; if(!d) return;
+  if(!confirm(acL('¿Borrar este documento?', 'Esborrar aquest document?'))) return;
+  const r = await sb.from('documentos_generales').delete().eq('id', d.id).select();
+  if(r.error || !r.data || !r.data.length){ alert(r.error ? r.error.message : acL('No se ha podido borrar (falta ejecutar el SQL 25).', 'No s\'ha pogut esborrar (cal executar l\'SQL 25).')); return; }
+  try { await sb.storage.from('documentos').remove([d.ruta_storage]); } catch(e){}
+  renderGestionPersonal('rrhh');
+}
 async function gpRrhhNominas(c){
   const personas = await gpPersonasActivas();
   const hoy = new Date(), anioAct = hoy.getFullYear();
@@ -8595,6 +8698,9 @@ async function gpRrhhNominas(c){
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <div class="field" style="flex:1;min-width:110px;"><label>${acL('Año', 'Any')}</label><select id="gp-n-anio">${[anioAct + 1, anioAct, anioAct - 1, anioAct - 2].map(a => `<option value="${a}"${a === anioAct ? ' selected' : ''}>${a}</option>`).join('')}</select></div>
       <div class="field" style="flex:2;min-width:150px;"><label>${acL('Mes o paga', 'Mes o paga')}</label><select id="gp-n-mes">${Array.from({ length: 14 }, (_, i) => i + 1).map(m => `<option value="${m}"${m === mesPrev ? ' selected' : ''}>${gpMes(m)}</option>`).join('')}</select></div></div>
+    <div class="field"><label>👤 ${acL('¿A quién se la subes?', 'A qui la puges?')}</label>
+      <select id="gp-n-persona" onchange="gpPrepararNominas()"><option value="">${acL('— Cada PDF a la persona que le corresponda (elegir abajo) —', '— Cada PDF a la persona que li correspongui (triar a sota) —')}</option>${personas.map(p => `<option value="${escAttr(p.email)}">${escAttr(p.nombre)}</option>`).join('')}</select>
+      <div class="subtle" style="font-size:11.5px;margin-top:4px;">${acL('Si es una sola nómina, elige aquí a la persona. Si subes varias de golpe, déjalo así y asigna cada PDF abajo.', 'Si és una sola nòmina, tria aquí la persona. Si en puges diverses de cop, deixa-ho així i assigna cada PDF a sota.')}</div></div>
     <div class="field"><label>${acL('PDF de nóminas', 'PDF de nòmines')}</label><input type="file" id="gp-n-files" accept=".pdf" multiple onchange="gpPrepararNominas()"></div>
     <div id="gp-n-previa"></div></div>`;
 }
@@ -8604,9 +8710,10 @@ function gpPrepararNominas(){
   const previa = document.getElementById('gp-n-previa');
   if(!files.length){ previa.innerHTML = ''; return; }
   const personas = window.__gpPersonas || [];
+  const fija = (document.getElementById('gp-n-persona') || {}).value || '';
   const opciones = sel => `<option value="">${acL('— elegir persona —', '— triar persona —')}</option>${personas.map(p => `<option value="${escAttr(p.email)}"${p.email === sel ? ' selected' : ''}>${escAttr(p.nombre)}</option>`).join('')}`;
   previa.innerHTML = files.map((f, i) => {
-    const sel = gpAdivinar(f.name, personas), grande = f.size > GP_MAX_BYTES;
+    const sel = fija || gpAdivinar(f.name, personas), grande = f.size > GP_MAX_BYTES;
     return `<div class="panel-stat-row" style="align-items:center;gap:8px;flex-wrap:wrap;"><span style="min-width:0;word-break:break-all;">📄 ${escAttr(f.name)}${grande ? ` <span class="chip" style="color:var(--alert);">&gt;10 MB</span>` : ''}</span>
       <select class="gp-n-sel" data-i="${i}" style="font-size:12.5px;max-width:230px;">${opciones(sel)}</select></div>`;
   }).join('') + `<p class="subtle" style="font-size:12px;">${acL('Los que queden sin persona no se subirán.', 'Els que quedin sense persona no es pujaran.')}</p>
@@ -8656,7 +8763,11 @@ async function gpRrhhAbrirPersona(){
   window.__gpDatos.rn = nom.data || []; window.__gpDatos.rd = doc.data || []; window.__gpDatos.rf = frm.data || [];
   const fila = (txt, sub, abrir, borrar) => `<div class="panel-stat-row" style="align-items:center;gap:8px;flex-wrap:wrap;"><span><strong>${txt}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${sub}</span></span><span style="display:flex;gap:10px;"><button class="link-btn" onclick="${abrir}">⬇️ ${acL('Abrir', 'Obrir')}</button><button class="link-btn" style="color:var(--alert);" onclick="${borrar}">${acL('Borrar', 'Esborrar')}</button></span></div>`;
   ficha.innerHTML = `
-    <div class="panel-card" style="margin-bottom:12px;"><h3 style="margin-top:0;">🧾 ${acL('Nóminas', 'Nòmines')}</h3>${(nom.data || []).length ? nom.data.map((n, i) => fila(`${escAttr(gpMes(n.mes))} ${n.anio}`, `${acL('Subida el', 'Pujada el')} ${gpFecha(n.subido_en)} · ${n.visto_en ? acL('abierta por la persona', 'oberta per la persona') : acL('aún sin abrir', 'encara sense obrir')}`, `gpRrhhAbrir('rn', ${i}, 'nómina')`, `gpRrhhBorrar('rn', ${i})`)).join('') : `<div class="empty-note">${acL('Sin nóminas.', 'Sense nòmines.')}</div>`}</div>
+    <div class="panel-card" style="margin-bottom:12px;"><h3 style="margin-top:0;">🧾 ${acL('Nóminas', 'Nòmines')}</h3>${(nom.data || []).length ? nom.data.map((n, i) => fila(`${escAttr(gpMes(n.mes))} ${n.anio}`, `${acL('Subida el', 'Pujada el')} ${gpFecha(n.subido_en)} · ${n.visto_en ? acL('abierta por la persona', 'oberta per la persona') : acL('aún sin abrir', 'encara sense obrir')}`, `gpRrhhAbrir('rn', ${i}, 'nómina')`, `gpRrhhBorrar('rn', ${i})`)).join('') : `<div class="empty-note">${acL('Sin nóminas.', 'Sense nòmines.')}</div>`}
+      <h4 style="margin:14px 0 6px;">${acL('Subir una nómina a esta persona', 'Pujar una nòmina a aquesta persona')}</h4>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;"><select id="gp-rn-anio">${[new Date().getFullYear() + 1, new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2].map(a => `<option value="${a}"${a === new Date().getFullYear() ? ' selected' : ''}>${a}</option>`).join('')}</select>
+        <select id="gp-rn-mes">${Array.from({ length: 14 }, (_, i) => i + 1).map(m => `<option value="${m}"${m === (new Date().getMonth() === 0 ? 12 : new Date().getMonth()) ? ' selected' : ''}>${gpMes(m)}</option>`).join('')}</select></div>
+      <input type="file" id="gp-rn-file" accept=".pdf" style="margin:6px 0;"><button class="link-btn" onclick="gpRrhhSubirNomina()">⬆️ ${acL('Subir y avisar', 'Pujar i avisar')}</button></div>
     <div class="panel-card" style="margin-bottom:12px;"><h3 style="margin-top:0;">📁 ${acL('Archivos', 'Arxius')}</h3>${(doc.data || []).length ? doc.data.map((d, i) => fila(escAttr(d.nombre), `${escAttr(gpCat(d.categoria))} · ${gpFecha(d.subido_en)}`, `gpRrhhAbrir('rd', ${i}, 'archivo')`, `gpRrhhBorrar('rd', ${i})`)).join('') : `<div class="empty-note">${acL('Sin archivos.', 'Sense arxius.')}</div>`}
       <div class="field" style="margin-top:12px;"><label>${acL('Subir un archivo a esta persona', 'Pujar un arxiu a aquesta persona')}</label>
         <select id="gp-rd-cat" style="margin-bottom:6px;">${GP_CATEGORIAS.map(k => `<option value="${k[0]}">${LANG_I === 'ca' ? k[2] : k[1]}</option>`).join('')}</select>
@@ -8675,6 +8786,20 @@ async function gpRrhhBorrar(clave, i){
   if(r.error){ alert(r.error.message); return; }
   await sb.storage.from('personal').remove([x.archivo_ruta]);
   await gpRegistrar('borrado', clave === 'rn' ? 'nómina' : 'archivo', x.persona_email, x.archivo_ruta);
+  gpRrhhAbrirPersona();
+}
+async function gpRrhhSubirNomina(){
+  const p = document.getElementById('gp-p-sel').value, f = document.getElementById('gp-rn-file').files[0];
+  if(!p) return; if(!f){ alert(acL('Elige el PDF de la nómina.', 'Tria el PDF de la nòmina.')); return; }
+  if(f.size > GP_MAX_BYTES){ alert(acL('El archivo pesa más de 10 MB.', 'L\'arxiu pesa més de 10 MB.')); return; }
+  const anio = Number(document.getElementById('gp-rn-anio').value), mes = Number(document.getElementById('gp-rn-mes').value);
+  const ruta = `${p}/nominas/${anio}-${String(mes).padStart(2, '0')}_${Date.now()}_${rutaSeguraArchivo(f.name)}`;
+  const up = await sb.storage.from('personal').upload(ruta, f);
+  if(up.error){ alert(up.error.message); return; }
+  const ins = await sb.from('personal_nominas').insert({ persona_email: p, anio, mes, archivo_ruta: ruta, subido_por_email: gpYo() });
+  if(ins.error){ await sb.storage.from('personal').remove([ruta]); alert(ins.error.message); return; }
+  await gpRegistrar('subida', 'nóminas', p, `${gpMes(mes)} ${anio}: 1`);
+  try { await sb.from('personal_comunicados').insert({ titulo: acL('Nueva nómina disponible', 'Nova nòmina disponible'), texto: acL(`Ya puedes consultar tu nómina de ${gpMes(mes)} ${anio} en Mi gestión personal › Nóminas.`, `Ja pots consultar la teva nòmina de ${gpMes(mes)} ${anio} a La meva gestió personal › Nòmines.`), para_todos: false, persona_email: p, requiere_lectura: false, creado_por_email: gpYo() }); } catch(e) {}
   gpRrhhAbrirPersona();
 }
 async function gpRrhhSubirDoc(){
@@ -11538,6 +11663,7 @@ async function renderInformesScreen(){
 
 async function renderPanelGeneral(){
   if(IS_JOVENES) return renderPanelJovenes();
+  if(IS_RRHH_SOLO){ showScreen('gestionpersonal'); return renderGestionPersonal('rrhh'); }
   const cont = document.getElementById('panel-content');
   const t = TI[LANG_I];
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
@@ -12249,9 +12375,25 @@ async function verPersonaStaff(usuarioId, origen){
           ${a.emprendeduria && a.emprendeduria.length ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Emprenedoria':'Emprendeduría'}</span><span>${etiquetasOpt(EMPRENDEDURIA_OPTS, a.emprendeduria)}</span></div>` : ''}
           ${a.notas ? `<div class="panel-stat-row"><span>${t.notasLbl}</span><span>${a.notas}</span></div>` : ''}
         </div>`;
-  const atencionesHtml = (atencionesRes.data && atencionesRes.data.length)
+  const resumenAtendio = (() => {
+    const por = {};
+    const suma = (email, tipo, fecha) => { if(!email) return; const o = por[email] || (por[email] = { at:0, ac:0, ci:0, ultima:'' }); o[tipo]++; if(fecha && fecha > o.ultima) o.ultima = fecha; };
+    (atencionesRes.data || []).forEach(a => suma(a.creado_por_email, 'at', a.creado_en));
+    (actuacionesRes.data || []).forEach(a => suma(a.tecnico_email, 'ac', a.fecha));
+    (citasRes.data || []).forEach(c => suma(c.creada_por_email, 'ci', c.fecha));
+    const filas = Object.keys(por).sort((a, b) => por[b].ultima.localeCompare(por[a].ultima)).map(e => {
+      const o = por[e]; const partes = [];
+      if(o.at) partes.push(`${o.at} ${acL(o.at === 1 ? 'atención' : 'atenciones', o.at === 1 ? 'atenció' : 'atencions')}`);
+      if(o.ac) partes.push(`${o.ac} ${acL(o.ac === 1 ? 'actuación' : 'actuaciones', o.ac === 1 ? 'actuació' : 'actuacions')}`);
+      if(o.ci) partes.push(`${o.ci} ${acL(o.ci === 1 ? 'cita' : 'citas', o.ci === 1 ? 'cita' : 'cites')}`);
+      return `<div class="panel-stat-row"><span><strong>${escAttr(nombreTecnico(e))}</strong></span><span class="subtle" style="font-size:12px;margin:0;">${partes.join(' · ')}${o.ultima ? ' · ' + acL('última: ', 'última: ') + new Date(o.ultima).toLocaleDateString(t.localeFecha) : ''}</span></div>`;
+    }).join('');
+    const resp = p.tecnico_responsable_email ? `<div class="panel-stat-row"><span>${t.tecnicoResponsableLbl}</span><span><strong>${escAttr(nombreTecnico(p.tecnico_responsable_email))}</strong></span></div>` : '';
+    return (resp || filas) ? `<div class="panel-card" style="margin-bottom:10px;"><h3>👥 ${acL('Quién la ha atendido', 'Qui l\'ha atesa')}</h3>${resp}${filas}</div>` : '';
+  })();
+  const atencionesHtml = resumenAtendio + ((atencionesRes.data && atencionesRes.data.length)
     ? atencionesRes.data.map(cardAtencion).join('')
-    : `<div class="empty-note">${t.nadieHaAtendido}</div>`;
+    : `<div class="empty-note">${t.nadieHaAtendido}</div>`);
 
   const actuacionesLista = actuacionesRes.data || [];
   const expedienteItems = [
@@ -12314,7 +12456,7 @@ async function verPersonaStaff(usuarioId, origen){
       </div>`;
   })() : '';
 
-  const formacionesLista = actuacionesLista.filter(ac => FORMACIONES_LOGOS.includes(ac.categoria));
+  const formacionesLista = actuacionesLista.filter(ac => FORMACIONES_LOGOS.includes(ac.categoria) || ac.objetivo === 'Formación');
   const formacionesHtml = formacionesLista.length ? formacionesLista.map(renderActuacionCard).join('') : `<div class="empty-note">${t.sinFormacionesVinculadas}</div>`;
 
   const derivacionesLista = actuacionesLista.filter(ac => ac.derivado_a);
@@ -12345,7 +12487,8 @@ async function verPersonaStaff(usuarioId, origen){
     </div>
     ${necesidadesHtml}
     <div class="panel-card">
-      ${campo(t.correoLbl, p.email)} ${campo(t.fechaAltaLbl, p.creado_en ? new Date(p.creado_en).toLocaleDateString(t.localeFecha) : '')}
+      <div class="panel-stat-row" style="align-items:center;"><span>${t.correoLbl}</span><span>${p.email ? `<a href="mailto:${escAttr(p.email)}" style="font-weight:700;color:inherit;">${escAttr(p.email)}</a>` : `<span class="subtle" style="margin:0;">—</span>`} <button class="link-btn" style="font-size:12px;" onclick="mostrarTabPersona('datos');document.getElementById('pds-email').focus();document.getElementById('pds-email').scrollIntoView({behavior:'smooth',block:'center'})">${p.email ? '✏️ ' + acL('Cambiar', 'Canviar') : '➕ ' + acL('Añadir correo', 'Afegir correu')}</button></span></div>
+      ${campo(t.fechaAltaLbl, p.creado_en ? new Date(p.creado_en).toLocaleDateString(t.localeFecha) : '')}
       <div class="panel-stat-row" style="align-items:center;">
         <span>${t.tecnicoResponsableLbl}</span>
         <span style="display:flex;gap:8px;align-items:center;">
@@ -12418,6 +12561,8 @@ async function verPersonaStaff(usuarioId, origen){
           : 'Completa aquí los datos que falten cuando ayudes a la persona por teléfono, WhatsApp o presencialmente.'}</p>
         <div class="field"><label>${LANG_I==='ca'?'Nom i cognoms':'Nombre y apellidos'}</label><input type="text" id="pds-nombre" value="${p.nombre_completo||''}"></div>
         <div class="field"><label>${LANG_I==='ca'?'Telèfon':'Teléfono'}</label><input type="tel" id="pds-telefono" value="${p.telefono||''}"></div>
+        <div class="field"><label>✉️ ${LANG_I==='ca'?'Correu electrònic':'Correo electrónico'}</label><input type="email" id="pds-email" autocomplete="off" value="${escAttr(p.email||'')}" placeholder="nombre@correo.com">
+          <div class="subtle" style="font-size:11.5px;margin-top:4px;">${acL('Es el correo de contacto de la ficha. No cambia el correo con el que la persona entra en Logos Acompanya.', 'És el correu de contacte de la fitxa. No canvia el correu amb què la persona entra a Logos Acompanya.')}</div></div>
         <div class="field"><label>DNI/NIE</label><input type="text" id="pds-dni" value="${p.dni_nie||''}"></div>
         <div class="field"><label>${LANG_I==='ca'?'Data de naixement':'Fecha de nacimiento'}</label><input type="date" id="pds-nacimiento" value="${p.fecha_nacimiento||''}"></div>
         <div class="field"><label>${LANG_I==='ca'?'Carrer':'Calle'}</label><input type="text" id="pds-calle" value="${p.calle||''}"></div>
@@ -12482,6 +12627,21 @@ async function verPersonaStaff(usuarioId, origen){
     </div>
 
     <div class="ptab-content" id="ptab-formaciones">
+      <div class="panel-card" style="background:var(--ochre-soft);border-color:var(--ochre);">
+        <h3 style="color:#7A4A1F;">🎓 ${acL('Registrar una formación', 'Registrar una formació')}</h3>
+        <div class="field" style="margin-bottom:8px;"><label>${acL('Formación', 'Formació')}</label>
+          <select id="form-nombre" onchange="document.getElementById('form-otra').style.display = this.value==='__otra__' ? 'block' : 'none';">
+            <option value="">${acL('— Elige una formación —', '— Tria una formació —')}</option>
+            ${FORMACIONES_LOGOS.map(f => `<option value="${escAttr(f)}">${escAttr(f)}</option>`).join('')}
+            <option value="__otra__">➕ ${acL('Otra formación…', 'Una altra formació…')}</option>
+          </select>
+          <input type="text" id="form-otra" placeholder="${acL('Nombre de la formación', 'Nom de la formació')}" style="display:none;margin-top:6px;width:100%;"></div>
+        <div class="field" style="margin-bottom:8px;"><label>${acL('Fecha de inicio', 'Data d\'inici')}</label><input type="date" id="form-fecha" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="field" style="margin-bottom:8px;"><label>${acL('Estado / resultado', 'Estat / resultat')}</label>
+          <select id="form-estado"><option value="en_tramite">${acL('Inscrita / en curso', 'Inscrita / en curs')}</option><option value="conseguido">${acL('Finalizada', 'Finalitzada')}</option><option value="no_conseguido">${acL('Abandonada / no finalizada', 'Abandonada / no finalitzada')}</option></select></div>
+        <div class="field" style="margin-bottom:8px;"><label>${acL('Observaciones', 'Observacions')}</label><textarea id="form-obs" rows="2" style="width:100%;"></textarea></div>
+        <button class="primary-btn" onclick="registrarFormacionFicha()">💾 ${acL('Guardar formación', 'Desar formació')}</button>
+      </div>
       <div class="panel-card"><h3>${t.actuacionesVinculadasFormaciones}</h3>${formacionesHtml}</div>
     </div>
 
@@ -12786,9 +12946,12 @@ async function descargarConsentimientoPDF(usuarioId, nombre, dni, fechaFirma){
 async function guardarDatosPersonaStaff(usuarioId){
   const val = id => document.getElementById(id).value.trim();
   const boolOrNull = v => v === '' ? null : v === 'true';
+  const correo = val('pds-email');
+  if(correo && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(correo)){ alert(acL('El correo no parece válido. Revisa que lleve @ y un dominio (por ejemplo nombre@gmail.com).', 'El correu no sembla vàlid. Revisa que porti @ i un domini (per exemple nom@gmail.com).')); return; }
   const payload = {
     nombre_completo: val('pds-nombre') || null,
     telefono: val('pds-telefono') || null,
+    email: val('pds-email') ? val('pds-email').toLowerCase() : null,
     dni_nie: val('pds-dni') || null,
     fecha_nacimiento: val('pds-nacimiento') || null,
     calle: val('pds-calle') || null,
@@ -12892,6 +13055,21 @@ async function crearActuacion(){
   }
 
   verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
+}
+
+async function registrarFormacionFicha(){
+  const v = id => (document.getElementById(id) || {}).value || '';
+  let nombre = v('form-nombre');
+  if(nombre === '__otra__') nombre = v('form-otra').trim();
+  if(!nombre){ alert(acL('Elige o escribe la formación.', 'Tria o escriu la formació.')); return; }
+  const { error } = await sb.from('actuaciones').insert({
+    usuario_id: window.__usuarioIdVisto, tecnico_email: CURRENT_USER.email,
+    fecha: v('form-fecha') || new Date().toISOString().slice(0,10),
+    categoria: nombre, objetivo: 'Formación', descripcion: v('form-obs').trim() || null, resultado: v('form-estado') || null
+  });
+  if(error){ alert(error.message); return; }
+  await verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
+  mostrarTabPersona('formaciones');
 }
 
 async function crearTramite(){
@@ -13093,14 +13271,14 @@ async function renderAdministrador(){
   window.__alertasTipos = REPARTO_OK ? ((await sb.from('alertas_tipos').select('*')).data || []) : [];
   const staffHtml = window.__staffLista.map(s => `
     <div class="panel-stat-row" style="align-items:flex-start;gap:8px;flex-wrap:wrap;">
-      <span style="min-width:0;">${s.nombre ? `<strong>${escAttr(s.nombre)}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(s.email)}</span>` : escAttr(s.email)}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}${s.es_rrhh ? ' <span class="chip gold">RR. HH.</span>' : ''}${s.gestiona_alertas ? ` <span class="chip good" style="font-size:10.5px;">🔔 ${acL('reparte alertas', 'reparteix alertes')}</span>` : ''}${s.ambito === 'jovenes' ? ` <span class="chip good" style="font-size:10.5px;">🌱 ${acL('Jóvenes en acción', 'Joves en acció')}</span>` : ''}${s.clave_cambiada === false ? ` <span class="chip" style="font-size:10.5px;">🔑 ${acL('contraseña inicial', 'contrasenya inicial')}</span>` : ''}</span>
+      <span style="min-width:0;">${s.nombre ? `<strong>${escAttr(s.nombre)}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(s.email)}</span>` : escAttr(s.email)}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}${s.es_rrhh ? ' <span class="chip gold">RR. HH.</span>' : ''}${s.gestiona_alertas ? ` <span class="chip good" style="font-size:10.5px;">🔔 ${acL('reparte alertas', 'reparteix alertes')}</span>` : ''}${s.ambito === 'rrhh' ? ` <span class="chip good" style="font-size:10.5px;">💼 ${acL('Solo RR. HH.', 'Només RR. HH.')}</span>` : ''}${s.ambito === 'jovenes' ? ` <span class="chip good" style="font-size:10.5px;">🌱 ${acL('Jóvenes en acción', 'Joves en acció')}</span>` : ''}${s.clave_cambiada === false ? ` <span class="chip" style="font-size:10.5px;">🔑 ${acL('contraseña inicial', 'contrasenya inicial')}</span>` : ''}</span>
       <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
         <span class="chip ${s.activo === false ? 'off' : 'good'}">${s.activo === false ? t.inactivoLbl : t.activoLbl}</span>
         <button class="link-btn" style="font-size:12px;" onclick="toggleActivoTecnico('${s.email}', ${s.activo === false})">${s.activo === false ? t.reactivar : t.desactivar}</button>
         ${(DELEGACION_OK && s.activo !== false && !s.es_admin && s.ambito !== 'jovenes') ? `<button class="link-btn" style="font-size:12px;" onclick="toggleGestorAlertas('${s.email}', ${!s.gestiona_alertas})">${s.gestiona_alertas ? acL('Quitar reparto de alertas', 'Treure repartiment d\'alertes') : acL('Delegar reparto de alertas', 'Delegar repartiment d\'alertes')}</button>` : ''}
         ${(GP_OK && s.activo !== false) ? `<button class="link-btn" style="font-size:12px;" onclick="toggleRRHH('${s.email}', ${!s.es_rrhh})">${s.es_rrhh ? acL('Quitar RR. HH.', 'Treure RR. HH.') : acL('Dar RR. HH.', 'Donar RR. HH.')}</button>` : ''}
         <button class="link-btn" style="font-size:12px;" onclick="editarNombreTecnico('${s.email}')">✏️ ${acL('Nombre', 'Nom')}</button>
-        ${(JOVENES_OK && !s.es_admin) ? `<select style="font-size:12px;max-width:150px;" title="${acL('Qué parte de la plataforma ve', 'Quina part de la plataforma veu')}" onchange="cambiarAmbitoTecnico('${s.email}', this.value)"><option value="general"${s.ambito !== 'jovenes' ? ' selected' : ''}>${acL('Equipo general', 'Equip general')}</option><option value="jovenes"${s.ambito === 'jovenes' ? ' selected' : ''}>🌱 ${acL('Solo Jóvenes en acción', 'Només Joves en acció')}</option></select>` : ''}
+        ${(JOVENES_OK && !s.es_admin) ? `<select style="font-size:12px;max-width:150px;" title="${acL('Qué parte de la plataforma ve', 'Quina part de la plataforma veu')}" onchange="cambiarAmbitoTecnico('${s.email}', this.value)"><option value="general"${s.ambito !== 'jovenes' ? ' selected' : ''}>${acL('Equipo general', 'Equip general')}</option><option value="jovenes"${s.ambito === 'jovenes' ? ' selected' : ''}>🌱 ${acL('Solo Jóvenes en acción', 'Només Joves en acció')}</option><option value="rrhh"${s.ambito === 'rrhh' ? ' selected' : ''}>💼 ${acL('Solo Recursos Humanos', 'Només Recursos Humans')}</option></select>` : ''}
         <button class="link-btn" style="font-size:12px;" title="${acL('Enviar enlace para elegir contraseña', 'Enviar enllaç per triar contrasenya')}" onclick="enviarEnlaceClave('${s.email}')">🔑 ${acL('Enlace', 'Enllaç')}</button>
         <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="quitarTecnico('${s.email}')">${acL('Quitar', 'Treure')}</button>
       </span>
@@ -13265,7 +13443,7 @@ async function renderAdministrador(){
         </div>
         ${JOVENES_OK ? `<div class="field">
           <label>${acL('¿Qué parte de la plataforma verá?', 'Quina part de la plataforma veurà?')}</label>
-          <select id="admin-nuevo-ambito"><option value="general">${acL('Equipo general (todo)', 'Equip general (tot)')}</option><option value="jovenes">🌱 ${acL('Solo Jóvenes en acción (panel propio)', 'Només Joves en acció (panell propi)')}</option></select>
+          <select id="admin-nuevo-ambito"><option value="general">${acL('Equipo general (todo)', 'Equip general (tot)')}</option><option value="jovenes">🌱 ${acL('Solo Jóvenes en acción (panel propio)', 'Només Joves en acció (panell propi)')}</option><option value="rrhh">💼 ${acL('Solo Recursos Humanos (nóminas, avisos y archivos)', 'Només Recursos Humans (nòmines, avisos i arxius)')}</option></select>
         </div>` : ''}
         <button class="link-btn" onclick="agregarTecnico()">${t.anadirPlataforma}</button>
       </div>
@@ -13785,6 +13963,10 @@ async function cargarMasFichajes(){
     : '';
 }
 
+function refrescarAvisos(){
+  const gp = document.getElementById('screen-gestionpersonal');
+  if(gp && gp.classList.contains('active')) renderGestionPersonal('rrhh'); else renderAdministrador();
+}
 async function crearAviso(){
   const titulo = document.getElementById('aviso-titulo').value.trim();
   if(!titulo){ alert(LANG_I==='ca' ? 'Escriu un títol.' : 'Escribe un título.'); return; }
@@ -13796,20 +13978,20 @@ async function crearAviso(){
     creado_por_email: CURRENT_USER.email
   });
   if(error){ alert(error.message); return; }
-  renderAdministrador();
+  refrescarAvisos();
 }
 
 async function toggleAvisoActivo(id, nuevoEstado){
   const { error } = await sb.from('avisos_intranet').update({ activo: nuevoEstado }).eq('id', id);
   if(error){ alert(error.message); return; }
-  renderAdministrador();
+  refrescarAvisos();
 }
 
 async function borrarAviso(id){
   if(!confirm(LANG_I==='ca' ? 'Segur que vols esborrar aquest avís?' : '¿Seguro que quieres borrar este aviso?')) return;
   const { error } = await sb.from('avisos_intranet').delete().eq('id', id);
   if(error){ alert(error.message); return; }
-  renderAdministrador();
+  refrescarAvisos();
 }
 
 async function agregarTecnico(){
@@ -13822,6 +14004,7 @@ async function agregarTecnico(){
   if(nombre && nombre.trim()) fila.nombre = nombre.trim();
   const ambito = (document.getElementById('admin-nuevo-ambito') || {}).value;
   if(JOVENES_OK && ambito === 'jovenes') fila.ambito = 'jovenes';
+  if(JOVENES_OK && ambito === 'rrhh'){ fila.ambito = 'rrhh'; fila.es_rrhh = true; }
   const { error } = await sb.from('staff').insert(fila);
   if(error){ alert(error.message); return; }
   renderAdministrador();
@@ -13838,8 +14021,10 @@ async function cambiarAmbitoTecnico(email, ambito){
   const s = (window.__staffLista || []).find(x => x.email === email), nombre = (s && s.nombre) || email;
   if(s && s.es_admin){ alert(acL('La administración siempre ve toda la plataforma.', 'L\'administració sempre veu tota la plataforma.')); renderAdministrador(); return; }
   if(ambito === 'jovenes' && !confirm(acL(`¿Dejar a ${nombre} solo con Jóvenes en acción?\n\nVerá únicamente su panel, la gestión de Jóvenes en acción y su fichaje. No verá personas usuarias, expedientes ni contabilidad, y las alertas de la convocatoria le llegarán a su panel.`, `Deixar ${nombre} només amb Joves en acció?\n\nVeurà únicament el seu panell, la gestió de Joves en acció i el seu fitxatge. No veurà persones usuàries, expedients ni comptabilitat, i les alertes de la convocatòria li arribaran al seu panell.`))){ renderAdministrador(); return; }
+  if(ambito === 'rrhh' && !confirm(acL(`¿Dejar a ${nombre} solo con Recursos Humanos?\n\nPodrá subir nóminas y archivos, enviar comunicados y gestionar avisos y recordatorios. No verá personas usuarias, expedientes ni contabilidad.`, `Deixar ${nombre} només amb Recursos Humans?\n\nPodrà pujar nòmines i arxius, enviar comunicats i gestionar avisos i recordatoris. No veurà persones usuàries, expedients ni comptabilitat.`))){ renderAdministrador(); return; }
   const cambios = { ambito };
-  if(ambito === 'jovenes') cambios.orden_alertas = null;     // sale del turno general
+  if(ambito === 'rrhh') cambios.es_rrhh = true;
+  if(ambito === 'jovenes' || ambito === 'rrhh') cambios.orden_alertas = null;     // sale del turno general
   const { error } = await staffCambiar(email, cambios);
   if(error){ alert(error.message); return; }
   if(ambito === 'jovenes') await repartoRenumerar(repartoTurnoActual().filter(x => x.email !== email));
