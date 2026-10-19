@@ -1117,7 +1117,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v82'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v84'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -3616,8 +3616,54 @@ function contactoCitaHtml(p){
   </div>`;
 }
 
+// ---------- El técnico cancela o cambia una cita ----------
+window.__citasMapa = window.__citasMapa || {};
+function citaAccionesHtml(c, nombre){
+  if(!c || c.estado === 'cancelada') return '';
+  window.__citasMapa[c.id] = { id: c.id, uid: c.usuario_id, nombre: nombre || '', fecha: c.fecha, hora: String(c.hora || '').slice(0, 5), motivo: c.motivo || '' };
+  return `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+    <button class="link-btn" style="font-size:12px;" onclick="cambiarCitaStaff('${c.id}')">🔁 ${acL('Cambiar cita', 'Canviar cita')}</button>
+    <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="cancelarCitaStaff('${c.id}')">✖ ${acL('Cancelar cita', 'Cancel·lar cita')}</button>
+  </div>`;
+}
+// Cancela la cita en la base de datos (directo; si no hay permiso, con la función segura del SQL 23)
+async function cancelarCitaDB(id){
+  let { data, error } = await sb.from('citas').update({ estado: 'cancelada' }).eq('id', id).select('id, estado');
+  if(!error && data && data.length && data[0].estado === 'cancelada') return true;
+  const r = await sb.rpc('cancelar_cita_personal', { p_id: id });
+  if(!r.error) return true;
+  alert((r.error && !/does not exist|schema cache|could not find/i.test(r.error.message || '') ? r.error.message + '\n\n' : '') + acL('No se ha podido cancelar la cita. Hay que ejecutar el SQL 23 en Supabase (una sola vez).', 'No s\'ha pogut cancel·lar la cita. Cal executar el SQL 23 a Supabase (una sola vegada).'));
+  return false;
+}
+function refrescarTrasCambioCita(uid){
+  const fichaAbierta = document.getElementById('screen-persona') && document.getElementById('screen-persona').classList.contains('active') && window.__usuarioIdVisto === uid;
+  if(fichaAbierta) return verPersonaStaff(uid, window.__origenPersonaVista);
+  if(document.getElementById('screen-agenda') && document.getElementById('screen-agenda').classList.contains('active')) return (__agendaVista === 'proximas' ? renderProximasCitas() : renderAgendaCitas());
+}
+async function cancelarCitaStaff(id){
+  const c = (window.__citasMapa || {})[id]; if(!c) return;
+  const f = new Date(c.fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha) + ' ' + c.hora;
+  if(!confirm(acL(`¿Cancelar la cita de ${c.nombre || 'esta persona'} del ${f}? Se libera la hora.`, `Cancel·lar la cita de ${c.nombre || 'aquesta persona'} del ${f}? S\'allibera l\'hora.`))) return;
+  if(!(await cancelarCitaDB(id))) return;
+  await refrescarTrasCambioCita(c.uid);
+  avisarCitaCreada(c.uid, c.nombre, c.fecha, c.hora, c.motivo, false, { modo:'cancelada' });
+}
+function cambiarCitaStaff(id){
+  const c = (window.__citasMapa || {})[id]; if(!c) return;
+  const f = new Date(c.fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha) + ' ' + c.hora;
+  abrirNuevaCitaStaff(c.uid, c.nombre, { reemplaza: id, motivo: c.motivo, antes: f });
+}
+
+// Lo que ha contestado la persona desde Logos Acompanya (confirma / pide otra hora / no puede)
+function respuestaCitaHtml(c){
+  if(!c || !c.respuesta_usuario) return '';
+  const ca = LANG_I === 'ca';
+  const m = { confirma:['✅', ca ? 'Confirma que vindrà' : 'Confirma que vendrá', 'good'], otra_hora:['🔁', ca ? 'Demana un altre dia/hora' : 'Pide otro día/hora', 'gold'], no_puede:['❌', ca ? 'No pot venir' : 'No puede venir', ''] }[c.respuesta_usuario];
+  if(!m) return '';
+  return `<div class="panel-stat-row" style="align-items:flex-start;"><span>${ca ? 'Resposta de la persona' : 'Respuesta de la persona'}</span><span><span class="chip ${m[2]}">${m[0]} ${m[1]}</span>${c.respuesta_texto ? `<br><span class="subtle" style="font-size:11.5px;margin:0;">${escAttr(c.respuesta_texto)}</span>` : ''}</span></div>`;
+}
 function tabsAgendaHtml(){
-  return `<div style="display:flex;gap:8px;margin-bottom:14px;">
+  return `${logosEstadoHtml()}<div style="display:flex;gap:8px;margin-bottom:14px;">
     <button class="link-btn" style="${__agendaVista==='dia'?'font-weight:700;text-decoration:underline;':''}" onclick="__agendaVista='dia';renderAgendaCitas()">${LANG_I==='ca'?'Per dia':'Por día'}</button>
     <button class="link-btn" style="${__agendaVista==='proximas'?'font-weight:700;text-decoration:underline;':''}" onclick="__agendaVista='proximas';renderProximasCitas()">${LANG_I==='ca'?'Properes cites':'Próximas citas'}</button>
     <button class="link-btn" style="margin-left:auto;font-weight:700;" onclick="abrirNuevaCitaStaff()">➕ ${LANG_I==='ca'?'Nova cita':'Nueva cita'}</button>
@@ -3652,7 +3698,9 @@ async function renderAgendaCitas(fecha){
           <div class="panel-stat-row"><span>${LANG_I==='ca'?'Persona usuària':'Persona usuaria'}</span><span><strong>${p.nombre_completo || (LANG_I==='ca'?'Sense nom':'Sin nombre')}</strong></span></div>
           ${p.telefono ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Telèfon':'Teléfono'}</span><span>${p.telefono}</span></div>` : ''}
           ${c.motivo ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Motiu':'Motivo'}</span><span>${c.motivo}</span></div>` : ''}
+          ${respuestaCitaHtml(c)}
           ${contactoCitaHtml(p)}
+          ${citaAccionesHtml(c, p.nombre_completo)}
           ${c.usuario_id ? `<button class="link-btn" style="font-size:12px;margin-top:8px;" onclick="verPersonaStaff('${c.usuario_id}','agenda')">${t.verInfoCompleta}</button>` : ''}
         </div>`;
       }).join('')
@@ -3677,8 +3725,9 @@ async function renderAgendaCitas(fecha){
 // ================= NUEVA CITA PUESTA POR UN TÉCNICO =================
 // El técnico crea la cita a nombre de la persona (con las mismas horas y topes que usa la ciudadanía).
 let __NC = { uid: null, nombre: '', fecha: '', hora: '', horario: null };
-function abrirNuevaCitaStaff(usuarioId, nombre){
-  __NC = { uid: usuarioId || null, nombre: nombre || '', fecha: '', hora: '', horario: null };
+function abrirNuevaCitaStaff(usuarioId, nombre, opts){
+  opts = opts || {};
+  __NC = { uid: usuarioId || null, nombre: nombre || '', fecha: '', hora: '', horario: null, reemplaza: opts.reemplaza || null, motivo: opts.motivo || '', antes: opts.antes || '' };
   let ov = document.getElementById('nc-ov');
   if(!ov){
     ov = document.createElement('div'); ov.id = 'nc-ov';
@@ -3705,13 +3754,15 @@ function pintarNuevaCitaStaff(){
       <h3 style="margin:0;">➕ ${acL('Nueva cita', 'Nova cita')}</h3>
       <button class="link-btn" onclick="cerrarNuevaCitaStaff()">✕</button>
     </div>
-    <div style="margin-top:10px;">${persona}</div>
+    <div style="margin-top:6px;">${logosEstadoHtml()}</div>
+    ${__NC.reemplaza ? `<div class="info-box info-box-gold" style="font-size:12.5px;">🔁 ${acL('Esta cita sustituirá a la de', 'Aquesta cita substituirà la del')} <strong>${escAttr(__NC.antes)}</strong>. ${acL('La anterior se cancelará al crear la nueva.', 'L\'anterior es cancel·larà en crear la nova.')}</div>` : ''}
+    <div style="margin-top:4px;">${persona}</div>
     ${__NC.uid ? `
     <div class="field" style="margin-top:12px;"><label>${acL('Día', 'Dia')}</label>
       <input type="date" id="nc-fecha" min="${hoy}" value="${__NC.fecha}" onchange="elegirDiaNuevaCita(this.value)"></div>
     <div id="nc-horas"></div>
     <div class="field" style="margin-top:12px;"><label>${acL('Motivo (opcional)', 'Motiu (opcional)')}</label>
-      <textarea id="nc-motivo" rows="2" placeholder="${acL('Para qué es la cita', 'Per a què és la cita')}"></textarea></div>
+      <textarea id="nc-motivo" rows="2" placeholder="${acL('Para qué es la cita', 'Per a què és la cita')}">${escAttr(__NC.motivo || '')}</textarea></div>
     <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px;"><input type="checkbox" id="nc-urgente"> 🔴 ${acL('Urgente: la persona verá un aviso destacado', 'Urgent: la persona veurà un avís destacat')}</label>
     <div id="nc-msg"></div>
     <button class="primary-btn" id="nc-guardar" style="margin-top:10px;" onclick="guardarNuevaCitaStaff()" ${__NC.hora ? '' : 'disabled'}>${acL('Crear cita', 'Crear cita')}</button>` : ''}
@@ -3749,7 +3800,9 @@ async function elegirDiaNuevaCita(fechaIso, mantener){
   if(!h){ cont.innerHTML = `<div class="auth-error">${acL('No se ha podido cargar el horario de atención.', 'No s\'ha pogut carregar l\'horari d\'atenció.')}</div>`; return; }
   const d = new Date(fechaIso + 'T00:00:00');
   const iso = d.getDay() === 0 ? 7 : d.getDay();
-  if(!(h.dias_semana || []).includes(iso)){ cont.innerHTML = `<div class="empty-note">${acL('Ese día no hay atención. Elige otro.', 'Aquest dia no hi ha atenció. Tria\'n un altre.')}</div>`; return; }
+  const hd = LOGOS_HORARIO[iso];
+  if(!hd){ cont.innerHTML = `<div class="empty-note">${acL('Ese día Logos está cerrado. Elige otro.', 'Aquest dia Logos és tancat. Tria\'n un altre.')}</div><p class="subtle" style="font-size:12px;">${logosHorarioTexto()}</p>`; return; }
+
   const { data: ocup } = await sb.rpc('citas_disponibilidad', { p_fecha: fechaIso });
   const ocupadas = {}; (ocup || []).forEach(o => { ocupadas[String(o.hora).slice(0, 5)] = o.ocupadas; });
   const slots = [];
@@ -3758,7 +3811,7 @@ async function elegirDiaNuevaCita(fechaIso, mantener){
     let c = Number(ini.slice(0, 2)) * 60 + Number(ini.slice(3, 5)); const f = Number(fin.slice(0, 2)) * 60 + Number(fin.slice(3, 5));
     while(c < f){ slots.push(String(Math.floor(c / 60)).padStart(2, '0') + ':' + String(c % 60).padStart(2, '0')); c += h.duracion_cita_minutos; }
   };
-  bloque(h.hora_inicio, h.hora_fin); bloque(h.hora_inicio_2, h.hora_fin_2);
+  { const dur = h.duracion_cita_minutos || 30; const bl = (ini, fin) => { let c = logosMin(ini); const f = logosMin(fin); while(c < f){ slots.push(String(Math.floor(c / 60)).padStart(2, '0') + ':' + String(c % 60).padStart(2, '0')); c += dur; } }; logosTramosDia(iso).forEach(t => bl(t[0], t[1])); if(hd.sinCita){ const a = logosMin(hd.sinCita[0]), z = logosMin(hd.sinCita[1]); for(let i = slots.length - 1; i >= 0; i--){ const m = logosMin(slots[i]); if(m >= a && m < z) slots.splice(i, 1); } } }
   const ahora = new Date(); const esHoy = fechaIso === ahora.toISOString().slice(0, 10);
   const minAhora = ahora.getHours() * 60 + ahora.getMinutes();
   cont.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">` + slots.map(s => {
@@ -3766,7 +3819,7 @@ async function elegirDiaNuevaCita(fechaIso, mantener){
     const pasada = esHoy && (Number(s.slice(0, 2)) * 60 + Number(s.slice(3, 5)) <= minAhora);
     const sel = s === __NC.hora;
     return `<button class="link-btn" style="border:1.5px solid ${sel ? 'var(--primary,#1E3A8A)' : 'var(--line)'};border-radius:10px;padding:6px 12px;${sel ? 'font-weight:800;background:var(--primary-soft,#E8EEFB);' : ''}${(lleno || pasada) ? 'opacity:.4;' : ''}" ${(lleno || pasada) ? 'disabled' : `onclick="__NC.hora='${s}';elegirDiaNuevaCita('${fechaIso}', true);document.getElementById('nc-guardar').disabled=false;"`}>${s}${lleno ? ' ✕' : ''}</button>`;
-  }).join('') + `</div>` + (slots.length ? '' : `<div class="empty-note">${acL('Sin horas ese día.', 'Sense hores aquest dia.')}</div>`);
+  }).join('') + `</div>` + (slots.length ? '' : `<div class="empty-note">${acL('Sin horas ese día.', 'Sense hores aquest dia.')}</div>`) + (hd.sinCita ? `<p class="subtle" style="font-size:12px;margin-top:8px;">${acL('Los miércoles de 9 a 13 h se atiende sin cita previa; por eso solo se dan citas fuera de esa franja.', 'Els dimecres de 9 a 13 h s\'atén sense cita prèvia; per això només es donen cites fora d\'aquesta franja.')}</p>` : '');
 }
 async function guardarNuevaCitaStaff(){
   const btn = document.getElementById('nc-guardar'), msg = document.getElementById('nc-msg');
@@ -3790,7 +3843,9 @@ async function guardarNuevaCitaStaff(){
   }
   cerrarNuevaCitaStaff();
   const uid = __NC.uid, fecha = __NC.fecha, horaC = __NC.hora, nombreC = __NC.nombre || '';
-  avisarCitaCreada(uid, nombreC, fecha, horaC, motivo, urgente);
+  const reemplaza = __NC.reemplaza, antes = __NC.antes;
+  if(reemplaza){ await cancelarCitaDB(reemplaza); }
+  avisarCitaCreada(uid, nombreC, fecha, horaC, motivo, urgente, reemplaza ? { modo:'cambiada', antes } : null);
   if(document.getElementById('screen-persona') && document.getElementById('screen-persona').classList.contains('active') && window.__usuarioIdVisto === uid) verPersonaStaff(uid, window.__origenPersonaVista);
   else { __agendaVista = 'dia'; __agendaFechaActual = fecha; showScreen('agenda'); renderAgendaCitas(fecha); }
 }
@@ -3928,29 +3983,59 @@ async function esperaEnviar(canal){
   const ov = document.getElementById('espera-ov'); if(ov) ov.remove();
 }
 
-async function avisarCitaCreada(uid, nombre, fecha, hora, motivo, urgente){
+async function avisarCitaCreada(uid, nombre, fecha, hora, motivo, urgente, extra){
   const ca = LANG_I === 'ca';
+  const modo = (extra && extra.modo) || 'creada';
   const { data: p } = await sb.from('perfiles').select('telefono, email, nombre_completo').eq('id', uid).maybeSingle();
-  if(!p || (!p.telefono && !p.email)) return;
+  if(!p) return;
+  if(!p.telefono && !p.email && modo !== 'cancelada') return;
   const f = new Date(fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha);
   const h = String(hora || '').slice(0, 5);
   const primer = String(nombre || p.nombre_completo || '').split(' ')[0];
-  const texto = ca
+  const saludo = `Hola${primer ? ' ' + primer : ''}`;
+  const texto = modo === 'cancelada'
+    ? (ca ? `${saludo}, hem hagut de cancel·lar la teva cita de Logos del ${f} a les ${h}. Disculpa les molèsties; et donarem una altra data aviat o pots demanar-la a Logos Acompanya.`
+          : `${saludo}, hemos tenido que cancelar tu cita en Logos del ${f} a las ${h}. Disculpa las molestias; te daremos otra fecha enseguida o puedes pedirla en Logos Acompanya.`)
+    : modo === 'cambiada'
+    ? (ca ? `${saludo}, hem canviat la teva cita de Logos${extra.antes ? ' (abans: ' + extra.antes + ')' : ''}. Nova cita: ${f} a les ${h}.${motivo ? ' Motiu: ' + motivo + '.' : ''} Pots confirmar-la o demanar un altre dia a Logos Acompanya.`
+          : `${saludo}, hemos cambiado tu cita en Logos${extra.antes ? ' (antes: ' + extra.antes + ')' : ''}. Nueva cita: ${f} a las ${h}.${motivo ? ' Motivo: ' + motivo + '.' : ''} Puedes confirmarla o pedir otro día en Logos Acompanya.`)
+    : ca
     ? `Hola${primer ? ' ' + primer : ''}, ${urgente ? 'tenim una cita important per a tu a Logos' : 't\'hem donat cita a Logos'}: ${f} a les ${h}.${motivo ? ' Motiu: ' + motivo + '.' : ''} Si no pots venir, cancel·la-la a Logos Acompanya o truca\'ns.`
     : `Hola${primer ? ' ' + primer : ''}, ${urgente ? 'tenemos una cita importante para ti en Logos' : 'te hemos dado cita en Logos'}: ${f} a las ${h}.${motivo ? ' Motivo: ' + motivo + '.' : ''} Si no puedes venir, cancélala en Logos Acompanya o llámanos.`;
-  window.__avisoCita = { uid, texto, tel: p.telefono || '', email: p.email || '' };
+  window.__avisoCita = { uid, texto, tel: p.telefono || '', email: p.email || '', nombre: primer, f, h, motivo: motivo || '', modo, nombreCompleto: nombre || p.nombre_completo || '' };
   const ov = document.createElement('div'); ov.id = 'aviso-cita-ov';
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px;';
   ov.innerHTML = `<div style="background:#fff;border-radius:14px;max-width:440px;width:100%;padding:18px;max-height:90vh;overflow:auto;">
-    <h3 style="margin:0 0 6px;">✅ ${ca ? 'Cita creada' : 'Cita creada'}</h3>
+    <h3 style="margin:0 0 6px;">${modo === 'cancelada' ? '✖ ' + (ca ? 'Cita cancel·lada' : 'Cita cancelada') : modo === 'cambiada' ? '🔁 ' + (ca ? 'Cita canviada' : 'Cita cambiada') : '✅ ' + (ca ? 'Cita creada' : 'Cita creada')}</h3>
     <p style="font-size:13px;margin:0 0 8px;">${ca ? 'Vols avisar la persona? Revisa el missatge i envia\'l.' : '¿Quieres avisar a la persona? Revisa el mensaje y envíalo.'}</p>
+    <div class="field" style="margin-bottom:8px;"><label style="font-size:12px;">${ca ? 'Plantilla de missatge' : 'Plantilla de mensaje'}</label>
+      <select id="aviso-cita-plantilla" onchange="aplicarPlantillaAvisoCita(this.value)" style="width:100%;"><option value="">${ca ? 'Missatge de cita (per defecte)' : 'Mensaje de cita (por defecto)'}</option></select></div>
     <textarea id="aviso-cita-texto" rows="5" style="width:100%;box-sizing:border-box;">${escAttr(texto)}</textarea>
+    <p class="subtle" style="font-size:11.5px;margin:6px 0 0;">${ca ? 'WhatsApp s\'obre amb el missatge a punt: només cal prémer enviar. A més, la cita surt a Logos Acompanya, on la persona pot confirmar-la o demanar un altre dia.' : 'WhatsApp se abre con el mensaje listo: solo hay que pulsar enviar. Además la cita aparece en Logos Acompanya, donde la persona puede confirmarla o pedir otro día.'}</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
       ${p.telefono ? `<button class="primary-btn" style="margin:0;width:auto;" onclick="enviarAvisoCita('whatsapp')">📲 WhatsApp</button>` : ''}
       ${p.email ? `<button class="primary-btn" style="margin:0;width:auto;background:#8a8a8a;" onclick="enviarAvisoCita('correo')">✉️ ${ca ? 'Correu' : 'Correo'}</button>` : ''}
+      ${modo === 'cancelada' ? `<button class="primary-btn" style="margin:0;width:auto;background:var(--gold);" onclick="const a=window.__avisoCita;document.getElementById('aviso-cita-ov').remove();abrirNuevaCitaStaff(a.uid,a.nombreCompleto)">➕ ${ca ? 'Donar una altra cita' : 'Dar otra cita'}</button>` : ''}
       <button class="primary-btn" style="margin:0;width:auto;background:#bbb;" onclick="document.getElementById('aviso-cita-ov').remove()">${ca ? 'Ara no' : 'Ahora no'}</button>
     </div></div>`;
   document.body.appendChild(ov);
+  try {
+    const { data: pls } = await sb.from('plantillas_mensajes').select('id, titulo, contenido').eq('activo', true).order('creado_en', { ascending:true });
+    window.__plantillasAviso = pls || [];
+    const sel = document.getElementById('aviso-cita-plantilla');
+    if(sel) (pls || []).forEach(pl => { const o = document.createElement('option'); o.value = pl.id; o.textContent = pl.titulo; sel.appendChild(o); });
+  } catch(e){}
+}
+function aplicarPlantillaAvisoCita(id){
+  const a = window.__avisoCita; if(!a) return;
+  const ta = document.getElementById('aviso-cita-texto'); if(!ta) return;
+  if(!id){ ta.value = a.texto; return; }
+  const pl = (window.__plantillasAviso || []).find(x => x.id === id); if(!pl) return;
+  let t = String(pl.contenido || '').replace(/\{nombre\}/gi, a.nombre || '').replace(/\{fecha\}/gi, a.f).replace(/\{hora\}/gi, a.h).replace(/\{motivo\}/gi, a.motivo);
+  // Si la plantilla no menciona la cita, se añade el día y la hora para que el mensaje sea completo
+ if(a.modo !== 'cancelada' && !/\{fecha\}|\{hora\}/i.test(pl.contenido || '')) t += '\n\n' + (LANG_I === 'ca' ? `Cita: ${a.f} a les ${a.h}.` : `Cita: ${a.f} a las ${a.h}.`);
+  ta.value = t;
+  window.__avisoCita.plantillaTitulo = pl.titulo;
 }
 async function enviarAvisoCita(canal){
   const a = window.__avisoCita; if(!a) return;
@@ -3961,7 +4046,7 @@ async function enviarAvisoCita(canal){
   } else {
     window.location.href = 'mailto:' + a.email + '?subject=' + encodeURIComponent('Cita en Logos') + '&body=' + encodeURIComponent(texto);
   }
-  await sb.from('mensajes_enviados').insert({ usuario_id: a.uid, tecnico_email: CURRENT_USER.email, plantilla_titulo: 'Aviso de cita', contenido_final: texto, canal: canal === 'whatsapp' ? 'whatsapp' : 'email' });
+  await sb.from('mensajes_enviados').insert({ usuario_id: a.uid, tecnico_email: CURRENT_USER.email, plantilla_titulo: a.plantillaTitulo || (a.modo === 'cancelada' ? 'Aviso de cita cancelada' : a.modo === 'cambiada' ? 'Aviso de cita cambiada' : 'Aviso de cita'), contenido_final: texto, canal: canal === 'whatsapp' ? 'whatsapp' : 'email' });
   const ov = document.getElementById('aviso-cita-ov'); if(ov) ov.remove();
 }
 
@@ -3992,7 +4077,9 @@ async function renderProximasCitas(){
           return `<div class="panel-card">
             <div class="panel-stat-row"><span><strong>${c.hora || '—'}</strong></span><span class="chip ${c.estado==='confirmada'?'good':'gold'}">${c.estado}</span></div>
             <div class="panel-stat-row"><span>${esCA?'Persona usuària':'Persona usuaria'}</span><span><strong>${p.nombre_completo || (esCA?'Sense nom':'Sin nombre')}</strong></span></div>
+            ${respuestaCitaHtml(c)}
             ${contactoCitaHtml(p)}
+            ${citaAccionesHtml(c, p.nombre_completo)}
             ${c.usuario_id ? `<button class="link-btn" style="font-size:12px;margin-top:8px;" onclick="verPersonaStaff('${c.usuario_id}','agenda')">${TI[LANG_I].verInfoCompleta}</button>` : ''}
           </div>`;
         }).join('');
@@ -7884,6 +7971,58 @@ async function limpiarRegistrosAntiguos(tipo){
 
 // ================= ACCESO DEL PERSONAL: contraseña propia, baja de personas y reparto de alertas =================
 const acL = (es, ca) => LANG_I === 'ca' ? ca : es;
+
+// ---------- Horario de atención de Logos (1 = lunes … 7 = domingo) ----------
+// Lunes, martes y jueves: 8–14 y 16–20, con cita. Miércoles: mismo horario; de 9 a 13 h sin cita previa y el resto con cita. Viernes: 8–14 con cita; tarde cerrado.
+const LOGOS_HORARIO = {
+  1: { m:['08:00','14:00'], t:['16:00','20:00'], cita:true },
+  2: { m:['08:00','14:00'], t:['16:00','20:00'], cita:true },
+  3: { m:['08:00','14:00'], t:['16:00','20:00'], cita:true, sinCita:['09:00','13:00'] },
+  4: { m:['08:00','14:00'], t:['16:00','20:00'], cita:true },
+  5: { m:['08:00','14:00'], t:null, cita:true }
+};
+function logosMadridAhora(){
+  try {
+    const p = {}; new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/Madrid', weekday:'short', hour:'2-digit', minute:'2-digit', hour12:false }).formatToParts(new Date()).forEach(x => { p[x.type] = x.value; });
+    const dias = { Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6, Sun:7 };
+    return { dia: dias[p.weekday] || 1, min: (Number(p.hour) % 24) * 60 + Number(p.minute) };
+  } catch(e){ const d = new Date(); return { dia: d.getDay() === 0 ? 7 : d.getDay(), min: d.getHours() * 60 + d.getMinutes() }; }
+}
+const logosMin = hhmm => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
+function logosTramosDia(dia){ const h = LOGOS_HORARIO[dia]; return h ? [h.m, h.t].filter(Boolean) : []; }
+function logosEstadoAhora(){
+  const n = logosMadridAhora(), h = LOGOS_HORARIO[n.dia];
+  const tramo = logosTramosDia(n.dia).find(t => n.min >= logosMin(t[0]) && n.min < logosMin(t[1]));
+  if(tramo) return { abierto:true, sinCita: !!(h.sinCita && n.min >= logosMin(h.sinCita[0]) && n.min < logosMin(h.sinCita[1])), hasta: tramo[1] };
+  // Próxima apertura
+  for(let i = 0; i < 8; i++){
+    const dia = ((n.dia - 1 + i) % 7) + 1;
+    for(const t of logosTramosDia(dia)){
+      if(i === 0 && logosMin(t[0]) <= n.min) continue;
+      return { abierto:false, proximo: t[0], dias: i, dia };
+    }
+  }
+  return { abierto:false };
+}
+function logosEstadoHtml(){
+  const ca = LANG_I === 'ca', e = logosEstadoAhora();
+  const nomDia = d => (ca ? ['dilluns','dimarts','dimecres','dijous','divendres'] : ['lunes','martes','miércoles','jueves','viernes'])[d - 1] || '';
+  let txt, bg, col;
+  if(e.abierto){
+    bg = '#E3F5E8'; col = '#17663A';
+    txt = `🟢 <strong>${ca ? 'Obert ara' : 'Abierto ahora'}</strong> · ${e.sinCita ? (ca ? 'sense cita prèvia' : 'sin cita previa') : (ca ? 'amb cita prèvia' : 'con cita previa')} · ${ca ? 'fins a les' : 'hasta las'} ${e.hasta}`;
+  } else {
+    bg = '#FBE4E4'; col = '#9B1C1C';
+    const cuando = e.proximo ? (e.dias === 0 ? (ca ? 'avui' : 'hoy') : e.dias === 1 ? (ca ? 'demà' : 'mañana') : (ca ? 'el ' : 'el ') + nomDia(e.dia)) + ' ' + (ca ? 'a les' : 'a las') + ' ' + e.proximo : '';
+    txt = `🔴 <strong>${ca ? 'Tancat ara' : 'Cerrado ahora'}</strong>${cuando ? ' · ' + (ca ? 'obrim ' : 'abrimos ') + cuando : ''}`;
+  }
+  return `<div style="background:${bg};color:${col};border-radius:10px;padding:7px 12px;font-size:12.5px;margin:0 0 10px;display:inline-block;">${txt}</div>`;
+}
+function logosHorarioTexto(){
+  const ca = LANG_I === 'ca';
+  return ca ? 'Dilluns, dimarts i dijous: 8–14 h i 16–20 h (amb cita). Dimecres: 8–14 h i 16–20 h; de 9 a 13 h sense cita prèvia i la resta amb cita. Divendres: 8–14 h (amb cita); tarda tancat.'
+            : 'Lunes, martes y jueves: 8–14 h y 16–20 h (con cita). Miércoles: 8–14 h y 16–20 h; de 9 a 13 h sin cita previa y el resto con cita. Viernes: 8–14 h (con cita); tarde cerrado.';
+}
 let CLAVE_CAMBIADA = true;    // true = no se le pide nada (también si el SQL nuevo aún no está en Supabase)
 let REPARTO_OK = false;       // true cuando la base de datos ya tiene el reparto de alertas
 window.__alertasTodas = false;
@@ -8038,6 +8177,7 @@ function alternarAlertasTodas(){ window.__alertasTodas = !window.__alertasTodas;
 // ---------- Administrador: reparto de alertas ----------
 const ALERTA_TIPOS_TXT = {
   cita_nueva: ['Nueva cita pedida', 'Nova cita demanada'],
+  cita_respuesta: ['La persona ha contestado a su cita', 'La persona ha contestat la seva cita'],
   consulta_orientacion: ['Consulta de orientación', 'Consulta d\'orientació'],
   tramite_nuevo: ['Trámite empezado desde la app', 'Tràmit començat des de l\'app'],
   autorizacion_nueva: ['Autorización firmada (Jóvenes en acción)', 'Autorització signada (Joves en acció)'],
@@ -11632,6 +11772,7 @@ async function renderPanelGeneral(){
     </div>`).join('');
 
   cont.innerHTML = `
+    ${logosEstadoHtml()}
     <div class="topbar-pro">
       <div class="topbar-search">
         <span class="topbar-search-icon">🔎</span>
@@ -11838,9 +11979,9 @@ function construirVistaUnica(p, d, cardAtencion, extra){
         ? `<p style="margin:0 0 8px;">${ca ? 'Signat el' : 'Firmado el'} <strong>${fmt(p.consentimiento_fecha)}</strong>.</p><button class="primary-btn" id="btn-descargar-consent-vu" style="width:auto;margin:0;" data-id="${escAttr(p.id)}" data-nombre="${escAttr(p.nombre_completo || '')}" data-dni="${escAttr(p.dni_nie || '')}" data-fecha="${escAttr(p.consentimiento_fecha || '')}" onclick="descargarConsentimientoPDF(this.dataset.id, this.dataset.nombre, this.dataset.dni, this.dataset.fecha)">⬇️ ${ca ? 'Descarrega el consentiment' : 'Descargar el consentimiento'}</button>`
         : `<div class="empty-note">${ca ? 'Encara no l\'ha signat.' : 'Todavía no lo ha firmado.'}</div>`}</div>
     </details>
-    <div class="panel-card">
-      <h3 style="margin:0 0 8px;">${ca ? 'Historial complet' : 'Historial completo'} <span class="subtle" style="font-size:12px;">(${ev.length})</span></h3>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+    <details class="panel-card" ${plegableAbierto('ficha-historial', false) ? 'open' : ''} ontoggle="plegableGuardar('ficha-historial', this.open)">
+      <summary style="cursor:pointer;font-weight:700;font-size:15px;">🕘 ${ca ? 'Historial complet' : 'Historial completo'} <span class="subtle" style="font-size:12px;">(${ev.length})</span></summary>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;">
         <button class="chip gold vu-filtro" data-vu="todo" onclick="filtrarVistaUnica('todo')" style="cursor:pointer;border:none;">${ca ? 'Tot' : 'Todo'} ${ev.length}</button>
         ${chips.filter(c => c[2]).map(c => `<button class="chip vu-filtro" data-vu="${c[0]}" onclick="filtrarVistaUnica('${c[0]}')" style="cursor:pointer;border:none;">${c[1]} ${c[2]}</button>`).join('')}
       </div>
@@ -11852,7 +11993,7 @@ function construirVistaUnica(p, d, cardAtencion, extra){
           </summary>
           ${e.cuerpo ? `<div style="margin-top:6px;">${e.cuerpo}</div>` : ''}
         </details>`).join('') : `<div class="empty-note">${t.sinActividad}</div>`}
-    </div>`;
+    </details>`;
 }
 function filtrarVistaUnica(tipo){
   document.querySelectorAll('.vu-ev').forEach(e => { e.style.display = (tipo === 'todo' || e.dataset.tipo === tipo) ? '' : 'none'; });
@@ -12116,7 +12257,7 @@ async function verPersonaStaff(usuarioId, origen){
         <div class="panel-stat-row">
           <span>${new Date(c.fecha).toLocaleDateString(t.localeFecha)} · ${c.hora || ''}${c.motivo ? `<br><span class="subtle" style="font-size:11px;margin:0;">${c.motivo}</span>` : ''}</span>
           <span class="chip ${c.estado==='confirmada'?'good':(c.estado==='cancelada'?'':'gold')}" style="${c.estado==='cancelada'?'background:#EEE;color:#888;':''}">${c.estado}</span>
-        </div>`).join('')
+        </div>${respuestaCitaHtml(c)}${citaAccionesHtml(c, p.nombre_completo)}`).join('')
     : `<div class="empty-note">${t.sinCitasReg}</div>`;
 
   const staffOptions = (staffListRes.data || []).filter(s => s.activo !== false).map(s => `<option value="${s.email}" ${p.tecnico_responsable_email===s.email?'selected':''}>${s.nombre || s.email}</option>`).join('');
@@ -12139,7 +12280,7 @@ async function verPersonaStaff(usuarioId, origen){
             <option value="">${t.sinAsignar}</option>
             ${staffOptions}
           </select>
-          <button class="link-btn" style="font-size:12px;" onclick="asignarTecnicoResponsable()">${t.guardar}</button>
+          <button class="primary-btn" style="width:auto;margin:0;padding:6px 12px;font-size:12.5px;" onclick="asignarTecnicoResponsable()">💾 ${LANG_I==='ca'?'Assignar':'Asignar'}</button>
         </span>
       </div>
       ${campo('DNI/NIE', p.dni_nie)} ${campo(t.fechaNacimientoLbl, p.fecha_nacimiento)}
@@ -12598,10 +12739,27 @@ function mostrarTabPersona(nombre){
 }
 
 async function asignarTecnicoResponsable(){
-  const email = document.getElementById('tecnico-responsable-select').value;
-  const { error } = await sb.from('perfiles').update({ tecnico_responsable_email: email || null }).eq('id', window.__usuarioIdVisto);
-  if(error){ alert(error.message); return; }
-  verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
+  const sel = document.getElementById('tecnico-responsable-select');
+  const email = sel.value || null;
+  const uid = window.__usuarioIdVisto;
+  const ca = LANG_I === 'ca';
+  // 1) cambio directo; .select() permite saber si se aplicó de verdad (si la base lo bloquea no da error, solo 0 filas)
+  let { data, error } = await sb.from('perfiles').update({ tecnico_responsable_email: email }).eq('id', uid).select('id, tecnico_responsable_email');
+  let ok = !error && data && data.length && (data[0].tecnico_responsable_email || null) === email;
+  // 2) si no se aplicó, se usa la función segura del SQL 23
+  if(!ok){
+    const r = await sb.rpc('asignar_tecnico_responsable', { p_usuario: uid, p_email: email });
+    if(!r.error) ok = true;
+    else if(!/does not exist|schema cache|could not find/i.test(r.error.message || '')){ alert((ca ? 'No s\'ha pogut assignar: ' : 'No se pudo asignar: ') + r.error.message); return; }
+  }
+  if(!ok){
+    alert((error ? error.message + '\n\n' : '') + (ca ? 'La base de dades no ha deixat desar l\'assignació. Cal executar el SQL 23 a Supabase (una sola vegada).' : 'La base de datos no ha permitido guardar la asignación. Hay que ejecutar el SQL 23 en Supabase (una sola vez).'));
+    return;
+  }
+  await verPersonaStaff(uid, window.__origenPersonaVista);
+  const nom = email ? nombreTecnico(email) : (ca ? 'ningú' : 'nadie');
+  const el = document.getElementById('tecnico-responsable-select');
+  if(el){ const m = document.createElement('span'); m.className = 'chip good'; m.textContent = '✅ ' + (ca ? 'Assignat a ' : 'Asignado a ') + nom; el.parentElement.appendChild(m); setTimeout(() => m.remove(), 4000); }
 }
 
 function seleccionarResultado(btn){
