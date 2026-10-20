@@ -1163,7 +1163,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v107'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v110'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -4959,12 +4959,12 @@ function renderResultadosSeguimiento(busqueda){
 
   if(__seguimientoSoloTramites){
     personasFiltradas = personasFiltradas
-      .map(([usuarioId, lista]) => [usuarioId, lista.filter(item => item.tipo === 'tramite' && item.data.estado !== 'hecho')])
+      .map(([usuarioId, lista]) => [usuarioId, lista.filter(item => item.tipo === 'tramite' && !trCerrado(item.data.estado))])
       .filter(([, lista]) => lista.length);
-    sinPersonaFiltrada = sinPersonaFiltrada.filter(item => item.tipo === 'tramite' && item.data.estado !== 'hecho');
+    sinPersonaFiltrada = sinPersonaFiltrada.filter(item => item.tipo === 'tramite' && !trCerrado(item.data.estado));
   }
 
-  const enCursoDe = lista => lista.filter(x => x.tipo === 'tramite' && x.data.estado !== 'hecho').length;
+  const enCursoDe = lista => lista.filter(x => x.tipo === 'tramite' && !trCerrado(x.data.estado)).length;
   const ultimaDe = lista => { const m = Math.max(...lista.map(x => new Date(x.fecha || 0).getTime())); return m ? new Date(m).toLocaleDateString(t.localeFecha) : '—'; };
   const abrirPorDefecto = __seguimientoSoloTramites || (!!busqueda && personasFiltradas.length <= 3);
 
@@ -12615,11 +12615,11 @@ function renderTramiteCardExpediente(tr){
   const esCA = LANG_I === 'ca';
   const t = TI[LANG_I];
   return `<div class="panel-card">
-    <div class="panel-stat-row"><span style="font-weight:700;">📄 ${esCA?'Tràmit':'Trámite'}</span><span class="chip ${tr.estado==='hecho'?'good':'gold'}">${tr.estado}</span></div>
+    <div class="panel-stat-row"><span style="font-weight:700;">📄 ${esCA?'Tràmit':'Trámite'}</span><span class="chip ${tr.estado==='hecho'?'good':'gold'}" ${tr.estado==='anulado'?'style="background:#EEE;color:#777;"':''}>${estadoTramiteTxt(tr.estado)}</span></div>
     <div class="panel-stat-row"><span>${t.fechaLbl}</span><span><strong>${tr.fecha_inicio ? new Date(tr.fecha_inicio).toLocaleDateString(t.localeFecha) : '—'}</strong></span></div>
     <div class="panel-stat-row"><span>${esCA?'Nom':'Nombre'}</span><span>${tr.nombre_servicio}</span></div>
     ${tr.fecha_fin ? `<div class="panel-stat-row"><span>${t.finLbl}</span><span>${new Date(tr.fecha_fin).toLocaleDateString(t.localeFecha)}</span></div>` : ''}
-    ${tr.estado !== 'hecho' ? `<button class="link-btn" style="font-size:11px;" onclick="marcarTramiteHecho('${tr.id}')">${t.marcarHecho}</button>` : ''}
+    ${!trCerrado(tr.estado) ? `<button class="link-btn" style="font-size:11px;" onclick="marcarTramiteHecho('${tr.id}')">${t.marcarHecho}</button> <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="anularTramite('${tr.id}')">✖ ${esCA?'Anul·lar':'Anular'}</button>` : ''}
   </div>`;
 }
 
@@ -12656,7 +12656,7 @@ function construirVistaUnica(p, d, cardAtencion, extra){
   ev.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
   const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
   const proxima = d.citas.filter(c => c.fecha && new Date(c.fecha) >= hoy && !/cancel/i.test(c.estado || '')).sort((a, b) => new Date(a.fecha) - new Date(b.fecha))[0];
-  const tramAbiertos = d.tramites.filter(tr => tr.estado !== 'hecho').length;
+  const tramAbiertos = d.tramites.filter(tr => !trCerrado(tr.estado)).length;
   const dir = [p.calle, p.codigo_postal, p.municipio].filter(Boolean).join(', ');
   const fila = (l, v) => v ? `<div class="panel-stat-row"><span>${l}</span><span><strong>${h(v)}</strong></span></div>` : '';
   const chips = [['atencion', ca ? 'Atencions' : 'Atenciones', d.atenciones.length], ['actuacion', ca ? 'Actuacions' : 'Actuaciones', d.actuaciones.length], ['tramite', ca ? 'Tràmits' : 'Trámites', d.tramites.length], ['cita', 'Citas', d.citas.length], ['mensaje', ca ? 'Missatges' : 'Mensajes', d.mensajes.length], ['documento', ca ? 'Documents' : 'Documentos', d.documentos.length]];
@@ -12895,7 +12895,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
           <span>${tr.nombre_servicio}<br><span class="subtle" style="font-size:11px;margin:0;">${t.inicioLbl}: ${tr.fecha_inicio ? new Date(tr.fecha_inicio).toLocaleDateString(t.localeFecha) : '—'}${tr.fecha_fin ? ' · ' + t.finLbl + ': ' + new Date(tr.fecha_fin).toLocaleDateString(t.localeFecha) : ''}</span></span>
           <span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
             <span class="chip ${tr.estado==='hecho'?'good':'gold'}">${estadoTramiteTxt(tr.estado)}</span>
-            ${tr.estado !== 'hecho' ? `<button class="link-btn" style="font-size:11px;" onclick="marcarTramiteHecho('${tr.id}')">${t.marcarHecho}</button>` : `<button class="link-btn" style="font-size:11px;" onclick="reabrirTramite('${tr.id}')">${acL('Reabrir','Reobrir')}</button>`}
+            ${!trCerrado(tr.estado) ? `<button class="link-btn" style="font-size:11px;" onclick="marcarTramiteHecho('${tr.id}')">${t.marcarHecho}</button><button class="link-btn" style="font-size:11px;" onclick="anularTramite('${tr.id}')">✖ ${acL('Anular','Anul·lar')}</button>` : `<button class="link-btn" style="font-size:11px;" onclick="reabrirTramite('${tr.id}')">${acL('Reabrir','Reobrir')}</button>`}
             <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="eliminarTramite('${tr.id}')">${acL('Eliminar','Eliminar')}</button>
           </span>
         </div>`).join('')
@@ -13659,13 +13659,21 @@ async function marcarTramiteHecho(tramiteId){
   verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
 }
 
+async function anularTramite(id){
+  if(!confirm(acL('¿Anular este trámite? Quedará en el historial como «Anulado» y dejará de contar como abierto.', 'Anul·lar aquest tràmit? Quedarà a l\'historial com «Anul·lat» i deixarà de comptar com a obert.'))) return;
+  const { data, error } = await sb.from('tramites').update({ estado:'anulado', fecha_fin: new Date().toISOString().slice(0,10) }).eq('id', id).select();
+  if(error){ alert(error.message + '\n\n' + acL('Si dice «violates check constraint», falta ejecutar el SQL 30.', 'Si diu «violates check constraint», falta executar l\'SQL 30.')); return; }
+  if(!data || !data.length){ alert(acL('No se pudo anular (sin permiso).', 'No s\'ha pogut anul·lar (sense permís).')); return; }
+  verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
+}
+function trCerrado(e){ return e === 'hecho' || e === 'anulado'; }
 function estadoTramiteTxt(e){
-  const m = { derivado_logos: acL('🙋 Pide ayuda a Logos', '🙋 Demana ajuda a Logos'), en_curso: acL('En curso', 'En curs'), hecho: acL('Hecho', 'Fet') };
+  const m = { derivado_logos: acL('🙋 Pide ayuda a Logos', '🙋 Demana ajuda a Logos'), en_curso: acL('En curso', 'En curs'), hecho: acL('Hecho', 'Fet'), anulado: acL('Anulado', 'Anul·lat') };
   return m[e] || e;
 }
 // Todo lo que la persona necesita, a la vista y con las acciones a un toque
 function construirNecesidadesFicha(tramites, consultas, p){
-  const abiertos = tramites.filter(tr => tr.estado !== 'hecho');
+  const abiertos = tramites.filter(tr => !trCerrado(tr.estado));
   const ayuda = abiertos.filter(tr => tr.estado === 'derivado_logos');
   const enCurso = abiertos.filter(tr => tr.estado !== 'derivado_logos');
   const pendientes = consultas.filter(c => c.estado !== 'respondida');
