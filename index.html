@@ -815,10 +815,15 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+// Librerías pesadas (PDF, Excel, QR): se descargan en segundo plano cuando la página ya está abierta
+(function(){ function cargar(){
+  ['html2canvas/1.4.1/html2canvas.min.js','jspdf/2.5.1/jspdf.umd.min.js','xlsx/0.18.5/xlsx.full.min.js','qrcode-generator/1.4.4/qrcode.min.js'].forEach(function(u){
+    var el = document.createElement('script'); el.src = 'https://cdnjs.cloudflare.com/ajax/libs/' + u; el.async = true; document.head.appendChild(el);
+  });
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', cargar); else cargar(); })();
+</script>
 <script>
 const SUPABASE_URL = 'https://foxtlpyfedwsvttzorql.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Ght82ml0pvg0_nQvunlXVA_u0WjRscq';
@@ -1153,7 +1158,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v102'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v104'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -1257,23 +1262,25 @@ async function checkStaff(){
   CLAVE_CAMBIADA = true; REPARTO_OK = false; JOVENES_OK = false; GP_OK = false; HR_OK = false; DELEGACION_OK = false;
   if(IS_STAFF){
     try {
-      const x = await sb.from('staff').select('clave_cambiada').eq('email', CURRENT_USER.email).maybeSingle();
+      // Todas las comprobaciones a la vez (antes iban una detrás de otra y la entrada tardaba muchos segundos)
+      const [x, r, j, g, hq, dq, iq, hpq, h2, h3, pe] = await Promise.all([
+        sb.from('staff').select('clave_cambiada').eq('email', CURRENT_USER.email).maybeSingle(),
+        sb.from('notificaciones').select('asignada_a_email').limit(1),
+        sb.from('notificaciones').select('para_jovenes').limit(1),
+        sb.from('personal_nominas').select('id').limit(1),
+        sb.from('personal_horarios').select('id').limit(1),
+        sb.from('staff').select('gestiona_alertas').limit(1),
+        sb.from('impacto_fichas').select('id').limit(1),
+        sb.from('personas_historicas').select('id').limit(1),
+        sb.from('personas_historicas').select('cp, datos').limit(1),
+        sb.from('personas_historicas').select('ethos').limit(1),
+        sb.from('perfiles').select('ethos').limit(1)
+      ]);
       if(!x.error) CLAVE_CAMBIADA = !!(x.data && x.data.clave_cambiada);
-      const r = await sb.from('notificaciones').select('asignada_a_email').limit(1);
-      REPARTO_OK = !r.error;
-      const j = await sb.from('notificaciones').select('para_jovenes').limit(1);
-      JOVENES_OK = !j.error;
-      const g = await sb.from('personal_nominas').select('id').limit(1);
-      GP_OK = !g.error;
-      const hq = await sb.from('personal_horarios').select('id').limit(1);
-      HR_OK = !hq.error;
-      const dq = await sb.from('staff').select('gestiona_alertas').limit(1);
-      DELEGACION_OK = !dq.error;
-      const iq = await sb.from('impacto_fichas').select('id').limit(1);
-      IMPACTO_OK = !iq.error;
-      const hpq = await sb.from('personas_historicas').select('id').limit(1); HISTORICAS_OK = !hpq.error;
-      if(HISTORICAS_OK){ const h2 = await sb.from('personas_historicas').select('cp, datos').limit(1); HIST_V2 = !h2.error; const h3 = await sb.from('personas_historicas').select('ethos').limit(1); HIST_ETHOS = !h3.error; }
-      const pe = await sb.from('perfiles').select('ethos').limit(1); PERFIL_ETHOS = !pe.error;
+      REPARTO_OK = !r.error; JOVENES_OK = !j.error; GP_OK = !g.error; HR_OK = !hq.error; DELEGACION_OK = !dq.error; IMPACTO_OK = !iq.error;
+      HISTORICAS_OK = !hpq.error;
+      if(HISTORICAS_OK){ HIST_V2 = !h2.error; HIST_ETHOS = !h3.error; }
+      PERFIL_ETHOS = !pe.error;
     } catch(e) { CLAVE_CAMBIADA = true; REPARTO_OK = false; JOVENES_OK = false; GP_OK = false; HR_OK = false; DELEGACION_OK = false; IMPACTO_OK = false; HISTORICAS_OK = false; }
   }
 }
@@ -5620,7 +5627,7 @@ async function guardarHorasContrato(email){
 }
 
 // ---------- QR para instalar Logos Acompanya en el móvil ----------
-const ACOMP_URL_DEFECTO = 'https://logos-acompana-digitalmente.netlify.app/';
+const ACOMP_URL_DEFECTO = 'https://acompanya.logostgn.cat/';
 function acompUrl(){ try { return localStorage.getItem('logos-acomp-url') || ACOMP_URL_DEFECTO; } catch(e){ return ACOMP_URL_DEFECTO; } }
 function acompUrlInstalar(){ const u = acompUrl(); return u + (u.includes('?') ? '&' : '?') + 'instalar=1'; }
 function qrSvgDe(texto, celda){
