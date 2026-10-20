@@ -220,6 +220,11 @@
   .at-sec .checkbox-row{margin:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;line-height:1.35;transition:border-color .15s,background .15s;}
   .at-sec .checkbox-row:hover{border-color:var(--gold);}
   .at-sec .checkbox-row:has(input:checked){border-color:var(--navy);background:var(--gold-soft);font-weight:600;}
+  .at-sec2 .at-opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px 12px;padding:4px 4px 6px;}
+  .at-sec2 .checkbox-row{margin:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;line-height:1.35;transition:border-color .15s,background .15s;}
+  .at-sec2 .checkbox-row:hover{border-color:var(--gold);}
+  .at-sec2 .checkbox-row:has(input:checked){border-color:var(--navy);background:var(--gold-soft);font-weight:600;}
+  .at-sec2>summary{text-transform:none !important;letter-spacing:0 !important;font-size:14px !important;}
   .at-form .field{margin-bottom:16px;}
   .at-obs{margin-top:4px;}
   .at-obs li{margin:0 0 8px;line-height:1.45;font-size:13.5px;}
@@ -1158,7 +1163,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v104'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v107'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -3063,8 +3068,8 @@ async function renderMiEspacio(){
     <div class="acciones-rapidas" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 14px;">
       <button class="primary-btn" style="margin:0;background:var(--navy,#1d3557);" onclick="abrirEscanerQR()">📷 ${LANG_I==='ca'?'Escanejar QR':'Escanear QR'}</button>
       <button class="primary-btn" style="margin:0;" onclick="showScreen('personas');renderPersonasScreen()">🔎 ${LANG_I==='ca'?'Cercar persona':'Buscar persona'}</button>
-      <button class="primary-btn" style="margin:0;" onclick="showScreen('atencion');renderAtencionForm()">➕ ${LANG_I==='ca'?'Atenció':'Atención'}</button>
-      <button class="primary-btn" style="margin:0;background:var(--gold);" onclick="showScreen('buscarpersona');renderBuscarPersonaActuacion()">📝 ${LANG_I==='ca'?'Actuació':'Actuación'}</button>
+      <button class="primary-btn" style="margin:0;" onclick="showScreen('atencion');renderAtencionForm()">📋 ${LANG_I==='ca'?'Fitxa d\'atenció':'Ficha de atención'}</button>
+      <button class="primary-btn" style="margin:0;background:var(--gold);" onclick="showScreen('buscarpersona');renderBuscarPersonaActuacion()">📂 ${LANG_I==='ca'?'Expedient / Actuació':'Expediente / Actuación'}</button>
       <button class="primary-btn" style="margin:0;background:var(--good);" onclick="showScreen('altapresencial');renderAltaPresencial()">🖊️ Alta presencial</button>
       <button class="primary-btn" style="margin:0;background:#8a8a8a;" onclick="abrirNuevaCitaStaff()">📅 ${LANG_I==='ca'?'Nova cita':'Nueva cita'}</button>
     </div>
@@ -3465,6 +3470,24 @@ function cerrarAtencionEnFicha(){
   const c = document.getElementById('atencion-en-ficha'); if(c) c.innerHTML = '';
   mostrarTabPersona('vista');
 }
+// ---------- Ficha de atención: bloques desplegables con contador de lo marcado ----------
+function secAt(titulo, cuerpo, clave){
+  return `<details class="plegable at-sec2" data-clave="${clave}"><summary><span>${titulo}</span><span class="plegable-n" data-n="${clave}">0</span></summary><div class="plegable-c"><div class="at-opts">${cuerpo}</div></div></details>`;
+}
+function atContadores(){
+  document.querySelectorAll('.at-sec2[data-clave]').forEach(d => {
+    const n = d.querySelectorAll('input:checked').length;
+    const chip = d.querySelector('[data-n]'); if(chip){ chip.textContent = n; chip.style.background = n ? 'var(--navy)' : ''; chip.style.color = n ? '#fff' : ''; }
+  });
+}
+function atPrefill(prev){
+  if(!prev) return;
+  const marca = (name, vals) => { const set = [].concat(vals || []); document.querySelectorAll(`input[name="${name}"]`).forEach(el => { el.checked = set.includes(el.value); }); };
+  marca('at-prestaciones', prev.prestaciones); marca('at-tramites', prev.tramites_bretxa); marca('at-programas', prev.derivacion_programas);
+  marca('at-talleres', prev.talleres); marca('at-ethos', prev.ethos); marca('at-derivacion', prev.derivacion); marca('at-emprendeduria', prev.emprendeduria); marca('at-conocio', prev.como_conocio);
+  const nn = document.getElementById('at-necesidades-nuevas'); if(nn && prev.necesidades_no_catalogadas) nn.value = prev.necesidades_no_catalogadas;
+  const nt = document.getElementById('at-notas'); if(nt && prev.notas) nt.value = prev.notas;
+}
 function renderAtencionForm(opts){
   opts = opts || {};
   const enFicha = !!(opts.usuarioId && document.getElementById('atencion-en-ficha'));
@@ -3474,14 +3497,16 @@ function renderAtencionForm(opts){
   const otro = document.getElementById(enFicha ? 'atencion-content' : 'atencion-en-ficha'); if(otro) otro.innerHTML = '';
   atContenedor().innerHTML = `
     <div class="at-form">
-    <h2 class="screen-title">${enFicha ? 'Registrar atención' + (opts.nombre ? ' · ' + escAttr(opts.nombre) : '') : 'Registrar atención'}</h2>
-    <p class="subtle">${enFicha ? 'Se guardará en la ficha de esta persona y a tu nombre' : 'Se guardará vinculada a tu correo'} (${CURRENT_USER.email}).</p>
+    <h2 class="screen-title">${enFicha ? 'Ficha de atención' + (opts.nombre ? ' · ' + escAttr(opts.nombre) : '') : 'Persona nueva · ficha de atención'}</h2>
+    ${enFicha
+      ? `<div class="nota-trabajo" style="margin-bottom:12px;"><strong class="t">📋 Una sola ficha por persona</strong>${(window.__atencionesPersona || [])[0] ? 'Esta persona ya tiene su ficha: <strong>revísala y complétala</strong>; se actualiza, no se crea otra.' : 'Aquí van los datos de la persona (los que ella ya rellenó solos o en el alta presencial) y los indicadores que completas tú.'} Cada visita o gestión se apunta aparte en el <strong>Expediente</strong> (nueva actuación).</div>`
+      : `<p class="subtle">Para una persona que todavía no tiene cuenta. Se guardará a tu nombre (${CURRENT_USER.email}).</p>`}
     <p style="margin:0 0 12px;"><button class="link-btn" onclick="exportarAtencionesExcel(${enFicha ? "'" + opts.usuarioId + "'" : ''})">⬇️ ${enFicha ? 'Excel de las atenciones de esta persona' : 'Excel con todas las atenciones (se completa solo con cada nueva)'}</button></p>
 
     ${enFicha ? '' : `
     <div class="panel-card" style="background:var(--ochre-soft);border:2px solid var(--ochre);margin:0 0 14px;">
       <div style="font-size:15px;font-weight:700;color:#7A4A1F;margin-bottom:4px;">✅ ¿La persona ya está registrada?</div>
-      <div style="font-size:14px;line-height:1.5;">Entonces <strong>no hace falta crear una atención nueva</strong>. Escribe su nombre aquí abajo, haz clic en ella y se abre su ficha: allí eliges lo que necesitas (atención, trámite, documento, cita, seguimiento…).</div>
+      <div style="font-size:14px;line-height:1.5;">Entonces <strong>no hace falta registrarla otra vez</strong>: tiene una sola ficha. Escribe su nombre aquí abajo y haz clic: se abre su ficha, donde completas sus datos y abres su expediente (actuaciones, trámites, citas, documentos…).</div>
     </div>
     <div class="panel-card" style="margin:0 0 14px;">
       <div class="field" style="margin:0;">
@@ -3497,10 +3522,10 @@ function renderAtencionForm(opts){
     </div>
     <details class="plegable" style="margin:0 0 14px;"><summary>ℹ️ ¿Cómo se usa esta página?</summary><div style="padding:8px 4px;font-size:13.5px;line-height:1.6;">
       <strong>1.</strong> Escribe el nombre en el buscador y toca a la persona: se abre su <em>ficha</em>.<br>
-      <strong>2.</strong> En la ficha, arriba, elige lo que quieres hacer: <em>Atención / Indicadores</em>, <em>Expediente</em> (trámites y seguimiento), <em>Proyectos</em>, <em>Formación</em>, <em>Documentos</em> o <em>Citas</em>.<br>
-      <strong>3.</strong> Si la persona <strong>no aparece</strong>, es que todavía no tiene cuenta: pulsa el botón de abajo y registra su atención con un nombre o iniciales.<br>
-      <strong>4.</strong> Al guardar, la atención queda a tu nombre y suma en los indicadores y en el Excel.</div></details>
-    <button class="primary-btn" id="at-btn-nueva" style="background:var(--gold);margin:0 0 14px;" onclick="document.getElementById('at-form-nueva').style.display='block';this.style.display='none';document.getElementById('at-nombre').focus();">👤 No la encuentro: registrar una atención nueva (persona sin cuenta)</button>
+      <strong>2.</strong> En la ficha, arriba, elige: <em>Ficha de atención</em> (datos e indicadores), <em>Expediente</em> (todas las actuaciones, trámites incluidos, hasta el cierre), <em>Proyectos</em>, <em>Formaciones</em>, <em>Documentos</em> o <em>Citas</em>.<br>
+      <strong>3.</strong> Si la persona <strong>no aparece</strong>, es que todavía no tiene cuenta: pulsa el botón de abajo y crea su ficha con un nombre o iniciales.<br>
+      <strong>4.</strong> Una persona = <strong>una sola ficha</strong> (ella rellena sus datos o se hace en el alta presencial; tú completas el resto). Cada visita o gestión se apunta como <em>actuación</em> en el Expediente.</div></details>
+    <button class="primary-btn" id="at-btn-nueva" style="background:var(--gold);margin:0 0 14px;" onclick="document.getElementById('at-form-nueva').style.display='block';this.style.display='none';document.getElementById('at-nombre').focus();">👤 No la encuentro: crear su ficha (persona sin cuenta)</button>
     <div id="at-form-nueva" style="display:none;">`}
 
     <div class="field" ${enFicha ? 'style="display:none;"' : ''}>
@@ -3509,18 +3534,18 @@ function renderAtencionForm(opts){
     </div>
 
     <div class="field">
-      <label>Duración estimada (minutos)</label>
+      <label>Duración de esta atención (minutos, opcional)</label>
       <input type="number" id="at-duracion" min="1" placeholder="Ej: 20">
     </div>
 
-    <div class="panel-card at-sec"><h3>Prestaciones económicas básicas</h3><div class="at-opts">${checkboxGroup('at-prestaciones', PRESTACIONES_OPTS)}</div></div>
-    <div class="panel-card at-sec"><h3>Trámites / proyectos dentro de Bretxa Logos</h3><div class="at-opts">${checkboxGroup('at-tramites', TRAMITES_BRETXA_OPTS)}</div></div>
-    <div class="panel-card at-sec"><h3>Derivación a los programas</h3><div class="at-opts">${checkboxGroup('at-programas', PROGRAMAS_OPTS)}</div></div>
-    <div class="panel-card at-sec"><h3>Talleres</h3><div class="at-opts">${checkboxGroup('at-talleres', TALLERES_OPTS)}</div></div>
-    <div class="panel-card at-sec"><h3>Situación residencial (ETHOS)</h3><div class="at-opts">${radioGroup('at-ethos', ETHOS_OPTS)}</div></div>
-    <div class="panel-card at-sec"><h3>Derivación</h3><div class="at-opts">${radioGroup('at-derivacion', DERIVACION_OPTS)}</div></div>
-    <div class="panel-card at-sec"><h3>Emprendeduría</h3><div class="at-opts">${checkboxGroup('at-emprendeduria', EMPRENDEDURIA_OPTS)}</div></div>
-    <div class="panel-card at-sec"><h3>¿Cómo nos conoció / quién derivó?</h3><div class="at-opts">${radioGroup('at-conocio', COMO_CONOCIO_OPTS)}</div></div>
+    ${secAt('💶 Prestaciones económicas básicas', checkboxGroup('at-prestaciones', PRESTACIONES_OPTS), 'at-prestaciones')}
+    ${secAt('🧾 Trámites / proyectos dentro de Bretxa Logos', checkboxGroup('at-tramites', TRAMITES_BRETXA_OPTS), 'at-tramites')}
+    ${secAt('🧭 Derivación a los programas', checkboxGroup('at-programas', PROGRAMAS_OPTS), 'at-programas')}
+    ${secAt('🛠️ Talleres', checkboxGroup('at-talleres', TALLERES_OPTS), 'at-talleres')}
+    ${secAt('🏠 Situación residencial (ETHOS)', radioGroup('at-ethos', ETHOS_OPTS), 'at-ethos')}
+    ${secAt('↗️ Derivación', radioGroup('at-derivacion', DERIVACION_OPTS), 'at-derivacion')}
+    ${secAt('🚀 Emprendeduría', checkboxGroup('at-emprendeduria', EMPRENDEDURIA_OPTS), 'at-emprendeduria')}
+    ${secAt('📣 ¿Cómo nos conoció / quién derivó?', radioGroup('at-conocio', COMO_CONOCIO_OPTS), 'at-conocio')}
 
     <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);margin-bottom:16px;">
       <h3 style="color:#7A5A16;">Necesidades detectadas que no están en el catálogo</h3>
@@ -3532,10 +3557,12 @@ function renderAtencionForm(opts){
       <textarea id="at-notas" rows="3" placeholder="Cualquier detalle útil: cómo llega la persona, qué le preocupa, próximos pasos…"></textarea>
     </div>
 
-    <button class="primary-btn" id="at-save-btn" onclick="guardarAtencion()" style="margin-bottom:${enFicha ? '8' : '24'}px;">Guardar atención</button>
+    <button class="primary-btn" id="at-save-btn" onclick="guardarAtencion()" style="margin-bottom:${enFicha ? '8' : '24'}px;">${enFicha ? ((window.__atencionesPersona || [])[0] ? '💾 Guardar cambios en la ficha' : '💾 Guardar ficha de atención') : 'Guardar atención'}</button>
     ${enFicha ? `<button class="link-btn" style="display:block;margin:0 auto 24px;" onclick="cerrarAtencionEnFicha()">Cancelar</button>` : '</div>'}
     </div>
   `;
+  if(enFicha) atPrefill((window.__atencionesPersona || [])[0]);
+  const raiz = atContenedor(); raiz.onchange = atContadores; atContadores();
 }
 
 let __busquedaAtencionTimeout = null;
@@ -3564,8 +3591,8 @@ async function renderBuscarPersonaActuacion(){
     : `<div class="empty-note">Todavía no hay actividad reciente.</div>`;
 
   cont.innerHTML = `
-    <h2 class="screen-title">Registrar actuación</h2>
-    <p class="subtle">Solo para personas que ya tienen cuenta creada en Logos Acompanya. Si es su primer contacto y todavía no tiene cuenta, usa "Registrar nueva atención" en su lugar.</p>
+    <h2 class="screen-title">Expediente / Actuación</h2>
+    <p class="subtle">Busca a la persona y abre su expediente: allí apuntas cada visita, trámite o paso hasta el cierre. Si todavía no tiene cuenta, crea primero su ficha desde «Ficha de atención».</p>
     <div class="panel-card">
       <h3>Acceso rápido — personas recientes</h3>
       <p class="subtle" style="margin:0 0 10px;">Un clic te lleva directo a su ficha, pestaña "Actuaciones".</p>
@@ -3639,6 +3666,10 @@ async function guardarAtencion(){
     return;
   }
   btn.disabled = true; btn.textContent = 'Guardando…';
+  if(window.__atencionEnFicha && window.__atencionUsuarioVinculado && document.getElementById('pds-nombre')){
+    const ok = await guardarDatosPersonaStaff(window.__atencionUsuarioVinculado, true);
+    if(ok === false){ btn.disabled = false; btn.textContent = 'Guardar'; return; }
+  }
 
   const getChecked = name => Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(el => el.value);
   const getRadio = name => { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : null; };
@@ -3660,24 +3691,40 @@ async function guardarAtencion(){
     notas: document.getElementById('at-notas').value.trim() || null
   };
 
-  let { error } = await sb.from('atenciones').insert(payload);
-  // Si la base de datos aún no tiene las columnas nuevas, se guarda igualmente sin ellas.
-  if(error && /derivacion_programas|talleres|ethos/.test(error.message || '')){
-    const { derivacion_programas, talleres, ethos, ...resto } = payload;
-    ({ error } = await sb.from('atenciones').insert(resto));
+  // Una sola ficha por persona: si ya tiene, se actualiza (no se crea otra). Si no se puede actualizar, se guarda como nueva.
+  const previa = (window.__atencionEnFicha && window.__atencionUsuarioVinculado) ? (window.__atencionesPersona || [])[0] : null;
+  let error = null, hecho = false;
+  if(previa){
+    const { creado_por_email, usuario_id, nombre_referencia, ...cambios } = payload;
+    let r = await sb.from('atenciones').update(cambios).eq('id', previa.id).select('id');
+    if(r.error && /derivacion_programas|talleres|ethos/.test(r.error.message || '')){
+      const { derivacion_programas, talleres, ethos, ...resto } = cambios;
+      r = await sb.from('atenciones').update(resto).eq('id', previa.id).select('id');
+    }
+    if(!r.error && r.data && r.data.length) hecho = true;
+  }
+  if(!hecho){
+    ({ error } = await sb.from('atenciones').insert(payload));
+    // Si la base de datos aún no tiene las columnas nuevas, se guarda igualmente sin ellas.
+    if(error && /derivacion_programas|talleres|ethos/.test(error.message || '')){
+      const { derivacion_programas, talleres, ethos, ...resto } = payload;
+      ({ error } = await sb.from('atenciones').insert(resto));
+    }
   }
   if(error){
     atContenedor().insertAdjacentHTML('afterbegin', `<div class="auth-error">${error.message}</div>`);
     btn.disabled = false; btn.textContent = 'Guardar atención';
     return;
   }
+  if(window.__atencionUsuarioVinculado){ try { await sb.from('avisos_espera').update({ atendido_en: new Date().toISOString(), atendido_por_email: CURRENT_USER.email }).eq('usuario_id', window.__atencionUsuarioVinculado).is('atendido_en', null); } catch(e){} }
   if(PERFIL_ETHOS && window.__atencionUsuarioVinculado && /^ethos[1-4]$/.test(payload.ethos || '')){ try { await sb.from('perfiles').update({ ethos: payload.ethos }).eq('id', window.__atencionUsuarioVinculado); } catch(e){} }
   if(window.__atencionEnFicha && window.__atencionUsuarioVinculado){
     // Vuelve a la ficha de la persona, ya con la atención en su expediente
     const uid = window.__atencionUsuarioVinculado;
     window.__atencionEnFicha = false;
     await verPersonaStaff(uid, window.__origenPersonaVista);
-    mostrarTabPersona('actuaciones');
+    mostrarTabPersona('atencion'); abrirAtencionEnFicha();
+    alert('✅ Ficha guardada.');
     return;
   }
   showScreen('miespacio');
@@ -3832,8 +3879,7 @@ async function renderAgendaCitas(fecha){
   const citasHtml = (citasDelDia && citasDelDia.length)
     ? citasDelDia.map(c => {
         const p = nombresAgenda[c.usuario_id] || {};
-        return `<div class="panel-card">
-          <div class="panel-stat-row"><span><strong>${c.hora || '—'}</strong></span><span class="chip ${c.estado==='confirmada'?'good':(c.estado==='cancelada'?'':'gold')}" style="${c.estado==='cancelada'?'background:#EEE;color:#888;':''}">${c.estado}</span></div>
+        return `<details class="plegable" ${(citasDelDia || []).length <= 6 ? 'open' : ''}><summary><span><strong>${c.hora || '—'}</strong> · ${escAttr(p.nombre_completo || (LANG_I==='ca'?'Sense nom':'Sin nombre'))}</span><span class="chip ${c.estado==='confirmada'?'good':(c.estado==='cancelada'?'':'gold')}" style="${c.estado==='cancelada'?'background:#EEE;color:#888;':''}">${c.estado}</span></summary><div class="plegable-c">
           <div class="panel-stat-row"><span>${LANG_I==='ca'?'Persona usuària':'Persona usuaria'}</span><span><strong>${p.nombre_completo || (LANG_I==='ca'?'Sense nom':'Sin nombre')}</strong></span></div>
           ${p.telefono ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Telèfon':'Teléfono'}</span><span>${p.telefono}</span></div>` : ''}
           ${c.motivo ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Motiu':'Motivo'}</span><span>${c.motivo}</span></div>` : ''}
@@ -3841,7 +3887,7 @@ async function renderAgendaCitas(fecha){
           ${contactoCitaHtml(p)}
           ${citaAccionesHtml(c, p.nombre_completo)}
           ${c.usuario_id ? `<button class="link-btn" style="font-size:12px;margin-top:8px;" onclick="verPersonaStaff('${c.usuario_id}','agenda')">${t.verInfoCompleta}</button>` : ''}
-        </div>`;
+        </div></details>`;
       }).join('')
     : `<div class="empty-note">${LANG_I==='ca' ? 'Sense cites aquest dia.' : 'Sin citas este día.'}</div>`;
 
@@ -4260,14 +4306,12 @@ async function renderProximasCitas(){
         const fechaFmt = new Date(fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, { weekday:'long', day:'numeric', month:'long' });
         const filas = porDia[fecha].map(c => {
           const p = nombres[c.usuario_id] || {};
-          return `<div class="panel-card">
-            <div class="panel-stat-row"><span><strong>${c.hora || '—'}</strong></span><span class="chip ${c.estado==='confirmada'?'good':'gold'}">${c.estado}</span></div>
-            <div class="panel-stat-row"><span>${esCA?'Persona usuària':'Persona usuaria'}</span><span><strong>${p.nombre_completo || (esCA?'Sense nom':'Sin nombre')}</strong></span></div>
+          return `<details class="plegable" open><summary><span><strong>${c.hora || '—'}</strong> · ${escAttr(p.nombre_completo || (esCA?'Sense nom':'Sin nombre'))}</span><span class="chip ${c.estado==='confirmada'?'good':'gold'}">${c.estado}</span></summary><div class="plegable-c">
             ${respuestaCitaHtml(c)}
             ${contactoCitaHtml(p)}
             ${citaAccionesHtml(c, p.nombre_completo)}
             ${c.usuario_id ? `<button class="link-btn" style="font-size:12px;margin-top:8px;" onclick="verPersonaStaff('${c.usuario_id}','agenda')">${TI[LANG_I].verInfoCompleta}</button>` : ''}
-          </div>`;
+          </div></details>`;
         }).join('');
         return `<p class="subtle" style="font-weight:700;text-transform:capitalize;margin-top:14px;">${fechaFmt}</p><div class="cards-grid">${filas}</div>`;
       }).join('')
@@ -11814,7 +11858,7 @@ function guiaUsoHtml(){
     [L('Ficha la entrada y elige sala.', 'Fitxa l\'entrada i tria sala.'), L('En «Mi espacio» ves tu horario, el botón de fichar y las salas: Empezar ahora, Reservar para más tarde o Bloquear toda la sala.', 'A «El meu espai» veus el teu horari, el botó de fitxar i les sales: Començar ara, Reservar per més tard o Bloquejar tota la sala.')],
     [L('Revisa el Inicio.', 'Revisa l\'Inici.'), L('Alertas nuevas, consultas de orientación pendientes y próximas revisiones. Cada bloque se pliega.', 'Alertes noves, consultes d\'orientació pendents i properes revisions. Cada bloc es plega.')],
     [L('Atiende a la persona.', 'Atén la persona.'), L('Búscala en «Personas usuarias» por nombre, DNI o teléfono. Si viene sin cuenta, usa «Alta presencial».', 'Cerca-la a «Persones usuàries» per nom, DNI o telèfon. Si ve sense compte, fes servir «Alta presencial».')],
-    [L('Registra lo que haces.', 'Registra el que fas.'), L('Desde «Mi espacio»: «Registrar atención» o «Registrar actuación». Los trámites, en «Expedientes»; las citas, en «Citas y calendario».', 'Des de «El meu espai»: «Registrar atenció» o «Registrar actuació». Els tràmits, a «Expedients»; les cites, a «Cites i calendari».')],
+    [L('Registra lo que haces.', 'Registra el que fas.'), L('Una persona, una sola ficha: busca a la persona, completa su «Ficha de atención» y apunta cada visita o gestión como actuación en su «Expediente». Las citas, en «Citas y calendario».', 'Una persona, una sola fitxa: cerca la persona, completa la seva «Fitxa d\'atenció» i apunta cada visita o gestió com a actuació al seu «Expedient». Les cites, a «Cites i calendari».')],
     [L('Mide el cambio.', 'Mesura el canvi.'), L('En «Impacto» → «Mis fichas», crea la ficha con un código o iniciales, nunca con el nombre.', 'A «Impacte» → «Les meves fitxes», crea la fitxa amb un codi o inicials, mai amb el nom.')],
     [L('Cierra bien.', 'Tanca bé.'), L('Ficha la salida y cierra la sesión si el equipo es compartido.', 'Fitxa la sortida i tanca la sessió si l\'equip és compartit.')]
   ];
@@ -12974,26 +13018,26 @@ async function verPersonaStaffInterno(usuarioId, origen){
   window.__nombrePersonaVista = p.nombre_completo || '';
   window.__atencionEnFicha = false;
   window.__tramitesFicha = {}; (tramitesRes.data || []).forEach(tr => { window.__tramitesFicha[tr.id] = tr.nombre_servicio || ''; });
+  window.__atencionesPersona = atencionesRes.data || [];
   const necesidadesHtml = construirNecesidadesFicha(tramitesRes.data || [], consultasRes.data || [], p);
   cont.innerHTML = `
     <h2 class="screen-title">${p.nombre_completo || t.sinNombre}</h2>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 12px;">
-      <button class="primary-btn" style="width:auto;margin:0;" onclick="abrirAtencionEnFicha()">➕ ${LANG_I==='ca'?'Registrar atenció':'Registrar atención'}</button>
-      <button class="primary-btn" style="width:auto;margin:0;background:var(--gold);" onclick="mostrarTabPersona('actuaciones');document.getElementById('act-descripcion').scrollIntoView({behavior:'smooth',block:'center'})">📝 ${LANG_I==='ca'?'Nova actuació':'Nueva actuación'}</button>
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="abrirAtencionEnFicha()">📋 ${LANG_I==='ca'?'Fitxa d\'atenció':'Ficha de atención'}</button>
+      <button class="primary-btn" style="width:auto;margin:0;background:var(--gold);" onclick="mostrarTabPersona('actuaciones');document.getElementById('act-descripcion').scrollIntoView({behavior:'smooth',block:'center'})">📝 ${LANG_I==='ca'?'Afegir actuació a l\'expedient':'Añadir actuación al expediente'}</button>
     </div>
     <div class="nota-trabajo"><strong class="t">📌 ${LANG_I==='ca'?'Aquesta fitxa és el lloc de treball':'Esta ficha es el lugar de trabajo'}</strong>${LANG_I==='ca'
       ? 'Aquí es registren totes les actuacions: <strong>tràmits, projectes i seguiment fins al tancament</strong>. Tria a sota què vols fer.'
       : 'Aquí se registran todas las actuaciones: <strong>trámites, proyectos y seguimiento hasta el cierre</strong>. Elige abajo lo que quieres hacer.'}</div>
     <div class="persona-tabs">
       <button class="ptab-btn principal active" data-tab="vista" onclick="mostrarTabPersona('vista')">🔎 ${LANG_I==='ca'?'Resum':'Resumen'}</button>
-      <button class="ptab-btn principal" data-tab="atencion" onclick="abrirAtencionEnFicha()">➕ ${LANG_I==='ca'?'Atenció / Indicadors':'Atención / Indicadores'}</button>
+      <button class="ptab-btn principal" data-tab="atencion" onclick="abrirAtencionEnFicha()">📋 ${LANG_I==='ca'?'Fitxa d\'atenció':'Ficha de atención'}</button>
       <button class="ptab-btn principal" data-tab="actuaciones" onclick="mostrarTabPersona('actuaciones')">📂 ${LANG_I==='ca'?'Expedient':'Expediente'}</button>
       <button class="ptab-btn principal" data-tab="proyectos" onclick="mostrarTabPersona('proyectos')">🧩 ${t.tabProyectos}</button>
       <button class="ptab-btn principal" data-tab="formaciones" onclick="mostrarTabPersona('formaciones')">🎓 ${t.tabFormaciones}</button>
       <span class="ptab-sep"></span>
       <button class="ptab-btn secundaria" data-tab="documentos" onclick="mostrarTabPersona('documentos')">📄 ${t.tabDocumentos}</button>
       <button class="ptab-btn secundaria" data-tab="citas" onclick="mostrarTabPersona('citas')">📅 ${t.tabCitas}</button>
-      <button class="ptab-btn secundaria" data-tab="datos" onclick="mostrarTabPersona('datos')">📋 ${LANG_I==='ca'?'Dades personals':'Datos personales'}</button>
       <button class="ptab-btn secundaria" data-tab="derivaciones" onclick="mostrarTabPersona('derivaciones')">↗️ ${t.tabDerivaciones}</button>
       <button class="ptab-btn secundaria" data-tab="historial" onclick="mostrarTabPersona('historial')">🕘 ${t.tabHistorial}</button>
       <button class="ptab-btn secundaria" data-tab="quienatendio" onclick="mostrarTabPersona('quienatendio')">👥 ${t.tabQuienAtendio}</button>
@@ -13052,11 +13096,9 @@ async function verPersonaStaffInterno(usuarioId, origen){
 
     </div>
 
-    <div class="ptab-content" id="ptab-atencion"><div id="atencion-en-ficha"></div></div>
-
-    <div class="ptab-content" id="ptab-datos">
-      <div class="panel-card">
-        <h3>📋 ${LANG_I==='ca'?'Dades personals':'Datos personales'}</h3>
+    <div class="ptab-content" id="ptab-atencion">
+      <details class="plegable" id="sec-datos" open><summary><span>📋 ${LANG_I==='ca'?'Dades de la persona':'Datos de la persona'}</span><span class="plegable-n">${LANG_I==='ca'?'ella i tu':'ella y tú'}</span></summary><div class="plegable-c">
+      <div>
         <p class="subtle" style="margin:0 0 14px;">${LANG_I==='ca'
           ? 'Completa aquí les dades que falten quan ajudis la persona per telèfon, WhatsApp o presencialment.'
           : 'Completa aquí los datos que falten cuando ayudes a la persona por teléfono, WhatsApp o presencialmente.'}</p>
@@ -13102,11 +13144,10 @@ async function verPersonaStaffInterno(usuarioId, origen){
           </select>
         </div>
         <div class="field"><label>${LANG_I==='ca'?'Nivell d\'ingressos':'Nivel de ingresos'}</label><input type="text" id="pds-ingresos" value="${p.nivel_ingresos||''}"></div>
-        <div class="field"><label>${LANG_I==='ca'?'Situació residencial (ETHOS)':'Situación residencial (ETHOS)'}</label>
-          <select id="pds-ethos"><option value="">—</option>${ETHOS_OPTS.map(o => `<option value="${o[0]}" ${p.ethos===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>
-          ${PERFIL_ETHOS ? '' : `<p class="subtle" style="font-size:11px;margin:4px 0 0;">${LANG_I==='ca'?'Cal executar el SQL 21 per desar-ho.':'Falta ejecutar el SQL 21 para guardarlo.'}</p>`}</div>
-        <button class="primary-btn" onclick="guardarDatosPersonaStaff('${p.id}')">💾 ${LANG_I==='ca'?'Desar dades':'Guardar datos'}</button>
+        <p class="subtle" style="margin:6px 0 0;font-size:12px;">${LANG_I==='ca'?'Es desa amb el botó «Desar» del final de la fitxa.':'Se guarda con el botón «Guardar» del final de la ficha.'}</p>
       </div>
+      </div></details>
+      <div id="atencion-en-ficha"></div>
     </div>
 
     <div class="ptab-content" id="ptab-proyectos">
@@ -13147,9 +13188,9 @@ async function verPersonaStaffInterno(usuarioId, origen){
     </div>
 
     <div class="ptab-content" id="ptab-actuaciones">
-      <div class="nota-trabajo"><strong class="t">📂 ${LANG_I==='ca'?'Expedient: seguiment fins al tancament':'Expediente: seguimiento hasta el cierre'}</strong>${LANG_I==='ca'
-        ? 'Cada cosa que es fa amb la persona s\'apunta aquí (actuació, tràmit, projecte, formació). Posa la data, què s\'ha fet i el <em>proper pas</em>; quan estigui resolt, marca-ho com a finalitzat.'
-        : 'Todo lo que se hace con la persona se apunta aquí (actuación, trámite, proyecto, formación). Pon la fecha, qué se ha hecho y el <em>próximo paso</em>; cuando esté resuelto, márcalo como finalizado.'}</div>
+      <div class="nota-trabajo"><strong class="t">📂 ${LANG_I==='ca'?'Expedient = la carpeta de la persona, oberta fins al tancament':'Expediente = la carpeta de la persona, abierta hasta el cierre'}</strong>${LANG_I==='ca'
+        ? 'Tot el que es treballa amb la persona és una <strong>actuació</strong> dins del seu expedient (atenció, tràmit, projecte, formació). Posa la data, què s\'ha fet i el <em>proper pas</em>; quan estigui resolt, marca-ho com a finalitzat.'
+        : 'Todo lo que se trabaja con la persona es una <strong>actuación</strong> dentro de su expediente (atención, trámite, proyecto, formación). Pon la fecha, qué se ha hecho y el <em>próximo paso</em>; cuando esté resuelto, márcalo como finalizado.'}</div>
       <div class="panel-card">
         ${actuacionesHtml}
         <div class="doc-upload-row" style="margin-top:10px;text-align:left;">
@@ -13462,11 +13503,11 @@ async function descargarConsentimientoPDF(usuarioId, nombre, dni, fechaFirma){
   }
 }
 
-async function guardarDatosPersonaStaff(usuarioId){
+async function guardarDatosPersonaStaff(usuarioId, silencioso){
   const val = id => document.getElementById(id).value.trim();
   const boolOrNull = v => v === '' ? null : v === 'true';
   const correo = val('pds-email');
-  if(correo && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(correo)){ alert(acL('El correo no parece válido. Revisa que lleve @ y un dominio (por ejemplo nombre@gmail.com).', 'El correu no sembla vàlid. Revisa que porti @ i un domini (per exemple nom@gmail.com).')); return; }
+  if(correo && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(correo)){ alert(acL('El correo no parece válido. Revisa que lleve @ y un dominio (por ejemplo nombre@gmail.com).', 'El correu no sembla vàlid. Revisa que porti @ i un domini (per exemple nom@gmail.com).')); return false; }
   const payload = {
     nombre_completo: val('pds-nombre') || null,
     telefono: val('pds-telefono') || null,
@@ -13487,14 +13528,17 @@ async function guardarDatosPersonaStaff(usuarioId){
     dependencia_reconocida: boolOrNull(document.getElementById('pds-dependencia').value),
     nivel_ingresos: val('pds-ingresos') || null
   };
-  if(PERFIL_ETHOS) payload.ethos = val('pds-ethos') || null;
+  if(PERFIL_ETHOS && document.getElementById('pds-ethos')) payload.ethos = val('pds-ethos') || null;
   const { error } = await sb.from('perfiles').update(payload).eq('id', usuarioId);
-  if(error){ alert(error.message); return; }
+  if(error){ alert(error.message); return false; }
+  if(silencioso) return true;
   alert(LANG_I==='ca' ? 'Dades desades correctament.' : 'Datos guardados correctamente.');
-  verPersonaStaff(usuarioId, 'panel');
+  await verPersonaStaff(usuarioId, window.__origenPersonaVista || 'panel');
+  mostrarTabPersona('atencion'); abrirAtencionEnFicha();
 }
 
 function mostrarTabPersona(nombre){
+  if(nombre === 'datos'){ nombre = 'atencion'; setTimeout(() => { const d = document.getElementById('sec-datos'); if(d){ d.open = true; d.scrollIntoView({ behavior:'smooth', block:'start' }); } }, 50); }
   document.querySelectorAll('.ptab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === nombre));
   document.querySelectorAll('.ptab-content').forEach(c => c.classList.toggle('active', c.id === 'ptab-'+nombre));
 }
@@ -13785,6 +13829,12 @@ async function renderAdministrador(){
   __adminActuacionesTodas = actuacionesPrimeraPagina.data || [];
   __adminActuacionesOffset = __adminActuacionesTodas.length;
   const totalActuaciones = actuacionesCountRes.count || 0;
+  // Los trámites cuentan como actuaciones (tipo «Trámite») en el registro y en el total
+  try {
+    const trAdm = await traerTodoPaginado((x, y) => sb.from('tramites').select('id, usuario_id, nombre_servicio, estado, fecha_inicio').range(x, y));
+    window.__adminTramitesExtra = ((trAdm && trAdm.data) || []).map(tr => ({ id:'tr-'+tr.id, usuario_id: tr.usuario_id, fecha: tr.fecha_inicio, categoria: LANG_I==='ca'?'Tràmit':'Trámite', descripcion: tr.nombre_servicio + ' (' + (tr.estado==='hecho' ? (LANG_I==='ca'?'tancat':'cerrado') : (LANG_I==='ca'?'en curs':'en curso')) + ')', es_tramite:true }));
+  } catch(e){ window.__adminTramitesExtra = []; }
+  const totalActuacionesConTramites = totalActuaciones + (window.__adminTramitesExtra || []).length;
   __adminSalasTodos = salasPrimeraPagina.data || [];
   __adminSalasOffset = __adminSalasTodos.length;
   const totalSalas = salasCountRes.count || 0;
@@ -14062,7 +14112,7 @@ async function renderAdministrador(){
     </div>
     ${carpetaCierra()}
 
-    ${carpetaAbre({ clave: 'adm-sec:actuaciones', icono: '📝', titulo: LANG_I==='ca' ? 'Registre d\'actuacions (expedients)' : 'Registro de actuaciones (expedientes)', cuenta: totalActuaciones })}
+    ${carpetaAbre({ clave: 'adm-sec:actuaciones', icono: '📝', titulo: LANG_I==='ca' ? 'Registre d\'actuacions (expedients)' : 'Registro de actuaciones (expedientes)', cuenta: totalActuacionesConTramites })}
     <p class="subtle" style="margin-top:6px;">${t.registroActuacionesDesc}</p>
     <div class="cards-grid" id="admin-actuaciones-grid">${renderFilasActuacionesAdmin(__adminActuacionesTodas)}</div>
     <div style="text-align:center;margin-top:18px;margin-bottom:24px;" id="admin-actuaciones-cargar-mas-wrap">
@@ -14159,6 +14209,7 @@ function historiaCopiar(){
 function renderFilasActuacionesAdmin(lista){
   const t = TI[LANG_I];
   const esCA = LANG_I === 'ca';
+  lista = (lista || []).concat(window.__adminTramitesExtra || []);
   if(!lista.length) return `<div class="empty-note">${t.sinActuacionesRegistradas}</div>`;
 
   // Agrupar por persona: una sola vez el nombre, con sus fechas de la más antigua a la más reciente.
@@ -14176,7 +14227,7 @@ function renderFilasActuacionesAdmin(lista){
     return masRecienteB - masRecienteA;
   });
 
-  const filaActuacion = (ac) => actuacionLineaHtml(ac, { vincular: !ac.usuario_id });
+  const filaActuacion = (ac) => actuacionLineaHtml(ac, { vincular: !ac.usuario_id && !ac.es_tramite, tecnico: !ac.es_tramite });
 
   const gruposHtml = personasOrdenadas.map(([usuarioId, acs]) => carpetaDesplegable({
     clave: 'adm:' + usuarioId, titulo: __adminNombresPersona[usuarioId] || t.sinNombre, cuenta: acs.length,
@@ -14740,10 +14791,10 @@ function guiaSlidesIntranet(){
       go: { txt: L('Ir a Personas usuarias', 'Anar a Persones usuàries'), run: ir('personas', renderPersonasScreen) } },
     { e: '📝', t: L('Registra lo que haces', 'Registra el que fas'),
       p: L('Cada atención cuenta: así Logos puede mostrar su trabajo.', 'Cada atenció compta: així Logos pot mostrar la seva feina.'),
-      l: [L('<strong>Registrar atención</strong> (Mi espacio): la visita o llamada, con prestaciones, trámites, derivación a programas y talleres.', '<strong>Registrar atenció</strong> (El meu espai): la visita o trucada, amb prestacions, tràmits, derivació a programes i tallers.'),
-          L('<strong>Registrar actuación</strong>: lo que haces dentro de un expediente.', '<strong>Registrar actuació</strong>: el que fas dins d\'un expedient.'),
+      l: [L('<strong>Ficha de atención</strong> (en la ficha de la persona): sus datos y los indicadores (prestaciones, trámites, programas, talleres, emprendeduría…). Es una sola ficha: se completa y se actualiza.', '<strong>Fitxa d\'atenció</strong> (a la fitxa de la persona): les seves dades i els indicadors (prestacions, tràmits, programes, tallers, emprenedoria…). És una sola fitxa: es completa i s\'actualitza.'),
+          L('<strong>Expediente</strong>: cada actuación (visita, llamada, trámite o paso) hasta el cierre.', '<strong>Expedient</strong>: cada actuació (visita, trucada, tràmit o pas) fins al tancament.'),
           L('Si la persona tiene cuenta, <strong>búscala</strong> arriba para vincularla.', 'Si la persona té compte, <strong>cerca-la</strong> a dalt per vincular-la.')],
-      go: { txt: L('Registrar una atención', 'Registrar una atenció'), run: ir('atencion', renderAtencionForm) } },
+      go: { txt: L('Buscar a una persona', 'Cercar una persona'), run: ir('atencion', renderAtencionForm) } },
     { e: '📂', t: L('Expedientes y citas', 'Expedients i cites'),
       l: [L('<strong>Expedientes</strong>: los trámites agrupados por persona. Usa <strong>📄 Mostrar solo trámites en curso</strong> para ver lo pendiente.', '<strong>Expedients</strong>: els tràmits agrupats per persona. Fes servir <strong>📄 Mostrar només tràmits en curs</strong> per veure el pendent.'),
           L('<strong>Citas y calendario</strong>: mira el día o las próximas citas. Cambia de día con las flechas. Con «➕ Nueva cita» (o desde la ficha de la persona) creas una cita a su nombre.', '<strong>Cites i calendari</strong>: mira el dia o les properes cites. Canvia de dia amb les fletxes. Amb «➕ Nova cita» (o des de la fitxa de la persona) crees una cita al seu nom.')],
