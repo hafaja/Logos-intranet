@@ -819,6 +819,37 @@
   </div>
 </div>
 
+<script>
+// Mantener la posición de la pantalla cuando una sección se vuelve a pintar (anular, marcar, guardar…): no salta al inicio.
+(function(){
+  try {
+    var d = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+    if(!d || !d.set) return;
+    function scrollers(){ var a = [document.scrollingElement, document.querySelector('.main')]; return a.filter(Boolean); }
+    Object.defineProperty(Element.prototype, 'innerHTML', {
+      configurable: true, enumerable: d.enumerable,
+      get: function(){ return d.get.call(this); },
+      set: function(v){
+        var id = this.id || '';
+        if(!/-content$/.test(id) || !this.isConnected) return d.set.call(this, v);
+        var self = this, lk = self.__lk;
+        if(!lk){
+          var best = null;
+          scrollers().forEach(function(s){ if(s.scrollTop > 60 && (!best || s.scrollTop > best.scrollTop)) best = s; });
+          if(!best) return d.set.call(this, v);
+          lk = self.__lk = { el: best, y: best.scrollTop, t: null };
+          self.style.minHeight = self.offsetHeight + 'px';
+        }
+        d.set.call(this, v);
+        var back = function(){ lk.el.scrollTop = lk.y; };
+        back(); requestAnimationFrame(back); setTimeout(back, 60);
+        clearTimeout(lk.t);
+        lk.t = setTimeout(function(){ self.style.minHeight = ''; self.__lk = null; }, 1000);
+      }
+    });
+  } catch(e){}
+})();
+</script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
 // Librerías pesadas (PDF, Excel, QR): se descargan en segundo plano cuando la página ya está abierta
@@ -1163,7 +1194,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v110'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v111'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
