@@ -1194,7 +1194,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v111'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v114'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -1534,7 +1534,30 @@ async function guardarUbicacionOficina(){
 
 // ---------- Fichaje: mientras la entrada está fichada, aviso permanente y aviso del navegador al cerrar ----------
 window.__fichajeAbierto = null;
+// Un fichaje abierto no puede durar más de FICHAJE_MAX_HORAS: el servidor lo cierra solo (SQL 31) y aquí se cierra también como refuerzo.
+const FICHAJE_MAX_HORAS = 12;
+function fichajeFin(f, ahora){
+  if(f.salida) return new Date(f.salida);
+  const tope = new Date(new Date(f.entrada).getTime() + FICHAJE_MAX_HORAS * 3600000);
+  return (ahora || new Date()) < tope ? (ahora || new Date()) : tope;
+}
+async function cerrarFichajesCaducados(){
+  try {
+    const r = await sb.rpc('cerrar_fichajes_caducados');
+    if(!r.error) return;
+  } catch(e){}
+  // Refuerzo sin SQL: cierra los fichajes propios que se quedaron abiertos
+  try {
+    if(!CURRENT_USER) return;
+    const limite = new Date(Date.now() - FICHAJE_MAX_HORAS * 3600000).toISOString();
+    const { data } = await sb.from('fichajes').select('id, entrada').eq('tecnico_email', CURRENT_USER.email).is('salida', null).lt('entrada', limite);
+    for(const f of (data || [])){
+      await sb.from('fichajes').update({ salida: new Date(new Date(f.entrada).getTime() + FICHAJE_MAX_HORAS * 3600000).toISOString(), cerrado_automaticamente: true, nota: 'Cerrado automáticamente: se superaron las ' + FICHAJE_MAX_HORAS + ' h sin fichar la salida.' }).eq('id', f.id);
+    }
+  } catch(e){}
+}
 async function fichajeRefrescar(){
+  await cerrarFichajesCaducados();
   try {
     if(!CURRENT_USER) { window.__fichajeAbierto = null; }
     else {
@@ -2392,7 +2415,7 @@ function buscarParaVincularActuacion(texto){
   if(!texto || texto.trim().length < 2){ cont.innerHTML = ''; return; }
   __vincularTimeout = setTimeout(async () => {
     const esCA = LANG_I === 'ca';
-    const { data } = await sb.from('perfiles').select('id, nombre_completo, municipio').ilike('nombre_completo', `%${texto.trim()}%`).limit(6);
+    const { data } = await buscarPerfiles(texto.trim(), 6, true);
     cont.innerHTML = (data && data.length)
       ? data.map(p => `<div class="list-row" style="cursor:pointer;" data-id="${p.id}" onclick="confirmarVincularActuacion(this.dataset.id)"><span>${escAttr(p.nombre_completo)}</span><span class="subtle">${escAttr(p.municipio || '')}</span></div>`).join('')
       : `<div class="empty-note">${esCA?'Cap resultat.':'Sin resultados.'}</div>`;
@@ -2891,7 +2914,7 @@ function buscarUsuarioNotaAtencion(texto){
   if(!texto || texto.trim().length < 2){ cont.innerHTML = ''; return; }
   __busquedaNotaAtencionTimeout = setTimeout(async () => {
     const esCA = LANG_I === 'ca';
-    const { data, error } = await sb.from('perfiles').select('id, nombre_completo, municipio').ilike('nombre_completo', `%${texto.trim()}%`).limit(5);
+    const { data, error } = await buscarPerfiles(texto.trim(), 5, true);
     if(error || !data || !data.length){ cont.innerHTML = `<div class="empty-note">${esCA?'Cap resultat.':'Sin resultados.'}</div>`; return; }
     cont.innerHTML = data.map(p => `
       <div class="list-row" style="cursor:pointer;" data-id="${p.id}" data-nombre="${escAttr(p.nombre_completo || '')}" onclick="vincularUsuarioNotaAtencion(this.dataset.id, this.dataset.nombre)">
@@ -3643,7 +3666,7 @@ function buscarPersonaActuacion(texto){
   const cont = document.getElementById('bp-resultados');
   if(!texto || texto.trim().length < 2){ cont.innerHTML = ''; return; }
   __busquedaPersonaActuacionTimeout = setTimeout(async () => {
-    const { data, error } = await sb.from('perfiles').select('id, nombre_completo, municipio').ilike('nombre_completo', `%${texto.trim()}%`).limit(8);
+    const { data, error } = await buscarPerfiles(texto.trim(), 8, true);
     if(error || !data || !data.length){ cont.innerHTML = `<div class="empty-note">No encontramos a nadie con ese nombre.<br><br>Para registrar una actuación, la persona debe tener ya una cuenta creada en Logos Acompanya (con sus datos básicos rellenados). Si es la primera vez que la atiendes y todavía no tiene cuenta, usa primero <strong>"Registrar nueva atención"</strong> — y anímala a crear su cuenta en Logos Acompanya cuando pueda.</div>`; return; }
     cont.innerHTML = data.map(p => `
       <div class="list-row" style="cursor:pointer;" onclick="verPersonaStaff('${p.id}','miespacio')">
@@ -3657,7 +3680,7 @@ function buscarUsuarioAtencion(texto){
   const cont = document.getElementById('at-resultados-busqueda');
   if(!texto || texto.trim().length < 2){ cont.innerHTML = ''; return; }
   __busquedaAtencionTimeout = setTimeout(async () => {
-    const { data, error } = await sb.from('perfiles').select('id, nombre_completo, municipio').ilike('nombre_completo', `%${texto.trim()}%`).limit(5);
+    const { data, error } = await buscarPerfiles(texto.trim(), 5, true);
     if(error || !data || !data.length){ cont.innerHTML = `<div class="empty-note">Sin resultados.</div>`; return; }
     cont.innerHTML = data.map(p => `
       <div class="list-row" style="cursor:pointer;" data-id="${p.id}" data-nombre="${escAttr(p.nombre_completo || '')}" onclick="vincularUsuarioAtencion(this.dataset.id, this.dataset.nombre)">
@@ -3992,8 +4015,7 @@ function buscarPersonaNuevaCita(texto){
   const q = (texto || '').trim().replace(/[,()%*]/g, ' ').trim();
   if(q.length < 2){ cont.innerHTML = ''; return; }
   __ncTimeout = setTimeout(async () => {
-    const { data, error } = await sb.from('perfiles').select('id, nombre_completo, municipio, dni_nie, telefono')
-      .or(`nombre_completo.ilike.%${q}%,dni_nie.ilike.%${q}%,telefono.ilike.%${q}%`).limit(8);
+    const { data, error } = await buscarPerfiles(q, 8, false);
     if(error || !data || !data.length){ cont.innerHTML = `<div class="empty-note">${acL('Sin resultados con cuenta en Logos Acompanya.', 'Sense resultats amb compte a Logos Acompanya.')}</div>`; return; }
     cont.innerHTML = data.map(p => `
       <div class="list-row" style="cursor:pointer;" data-id="${p.id}" data-nombre="${escAttr(p.nombre_completo || '')}" onclick="elegirPersonaNuevaCita(this.dataset.id, this.dataset.nombre)">
@@ -4379,6 +4401,17 @@ const normTxt = x => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').to
 const fechaCorta = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES'); };
 
 // Trae todas las filas de una consulta paginando de 1000 en 1000 (el servidor no da más de golpe).
+// Búsqueda de personas que ignora acentos y mayúsculas (usa la función buscar_perfiles del SQL 32; si no existe, busca como antes)
+async function buscarPerfiles(texto, lim, soloNombre){
+  const q = String(texto || '').trim().replace(/[,()%*]/g, ' ').trim();
+  if(!q) return { data: [], error: null };
+  try {
+    const r = await sb.rpc('buscar_perfiles', { q: q, lim: lim || 10, solo_nombre: !!soloNombre });
+    if(!r.error) return { data: r.data || [], error: null };
+  } catch(e){}
+  const base = sb.from('perfiles').select('id, nombre_completo, municipio, dni_nie, telefono');
+  return await (soloNombre ? base.ilike('nombre_completo', `%${q}%`) : base.or(`nombre_completo.ilike.%${q}%,dni_nie.ilike.%${q}%,telefono.ilike.%${q}%`)).limit(lim || 10);
+}
 async function traerTodoPaginado(fabrica){
   const todo = [];
   for(let desde = 0; desde < 50000; desde += 1000){
@@ -5195,7 +5228,7 @@ async function cargarResultadosDocs(){
   __docsIdsProyBusqueda = b ? (proyectosLista || []).filter(p => (p.nombre || '').toLowerCase().includes(b.toLowerCase())).map(p => p.id) : [];
   __docsIdsPersBusqueda = [];
   if(b){
-    const { data: pm } = await sb.from('perfiles').select('id').ilike('nombre_completo', `%${b}%`).limit(50);
+    const { data: pm } = await buscarPerfiles(b, 50, true);
     __docsIdsPersBusqueda = (pm || []).map(p => p.id);
   }
 
@@ -5662,7 +5695,7 @@ async function renderHorasEquipo(){
   }
   const semana = {}, mes = {};
   (fr.data || []).forEach(f => {
-    const e = String(f.tecnico_email || '').toLowerCase(), ini = new Date(f.entrada), fin = f.salida ? new Date(f.salida) : ahora;
+    const e = String(f.tecnico_email || '').toLowerCase(), ini = new Date(f.entrada), fin = fichajeFin(f, ahora);
     const m = Math.max(0, (fin - ini) / 60000);
     if(ini >= mes1) mes[e] = (mes[e] || 0) + m;
     if(ini >= lunes) semana[e] = (semana[e] || 0) + m;
@@ -8292,8 +8325,7 @@ function buscarBeneficiarioProyecto(texto, proyectoId, inmediato){
   const ejecutar = async () => {
     const esCA = LANG_I === 'ca';
     const q = texto.trim().replace(/[,()%*]/g, ' ');
-    let res = await sb.from('perfiles').select('id, nombre_completo, municipio, telefono').or(`nombre_completo.ilike.%${q}%,dni_nie.ilike.%${q}%,telefono.ilike.%${q}%`).limit(10);
-    if(res.error) res = await sb.from('perfiles').select('id, nombre_completo, municipio, telefono').ilike('nombre_completo', `%${q}%`).limit(10);
+    const res = await buscarPerfiles(q, 10, false);
     if(res.error){ caja.innerHTML = `<div class="empty-note">${escAttr(res.error.message)}</div>`; return; }
     const { data: part } = await sb.from('proyecto_participantes').select('usuario_id').eq('proyecto_id', proyectoId).eq('rol', 'beneficiario');
     const ya = new Set((part || []).map(p => p.usuario_id));
@@ -9455,7 +9487,7 @@ async function hrInfoMiEspacio(email, fichadoAhora){
     const hoy = hrTramosDia(h.tramos, dia);
     const lunes = new Date(ahora); lunes.setHours(0, 0, 0, 0); lunes.setDate(lunes.getDate() - (dia - 1));
     const fr = await sb.from('fichajes').select('entrada, salida').eq('tecnico_email', email).gte('entrada', lunes.toISOString());
-    const fichados = (fr.data || []).reduce((s, f) => s + Math.max(0, Math.round(((f.salida ? new Date(f.salida) : ahora) - new Date(f.entrada)) / 60000)), 0);
+    const fichados = (fr.data || []).reduce((s, f) => s + Math.max(0, Math.round((fichajeFin(f, ahora) - new Date(f.entrada)) / 60000)), 0);
     const previstasSemana = h.tramos.reduce((s, t) => s + Math.max(0, hrMin(t.hasta) - hrMin(t.desde)), 0);
     const previstasHastaAhora = h.tramos.filter(t => t.dia < dia).reduce((s, t) => s + (hrMin(t.hasta) - hrMin(t.desde)), 0)
       + hrTramosDia(h.tramos, dia).reduce((s, t) => s + Math.max(0, Math.min(hrMin(t.hasta), ahora.getHours() * 60 + ahora.getMinutes()) - hrMin(t.desde)), 0);
@@ -12815,7 +12847,7 @@ async function ejecutarBusquedaGlobal(q){
   box.innerHTML = `<div class="empty-note" style="padding:12px;">${esCA?'Cercant…':'Buscando…'}</div>`;
 
   const [personasR, proyectosR, docsR] = await Promise.all([
-    sb.from('perfiles').select('id, nombre_completo, municipio').ilike('nombre_completo', `%${q}%`).limit(5),
+    buscarPerfiles(q, 5, true),
     sb.from('proyectos').select('id, nombre').ilike('nombre', `%${q}%`).limit(5),
     sb.from('documentos').select('id, nombre_archivo, ruta_storage').ilike('nombre_archivo', `%${q}%`).limit(5)
   ]);
@@ -13834,6 +13866,7 @@ async function renderAdministrador(){
   __adminTraductorOffset = 0;
   __adminTraductorTodos = [];
 
+  await cerrarFichajesCaducados();
   const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes, revisionesRes, perfilesIncompletosRes, actuacionesPrimeraPagina, actuacionesCountRes, actuacionesLigeroRes, avisosAdminRes, oficinaRes, proyectosAdminRes, proyectoParticipantesAdminRes, salasPrimeraPagina, salasCountRes, traductorPrimeraPagina, traductorCountRes] = await Promise.all([
     sb.from('atenciones').select('*').order('creado_en', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
     sb.from('atenciones').select('creado_por_email'), // sin límite: solo para el conteo de carga de trabajo
