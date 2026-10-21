@@ -567,6 +567,7 @@
       <details class="nav-grupo" open>
         <summary>📚 Formación y proyectos</summary>
         <button data-target="jovenes" onclick="showScreen('jovenes');renderJovenesScreen()">🌱 Jóvenes en acción</button>
+        <button data-target="miformacion" onclick="showScreen('miformacion');renderMiFormacion()">🎓 Mi formación</button>
         <button data-target="aulavirtual" onclick="showScreen('aulavirtual');renderAulaVirtualScreen()">🎥 Aula Virtual · Hub Logos</button>
         <button data-target="formaciones" onclick="showScreen('formaciones');renderFormacionesScreen()">🎓 Formaciones</button>
         <button data-target="subvenciones" onclick="showScreen('subvenciones');renderSubvencionesScreen()">💶 Subvenciones</button>
@@ -735,6 +736,13 @@
     <div class="main-content">
       <div class="topbar"><span class="brand">Formaciones</span></div>
       <div class="content" id="formaciones-content"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-miformacion">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Mi formación · Equipo Logos</span></div>
+      <div class="content" id="miformacion-content"></div>
     </div>
   </div>
 
@@ -1081,8 +1089,8 @@ function aplicarTraduccionesSidebar(){
 // Quien es de Jóvenes en acción solo entra a su espacio; el resto de la plataforma queda oculta (y cerrada también en la base de datos)
 // Jóvenes en acción (y su pestaña de Familias) queda oculto del menú para el equipo general. Para volver a mostrarlo: MOSTRAR_JOVENES = true.
 const MOSTRAR_JOVENES = false;
-const PANTALLAS_JOVENES = ['login', 'panel', 'miespacio', 'gestionpersonal', 'jovenes', 'config'];
-const PANTALLAS_RRHH_SOLO = ['login', 'miespacio', 'gestionpersonal', 'subvenciones', 'config'];
+const PANTALLAS_JOVENES = ['login', 'panel', 'miespacio', 'gestionpersonal', 'jovenes', 'miformacion', 'config'];
+const PANTALLAS_RRHH_SOLO = ['login', 'miespacio', 'gestionpersonal', 'subvenciones', 'miformacion', 'config'];
 function aplicarMenuPorRol(){
   document.querySelectorAll('.sidebar nav button[data-target]').forEach(b => {
     b.classList.toggle('rol-oculto', (IS_JOVENES && !PANTALLAS_JOVENES.includes(b.dataset.target)) || (IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(b.dataset.target)) || (!MOSTRAR_JOVENES && !IS_JOVENES && b.dataset.target === 'jovenes') || (b.dataset.target === 'subvenciones' && !(IS_ADMIN || IS_RRHH)));
@@ -1194,7 +1202,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v117'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v119'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -3125,6 +3133,7 @@ async function renderMiEspacio(){
       <button class="primary-btn" style="margin:0;" onclick="showScreen('atencion');renderAtencionForm()">📋 ${LANG_I==='ca'?'Fitxa d\'atenció':'Ficha de atención'}</button>
       <button class="primary-btn" style="margin:0;background:var(--gold);" onclick="showScreen('buscarpersona');renderBuscarPersonaActuacion()">📂 ${LANG_I==='ca'?'Expedient / Actuació':'Expediente / Actuación'}</button>
       <button class="primary-btn" style="margin:0;background:var(--good);" onclick="showScreen('altapresencial');renderAltaPresencial()">🖊️ Alta presencial</button>
+      <button class="primary-btn" style="margin:0;background:#33449E;" onclick="showScreen('miformacion');renderMiFormacion()">🎓 ${LANG_I==='ca'?'La meva formació':'Mi formación'} <span id="mi-formacion-n" style="font-weight:400;font-size:12px;"></span></button>
       <button class="primary-btn" style="margin:0;background:#8a8a8a;" onclick="abrirNuevaCitaStaff()">📅 ${LANG_I==='ca'?'Nova cita':'Nueva cita'}</button>
     </div>
 
@@ -3192,6 +3201,7 @@ async function renderMiEspacio(){
   animateNumber(document.getElementById('num-semana-act'), semanaCountAct);
   animateNumber(document.getElementById('num-total-act'), totalCountAct);
   activarBarras();
+  mfResumenEspacio();
 }
 
 // Secciones plegables: se recuerda en este navegador si la persona las dejó abiertas (si no se puede guardar, quedan cerradas).
@@ -5664,6 +5674,7 @@ async function renderFormacionesScreen(){
     <h2 class="screen-title">🎓 ${acL('Formaciones', 'Formacions')}</h2>
     <p class="subtle" style="margin:0 0 14px;">${acL('Enlaces a las formaciones que recomienda Logos. Se abren en una pestaña nueva.', 'Enllaços a les formacions que recomana Logos. S\'obren en una pestanya nova.')}</p>
     ${cats.length ? cats.map(k => `<details class="plegable" style="margin-bottom:10px;" open><summary>📂 ${escAttr(k)} <span class="chip">${porCat[k].length}</span></summary><div style="padding-top:8px;">${porCat[k].map(tarjeta).join('')}</div></details>`).join('') : `<div class="empty-note">${acL('Todavía no hay formaciones publicadas.', 'Encara no hi ha formacions publicades.')}</div>`}
+    ${puedeGestionar && visibles.length ? `<div class="panel-card" style="background:#E7ECFF;border-color:#33449E;margin:14px 0;"><strong>🎥 ${acL('Pasar estas formaciones al Aula Virtual del equipo', 'Passar aquestes formacions a l\'Aula Virtual de l\'equip')}</strong><p class="subtle" style="margin:4px 0 8px;font-size:12.5px;">${acL('Crea un curso para el equipo con un módulo por categoría y cada enlace como contenido, para que cada persona vea su progreso en «Mi formación». Esta lista no se borra.', 'Crea un curs per a l\'equip amb un mòdul per categoria i cada enllaç com a contingut, perquè cada persona vegi el seu progrés a «La meva formació». Aquesta llista no s\'esborra.')}</p><button class="primary-btn" style="width:auto;margin:0;background:#33449E;" onclick="formacionesAlAula()">📥 ${acL('Pasar al Aula Virtual', 'Passar a l\'Aula Virtual')}</button></div>` : ''}
     ${puedeGestionar ? `
     <div class="panel-card" style="margin-top:16px;background:var(--ochre-soft);border-color:var(--ochre);">
       <h3 style="margin-top:0;color:#7A4A1F;">➕ ${acL('Añadir formaciones', 'Afegir formacions')}</h3>
@@ -5933,6 +5944,29 @@ async function formacionAnadir(){
   if(!formacionUrlValida(url)){ alert(acL('Escribe un enlace válido que empiece por https://', 'Escriu un enllaç vàlid que comenci per https://')); return; }
   if(await formacionInsertar([{ titulo, url, categoria: v('form-e-cat').trim() || null, descripcion: v('form-e-desc').trim() || null }])) renderFormacionesScreen();
 }
+async function formacionesAlAula(){
+  const activas = (window.__formEnlaces || []).filter(f => f.activo !== false && f.url);
+  if(!activas.length){ alert(acL('No hay formaciones para pasar.', 'No hi ha formacions per passar.')); return; }
+  const nombre = acL('Formaciones del equipo', 'Formacions de l\'equip');
+  const { data: ya } = await sb.from('cursos').select('id').eq('nombre', nombre).eq('audiencia', 'equipo').limit(1);
+  if(ya && ya.length && !confirm(acL('Ya existe un curso «' + nombre + '». ¿Crear otro igualmente?', 'Ja existeix un curs «' + nombre + '». Vols crear-ne un altre igualment?'))) return;
+  if(!confirm(acL(`Se creará el curso «${nombre}» para el equipo con ${activas.length} formaciones. ¿Continuar?`, `Es crearà el curs «${nombre}» per a l'equip amb ${activas.length} formacions. Continuar?`))) return;
+  const { data: curso, error: e1 } = await sb.from('cursos').insert({ nombre, modalidad: 'online', estado: 'activo', audiencia: 'equipo', docente_email: CURRENT_USER.email, docente_nombre: CURRENT_USER_NOMBRE || null, creado_por_email: CURRENT_USER.email, descripcion: acL('Formaciones recopiladas por el equipo.', 'Formacions recopilades per l\'equip.') }).select().single();
+  if(e1){ alert(/audiencia/i.test(e1.message) ? acL('Falta ejecutar el SQL 36 en Supabase.', 'Cal executar el SQL 36 a Supabase.') : e1.message); return; }
+  const porCat = {};
+  activas.forEach(f => { const k = (f.categoria || '').trim() || acL('Otras formaciones', 'Altres formacions'); (porCat[k] = porCat[k] || []).push(f); });
+  let orden = 0, n = 0;
+  for(const cat of Object.keys(porCat).sort((a, b) => a.localeCompare(b))){
+    const { data: mod, error: e2 } = await sb.from('curso_modulos').insert({ curso_id: curso.id, titulo: cat, orden: orden++ }).select().single();
+    if(e2){ alert(e2.message); return; }
+    const filas = porCat[cat].map((f, i) => ({ modulo_id: mod.id, tipo: /youtu|vimeo/i.test(f.url) ? 'video' : 'documento', titulo: f.titulo, url_externa: f.url, orden: i }));
+    const { error: e3 } = await sb.from('curso_contenidos').insert(filas);
+    if(e3){ alert(e3.message); return; }
+    n += filas.length;
+  }
+  alert(acL(`Listo: curso creado con ${n} formaciones. Lo encuentras en «Mi formación».`, `Fet: curs creat amb ${n} formacions. El trobaràs a «La meva formació».`));
+  showScreen('miformacion'); renderMiFormacion();
+}
 async function formacionAnadirVarias(){
   const lineas = ((document.getElementById('form-e-masivo') || {}).value || '').split('\n').map(l => l.trim()).filter(Boolean);
   const filas = [], malas = [];
@@ -6105,13 +6139,13 @@ async function renderAulaVirtualScreen(){
     cerrado: LANG_I==='ca' ? 'Tancat' : 'Cerrado'
   };
 
-  const cursosHtml = (cursos && cursos.length)
-    ? cursos.map(c => {
+  const cursosHtmlDe = (lista) => (lista && lista.length)
+    ? lista.map(c => {
         const misStats = misCursosStats[c.id];
         return `
         <div class="panel-card">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
-            <h3 style="margin:0;">${iconoModalidad[c.modalidad] || '🏫'} ${c.nombre}</h3>
+            <h3 style="margin:0;">${iconoModalidad[c.modalidad] || '🏫'} ${c.nombre}${c.audiencia === 'equipo' ? ` <span class="chip" style="background:#33449E;color:#fff;font-size:10px;">👥 ${LANG_I==='ca'?'Equip':'Equipo'}</span>` : ''}</h3>
             <span class="chip" style="background:${estadoCursoColor[c.estado] || '#999'};color:#fff;flex-shrink:0;">${textoEstadoCurso[c.estado] || c.estado}</span>
           </div>
           ${misStats ? `<span class="chip" style="background:var(--gold);color:#fff;font-size:10px;margin-top:4px;display:inline-block;">👨‍🏫 ${LANG_I==='ca'?'El teu curs':'Tu curso'}</span>` : ''}
@@ -6137,6 +6171,10 @@ async function renderAulaVirtualScreen(){
         </div>`;
       }).join('')
     : `<div class="empty-note">${LANG_I==='ca' ? 'Encara no hi ha cursos.' : 'Todavía no hay cursos.'}</div>`;
+  const cursosCiudadania = (cursos || []).filter(c => c.audiencia !== 'equipo');
+  const cursosEquipo = (cursos || []).filter(c => c.audiencia === 'equipo');
+  const cursosHtml = cursosHtmlDe(cursosCiudadania)
+    + (cursosEquipo.length ? `</div><div class="section-label" style="margin:16px 0 8px;">👥 ${LANG_I==='ca'?"Formació de l'equip (tècnics i administradors)":'Formación del equipo (técnicos y administradores)'} <button class="link-btn" style="font-size:12px;margin-left:8px;" onclick="showScreen('miformacion');renderMiFormacion()">${LANG_I==='ca'?'Fer-los com a alumne →':'Hacerlos como alumno/a →'}</button></div><div class="cards-grid" style="margin-bottom:16px;">${cursosHtmlDe(cursosEquipo)}` : '');
 
   cont.innerHTML = `
     <p class="subtle">${LANG_I==='ca'
@@ -6153,6 +6191,13 @@ async function renderAulaVirtualScreen(){
     <div class="panel-card" style="margin-bottom:16px;">
       <h3>➕ ${LANG_I==='ca' ? 'Crear curs' : 'Crear curso'}</h3>
       <div class="field"><input type="text" id="curso-nombre" placeholder="${LANG_I==='ca'?'Nom del curs (ex: Competències digitals bàsiques)':'Nombre del curso (ej: Competencias digitales básicas)'}"></div>
+      <div class="field">
+        <label>${LANG_I==='ca'?'Adreçat a':'Dirigido a'}</label>
+        <select id="curso-audiencia">
+          <option value="ciudadania">${LANG_I==='ca'?'Ciutadania (Logos Acompanya)':'Ciudadanía (Logos Acompanya)'}</option>
+          <option value="equipo">${LANG_I==='ca'?"👥 Equip de Logos (tècnics i administradors)":'👥 Equipo de Logos (técnicos y administradores)'}</option>
+        </select>
+      </div>
       <div class="field"><input type="text" id="curso-proyecto" placeholder="${LANG_I==='ca'?'Projecte (ex: Autonomia Digital Activa)':'Proyecto (ej: Autonomía Digital Activa)'}"></div>
       <div class="field"><input type="text" id="curso-docente" placeholder="${LANG_I==='ca'?'Docent':'Docente'}" value="${CURRENT_USER_NOMBRE || ''}"></div>
       <div class="field">
@@ -6227,6 +6272,129 @@ async function renderAulaVirtualScreen(){
   }
 }
 
+// ================= MI FORMACIÓN (cursos del equipo: técnicos y administradores) =================
+window.__mfAbiertos = window.__mfAbiertos || {};
+async function renderMiFormacion(){
+  const cont = document.getElementById('miformacion-content'); if(!cont) return;
+  const ca = LANG_I === 'ca';
+  cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const { data: cursos, error } = await sb.from('cursos').select('*').eq('audiencia', 'equipo').order('creado_en', { ascending: false });
+  if(error){
+    cont.innerHTML = `<div class="auth-error">${/audiencia|schema cache|does not exist/i.test(error.message || '') ? acL('Falta ejecutar el SQL 36 en Supabase para activar la formación del equipo.', 'Cal executar el SQL 36 a Supabase per activar la formació de l\'equip.') : escAttr(error.message)}</div>`;
+    return;
+  }
+  const lista = (cursos || []).filter(c => c.estado !== 'preparacion' || IS_ADMIN || c.docente_email === CURRENT_USER.email);
+  const intro = `<p class="subtle" style="margin:0 0 12px;">${acL('Formación para el equipo de Logos: técnicos y administradores. Abre el contenido, márcalo como visto y sigue donde lo dejaste.', 'Formació per a l\'equip de Logos: tècnics i administradors. Obre el contingut, marca\'l com a vist i continua on ho vas deixar.')}</p>`;
+  const crear = `<button class="link-btn" style="margin-bottom:12px;" onclick="showScreen('aulavirtual');renderAulaVirtualScreen()">➕ ${acL('Crear o gestionar cursos (Aula Virtual)', 'Crear o gestionar cursos (Aula Virtual)')}</button>`;
+  if(!lista.length){
+    cont.innerHTML = intro + `<div class="empty-note">${acL('Todavía no hay cursos para el equipo.', 'Encara no hi ha cursos per a l\'equip.')}</div>` + crear;
+    return;
+  }
+  const ids = lista.map(c => c.id);
+  const { data: modulos } = await sb.from('curso_modulos').select('*').in('curso_id', ids).order('orden', { ascending: true });
+  const modIds = (modulos || []).map(m => m.id);
+  let contenidos = [], actividades = [], progresos = [], entregas = [];
+  if(modIds.length){
+    const [c1, a1] = await Promise.all([
+      sb.from('curso_contenidos').select('*').in('modulo_id', modIds).order('orden', { ascending: true }),
+      sb.from('curso_actividades').select('*').in('modulo_id', modIds).order('orden', { ascending: true })
+    ]);
+    contenidos = c1.data || []; actividades = a1.data || [];
+    if(contenidos.length){
+      const { data } = await sb.from('curso_progreso_contenido').select('*').eq('usuario_id', CURRENT_USER.id).in('contenido_id', contenidos.map(c => c.id));
+      progresos = data || [];
+    }
+    if(actividades.length){
+      const { data } = await sb.from('curso_actividad_entregas').select('*').eq('usuario_id', CURRENT_USER.id).in('actividad_id', actividades.map(a => a.id));
+      entregas = data || [];
+    }
+  }
+  const icono = { video:'🎬', pdf:'📄', presentacion:'📊', documento:'📎' };
+  const actHecha = a => entregas.some(e => e.actividad_id === a.id && (a.tipo === 'test' || e.estado === 'aprobado'));
+  const tarjeta = c => {
+    const mods = (modulos || []).filter(m => m.curso_id === c.id);
+    const modIdsC = mods.map(m => m.id);
+    const cont_c = contenidos.filter(x => modIdsC.includes(x.modulo_id));
+    const act_c = actividades.filter(x => modIdsC.includes(x.modulo_id));
+    const total = cont_c.length + act_c.length;
+    const hechos = cont_c.filter(x => progresos.some(p => p.contenido_id === x.id)).length + act_c.filter(actHecha).length;
+    const pct = total ? Math.round(hechos / total * 100) : 0;
+    const modsHtml = mods.map((m, i) => {
+      const cs = cont_c.filter(x => x.modulo_id === m.id), as = act_c.filter(x => x.modulo_id === m.id);
+      const filasC = cs.map(x => {
+        const visto = progresos.some(p => p.contenido_id === x.id);
+        const abrir = x.url_externa ? `<a href="${escAttr(x.url_externa)}" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">${acL('Abrir', 'Obrir')}</a>`
+          : (x.ruta_storage ? `<button class="link-btn" style="font-size:12px;" onclick="mfAbrirArchivo('${escAttr(x.ruta_storage)}')">${acL('Abrir', 'Obrir')}</button>` : '');
+        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line,#E8EAF0);"><span style="flex:1;min-width:0;">${icono[x.tipo] || '📎'} ${escAttr(x.titulo)}</span>${abrir}${visto
+          ? `<span class="chip hecho" style="font-size:10px;">✅ ${acL('Visto', 'Vist')}</span>`
+          : `<button class="link-btn" style="font-size:12px;" onclick="mfMarcarVisto('${x.id}')">${acL('Marcar visto', 'Marcar vist')}</button>`}</div>`;
+      }).join('');
+      const filasA = as.map(a => `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line,#E8EAF0);"><span style="flex:1;min-width:0;">${a.tipo === 'test' ? '📝' : '📋'} ${escAttr(a.titulo)}</span>${actHecha(a)
+        ? `<span class="chip hecho" style="font-size:10px;">✅ ${acL('Hecha', 'Feta')}</span>`
+        : `<a class="link-btn" style="font-size:12px;" href="https://acompanya.logostgn.cat" target="_blank" rel="noopener">${acL('Hacer en Logos Acompanya ↗', 'Fer a Logos Acompanya ↗')}</a>`}</div>`).join('');
+      return `<div style="margin:10px 0 0;"><strong style="font-size:13px;">${acL('Módulo', 'Mòdul')} ${i + 1}. ${escAttr(m.titulo)}</strong>${m.descripcion ? `<p class="subtle" style="margin:2px 0 4px;font-size:12px;">${escAttr(m.descripcion)}</p>` : ''}${filasC}${filasA}${!filasC && !filasA ? `<div class="empty-note">${acL('Todavía sin contenido.', 'Encara sense contingut.')}</div>` : ''}</div>`;
+    }).join('') || `<div class="empty-note">${acL('Este curso todavía no tiene módulos.', 'Aquest curs encara no té mòduls.')}</div>`;
+    return `<details class="plegable" ${window.__mfAbiertos[c.id] ? 'open' : ''} ontoggle="window.__mfAbiertos['${c.id}']=this.open">
+      <summary><span>🎓 ${escAttr(c.nombre)}</span><span class="plegable-n">${pct}%</span></summary>
+      <div class="plegable-c">
+        <div style="height:8px;background:#E8EAF0;border-radius:6px;overflow:hidden;margin:2px 0 8px;"><i style="display:block;height:8px;width:${pct}%;background:var(--good);"></i></div>
+        ${c.descripcion ? `<p class="subtle" style="margin:0 0 4px;">${escAttr(c.descripcion)}</p>` : ''}
+        <p class="subtle" style="font-size:12px;margin:0;">${total ? `${hechos}/${total} ${acL('completados', 'completats')}` : ''}${c.docente_nombre ? ` · ${acL('Docente', 'Docent')}: ${escAttr(c.docente_nombre)}` : ''}${c.horas_totales ? ` · ${c.horas_totales} h` : ''}</p>
+        ${modsHtml}
+        ${IS_ADMIN ? `<button class="link-btn" style="margin-top:12px;font-size:12px;" onclick="mfSeguimiento('${c.id}')">📊 ${acL('Ver seguimiento del equipo', 'Veure seguiment de l\'equip')}</button><div id="mf-seg-${c.id}"></div>` : ''}
+      </div>
+    </details>`;
+  };
+  cont.innerHTML = intro + lista.map(tarjeta).join('') + crear;
+}
+async function mfResumenEspacio(){
+  const el = document.getElementById('mi-formacion-n'); if(!el) return;
+  try {
+    const { data } = await sb.from('cursos').select('id').eq('audiencia', 'equipo').in('estado', ['inscripcion', 'activo']);
+    if(data && data.length) el.textContent = '· ' + data.length + (LANG_I==='ca' ? ' en marxa' : ' en marcha');
+  } catch(e){}
+}
+async function mfAbrirArchivo(ruta){
+  const { data, error } = await sb.storage.from('documentos').createSignedUrl(ruta, 60);
+  if(error){ alert(error.message); return; }
+  window.open(data.signedUrl, '_blank');
+}
+async function mfMarcarVisto(contenidoId){
+  const { error } = await sb.from('curso_progreso_contenido').insert({ usuario_id: CURRENT_USER.id, contenido_id: contenidoId });
+  if(error && !/duplicate/i.test(error.message)){ alert(error.message); return; }
+  renderMiFormacion();
+}
+// Administración: quién ha avanzado cuánto en un curso del equipo
+async function mfSeguimiento(cursoId){
+  const host = document.getElementById('mf-seg-' + cursoId); if(!host) return;
+  host.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const [{ data: mods }, { data: equipo }] = await Promise.all([
+    sb.from('curso_modulos').select('id').eq('curso_id', cursoId),
+    sb.from('staff').select('email, nombre, activo').order('nombre', { ascending: true })
+  ]);
+  const modIds = (mods || []).map(m => m.id);
+  const [c1, a1] = modIds.length ? await Promise.all([
+    sb.from('curso_contenidos').select('id').in('modulo_id', modIds), sb.from('curso_actividades').select('id, tipo').in('modulo_id', modIds)
+  ]) : [{ data: [] }, { data: [] }];
+  const cids = (c1.data || []).map(x => x.id), acts = a1.data || [];
+  const total = cids.length + acts.length;
+  const personal = (equipo || []).filter(p => p.activo !== false);
+  const { data: perf } = personal.length ? await sb.from('perfiles').select('id, email').in('email', personal.map(p => p.email)) : { data: [] };
+  const idPorEmail = {}; (perf || []).forEach(p => { idPorEmail[String(p.email).toLowerCase()] = p.id; });
+  const uids = Object.values(idPorEmail);
+  const { data: prog } = (uids.length && cids.length) ? await sb.from('curso_progreso_contenido').select('usuario_id, contenido_id').in('usuario_id', uids).in('contenido_id', cids) : { data: [] };
+  const { data: ent } = (uids.length && acts.length) ? await sb.from('curso_actividad_entregas').select('usuario_id, actividad_id, estado').in('usuario_id', uids).in('actividad_id', acts.map(a => a.id)) : { data: [] };
+  if(!total){ host.innerHTML = `<div class="empty-note">${acL('El curso todavía no tiene contenido.', 'El curs encara no té contingut.')}</div>`; return; }
+  const filas = personal.map(p => {
+    const uid = idPorEmail[String(p.email).toLowerCase()];
+    const hechasAct = (ent || []).filter(e => e.usuario_id === uid && (((acts.find(a => a.id === e.actividad_id) || {}).tipo === 'test') || e.estado === 'aprobado')).length;
+    const h = uid ? (prog || []).filter(x => x.usuario_id === uid).length + hechasAct : 0;
+    const pct = Math.min(100, Math.round(h / total * 100));
+    return `<div class="panel-stat-row"><span>${escAttr(p.nombre || p.email)}</span><span><strong>${pct}%</strong> ${pct >= 100 ? '✅' : (pct > 0 ? '🟡' : '⬜')}</span></div>`;
+  }).join('');
+  host.innerHTML = `<div class="panel-card" style="margin-top:8px;"><h4 style="margin:0 0 6px;font-size:13px;">📊 ${acL('Seguimiento del equipo', 'Seguiment de l\'equip')}</h4>${filas || `<div class="empty-note">${acL('Sin personal.', 'Sense personal.')}</div>`}</div>`;
+}
+
 async function crearCurso(){
   const nombre = document.getElementById('curso-nombre').value.trim();
   if(!nombre){ alert(LANG_I==='ca' ? 'Escriu el nom del curs.' : 'Escribe el nombre del curso.'); return; }
@@ -6241,9 +6409,10 @@ async function crearCurso(){
     horas_totales: document.getElementById('curso-horas').value || null,
     plazas: document.getElementById('curso-plazas').value || null,
     descripcion: document.getElementById('curso-descripcion').value.trim() || null,
-    creado_por_email: CURRENT_USER.email
+    creado_por_email: CURRENT_USER.email,
+    ...(document.getElementById('curso-audiencia') && document.getElementById('curso-audiencia').value === 'equipo' ? { audiencia: 'equipo' } : {})
   });
-  if(error){ alert(error.message); return; }
+  if(error){ alert(/audiencia/i.test(error.message) ? (LANG_I==='ca' ? 'Cal executar el SQL 36 a Supabase per crear cursos de l\'equip.' : 'Falta ejecutar el SQL 36 en Supabase para crear cursos del equipo.') : error.message); return; }
   renderAulaVirtualScreen();
 }
 
@@ -12489,6 +12658,7 @@ async function renderPanelGeneral(){
   const accesos = [
     { icon:'👥', bg:'var(--good-soft)', color:'var(--good)', titulo: LANG_I==='ca'?'Persones usuàries':'Personas usuarias', sub: LANG_I==='ca'?'Veure i gestionar expedients.':'Ver y gestionar expedientes.', onclick:"showScreen('personas');renderPersonasScreen()" },
     { icon:'📁', bg:'var(--gold-soft)', color:'#7A5A16', titulo: LANG_I==='ca'?'Projectes':'Proyectos', sub: LANG_I==='ca'?'Seguiment dels projectes actius.':'Seguimiento de proyectos activos.', onclick:"showScreen('proyectos');renderProyectosScreen()" },
+    { icon:'🎓', bg:'var(--good-soft)', color:'var(--good)', titulo: LANG_I==='ca'?'La meva formació':'Mi formación', sub: LANG_I==='ca'?"Cursos de l'equip: continua on ho vas deixar.":'Cursos del equipo: sigue donde lo dejaste.', onclick:"showScreen('miformacion');renderMiFormacion()" },
     { icon:'🎥', bg:'#E7ECFF', color:'#33449E', titulo:'Aula Virtual', sub: LANG_I==='ca'?'Cursos, materials i activitats.':'Cursos, materiales y actividades.', onclick:"showScreen('aulavirtual');renderAulaVirtualScreen()" },
     { icon:'🗂️', bg:'var(--bg)', color:'var(--ink)', titulo: LANG_I==='ca'?'Gestió documental':'Gestión documental', sub: LANG_I==='ca'?'Accedir a arxius i plantilles.':'Acceder a archivos y plantillas.', onclick:"showScreen('docsglobal');renderDocsGlobalScreen()" },
     { icon:'💬', bg:'var(--alert-soft)', color:'var(--alert)', titulo: LANG_I==='ca'?'Comunicació':'Comunicación', sub: LANG_I==='ca'?"Comunicació interna de l'equip.":'Comunicación interna del equipo.', onclick:"showScreen('comunicacion');renderComunicacionScreen()" },
