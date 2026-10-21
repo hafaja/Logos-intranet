@@ -1194,7 +1194,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v114'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v117'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -4560,9 +4560,10 @@ async function histPintarVista(caja){
     caja.innerHTML = `<div class="empty-note">${esCA?'Encara no s\'ha importat cap persona d\'anys anteriors.':'Todavía no se ha importado ninguna persona de años anteriores.'}${IS_ADMIN ? `<br><button class="link-btn" onclick="histAbrirImportador()">📥 ${esCA?'Importar ara':'Importar ahora'}</button>` : ''}</div>`;
     return;
   }
-  caja.innerHTML = `<p class="subtle" style="margin:0 0 8px;">${(data.total || 0).toLocaleString()} ${esCA?'persones d\'anys anteriors':'personas de años anteriores'}.</p>` + anios.map(a => `
+  const hayPers = data.total_personas != null;
+  caja.innerHTML = `<p class="subtle" style="margin:0 0 8px;">${hayPers ? `<strong>${(data.total_personas || 0).toLocaleString()}</strong> ${esCA?'persones diferents':'personas distintas'} · ${(data.total || 0).toLocaleString()} ${esCA?'registres d\'anys anteriors':'registros de años anteriores'}` : `${(data.total || 0).toLocaleString()} ${esCA?'registres d\'anys anteriors':'registros de años anteriores'}`}.</p>` + anios.map(a => `
     <details class="plegable" ontoggle="if(this.open) histCargarAnio(${a.anio}, 0)">
-      <summary><span>🗄️ ${a.anio}</span><span class="plegable-n">${a.total.toLocaleString()}</span></summary>
+      <summary><span>🗄️ ${a.anio}</span><span class="plegable-n">${a.personas != null ? `${a.personas.toLocaleString()} ${esCA?'pers.':'pers.'} · ${a.total.toLocaleString()} ${esCA?'reg.':'reg.'}` : a.total.toLocaleString()}</span></summary>
       <div class="plegable-c" id="hist-anio-${a.anio}"><div class="placeholder">${TI[LANG_I].cargando}</div></div>
     </details>`).join('');
 }
@@ -4898,7 +4899,7 @@ async function alcancePersonasPintar(idHost){
     ]);
     const hist = (h.data && h.data.por_anio) || [];
     const porAnio = {}, mesesAct = {}; let sinFecha = 0;
-    hist.forEach(x => { (porAnio[x.anio] = porAnio[x.anio] || { h: 0, a: 0 }).h += x.total; });
+    hist.forEach(x => { (porAnio[x.anio] = porAnio[x.anio] || { h: 0, a: 0 }).h += (x.personas != null ? x.personas : x.total); });
     if(!perf.error){
       (perf.data || []).forEach(p => {
         const d = p.fecha_alta ? new Date(p.fecha_alta) : null;
@@ -14206,7 +14207,8 @@ function historiaFrase(d, ca){
   const t = (d || []).filter(x => x.visible && x.publicado > 0);
   if(!t.length) return ca ? 'Encara no hi ha cap xifra per publicar.' : 'Todavía no hay ninguna cifra para publicar.';
   const total = t.reduce((a, x) => a + x.publicado, 0), desde = t[0].anio;
-  return ca ? `Des de ${desde}, Logos ha acompanyat ${hsN(total)} persones.` : `Desde ${desde}, Logos ha acompañado a ${hsN(total)} personas.`;
+  const at = t.reduce((a, x) => a + (x.atenciones || 0), 0);
+  return ca ? `Des de ${desde}, Logos ha acompanyat ${hsN(total)} persones${at ? ` en ${hsN(at)} atencions` : ''}.` : `Desde ${desde}, Logos ha acompañado a ${hsN(total)} personas${at ? ` en ${hsN(at)} atenciones` : ''}.`;
 }
 function historiaCodigoWeb(){
   const cierre = '<' + '/script>';
@@ -14218,7 +14220,7 @@ function historiaCodigoWeb(){
     'try{const r=await fetch(U+\'/rest/v1/rpc/historia_publica\',{method:\'POST\',headers:{apikey:K,Authorization:\'Bearer \'+K,\'Content-Type\':\'application/json\'},body:\'{}\'});',
     'const d=await r.json();if(!d.por_anio||!d.por_anio.length)return;',
     'const f=n=>Number(n).toLocaleString(ca?\'ca-ES\':\'es-ES\');const m=Math.max.apply(null,d.por_anio.map(x=>x.personas));',
-    'const t=ca?\'Des de \'+d.desde+\', hem acompanyat <strong>\'+f(d.total)+\'</strong> persones.\':\'Desde \'+d.desde+\', hemos acompañado a <strong>\'+f(d.total)+\'</strong> personas.\';',
+    'const t=ca?\'Des de \'+d.desde+\', hem acompanyat <strong>\'+f(d.total)+\'</strong> persones\'+(d.total_atenciones?\' en \'+f(d.total_atenciones)+\' atencions\':\'\')+\'.\':\'Desde \'+d.desde+\', hemos acompañado a <strong>\'+f(d.total)+\'</strong> personas\'+(d.total_atenciones?\' en \'+f(d.total_atenciones)+\' atenciones\':\'\')+\'.\';',
     'document.getElementById(\'logos-historia\').innerHTML=\'<p style="font-size:1.25em;margin:0 0 12px">\'+t+\'</p>\'+d.por_anio.map(x=>\'<div style="display:flex;align-items:center;gap:10px;margin:4px 0"><span style="width:44px">\'+x.anio+\'</span><span style="flex:1;background:#eee;border-radius:6px;height:12px"><i style="display:block;height:12px;border-radius:6px;background:#F2BC2C;width:\'+Math.max(3,Math.round(x.personas/m*100))+\'%"></i></span><strong style="min-width:56px;text-align:right">\'+f(x.personas)+\'</strong></div>\').join(\'\');',
     '}catch(e){}})();',
     cierre].join('\n');
@@ -14232,6 +14234,10 @@ async function historiaPintar(){
   const tarjeta = x => `<div class="panel-card" style="margin-bottom:8px;">
     <div class="panel-stat-row"><strong style="font-size:16px;">${x.anio}</strong><span class="chip ${x.visible ? 'gold' : ''}">${x.visible ? (ca ? 'Publicat' : 'Publicado') : (ca ? 'Amagat' : 'Oculto')}: ${hsN(x.publicado)}</span></div>
     <p class="subtle" style="font-size:12px;margin:2px 0 8px;">${ca ? 'Històric' : 'Histórico'} ${hsN(x.historico)} · ${ca ? 'Amb compte' : 'Con cuenta'} ${hsN(x.cuentas)} · ${ca ? 'Sense compte' : 'Sin cuenta'} ${hsN(x.sin_cuenta)} = ${ca ? 'calculat' : 'calculado'} <strong>${hsN(x.calculado)}</strong></p>
+    ${x.atenciones != null ? `<p class="subtle" style="font-size:12px;margin:0 0 8px;">📋 ${ca ? 'Atencions' : 'Atenciones'}: <strong>${hsN(x.atenciones)}</strong> (${ca ? 'històric' : 'histórico'} ${hsN(x.atenciones_hist)} + ${ca ? 'plataforma' : 'plataforma'} ${hsN(x.atenciones_plat)})</p>` : ''}
+    ${(x.manual != null && Number(x.publicado) !== Number(x.calculado)) ? `<p style="font-size:12px;margin:0 0 8px;color:#7A4A1F;">✍️ ${ca
+      ? `Es publica la <strong>xifra manual ${hsN(x.publicado)}</strong>, no la calculada (${hsN(x.calculado)}). Diferència: ${hsN(Number(x.publicado) - Number(x.calculado))}.`
+      : `Se publica la <strong>cifra manual ${hsN(x.publicado)}</strong>, no la calculada (${hsN(x.calculado)}). Diferencia: ${hsN(Number(x.publicado) - Number(x.calculado))}.`}</p>` : ''}
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
       <label style="font-size:12.5px;">${ca ? 'Xifra manual' : 'Cifra manual'} <input type="number" min="0" id="hs-m-${x.anio}" value="${x.manual != null ? x.manual : ''}" style="width:110px;"></label>
       <label class="checkbox-row" style="margin:0;"><input type="checkbox" id="hs-f-${x.anio}" ${x.fijar ? 'checked' : ''}> ${ca ? 'Fer servir exactament aquesta xifra' : 'Usar exactamente esta cifra'}</label>
