@@ -1727,7 +1727,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v127'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v128'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -4589,7 +4589,8 @@ async function renderAgendaCitas(fecha){
   const t = TI[LANG_I];
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
 
-  const { data: citasDelDia } = await sb.from('citas').select('*').eq('fecha', __agendaFechaActual).order('hora', { ascending:true });
+  const { data: citasDelDiaTodas } = await sb.from('citas').select('*').eq('fecha', __agendaFechaActual).order('hora', { ascending:true });
+  const citasDelDia = sinBorrados(citasDelDiaTodas);
 
   const ids = [...new Set((citasDelDia || []).map(c => c.usuario_id).filter(Boolean))];
   let nombresAgenda = {};
@@ -5530,7 +5531,7 @@ async function obtenerPersonasParaExport(){
   const cols = 'id, nombre_completo, dni_nie, telefono, municipio, calle' + (FECHA_ALTA_OK ? ', fecha_alta' : '') + (PERFIL_ETHOS ? ', ethos' : '');
   const [perfRes, trRes, atRes, acRes, pyRes] = await Promise.all([
     traerTodoPaginado((a, b) => sb.from('perfiles').select(cols).not('nombre_completo', 'is', null).order('nombre_completo', { ascending:true }).range(a, b)),
-    traerTodoPaginado((a, b) => sb.from('tramites').select('usuario_id, nombre_servicio').range(a, b)),
+    traerTodoPaginado((a, b) => sb.from('tramites').select('usuario_id, nombre_servicio, estado').range(a, b)),
     traerTodoPaginado((a, b) => sb.from('atenciones').select('usuario_id, prestaciones, tramites_bretxa, emprendeduria').not('usuario_id', 'is', null).range(a, b)),
     traerTodoPaginado((a, b) => sb.from('actuaciones').select('usuario_id, categoria, proyecto_id').range(a, b)),
     sb.from('proyectos').select('id, nombre')
@@ -5539,7 +5540,7 @@ async function obtenerPersonasParaExport(){
   const juntar = () => ({ tr: new Set(), sv: new Set(), py: new Set() });
   const porPersona = {};
   const de = id => (porPersona[id] = porPersona[id] || juntar());
-  (trRes.data || []).forEach(r => { if(r.usuario_id && r.nombre_servicio) de(r.usuario_id).tr.add(r.nombre_servicio); });
+  sinBorrados(trRes.data).forEach(r => { if(r.usuario_id && r.nombre_servicio) de(r.usuario_id).tr.add(r.nombre_servicio); });
   (atRes.data || []).forEach(r => { if(!r.usuario_id) return; [...(r.prestaciones || []), ...(r.tramites_bretxa || []), ...(r.emprendeduria || [])].forEach(s => s && de(r.usuario_id).sv.add(s)); });
   (acRes.data || []).forEach(r => { if(!r.usuario_id) return; if(r.categoria) de(r.usuario_id).sv.add(r.categoria); if(r.proyecto_id && nombreProy[r.proyecto_id]) de(r.usuario_id).py.add(nombreProy[r.proyecto_id]); });
   let perfiles = perfRes.data || [];
@@ -5623,7 +5624,7 @@ async function renderSeguimientoScreen(){
 
   const items = [
     ...(actuaciones || []).map(ac => ({ usuario_id: ac.usuario_id, fecha: ac.fecha, tipo: 'actuacion', data: ac })),
-    ...(tramites || []).map(tr => ({ usuario_id: tr.usuario_id, fecha: tr.fecha_inicio, tipo: 'tramite', data: tr }))
+    ...sinBorrados(tramites).map(tr => ({ usuario_id: tr.usuario_id, fecha: tr.fecha_inicio, tipo: 'tramite', data: tr }))
   ];
 
   const ids = [...new Set(items.map(i => i.usuario_id).filter(Boolean))];
@@ -7252,6 +7253,7 @@ async function exportarFichaPersona(usuarioId, formato){
       sb.from('consultas_orientacion').select('*').eq('usuario_id', usuarioId).order('creado_en', { ascending: true })
     ]);
     const p = pr.data; if(!p){ alert('No se encontró a la persona.'); return; }
+    if(tr) tr.data = sinBorrados(tr.data); if(ci) ci.data = sinBorrados(ci.data);
     const tec = e => (typeof nombreTecnico === 'function' ? nombreTecnico(e) : e) || '';
     const lista = r => (r && r.data) || [];
     const secs = fichaSecciones(p);
@@ -12948,7 +12950,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-22 · v127 (ficha editable con todos los campos)';
+const APP_VERSION_INTRANET = '2026-10-22 · v128 (trámites anulados y citas canceladas ocultos)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -13334,6 +13336,7 @@ async function renderPanelGeneral(){
 
   const totalPersonas = total.data ? total.data.total_personas : 0;
 
+  if(citasHoyRes) citasHoyRes.data = sinBorrados(citasHoyRes.data);
   // Dashboard nuevo: nombres de personas para citas/documentos/revisiones/expedientes de hoy
   const idsDashboard = [...new Set([
     ...(citasHoyRes.data || []).map(c => c.usuario_id),
@@ -13983,6 +13986,8 @@ async function verPersonaStaffInterno(usuarioId, origen){
 
   (staffListRes.data || []).forEach(s => { if(s.nombre) __mapaNombresTecnicos[s.email] = s.nombre; });
 
+  if(tramitesRes) tramitesRes.data = sinBorrados(tramitesRes.data);
+  if(citasRes) citasRes.data = sinBorrados(citasRes.data);
   const p = perfilRes.data;
   if(!p){ cont.innerHTML = `<div class="empty-note">${t.noSeEncontroPerfil}</div>`; return; }
 
@@ -14824,6 +14829,8 @@ async function anularTramite(id){
   if(!data || !data.length){ alert(acL('No se pudo anular (sin permiso).', 'No s\'ha pogut anul·lar (sense permís).')); return; }
   verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
 }
+// Trámites anulados y citas canceladas: se quedan guardados en la base de datos, pero no se muestran en pantalla
+function sinBorrados(lista){ return (lista || []).filter(x => x && x.estado !== 'anulado' && x.estado !== 'cancelada'); }
 function trCerrado(e){ return e === 'hecho' || e === 'anulado'; }
 function estadoTramiteTxt(e){
   const m = { derivado_logos: acL('🙋 Pide ayuda a Logos', '🙋 Demana ajuda a Logos'), en_curso: acL('En curso', 'En curs'), hecho: acL('Hecho', 'Fet'), anulado: acL('Anulado', 'Anul·lat') };
@@ -14999,7 +15006,7 @@ async function renderAdministrador(){
   // Los trámites cuentan como actuaciones (tipo «Trámite») en el registro y en el total
   try {
     const trAdm = await traerTodoPaginado((x, y) => sb.from('tramites').select('id, usuario_id, nombre_servicio, estado, fecha_inicio').range(x, y));
-    window.__adminTramitesExtra = ((trAdm && trAdm.data) || []).map(tr => ({ id:'tr-'+tr.id, usuario_id: tr.usuario_id, fecha: tr.fecha_inicio, categoria: LANG_I==='ca'?'Tràmit':'Trámite', descripcion: tr.nombre_servicio + ' (' + (tr.estado==='hecho' ? (LANG_I==='ca'?'tancat':'cerrado') : (LANG_I==='ca'?'en curs':'en curso')) + ')', es_tramite:true }));
+    window.__adminTramitesExtra = sinBorrados(trAdm && trAdm.data).map(tr => ({ id:'tr-'+tr.id, usuario_id: tr.usuario_id, fecha: tr.fecha_inicio, categoria: LANG_I==='ca'?'Tràmit':'Trámite', descripcion: tr.nombre_servicio + ' (' + (tr.estado==='hecho' ? (LANG_I==='ca'?'tancat':'cerrado') : (LANG_I==='ca'?'en curs':'en curso')) + ')', es_tramite:true }));
   } catch(e){ window.__adminTramitesExtra = []; }
   const totalActuacionesConTramites = totalActuaciones + (window.__adminTramitesExtra || []).length;
   __adminSalasTodos = salasPrimeraPagina.data || [];
