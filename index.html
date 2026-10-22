@@ -444,7 +444,7 @@
   /* Adaptación a pantallas estrechas: el menú lateral pasa a barra inferior */
   .mobile-menu-toggle{display:none;}
   .mobile-menu-header{display:none;}
-  .nav-hist{display:none;}
+  .nav-hist-grupo{display:none;}
   @media (max-width: 760px){
     #app{flex-direction:column;}
     .sidebar{width:100%;height:56px;position:sticky;bottom:0;top:auto;order:2;flex-direction:row;align-items:center;justify-content:center;padding:0;border-top:1.5px solid rgba(255,255,255,.1);z-index:150;}
@@ -454,8 +454,11 @@
     .sidebar .ilang-btn{background:#fff;border:1.5px solid var(--line);color:var(--navy);padding:7px 11px;font-size:12px;}
     .sidebar .ilang-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
     .mobile-menu-toggle{display:flex;flex:1;height:38px;align-items:center;justify-content:center;gap:8px;background:var(--navy);border:none;border-radius:999px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font-body);}
-    .nav-hist{display:flex;align-items:center;justify-content:center;flex:none;width:44px;height:38px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--navy);font-size:26px;line-height:1;font-weight:700;cursor:pointer;padding:0 0 3px;}
-    .nav-hist:disabled{opacity:.3;cursor:default;}
+    /* En móvil las flechas van arriba, junto al título, solo con el icono */
+    .nav-hist{width:44px;height:38px;padding:0 !important;justify-content:center;}
+    .nav-hist-txt{display:none;}
+    .main .topbar.con-flechas{gap:10px;}
+    .topbar.con-flechas .brand{font-size:19px;}
     body > .asistente-btn{bottom:74px;right:14px;width:48px;height:48px;font-size:20px;}
     .mobile-menu-overlay{display:none;}
     .sidebar.menu-open .mobile-menu-overlay{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:56px;background:var(--navy);z-index:160;}
@@ -470,14 +473,16 @@
     .panel-stat-row{flex-wrap:wrap;}
     .panel-stat-row>span:last-child{width:100%;justify-content:flex-end;margin-top:4px;}
   }
-  /* Flechas atrás/adelante también en ordenador (en móvil están en la barra inferior) */
-  @media (min-width: 761px){
-    .nav-hist{display:flex;align-items:center;justify-content:center;position:fixed;bottom:18px;width:44px;height:44px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--navy);font-size:28px;line-height:1;font-weight:700;cursor:pointer;padding:0 0 4px;box-shadow:0 4px 14px rgba(30,63,102,.18);z-index:120;}
-    #nav-back{left:246px;}
-    #nav-fwd{left:300px;}
-    .nav-hist:hover:not(:disabled){background:var(--navy);color:#fff;}
-    .nav-hist:disabled{opacity:.35;cursor:default;box-shadow:none;}
-  }
+  /* Flechas atrás/adelante: arriba, a la izquierda del título de cada apartado (en ordenador y en móvil) */
+  .nav-hist-grupo{display:flex;flex:none;background:#fff;border:2px solid var(--navy);border-radius:999px;overflow:hidden;box-shadow:0 2px 8px rgba(30,63,102,.12);}
+  .nav-hist{display:flex;align-items:center;gap:3px;height:38px;padding:0 14px 0 8px;border:none;background:#fff;color:var(--navy);font-family:var(--font-body);font-size:13.5px;font-weight:800;cursor:pointer;transition:background .15s,color .15s;-webkit-tap-highlight-color:transparent;}
+  #nav-fwd{padding:0 8px 0 14px;border-left:1.5px solid var(--line);}
+  .nav-hist:hover:not(:disabled),.nav-hist:active:not(:disabled){background:var(--navy);color:#fff;}
+  .nav-hist:focus-visible{outline:3px solid var(--gold);outline-offset:-3px;}
+  .nav-hist:disabled{color:#c3cad4;cursor:default;}
+  .topbar.con-flechas{justify-content:flex-start;gap:16px;flex-wrap:wrap;}
+  .nav-hist-fila{display:flex;margin:0 0 16px;}
+  @media print{ .nav-hist-grupo{display:none !important;} }
 
   /* Asistente de orientación (chat con Claude) */
   .asistente-btn{position:fixed;bottom:22px;right:22px;width:56px;height:56px;border-radius:50%;background:var(--navy);color:var(--gold);border:none;font-size:23px;cursor:pointer;box-shadow:var(--shadow-lg);z-index:200;display:flex;align-items:center;justify-content:center;}
@@ -554,9 +559,7 @@
       <button id="ibtn-es" class="ilang-btn active" onclick="setLangI('es')">ES</button>
       <button id="ibtn-ca" class="ilang-btn" onclick="setLangI('ca')">CA</button>
     </div>
-    <button class="nav-hist" id="nav-back" onclick="history.back()" aria-label="Atrás" title="Atrás">‹</button>
     <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('menu-open')">☰ Menú</button>
-    <button class="nav-hist" id="nav-fwd" onclick="history.forward()" aria-label="Adelante" title="Adelante">›</button>
     <div class="mobile-menu-overlay">
       <div class="mobile-menu-header">
         <span>Menú</span>
@@ -614,6 +617,10 @@
   </div>
 
   <div class="main">
+  <div class="nav-hist-grupo" id="nav-hist-grupo" style="display:none;">
+      <button class="nav-hist" id="nav-back" onclick="navAtras()" aria-label="Atrás" title="Atrás (Alt + ←)"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nav-hist-txt" id="nav-back-txt">Atrás</span></button>
+      <button class="nav-hist" id="nav-fwd" onclick="navAdelante()" aria-label="Adelante" title="Adelante (Alt + →)"><span class="nav-hist-txt" id="nav-fwd-txt">Adelante</span><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
   <div class="screen active" id="screen-login">
     <div class="main-content">
       <div class="hero">
@@ -1589,6 +1596,7 @@ let _trTimer = null;
 
 function aplicarTraduccionesSidebar(){
   const t = TI[LANG_I];
+  try { navPintar(); } catch(e){}
   document.querySelector('.sidebar nav button[data-target="miespacio"]').innerHTML = t.miEspacio;
   document.querySelector('.sidebar nav button[data-target="panel"]').innerHTML = `${t.panelGeneral} <span id="badge-panel" class="nav-badge" style="display:none;">0</span>`;
   document.getElementById('nav-admin-btn').innerHTML = t.administrador;
@@ -1777,12 +1785,69 @@ function irAPantallaInicial(){
 
 // Navegación adelante/atrás (flechas ‹ › y botón atrás del navegador/teléfono)
 window.__navIdx = 0; window.__navMax = 0; window.__navRestaurando = false;
+window.__navUltimoPaso = 0;
+function navPantallaActiva(){ const a = document.querySelector('.screen.active'); return a ? a.id.replace('screen-', '') : null; }
+function navPantallaInicio(){
+  if(typeof IS_RRHH_SOLO !== 'undefined' && IS_RRHH_SOLO) return 'gestionpersonal';
+  if(typeof IS_ADMIN !== 'undefined' && !IS_ADMIN && !IS_JOVENES) return 'miespacio';
+  return 'panel';
+}
+function navAtras(){
+  if(window.__navIdx > 0){ history.back(); return; }
+  // Sin páginas anteriores (p. ej. al recargar): «Atrás» lleva a la página de inicio de cada perfil
+  const ini = navPantallaInicio();
+  if(navPantallaActiva() === ini) return;
+  if(ini === 'gestionpersonal'){ showScreen('gestionpersonal'); renderGestionPersonal('rrhh'); }
+  else if(ini === 'miespacio'){ showScreen('miespacio'); renderMiEspacio(); }
+  else { showScreen('panel'); renderPanelGeneral(); }
+}
+function navAdelante(){ if(window.__navIdx < window.__navMax) history.forward(); }
+function navColocar(g){
+  const a = document.querySelector('.screen.active'); if(!g || !a) return;
+  const mc = a.querySelector('.main-content'); if(!mc) return;
+  let tb = mc.querySelector(':scope > .topbar');
+  if(!tb){
+    tb = mc.querySelector(':scope > .nav-hist-fila');
+    if(!tb){ tb = document.createElement('div'); tb.className = 'nav-hist-fila'; mc.insertBefore(tb, mc.firstChild); }
+  }
+  tb.classList.add('con-flechas');
+  if(g.parentNode !== tb || tb.firstChild !== g) tb.insertBefore(g, tb.firstChild);
+}
 function navPintar(){
+  const g = document.getElementById('nav-hist-grupo');
+  navColocar(g);
   const b = document.getElementById('nav-back'), f = document.getElementById('nav-fwd');
-  const ver = (typeof CURRENT_USER !== 'undefined' && CURRENT_USER) ? '' : 'none';
-  [b, f].forEach(x => { if(x) x.style.display = ver; });
-  if(b) b.disabled = window.__navIdx <= 0;
+  const ver = (typeof CURRENT_USER !== 'undefined' && CURRENT_USER && navPantallaActiva() !== 'login') ? '' : 'none';
+  if(g) g.style.display = ver;
+  if(b) b.disabled = window.__navIdx <= 0 && navPantallaActiva() === navPantallaInicio();
   if(f) f.disabled = window.__navIdx >= window.__navMax;
+  const ca = (typeof LANG_I !== 'undefined' && LANG_I === 'ca');
+  const tb = ca ? 'Enrere' : 'Atrás', tf = ca ? 'Endavant' : 'Adelante';
+  const xb = document.getElementById('nav-back-txt'), xf = document.getElementById('nav-fwd-txt');
+  if(xb && xb.textContent !== tb){ xb.textContent = tb; b.setAttribute('aria-label', tb); b.title = tb + ' (Alt + ←)'; }
+  if(xf && xf.textContent !== tf){ xf.textContent = tf; f.setAttribute('aria-label', tf); f.title = tf + ' (Alt + →)'; }
+}
+// Pasos dentro de una misma pantalla (pestañas de «Mi gestión personal», etapas de un proyecto) para que las flechas también los recorran
+function navSub(clave){
+  if(window.__navRestaurando) return;
+  setTimeout(() => {
+    try {
+      if(window.__navRestaurando || !CURRENT_USER) return;
+      const cur = history.state; const pant = navPantallaActiva();
+      if(!(cur && cur.logosNav) || cur.s !== pant || cur.sub === clave) return;
+      const est = Object.assign({}, cur, { sub: clave });
+      if(!cur.sub && Date.now() - window.__navUltimoPaso < 600){ history.replaceState(est, '', location.pathname + location.search); }
+      else { window.__navIdx++; window.__navMax = window.__navIdx; est.i = window.__navIdx; history.pushState(est, '', location.pathname + location.search); }
+      window.__navUltimoPaso = Date.now();
+    } catch(e){}
+    navPintar();
+  }, 0);
+}
+function navRestaurarSub(st){
+  const sub = String(st.sub || '');
+  if(sub.indexOf('gp:') === 0){ showScreen('gestionpersonal'); renderGestionPersonal(sub.slice(3)); return true; }
+  if(sub.indexOf('et:') === 0){ const pz = sub.split(':'); showScreen(st.s); renderEtapaProyectoStaff(pz[1], Number(pz[2]) || 1); return true; }
+  return false;
 }
 function navRegistrar(name){
   if(window.__navRestaurando) { setTimeout(navPintar, 0); return; }
@@ -1795,6 +1860,7 @@ function navRegistrar(name){
       const est = { logosNav:true, s:name, p:persona, o:window.__origenPersonaVista || null, i:0 };
       if(!(cur && cur.logosNav)){ est.i = 0; window.__navIdx = 0; window.__navMax = 0; history.replaceState(est, '', location.pathname + location.search); }
       else { window.__navIdx++; window.__navMax = window.__navIdx; est.i = window.__navIdx; history.pushState(est, '', location.pathname + location.search); }
+      window.__navUltimoPaso = Date.now();
     } catch(e){}
     navPintar();
   }, 0);
@@ -1804,6 +1870,7 @@ window.addEventListener('popstate', function(e){
   window.__navIdx = st.i || 0; window.__navRestaurando = true;
   try {
     if(st.s === 'persona' && st.p){ verPersonaStaff(st.p, st.o || 'panel'); }
+    else if(st.sub && navRestaurarSub(st)){ }
     else {
       const b = document.querySelector('.sidebar nav button[data-target="' + st.s + '"]');
       if(b && !b.classList.contains('rol-oculto')) b.click(); else showScreen(st.s);
@@ -8373,6 +8440,7 @@ async function iniciarItinerarioStaff(modo){
 
 async function renderEtapaProyectoStaff(itinerarioId, etapaNum){
   window.__itinerarioStaffActual = itinerarioId;
+  navSub('et:' + itinerarioId + ':' + etapaNum);
   const cont = document.getElementById('mipropioproyecto-content');
   cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
 
@@ -9880,6 +9948,7 @@ function gpArchivoValido(f){
 
 async function renderGestionPersonal(tab){
   if(tab) window.__gpTab = tab;
+  if(window.__gpTab) navSub('gp:' + window.__gpTab);
   const cont = document.getElementById('gestionpersonal-content');
   if(!cont) return;
   if(!GP_OK){
