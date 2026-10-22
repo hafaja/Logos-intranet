@@ -444,7 +444,7 @@
   /* Adaptación a pantallas estrechas: el menú lateral pasa a barra inferior */
   .mobile-menu-toggle{display:none;}
   .mobile-menu-header{display:none;}
-  .nav-hist-grupo{display:none;}
+  .nav-hist{display:none;}
   @media (max-width: 760px){
     #app{flex-direction:column;}
     .sidebar{width:100%;height:56px;position:sticky;bottom:0;top:auto;order:2;flex-direction:row;align-items:center;justify-content:center;padding:0;border-top:1.5px solid rgba(255,255,255,.1);z-index:150;}
@@ -454,11 +454,8 @@
     .sidebar .ilang-btn{background:#fff;border:1.5px solid var(--line);color:var(--navy);padding:7px 11px;font-size:12px;}
     .sidebar .ilang-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
     .mobile-menu-toggle{display:flex;flex:1;height:38px;align-items:center;justify-content:center;gap:8px;background:var(--navy);border:none;border-radius:999px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font-body);}
-    /* En móvil: solo las flechas, el título en medio */
-    .main .nav-sec, .main #nav-fwd{width:42px;height:42px;padding:0;justify-content:center;}
-    .main .nav-sec-txt{display:none;}
-    .main .topbar.con-flechas{gap:8px;}
-    .topbar.con-flechas > .brand{font-size:19px;}
+    .nav-hist{display:flex;align-items:center;justify-content:center;flex:none;width:44px;height:38px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--navy);font-size:26px;line-height:1;font-weight:700;cursor:pointer;padding:0 0 3px;}
+    .nav-hist:disabled{opacity:.3;cursor:default;}
     body > .asistente-btn{bottom:74px;right:14px;width:48px;height:48px;font-size:20px;}
     .mobile-menu-overlay{display:none;}
     .sidebar.menu-open .mobile-menu-overlay{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:56px;background:var(--navy);z-index:160;}
@@ -473,19 +470,14 @@
     .panel-stat-row{flex-wrap:wrap;}
     .panel-stat-row>span:last-child{width:100%;justify-content:flex-end;margin-top:4px;}
   }
-  /* Flechas de apartados: ‹ apartado anterior · TÍTULO · apartado siguiente › (en ordenador y en móvil) */
-  .topbar.con-flechas{display:grid;grid-template-columns:minmax(42px,1fr) auto minmax(42px,1fr);align-items:center;gap:14px;}
-  .topbar.con-flechas > .brand, .topbar.con-flechas > .back-btn{grid-column:2;text-align:center;justify-self:center;}
-  #nav-back{grid-column:1;justify-self:start;} #nav-fwd{grid-column:3;justify-self:end;}
-  .nav-sec{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:100%;height:40px;padding:0 14px 0 8px;border:2px solid var(--navy);border-radius:999px;background:#fff;color:var(--navy);font-family:var(--font-body);font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(30,63,102,.12);transition:background .15s,color .15s;-webkit-tap-highlight-color:transparent;}
-  #nav-fwd{padding:0 8px 0 14px;}
-  .nav-sec svg{flex:none;}
-  .nav-sec-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .nav-sec:hover:not(:disabled),.nav-sec:active:not(:disabled){background:var(--navy);color:#fff;}
-  .nav-sec:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
-  .nav-sec:disabled{visibility:hidden;}
-  .nav-hist-fila{margin:0 0 16px;}
-  @media print{ .nav-sec{display:none !important;} }
+  /* Flechas atrás/adelante también en ordenador (en móvil están en la barra inferior) */
+  @media (min-width: 761px){
+    .nav-hist{display:flex;align-items:center;justify-content:center;position:fixed;bottom:18px;width:44px;height:44px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--navy);font-size:28px;line-height:1;font-weight:700;cursor:pointer;padding:0 0 4px;box-shadow:0 4px 14px rgba(30,63,102,.18);z-index:120;}
+    #nav-back{left:246px;}
+    #nav-fwd{left:300px;}
+    .nav-hist:hover:not(:disabled){background:var(--navy);color:#fff;}
+    .nav-hist:disabled{opacity:.35;cursor:default;box-shadow:none;}
+  }
 
   /* Asistente de orientación (chat con Claude) */
   .asistente-btn{position:fixed;bottom:22px;right:22px;width:56px;height:56px;border-radius:50%;background:var(--navy);color:var(--gold);border:none;font-size:23px;cursor:pointer;box-shadow:var(--shadow-lg);z-index:200;display:flex;align-items:center;justify-content:center;}
@@ -562,7 +554,9 @@
       <button id="ibtn-es" class="ilang-btn active" onclick="setLangI('es')">ES</button>
       <button id="ibtn-ca" class="ilang-btn" onclick="setLangI('ca')">CA</button>
     </div>
+    <button class="nav-hist" id="nav-back" onclick="history.back()" aria-label="Atrás" title="Atrás">‹</button>
     <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('menu-open')">☰ Menú</button>
+    <button class="nav-hist" id="nav-fwd" onclick="history.forward()" aria-label="Adelante" title="Adelante">›</button>
     <div class="mobile-menu-overlay">
       <div class="mobile-menu-header">
         <span>Menú</span>
@@ -620,10 +614,6 @@
   </div>
 
   <div class="main">
-  <div id="nav-sec-almacen" style="display:none;">
-    <button class="nav-sec" id="nav-back" onclick="navAtras()" aria-label="Apartado anterior"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nav-sec-txt" id="nav-back-txt"></span></button>
-    <button class="nav-sec" id="nav-fwd" onclick="navAdelante()" aria-label="Apartado siguiente"><span class="nav-sec-txt" id="nav-fwd-txt"></span><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  </div>
   <div class="screen active" id="screen-login">
     <div class="main-content">
       <div class="hero">
@@ -1599,7 +1589,6 @@ let _trTimer = null;
 
 function aplicarTraduccionesSidebar(){
   const t = TI[LANG_I];
-  try { navPintar(); } catch(e){}
   document.querySelector('.sidebar nav button[data-target="miespacio"]').innerHTML = t.miEspacio;
   document.querySelector('.sidebar nav button[data-target="panel"]').innerHTML = `${t.panelGeneral} <span id="badge-panel" class="nav-badge" style="display:none;">0</span>`;
   document.getElementById('nav-admin-btn').innerHTML = t.administrador;
@@ -1727,7 +1716,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v125'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v127'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -1788,91 +1777,12 @@ function irAPantallaInicial(){
 
 // Navegación adelante/atrás (flechas ‹ › y botón atrás del navegador/teléfono)
 window.__navIdx = 0; window.__navMax = 0; window.__navRestaurando = false;
-window.__navUltimoPaso = 0;
-function navPantallaActiva(){ const a = document.querySelector('.screen.active'); return a ? a.id.replace('screen-', '') : null; }
-function navPantallaInicio(){
-  if(typeof IS_RRHH_SOLO !== 'undefined' && IS_RRHH_SOLO) return 'gestionpersonal';
-  if(typeof IS_ADMIN !== 'undefined' && !IS_ADMIN && !IS_JOVENES) return 'miespacio';
-  return 'panel';
-}
-// Apartados del menú en orden (solo los que ve cada perfil)
-function navSecciones(){
-  return Array.from(document.querySelectorAll('.sidebar nav button[data-target]')).filter(b => {
-    if(b.classList.contains('rol-oculto') || b.style.display === 'none') return false;
-    const g = b.closest('.nav-grupo'); return !(g && g.classList.contains('rol-oculto'));
-  });
-}
-function navNombre(b){
-  let t = ''; b.childNodes.forEach(n => { if(n.nodeType === 3 || !(n.classList && n.classList.contains('nav-badge'))) t += n.textContent; });
-  return t.replace(/^[^A-Za-zÀ-ÿ0-9]+/, '').replace(/\s+/g, ' ').trim();
-}
-function navPosicion(){
-  const pant = navPantallaActiva();
-  const grupo = { atencion:'miespacio', buscarpersona:'miespacio', persona:(window.__origenPersonaVista && window.__origenPersonaVista !== 'persona' ? window.__origenPersonaVista : 'panel') };
-  const objetivo = grupo[pant] || pant;
-  const lista = navSecciones();
-  return { lista, i: lista.findIndex(b => b.dataset.target === objetivo) };
-}
-function navIrSeccion(paso){
-  const { lista, i } = navPosicion(); if(i < 0) return;
-  const b = lista[i + paso]; if(!b) return;
-  b.click();
-  try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e){ window.scrollTo(0, 0); }
-}
-function navAtras(){ navIrSeccion(-1); }
-function navAdelante(){ navIrSeccion(1); }
-function navColocar(b, f){
-  const a = document.querySelector('.screen.active'); if(!a || !b || !f) return;
-  const mc = a.querySelector('.main-content'); if(!mc) return;
-  let tb = mc.querySelector(':scope > .topbar');
-  if(!tb){
-    tb = mc.querySelector(':scope > .nav-hist-fila');
-    if(!tb){ tb = document.createElement('div'); tb.className = 'topbar nav-hist-fila'; tb.innerHTML = '<span class="brand"></span>'; mc.insertBefore(tb, mc.firstChild); }
-  }
-  tb.classList.add('con-flechas');
-  if(b.parentNode !== tb) tb.insertBefore(b, tb.firstChild);
-  if(f.parentNode !== tb || tb.lastChild !== f) tb.appendChild(f);
-}
 function navPintar(){
   const b = document.getElementById('nav-back'), f = document.getElementById('nav-fwd');
-  if(!b || !f) return;
-  const dentro = (typeof CURRENT_USER !== 'undefined' && CURRENT_USER && navPantallaActiva() !== 'login');
-  if(!dentro){ const alm = document.getElementById('nav-sec-almacen'); if(alm && b.parentNode !== alm){ alm.appendChild(b); alm.appendChild(f); } return; }
-  navColocar(b, f);
-  const { lista, i } = navPosicion();
-  const ant = i > 0 ? lista[i - 1] : null, sig = (i >= 0 && i < lista.length - 1) ? lista[i + 1] : null;
-  // Título de las pantallas sin cabecera propia (Inicio)
-  const fila = b.parentNode && b.parentNode.classList.contains('nav-hist-fila') ? b.parentNode.querySelector('.brand') : null;
-  if(fila && i >= 0) fila.textContent = navNombre(lista[i]);
-  const ca = (typeof LANG_I !== 'undefined' && LANG_I === 'ca');
-  b.disabled = !ant; f.disabled = !sig;
-  const nb = ant ? navNombre(ant) : '', nf = sig ? navNombre(sig) : '';
-  document.getElementById('nav-back-txt').textContent = nb;
-  document.getElementById('nav-fwd-txt').textContent = nf;
-  b.title = ant ? (ca ? 'Anterior: ' : 'Anterior: ') + nb : ''; b.setAttribute('aria-label', b.title || (ca ? 'Apartat anterior' : 'Apartado anterior'));
-  f.title = sig ? (ca ? 'Següent: ' : 'Siguiente: ') + nf : ''; f.setAttribute('aria-label', f.title || (ca ? 'Apartat següent' : 'Apartado siguiente'));
-}
-// Pasos dentro de una misma pantalla (pestañas de «Mi gestión personal», etapas de un proyecto) para que las flechas también los recorran
-function navSub(clave){
-  if(window.__navRestaurando) return;
-  setTimeout(() => {
-    try {
-      if(window.__navRestaurando || !CURRENT_USER) return;
-      const cur = history.state; const pant = navPantallaActiva();
-      if(!(cur && cur.logosNav) || cur.s !== pant || cur.sub === clave) return;
-      const est = Object.assign({}, cur, { sub: clave });
-      if(!cur.sub && Date.now() - window.__navUltimoPaso < 600){ history.replaceState(est, '', location.pathname + location.search); }
-      else { window.__navIdx++; window.__navMax = window.__navIdx; est.i = window.__navIdx; history.pushState(est, '', location.pathname + location.search); }
-      window.__navUltimoPaso = Date.now();
-    } catch(e){}
-    navPintar();
-  }, 0);
-}
-function navRestaurarSub(st){
-  const sub = String(st.sub || '');
-  if(sub.indexOf('gp:') === 0){ showScreen('gestionpersonal'); renderGestionPersonal(sub.slice(3)); return true; }
-  if(sub.indexOf('et:') === 0){ const pz = sub.split(':'); showScreen(st.s); renderEtapaProyectoStaff(pz[1], Number(pz[2]) || 1); return true; }
-  return false;
+  const ver = (typeof CURRENT_USER !== 'undefined' && CURRENT_USER) ? '' : 'none';
+  [b, f].forEach(x => { if(x) x.style.display = ver; });
+  if(b) b.disabled = window.__navIdx <= 0;
+  if(f) f.disabled = window.__navIdx >= window.__navMax;
 }
 function navRegistrar(name){
   if(window.__navRestaurando) { setTimeout(navPintar, 0); return; }
@@ -1885,7 +1795,6 @@ function navRegistrar(name){
       const est = { logosNav:true, s:name, p:persona, o:window.__origenPersonaVista || null, i:0 };
       if(!(cur && cur.logosNav)){ est.i = 0; window.__navIdx = 0; window.__navMax = 0; history.replaceState(est, '', location.pathname + location.search); }
       else { window.__navIdx++; window.__navMax = window.__navIdx; est.i = window.__navIdx; history.pushState(est, '', location.pathname + location.search); }
-      window.__navUltimoPaso = Date.now();
     } catch(e){}
     navPintar();
   }, 0);
@@ -1895,7 +1804,6 @@ window.addEventListener('popstate', function(e){
   window.__navIdx = st.i || 0; window.__navRestaurando = true;
   try {
     if(st.s === 'persona' && st.p){ verPersonaStaff(st.p, st.o || 'panel'); }
-    else if(st.sub && navRestaurarSub(st)){ }
     else {
       const b = document.querySelector('.sidebar nav button[data-target="' + st.s + '"]');
       if(b && !b.classList.contains('rol-oculto')) b.click(); else showScreen(st.s);
@@ -8465,7 +8373,6 @@ async function iniciarItinerarioStaff(modo){
 
 async function renderEtapaProyectoStaff(itinerarioId, etapaNum){
   window.__itinerarioStaffActual = itinerarioId;
-  navSub('et:' + itinerarioId + ':' + etapaNum);
   const cont = document.getElementById('mipropioproyecto-content');
   cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
 
@@ -9973,7 +9880,6 @@ function gpArchivoValido(f){
 
 async function renderGestionPersonal(tab){
   if(tab) window.__gpTab = tab;
-  if(window.__gpTab) navSub('gp:' + window.__gpTab);
   const cont = document.getElementById('gestionpersonal-content');
   if(!cont) return;
   if(!GP_OK){
@@ -12948,7 +12854,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-22 · v125 (flechas atrás/adelante + fecha de nacimiento escrita a mano)';
+const APP_VERSION_INTRANET = '2026-10-22 · v127 (ficha editable con todos los campos)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -13797,8 +13703,8 @@ function construirVistaUnica(p, d, cardAtencion, extra){
       <summary style="cursor:pointer;font-weight:700;">📋 ${ca ? 'Dades personals completes' : 'Datos personales completos'}</summary>
       <div style="margin-top:8px;">
         ${fila(ca ? 'Data de naixement' : 'Fecha de nacimiento', p.fecha_nacimiento)}${fila(ca ? 'Sexe' : 'Sexo', p.sexo)}${fila('Provincia', p.provincia)}
-        ${fila(ca ? 'Convivència' : 'Convivencia', p.convivencia)}${fila(ca ? 'Persones a la llar' : 'Personas en el hogar', p.personas_hogar)}${fila(ca ? 'Nombre de fills' : 'Número de hijos', p.numero_hijos)}
-        ${fila(ca ? 'Situació laboral' : 'Situación laboral', p.situacion_laboral)}${fila(ca ? 'Nivell d\'ingressos' : 'Nivel de ingresos', p.nivel_ingresos)}
+        ${fila(ca ? 'Persones a la llar' : 'Personas en el hogar', p.personas_hogar)}${fila(ca ? 'Nombre de fills' : 'Número de hijos', p.numero_hijos)}
+        ${fila(ca ? 'Situació laboral' : 'Situación laboral', p.situacion_laboral)}
         ${p.discapacidad_reconocida === true ? fila(ca ? 'Discapacitat reconeguda' : 'Discapacidad reconocida', (ca ? 'Sí' : 'Sí') + (p.porcentaje_discapacidad ? ' · ' + p.porcentaje_discapacidad + '%' : '')) : ''}
         ${p.dependencia_reconocida === true ? fila(ca ? 'Dependència reconeguda' : 'Dependencia reconocida', 'Sí') : ''}
         ${fila(t.fechaAltaLbl, p.creado_en ? fmt(p.creado_en) : '')}
@@ -14188,10 +14094,9 @@ async function verPersonaStaffInterno(usuarioId, origen){
       ${p.telefono ? `<div class="panel-stat-row"><span></span><a href="${enlaceWhatsApp(p.telefono, p.nombre_completo)}" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;color:#25D366;">💬 ${LANG_I==='ca'?'Escriure per WhatsApp':'Escribir por WhatsApp'}</a></div>` : ''}
       ${campo(t.calleLbl, p.calle)}
       ${campo(t.municipioLbl, p.municipio)} ${campo(t.codigoPostalLbl, p.codigo_postal)} ${campo(t.provinciaLbl, p.provincia)}
-      ${campo(t.conQuienViveLbl, p.convivencia)} ${campo(t.personasHogarLbl, p.personas_hogar)} ${campo(t.numeroHijosLbl, p.numero_hijos)}
+      ${campo(t.personasHogarLbl, p.personas_hogar)} ${campo(t.numeroHijosLbl, p.numero_hijos)}
       ${campo(t.sexoLbl, p.sexo)} ${campo(t.nacionalidadLbl, p.nacionalidad)} ${campo(t.situacionRegularizacionLbl, p.situacion_regularizacion)} ${campo(t.situacionLaboralLbl, p.situacion_laboral)} ${campo(t.nivelEstudiosLbl, p.nivel_estudios)}
       ${campo(t.titulacionesCursosLbl, p.titulaciones_cursos)} ${campo(t.experienciaLaboralLbl, p.experiencia_laboral)}
-      ${campo(t.nivelIngresosLbl, p.nivel_ingresos)}
       ${campoBool(t.discapacidadReconocidaLbl, p.discapacidad_reconocida)} ${campo(t.pctDiscapacidadLbl, p.porcentaje_discapacidad)}
       ${campoBool(t.dependenciaReconocidaLbl, p.dependencia_reconocida)}
       ${campoBool(t.familiaMonoparentalLbl, p.familia_monoparental)} ${campoBool(t.familiaNumerosaLbl, p.familia_numerosa)}
@@ -14237,7 +14142,6 @@ async function verPersonaStaffInterno(usuarioId, origen){
         <div class="field"><label>${LANG_I==='ca'?'Municipi':'Municipio'}</label><input type="text" id="pds-municipio" value="${p.municipio||''}"></div>
         <div class="field"><label>${LANG_I==='ca'?'Codi postal':'Código postal'}</label><input type="text" id="pds-cp" value="${p.codigo_postal||''}"></div>
         <div class="field"><label>Provincia</label><input type="text" id="pds-provincia" value="${p.provincia||''}"></div>
-        <div class="field"><label>${LANG_I==='ca'?'Convivència':'Convivencia'}</label><input type="text" id="pds-convivencia" value="${p.convivencia||''}"></div>
         <div class="field"><label>${LANG_I==='ca'?'Persones a la llar':'Personas en el hogar'}</label><input type="number" min="1" id="pds-personas-hogar" value="${p.personas_hogar||''}"></div>
         <div class="field"><label>${LANG_I==='ca'?'Nombre de fills':'Número de hijos'}</label><input type="number" min="0" id="pds-num-hijos" value="${p.numero_hijos||''}"></div>
         <div class="field">
@@ -14268,7 +14172,34 @@ async function verPersonaStaffInterno(usuarioId, origen){
             <option value="false" ${p.dependencia_reconocida===false?'selected':''}>${LANG_I==='ca'?'No':'No'}</option>
           </select>
         </div>
-        <div class="field"><label>${LANG_I==='ca'?'Nivell d\'ingressos':'Nivel de ingresos'}</label><input type="text" id="pds-ingresos" value="${p.nivel_ingresos||''}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Nacionalitat':'Nacionalidad'}</label><input type="text" id="pds-nacionalidad" value="${escAttr(p.nacionalidad||'')}"></div>
+        <div class="field">
+          <label>${LANG_I==='ca'?'Situació de regularització':'Situación de regularización'}</label>
+          <select id="pds-regularizacion">
+            <option value="">—</option>
+            <option value="regularizada" ${p.situacion_regularizacion==='regularizada'?'selected':''}>${LANG_I==='ca'?'Regularitzada':'Regularizada'}</option>
+            <option value="en_tramite" ${p.situacion_regularizacion==='en_tramite'?'selected':''}>${LANG_I==='ca'?'En tràmit':'En trámite'}</option>
+            <option value="irregular" ${p.situacion_regularizacion==='irregular'?'selected':''}>${LANG_I==='ca'?'Situació irregular':'Situación irregular'}</option>
+            <option value="prefiero_no_decir" ${p.situacion_regularizacion==='prefiero_no_decir'?'selected':''}>${LANG_I==='ca'?'Prefereix no respondre':'Prefiere no responder'}</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>${LANG_I==='ca'?'Nivell d\'estudis':'Nivel de estudios'}</label>
+          <select id="pds-nivel-estudios">
+            <option value="">—</option>
+            <option value="sin_estudios" ${p.nivel_estudios==='sin_estudios'?'selected':''}>${LANG_I==='ca'?'Sense estudis':'Sin estudios'}</option>
+            <option value="primaria" ${p.nivel_estudios==='primaria'?'selected':''}>${LANG_I==='ca'?'Primària':'Primaria'}</option>
+            <option value="eso" ${p.nivel_estudios==='eso'?'selected':''}>ESO</option>
+            <option value="bachillerato_fp" ${p.nivel_estudios==='bachillerato_fp'?'selected':''}>${LANG_I==='ca'?'Batxillerat / FP':'Bachillerato / FP'}</option>
+            <option value="universitarios" ${p.nivel_estudios==='universitarios'?'selected':''}>${LANG_I==='ca'?'Universitaris':'Universitarios'}</option>
+          </select>
+        </div>
+        <div class="field"><label>${LANG_I==='ca'?'Titulacions o cursos':'Titulaciones o cursos'}</label><input type="text" id="pds-titulaciones" value="${escAttr(p.titulaciones_cursos||'')}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Experiència laboral prèvia':'Experiencia laboral previa'}</label><input type="text" id="pds-experiencia" value="${escAttr(p.experiencia_laboral||'')}"></div>
+        <label class="checkbox-row"><input type="checkbox" id="pds-monoparental" ${p.familia_monoparental?'checked':''}>${LANG_I==='ca'?'Família monoparental':'Familia monoparental'}</label>
+        <label class="checkbox-row"><input type="checkbox" id="pds-numerosa" ${p.familia_numerosa?'checked':''}>${LANG_I==='ca'?'Família nombrosa':'Familia numerosa'}</label>
+        <label class="checkbox-row"><input type="checkbox" id="pds-hijos-cargo" ${p.hijos_a_cargo?'checked':''}>${LANG_I==='ca'?'Fills a càrrec':'Hijos a cargo'}</label>
+        <label class="checkbox-row"><input type="checkbox" id="pds-desempleo" ${p.situacion_desempleo?'checked':''}>${LANG_I==='ca'?'Situació de desocupació':'Situación de desempleo'}</label>
         <p class="subtle" style="margin:6px 0 0;font-size:12px;">${LANG_I==='ca'?'Es desa amb el botó «Desar» del final de la fitxa.':'Se guarda con el botón «Guardar» del final de la ficha.'}</p>
       </div>
       </div></details>
@@ -14644,7 +14575,6 @@ async function guardarDatosPersonaStaff(usuarioId, silencioso){
     municipio: val('pds-municipio') || null,
     codigo_postal: val('pds-cp') || null,
     provincia: val('pds-provincia') || null,
-    convivencia: val('pds-convivencia') || null,
     personas_hogar: val('pds-personas-hogar') ? parseInt(val('pds-personas-hogar')) : null,
     numero_hijos: val('pds-num-hijos') ? parseInt(val('pds-num-hijos')) : null,
     sexo: val('pds-sexo') || null,
@@ -14652,7 +14582,15 @@ async function guardarDatosPersonaStaff(usuarioId, silencioso){
     discapacidad_reconocida: boolOrNull(document.getElementById('pds-discapacidad').value),
     porcentaje_discapacidad: val('pds-pct-discapacidad') ? parseInt(val('pds-pct-discapacidad')) : null,
     dependencia_reconocida: boolOrNull(document.getElementById('pds-dependencia').value),
-    nivel_ingresos: val('pds-ingresos') || null
+    nacionalidad: val('pds-nacionalidad') || null,
+    situacion_regularizacion: val('pds-regularizacion') || null,
+    nivel_estudios: val('pds-nivel-estudios') || null,
+    titulaciones_cursos: val('pds-titulaciones') || null,
+    experiencia_laboral: val('pds-experiencia') || null,
+    familia_monoparental: document.getElementById('pds-monoparental').checked,
+    familia_numerosa: document.getElementById('pds-numerosa').checked,
+    hijos_a_cargo: document.getElementById('pds-hijos-cargo').checked,
+    situacion_desempleo: document.getElementById('pds-desempleo').checked,
   };
   if(PERFIL_ETHOS && document.getElementById('pds-ethos')) payload.ethos = val('pds-ethos') || null;
   const { error } = await sb.from('perfiles').update(payload).eq('id', usuarioId);
