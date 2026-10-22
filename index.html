@@ -1702,7 +1702,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v123'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v124'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -6898,7 +6898,7 @@ async function mfSeguimiento(cursoId){
 }
 
 // ================= FICHA DE PERSONA: Excel y PDF profesionales =================
-const FICHA_MALVA = 'B87BA6';
+const FICHA_MALVA = '3E6FA3';
 const FICHA_ETIQ = {
   nombre_completo:'Nombre y apellidos', dni_nie:'DNI/NIE', fecha_nacimiento:'Fecha de nacimiento', sexo:'Sexo', nacionalidad:'Nacionalidad',
   email:'Correo electrónico', telefono:'Teléfono', calle:'Calle y número', codigo_postal:'Código postal', cp:'Código postal', municipio:'Municipio', provincia:'Provincia',
@@ -6951,6 +6951,7 @@ function fichaSecciones(obj, extra){
   return secs;
 }
 function fichaHoja(libro, nombre, cabecera, filas){
+  ({ cabecera, filas } = expQuitarVacias(cabecera, filas));
   const hoja = libro.addWorksheet(String(nombre).replace(/[\\\/\?\*\[\]:]/g, ' ').slice(0, 31), { views: [{ state: 'frozen', ySplit: 1 }] });
   const anchos = expAnchos(cabecera, filas, 11, 55);
   hoja.columns = cabecera.map((c, i) => ({ header: String(c), key: 'c' + i, width: anchos[i] }));
@@ -7003,7 +7004,7 @@ async function construirFichaXLSX(ficha){
       const titulo = valores.slice(0, 2).map(x => x[1]).join('  ·  ');
       hoja.mergeCells(r, 1, r, 2);
       const h = hoja.getCell(r, 1); h.value = (n + 1) + '.  ' + titulo;
-      h.font = { bold: true, size: 11, color: { argb: 'FF' + EXP_VIOLETA } }; h.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE4D8F0' } }; h.alignment = { vertical: 'middle', indent: 1 };
+      h.font = { bold: true, size: 11, color: { argb: 'FF' + EXP_VIOLETA } }; h.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDDE7F3' } }; h.alignment = { vertical: 'middle', indent: 1 };
       hoja.getRow(r).height = 20; r++;
       valores.slice(2).forEach((x, i) => {
         const a = hoja.getCell(r, 1), v = hoja.getCell(r, 2);
@@ -7026,15 +7027,15 @@ function construirFichaPDF(ficha){
   const limpia = v => String(expTexto(v)).replace(/[\u{1F000}-\u{1FFFF}←-⇿⌀-➿⬀-⯿️‍]/gu, '').replace(/[ \t]{2,}/g, ' ').trim();
   const W = () => pdf.internal.pageSize.getWidth();
   // Cabecera de la primera página
-  pdf.setFillColor(91, 44, 131); pdf.rect(0, 0, W(), 26, 'F');
+  pdf.setFillColor(30, 63, 102); pdf.rect(0, 0, W(), 26, 'F');
   pdf.setTextColor(255, 255, 255); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(17); pdf.text(limpia(ficha.titulo), 12, 12.5);
   pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.text(limpia(ficha.subtitulo), 12, 20);
   let y = 33;
-  const estiloComun = { theme: 'grid', styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak', valign: 'top', lineColor: [217, 204, 232], lineWidth: 0.2, textColor: [22, 35, 63] }, alternateRowStyles: { fillColor: [243, 238, 249] }, margin: { left: 12, right: 12, top: 14, bottom: 14 } };
+  const estiloComun = { theme: 'grid', styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak', valign: 'top', lineColor: [201, 214, 230], lineWidth: 0.2, textColor: [22, 35, 63] }, alternateRowStyles: { fillColor: [238, 243, 249] }, margin: { left: 12, right: 12, top: 14, bottom: 14 } };
   ficha.secciones.filter(s => s.tipo === 'campos').forEach(s => {
     pdf.autoTable(Object.assign({}, estiloComun, {
       startY: y,
-      head: [[{ content: limpia(s.nombre), colSpan: 2, styles: { fillColor: [184, 123, 166], textColor: 255, fontStyle: 'bold', fontSize: 10.5, halign: 'left' } }]],
+      head: [[{ content: limpia(s.nombre), colSpan: 2, styles: { fillColor: [62, 111, 163], textColor: 255, fontStyle: 'bold', fontSize: 10.5, halign: 'left' } }]],
       body: s.filas.map(f => [limpia(f[0]), limpia(f[1])]),
       columnStyles: { 0: { cellWidth: 52, fontStyle: 'bold' }, 1: { cellWidth: 'auto' } },
       rowPageBreak: 'avoid', showHead: 'everyPage'
@@ -7044,12 +7045,12 @@ function construirFichaPDF(ficha){
   ficha.secciones.filter(s => s.tipo === 'tabla' && s.filas.length).forEach(s => {
     pdf.addPage('a4', 'landscape');
     pdf.setFont('helvetica', 'bold'); pdf.setFontSize(13); pdf.setTextColor(22, 35, 63); pdf.text(limpia(s.nombre) + '  (' + s.filas.length + ')', 12, 14);
-    const n = s.cabecera.length;
+    const q = expQuitarVacias(s.cabecera, s.filas), n = q.cabecera.length;
     pdf.autoTable(Object.assign({}, estiloComun, {
       startY: 18, margin: { left: 10, right: 10, top: 14, bottom: 14 },
       styles: Object.assign({}, estiloComun.styles, { fontSize: n <= 6 ? 9 : (n <= 9 ? 8 : 7) }),
-      head: [s.cabecera.map(limpia)], body: s.filas.map(f => s.cabecera.map((_, i) => limpia(f[i]))),
-      headStyles: { fillColor: [91, 44, 131], textColor: 255, fontStyle: 'bold', halign: 'left', valign: 'middle' },
+      head: [q.cabecera.map(limpia)], body: q.filas.map(f => q.cabecera.map((_, i) => limpia(f[i]))),
+      headStyles: { fillColor: [30, 63, 102], textColor: 255, fontStyle: 'bold', halign: 'left', valign: 'middle' },
       rowPageBreak: 'avoid', showHead: 'everyPage'
     }));
   });
@@ -15360,7 +15361,14 @@ async function cargarMasTraductor(){
 // ---------- Exportaciones (Excel / PDF) ----------
 
 // ---- Exportaciones: Excel con estilo y PDF paginado (cabecera violeta) ----
-const EXP_VIOLETA = '5B2C83', EXP_ZEBRA = 'F3EEF9', EXP_BORDE = 'D9CCE8';
+// Cabecera azul Logos con letras blancas (el nombre EXP_VIOLETA se conserva por compatibilidad)
+const EXP_VIOLETA = '1E3F66', EXP_ZEBRA = 'EEF3F9', EXP_BORDE = 'C9D6E6';
+// Quita las columnas que no tienen ningún dato en ninguna fila, para que no queden huecos vacíos
+function expQuitarVacias(cabecera, filas){
+  const mantener = cabecera.map((_, i) => filas.some(f => { const v = expTexto(f[i]); return v !== '' && v !== null && v !== undefined; }));
+  if(!filas.length || !mantener.some(Boolean)) return { cabecera, filas };
+  return { cabecera: cabecera.filter((_, i) => mantener[i]), filas: filas.map(f => f.filter((_, i) => mantener[i])) };
+}
 function expTexto(v){
   if(v === null || v === undefined) return '';
   if(v instanceof Date) return v.toLocaleDateString('es-ES');
@@ -15374,6 +15382,7 @@ function expAnchos(cabecera, filas, min, max){
   });
 }
 async function construirXLSXBuffer(cabecera, filas, nombreHoja){
+  ({ cabecera, filas } = expQuitarVacias(cabecera, filas));
   const ExcelJS = window.ExcelJS;
   const libro = new ExcelJS.Workbook();
   libro.creator = 'Logos Intranet'; libro.created = new Date();
@@ -15403,6 +15412,7 @@ async function construirXLSXBuffer(cabecera, filas, nombreHoja){
   return await libro.xlsx.writeBuffer();
 }
 function construirPDFTabla(titulo, cabecera, filas){
+  ({ cabecera, filas } = expQuitarVacias(cabecera, filas));
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const limpia = v => String(expTexto(v)).replace(/[\u{1F000}-\u{1FFFF}←-⇿⌀-➿⬀-⯿️‍]/gu, '').replace(/\s{2,}/g, ' ').trim();
@@ -15418,9 +15428,9 @@ function construirPDFTabla(titulo, cabecera, filas){
     startY: 22,
     margin: { left: 10, right: 10, top: 12, bottom: 12 },
     theme: 'grid',
-    styles: { fontSize: fs, cellPadding: 1.8, overflow: 'linebreak', valign: 'top', lineColor: [217, 204, 232], lineWidth: 0.2, textColor: [22, 35, 63] },
-    headStyles: { fillColor: [91, 44, 131], textColor: 255, fontStyle: 'bold', halign: 'left', valign: 'middle' },
-    alternateRowStyles: { fillColor: [243, 238, 249] },
+    styles: { fontSize: fs, cellPadding: 1.8, overflow: 'linebreak', valign: 'top', lineColor: [201, 214, 230], lineWidth: 0.2, textColor: [22, 35, 63] },
+    headStyles: { fillColor: [30, 63, 102], textColor: 255, fontStyle: 'bold', halign: 'left', valign: 'middle' },
+    alternateRowStyles: { fillColor: [238, 243, 249] },
     showHead: 'everyPage',
     rowPageBreak: 'avoid',
     didDrawPage: () => {}
@@ -15449,6 +15459,7 @@ async function descargarXLSX(cabecera, filas, nombreArchivo, nombreHoja){
     }
   } catch(e){ console.warn('Excel con estilo no disponible, se usa el sencillo', e); }
   // Respaldo (sin colores) si no ha cargado la librería de estilos
+  ({ cabecera, filas } = expQuitarVacias(cabecera, filas));
   const hoja = XLSX.utils.aoa_to_sheet([cabecera, ...filas]);
   hoja['!cols'] = expAnchos(cabecera, filas, 10, 48).map(w => ({ wch: w }));
   const libro = XLSX.utils.book_new();
