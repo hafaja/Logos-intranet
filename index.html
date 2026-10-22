@@ -444,6 +444,7 @@
   /* Adaptación a pantallas estrechas: el menú lateral pasa a barra inferior */
   .mobile-menu-toggle{display:none;}
   .mobile-menu-header{display:none;}
+  .nav-hist{display:none;}
   @media (max-width: 760px){
     #app{flex-direction:column;}
     .sidebar{width:100%;height:56px;position:sticky;bottom:0;top:auto;order:2;flex-direction:row;align-items:center;justify-content:center;padding:0;border-top:1.5px solid rgba(255,255,255,.1);z-index:150;}
@@ -453,6 +454,9 @@
     .sidebar .ilang-btn{background:#fff;border:1.5px solid var(--line);color:var(--navy);padding:7px 11px;font-size:12px;}
     .sidebar .ilang-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
     .mobile-menu-toggle{display:flex;flex:1;height:38px;align-items:center;justify-content:center;gap:8px;background:var(--navy);border:none;border-radius:999px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font-body);}
+    .nav-hist{display:flex;align-items:center;justify-content:center;flex:none;width:44px;height:38px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--navy);font-size:26px;line-height:1;font-weight:700;cursor:pointer;padding:0 0 3px;}
+    .nav-hist:disabled{opacity:.3;cursor:default;}
+    body > .asistente-btn{bottom:74px;right:14px;width:48px;height:48px;font-size:20px;}
     .mobile-menu-overlay{display:none;}
     .sidebar.menu-open .mobile-menu-overlay{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:56px;background:var(--navy);z-index:160;}
     .mobile-menu-header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1.5px solid rgba(255,255,255,.12);font-family:var(--font-display);font-weight:700;font-size:17px;flex-shrink:0;color:var(--gold);}
@@ -465,6 +469,14 @@
     .hint-deslizar{display:block;}
     .panel-stat-row{flex-wrap:wrap;}
     .panel-stat-row>span:last-child{width:100%;justify-content:flex-end;margin-top:4px;}
+  }
+  /* Flechas atrás/adelante también en ordenador (en móvil están en la barra inferior) */
+  @media (min-width: 761px){
+    .nav-hist{display:flex;align-items:center;justify-content:center;position:fixed;bottom:18px;width:44px;height:44px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--navy);font-size:28px;line-height:1;font-weight:700;cursor:pointer;padding:0 0 4px;box-shadow:0 4px 14px rgba(30,63,102,.18);z-index:120;}
+    #nav-back{left:246px;}
+    #nav-fwd{left:300px;}
+    .nav-hist:hover:not(:disabled){background:var(--navy);color:#fff;}
+    .nav-hist:disabled{opacity:.35;cursor:default;box-shadow:none;}
   }
 
   /* Asistente de orientación (chat con Claude) */
@@ -542,7 +554,9 @@
       <button id="ibtn-es" class="ilang-btn active" onclick="setLangI('es')">ES</button>
       <button id="ibtn-ca" class="ilang-btn" onclick="setLangI('ca')">CA</button>
     </div>
+    <button class="nav-hist" id="nav-back" onclick="history.back()" aria-label="Atrás" title="Atrás">‹</button>
     <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('menu-open')">☰ Menú</button>
+    <button class="nav-hist" id="nav-fwd" onclick="history.forward()" aria-label="Adelante" title="Adelante">›</button>
     <div class="mobile-menu-overlay">
       <div class="mobile-menu-header">
         <span>Menú</span>
@@ -1702,7 +1716,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v124'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v125'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -1727,6 +1741,23 @@ document.addEventListener('input', e => {
   if(document.body) arrancar(); else document.addEventListener('DOMContentLoaded', arrancar);
   setTimeout(() => obs.disconnect(), 60000);
 })();
+// Fecha de nacimiento escrita a mano (dd/mm/aaaa)
+function fechaISOaES(iso){ const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? m[3] + '/' + m[2] + '/' + m[1] : ''; }
+function fechaESaISO(t){
+  t = (t || '').trim(); if(!t) return '';
+  const m = /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/.exec(t); if(!m) return null;
+  const d = +m[1], mo = +m[2], y = +m[3], dt = new Date(y, mo - 1, d);
+  if(dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d || y < 1900 || dt > new Date()) return null;
+  return y + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+}
+function fechaTxtISO(id){ const el = document.getElementById(id); return el ? fechaESaISO(el.value) : ''; }
+document.addEventListener('input', function(e){
+  const el = e.target; if(!el || !el.classList || !el.classList.contains('fecha-txt')) return;
+  if(e.inputType && e.inputType.indexOf('delete') === 0) return;
+  const d = el.value.replace(/\D/g, '').slice(0, 8);
+  let o = d.slice(0, 2); if(d.length > 2) o += '/' + d.slice(2, 4); if(d.length > 4) o += '/' + d.slice(4);
+  el.value = o;
+});
 function irAPantallaInicial(){
   let pend = null; try { pend = sessionStorage.getItem('logos_qr_pend'); sessionStorage.removeItem('logos_qr_pend'); } catch(e){}
   if(pend){ window.__recuerdoInicial = null; showScreen('panel'); renderPanelGeneral(); qrBuscarCodigo(pend); return; }
@@ -1744,6 +1775,44 @@ function irAPantallaInicial(){
   renderPanelGeneral();
 }
 
+// Navegación adelante/atrás (flechas ‹ › y botón atrás del navegador/teléfono)
+window.__navIdx = 0; window.__navMax = 0; window.__navRestaurando = false;
+function navPintar(){
+  const b = document.getElementById('nav-back'), f = document.getElementById('nav-fwd');
+  const ver = (typeof CURRENT_USER !== 'undefined' && CURRENT_USER) ? '' : 'none';
+  [b, f].forEach(x => { if(x) x.style.display = ver; });
+  if(b) b.disabled = window.__navIdx <= 0;
+  if(f) f.disabled = window.__navIdx >= window.__navMax;
+}
+function navRegistrar(name){
+  if(window.__navRestaurando) { setTimeout(navPintar, 0); return; }
+  setTimeout(() => {
+    try {
+      if(name === 'login' || !CURRENT_USER){ window.__navIdx = 0; window.__navMax = 0; navPintar(); return; }
+      const persona = name === 'persona' ? (window.__usuarioIdVisto || null) : null;
+      const cur = history.state;
+      if(cur && cur.logosNav && cur.s === name && (cur.p || null) === persona){ navPintar(); return; }
+      const est = { logosNav:true, s:name, p:persona, o:window.__origenPersonaVista || null, i:0 };
+      if(!(cur && cur.logosNav)){ est.i = 0; window.__navIdx = 0; window.__navMax = 0; history.replaceState(est, '', location.pathname + location.search); }
+      else { window.__navIdx++; window.__navMax = window.__navIdx; est.i = window.__navIdx; history.pushState(est, '', location.pathname + location.search); }
+    } catch(e){}
+    navPintar();
+  }, 0);
+}
+window.addEventListener('popstate', function(e){
+  const st = e.state; if(!st || !st.logosNav || !CURRENT_USER){ navPintar(); return; }
+  window.__navIdx = st.i || 0; window.__navRestaurando = true;
+  try {
+    if(st.s === 'persona' && st.p){ verPersonaStaff(st.p, st.o || 'panel'); }
+    else {
+      const b = document.querySelector('.sidebar nav button[data-target="' + st.s + '"]');
+      if(b && !b.classList.contains('rol-oculto')) b.click(); else showScreen(st.s);
+    }
+  } catch(err){}
+  setTimeout(() => { window.__navRestaurando = false; navPintar(); }, 800);
+  navPintar();
+});
+
 function showScreen(name){
   if(IS_JOVENES && !PANTALLAS_JOVENES.includes(name)) name = 'panel';
   if(IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(name)) name = 'gestionpersonal';
@@ -1754,6 +1823,7 @@ function showScreen(name){
   const target = group[name] || name;
   const btn = document.querySelector('.sidebar nav button[data-target="'+target+'"]');
   if(btn) btn.classList.add('active');
+  navRegistrar(name);
   if(name !== 'login' && CURRENT_USER) recuerdoGuardar({ pantalla: name, persona: name === 'persona' ? (window.__usuarioIdVisto || null) : null, origen: window.__origenPersonaVista || null });
 }
 
@@ -14068,7 +14138,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
         <div class="field"><label>✉️ ${LANG_I==='ca'?'Correu electrònic':'Correo electrónico'}</label><input type="email" id="pds-email" autocomplete="off" value="${escAttr(p.email||'')}" placeholder="nombre@correo.com">
           <div class="subtle" style="font-size:11.5px;margin-top:4px;">${acL('Es el correo de contacto de la ficha. No cambia el correo con el que la persona entra en Logos Acompanya.', 'És el correu de contacte de la fitxa. No canvia el correu amb què la persona entra a Logos Acompanya.')}</div></div>
         <div class="field"><label>DNI/NIE</label><input type="text" id="pds-dni" value="${p.dni_nie||''}"></div>
-        <div class="field"><label>${LANG_I==='ca'?'Data de naixement':'Fecha de nacimiento'}</label><input type="date" id="pds-nacimiento" value="${p.fecha_nacimiento||''}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Data de naixement':'Fecha de nacimiento'}</label><input type="text" class="fecha-txt" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" id="pds-nacimiento" value="${fechaISOaES(p.fecha_nacimiento)}"><div class="subtle" style="font-size:11px;margin:2px 0 0;">${LANG_I==='ca'?'Escriu-la: dd/mm/aaaa':'Escríbela así: dd/mm/aaaa'}</div></div>
         <div class="field"><label>${LANG_I==='ca'?'Carrer':'Calle'}</label><input type="text" id="pds-calle" value="${p.calle||''}"></div>
         <div class="field"><label>${LANG_I==='ca'?'Municipi':'Municipio'}</label><input type="text" id="pds-municipio" value="${p.municipio||''}"></div>
         <div class="field"><label>${LANG_I==='ca'?'Codi postal':'Código postal'}</label><input type="text" id="pds-cp" value="${p.codigo_postal||''}"></div>
@@ -14466,6 +14536,7 @@ async function descargarConsentimientoPDF(usuarioId, nombre, dni, fechaFirma){
 
 async function guardarDatosPersonaStaff(usuarioId, silencioso){
   const val = id => document.getElementById(id).value.trim();
+  if(fechaTxtISO('pds-nacimiento') === null){ alert(LANG_I==='ca' ? 'La data de naixement no és vàlida. Escriu-la així: dd/mm/aaaa (per exemple 15/03/1980).' : 'La fecha de nacimiento no es válida. Escríbela así: dd/mm/aaaa (por ejemplo 15/03/1980).'); return; }
   const boolOrNull = v => v === '' ? null : v === 'true';
   const correo = val('pds-email');
   if(correo && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(correo)){ alert(acL('El correo no parece válido. Revisa que lleve @ y un dominio (por ejemplo nombre@gmail.com).', 'El correu no sembla vàlid. Revisa que porti @ i un domini (per exemple nom@gmail.com).')); return false; }
@@ -14474,7 +14545,7 @@ async function guardarDatosPersonaStaff(usuarioId, silencioso){
     telefono: val('pds-telefono') || null,
     email: val('pds-email') ? val('pds-email').toLowerCase() : null,
     dni_nie: val('pds-dni') || null,
-    fecha_nacimiento: val('pds-nacimiento') || null,
+    fecha_nacimiento: fechaTxtISO('pds-nacimiento') || null,
     calle: val('pds-calle') || null,
     municipio: val('pds-municipio') || null,
     codigo_postal: val('pds-cp') || null,
