@@ -862,9 +862,11 @@
 <script>
 // Librerías pesadas (PDF, Excel, QR): se descargan en segundo plano cuando la página ya está abierta
 (function(){ function cargar(){
-  ['html2canvas/1.4.1/html2canvas.min.js','jspdf/2.5.1/jspdf.umd.min.js','xlsx/0.18.5/xlsx.full.min.js','qrcode-generator/1.4.4/qrcode.min.js'].forEach(function(u){
-    var el = document.createElement('script'); el.src = 'https://cdnjs.cloudflare.com/ajax/libs/' + u; el.async = true; document.head.appendChild(el);
-  });
+  var base = 'https://cdnjs.cloudflare.com/ajax/libs/';
+  function una(u, fin){ var el = document.createElement('script'); el.src = base + u; el.async = true; el.onload = el.onerror = fin || function(){}; document.head.appendChild(el); }
+  // el complemento de tablas del PDF necesita jsPDF ya cargado: van una detrás de otra
+  una('jspdf/2.5.1/jspdf.umd.min.js', function(){ una('jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js'); });
+  ['html2canvas/1.4.1/html2canvas.min.js','xlsx/0.18.5/xlsx.full.min.js','exceljs/4.4.0/exceljs.min.js','qrcode-generator/1.4.4/qrcode.min.js'].forEach(function(u){ una(u); });
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', cargar); else cargar(); })();
 </script>
@@ -1063,6 +1065,8 @@ const TI = {
 
 function setLangI(lang){
   LANG_I = lang;
+  try { localStorage.setItem('logos_lang_i', lang); } catch(e){}
+  document.documentElement.lang = lang;
   document.getElementById('ibtn-es').classList.toggle('active', lang === 'es');
   document.getElementById('ibtn-ca').classList.toggle('active', lang === 'ca');
   aplicarTraduccionesSidebar();
@@ -1071,7 +1075,503 @@ function setLangI(lang){
   if(activo && activo.id === 'screen-panel') renderPanelGeneral();
   if(activo && activo.id === 'screen-admin') renderAdministrador();
   if(activo && activo.id === 'screen-persona' && window.__usuarioIdVisto) verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
+  traducirEstatico(document.body);
 }
+
+// ===== Traducción de los textos fijos (mismo patrón que Logos Acompanya) =====
+// TXT_ES_CA: texto en español → catalán. Se aplica a todo texto que coincida exactamente, tanto en la página fija
+// como en lo que se dibuja después (un observador vigila los cambios). Al volver a ES se restauran los originales.
+const TXT_ES_CA = {
+  // Menú lateral
+  'Personal y administración':'Personal i administració','☰ Menú':'☰ Menú','Menú':'Menú','Inicio':'Inici','Mi espacio':'El meu espai',
+  '📖 Guía rápida':'📖 Guia ràpida','👤 Mi gestión personal':'👤 La meva gestió personal','📊 Impacto':'📊 Impacte',
+  '📁 Personas y casos':'📁 Persones i casos','Personas usuarias':'Persones usuàries','📷 Escanear QR':'📷 Escanejar QR','Expedientes':'Expedients',
+  'Citas y calendario':'Cites i calendari','📚 Formación y proyectos':'📚 Formació i projectes','🌱 Jóvenes en acción':'🌱 Joves en acció',
+  '🎓 Mi formación':'🎓 La meva formació','🎓 Formaciones':'🎓 Formacions','💶 Subvenciones':'💶 Subvencions','📁 Proyectos':'📁 Projectes',
+  '🚀 Emprendimiento':'🚀 Emprenedoria','🏛️ Crea un proyecto de Logos':'🏛️ Crea un projecte de Logos','🛠️ Herramientas del equipo':'🛠️ Eines de l\'equip',
+  'Gestión documental':'Gestió documental','Comunicación':'Comunicació','Trabajo en equipo':'Treball en equip','📰 Portales del día':'📰 Portals del dia',
+  '📊 Gestión':'📊 Gestió','Informes y datos':'Informes i dades','Administrador':'Administrador','🧾 Contabilidad':'🧾 Comptabilitat','Configuración':'Configuració',
+  // Acceso
+  'Correo electrónico':'Correu electrònic','Contraseña':'Contrasenya','¿Primera vez? Crear cuenta':'Primera vegada? Crear compte',
+  '🔑 ¿Has olvidado la contraseña?':'🔑 Has oblidat la contrasenya?','TI:Mostrar la contraseña':'Mostrar la contrasenya','TI:Ocultar la contraseña':'Amagar la contrasenya',
+  'Acceso exclusivo para técnicos y responsables de Logos':'Accés exclusiu per a tècnics i responsables de Logos',
+  // Cabeceras y botones de pantalla
+  '🚪 Salas de atención':'🚪 Sales d\'atenció','← Mi espacio':'← El meu espai','← Volver':'← Tornar','Cargando…':'Carregant…','Hola':'Hola',
+  'Subvenciones':'Subvencions','Formaciones':'Formacions','Mi formación · Equipo Logos':'La meva formació · Equip Logos','Crea un proyecto de Logos':'Crea un projecte de Logos',
+  'Portales del día':'Portals del dia','Contabilidad':'Comptabilitat','Proyectos':'Projectes','Cancelar':'Cancel·lar','Cerrar':'Tancar','Buscar':'Cercar','Guardar':'Desar',
+  '💾 Guardar':'💾 Desar','Enviar':'Enviar','Quitar':'Treure','Reservar':'Reservar','Avisar':'Avisar','Bloquear':'Bloquejar','Citas':'Cites','Documentos':'Documents',
+  '⏸ Pausa':'⏸ Pausa','← Atrás':'← Enrere','← Anterior':'← Anterior','Siguiente →':'Següent →','🖨️ Imprimir':'🖨️ Imprimir','⬇ CSV':'⬇ CSV',
+  // Asistente
+  '💬 Asistente Logos':'💬 Assistent Logos','Hola 👋 ¿En qué módulo o trámite necesitas orientación? Si quieres, te explico cómo se usa la Intranet.':'Hola 👋 En quin mòdul o tràmit necessites orientació? Si vols, t\'explico com es fa servir la Intranet.',
+  '¡Hola! Estoy aquí para ayudarte a usar Logos.':'Hola! Sóc aquí per ajudar-te a fer servir Logos.','TI:Asistente interno':'Assistent intern','PH:Escribe tu pregunta…':'Escriu la teva pregunta…',
+  'PH:Buscar personas, proyectos, documentos…':'Cercar persones, projectes, documents…',
+  // Otros textos fijos
+  'Todavía no hay ninguna cifra para publicar.':'Encara no hi ha cap xifra per publicar.','sin datos':'sense dades','Melocotón suave':'Préssec suau',
+  'Todavía no hay actividad reciente.':'Encara no hi ha activitat recent.','Sin resultados.':'Sense resultats.','No se ha encontrado.':'No s\'ha trobat.',
+  'No encontramos a nadie con ese nombre.':'No trobem ningú amb aquest nom.','Marcar leída':'Marcar llegida','Pasar a…':'Passar a…','✋ Me encargo yo':'✋ Me n\'encarrego jo',
+  '🔔 Alertas nuevas':'🔔 Alertes noves','Alertas nuevas':'Alertes noves',
+  // Ficha de atención, buscadores y listas de opciones
+  "Persona nueva · ficha de atención":"Persona nova · fitxa d'atenció",
+  "Ficha de atención":"Fitxa d'atenció",
+  "📋 Una sola ficha por persona":"📋 Una sola fitxa per persona",
+  "Esta persona ya tiene su ficha:":"Aquesta persona ja té la seva fitxa:",
+  "revísala y complétala":"revisa-la i completa-la",
+  "; se actualiza, no se crea otra. Cada visita o gestión se apunta aparte en el":"; s'actualitza, no se'n crea una altra. Cada visita o gestió s'apunta a part a l'",
+  "(nueva actuación).":"(nova actuació).",
+  "Expediente":"Expedient",
+  "⬇️ Excel de las atenciones de esta persona":"⬇️ Excel de les atencions d'aquesta persona",
+  "⬇️ Excel con todas las atenciones (se completa solo con cada nueva)":"⬇️ Excel amb totes les atencions (es completa sol amb cada nova)",
+  "✅ ¿La persona ya está registrada?":"✅ La persona ja està registrada?",
+  "Entonces":"Aleshores",
+  "no hace falta registrarla otra vez":"no cal registrar-la una altra vegada",
+  ": tiene una sola ficha. Escribe su nombre aquí abajo y haz clic: se abre su ficha, donde completas sus datos y abres su expediente (actuaciones, trámites, citas, documentos…).":": té una sola fitxa. Escriu el seu nom aquí sota i fes clic: s'obre la seva fitxa, on completes les seves dades i obres el seu expedient (actuacions, tràmits, cites, documents…).",
+  "🔎 Paso 1 · Busca a la persona por su nombre":"🔎 Pas 1 · Cerca la persona pel seu nom",
+  "📋 Ver/completar su ficha":"📋 Veure/completar la seva fitxa",
+  "ℹ️ ¿Cómo se usa esta página?":"ℹ️ Com es fa servir aquesta pàgina?",
+  "Escribe el nombre en el buscador y toca a la persona: se abre su":"Escriu el nom al cercador i toca la persona: s'obre la seva",
+  "ficha":"fitxa",
+  "En la ficha, arriba, elige:":"A la fitxa, a dalt, tria:",
+  "(datos e indicadores),":"(dades i indicadors),",
+  "(todas las actuaciones, trámites incluidos, hasta el cierre),":"(totes les actuacions, tràmits inclosos, fins al tancament),",
+  "Si la persona":"Si la persona",
+  "no aparece":"no apareix",
+  ", es que todavía no tiene cuenta: pulsa el botón de abajo y crea su ficha con un nombre o iniciales.":", és que encara no té compte: prem el botó de sota i crea la seva fitxa amb un nom o inicials.",
+  "Una persona =":"Una persona =",
+  "una sola ficha":"una sola fitxa",
+  "(ella rellena sus datos o se hace en el alta presencial; tú completas el resto). Cada visita o gestión se apunta como":"(ella omple les seves dades o es fa a l'alta presencial; tu completes la resta). Cada visita o gestió s'apunta com a",
+  "actuación":"actuació",
+  "en el Expediente.":"a l'Expedient.",
+  "👤 No la encuentro: crear su ficha (persona sin cuenta)":"👤 No la trobo: crear la seva fitxa (persona sense compte)",
+  "Nombre o referencia de la persona":"Nom o referència de la persona",
+  "Duración de esta atención (minutos, opcional)":"Durada d'aquesta atenció (minuts, opcional)",
+  "Necesidades detectadas que no están en el catálogo":"Necessitats detectades que no són al catàleg",
+  "Observaciones (opcional)":"Observacions (opcional)",
+  "Guardar atención":"Desar atenció",
+  "💾 Guardar cambios en la ficha":"💾 Desar els canvis a la fitxa",
+  "Registrar nueva atención":"Registrar nova atenció",
+  "PH:Escribe al menos 2 letras del nombre…":"Escriu almenys 2 lletres del nom…",
+  "PH:Ej: María G., o iniciales":"Ex: Maria G., o inicials",
+  "PH:Cualquier detalle útil: cómo llega la persona, qué le preocupa, próximos pasos…":"Qualsevol detall útil: com arriba la persona, què li preocupa, propers passos…",
+  "PH:Escribe el nombre para buscar":"Escriu el nom per cercar",
+  "PH:nombre@correo.com":"nom@correu.com",
+  "💶 Prestaciones económicas básicas":"💶 Prestacions econòmiques bàsiques",
+  "Renta Garantizada de Ciudadanía (RGC)":"Renda Garantida de Ciutadania (RGC)",
+  "RGC no activable (+65 años o discapacidad +65%)":"RGC no activable (+65 anys o discapacitat +65%)",
+  "Ingreso Mínimo Vital (IMV)":"Ingrés Mínim Vital (IMV)",
+  "Pensiones NO contributivas":"Pensions NO contributives",
+  "Prestación contributiva (SEPE)":"Prestació contributiva (SEPE)",
+  "Trabajador/a activo":"Treballador/a actiu",
+  "Fijo discontinuo":"Fix discontinu",
+  "Ninguna":"Cap",
+  "Ninguno":"Cap",
+  "🧾 Trámites / proyectos dentro de Bretxa Logos":"🧾 Tràmits / projectes dins de Bretxa Logos",
+  "Cita previa":"Cita prèvia",
+  "Solicitud IMV":"Sol·licitud IMV",
+  "Aportar/acceder a trámites":"Aportar/accedir a tràmits",
+  "Acceso a recursos sociales":"Accés a recursos socials",
+  "Asesoramiento e información":"Assessorament i informació",
+  "Asesoramiento emprendeduría":"Assessorament d'emprenedoria",
+  "Acompañamiento ocupacional":"Acompanyament ocupacional",
+  "Acceso digital":"Accés digital",
+  "Dispositivos TIC":"Dispositius TIC",
+  "🧭 Derivación a los programas":"🧭 Derivació als programes",
+  "Solo Bretxa Logos":"Només Bretxa Logos",
+  "Raíces – Reconnexió Familiar":"Arrels – Reconnexió Familiar",
+  "🛠️ Talleres":"🛠️ Tallers",
+  "Búsqueda de empleo":"Cerca de feina",
+  "Competencias digitales":"Competències digitals",
+  "Otros":"Altres",
+  "🏠 Situación residencial (ETHOS)":"🏠 Situació residencial (ETHOS)",
+  "No procede":"No procedeix",
+  "ETHOS 1 – Sin techo":"ETHOS 1 – Sense sostre",
+  "ETHOS 2 – Sin vivienda":"ETHOS 2 – Sense habitatge",
+  "ETHOS 3 – Vivienda insegura":"ETHOS 3 – Habitatge insegur",
+  "ETHOS 4 – Vivienda inadecuada":"ETHOS 4 – Habitatge inadequat",
+  "↗️ Derivación":"↗️ Derivació",
+  "🚀 Emprendeduría":"🚀 Emprenedoria",
+  "Capitalización paro":"Capitalització de l'atur",
+  "Alta autónomo/a":"Alta d'autònom/a",
+  "Emprendeduría social":"Emprenedoria social",
+  "Compatibilización paro/emprendeduría":"Compatibilització atur/emprenedoria",
+  "Constitución cooperativas":"Constitució de cooperatives",
+  "Microcréditos":"Microcrèdits",
+  "Ayudas SOC":"Ajuts SOC",
+  "Preaceleración":"Preacceleració",
+  "Mentoría":"Mentoria",
+  "Plan de empresa":"Pla d'empresa",
+  "Formación gestión":"Formació en gestió",
+  "Intrèpids (filiales)":"Intrèpids (filials)",
+  "Vecino/a del Port":"Veí/ïna del Port",
+  "Usuario/a Logos":"Usuari/ària de Logos",
+  "Terceras personas":"Terceres persones",
+  "Redes sociales":"Xarxes socials",
+  "Escuela Saavedra":"Escola Saavedra",
+  "Escuela Pau Delclós":"Escola Pau Delclós",
+  "Diputació – JOB CLUB A3":"Diputació – JOB CLUB A3",
+  "Expediente / Actuación":"Expedient / Actuació",
+  "Busca a la persona y abre su expediente: allí apuntas cada visita, trámite o paso hasta el cierre. Si todavía no tiene cuenta, crea primero su ficha desde «Ficha de atención».":"Cerca la persona i obre el seu expedient: allà apuntes cada visita, tràmit o pas fins al tancament. Si encara no té compte, crea primer la seva fitxa des de «Fitxa d'atenció».",
+  "Acceso rápido — personas recientes":"Accés ràpid — persones recents",
+  "Un clic te lleva directo a su ficha, pestaña \"Actuaciones\".":"Un clic et porta directament a la seva fitxa, pestanya \"Actuacions\".",
+  "¿No está en la lista? Búscala por nombre:":"No és a la llista? Cerca-la pel nom:",
+  "📷 Escanear QR de una persona":"📷 Escanejar el QR d'una persona",
+  "No se ha podido abrir la cámara (¿permiso denegado?). Escribe el código a mano.":"No s'ha pogut obrir la càmera (permís denegat?). Escriu el codi a mà.",
+  "Apunta la cámara al QR de la persona. Si no lo lee, acércalo, evita reflejos o escribe el código abajo.":"Apunta la càmera al QR de la persona. Si no el llegeix, acosta'l, evita reflexos o escriu el codi a sota.",
+  "PH:o pega/escribe el código":"o enganxa/escriu el codi",
+  "Escanea el código con la cámara · Escaneja el codi amb la càmera":"Escaneja el codi amb la càmera",
+  "Provincia":"Província",
+  "Gris (original) ✓":"Gris (original) ✓",
+  "Blanco":"Blanc",
+  "Azul suave":"Blau suau",
+  "Verde suave":"Verd suau",
+  "Lavanda suave":"Lavanda suau",
+  "Plantillas":"Plantilles",
+  "Formularios":"Formularis",
+  "Protocolos":"Protocols",
+  "Manuales":"Manuals",
+  "2026-10-15 · v54 (Guía en diapositivas + importador elige la hoja con datos)":"2026-10-15 · v54 (Guia en diapositives + l'importador tria el full amb dades)",
+  "Sin avisos por ahora.":"Sense avisos per ara.",
+  "Marca todos los pasos para poder activarlo.":"Marca tots els passos per poder activar-ho.",
+  "Resumen generado a partir de lo que has ido rellenando.":"Resum generat a partir del que has anat omplint.",
+  "Solo puedes crear cuenta si el responsable ya ha añadido tu correo en \"Gestión de personal\".":"Només pots crear un compte si el responsable ja ha afegit el teu correu a \"Gestió de personal\".",
+  "Todavía no hay ningún seguimiento registrado.":"Encara no hi ha cap seguiment registrat.",
+  "Ve registrando cómo avanza el proyecto, de vez en cuando.":"Ves registrant com avança el projecte, de tant en tant.",
+  "Ver el proyecto →":"Veure el projecte →",
+  "Mejoras necesarias":"Millores necessàries",
+  "Ya atendido":"Ja atès",
+  "Actividades realizadas":"Activitats realitzades",
+  "Actividades:":"Activitats:",
+  "Personas atendidas":"Persones ateses",
+  "Personas atendidas:":"Persones ateses:",
+  "Dificultades":"Dificultats",
+  "Dificultades:":"Dificultats:",
+  "Resultados":"Resultats",
+  "Resultados:":"Resultats:",
+  "Situación inicial:":"Situació inicial:",
+  "Seguimiento a 6 y 12 meses:":"Seguiment als 6 i 12 mesos:",
+  "Cierre:":"Tancament:",
+  "Sector:":"Sector:",
+  "Hora":"Hora",
+  "Documentos":"Documents",
+  "Citas":"Cites",
+  // Proyectos, contabilidad, impacto, gestión y avisos
+  "No se ha podido cargar el generador de QR. Revisa la conexión e inténtalo de nuevo.":"No s'ha pogut carregar el generador de QR. Revisa la connexió i torna-ho a provar.",
+  "✔ Código leído. Buscando a la persona…":"✔ Codi llegit. Cercant la persona…",
+  "Se ha leído un QR, pero no es un código de una persona de Logos.":"S'ha llegit un QR, però no és un codi d'una persona de Logos.",
+  "¿Ya tienes cuenta? Entra":"Ja tens compte? Entra",
+  "Rellena el correo y la contraseña.":"Omple el correu i la contrasenya.",
+  "Hemos enviado un correo de confirmación a":"Hem enviat un correu de confirmació a",
+  "Tienes la entrada fichada y no has fichado la salida. ¿Cerrar la sesión igualmente?":"Tens l'entrada fitxada i no has fitxat la sortida. Tancar la sessió igualment?",
+  "Esta plataforma es solo para personal de Logos. Este correo no tiene acceso.":"Aquesta plataforma és només per al personal de Logos. Aquest correu no té accés.",
+  "Escribe tu correo arriba y vuelve a pulsar «¿Has olvidado la contraseña?».":"Escriu el teu correu a dalt i torna a prémer «Has oblidat la contrasenya?».",
+  "Tu acceso al personal ya no está activo. Habla con la administración.":"El teu accés al personal ja no és actiu. Parla amb l'administració.",
+  "Cerrado automáticamente: se superaron las":"Tancat automàticament: es van superar les",
+  "Tienes la entrada fichada desde las":"Tens l'entrada fitxada des de les",
+  "Ficha la salida antes de cerrar el ordenador.":"Fitxa la sortida abans de tancar l'ordinador.",
+  "Se ha fichado, pero no se ha podido registrar la ubicación (revisa los permisos de localización del navegador).":"S'ha fitxat, però no s'ha pogut registrar la ubicació (revisa els permisos de localització del navegador).",
+  "Escribe un nombre o referencia para la persona.":"Escriu un nom o referència per a la persona.",
+  "💾 Guardar ficha de atención":"💾 Desar fitxa d'atenció",
+  "Un clic te lleva directo a su ficha, pestaña \"Actuaciones\".":"Un clic et porta directament a la seva fitxa, pestanya \"Actuacions\".",
+  "Para registrar una actuación, la persona debe tener ya una cuenta creada en Logos Acompanya (con sus datos básicos rellenados). Si es la primera vez que la atiendes y todavía no tiene cuenta, usa primero":"Per registrar una actuació, la persona ha de tenir ja un compte creat a Logos Acompanya (amb les seves dades bàsiques omplertes). Si és la primera vegada que l'atens i encara no té compte, fes servir primer",
+  "\"Registrar nueva atención\"":"\"Registrar nova atenció\"",
+  "Todavía no hay atenciones registradas.":"Encara no hi ha atencions registrades.",
+  "Nombre en la ficha":"Nom a la fitxa",
+  "Situación laboral":"Situació laboral",
+  "Duración (min)":"Durada (min)",
+  "Duración":"Durada",
+  "Prestaciones":"Prestacions",
+  "Trámites Bretxa":"Tràmits Bretxa",
+  "Derivación a programas":"Derivació a programes",
+  "Situación residencial (ETHOS)":"Situació residencial (ETHOS)",
+  "Derivación":"Derivació",
+  "Atenciones":"Atencions",
+  "Nueva cita":"Nova cita",
+  "¿Cancelar la cita de":"Cancel·lar la cita de",
+  "Fecha de alta":"Data d'alta",
+  "Proyecto":"Projecte",
+  "Lote de importación":"Lot d'importació",
+  "Dirección":"Adreça",
+  "Año de alta":"Any d'alta",
+  "Trámites":"Tràmits",
+  "Personas":"Persones",
+  "Fecha de alta / primera atención":"Data d'alta / primera atenció",
+  "ETHOS (situación residencial)":"ETHOS (situació residencial)",
+  "Con quién vive":"Amb qui viu",
+  "Personas en el hogar":"Persones a la llar",
+  "Titulaciones":"Titulacions",
+  "Personas dependientes a cargo":"Persones dependents a càrrec",
+  "Fecha del consentimiento":"Data del consentiment",
+  "Regularización":"Regularització",
+  "Datos sensibles autorizados":"Dades sensibles autoritzades",
+  "Situación de violencia":"Situació de violència",
+  "Datos personales":"Dades personals",
+  "Hogar y situación":"Llar i situació",
+  "Formación e intereses":"Formació i interessos",
+  "Otros datos":"Altres dades",
+  "Otros datos del archivo":"Altres dades de l'arxiu",
+  "Ficha":"Fitxa",
+  "No se encontró a la persona.":"No s'ha trobat la persona.",
+  "Trámites generales":"Tràmits generals",
+  "Actuaciones":"Actuacions",
+  "Proyecto / trámite":"Projecte / tràmit",
+  "Actuación realizada":"Actuació realitzada",
+  "Trámite / servicio":"Tràmit / servei",
+  "Ficha de":"Fitxa de",
+  "No se pudo preparar la ficha:":"No s'ha pogut preparar la fitxa:",
+  "Error al cargar:":"Error en carregar:",
+  "Datos":"Dades",
+  "Persona usuaria":"Persona usuària",
+  "Idioma persona":"Idioma persona",
+  "Fecha y hora":"Data i hora",
+  "Páginas que vigilamos":"Pàgines que vigilem",
+  "Añadir":"Afegir",
+  "¿Qué quiero hacer?":"Què vull fer?",
+  "¿Por qué quiero hacerlo?":"Per què vull fer-ho?",
+  "¿Qué problema quiero solucionar?":"Quin problema vull solucionar?",
+  "¿A quién quiero ayudar?":"A qui vull ajudar?",
+  "Descripción breve de la idea":"Descripció breu de la idea",
+  "Definir el proyecto":"Definir el projecte",
+  "Nombre del proyecto":"Nom del projecte",
+  "Objetivo general":"Objectiu general",
+  "Objetivos específicos":"Objectius específics",
+  "Personas beneficiarias":"Persones beneficiàries",
+  "Necesidades que queremos atender":"Necessitats que volem atendre",
+  "Lugar donde se desarrollará":"Lloc on es desenvoluparà",
+  "Analizar la necesidad":"Analitzar la necessitat",
+  "¿Existe realmente esta necesidad?":"Existeix realment aquesta necessitat?",
+  "¿A cuántas personas afecta?":"A quantes persones afecta?",
+  "¿Qué recursos existen actualmente?":"Quins recursos existeixen actualment?",
+  "¿Qué hacen otras entidades?":"Què fan altres entitats?",
+  "¿Qué aportará nuestro proyecto de diferente?":"Què aportarà de diferent el nostre projecte?",
+  "Diseñar las actividades":"Dissenyar les activitats",
+  "¿Qué vamos a hacer?":"Què farem?",
+  "¿Cómo lo vamos a hacer?":"Com ho farem?",
+  "¿Cuándo?":"Quan?",
+  "¿Dónde?":"On?",
+  "¿Quién participará?":"Qui hi participarà?",
+  "¿Qué materiales necesitamos?":"Quins materials necessitem?",
+  "Organizar el equipo":"Organitzar l'equip",
+  "Responsable del proyecto":"Responsable del projecte",
+  "Colaboradores":"Col·laboradors",
+  "Voluntarios":"Voluntaris",
+  "Entidades asociadas":"Entitats associades",
+  "Funciones de cada persona":"Funcions de cada persona",
+  "Preparar el presupuesto":"Preparar el pressupost",
+  "Recursos necesarios":"Recursos necessaris",
+  "Gastos":"Despeses",
+  "Recursos propios":"Recursos propis",
+  "Subvenciones posibles":"Subvencions possibles",
+  "Donaciones":"Donacions",
+  "Colaboraciones":"Col·laboracions",
+  "Otras fuentes de financiación":"Altres fonts de finançament",
+  "Crear el calendario":"Crear el calendari",
+  "Preparación":"Preparació",
+  "Actividades":"Activitats",
+  "Seguimiento":"Seguiment",
+  "Evaluación":"Avaluació",
+  "Finalización":"Finalització",
+  "Ver mi proyecto":"Veure el meu projecte",
+  "Tu proyecto":"El teu projecte",
+  "Justificación":"Justificació",
+  "Equipo":"Equip",
+  "Continuidad del proyecto":"Continuïtat del projecte",
+  "← Volver a editar las etapas":"← Tornar a editar les etapes",
+  "Anota las subvenciones, convocatorias, ayuntamientos, Generalitat, Diputación, fundaciones, entidades colaboradoras, espacios, formación o voluntariado que puedan encajar con este proyecto.":"Anota les subvencions, convocatòries, ajuntaments, Generalitat, Diputació, fundacions, entitats col·laboradores, espais, formació o voluntariat que puguin encaixar amb aquest projecte.",
+  "🔗 Continuar: recursos y oportunidades →":"🔗 Continuar: recursos i oportunitats →",
+  "🔗 Recursos y oportunidades":"🔗 Recursos i oportunitats",
+  "← Volver al resumen":"← Tornar al resum",
+  "🚀 Continuar: poner en marcha →":"🚀 Continuar: posar en marxa →",
+  "🚀 Presentar y poner en marcha":"🚀 Presentar i posar en marxa",
+  "Preparar la documentación":"Preparar la documentació",
+  "Presentar el proyecto":"Presentar el projecte",
+  "Buscar financiación":"Cercar finançament",
+  "Crear el equipo":"Crear l'equip",
+  "Comenzar las actividades":"Començar les activitats",
+  "✅ Este proyecto ya está registrado en \"📁 Proyectos\", como proyecto en marcha.":"✅ Aquest projecte ja està registrat a \"📁 Projectes\", com a projecte en marxa.",
+  "🚀 Marcar como proyecto en marcha":"🚀 Marcar com a projecte en marxa",
+  "Proyecto nuevo":"Projecte nou",
+  "📊 Continuar: seguimiento →":"📊 Continuar: seguiment →",
+  "📊 Seguimiento y evaluación":"📊 Seguiment i avaluació",
+  "➕ Nuevo registro":"➕ Nou registre",
+  "➕ Guardar registro":"➕ Desar registre",
+  "ETAPA 9 DE 11":"ETAPA 9 DE 11",
+  "Activo":"Actiu",
+  "Finalizado":"Finalitzat",
+  "Pausado":"Pausat",
+  "Fechas":"Dates",
+  "¡Hecho! El proyecto ya está en marcha, dentro de \"📁 Proyectos\".":"Fet! El projecte ja és en marxa, dins de \"📁 Projectes\".",
+  "No puedes desactivarte a ti mismo/a. Pide a otro administrador que lo haga si hace falta.":"No et pots desactivar a tu mateix/a. Demana-ho a un altre administrador si cal.",
+  "No puedes desactivar a la única persona administradora activa.":"No pots desactivar l'única persona administradora activa.",
+  "No puedes quitarte a ti mismo/a.":"No et pots treure a tu mateix/a.",
+  "No puedes quitar a la única persona administradora activa.":"No pots treure l'única persona administradora activa.",
+  "Título del curso":"Títol del curs",
+  "Escribe el título del curso.":"Escriu el títol del curs.",
+  "formación":"formació",
+  "No hay ninguna nómina con persona asignada.":"No hi ha cap nòmina amb persona assignada.",
+  "¿Borrar definitivamente? No se puede deshacer.":"Esborrar definitivament? No es pot desfer.",
+  "Esta persona tiene un horario propio.":"Aquesta persona té un horari propi.",
+  "Esta persona usa ahora el horario general. Si cambias algo y guardas, se creará uno propio para ella.":"Aquesta persona fa servir ara l'horari general. Si canvies alguna cosa i deses, se'n crearà un de propi per a ella.",
+  "Es el horario que usa todo el personal que no tenga uno propio.":"És l'horari que fa servir tot el personal que no en tingui un de propi.",
+  "¿Quitar el horario propio de esta persona? Volverá a usar el horario general.":"Treure l'horari propi d'aquesta persona? Tornarà a fer servir l'horari general.",
+  "Sin datos":"Sense dades",
+  "Personas con ficha":"Persones amb fitxa",
+  "Con situación inicial":"Amb situació inicial",
+  "Con cierre":"Amb tancament",
+  "Con seguimiento 6 meses":"Amb seguiment 6 mesos",
+  "Con seguimiento 12 meses":"Amb seguiment 12 mesos",
+  "% con mejora en alguna dimensión":"% amb millora en alguna dimensió",
+  "% que mantiene la mejora a 6 meses":"% que manté la millora als 6 mesos",
+  "% que mantiene la mejora a 12 meses":"% que manté la millora als 12 mesos",
+  "% con mejora":"% amb millora",
+  "Tasa de inserción laboral (%)":"Taxa d'inserció laboral (%)",
+  "Inserción sostenida a 6 meses (%)":"Inserció sostinguda als 6 mesos (%)",
+  "Horas de formación":"Hores de formació",
+  "Certificados o titulaciones":"Certificats o titulacions",
+  "WHO-5 medio al inicio":"WHO-5 mitjà a l'inici",
+  "WHO-5 medio al cierre":"WHO-5 mitjà al tancament",
+  "Satisfacción media (1-5)":"Satisfacció mitjana (1-5)",
+  "Rellena al menos un dato.":"Omple almenys una dada.",
+  "Esta sección es solo para la administración.":"Aquesta secció és només per a l'administració.",
+  "No se puede leer la contabilidad. Si dice que falta una tabla, hay que ejecutar el archivo SQL de contabilidad en Supabase.":"No es pot llegir la comptabilitat. Si diu que falta una taula, cal executar l'arxiu SQL de comptabilitat a Supabase.",
+  "Empieza en blanco, sin ninguna cifra. Se crea un plan de códigos básico que puedes cambiar, una caja y un banco.":"Comença en blanc, sense cap xifra. Es crea un pla de codis bàsic que pots canviar, una caixa i un banc.",
+  "Nombre de la entidad":"Nom de l'entitat",
+  "Nueva cuenta":"Nou compte",
+  "Esta cuenta tiene movimientos: no se puede borrar, pero sí desactivar.":"Aquest compte té moviments: no es pot esborrar, però sí desactivar.",
+  "Escribe un nombre.":"Escriu un nom.",
+  "No se puede cambiar la moneda principal porque ya hay movimientos.":"No es pot canviar la moneda principal perquè ja hi ha moviments.",
+  "Comprobaciones":"Comprovacions",
+  "movimientos en la segunda moneda sin tipo de cambio: no entran en el total.":"moviments en la segona moneda sense tipus de canvi: no entren al total.",
+  "Subvenciones y ayudas públicas":"Subvencions i ajuts públics",
+  "Donaciones de personas o entidades":"Donacions de persones o entitats",
+  "Formación":"Formació",
+  "604 Formación y actividades":"604 Formació i activitats",
+  "Ayudas a personas atendidas":"Ajuts a persones ateses",
+  "Publicaciones y suscripciones":"Publicacions i subscripcions",
+  "Personal y colaboraciones":"Personal i col·laboracions",
+  "Sin indicar":"Sense indicar",
+  "Todos":"Tots",
+  "Domiciliación":"Domiciliació",
+  "Elige el medio de pago.":"Tria el mitjà de pagament.",
+  "El efectivo solo se apunta en una caja.":"L'efectiu només s'apunta en una caixa.",
+  "Con tarjeta, transferencia, Bizum o domiciliación hay que usar una cuenta de banco, tarjeta o monedero (no una caja).":"Amb targeta, transferència, Bizum o domiciliació cal fer servir un compte de banc, targeta o moneder (no una caixa).",
+  "No tienes ninguna cuenta para este medio de pago. Créala en la pestaña Cuentas.":"No tens cap compte per a aquest mitjà de pagament. Crea'l a la pestanya Comptes.",
+  "Ese mes está cerrado. Ábrelo de nuevo para cambiar movimientos.":"Aquest mes està tancat. Obre'l de nou per canviar moviments.",
+  "Conciliación con el extracto":"Conciliació amb l'extracte",
+  "Aún no hay comprobaciones.":"Encara no hi ha comprovacions.",
+  "Última comprobación":"Darrera comprovació",
+  "No se puede cerrar todavía:":"Encara no es pot tancar:",
+  "Todavía no hay nadie en cuotas. Añade a quien paga una cuota periódica.":"Encara no hi ha ningú en quotes. Afegeix qui paga una quota periòdica.",
+  "Solo se guarda el nombre: no escribas datos personales.":"Només es desa el nom: no escriguis dades personals.",
+  "Qué necesita esta persona":"Què necessita aquesta persona",
+  "Nombre y apellidos de esta persona:":"Nom i cognoms d'aquesta persona:",
+  "Excel con estilo no disponible, se usa el sencillo":"Excel amb estil no disponible, s'utilitza el senzill",
+  "¡Listo!":"Fet!",
+  "Todo al día":"Tot al dia",
+  "Sin leer":"Sense llegir",
+  "Tu información es privada":"La teva informació és privada",
+  "Jóvenes en acción":"Joves en acció",
+  "Aprender, participar, convivir y crecer para construir un futuro mejor.":"Aprendre, participar, conviure i créixer per construir un futur millor."
+};
+const TXT_PATRONES = [
+  // Avisos que genera Logos Acompanya (se guardan en español; aquí se muestran en catalán)
+  [/^🆘 (.+) necesita la ayuda de Logos con: "(.+)"\.$/, m => '🆘 ' + m[1] + ' necessita l\'ajuda de Logos amb: "' + m[2] + '".'],
+  [/^🟢 (.+) ha empezado por su cuenta: "(.+)" \(enlace oficial\)\. Es solo un aviso, no hace falta actuar\.$/, m => '🟢 ' + m[1] + ' ha començat pel seu compte: "' + m[2] + '" (enllaç oficial). És només un avís, no cal actuar.'],
+  [/^(.+) no sabe qué necesita y ha pedido orientación\.$/, m => m[1] + ' no sap què necessita i ha demanat orientació.'],
+  [/^(.+) ha empezado a hacer seguimiento del trámite "(.+)" desde la app\.$/, m => m[1] + ' ha començat a fer el seguiment del tràmit "' + m[2] + '" des de l\'app.'],
+  [/^⚪ (.+) ha anulado el trámite "(.+)"\. Solo es un aviso\.$/, m => '⚪ ' + m[1] + ' ha anul·lat el tràmit "' + m[2] + '". És només un avís.'],
+  [/^(.+) ha autorizado a (.+) para la actividad "(.+)"\.$/, m => m[1] + ' ha autoritzat ' + m[2] + ' per a l\'activitat "' + m[3] + '".'],
+  [/^(.+) ha autorizado que (.+) salga solo\/a del centro a partir del (.+)\.$/, m => m[1] + ' ha autoritzat que ' + m[2] + ' surti sol/a del centre a partir del ' + m[3] + '.'],
+  [/^(.+) ha REVOCADO la autorización para que (.+) salga solo\/a del centro\.$/, m => m[1] + ' ha REVOCAT l\'autorització perquè ' + m[2] + ' surti sol/a del centre.'],
+  [/^(.+) confirma que vendrá a la cita del (.+) a las (.+)\.( Comentario: .+)?$/, m => m[1] + ' confirma que vindrà a la cita del ' + m[2] + ' a les ' + m[3] + '.' + (m[4] ? ' Comentari:' + m[4].slice(12) : '')],
+  [/^(.+) pide otro día\/hora a la cita del (.+) a las (.+)\.( Comentario: .+)?$/, m => m[1] + ' demana un altre dia/hora per a la cita del ' + m[2] + ' a les ' + m[3] + '.' + (m[4] ? ' Comentari:' + m[4].slice(12) : '')],
+  [/^(.+) no puede venir \(cita cancelada\) a la cita del (.+) a las (.+)\.( Comentario: .+)?$/, m => m[1] + ' no pot venir (cita cancel·lada) a la cita del ' + m[2] + ' a les ' + m[3] + '.' + (m[4] ? ' Comentari:' + m[4].slice(12) : '')],
+  [/^(.+) ha cancelado su cita del (.+)\.$/, m => m[1] + ' ha cancel·lat la seva cita del ' + m[2] + '.'],
+  [/^(.+) ha pedido cita para el (.+) a las (.+)\.$/, m => m[1] + ' ha demanat cita per al ' + m[2] + ' a les ' + m[3] + '.'],
+  [/^(.+) ha completado o actualizado sus datos en "Mi espacio"\.$/, m => m[1] + ' ha completat o actualitzat les seves dades a "El meu espai".'],
+  [/^Ficha de atención · (.+)$/, m => 'Fitxa d\'atenció · ' + m[1]],
+  [/^Para una persona que todavía no tiene cuenta\. Se guardará a tu nombre \((.+)\)\.$/, m => 'Per a una persona que encara no té compte. Es desarà a nom teu (' + m[1] + ').'],
+  [/^Citas (\d+)$/, m => 'Cites ' + m[1]]
+];   // [expresión, función(coincidencia) → catalán] para textos con números o nombres
+function _trPatron(t){
+  for(const [re, f] of TXT_PATRONES){ const m = re.exec(t); if(m) return f(m); }
+  return undefined;
+}
+function _trNodo(n, ca){
+  const par = n.parentNode;
+  if(!par || /^(SCRIPT|STYLE|TEXTAREA)$/.test(par.nodeName)) return;
+  if(n.__es === undefined){
+    const t = n.nodeValue.trim();
+    if(!t) return;
+    let r = TXT_ES_CA[t];
+    if(r === undefined) r = _trPatron(t);
+    if(r === undefined) return;
+    n.__es = n.nodeValue;
+  }
+  const es = n.__es, t = es.trim();
+  let r = TXT_ES_CA[t]; if(r === undefined) r = _trPatron(t);
+  n.nodeValue = ca && r !== undefined ? es.replace(t, r) : es;
+}
+function _trAttrs(e, ca){
+  ['placeholder','title'].forEach(a => {
+    if(!e.hasAttribute(a)) return;
+    const pre = a === 'placeholder' ? 'PH:' : 'TI:';
+    if(e['__es_'+a] === undefined){
+      const v = e.getAttribute(a);
+      if(!(pre + v in TXT_ES_CA)) return;
+      e['__es_'+a] = v;
+    }
+    const es = e['__es_'+a], r = TXT_ES_CA[pre + es];
+    e.setAttribute(a, ca && r !== undefined ? r : es);
+  });
+}
+
+// Avisos y confirmaciones del navegador (alert / confirm): se traducen igual que el resto cuando el idioma es CA
+const TXT_MENSAJES = {
+ "El navegador ha bloqueado la ventana de impresión. Permite las ventanas emergentes para esta página.": "El navegador ha bloquejat la finestra d'impressió. Permet les finestres emergents per a aquesta pàgina.",
+ "Escribe tu nombre antes de guardar.": "Escriu el teu nom abans de desar.",
+ "Escribe una respuesta antes de enviar.": "Escriu una resposta abans d'enviar.",
+ "Esta persona aún no tiene código QR (falta ejecutar el SQL 17 en Supabase).": "Aquesta persona encara no té codi QR (falta executar l'SQL 17 a Supabase).",
+ "Guardado.": "Desat.",
+ "No se encontró a la persona.": "No s'ha trobat la persona.",
+ "No se encontró el curso.": "No s'ha trobat el curs.",
+ "No se ha podido cargar el generador de QR. Revisa la conexión e inténtalo de nuevo.": "No s'ha pogut carregar el generador de QR. Revisa la connexió i torna-ho a provar.",
+ "¡Hecho! El proyecto ya está en marcha, dentro de \"📁 Proyectos\".": "Fet! El projecte ja és en marxa, dins de \"📁 Projectes\".",
+ "✅ Ficha guardada.": "✅ Fitxa desada."
+};
+const TXT_MENSAJES_INI = {"No se pudo generar el PDF: ": "No s'ha pogut generar el PDF: ", "No se pudo generar el certificado: ": "No s'ha pogut generar el certificat: ", "No se pudo preparar la ficha: ": "No s'ha pogut preparar la fitxa: "};
+function _trMsg(m){
+  if(LANG_I !== 'ca' || typeof m !== 'string') return m;
+  if(TXT_MENSAJES[m] !== undefined) return TXT_MENSAJES[m];
+  if(TXT_ES_CA[m] !== undefined) return TXT_ES_CA[m];
+  const pt = _trPatron(m); if(pt !== undefined) return pt;
+  for(const k in TXT_MENSAJES_INI){ if(m.indexOf(k) === 0) return TXT_MENSAJES_INI[k] + m.slice(k.length); }
+  return m;
+}
+(function(){
+  const a = window.alert.bind(window), c = window.confirm.bind(window);
+  window.alert = m => a(_trMsg(m));
+  window.confirm = m => c(_trMsg(m));
+})();
+let TRAD_USADA = false;
+function traducirEstatico(raiz){
+  raiz = raiz || document.body;
+  const ca = LANG_I === 'ca';
+  if(!ca && !TRAD_USADA) return;
+  if(ca) TRAD_USADA = true;
+  const w = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT);
+  let n; const lista = [];
+  while(n = w.nextNode()) lista.push(n);
+  lista.forEach(x => _trNodo(x, ca));
+  if(raiz.querySelectorAll) raiz.querySelectorAll('[placeholder],[title]').forEach(e => _trAttrs(e, ca));
+}
+let _trTimer = null;
+(function(){
+  function pendiente(){ if(_trTimer) return; _trTimer = setTimeout(() => { _trTimer = null; if(LANG_I === 'ca') traducirEstatico(document.body); }, 40); }
+  document.addEventListener('DOMContentLoaded', () => {
+    try { new MutationObserver(pendiente).observe(document.body, { childList:true, subtree:true }); } catch(e){}
+    let g = null; try { g = localStorage.getItem('logos_lang_i'); } catch(e){}
+    if(g === 'ca') setLangI('ca');
+  });
+})();
 
 function aplicarTraduccionesSidebar(){
   const t = TI[LANG_I];
@@ -1202,7 +1702,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v119'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v123'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -4615,6 +5115,8 @@ function histVer(id){
     ${dato(esCA?'Nacionalitat':'Nacionalidad', p.nacionalidad)}${dato(esCA?'Tipus':'Tipo', p.tipo)}${dato(esCA?'Servei':'Servicio', p.servicio)}${dato(esCA?'Projecte':'Proyecto', p.proyecto)}${dato(esCA?'Notes':'Notas', p.notas)}${HIST_ETHOS ? (IS_ADMIN ? `<div class="ja-dato"><span>ETHOS</span><select onchange="histGuardarEthos('${p.id}', this.value)"><option value="">—</option>${ETHOS_OPTS.map(o => `<option value="${o[0]}" ${p.ethos===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div>` : dato('ETHOS', p.ethos ? etiquetaOpt(ETHOS_OPTS, p.ethos) : '')) : ''}${dato(esCA?'Lot':'Lote', p.origen)}
     ${p.datos && typeof p.datos === 'object' ? `<details style="margin-top:8px;" open><summary style="cursor:pointer;font-weight:600;">${esCA?'Altres dades de l\'arxiu':'Otros datos del archivo'} <span class="chip off" style="font-size:10px;">${esCA?'sensible':'sensible'}</span></summary>${Object.entries(p.datos).map(([k, v]) => dato(k, String(v))).join('')}</details>` : ''}
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;align-items:center;">
+      <button class="link-btn" onclick="exportarFichaHist('${p.id}','xlsx')">⬇️ ${esCA?'Fitxa Excel':'Ficha Excel'}</button>
+      <button class="link-btn" onclick="exportarFichaHist('${p.id}','pdf')">⬇️ ${esCA?'Fitxa PDF':'Ficha PDF'}</button>
       ${IMPACTO_OK ? `<button class="primary-btn" style="width:auto;margin:0;" onclick="histAImpacto('${p.id}')">📊 ${esCA?'Crear fitxa d\'impacte':'Crear ficha de impacto'}</button>` : ''}
       ${IS_ADMIN ? `<button class="link-btn" style="color:var(--alert);" onclick="histBorrar('${p.id}')">${esCA?'Esborrar':'Borrar'}</button>` : ''}
       <button class="link-btn" style="margin-left:auto;" onclick="histCerrar()">${esCA?'Tancar':'Cerrar'}</button>
@@ -6393,6 +6895,228 @@ async function mfSeguimiento(cursoId){
     return `<div class="panel-stat-row"><span>${escAttr(p.nombre || p.email)}</span><span><strong>${pct}%</strong> ${pct >= 100 ? '✅' : (pct > 0 ? '🟡' : '⬜')}</span></div>`;
   }).join('');
   host.innerHTML = `<div class="panel-card" style="margin-top:8px;"><h4 style="margin:0 0 6px;font-size:13px;">📊 ${acL('Seguimiento del equipo', 'Seguiment de l\'equip')}</h4>${filas || `<div class="empty-note">${acL('Sin personal.', 'Sense personal.')}</div>`}</div>`;
+}
+
+// ================= FICHA DE PERSONA: Excel y PDF profesionales =================
+const FICHA_MALVA = 'B87BA6';
+const FICHA_ETIQ = {
+  nombre_completo:'Nombre y apellidos', dni_nie:'DNI/NIE', fecha_nacimiento:'Fecha de nacimiento', sexo:'Sexo', nacionalidad:'Nacionalidad',
+  email:'Correo electrónico', telefono:'Teléfono', calle:'Calle y número', codigo_postal:'Código postal', cp:'Código postal', municipio:'Municipio', provincia:'Provincia',
+  convivencia:'Con quién vive', personas_hogar:'Personas en el hogar', numero_hijos:'Número de hijos/as', hijos:'Hijos/as', situacion_laboral:'Situación laboral',
+  discapacidad_reconocida:'Discapacidad reconocida', porcentaje_discapacidad:'% de discapacidad', dependencia_reconocida:'Dependencia reconocida', nivel_ingresos:'Nivel de ingresos',
+  nivel_estudios:'Nivel de estudios', titulaciones:'Titulaciones', experiencia:'Experiencia', monoparental:'Familia monoparental', familia_numerosa:'Familia numerosa', numerosa:'Familia numerosa',
+  dependientes:'Personas dependientes a cargo', desempleo:'En desempleo', intereses_formativos:'Intereses formativos', fecha_alta:'Fecha de alta', consentimiento_firmado:'Consentimiento firmado',
+  consentimiento_fecha:'Fecha del consentimiento', tecnico_responsable_email:'Técnico responsable', ethos:'ETHOS', codigo:'Código', anio:'Año', tipo:'Tipo', servicio:'Servicio', proyecto:'Proyecto',
+  regularizacion:'Regularización', sensibles:'Datos sensibles autorizados', violencia:'Situación de violencia', emocionales:'Apoyo emocional', menores:'Menores a cargo'
+};
+const FICHA_GRUPOS = [
+  ['Datos personales', ['nombre_completo','dni_nie','fecha_nacimiento','sexo','nacionalidad','email','telefono','fecha_alta','codigo','anio','tecnico_responsable_email']],
+  ['Domicilio', ['calle','codigo_postal','cp','municipio','provincia']],
+  ['Hogar y situación', ['convivencia','personas_hogar','numero_hijos','hijos','dependientes','monoparental','familia_numerosa','numerosa','situacion_laboral','desempleo','nivel_ingresos','discapacidad_reconocida','porcentaje_discapacidad','dependencia_reconocida','regularizacion','menores','violencia','emocionales']],
+  ['Formación e intereses', ['nivel_estudios','titulaciones','experiencia','intereses_formativos']],
+  ['Servicio', ['tipo','servicio','proyecto','ethos']],
+  ['Consentimiento', ['consentimiento_firmado','consentimiento_fecha','sensibles']]
+];
+const FICHA_OCULTAR = /^(id|.*_id|ruta_.*|token.*|clave.*|password.*|avatar.*|foto.*|push.*|fcm.*|datos|creado_en|actualizado.*|updated.*|created.*)$/i;
+function fichaEtiqueta(k){ return FICHA_ETIQ[k] || String(k).replace(/_/g, ' ').replace(/^./, c => c.toUpperCase()); }
+function fichaFecha(v){
+  const s = String(v);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)){ const [y, m, d] = s.split('-'); return d + '/' + m + '/' + y; }
+  const d = new Date(s); return isNaN(d) ? s : d.toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+function fichaValor(v){
+  if(v === null || v === undefined || v === '') return '';
+  if(v === true) return 'Sí'; if(v === false) return 'No';
+  if(Array.isArray(v)) return v.map(fichaValor).filter(Boolean).join(', ');
+  if(typeof v === 'object') return Object.entries(v).map(([k, x]) => fichaEtiqueta(k) + ': ' + fichaValor(x)).filter(l => !/: $/.test(l)).join('\n');
+  if(typeof v === 'string' && /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}.*)?$/.test(v)) return fichaFecha(v);
+  return String(v);
+}
+// Convierte un registro en secciones de "campo / dato" (solo lo que tiene valor)
+function fichaSecciones(obj, extra){
+  obj = obj || {};
+  const usados = new Set(), secs = [];
+  FICHA_GRUPOS.forEach(([nombre, claves]) => {
+    const filas = [];
+    claves.forEach(k => { if(k in obj){ usados.add(k); const v = fichaValor(obj[k]); if(v !== '') filas.push([fichaEtiqueta(k), v]); } });
+    if(filas.length) secs.push({ nombre, tipo: 'campos', filas });
+  });
+  const resto = [];
+  Object.keys(obj).forEach(k => { if(usados.has(k) || FICHA_OCULTAR.test(k)) return; const v = fichaValor(obj[k]); if(v !== '') resto.push([fichaEtiqueta(k), v]); });
+  if(resto.length) secs.push({ nombre: 'Otros datos', tipo: 'campos', filas: resto });
+  if(extra && typeof extra === 'object'){
+    const f = Object.entries(extra).map(([k, v]) => [fichaEtiqueta(k), fichaValor(v)]).filter(x => x[1] !== '');
+    if(f.length) secs.push({ nombre: 'Otros datos del archivo', tipo: 'campos', filas: f });
+  }
+  return secs;
+}
+function fichaHoja(libro, nombre, cabecera, filas){
+  const hoja = libro.addWorksheet(String(nombre).replace(/[\\\/\?\*\[\]:]/g, ' ').slice(0, 31), { views: [{ state: 'frozen', ySplit: 1 }] });
+  const anchos = expAnchos(cabecera, filas, 11, 55);
+  hoja.columns = cabecera.map((c, i) => ({ header: String(c), key: 'c' + i, width: anchos[i] }));
+  filas.forEach(f => hoja.addRow(cabecera.map((_, i) => expTexto(f[i]))));
+  const borde = { style: 'thin', color: { argb: 'FF' + EXP_BORDE } };
+  hoja.getRow(1).height = 26;
+  hoja.getRow(1).eachCell(c => { c.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + EXP_VIOLETA } }; c.alignment = { vertical: 'middle', wrapText: true }; c.border = { top: borde, left: borde, bottom: borde, right: borde }; });
+  hoja.eachRow((fila, n) => { if(n === 1) return; fila.eachCell({ includeEmpty: true }, c => { c.alignment = { vertical: 'top', wrapText: true }; c.border = { top: borde, left: borde, bottom: borde, right: borde }; if(n % 2 === 0) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + EXP_ZEBRA } }; }); });
+  hoja.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: cabecera.length } };
+  hoja.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+}
+// ficha = { titulo, subtitulo, secciones:[{nombre,tipo:'campos',filas}|{nombre,tipo:'tabla',cabecera,filas}] }
+async function construirFichaXLSX(ficha){
+  const libro = new window.ExcelJS.Workbook();
+  libro.creator = 'Logos Intranet'; libro.created = new Date();
+  const hoja = libro.addWorksheet('Ficha', { views: [{ showGridLines: false }] });
+  hoja.columns = [{ width: 38 }, { width: 90 }];
+  const borde = { style: 'thin', color: { argb: 'FF' + EXP_BORDE } };
+  hoja.mergeCells('A1:B1');
+  const t = hoja.getCell('A1'); t.value = ficha.titulo;
+  t.font = { bold: true, size: 17, color: { argb: 'FFFFFFFF' } }; t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + EXP_VIOLETA } }; t.alignment = { vertical: 'middle', indent: 1 };
+  hoja.getRow(1).height = 38;
+  hoja.mergeCells('A2:B2');
+  const st = hoja.getCell('A2'); st.value = ficha.subtitulo; st.font = { italic: true, size: 10, color: { argb: 'FF6B6B7B' } }; st.alignment = { indent: 1 };
+  let r = 4;
+  const campos = ficha.secciones.filter(s => s.tipo === 'campos');
+  campos.forEach(s => {
+    hoja.mergeCells(r, 1, r, 2);
+    const b = hoja.getCell(r, 1); b.value = s.nombre;
+    b.font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } }; b.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + FICHA_MALVA } }; b.alignment = { vertical: 'middle', indent: 1 };
+    hoja.getRow(r).height = 22; r++;
+    s.filas.forEach((f, i) => {
+      const a = hoja.getCell(r, 1), v = hoja.getCell(r, 2);
+      a.value = f[0]; v.value = String(expTexto(f[1]));
+      a.font = { bold: true, color: { argb: 'FF16233F' } };
+      [a, v].forEach(c => { c.font = c === a ? c.font : { size: 11, color: { argb: 'FF16233F' } }; c.alignment = { vertical: 'top', horizontal: 'left', wrapText: true, indent: c === a ? 1 : 0 }; c.border = { top: borde, left: borde, bottom: borde, right: borde }; if(i % 2 === 1) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + EXP_ZEBRA } }; });
+      if(String(f[1]).length < 80 && String(f[1]).indexOf('\n') < 0) hoja.getRow(r).height = 20;
+      r++;
+    });
+    r++;
+  });
+  // Historial completo en la misma hoja, como documento: cada atención, actuación, trámite… con todos sus datos legibles
+  ficha.secciones.filter(s => s.tipo === 'tabla' && s.filas.length).forEach(s => {
+    hoja.mergeCells(r, 1, r, 2);
+    const b = hoja.getCell(r, 1); b.value = s.nombre + '  (' + s.filas.length + ')';
+    b.font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } }; b.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + FICHA_MALVA } }; b.alignment = { vertical: 'middle', indent: 1 };
+    hoja.getRow(r).height = 22; r++;
+    s.filas.forEach((fila, n) => {
+      const valores = s.cabecera.map((c, i) => [c, expTexto(fila[i])]).filter(x => x[1] !== '' && x[1] !== null && x[1] !== undefined && String(x[1]).trim() !== '—' && String(x[1]).trim() !== '-');
+      const titulo = valores.slice(0, 2).map(x => x[1]).join('  ·  ');
+      hoja.mergeCells(r, 1, r, 2);
+      const h = hoja.getCell(r, 1); h.value = (n + 1) + '.  ' + titulo;
+      h.font = { bold: true, size: 11, color: { argb: 'FF' + EXP_VIOLETA } }; h.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE4D8F0' } }; h.alignment = { vertical: 'middle', indent: 1 };
+      hoja.getRow(r).height = 20; r++;
+      valores.slice(2).forEach((x, i) => {
+        const a = hoja.getCell(r, 1), v = hoja.getCell(r, 2);
+        a.value = x[0]; v.value = String(x[1]);
+        a.font = { bold: true, color: { argb: 'FF16233F' } };
+        [a, v].forEach(c => { c.font = c === a ? c.font : { size: 11, color: { argb: 'FF16233F' } }; c.alignment = { vertical: 'top', horizontal: 'left', wrapText: true, indent: c === a ? 1 : 0 }; c.border = { top: borde, left: borde, bottom: borde, right: borde }; if(i % 2 === 1) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + EXP_ZEBRA } }; });
+        if(String(x[1]).length < 80 && String(x[1]).indexOf('\n') < 0) hoja.getRow(r).height = 20;
+        r++;
+      });
+      r++;
+    });
+  });
+  hoja.pageSetup = { orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+  ficha.secciones.filter(s => s.tipo === 'tabla' && s.filas.length).forEach(s => fichaHoja(libro, s.nombre, s.cabecera, s.filas));
+  return await libro.xlsx.writeBuffer();
+}
+function construirFichaPDF(ficha){
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const limpia = v => String(expTexto(v)).replace(/[\u{1F000}-\u{1FFFF}←-⇿⌀-➿⬀-⯿️‍]/gu, '').replace(/[ \t]{2,}/g, ' ').trim();
+  const W = () => pdf.internal.pageSize.getWidth();
+  // Cabecera de la primera página
+  pdf.setFillColor(91, 44, 131); pdf.rect(0, 0, W(), 26, 'F');
+  pdf.setTextColor(255, 255, 255); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(17); pdf.text(limpia(ficha.titulo), 12, 12.5);
+  pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.text(limpia(ficha.subtitulo), 12, 20);
+  let y = 33;
+  const estiloComun = { theme: 'grid', styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak', valign: 'top', lineColor: [217, 204, 232], lineWidth: 0.2, textColor: [22, 35, 63] }, alternateRowStyles: { fillColor: [243, 238, 249] }, margin: { left: 12, right: 12, top: 14, bottom: 14 } };
+  ficha.secciones.filter(s => s.tipo === 'campos').forEach(s => {
+    pdf.autoTable(Object.assign({}, estiloComun, {
+      startY: y,
+      head: [[{ content: limpia(s.nombre), colSpan: 2, styles: { fillColor: [184, 123, 166], textColor: 255, fontStyle: 'bold', fontSize: 10.5, halign: 'left' } }]],
+      body: s.filas.map(f => [limpia(f[0]), limpia(f[1])]),
+      columnStyles: { 0: { cellWidth: 52, fontStyle: 'bold' }, 1: { cellWidth: 'auto' } },
+      rowPageBreak: 'avoid', showHead: 'everyPage'
+    }));
+    y = pdf.lastAutoTable.finalY + 7;
+  });
+  ficha.secciones.filter(s => s.tipo === 'tabla' && s.filas.length).forEach(s => {
+    pdf.addPage('a4', 'landscape');
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(13); pdf.setTextColor(22, 35, 63); pdf.text(limpia(s.nombre) + '  (' + s.filas.length + ')', 12, 14);
+    const n = s.cabecera.length;
+    pdf.autoTable(Object.assign({}, estiloComun, {
+      startY: 18, margin: { left: 10, right: 10, top: 14, bottom: 14 },
+      styles: Object.assign({}, estiloComun.styles, { fontSize: n <= 6 ? 9 : (n <= 9 ? 8 : 7) }),
+      head: [s.cabecera.map(limpia)], body: s.filas.map(f => s.cabecera.map((_, i) => limpia(f[i]))),
+      headStyles: { fillColor: [91, 44, 131], textColor: 255, fontStyle: 'bold', halign: 'left', valign: 'middle' },
+      rowPageBreak: 'avoid', showHead: 'everyPage'
+    }));
+  });
+  const total = pdf.getNumberOfPages();
+  for(let p = 1; p <= total; p++){
+    pdf.setPage(p);
+    const w = pdf.internal.pageSize.getWidth(), h = pdf.internal.pageSize.getHeight();
+    pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(130, 130, 130);
+    pdf.text('Logos Intranet · Documento confidencial con datos personales (RGPD)', 12, h - 6);
+    pdf.text('Página ' + p + ' de ' + total, w - 12, h - 6, { align: 'right' });
+  }
+  return pdf;
+}
+async function fichaDescargar(ficha, formato, nombreBase){
+  if(formato === 'pdf'){
+    if(!(window.jspdf && window.jspdf.jsPDF && (new window.jspdf.jsPDF()).autoTable)){ alert(LANG_I === 'ca' ? 'No s\'ha pogut carregar el generador de PDF. Recarrega la pàgina.' : 'No se ha podido cargar el generador de PDF. Recarga la página.'); return; }
+    construirFichaPDF(ficha).save(nombreBase + '.pdf'); return;
+  }
+  if(!window.ExcelJS){ alert(LANG_I === 'ca' ? 'No s\'ha pogut carregar el generador d\'Excel. Recarrega la pàgina.' : 'No se ha podido cargar el generador de Excel. Recarga la página.'); return; }
+  const buf = await construirFichaXLSX(ficha);
+  expDescargarBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), nombreBase + '.xlsx');
+}
+function fichaNombreArchivo(prefijo, nombre){
+  return prefijo + '-' + String(nombre || 'persona').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + new Date().toISOString().slice(0, 10);
+}
+// Ficha de una persona usuaria registrada (datos + atenciones + actuaciones + trámites + citas + proyectos + documentos + consultas)
+async function exportarFichaPersona(usuarioId, formato){
+  try {
+    const [pr, at, ac, tr, ci, py, dc, co] = await Promise.all([
+      sb.from('perfiles').select('*').eq('id', usuarioId).maybeSingle(),
+      sb.from('atenciones').select('*').eq('usuario_id', usuarioId).order('creado_en', { ascending: true }),
+      sb.from('actuaciones').select('*').eq('usuario_id', usuarioId).order('fecha', { ascending: true }),
+      sb.from('tramites').select('*').eq('usuario_id', usuarioId).order('creado_en', { ascending: true }),
+      sb.from('citas').select('*').eq('usuario_id', usuarioId).order('fecha', { ascending: true }),
+      sb.from('proyecto_participantes').select('*, proyectos(nombre, estado)').eq('usuario_id', usuarioId).eq('rol', 'beneficiario'),
+      sb.from('documentos').select('*').eq('usuario_id', usuarioId).order('subido_en', { ascending: true }),
+      sb.from('consultas_orientacion').select('*').eq('usuario_id', usuarioId).order('creado_en', { ascending: true })
+    ]);
+    const p = pr.data; if(!p){ alert('No se encontró a la persona.'); return; }
+    const tec = e => (typeof nombreTecnico === 'function' ? nombreTecnico(e) : e) || '';
+    const lista = r => (r && r.data) || [];
+    const secs = fichaSecciones(p);
+    const opt = (o, v) => (typeof etiquetasOpt === 'function' && Array.isArray(v) && typeof o !== 'undefined') ? etiquetasOpt(o, v) : fichaValor(v);
+    const tablas = [
+      { nombre: 'Atenciones', tipo: 'tabla', cabecera: ['Fecha', 'Técnico', 'Duración (min)', 'Prestaciones', 'Trámites generales', 'Derivación a programas', 'Talleres', 'Notas'],
+        filas: lista(at).map(a => [fichaFecha(a.creado_en), tec(a.creado_por_email), a.duracion_minutos || '', opt(typeof PRESTACIONES_OPTS !== 'undefined' ? PRESTACIONES_OPTS : [], a.prestaciones), opt(typeof TRAMITES_BRETXA_OPTS !== 'undefined' ? TRAMITES_BRETXA_OPTS : [], a.tramites_bretxa), opt(typeof PROGRAMAS_OPTS !== 'undefined' ? PROGRAMAS_OPTS : [], a.derivacion_programas), opt(typeof TALLERES_OPTS !== 'undefined' ? TALLERES_OPTS : [], a.talleres), a.notas || '']) },
+      { nombre: 'Actuaciones', tipo: 'tabla', cabecera: ['Fecha', 'Hora', 'Técnico', 'Proyecto / trámite', 'Objetivo', 'Actuación realizada', 'Resultado', 'Derivado a', 'Próximo paso', 'Próxima revisión'],
+        filas: lista(ac).map(a => [fichaFecha(a.fecha), a.hora ? String(a.hora).slice(0, 5) : '', tec(a.tecnico_email), a.categoria || '', a.objetivo || '', a.descripcion || '', fichaValor(a.resultado).replace(/_/g, ' '), a.derivado_a || '', a.proximo_paso || '', a.fecha_proxima_revision ? fichaFecha(a.fecha_proxima_revision) : '']) },
+      { nombre: 'Trámites', tipo: 'tabla', cabecera: ['Trámite / servicio', 'Estado', 'Inicio', 'Fin', 'Notas'],
+        filas: lista(tr).map(t => [t.nombre_servicio || '', typeof estadoTramiteTxt === 'function' ? estadoTramiteTxt(t.estado) : fichaValor(t.estado), t.fecha_inicio ? fichaFecha(t.fecha_inicio) : '', (t.fecha_fin || t.fecha_final || t.fecha_cierre) ? fichaFecha(t.fecha_fin || t.fecha_final || t.fecha_cierre) : '', t.notas || t.observaciones || '']) },
+      { nombre: 'Citas', tipo: 'tabla', cabecera: ['Fecha', 'Hora', 'Motivo', 'Estado', 'Técnico'],
+        filas: lista(ci).map(c => [c.fecha ? fichaFecha(c.fecha) : '', c.hora ? String(c.hora).slice(0, 5) : '', c.motivo || c.tipo || c.asunto || '', fichaValor(c.estado), tec(c.tecnico_email || c.creada_por_email)]) },
+      { nombre: 'Proyectos', tipo: 'tabla', cabecera: ['Proyecto', 'Estado'], filas: lista(py).map(x => [x.proyectos ? x.proyectos.nombre : '', x.proyectos ? fichaValor(x.proyectos.estado) : '']) },
+      { nombre: 'Consultas', tipo: 'tabla', cabecera: ['Fecha', 'Consulta', 'Estado'], filas: lista(co).map(x => [fichaFecha(x.creado_en), x.mensaje || x.consulta || x.texto || x.asunto || '', fichaValor(x.estado)]) },
+      { nombre: 'Documentos', tipo: 'tabla', cabecera: ['Documento', 'Tipo', 'Carpeta', 'Subido'], filas: lista(dc).map(d => [d.nombre_archivo || '', fichaValor(d.tipo_documento), d.carpeta || '', d.subido_en ? fichaFecha(d.subido_en) : '']) }
+    ];
+    const ficha = { titulo: 'Ficha de ' + (p.nombre_completo || 'persona usuaria'), subtitulo: 'Persona usuaria · exportada el ' + new Date().toLocaleDateString('es-ES') + ' · Associació Logos', secciones: secs.concat(tablas) };
+    await fichaDescargar(ficha, formato, fichaNombreArchivo('Ficha', p.nombre_completo));
+  } catch(e){ alert('No se pudo preparar la ficha: ' + (e.message || e)); }
+}
+// Ficha de una persona del histórico (años anteriores)
+async function exportarFichaHist(id, formato){
+  const p = (typeof __histCache !== 'undefined') ? __histCache[id] : null; if(!p) return;
+  try {
+    const ficha = { titulo: 'Ficha de ' + (p.nombre_completo || 'persona'), subtitulo: 'Histórico · ' + (p.codigo || '') + (p.anio ? ' · año ' + p.anio : '') + ' · exportada el ' + new Date().toLocaleDateString('es-ES') + ' · Associació Logos', secciones: fichaSecciones(p, p.datos) };
+    await fichaDescargar(ficha, formato, fichaNombreArchivo('Ficha-historico', p.nombre_completo));
+  } catch(e){ alert('No se pudo preparar la ficha: ' + (e.message || e)); }
 }
 
 async function crearCurso(){
@@ -13257,6 +13981,8 @@ async function verPersonaStaffInterno(usuarioId, origen){
   cont.innerHTML = `
     <h2 class="screen-title">${p.nombre_completo || t.sinNombre}</h2>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 12px;">
+      <button class="link-btn" style="margin:0;" onclick="exportarFichaPersona('${p.id}','xlsx')">⬇️ ${LANG_I==='ca'?'Fitxa Excel':'Ficha Excel'}</button>
+      <button class="link-btn" style="margin:0;" onclick="exportarFichaPersona('${p.id}','pdf')">⬇️ ${LANG_I==='ca'?'Fitxa PDF':'Ficha PDF'}</button>
       <button class="primary-btn" style="width:auto;margin:0;" onclick="abrirAtencionEnFicha()">📋 ${LANG_I==='ca'?'Fitxa d\'atenció':'Ficha de atención'}</button>
       <button class="primary-btn" style="width:auto;margin:0;background:var(--gold);" onclick="mostrarTabPersona('actuaciones');document.getElementById('act-descripcion').scrollIntoView({behavior:'smooth',block:'center'})">📝 ${LANG_I==='ca'?'Afegir actuació a l\'expedient':'Añadir actuación al expediente'}</button>
     </div>
@@ -14633,46 +15359,111 @@ async function cargarMasTraductor(){
 
 // ---------- Exportaciones (Excel / PDF) ----------
 
+// ---- Exportaciones: Excel con estilo y PDF paginado (cabecera violeta) ----
+const EXP_VIOLETA = '5B2C83', EXP_ZEBRA = 'F3EEF9', EXP_BORDE = 'D9CCE8';
+function expTexto(v){
+  if(v === null || v === undefined) return '';
+  if(v instanceof Date) return v.toLocaleDateString('es-ES');
+  return typeof v === 'number' ? v : String(v).replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '').replace(/\s+\n/g, '\n').trim();
+}
+function expAnchos(cabecera, filas, min, max){
+  return cabecera.map((c, i) => {
+    let m = String(c).length + 2;
+    filas.slice(0, 300).forEach(f => { const l = String(expTexto(f[i])).split('\n').reduce((a, x) => Math.max(a, x.length), 0); if(l + 2 > m) m = l + 2; });
+    return Math.max(min, Math.min(max, m));
+  });
+}
+async function construirXLSXBuffer(cabecera, filas, nombreHoja){
+  const ExcelJS = window.ExcelJS;
+  const libro = new ExcelJS.Workbook();
+  libro.creator = 'Logos Intranet'; libro.created = new Date();
+  const hoja = libro.addWorksheet(String(nombreHoja || 'Datos').replace(/[\\\/\?\*\[\]:]/g, ' ').slice(0, 31), { views: [{ state: 'frozen', ySplit: 1 }] });
+  const anchos = expAnchos(cabecera, filas, 10, 48);
+  hoja.columns = cabecera.map((c, i) => ({ header: String(c), key: 'c' + i, width: anchos[i] }));
+  filas.forEach(f => hoja.addRow(cabecera.map((_, i) => expTexto(f[i]))));
+  const borde = { style: 'thin', color: { argb: 'FF' + EXP_BORDE } };
+  const cab = hoja.getRow(1);
+  cab.height = 26;
+  cab.eachCell(c => {
+    c.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + EXP_VIOLETA } };
+    c.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+    c.border = { top: borde, left: borde, bottom: borde, right: borde };
+  });
+  hoja.eachRow((fila, n) => {
+    if(n === 1) return;
+    fila.eachCell({ includeEmpty: true }, c => {
+      c.alignment = { vertical: 'top', wrapText: true };
+      c.border = { top: borde, left: borde, bottom: borde, right: borde };
+      if(n % 2 === 0) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + EXP_ZEBRA } };
+    });
+  });
+  hoja.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: cabecera.length } };
+  hoja.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+  return await libro.xlsx.writeBuffer();
+}
+function construirPDFTabla(titulo, cabecera, filas){
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const limpia = v => String(expTexto(v)).replace(/[\u{1F000}-\u{1FFFF}←-⇿⌀-➿⬀-⯿️‍]/gu, '').replace(/\s{2,}/g, ' ').trim();
+  const n = cabecera.length;
+  const fs = n <= 6 ? 9.5 : (n <= 9 ? 8.5 : (n <= 12 ? 7.5 : 6.5));
+  pdf.setFont('helvetica', 'bold'); pdf.setFontSize(14); pdf.setTextColor(22, 35, 63);
+  pdf.text(limpia(titulo), 10, 13);
+  pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8.5); pdf.setTextColor(110, 110, 110);
+  pdf.text(new Date().toLocaleString('es-ES') + '  ·  ' + filas.length + ' ' + (filas.length === 1 ? 'fila' : 'filas'), 10, 18.5);
+  pdf.autoTable({
+    head: [cabecera.map(limpia)],
+    body: filas.map(f => cabecera.map((_, i) => limpia(f[i]))),
+    startY: 22,
+    margin: { left: 10, right: 10, top: 12, bottom: 12 },
+    theme: 'grid',
+    styles: { fontSize: fs, cellPadding: 1.8, overflow: 'linebreak', valign: 'top', lineColor: [217, 204, 232], lineWidth: 0.2, textColor: [22, 35, 63] },
+    headStyles: { fillColor: [91, 44, 131], textColor: 255, fontStyle: 'bold', halign: 'left', valign: 'middle' },
+    alternateRowStyles: { fillColor: [243, 238, 249] },
+    showHead: 'everyPage',
+    rowPageBreak: 'avoid',
+    didDrawPage: () => {}
+  });
+  const total = pdf.getNumberOfPages();
+  for(let p = 1; p <= total; p++){
+    pdf.setPage(p); pdf.setFontSize(8); pdf.setTextColor(130, 130, 130);
+    pdf.text('Logos Intranet', 10, pdf.internal.pageSize.getHeight() - 6);
+    pdf.text('Página ' + p + ' de ' + total, pdf.internal.pageSize.getWidth() - 10, pdf.internal.pageSize.getHeight() - 6, { align: 'right' });
+  }
+  return pdf;
+}
+function expDescargarBlob(blob, nombre){
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement('a');
+  enlace.href = url; enlace.download = nombre;
+  document.body.appendChild(enlace); enlace.click(); document.body.removeChild(enlace);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
 async function descargarXLSX(cabecera, filas, nombreArchivo, nombreHoja){
+  try {
+    if(window.ExcelJS){
+      const buf = await construirXLSXBuffer(cabecera, filas, nombreHoja);
+      expDescargarBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), nombreArchivo);
+      return;
+    }
+  } catch(e){ console.warn('Excel con estilo no disponible, se usa el sencillo', e); }
+  // Respaldo (sin colores) si no ha cargado la librería de estilos
   const hoja = XLSX.utils.aoa_to_sheet([cabecera, ...filas]);
+  hoja['!cols'] = expAnchos(cabecera, filas, 10, 48).map(w => ({ wch: w }));
   const libro = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(libro, hoja, nombreHoja);
   const buf = XLSX.write(libro, { bookType: 'xlsx', type: 'array' });
-  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  const url = URL.createObjectURL(blob);
-  const enlace = document.createElement('a');
-  enlace.href = url; enlace.download = nombreArchivo;
-  document.body.appendChild(enlace); enlace.click(); document.body.removeChild(enlace);
-  URL.revokeObjectURL(url);
+  expDescargarBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), nombreArchivo);
+}
+async function descargarPDFTabla(titulo, cabecera, filas, nombreArchivo){
+  if(window.jspdf && window.jspdf.jsPDF && (new window.jspdf.jsPDF()).autoTable){
+    construirPDFTabla(titulo, cabecera, filas).save(nombreArchivo);
+    return;
+  }
+  alert(LANG_I === 'ca' ? 'No s\'ha pogut carregar el generador de PDF. Recarrega la pàgina i torna-ho a provar.' : 'No se ha podido cargar el generador de PDF. Recarga la página e inténtalo de nuevo.');
 }
 
-async function descargarPDFTabla(titulo, cabecera, filas, nombreArchivo){
-  const filasHtml = filas.map(f => `<tr>${f.map(c => `<td style="border:1px solid #ccc;padding:5px 7px;font-size:10.5px;">${c ?? ''}</td>`).join('')}</tr>`).join('');
-  const contenedor = document.createElement('div');
-  contenedor.style.cssText = 'position:absolute;left:0;top:-10000px;width:1000px;background:#fff;padding:30px;font-family:Georgia,serif;color:#16233F;';
-  contenedor.innerHTML = `
-    <h1 style="font-size:18px;margin:0 0 4px;">${titulo}</h1>
-    <p style="font-size:11px;color:#666;margin:0 0 14px;">${new Date().toLocaleString('es-ES')}</p>
-    <table style="width:100%;border-collapse:collapse;">
-      <thead><tr>${cabecera.map(c => `<th style="border:1px solid #ccc;padding:5px 7px;font-size:10.5px;background:#F5F3EC;text-align:left;">${c}</th>`).join('')}</tr></thead>
-      <tbody>${filasHtml}</tbody>
-    </table>`;
-  document.body.appendChild(contenedor);
-  try {
-    const canvas = await html2canvas(contenedor, { scale: 2, backgroundColor: '#ffffff' });
-    const imgData = canvas.toDataURL('image/png');
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    const anchoPagina = pdf.internal.pageSize.getWidth();
-    const margen = 10;
-    const anchoImg = anchoPagina - margen * 2;
-    const altoImg = (canvas.height * anchoImg) / canvas.width;
-    pdf.addImage(imgData, 'PNG', margen, margen, anchoImg, altoImg);
-    pdf.save(nombreArchivo);
-  } finally {
-    document.body.removeChild(contenedor);
-  }
-}
 
 async function exportarFichajesExcel(){
   const { data } = await sb.from('fichajes').select('*').order('entrada', { ascending:false });
