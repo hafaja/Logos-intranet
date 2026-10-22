@@ -454,11 +454,11 @@
     .sidebar .ilang-btn{background:#fff;border:1.5px solid var(--line);color:var(--navy);padding:7px 11px;font-size:12px;}
     .sidebar .ilang-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
     .mobile-menu-toggle{display:flex;flex:1;height:38px;align-items:center;justify-content:center;gap:8px;background:var(--navy);border:none;border-radius:999px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font-body);}
-    /* En móvil: solo las flechas, el título en medio */
-    .main .nav-sec, .main #nav-fwd{width:42px;height:42px;padding:0;justify-content:center;}
-    .main .nav-sec-txt{display:none;}
-    .main .topbar.con-flechas{gap:8px;}
-    .topbar.con-flechas > .brand{font-size:19px;}
+    /* En móvil las flechas van arriba, junto al título, solo con el icono */
+    .nav-hist{width:44px;height:38px;padding:0 !important;justify-content:center;}
+    .nav-hist-txt{display:none;}
+    .main .topbar.con-flechas{gap:10px;}
+    .topbar.con-flechas .brand{font-size:19px;}
     body > .asistente-btn{bottom:74px;right:14px;width:48px;height:48px;font-size:20px;}
     .mobile-menu-overlay{display:none;}
     .sidebar.menu-open .mobile-menu-overlay{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:56px;background:var(--navy);z-index:160;}
@@ -473,19 +473,16 @@
     .panel-stat-row{flex-wrap:wrap;}
     .panel-stat-row>span:last-child{width:100%;justify-content:flex-end;margin-top:4px;}
   }
-  /* Flechas de apartados: ‹ apartado anterior · TÍTULO · apartado siguiente › (en ordenador y en móvil) */
-  .topbar.con-flechas{display:grid;grid-template-columns:minmax(42px,1fr) auto minmax(42px,1fr);align-items:center;gap:14px;}
-  .topbar.con-flechas > .brand, .topbar.con-flechas > .back-btn{grid-column:2;text-align:center;justify-self:center;}
-  #nav-back{grid-column:1;justify-self:start;} #nav-fwd{grid-column:3;justify-self:end;}
-  .nav-sec{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:100%;height:40px;padding:0 14px 0 8px;border:2px solid var(--navy);border-radius:999px;background:#fff;color:var(--navy);font-family:var(--font-body);font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(30,63,102,.12);transition:background .15s,color .15s;-webkit-tap-highlight-color:transparent;}
-  #nav-fwd{padding:0 8px 0 14px;}
-  .nav-sec svg{flex:none;}
-  .nav-sec-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .nav-sec:hover:not(:disabled),.nav-sec:active:not(:disabled){background:var(--navy);color:#fff;}
-  .nav-sec:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
-  .nav-sec:disabled{visibility:hidden;}
-  .nav-hist-fila{margin:0 0 16px;}
-  @media print{ .nav-sec{display:none !important;} }
+  /* Flechas atrás/adelante: arriba, a la izquierda del título de cada apartado (en ordenador y en móvil) */
+  .nav-hist-grupo{display:flex;flex:none;background:#fff;border:2px solid var(--navy);border-radius:999px;overflow:hidden;box-shadow:0 2px 8px rgba(30,63,102,.12);}
+  .nav-hist{display:flex;align-items:center;gap:3px;height:38px;padding:0 14px 0 8px;border:none;background:#fff;color:var(--navy);font-family:var(--font-body);font-size:13.5px;font-weight:800;cursor:pointer;transition:background .15s,color .15s;-webkit-tap-highlight-color:transparent;}
+  #nav-fwd{padding:0 8px 0 14px;border-left:1.5px solid var(--line);}
+  .nav-hist:hover:not(:disabled),.nav-hist:active:not(:disabled){background:var(--navy);color:#fff;}
+  .nav-hist:focus-visible{outline:3px solid var(--gold);outline-offset:-3px;}
+  .nav-hist:disabled{color:#c3cad4;cursor:default;}
+  .topbar.con-flechas{justify-content:flex-start;gap:16px;flex-wrap:wrap;}
+  .nav-hist-fila{display:flex;margin:0 0 16px;}
+  @media print{ .nav-hist-grupo{display:none !important;} }
 
   /* Asistente de orientación (chat con Claude) */
   .asistente-btn{position:fixed;bottom:22px;right:22px;width:56px;height:56px;border-radius:50%;background:var(--navy);color:var(--gold);border:none;font-size:23px;cursor:pointer;box-shadow:var(--shadow-lg);z-index:200;display:flex;align-items:center;justify-content:center;}
@@ -620,9 +617,9 @@
   </div>
 
   <div class="main">
-  <div id="nav-sec-almacen" style="display:none;">
-    <button class="nav-sec" id="nav-back" onclick="navAtras()" aria-label="Apartado anterior"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nav-sec-txt" id="nav-back-txt"></span></button>
-    <button class="nav-sec" id="nav-fwd" onclick="navAdelante()" aria-label="Apartado siguiente"><span class="nav-sec-txt" id="nav-fwd-txt"></span><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <div class="nav-hist-grupo" id="nav-hist-grupo" style="display:none;">
+      <button class="nav-hist" id="nav-back" onclick="navAtras()" aria-label="Atrás" title="Atrás (Alt + ←)"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nav-hist-txt" id="nav-back-txt">Atrás</span></button>
+      <button class="nav-hist" id="nav-fwd" onclick="navAdelante()" aria-label="Adelante" title="Adelante (Alt + →)"><span class="nav-hist-txt" id="nav-fwd-txt">Adelante</span><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
   <div class="screen active" id="screen-login">
     <div class="main-content">
@@ -1795,62 +1792,40 @@ function navPantallaInicio(){
   if(typeof IS_ADMIN !== 'undefined' && !IS_ADMIN && !IS_JOVENES) return 'miespacio';
   return 'panel';
 }
-// Apartados del menú en orden (solo los que ve cada perfil)
-function navSecciones(){
-  return Array.from(document.querySelectorAll('.sidebar nav button[data-target]')).filter(b => {
-    if(b.classList.contains('rol-oculto') || b.style.display === 'none') return false;
-    const g = b.closest('.nav-grupo'); return !(g && g.classList.contains('rol-oculto'));
-  });
+function navAtras(){
+  if(window.__navIdx > 0){ history.back(); return; }
+  // Sin páginas anteriores (p. ej. al recargar): «Atrás» lleva a la página de inicio de cada perfil
+  const ini = navPantallaInicio();
+  if(navPantallaActiva() === ini) return;
+  if(ini === 'gestionpersonal'){ showScreen('gestionpersonal'); renderGestionPersonal('rrhh'); }
+  else if(ini === 'miespacio'){ showScreen('miespacio'); renderMiEspacio(); }
+  else { showScreen('panel'); renderPanelGeneral(); }
 }
-function navNombre(b){
-  let t = ''; b.childNodes.forEach(n => { if(n.nodeType === 3 || !(n.classList && n.classList.contains('nav-badge'))) t += n.textContent; });
-  return t.replace(/^[^A-Za-zÀ-ÿ0-9]+/, '').replace(/\s+/g, ' ').trim();
-}
-function navPosicion(){
-  const pant = navPantallaActiva();
-  const grupo = { atencion:'miespacio', buscarpersona:'miespacio', persona:(window.__origenPersonaVista && window.__origenPersonaVista !== 'persona' ? window.__origenPersonaVista : 'panel') };
-  const objetivo = grupo[pant] || pant;
-  const lista = navSecciones();
-  return { lista, i: lista.findIndex(b => b.dataset.target === objetivo) };
-}
-function navIrSeccion(paso){
-  const { lista, i } = navPosicion(); if(i < 0) return;
-  const b = lista[i + paso]; if(!b) return;
-  b.click();
-  try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e){ window.scrollTo(0, 0); }
-}
-function navAtras(){ navIrSeccion(-1); }
-function navAdelante(){ navIrSeccion(1); }
-function navColocar(b, f){
-  const a = document.querySelector('.screen.active'); if(!a || !b || !f) return;
+function navAdelante(){ if(window.__navIdx < window.__navMax) history.forward(); }
+function navColocar(g){
+  const a = document.querySelector('.screen.active'); if(!g || !a) return;
   const mc = a.querySelector('.main-content'); if(!mc) return;
   let tb = mc.querySelector(':scope > .topbar');
   if(!tb){
     tb = mc.querySelector(':scope > .nav-hist-fila');
-    if(!tb){ tb = document.createElement('div'); tb.className = 'topbar nav-hist-fila'; tb.innerHTML = '<span class="brand"></span>'; mc.insertBefore(tb, mc.firstChild); }
+    if(!tb){ tb = document.createElement('div'); tb.className = 'nav-hist-fila'; mc.insertBefore(tb, mc.firstChild); }
   }
   tb.classList.add('con-flechas');
-  if(b.parentNode !== tb) tb.insertBefore(b, tb.firstChild);
-  if(f.parentNode !== tb || tb.lastChild !== f) tb.appendChild(f);
+  if(g.parentNode !== tb || tb.firstChild !== g) tb.insertBefore(g, tb.firstChild);
 }
 function navPintar(){
+  const g = document.getElementById('nav-hist-grupo');
+  navColocar(g);
   const b = document.getElementById('nav-back'), f = document.getElementById('nav-fwd');
-  if(!b || !f) return;
-  const dentro = (typeof CURRENT_USER !== 'undefined' && CURRENT_USER && navPantallaActiva() !== 'login');
-  if(!dentro){ const alm = document.getElementById('nav-sec-almacen'); if(alm && b.parentNode !== alm){ alm.appendChild(b); alm.appendChild(f); } return; }
-  navColocar(b, f);
-  const { lista, i } = navPosicion();
-  const ant = i > 0 ? lista[i - 1] : null, sig = (i >= 0 && i < lista.length - 1) ? lista[i + 1] : null;
-  // Título de las pantallas sin cabecera propia (Inicio)
-  const fila = b.parentNode && b.parentNode.classList.contains('nav-hist-fila') ? b.parentNode.querySelector('.brand') : null;
-  if(fila && i >= 0) fila.textContent = navNombre(lista[i]);
+  const ver = (typeof CURRENT_USER !== 'undefined' && CURRENT_USER && navPantallaActiva() !== 'login') ? '' : 'none';
+  if(g) g.style.display = ver;
+  if(b) b.disabled = window.__navIdx <= 0 && navPantallaActiva() === navPantallaInicio();
+  if(f) f.disabled = window.__navIdx >= window.__navMax;
   const ca = (typeof LANG_I !== 'undefined' && LANG_I === 'ca');
-  b.disabled = !ant; f.disabled = !sig;
-  const nb = ant ? navNombre(ant) : '', nf = sig ? navNombre(sig) : '';
-  document.getElementById('nav-back-txt').textContent = nb;
-  document.getElementById('nav-fwd-txt').textContent = nf;
-  b.title = ant ? (ca ? 'Anterior: ' : 'Anterior: ') + nb : ''; b.setAttribute('aria-label', b.title || (ca ? 'Apartat anterior' : 'Apartado anterior'));
-  f.title = sig ? (ca ? 'Següent: ' : 'Siguiente: ') + nf : ''; f.setAttribute('aria-label', f.title || (ca ? 'Apartat següent' : 'Apartado siguiente'));
+  const tb = ca ? 'Enrere' : 'Atrás', tf = ca ? 'Endavant' : 'Adelante';
+  const xb = document.getElementById('nav-back-txt'), xf = document.getElementById('nav-fwd-txt');
+  if(xb && xb.textContent !== tb){ xb.textContent = tb; b.setAttribute('aria-label', tb); b.title = tb + ' (Alt + ←)'; }
+  if(xf && xf.textContent !== tf){ xf.textContent = tf; f.setAttribute('aria-label', tf); f.title = tf + ' (Alt + →)'; }
 }
 // Pasos dentro de una misma pantalla (pestañas de «Mi gestión personal», etapas de un proyecto) para que las flechas también los recorran
 function navSub(clave){
@@ -4296,24 +4271,48 @@ async function renderBuscarPersonaActuacion(){
   const cont = document.getElementById('buscarpersona-content');
   cont.innerHTML = `<div class="placeholder">Cargando…</div>`;
 
-  const [actRecientes, atRecientes] = await Promise.all([
+  const LIMITE_RECIENTES = 10;
+  const [actRecientes, atRecientes, nuevosRes] = await Promise.all([
     sb.from('actuaciones').select('usuario_id, fecha').order('fecha', { ascending:false }).limit(30),
-    sb.from('atenciones').select('usuario_id, creado_en').not('usuario_id', 'is', null).order('creado_en', { ascending:false }).limit(30)
+    sb.from('atenciones').select('usuario_id, creado_en').not('usuario_id', 'is', null).order('creado_en', { ascending:false }).limit(30),
+    (async () => {
+      // Las altas más nuevas (aunque todavía no tengan ninguna actuación)
+      try {
+        let r = await sb.from('perfiles').select('id, nombre_completo, email, municipio, fecha_alta').order('fecha_alta', { ascending:false, nullsFirst:false }).limit(LIMITE_RECIENTES);
+        if(r.error) r = await sb.from('perfiles').select('id, nombre_completo, email, municipio').limit(LIMITE_RECIENTES);
+        return r;
+      } catch(e){ return { data: [] }; }
+    })()
   ]);
 
-  const idsRecientes = [...new Set([
+  const perfilesInfo = {};
+  (nuevosRes.data || []).forEach(p => { perfilesInfo[p.id] = p; });
+  const idsNuevos = (nuevosRes.data || []).map(p => p.id);
+  const idsActividad = [...new Set([
     ...(actRecientes.data || []).map(a => a.usuario_id),
     ...(atRecientes.data || []).map(a => a.usuario_id)
-  ])].slice(0, 12);
+  ])].filter(id => id);
+  const idsRecientes = [...new Set([...idsNuevos, ...idsActividad])].slice(0, LIMITE_RECIENTES);
 
-  let nombresRecientes = {};
-  if(idsRecientes.length){
-    const { data: perfilesRecientes } = await sb.from('perfiles').select('id, nombre_completo').in('id', idsRecientes);
-    (perfilesRecientes || []).forEach(p => { nombresRecientes[p.id] = p.nombre_completo; });
+  const faltan = idsRecientes.filter(id => !perfilesInfo[id]);
+  if(faltan.length){
+    const { data: extra } = await sb.from('perfiles').select('id, nombre_completo, email, municipio').in('id', faltan);
+    (extra || []).forEach(p => { perfilesInfo[p.id] = p; });
   }
 
-  const recientesHtml = idsRecientes.length
-    ? idsRecientes.map(id => `<button class="link-btn" style="display:block;width:100%;text-align:left;margin-bottom:6px;" onclick="verPersonaStaff('${id}','miespacio')">👤 ${nombresRecientes[id] || 'Persona sin nombre'}</button>`).join('')
+  const nombreLista = id => {
+    const p = perfilesInfo[id]; if(!p) return null;
+    return (p.nombre_completo && p.nombre_completo.trim()) || (p.email ? p.email : null);
+  };
+  const visibles = idsRecientes.filter(id => nombreLista(id));
+  const recientesHtml = visibles.length
+    ? visibles.map(id => {
+        const p = perfilesInfo[id];
+        const sinNombre = !(p.nombre_completo && p.nombre_completo.trim());
+        const alta = p.fecha_alta ? fechaISOaES(p.fecha_alta) : '';
+        const pie = [alta ? acL('alta ', 'alta ') + alta : '', p.municipio || '', sinNombre ? acL('aún sin nombre en la ficha', 'encara sense nom a la fitxa') : ''].filter(Boolean).join(' · ');
+        return `<button class="link-btn" style="display:block;width:100%;text-align:left;margin-bottom:6px;" onclick="verPersonaStaff('${id}','miespacio')">👤 ${escAttr(nombreLista(id))}${pie ? `<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(pie)}</span>` : ''}</button>`;
+      }).join('')
     : `<div class="empty-note">Todavía no hay actividad reciente.</div>`;
 
   cont.innerHTML = `
@@ -4589,8 +4588,7 @@ async function renderAgendaCitas(fecha){
   const t = TI[LANG_I];
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
 
-  const { data: citasDelDiaTodas } = await sb.from('citas').select('*').eq('fecha', __agendaFechaActual).order('hora', { ascending:true });
-  const citasDelDia = sinBorrados(citasDelDiaTodas);
+  const { data: citasDelDia } = await sb.from('citas').select('*').eq('fecha', __agendaFechaActual).order('hora', { ascending:true });
 
   const ids = [...new Set((citasDelDia || []).map(c => c.usuario_id).filter(Boolean))];
   let nombresAgenda = {};
@@ -5531,7 +5529,7 @@ async function obtenerPersonasParaExport(){
   const cols = 'id, nombre_completo, dni_nie, telefono, municipio, calle' + (FECHA_ALTA_OK ? ', fecha_alta' : '') + (PERFIL_ETHOS ? ', ethos' : '');
   const [perfRes, trRes, atRes, acRes, pyRes] = await Promise.all([
     traerTodoPaginado((a, b) => sb.from('perfiles').select(cols).not('nombre_completo', 'is', null).order('nombre_completo', { ascending:true }).range(a, b)),
-    traerTodoPaginado((a, b) => sb.from('tramites').select('usuario_id, nombre_servicio, estado').range(a, b)),
+    traerTodoPaginado((a, b) => sb.from('tramites').select('usuario_id, nombre_servicio').range(a, b)),
     traerTodoPaginado((a, b) => sb.from('atenciones').select('usuario_id, prestaciones, tramites_bretxa, emprendeduria').not('usuario_id', 'is', null).range(a, b)),
     traerTodoPaginado((a, b) => sb.from('actuaciones').select('usuario_id, categoria, proyecto_id').range(a, b)),
     sb.from('proyectos').select('id, nombre')
@@ -5540,7 +5538,7 @@ async function obtenerPersonasParaExport(){
   const juntar = () => ({ tr: new Set(), sv: new Set(), py: new Set() });
   const porPersona = {};
   const de = id => (porPersona[id] = porPersona[id] || juntar());
-  sinBorrados(trRes.data).forEach(r => { if(r.usuario_id && r.nombre_servicio) de(r.usuario_id).tr.add(r.nombre_servicio); });
+  (trRes.data || []).forEach(r => { if(r.usuario_id && r.nombre_servicio) de(r.usuario_id).tr.add(r.nombre_servicio); });
   (atRes.data || []).forEach(r => { if(!r.usuario_id) return; [...(r.prestaciones || []), ...(r.tramites_bretxa || []), ...(r.emprendeduria || [])].forEach(s => s && de(r.usuario_id).sv.add(s)); });
   (acRes.data || []).forEach(r => { if(!r.usuario_id) return; if(r.categoria) de(r.usuario_id).sv.add(r.categoria); if(r.proyecto_id && nombreProy[r.proyecto_id]) de(r.usuario_id).py.add(nombreProy[r.proyecto_id]); });
   let perfiles = perfRes.data || [];
@@ -5624,7 +5622,7 @@ async function renderSeguimientoScreen(){
 
   const items = [
     ...(actuaciones || []).map(ac => ({ usuario_id: ac.usuario_id, fecha: ac.fecha, tipo: 'actuacion', data: ac })),
-    ...sinBorrados(tramites).map(tr => ({ usuario_id: tr.usuario_id, fecha: tr.fecha_inicio, tipo: 'tramite', data: tr }))
+    ...(tramites || []).map(tr => ({ usuario_id: tr.usuario_id, fecha: tr.fecha_inicio, tipo: 'tramite', data: tr }))
   ];
 
   const ids = [...new Set(items.map(i => i.usuario_id).filter(Boolean))];
@@ -7253,7 +7251,6 @@ async function exportarFichaPersona(usuarioId, formato){
       sb.from('consultas_orientacion').select('*').eq('usuario_id', usuarioId).order('creado_en', { ascending: true })
     ]);
     const p = pr.data; if(!p){ alert('No se encontró a la persona.'); return; }
-    if(tr) tr.data = sinBorrados(tr.data); if(ci) ci.data = sinBorrados(ci.data);
     const tec = e => (typeof nombreTecnico === 'function' ? nombreTecnico(e) : e) || '';
     const lista = r => (r && r.data) || [];
     const secs = fichaSecciones(p);
@@ -12950,7 +12947,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-22 · v128 (trámites anulados y citas canceladas ocultos)';
+const APP_VERSION_INTRANET = '2026-10-22 · v128 (expedientes: altas nuevas y recientes, máximo 10)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -13336,7 +13333,6 @@ async function renderPanelGeneral(){
 
   const totalPersonas = total.data ? total.data.total_personas : 0;
 
-  if(citasHoyRes) citasHoyRes.data = sinBorrados(citasHoyRes.data);
   // Dashboard nuevo: nombres de personas para citas/documentos/revisiones/expedientes de hoy
   const idsDashboard = [...new Set([
     ...(citasHoyRes.data || []).map(c => c.usuario_id),
@@ -13986,8 +13982,6 @@ async function verPersonaStaffInterno(usuarioId, origen){
 
   (staffListRes.data || []).forEach(s => { if(s.nombre) __mapaNombresTecnicos[s.email] = s.nombre; });
 
-  if(tramitesRes) tramitesRes.data = sinBorrados(tramitesRes.data);
-  if(citasRes) citasRes.data = sinBorrados(citasRes.data);
   const p = perfilRes.data;
   if(!p){ cont.innerHTML = `<div class="empty-note">${t.noSeEncontroPerfil}</div>`; return; }
 
@@ -14829,8 +14823,6 @@ async function anularTramite(id){
   if(!data || !data.length){ alert(acL('No se pudo anular (sin permiso).', 'No s\'ha pogut anul·lar (sense permís).')); return; }
   verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
 }
-// Trámites anulados y citas canceladas: se quedan guardados en la base de datos, pero no se muestran en pantalla
-function sinBorrados(lista){ return (lista || []).filter(x => x && x.estado !== 'anulado' && x.estado !== 'cancelada'); }
 function trCerrado(e){ return e === 'hecho' || e === 'anulado'; }
 function estadoTramiteTxt(e){
   const m = { derivado_logos: acL('🙋 Pide ayuda a Logos', '🙋 Demana ajuda a Logos'), en_curso: acL('En curso', 'En curs'), hecho: acL('Hecho', 'Fet'), anulado: acL('Anulado', 'Anul·lat') };
@@ -15006,7 +14998,7 @@ async function renderAdministrador(){
   // Los trámites cuentan como actuaciones (tipo «Trámite») en el registro y en el total
   try {
     const trAdm = await traerTodoPaginado((x, y) => sb.from('tramites').select('id, usuario_id, nombre_servicio, estado, fecha_inicio').range(x, y));
-    window.__adminTramitesExtra = sinBorrados(trAdm && trAdm.data).map(tr => ({ id:'tr-'+tr.id, usuario_id: tr.usuario_id, fecha: tr.fecha_inicio, categoria: LANG_I==='ca'?'Tràmit':'Trámite', descripcion: tr.nombre_servicio + ' (' + (tr.estado==='hecho' ? (LANG_I==='ca'?'tancat':'cerrado') : (LANG_I==='ca'?'en curs':'en curso')) + ')', es_tramite:true }));
+    window.__adminTramitesExtra = ((trAdm && trAdm.data) || []).map(tr => ({ id:'tr-'+tr.id, usuario_id: tr.usuario_id, fecha: tr.fecha_inicio, categoria: LANG_I==='ca'?'Tràmit':'Trámite', descripcion: tr.nombre_servicio + ' (' + (tr.estado==='hecho' ? (LANG_I==='ca'?'tancat':'cerrado') : (LANG_I==='ca'?'en curs':'en curso')) + ')', es_tramite:true }));
   } catch(e){ window.__adminTramitesExtra = []; }
   const totalActuacionesConTramites = totalActuaciones + (window.__adminTramitesExtra || []).length;
   __adminSalasTodos = salasPrimeraPagina.data || [];
