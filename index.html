@@ -256,6 +256,13 @@
   .salas-grid-uniforme{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:12px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;padding-bottom:4px;margin-bottom:14px;}
   .hint-deslizar{display:none;text-align:center;font-size:11.5px;color:var(--ink-soft);margin:-8px 0 14px;}
   .salas-grid-uniforme>.panel-card{min-height:168px;display:flex;flex-direction:column;justify-content:flex-start;flex:1 0 150px;scroll-snap-align:start;}
+  .salas-grid-uniforme>.panel-card.fichaje-card{flex:2 0 250px;}
+  .campo-falta{border-color:var(--alert) !important;background:#FFF5F3 !important;box-shadow:0 0 0 2px rgba(200,60,40,.12);}
+  .mi-act-grid{display:grid;grid-template-columns:minmax(110px,1.4fr) repeat(3,1fr);gap:8px 6px;align-items:center;text-align:center;}
+  .mi-act-grid strong{font-family:var(--font-display);font-size:22px;color:var(--navy);}
+  .mi-act-h{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
+  .mi-act-l{text-align:left;font-weight:700;font-size:13px;}
+  details.salas-mas{margin-bottom:16px;}
   .panel-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);}
   @keyframes fadeUp{to{opacity:1;transform:translateY(0);}}
 
@@ -882,7 +889,7 @@
   } catch(e){}
 })();
 </script>
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
 <script>
 // Librerías pesadas (PDF, Excel, QR): se descargan en segundo plano cuando la página ya está abierta
 (function(){ function cargar(){
@@ -1229,6 +1236,8 @@ const TXT_ES_CA = {
   "Usuario/a Logos":"Usuari/ària de Logos",
   "Terceras personas":"Terceres persones",
   "Redes sociales":"Xarxes socials",
+  "IA (ChatGPT, Gemini, Claude…)":"IA (ChatGPT, Gemini, Claude…)",
+  "Internet / buscador (Google…)":"Internet / cercador (Google…)",
   "Escuela Saavedra":"Escola Saavedra",
   "Escuela Pau Delclós":"Escola Pau Delclós",
   "Diputació – JOB CLUB A3":"Diputació – JOB CLUB A3",
@@ -1727,7 +1736,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v130'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v134'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -1808,7 +1817,7 @@ function navNombre(b){
 }
 function navPosicion(){
   const pant = navPantallaActiva();
-  const grupo = { atencion:'miespacio', buscarpersona:'miespacio', persona:(window.__origenPersonaVista && window.__origenPersonaVista !== 'persona' ? window.__origenPersonaVista : 'panel') };
+  const grupo = { atencion:'miespacio', buscarpersona:'miespacio', altapresencial:'miespacio', salas:'miespacio', persona:(window.__origenPersonaVista && window.__origenPersonaVista !== 'persona' ? window.__origenPersonaVista : 'panel') };
   const objetivo = grupo[pant] || pant;
   const lista = navSecciones();
   return { lista, i: lista.findIndex(b => b.dataset.target === objetivo) };
@@ -3315,6 +3324,12 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
     </div>`;
   })() : '';
 
+  // Bloque «Otras salas»: abierto en ordenador y plegado en el móvil (se recuerda lo que elija cada persona).
+  // Se abre solo si estoy ocupando una plaza de esas salas o estoy en una reunión, para no esconder lo mío.
+  const otrasPlazas = [...salasVarias, ...salasUnaPlaza].reduce((a, sl) => a.concat(sl.plazas), []);
+  const libresOtras = otrasPlazas.filter(id => !ocupacionPorPlaza[id]).length;
+  const estoyEnOtras = !!reunionMia || !!(ocupacionMiaActual && otrasPlazas.includes(ocupacionMiaActual.sala));
+  const salasMasAbierto = estoyEnOtras || plegableAbierto('me-salas-mas', window.innerWidth > 760);
   const avisoErrorSalasHtml = errorLecturaSalas ? `
     <div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);margin-bottom:14px;"><div><strong>⚠️ ${esCA?'No es poden llegir les sales':'No se pueden leer las salas'}</strong><br>
     <span>${esCA?'Pot ser un permís de la base de dades. Avisa l\'administrador i ensenya-li aquest missatge: ':'Puede ser un permiso de la base de datos. Avisa al administrador y enséñale este mensaje: '}<em>${errorLecturaSalas.message}</em></span></div></div>` : '';
@@ -3334,11 +3349,16 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
     ${hint}
     ${promptBloqueoSala(salaUno)}
 
+    <details class="plegable salas-mas" ${salasMasAbierto ? 'open' : ''} ontoggle="plegableGuardar('me-salas-mas', this.open)">
+      <summary><span>🚪 ${esCA?'Altres sales i reunió':'Otras salas y reunión'}</span><span class="plegable-n" title="${esCA?'Places lliures ara':'Plazas libres ahora'}">🟢 ${libresOtras}</span></summary>
+      <div class="plegable-c">
     ${salasVarias.map(bloqueSalaHtml).join('')}
 
     <p style="font-weight:700;font-size:13px;margin:14px 0 6px;">${esCA?'Altres sales (una plaça) i reunió':'Otras salas (una plaza) y reunión'}</p>
     <div class="salas-grid-uniforme">${salasUnaPlaza.map(tarjetasSala).join('')}${reunionHtml}</div>
     ${hint}
+      </div>
+    </details>
 
     <div id="reserva-plaza-form-wrap"></div>
     ${historialHoySalaHtml ? `<div class="panel-card" style="margin-bottom:20px;"><h3>${esCA?'El teu historial d\'avui':'Tu historial de hoy'}</h3>${historialHoySalaHtml}</div>` : ''}
@@ -3649,9 +3669,17 @@ async function renderMiEspacio(){
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   const inicioSemana = new Date(hoy); inicioSemana.setDate(hoy.getDate() - hoy.getDay());
 
-  const { data: mias } = await sb.from('atenciones').select('*').eq('creado_por_email', email).order('creado_en', { ascending:false }).limit(300);
+  // Velocidad: todas las consultas que no dependen unas de otras se lanzan A LA VEZ (antes iban una detrás de otra)
+  const ya = q => Promise.resolve(q);
+  const pMias = ya(sb.from('atenciones').select('*').eq('creado_por_email', email).order('creado_en', { ascending:false }).limit(300));
+  const pFichajes = ya(sb.from('fichajes').select('*').eq('tecnico_email', email).gte('entrada', hoy.toISOString()).order('entrada', { ascending:true }));
+  const pAct = ya(sb.from('actuaciones').select('*').eq('tecnico_email', email).order('fecha', { ascending:false }).limit(300));
+  const pRev = ya(sb.from('actuaciones').select('*').eq('tecnico_email', email).not('fecha_proxima_revision', 'is', null).order('fecha_proxima_revision', { ascending:true }));
+  const pCitas = construirMisCitasHtml(email);
+  const pEspera = construirEnEsperaHtml();
+  [pMias, pFichajes, pAct, pRev, pCitas, pEspera].forEach(x => x.catch(() => {}));
+  const [{ data: mias }, { data: fichajesHoy }] = await Promise.all([pMias, pFichajes]);
   const lista = mias || [];
-  const { data: fichajesHoy } = await sb.from('fichajes').select('*').eq('tecnico_email', email).gte('entrada', hoy.toISOString()).order('entrada', { ascending:true });
   const fichajesDeHoy = fichajesHoy || [];
   const horaFmtFichaje = iso => new Date(iso).toLocaleTimeString(t.localeFecha, { hour:'2-digit', minute:'2-digit' });
   const duracionFmtFichaje = (ini, fin) => {
@@ -3667,7 +3695,7 @@ async function renderMiEspacio(){
     </div>`).join('');
   const horarioInfoHtml = await hrInfoMiEspacio(email, fichadoAhora);
   const fichajeCardHtml = `
-    <div class="panel-card" style="text-align:center;background:${fichadoAhora ? 'var(--good-soft)' : 'var(--gold-soft)'};border-color:${fichadoAhora ? 'var(--good)' : 'var(--gold)'};">
+    <div class="panel-card fichaje-card" style="text-align:center;background:${fichadoAhora ? 'var(--good-soft)' : 'var(--gold-soft)'};border-color:${fichadoAhora ? 'var(--good)' : 'var(--gold)'};">
       <h3 style="text-align:left;">${t.fichajeHoy}</h3>
       ${horarioInfoHtml}
       ${fichadoAhora
@@ -3679,28 +3707,19 @@ async function renderMiEspacio(){
     </div>
   `;
 
-  const salasAtencionHtml = await construirSalasAtencionHtml(fichajeCardHtml);
-  const misCitasHtml = await construirMisCitasHtml(email);
-  const enEsperaHtml = await construirEnEsperaHtml();
-
-  const { data: misActuacionesRaw } = await sb.from('actuaciones').select('*').eq('tecnico_email', email).order('fecha', { ascending:false }).limit(300);
+  const pSalas = construirSalasAtencionHtml(fichajeCardHtml);
+  const pFichasPend = fichasPendientesTecnico(email, [...new Set(lista.map(a => a.usuario_id).filter(Boolean))]);
+  const [salasAtencionHtml, misCitasHtml, enEsperaHtml, { data: misActuacionesRaw }, { data: misRevisionesRaw }, fichasPend] = await Promise.all([pSalas, pCitas, pEspera, pAct, pRev, pFichasPend]);
   const misActuaciones = misActuacionesRaw || [];
-  let nombresActuacion = {};
-  const idsAct = [...new Set(misActuaciones.map(a => a.usuario_id).filter(Boolean))];
-  if(idsAct.length){
-    const { data: perfilesAct } = await sb.from('perfiles').select('id, nombre_completo').in('id', idsAct);
-    (perfilesAct || []).forEach(p => { nombresActuacion[p.id] = p.nombre_completo; });
-  }
-
-  const { data: misRevisionesRaw } = await sb.from('actuaciones').select('*').eq('tecnico_email', email).not('fecha_proxima_revision', 'is', null).order('fecha_proxima_revision', { ascending:true });
   const misRevisiones = misRevisionesRaw || [];
-  const avisosMiEspacioHtml = await construirAvisosMiEspacioHtml(misRevisiones);
-  let nombresRevision = {};
-  if(misRevisiones.length){
-    const ids = [...new Set(misRevisiones.map(r => r.usuario_id))];
-    const { data: perfilesRev } = await sb.from('perfiles').select('id, nombre_completo').in('id', ids);
-    (perfilesRev || []).forEach(p => { nombresRevision[p.id] = p.nombre_completo; });
-  }
+  // Nombres de las personas (actuaciones y revisiones) en una sola consulta, a la vez que los avisos
+  const idsNombres = [...new Set([...misActuaciones, ...misRevisiones].map(a => a.usuario_id).filter(Boolean))];
+  const [avisosMiEspacioHtml, perfilesNom] = await Promise.all([
+    construirAvisosMiEspacioHtml(misRevisiones),
+    idsNombres.length ? ya(sb.from('perfiles').select('id, nombre_completo').in('id', idsNombres)) : Promise.resolve({ data: [] })
+  ]);
+  const nombresActuacion = {}, nombresRevision = {};
+  ((perfilesNom && perfilesNom.data) || []).forEach(p => { nombresActuacion[p.id] = p.nombre_completo; nombresRevision[p.id] = p.nombre_completo; });
 
   const hoyCount = lista.filter(a => new Date(a.creado_en) >= hoy).length;
   const semanaCount = lista.filter(a => new Date(a.creado_en) >= inicioSemana).length;
@@ -3796,10 +3815,11 @@ async function renderMiEspacio(){
       <button class="primary-btn" style="margin:0;background:var(--gold);" onclick="showScreen('buscarpersona');renderBuscarPersonaActuacion()">📂 ${LANG_I==='ca'?'Expedient / Actuació':'Expediente / Actuación'}</button>
       <button class="primary-btn" style="margin:0;background:var(--good);" onclick="showScreen('altapresencial');renderAltaPresencial()">🖊️ Alta presencial</button>
       <button class="primary-btn" style="margin:0;background:#33449E;" onclick="showScreen('miformacion');renderMiFormacion()">🎓 ${LANG_I==='ca'?'La meva formació':'Mi formación'} <span id="mi-formacion-n" style="font-weight:400;font-size:12px;"></span></button>
-      <button class="primary-btn" style="margin:0;background:#8a8a8a;" onclick="abrirNuevaCitaStaff()">📅 ${LANG_I==='ca'?'Nova cita':'Nueva cita'}</button>
+      <button class="primary-btn" style="margin:0;background:#2E7D8C;" onclick="abrirNuevaCitaStaff()">📅 ${LANG_I==='ca'?'Nova cita':'Nueva cita'}</button>
     </div>
 
     ${enEsperaHtml}
+    ${fichasPendientesTecnicoHtml(fichasPend)}
     ${avisosMiEspacioHtml}
 
     ${misCitasHtml}
@@ -3807,29 +3827,25 @@ async function renderMiEspacio(){
     ${salasAtencionHtml}
 
 
-    <div class="section-label" style="margin-bottom:6px;">${t.tusUltimasAtenciones}</div>
-    <div class="stat-grid">
-      <div class="stat-card"><div class="stat-num" id="num-hoy">0</div><div class="stat-label">${t.hoyLbl}</div></div>
-      <div class="stat-card"><div class="stat-num" id="num-semana">0</div><div class="stat-label">${t.estaSemana}</div></div>
-      <div class="stat-card"><div class="stat-num" id="num-total">0</div><div class="stat-label">${t.totalLbl}</div></div>
-    </div>
-
-    <div class="section-label" style="margin-top:14px;margin-bottom:6px;">${t.tusUltimasActuaciones}</div>
-    <div class="stat-grid">
-      <div class="stat-card"><div class="stat-num" id="num-hoy-act">0</div><div class="stat-label">${t.hoyLbl}</div></div>
-      <div class="stat-card"><div class="stat-num" id="num-semana-act">0</div><div class="stat-label">${t.estaSemana}</div></div>
-      <div class="stat-card"><div class="stat-num" id="num-total-act">0</div><div class="stat-label">${t.totalLbl}</div></div>
+    <div class="panel-card mi-actividad">
+      <h3>📊 ${LANG_I==='ca'?'La teva activitat':'Tu actividad'}</h3>
+      <div class="mi-act-grid">
+        <span></span><span class="mi-act-h">${t.hoyLbl}</span><span class="mi-act-h">${t.estaSemana}</span><span class="mi-act-h">${t.totalLbl}</span>
+        <span class="mi-act-l">🧑‍💼 ${LANG_I==='ca'?'Atencions':'Atenciones'}</span><strong id="num-hoy">0</strong><strong id="num-semana">0</strong><strong id="num-total">0</strong>
+        <span class="mi-act-l">📝 ${LANG_I==='ca'?'Actuacions':'Actuaciones'}</span><strong id="num-hoy-act">0</strong><strong id="num-semana-act">0</strong><strong id="num-total-act">0</strong>
+      </div>
     </div>
 
 
-    <div class="panel-card">
-      <h3>${t.tuNombre}</h3>
+    <details class="plegable" ${CURRENT_USER_NOMBRE ? '' : 'open'}><summary><span>${t.tuNombre}</span>${CURRENT_USER_NOMBRE ? `<span class="plegable-n">${escAttr(CURRENT_USER_NOMBRE)}</span>` : ''}</summary>
+    <div class="panel-card" style="margin:8px 0 0;">
       <p class="subtle" style="margin:0 0 10px;">${CURRENT_USER_NOMBRE ? `${t.apareceComo} <strong>${CURRENT_USER_NOMBRE}</strong> ${t.enVezCorreo}` : t.todaviaCorreo}</p>
       <div style="display:flex;gap:8px;">
         <input type="text" id="mi-nombre-input" placeholder="${t.placeholderNombre}" value="${CURRENT_USER_NOMBRE || ''}" style="flex:1;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-family:var(--font-body);font-size:14px;">
         <button class="link-btn" onclick="guardarMiNombre()">${t.guardar}</button>
       </div>
     </div>
+    </details>
 
 
     <details class="plegable" ${plegableAbierto('mi-revisiones') ? 'open' : ''} ontoggle="plegableGuardar('mi-revisiones', this.open)">
@@ -3972,7 +3988,7 @@ function bloqueAtencionNuevos(d){
 const COMO_CONOCIO_OPTS = [
   ['vei_port','Vecino/a del Port'], ['imsst','IMSST'], ['sepe','SEPE'], ['usuari_logos','Usuario/a Logos'],
   ['terceres_persones','Terceras personas'], ['pere_mata','Pere Mata'], ['actic','ACTIC'], ['siad','SIAD'], ['pass','PASS'],
-  ['xarxes_socials','Redes sociales'], ['escola_saavedra','Escuela Saavedra'], ['escola_pau_delclos','Escuela Pau Delclós']
+  ['xarxes_socials','Redes sociales'], ['ia','IA (ChatGPT, Gemini, Claude…)'], ['internet','Internet / buscador (Google…)'], ['escola_saavedra','Escuela Saavedra'], ['escola_pau_delclos','Escuela Pau Delclós']
 ];
 
 function checkboxGroup(name, opts){
@@ -4478,7 +4494,8 @@ async function guardarAtencion(){
     return;
   }
   showScreen('miespacio');
-  renderMiEspacio();
+  await renderMiEspacio();
+  alert(LANG_I === 'ca' ? '✅ Atenció desada.' : '✅ Atención guardada.');
 }
 
 // ---------- Excel de atenciones: una fila por atención, con todos los datos; se vuelve a generar con las nuevas cada vez ----------
@@ -4684,7 +4701,8 @@ function pintarNuevaCitaStaff(){
     : `<div class="field"><label>${acL('Buscar persona (nombre, DNI/NIE o teléfono)', 'Cercar persona (nom, DNI/NIE o telèfon)')}</label>
          <input type="text" id="nc-buscar" oninput="buscarPersonaNuevaCita(this.value)" placeholder="${acL('Escribe al menos 2 letras', 'Escriu almenys 2 lletres')}" autocomplete="off"></div>
        <div id="nc-resultados"></div>
-       <p class="subtle" style="font-size:12px;">${acL('Si la persona aún no tiene cuenta, primero hay que darla de alta (Alta presencial) y después ya se le puede crear la cita.', 'Si la persona encara no té compte, primer cal donar-la d\'alta (Alta presencial) i després ja se li pot crear la cita.')}</p>`;
+       <p class="subtle" style="font-size:12px;">${acL('Si la persona aún no tiene cuenta, primero hay que darla de alta (Alta presencial) y después ya se le puede crear la cita.', 'Si la persona encara no té compte, primer cal donar-la d\'alta (Alta presencial) i després ja se li pot crear la cita.')}</p>
+       <button class="link-btn" style="font-weight:700;" onclick="cerrarNuevaCitaStaff();showScreen('altapresencial');renderAltaPresencial()">🖊️ ${acL('No la encuentro: darla de alta ahora', 'No la trobo: donar-la d\'alta ara')}</button>`;
   ov.innerHTML = `<div class="panel-card" style="width:100%;max-width:520px;margin:20px 0;background:var(--card, #fff);">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
       <h3 style="margin:0;">➕ ${acL('Nueva cita', 'Nova cita')}</h3>
@@ -5550,7 +5568,7 @@ async function obtenerPersonasParaExport(completo){
     const datos = (res.data || []).filter(p => !hayTexto || normTxt(p.nombre_completo).includes(q));
     const extra = []; datos.forEach(p => { if(p.datos && typeof p.datos === 'object') Object.keys(p.datos).forEach(k => { if(!extra.includes(k) && !/^ethos$/i.test(k)) extra.push(k); }); });
     return { cabecera: ['Código', 'Año', 'Fecha de alta', 'Nombre', 'DNI/NIE', 'Teléfono', 'Correo', 'Código postal', 'Municipio', 'Sexo', 'Fecha de nacimiento', 'Edad en el alta', 'Nacionalidad', 'Tipo (trámite/servicio/proyecto)', 'Servicio', 'Proyecto', 'Notas', 'ETHOS', 'Lote de importación'].concat(extra),
-      filas: datos.map(p => [p.codigo || '', p.anio || '', p.fecha_alta || '', p.nombre_completo || '', p.dni_nie || '', p.telefono || '', p.email || '', p.cp || '', p.municipio || '', p.sexo || '', p.fecha_nacimiento || '', p.edad_alta != null ? p.edad_alta : '', p.nacionalidad || '', p.tipo || '', p.servicio || '', p.proyecto || '', p.notas || '', ethosLargo(p.ethos) || ((p.datos && (p.datos.ETHOS || p.datos.Ethos || p.datos.ethos)) || ''), p.origen || ''].concat(extra.map(k => (p.datos && p.datos[k]) || ''))) };
+      filas: datos.map(p => [p.codigo || '', p.anio || '', personaFecha(p.fecha_alta), p.nombre_completo || '', p.dni_nie || '', p.telefono || '', p.email || '', p.cp || '', p.municipio || '', p.sexo || '', personaFecha(p.fecha_nacimiento), p.edad_alta != null ? p.edad_alta : '', p.nacionalidad || '', p.tipo || '', p.servicio || '', p.proyecto || '', p.notas || '', ethosLargo(p.ethos) || ((p.datos && (p.datos.ETHOS || p.datos.Ethos || p.datos.ethos)) || ''), p.origen || ''].concat(extra.map(k => (p.datos && p.datos[k]) || ''))) };
   }
   const cols = completo ? '*' : 'id, nombre_completo, dni_nie, telefono, municipio, calle' + (FECHA_ALTA_OK ? ', fecha_alta' : '') + (PERFIL_ETHOS ? ', ethos' : '');
   const hoyIsoExp = new Date().toISOString().slice(0, 10);
@@ -5597,8 +5615,52 @@ async function exportarPersonasExcel(){
   descargarXLSX(cabecera, filas, __personasVista === 'hist' ? 'Personas-historico.xlsx' : 'Personas-usuarias.xlsx', __personasVista === 'hist' ? 'Histórico' : 'Personas');
 }
 async function exportarPersonasPDF(){
-  const { cabecera, filas } = await obtenerPersonasParaExport();
-  descargarPDFTabla(__personasVista === 'hist' ? 'Personas usuarias · Histórico — Logos Intranet' : 'Personas usuarias — Logos Intranet', cabecera, filas, __personasVista === 'hist' ? 'Personas-historico.pdf' : 'Personas-usuarias.pdf');
+  // Mismos datos que el Excel, pero en formato ficha: un bloque por persona (se lee bien aunque haya muchos datos)
+  const { cabecera, filas } = await obtenerPersonasParaExport(true);
+  if(!(window.jspdf && window.jspdf.jsPDF && (new window.jspdf.jsPDF()).autoTable)){ alert(LANG_I === 'ca' ? 'No s\'ha pogut carregar el generador de PDF. Recarrega la pàgina i torna-ho a provar.' : 'No se ha podido cargar el generador de PDF. Recarga la página e inténtalo de nuevo.'); return; }
+  const hist = __personasVista === 'hist';
+  construirPDFFichas(hist ? 'Personas usuarias · Histórico' : 'Personas usuarias', cabecera, filas).save(hist ? 'Personas-historico.pdf' : 'Personas-usuarias.pdf');
+}
+// PDF «una ficha por persona»: nombre arriba y sus datos (solo los que tienen valor) en dos columnas
+function construirPDFFichas(titulo, cabecera, filas){
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const ca = LANG_I === 'ca';
+  const limpia = v => String(expTexto(v)).replace(/[\u{1F000}-\u{1FFFF}←-⇿⌀-➿⬀-⯿️‍]/gu, '').replace(/[ \t]{2,}/g, ' ').trim();
+  const iNom = Math.max(0, cabecera.findIndex(c => /^(nombre|nom)$/i.test(String(c).trim())));
+  const W = pdf.internal.pageSize.getWidth();
+  pdf.setFillColor(30, 63, 102); pdf.rect(0, 0, W, 24, 'F');
+  pdf.setTextColor(255, 255, 255); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(16); pdf.text(limpia(titulo) + ' — Logos Intranet', 12, 12);
+  pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9);
+  pdf.text(new Date().toLocaleString('es-ES') + '  ·  ' + filas.length + ' ' + (filas.length === 1 ? (ca ? 'persona' : 'persona') : (ca ? 'persones' : 'personas')), 12, 19);
+  let y = 31;
+  filas.forEach((f, n) => {
+    const nombre = limpia(f[iNom]) || (ca ? 'Sense nom' : 'Sin nombre');
+    const pares = cabecera.map((c, i) => [limpia(c), limpia(f[i])]).filter((x, i) => i !== iNom && x[1] !== '');
+    const body = [];
+    for(let k = 0; k < pares.length; k += 2){ const a = pares[k], b = pares[k + 1] || ['', '']; body.push([a[0], a[1], b[0], b[1]]); }
+    if(!body.length) body.push([{ content: ca ? 'Sense més dades' : 'Sin más datos', colSpan: 4 }]);
+    pdf.autoTable({
+      startY: y, margin: { left: 12, right: 12, top: 14, bottom: 14 }, theme: 'grid', pageBreak: 'auto', rowPageBreak: 'avoid', showHead: 'everyPage',
+      head: [[{ content: (n + 1) + '. ' + nombre, colSpan: 4, styles: { fillColor: [62, 111, 163], textColor: 255, fontStyle: 'bold', fontSize: 10.5, halign: 'left' } }]],
+      body,
+      styles: { fontSize: 8.5, cellPadding: 1.6, overflow: 'linebreak', valign: 'top', lineColor: [201, 214, 230], lineWidth: 0.2, textColor: [22, 35, 63] },
+      columnStyles: { 0: { cellWidth: 34, fontStyle: 'bold', textColor: [70, 85, 110] }, 1: { cellWidth: 59 }, 2: { cellWidth: 34, fontStyle: 'bold', textColor: [70, 85, 110] }, 3: { cellWidth: 'auto' } },
+      alternateRowStyles: { fillColor: [244, 247, 251] }
+    });
+    y = pdf.lastAutoTable.finalY + 5;
+    // si el siguiente bloque no cabe ni empezado, se pasa a la página siguiente
+    if(y > pdf.internal.pageSize.getHeight() - 40 && n < filas.length - 1){ pdf.addPage(); y = 16; }
+  });
+  const total = pdf.getNumberOfPages();
+  for(let p = 1; p <= total; p++){
+    pdf.setPage(p);
+    const w = pdf.internal.pageSize.getWidth(), h = pdf.internal.pageSize.getHeight();
+    pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(130, 130, 130);
+    pdf.text('Logos Intranet · ' + (ca ? 'Document confidencial amb dades personals (RGPD)' : 'Documento confidencial con datos personales (RGPD)'), 12, h - 6);
+    pdf.text((ca ? 'Pàgina ' : 'Página ') + p + (ca ? ' de ' : ' de ') + total, w - 12, h - 6, { align: 'right' });
+  }
+  return pdf;
 }
 
 // ================= PERSONAS ATENDIDAS POR AÑO Y MES (histórico + actuales) =================
@@ -6512,6 +6574,36 @@ function qrAppImprimir(){
 }
 
 // ---------- Subvenciones: seguimiento y avisos de plazos (solo David y Recursos Humanos) ----------
+// Recordatorios escalonados de las convocatorias: 5 meses, 1 mes y 1 semana antes del plazo.
+// El correo automático (función «avisos-subvenciones», SQL 37) usa exactamente estas mismas etapas.
+const SUBV_ETAPAS = [ { k: '5m', dias: 150, es: '5 meses', ca: '5 mesos' }, { k: '1m', dias: 30, es: '1 mes', ca: '1 mes' }, { k: '1s', dias: 7, es: '1 semana', ca: '1 setmana' } ];
+const SUBV_AVISO_DIAS = SUBV_ETAPAS[0].dias;
+const SUBV_CORREO_AVISOS = 'bretxalogos@gmail.com';   // + Recursos Humanos (todas las personas marcadas como RRHH en el equipo)
+function subvQuedan(d){
+  if(d < 0) return acL('Plazo vencido', 'Termini vençut');
+  if(d === 0) return acL('Termina hoy', 'Acaba avui');
+  if(d > 60) return acL(`Quedan ~${Math.round(d / 30)} meses`, `Queden ~${Math.round(d / 30)} mesos`);
+  return acL(`Quedan ${d} días`, `Queden ${d} dies`);
+}
+function subvEtapasEnviadasTxt(f){
+  const env = Array.isArray(f.avisos_enviados) ? f.avisos_enviados : [];
+  const n = SUBV_ETAPAS.filter(e => env.includes(e.k)).map(e => LANG_I === 'ca' ? e.ca : e.es);
+  return n.length ? '📧 ' + acL('Correo enviado:', 'Correu enviat:') + ' ' + n.join(' · ') : '';
+}
+async function subvCorreoPrueba(){
+  const btn = document.getElementById('subv-prueba-btn'); if(btn){ btn.disabled = true; btn.textContent = acL('Enviando…', 'Enviant…'); }
+  try {
+    const res = await fetch(SUPABASE_URL + '/functions/v1/avisos-subvenciones', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await tokenParaFunciones()), 'apikey': SUPABASE_KEY }, body: JSON.stringify({ prueba: true }) });
+    let data = {}; try { data = await res.json(); } catch(e){}
+    if(res.status === 404) alert(acL('Todavía no está instalada la función «avisos-subvenciones» en Supabase (mira la guía de instalación).', 'Encara no està instal·lada la funció «avisos-subvenciones» a Supabase (mira la guia d\'instal·lació).'));
+    else if(!res.ok || data.error) alert('⚠️ ' + (data.error || ('Error ' + res.status)));
+    else alert(data.enviados ? acL(`✅ Correo de prueba enviado a ${(data.a || []).join(', ')} con ${data.enviados} convocatoria(s).`, `✅ Correu de prova enviat a ${(data.a || []).join(', ')} amb ${data.enviados} convocatòria(es).`) : (data.mensaje || acL('No hay nada que avisar.', 'No hi ha res a avisar.')));
+  } catch(e){ alert(acL('No se ha podido conectar con la función de avisos.', 'No s\'ha pogut connectar amb la funció d\'avisos.')); }
+  if(btn){ btn.disabled = false; btn.textContent = '📧 ' + acL('Enviar correo de prueba', 'Enviar correu de prova'); }
+}
+const SUBV_FUENTES_BASE = [
+  { titulo: 'Xarxanet · Finançament', organismo: 'Xarxanet.org', url: 'https://xarxanet.org/financament' }
+];
 const SUBV_ESTADOS = { seguimiento: ['En seguimiento', 'En seguiment'], abierta: ['Abierta', 'Oberta'], presentada: ['Presentada', 'Presentada'], concedida: ['Concedida', 'Concedida'], denegada: ['Denegada', 'Denegada'], cerrada: ['Cerrada', 'Tancada'] };
 function subvDias(iso){ if(!iso) return null; const h = new Date(); h.setHours(0,0,0,0); return Math.round((new Date(iso + 'T00:00:00') - h) / 86400000); }
 function subvFecha(iso){ return iso ? new Date(iso + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha) : '—'; }
@@ -6523,7 +6615,7 @@ function subvCalcularAvisos(filas){
     if(f.tipo === 'convocatoria'){
       if(!['seguimiento', 'abierta'].includes(f.estado)) return;
       const d = subvDias(f.fecha_limite);
-      if(d !== null && d <= 30) plazos.push({ f, d });
+      if(d !== null && d <= SUBV_AVISO_DIAS) plazos.push({ f, d });
     } else {
       const ult = f.ultima_revision ? new Date(f.ultima_revision + 'T00:00:00') : null;
       const dias = ult ? Math.round((hoy - ult) / 86400000) : 9999;
@@ -6534,7 +6626,7 @@ function subvCalcularAvisos(filas){
   return { plazos, revisar };
 }
 function subvAvisosHtml(av){
-  const p = av.plazos.map(o => `<div class="panel-stat-row"><span><strong>${escAttr(o.f.titulo)}</strong><br><span class="subtle" style="font-size:11.5px;margin:0;">${escAttr(o.f.organismo || '')}</span></span><span class="chip ${o.d < 0 ? '' : (o.d <= 7 ? 'off' : 'gold')}" style="font-size:11px;">${o.d < 0 ? acL('Plazo vencido', 'Termini vençut') : (o.d === 0 ? acL('Termina hoy', 'Acaba avui') : acL(`Quedan ${o.d} días`, `Queden ${o.d} dies`))}</span></div>`).join('');
+  const p = av.plazos.map(o => `<div class="panel-stat-row"><span><strong>${escAttr(o.f.titulo)}</strong><br><span class="subtle" style="font-size:11.5px;margin:0;">${escAttr(o.f.organismo || '')}</span></span><span class="chip ${o.d < 0 ? '' : (o.d <= 7 ? 'off' : (o.d <= 30 ? 'gold' : ''))}" style="font-size:11px;${o.d > 30 ? 'background:#E8EEF6;color:var(--navy);' : ''}">${o.d <= 7 ? '🔴 ' : (o.d <= 30 ? '🟠 ' : '🔵 ')}${subvQuedan(o.d)}</span></div>`).join('');
   const r = av.revisar.length ? `<div class="subtle" style="font-size:12.5px;margin:8px 0 0;">🔎 ${acL('Toca revisar:', 'Toca revisar:')} ${av.revisar.map(o => escAttr(o.f.organismo ? o.f.organismo.split(' (')[0] + ' · ' + o.f.titulo : o.f.titulo)).join(' · ')}</div>` : '';
   return (p || '') + r || `<div class="empty-note" style="margin:0;">✅ ${acL('No hay plazos próximos ni páginas por revisar.', 'No hi ha terminis propers ni pàgines per revisar.')}</div>`;
 }
@@ -6556,13 +6648,20 @@ async function renderSubvencionesScreen(){
   }
   const filas = data || [];
   const conv = filas.filter(f => f.tipo === 'convocatoria'), fuentes = filas.filter(f => f.tipo === 'fuente');
+  // Páginas que se añaden solas a «Páginas que vigilamos» si todavía no están (una sola vez por navegador: si alguien la borra, no vuelve a salir)
+  for(const fb of SUBV_FUENTES_BASE){
+    const clave = 'subv-auto:' + fb.url; let hecho = false; try { hecho = localStorage.getItem(clave) === '1'; } catch(e){}
+    if(hecho || fuentes.some(f => String(f.url || '').replace(/\/+$/, '').toLowerCase() === fb.url.toLowerCase())) { try { localStorage.setItem(clave, '1'); } catch(e){} continue; }
+    try { localStorage.setItem(clave, '1'); } catch(e){}
+    if(await subvInsertar({ tipo: 'fuente', titulo: fb.titulo, organismo: fb.organismo, url: fb.url })) return renderSubvencionesScreen();
+  }
   const av = subvCalcularAvisos(filas);
   const estadoOpts = sel => Object.entries(SUBV_ESTADOS).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${acL(v[0], v[1])}</option>`).join('');
   const tarjetaConv = f => { const d = subvDias(f.fecha_limite); return `<div class="panel-card" style="margin:0 0 8px;${f.activo === false ? 'opacity:.55;' : ''}">
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:flex-start;">
         <div style="min-width:0;"><strong>${escAttr(f.titulo)}</strong>${f.organismo ? `<div class="subtle" style="font-size:12.5px;margin:2px 0 0;">${escAttr(f.organismo)}${f.importe ? ' · ' + escAttr(f.importe) : ''}</div>` : ''}
           <div class="subtle" style="font-size:12.5px;margin:2px 0 0;">${acL('Plazo:', 'Termini:')} <strong>${subvFecha(f.fecha_limite)}</strong>${d !== null && ['seguimiento','abierta'].includes(f.estado) ? ` <span class="chip ${d < 0 ? '' : (d <= 7 ? 'off' : 'gold')}" style="font-size:11px;">${d < 0 ? acL('vencido', 'vençut') : acL(d + ' días', d + ' dies')}</span>` : ''}</div>
-          ${f.notas ? `<div class="subtle" style="font-size:12.5px;margin:3px 0 0;">${escAttr(f.notas)}</div>` : ''}</div>
+          ${f.notas ? `<div class="subtle" style="font-size:12.5px;margin:3px 0 0;">${escAttr(f.notas)}</div>` : ''}${subvEtapasEnviadasTxt(f) ? `<div class="subtle" style="font-size:11.5px;margin:3px 0 0;">${subvEtapasEnviadasTxt(f)}</div>` : ''}</div>
         <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <select onchange="subvEstado('${f.id}', this.value)" style="width:auto;padding:5px 8px;font-size:12.5px;">${estadoOpts(f.estado)}</select>
           ${f.url ? `<a class="primary-btn" style="width:auto;margin:0;padding:6px 12px;text-decoration:none;font-size:12.5px;" href="${escAttr(f.url)}" target="_blank" rel="noopener noreferrer">${acL('Abrir', 'Obrir')} ↗</a>` : ''}
@@ -6579,7 +6678,10 @@ async function renderSubvencionesScreen(){
   cont.innerHTML = `
     <h2 class="screen-title">💶 ${acL('Subvenciones', 'Subvencions')}</h2>
     <p class="subtle" style="margin:0 0 14px;">${acL('Para la dirección y Recursos Humanos. Aquí se apuntan las convocatorias y se avisa cuando se acerca un plazo o hace tiempo que no se mira una página. Los avisos también salen en el Inicio.', 'Per a la direcció i Recursos Humans. Aquí s\'apunten les convocatòries i s\'avisa quan s\'acosta un termini o fa temps que no es mira una pàgina. Els avisos també surten a l\'Inici.')}</p>
-    <div class="panel-card" style="border-color:var(--ochre);margin-bottom:14px;"><h3 style="margin-top:0;">🔔 ${acL('Avisos', 'Avisos')}</h3>${subvAvisosHtml(av)}</div>
+    <div class="panel-card" style="border-color:var(--ochre);margin-bottom:14px;"><h3 style="margin-top:0;">🔔 ${acL('Avisos', 'Avisos')}</h3>
+      <p class="subtle" style="font-size:12.5px;margin:0 0 10px;">⏰ ${acL(`Recordatorios automáticos de cada convocatoria con fecha límite: <strong>5 meses, 1 mes y 1 semana antes</strong>. Salen aquí y en el Inicio, y llegan por correo a <strong>${SUBV_CORREO_AVISOS}</strong> y a <strong>Recursos Humanos</strong>.`, `Recordatoris automàtics de cada convocatòria amb data límit: <strong>5 mesos, 1 mes i 1 setmana abans</strong>. Surten aquí i a l'Inici, i arriben per correu a <strong>${SUBV_CORREO_AVISOS}</strong> i a <strong>Recursos Humans</strong>.`)}</p>
+      ${subvAvisosHtml(av)}
+      ${IS_ADMIN ? `<div style="margin-top:10px;"><button class="link-btn" id="subv-prueba-btn" style="font-size:12.5px;" onclick="subvCorreoPrueba()">📧 ${acL('Enviar correo de prueba', 'Enviar correu de prova')}</button></div>` : ''}</div>
     <h3>${acL('Convocatorias', 'Convocatòries')} <span class="chip">${conv.length}</span></h3>
     ${conv.length ? conv.map(tarjetaConv).join('') : `<div class="empty-note">${acL('Todavía no hay convocatorias apuntadas.', 'Encara no hi ha convocatòries apuntades.')}</div>`}
     <div class="panel-card" style="margin:10px 0 18px;background:var(--ochre-soft);border-color:var(--ochre);">
@@ -6627,7 +6729,11 @@ async function subvEditarPlazo(id){
   if(nuevo === null) return;
   const f = nuevo.trim();
   if(f && !/^\d{4}-\d{2}-\d{2}$/.test(f)){ alert(acL('Formato: AAAA-MM-DD, por ejemplo 2026-12-15.', 'Format: AAAA-MM-DD, per exemple 2026-12-15.')); return; }
-  if(await subvActualizar(id, { fecha_limite: f || null })) renderSubvencionesScreen();
+  // Plazo nuevo: los recordatorios por correo vuelven a empezar (si la columna aún no existe, se guarda solo la fecha)
+  let r = await sb.from('subvenciones').update({ fecha_limite: f || null, avisos_enviados: [] }).eq('id', id).select('id');
+  if(r.error && /avisos_enviados/.test(r.error.message || '')) return (await subvActualizar(id, { fecha_limite: f || null })) && renderSubvencionesScreen();
+  if(r.error){ alert(r.error.message); return; }
+  renderSubvencionesScreen();
 }
 async function subvBorrar(id){
   if(!confirm(acL('¿Borrar esta entrada?', 'Esborrar aquesta entrada?'))) return;
@@ -7182,6 +7288,105 @@ const CAMPOS_PERSONA = [
   ['consentimiento_fecha', 'Fecha del consentimiento', 'Data del consentiment', p => p.consentimiento_firmado ? personaFecha(p.consentimiento_fecha) : '']
 ];
 function personaEtiqueta(c){ return LANG_I === 'ca' ? c[2] : c[1]; }
+// ===== FICHAS INCOMPLETAS: datos que el técnico debe rellenar en la ficha de cada persona =====
+// Para cambiar qué datos son obligatorios, basta con añadir o quitar claves de esta lista.
+// [clave del dato, casilla del formulario de la ficha]
+const CAMPOS_FICHA_OBLIGATORIOS = [
+  ['dni_nie', 'pds-dni'], ['fecha_nacimiento', 'pds-nacimiento'], ['sexo', 'pds-sexo'], ['nacionalidad', 'pds-nacionalidad'],
+  ['situacion_regularizacion', 'pds-regularizacion'], ['telefono', 'pds-telefono'], ['calle', 'pds-calle'], ['codigo_postal', 'pds-cp'],
+  ['municipio', 'pds-municipio'], ['personas_hogar', 'pds-personas-hogar'], ['numero_hijos', 'pds-num-hijos'], ['situacion_laboral', 'pds-laboral'],
+  ['discapacidad_reconocida', 'pds-discapacidad'], ['dependencia_reconocida', 'pds-dependencia'], ['nivel_estudios', 'pds-nivel-estudios']
+];
+function fichaVacio(v){ return v === null || v === undefined || String(v).trim() === ''; }
+// Devuelve los nombres de los datos que faltan en la ficha de una persona (incluye el consentimiento sin firmar)
+function fichaDatosQueFaltan(p){
+  if(!p) return [];
+  const falta = CAMPOS_FICHA_OBLIGATORIOS.filter(([k]) => fichaVacio(p[k])).map(([k]) => { const c = CAMPOS_PERSONA.find(x => x[0] === k); return c ? personaEtiqueta(c) : k; });
+  if(!p.consentimiento_firmado) falta.push(LANG_I === 'ca' ? 'Consentiment signat' : 'Consentimiento firmado');
+  return falta;
+}
+// En el formulario de datos de la ficha, marca en rojo las casillas vacías (y se quita al rellenarlas)
+function fichaMarcarFaltan(){
+  CAMPOS_FICHA_OBLIGATORIOS.forEach(([, id]) => {
+    const el = document.getElementById(id); if(!el) return;
+    const pintar = () => el.classList.toggle('campo-falta', fichaVacio(el.value));
+    pintar();
+    if(!el.dataset.faltaOk){ el.dataset.faltaOk = '1'; el.addEventListener('input', pintar); el.addEventListener('change', pintar); }
+  });
+}
+async function abrirFichaCompletar(id, origen){
+  await verPersonaStaff(id, origen || 'miespacio');
+  mostrarTabPersona('datos');
+}
+// Lista de personas con datos pendientes (para Mi espacio y para la administración)
+function fichasPendientesListaHtml(pers, origen, max){
+  const ca = LANG_I === 'ca'; max = max || 60;
+  const filas = pers.slice(0, max).map(x => `
+    <div class="panel-stat-row" style="align-items:center;gap:8px;">
+      <span><strong>${escAttr(x.p.nombre_completo || '—')}</strong><br><span class="subtle" style="font-size:11.5px;margin:0;">${ca ? 'Falten' : 'Faltan'} ${x.falta.length}: ${escAttr(x.falta.slice(0, 5).join(', '))}${x.falta.length > 5 ? '…' : ''}</span></span>
+      <button class="link-btn" style="font-size:12px;white-space:nowrap;" data-id="${escAttr(x.p.id)}" onclick="abrirFichaCompletar(this.dataset.id, '${origen}')">✏️ ${ca ? 'Completar' : 'Completar'}</button>
+    </div>`).join('');
+  return filas + (pers.length > max ? `<p class="subtle" style="font-size:12px;margin:8px 0 0;">${ca ? 'I' : 'Y'} ${pers.length - max} ${ca ? 'més.' : 'más.'}</p>` : '');
+}
+// Mi espacio: fichas de MIS personas (soy su técnico responsable, o las he atendido yo y no tienen responsable) con datos pendientes
+async function fichasPendientesTecnico(email, idsAtendidas){
+  try {
+    const [asig, aten] = await Promise.all([
+      sb.from('perfiles').select('*').eq('tecnico_responsable_email', email).not('nombre_completo', 'is', null).limit(1000),
+      idsAtendidas.length ? sb.from('perfiles').select('*').in('id', idsAtendidas.slice(0, 300)).not('nombre_completo', 'is', null) : Promise.resolve({ data: [] })
+    ]);
+    const vistos = new Set(), lista = [];
+    [...(asig.data || []), ...(aten.data || []).filter(p => !p.tecnico_responsable_email || p.tecnico_responsable_email === email)].forEach(p => {
+      if(vistos.has(p.id)) return; vistos.add(p.id);
+      const falta = fichaDatosQueFaltan(p); if(falta.length) lista.push({ p, falta });
+    });
+    lista.sort((a, b) => b.falta.length - a.falta.length);
+    return lista;
+  } catch(e){ return []; }
+}
+function fichasPendientesTecnicoHtml(lista){
+  if(!lista.length) return '';
+  const ca = LANG_I === 'ca';
+  return `<details class="plegable gold fichas-pend" ${plegableAbierto('me-fichas-pend', false) ? 'open' : ''} ontoggle="plegableGuardar('me-fichas-pend', this.open)">
+    <summary><span>⚠️ ${ca ? 'Fitxes amb dades pendents' : 'Fichas con datos pendientes'}</span><span class="plegable-n">${lista.length}</span></summary>
+    <div class="plegable-c">
+      <p class="subtle" style="font-size:12.5px;margin:0 0 8px;">${ca ? 'A aquestes persones (les teves) els falten dades a la fitxa. Completa-les quan puguis: la informació serveix per als informes i les subvencions.' : 'A estas personas (las tuyas) les faltan datos en la ficha. Complétalas cuando puedas: la información sirve para los informes y las subvenciones.'}</p>
+      ${fichasPendientesListaHtml(lista, 'miespacio')}
+    </div>
+  </details>`;
+}
+// Administración (Inicio): fichas incompletas agrupadas por técnico. Se carga después de pintar el Inicio, para no hacerlo más lento.
+async function pintarFichasPendientesAdmin(){
+  const host = document.getElementById('panel-fichas-pend'); if(!host) return;
+  const ca = LANG_I === 'ca';
+  try {
+    const [perf, aten, st] = await Promise.all([
+      traerTodoPaginado((a, b) => sb.from('perfiles').select('*').not('nombre_completo', 'is', null).range(a, b)),
+      traerTodoPaginado((a, b) => sb.from('atenciones').select('usuario_id, creado_por_email, creado_en').not('usuario_id', 'is', null).order('creado_en', { ascending: true }).range(a, b)),
+      sb.from('staff').select('email, nombre')
+    ]);
+    ((st && st.data) || []).forEach(x => { if(x.nombre) __mapaNombresTecnicos[x.email] = x.nombre; });
+    const ultimo = {}; ((aten && aten.data) || []).forEach(a => { ultimo[a.usuario_id] = a.creado_por_email; });
+    const grupos = {}; let total = 0;
+    ((perf && perf.data) || []).forEach(p => {
+      const falta = fichaDatosQueFaltan(p); if(!falta.length) return;
+      const tec = p.tecnico_responsable_email || ultimo[p.id] || '';
+      (grupos[tec] = grupos[tec] || []).push({ p, falta }); total++;
+    });
+    if(!total){ host.innerHTML = ''; return; }
+    const orden = Object.keys(grupos).sort((a, b) => (a === '') - (b === '') || grupos[b].length - grupos[a].length);
+    host.innerHTML = `<details class="plegable gold" id="plg-fichas-pend" ${plegableAbierto('inicio-fichas-pend', false) ? 'open' : ''} ontoggle="plegableGuardar('inicio-fichas-pend', this.open)">
+      <summary><span>⚠️ ${ca ? 'Fitxes incompletes per tècnic' : 'Fichas incompletas por técnico'}</span><span class="plegable-n">${total}</span></summary>
+      <div class="plegable-c">
+        <p class="subtle" style="font-size:12.5px;margin:0 0 8px;">${ca ? 'Persones a les quals falten dades obligatòries a la fitxa, agrupades pel tècnic responsable (o, si no en tenen, per qui les va atendre per última vegada).' : 'Personas a las que les faltan datos obligatorios en la ficha, agrupadas por su técnico responsable (o, si no tienen, por quien las atendió por última vez).'}</p>
+        ${orden.map(tec => `<details class="plegable" style="margin-bottom:6px;">
+          <summary><span>${tec ? '👤 ' + escAttr(nombreTecnico(tec)) : '❔ ' + (ca ? 'Sense tècnic assignat' : 'Sin técnico asignado')}</span><span class="plegable-n">${grupos[tec].length}</span></summary>
+          <div class="plegable-c">${fichasPendientesListaHtml(grupos[tec].sort((a, b) => b.falta.length - a.falta.length), 'panel', 40)}</div>
+        </details>`).join('')}
+      </div>
+    </details>`;
+  } catch(e){ host.innerHTML = ''; }
+}
 // Convierte un registro en secciones de "campo / dato" (solo lo que tiene valor)
 function fichaSecciones(obj, extra){
   obj = obj || {};
@@ -13037,7 +13242,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-23 · v130 (Excel de personas con todos los datos de la ficha)';
+const APP_VERSION_INTRANET = '2026-10-23 · v134 (Subvenciones: recordatorios 5 meses / 1 mes / 1 semana + correo)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -13710,6 +13915,7 @@ async function renderPanelGeneral(){
           ${plg('alertas', notifsCount, t.alertasNuevas, `${interruptorAlertas}${notifsHtml}`, { gold:true, abierto: notifsCount > 0 })}
           ${plg('consultas', (consultasPend.data || []).length, t.consultasPendientesTitulo, consultasHtml, { gold:true, abierto: (consultasPend.data || []).length > 0 })}
         </div>
+        ${IS_ADMIN ? '<div id="panel-fichas-pend" style="margin-top:12px;"></div>' : ''}
       </div>
 
       <div>
@@ -13742,6 +13948,7 @@ async function renderPanelGeneral(){
     <button class="link-btn" style="margin-bottom:24px;" onclick="showScreen('informes');renderInformesScreen()">${LANG_I==='ca' ? 'Veure totes les estadístiques →' : 'Ver todas las estadísticas →'}</button>
   `;
 
+  if(IS_ADMIN) pintarFichasPendientesAdmin();
   animateNumber(document.getElementById('num-total-personas'), totalPersonas);
   actualizarBadgePanel();
   activarBarras();
@@ -13873,7 +14080,13 @@ function construirVistaUnica(p, d, cardAtencion, extra){
   const dir = [p.calle, p.codigo_postal, p.municipio].filter(Boolean).join(', ');
   const fila = (l, v) => v ? `<div class="panel-stat-row"><span>${l}</span><span><strong>${h(v)}</strong></span></div>` : '';
   const chips = [['atencion', ca ? 'Atencions' : 'Atenciones', d.atenciones.length], ['actuacion', ca ? 'Actuacions' : 'Actuaciones', d.actuaciones.length], ['tramite', ca ? 'Tràmits' : 'Trámites', d.tramites.length], ['cita', 'Citas', d.citas.length], ['mensaje', ca ? 'Missatges' : 'Mensajes', d.mensajes.length], ['documento', ca ? 'Documents' : 'Documentos', d.documentos.length]];
+  const faltanFicha = fichaDatosQueFaltan(p);
   return `
+    ${faltanFicha.length ? `<div class="panel-card" style="background:var(--alert-soft,#FDECEA);border-color:var(--alert);">
+      <strong>⚠️ ${ca ? 'Falten dades a la fitxa' : 'Faltan datos en la ficha'} (${faltanFicha.length})</strong>
+      <p style="margin:6px 0 10px;font-size:13px;">${h(faltanFicha.join(', '))}</p>
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="mostrarTabPersona('datos')">✏️ ${ca ? 'Completar ara' : 'Completar ahora'}</button>
+    </div>` : ''}
     <div class="panel-card">
       <h3 style="margin:0 0 8px;">${ca ? 'Resum' : 'Resumen'}</h3>
       ${fila(ca ? 'Telèfon' : 'Teléfono', p.telefono)}${fila('DNI/NIE', p.dni_nie)}${fila(t.correoLbl, p.email)}${fila(ca ? 'Adreça' : 'Dirección', dir)}
@@ -14027,8 +14240,9 @@ function cerrarBusquedaGlobal(){
 // Si la ficha ya está abierta y se vuelve a pintar (subir un documento, guardar una atención…), no salta al principio
 async function verPersonaStaff(usuarioId, origen){
   const yaAbierta = !!(document.getElementById('screen-persona') && document.getElementById('screen-persona').classList.contains('active') && window.__usuarioIdVisto === usuarioId);
-  if(!yaAbierta) return verPersonaStaffInterno(usuarioId, origen);
-  return recargarSinSaltar('persona-content', () => verPersonaStaffInterno(usuarioId, origen));
+  const r = !yaAbierta ? await verPersonaStaffInterno(usuarioId, origen) : await recargarSinSaltar('persona-content', () => verPersonaStaffInterno(usuarioId, origen));
+  try { fichaMarcarFaltan(); } catch(e){}
+  return r;
 }
 async function verPersonaStaffInterno(usuarioId, origen){
   window.__usuarioIdVisto = usuarioId;
