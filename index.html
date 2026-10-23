@@ -1727,7 +1727,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v129'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v130'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -5543,7 +5543,7 @@ async function histBorrarLote(origen){
 }
 
 // ================= EXPORTAR (Excel / PDF) =================
-async function obtenerPersonasParaExport(){
+async function obtenerPersonasParaExport(completo){
   const texto = (__personasUltimoTexto || '').trim(), hayTexto = texto.length >= 2, q = normTxt(texto);
   if(__personasVista === 'hist' && HISTORICAS_OK){
     const res = await traerTodoPaginado((a, b) => sb.from('personas_historicas').select('*').order('anio', { ascending:true }).order('nombre_completo', { ascending:true }).range(a, b));
@@ -5552,14 +5552,20 @@ async function obtenerPersonasParaExport(){
     return { cabecera: ['Código', 'Año', 'Fecha de alta', 'Nombre', 'DNI/NIE', 'Teléfono', 'Correo', 'Código postal', 'Municipio', 'Sexo', 'Fecha de nacimiento', 'Edad en el alta', 'Nacionalidad', 'Tipo (trámite/servicio/proyecto)', 'Servicio', 'Proyecto', 'Notas', 'ETHOS', 'Lote de importación'].concat(extra),
       filas: datos.map(p => [p.codigo || '', p.anio || '', p.fecha_alta || '', p.nombre_completo || '', p.dni_nie || '', p.telefono || '', p.email || '', p.cp || '', p.municipio || '', p.sexo || '', p.fecha_nacimiento || '', p.edad_alta != null ? p.edad_alta : '', p.nacionalidad || '', p.tipo || '', p.servicio || '', p.proyecto || '', p.notas || '', ethosLargo(p.ethos) || ((p.datos && (p.datos.ETHOS || p.datos.Ethos || p.datos.ethos)) || ''), p.origen || ''].concat(extra.map(k => (p.datos && p.datos[k]) || ''))) };
   }
-  const cols = 'id, nombre_completo, dni_nie, telefono, municipio, calle' + (FECHA_ALTA_OK ? ', fecha_alta' : '') + (PERFIL_ETHOS ? ', ethos' : '');
-  const [perfRes, trRes, atRes, acRes, pyRes] = await Promise.all([
+  const cols = completo ? '*' : 'id, nombre_completo, dni_nie, telefono, municipio, calle' + (FECHA_ALTA_OK ? ', fecha_alta' : '') + (PERFIL_ETHOS ? ', ethos' : '');
+  const hoyIsoExp = new Date().toISOString().slice(0, 10);
+  const [perfRes, trRes, atRes, acRes, pyRes, ciRes, stRes] = await Promise.all([
     traerTodoPaginado((a, b) => sb.from('perfiles').select(cols).not('nombre_completo', 'is', null).order('nombre_completo', { ascending:true }).range(a, b)),
     traerTodoPaginado((a, b) => sb.from('tramites').select('usuario_id, nombre_servicio, estado').range(a, b)),
     traerTodoPaginado((a, b) => sb.from('atenciones').select('usuario_id, prestaciones, tramites_bretxa, emprendeduria').not('usuario_id', 'is', null).range(a, b)),
     traerTodoPaginado((a, b) => sb.from('actuaciones').select('usuario_id, categoria, proyecto_id').range(a, b)),
-    sb.from('proyectos').select('id, nombre')
+    sb.from('proyectos').select('id, nombre'),
+    completo ? traerTodoPaginado((a, b) => sb.from('citas').select('usuario_id, fecha, hora, estado').gte('fecha', hoyIsoExp).order('fecha', { ascending:true }).range(a, b)) : Promise.resolve({ data: [] }),
+    completo ? sb.from('staff').select('email, nombre') : Promise.resolve({ data: [] })
   ]);
+  ((stRes && stRes.data) || []).forEach(x => { if(x.nombre) __mapaNombresTecnicos[x.email] = x.nombre; });
+  const proximaCita = {}; sinBorrados(ciRes && ciRes.data).forEach(c => { if(c.usuario_id && !proximaCita[c.usuario_id]) proximaCita[c.usuario_id] = c; });
+  const abiertos = {}; sinBorrados(trRes.data).forEach(r => { if(r.usuario_id && !trCerrado(r.estado)) abiertos[r.usuario_id] = (abiertos[r.usuario_id] || 0) + 1; });
   const nombreProy = {}; ((pyRes.data) || []).forEach(p => { nombreProy[p.id] = p.nombre; });
   const juntar = () => ({ tr: new Set(), sv: new Set(), py: new Set() });
   const porPersona = {};
@@ -5570,6 +5576,14 @@ async function obtenerPersonasParaExport(){
   let perfiles = perfRes.data || [];
   if(hayTexto) perfiles = perfiles.filter(p => normTxt(p.nombre_completo).includes(q));
   const lista = s => [...s].join('; ');
+  if(completo){
+    const ca = LANG_I === 'ca';
+    return {
+      cabecera: CAMPOS_PERSONA.map(personaEtiqueta).concat(ca ? ['Any d\'alta', 'Mes d\'alta', 'Tràmits', 'Tràmits oberts', 'Serveis', 'Projectes', 'Propera cita'] : ['Año de alta', 'Mes de alta', 'Trámites', 'Trámites abiertos', 'Servicios', 'Proyectos', 'Próxima cita']),
+      filas: perfiles.map(p => { const x = porPersona[p.id] || juntar(); const d = new Date(p.fecha_alta || p.creado_en || ''); const ok = !isNaN(d); const pc = proximaCita[p.id];
+        return CAMPOS_PERSONA.map(c => c[3](p)).concat([ok ? d.getFullYear() : '', ok ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` : '', lista(x.tr), abiertos[p.id] ? String(abiertos[p.id]) : '', lista(x.sv), lista(x.py), pc ? personaFecha(pc.fecha) + (pc.hora ? ' ' + String(pc.hora).slice(0, 5) : '') : '']); })
+    };
+  }
   return {
     cabecera: ['Nombre', 'DNI/NIE', 'Teléfono', 'Municipio', 'Dirección', 'Fecha de alta (primer registro)', 'Año de alta', 'Mes de alta', 'ETHOS', 'Trámites', 'Servicios', 'Proyectos'],
     filas: perfiles.map(p => { const x = porPersona[p.id] || juntar(); const d = p.fecha_alta ? new Date(p.fecha_alta) : null; const ok = d && !isNaN(d);
@@ -5579,7 +5593,7 @@ async function obtenerPersonasParaExport(){
 }
 
 async function exportarPersonasExcel(){
-  const { cabecera, filas } = await obtenerPersonasParaExport();
+  const { cabecera, filas } = await obtenerPersonasParaExport(true);
   descargarXLSX(cabecera, filas, __personasVista === 'hist' ? 'Personas-historico.xlsx' : 'Personas-usuarias.xlsx', __personasVista === 'hist' ? 'Histórico' : 'Personas');
 }
 async function exportarPersonasPDF(){
@@ -7119,6 +7133,55 @@ function fichaValor(v){
   if(typeof v === 'string' && /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}.*)?$/.test(v)) return fichaFecha(v);
   return String(v);
 }
+// ===== DATOS DE LA PERSONA: una sola lista para la ficha y para el Excel de «Personas usuarias» =====
+// Así los dos muestran exactamente los mismos datos, con las mismas etiquetas y el mismo formato.
+function personaSiNo(v){ return v === true ? (LANG_I === 'ca' ? 'Sí' : 'Sí') : v === false ? 'No' : ''; }
+function personaFecha(v){ if(!v) return ''; const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(v)); if(m) return m[3] + '/' + m[2] + '/' + m[1]; const d = new Date(v); return isNaN(d) ? String(v) : d.toLocaleDateString('es-ES'); }
+function personaEdad(p){
+  if(!p.fecha_nacimiento) return '';
+  const n = new Date(p.fecha_nacimiento), h = new Date(); if(isNaN(n)) return '';
+  let e = h.getFullYear() - n.getFullYear(); if(h.getMonth() < n.getMonth() || (h.getMonth() === n.getMonth() && h.getDate() < n.getDate())) e--;
+  return e >= 0 && e < 120 ? String(e) : '';
+}
+function personaOpcion(v, mapa){ if(!v) return ''; const o = mapa[v]; return o ? o[LANG_I === 'ca' ? 1 : 0] : String(v); }
+const PERSONA_SEXO = { mujer:['Mujer','Dona'], hombre:['Hombre','Home'], otro:['Otro','Altre'], prefiero_no_decir:['Prefiere no decirlo','Prefereix no dir-ho'] };
+const PERSONA_REGULARIZACION = { regularizada:['Regularizada','Regularitzada'], en_tramite:['En trámite','En tràmit'], irregular:['Situación irregular','Situació irregular'], prefiero_no_decir:['Prefiere no responder','Prefereix no respondre'] };
+const PERSONA_ESTUDIOS = { sin_estudios:['Sin estudios','Sense estudis'], primaria:['Primaria','Primària'], eso:['ESO','ESO'], bachillerato_fp:['Bachillerato / FP','Batxillerat / FP'], universitarios:['Universitarios','Universitaris'] };
+// [clave, etiqueta ES, etiqueta CA, cómo se muestra el dato]
+const CAMPOS_PERSONA = [
+  ['nombre_completo', 'Nombre', 'Nom', p => p.nombre_completo || ''],
+  ['dni_nie', 'DNI/NIE', 'DNI/NIE', p => p.dni_nie || ''],
+  ['fecha_nacimiento', 'Fecha de nacimiento', 'Data de naixement', p => personaFecha(p.fecha_nacimiento)],
+  ['edad', 'Edad', 'Edat', p => personaEdad(p)],
+  ['sexo', 'Sexo', 'Sexe', p => personaOpcion(p.sexo, PERSONA_SEXO)],
+  ['nacionalidad', 'Nacionalidad', 'Nacionalitat', p => p.nacionalidad || ''],
+  ['situacion_regularizacion', 'Situación de regularización', 'Situació de regularització', p => personaOpcion(p.situacion_regularizacion, PERSONA_REGULARIZACION)],
+  ['telefono', 'Teléfono', 'Telèfon', p => p.telefono || ''],
+  ['email', 'Correo', 'Correu', p => p.email || ''],
+  ['calle', 'Dirección', 'Adreça', p => p.calle || ''],
+  ['codigo_postal', 'Código postal', 'Codi postal', p => p.codigo_postal || ''],
+  ['municipio', 'Municipio', 'Municipi', p => p.municipio || ''],
+  ['provincia', 'Provincia', 'Província', p => p.provincia || ''],
+  ['personas_hogar', 'Personas en el hogar', 'Persones a la llar', p => p.personas_hogar != null ? String(p.personas_hogar) : ''],
+  ['numero_hijos', 'Número de hijos', 'Nombre de fills', p => p.numero_hijos != null ? String(p.numero_hijos) : ''],
+  ['hijos_a_cargo', 'Hijos a cargo', 'Fills a càrrec', p => personaSiNo(p.hijos_a_cargo)],
+  ['familia_monoparental', 'Familia monoparental', 'Família monoparental', p => personaSiNo(p.familia_monoparental)],
+  ['familia_numerosa', 'Familia numerosa', 'Família nombrosa', p => personaSiNo(p.familia_numerosa)],
+  ['situacion_laboral', 'Situación laboral', 'Situació laboral', p => p.situacion_laboral || ''],
+  ['situacion_desempleo', 'En situación de desempleo', 'En situació d\'atur', p => personaSiNo(p.situacion_desempleo)],
+  ['discapacidad_reconocida', 'Discapacidad reconocida', 'Discapacitat reconeguda', p => personaSiNo(p.discapacidad_reconocida)],
+  ['porcentaje_discapacidad', '% de discapacidad', '% de discapacitat', p => p.porcentaje_discapacidad ? p.porcentaje_discapacidad + '%' : ''],
+  ['dependencia_reconocida', 'Dependencia reconocida', 'Dependència reconeguda', p => personaSiNo(p.dependencia_reconocida)],
+  ['nivel_estudios', 'Nivel de estudios', 'Nivell d\'estudis', p => personaOpcion(p.nivel_estudios, PERSONA_ESTUDIOS)],
+  ['titulaciones_cursos', 'Titulaciones o cursos', 'Titulacions o cursos', p => p.titulaciones_cursos || ''],
+  ['experiencia_laboral', 'Experiencia laboral previa', 'Experiència laboral prèvia', p => p.experiencia_laboral || ''],
+  ['ethos', 'ETHOS', 'ETHOS', p => (p.ethos && p.ethos !== 'no_escau' && p.ethos !== 'no_consta') ? (ethosLargo(p.ethos) || p.ethos) : ''],
+  ['tecnico_responsable_email', 'Técnico responsable', 'Tècnic responsable', p => p.tecnico_responsable_email ? nombreTecnico(p.tecnico_responsable_email) : ''],
+  ['fecha_alta', 'Fecha de alta', 'Data d\'alta', p => personaFecha(p.fecha_alta || p.creado_en)],
+  ['consentimiento_firmado', 'Consentimiento', 'Consentiment', p => p.consentimiento_firmado ? (LANG_I === 'ca' ? 'Signat' : 'Firmado') : (LANG_I === 'ca' ? 'Pendent' : 'Pendiente')],
+  ['consentimiento_fecha', 'Fecha del consentimiento', 'Data del consentiment', p => p.consentimiento_firmado ? personaFecha(p.consentimiento_fecha) : '']
+];
+function personaEtiqueta(c){ return LANG_I === 'ca' ? c[2] : c[1]; }
 // Convierte un registro en secciones de "campo / dato" (solo lo que tiene valor)
 function fichaSecciones(obj, extra){
   obj = obj || {};
@@ -12974,7 +13037,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-22 · v129 (flechas entre apartados + trámites anulados y citas canceladas ocultos)';
+const APP_VERSION_INTRANET = '2026-10-23 · v130 (Excel de personas con todos los datos de la ficha)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -13823,12 +13886,7 @@ function construirVistaUnica(p, d, cardAtencion, extra){
     <details class="panel-card" open>
       <summary style="cursor:pointer;font-weight:700;">📋 ${ca ? 'Dades personals completes' : 'Datos personales completos'}</summary>
       <div style="margin-top:8px;">
-        ${fila(ca ? 'Data de naixement' : 'Fecha de nacimiento', p.fecha_nacimiento)}${fila(ca ? 'Sexe' : 'Sexo', p.sexo)}${fila('Provincia', p.provincia)}
-        ${fila(ca ? 'Persones a la llar' : 'Personas en el hogar', p.personas_hogar)}${fila(ca ? 'Nombre de fills' : 'Número de hijos', p.numero_hijos)}
-        ${fila(ca ? 'Situació laboral' : 'Situación laboral', p.situacion_laboral)}
-        ${p.discapacidad_reconocida === true ? fila(ca ? 'Discapacitat reconeguda' : 'Discapacidad reconocida', (ca ? 'Sí' : 'Sí') + (p.porcentaje_discapacidad ? ' · ' + p.porcentaje_discapacidad + '%' : '')) : ''}
-        ${p.dependencia_reconocida === true ? fila(ca ? 'Dependència reconeguda' : 'Dependencia reconocida', 'Sí') : ''}
-        ${fila(t.fechaAltaLbl, p.creado_en ? fmt(p.creado_en) : '')}
+        ${CAMPOS_PERSONA.filter(c => !['nombre_completo', 'dni_nie', 'telefono', 'email', 'calle', 'codigo_postal', 'municipio', 'ethos', 'tecnico_responsable_email', 'consentimiento_firmado', 'consentimiento_fecha'].includes(c[0])).map(c => fila(personaEtiqueta(c), c[3](p))).join('')}
       </div>
     </details>
     <details class="panel-card" ${(extra.proyectos || []).length ? 'open' : ''}>
