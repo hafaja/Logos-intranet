@@ -619,6 +619,19 @@
   .gi-skip{font-size:12.5px;text-align:center;padding:0 16px 12px;color:var(--ink-soft,#5b6677);}
   .gi-skip label{cursor:pointer;}
   @media (max-width:520px){.gi-card{max-height:96vh;border-radius:18px;}.gi-body{padding:6px 18px 4px;}.gi-t{font-size:21px;}}
+.cita-acciones{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.cita-acc{font:inherit;font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:999px;border:1.5px solid var(--line,#ddd);background:#fff;color:var(--ink,#222);cursor:pointer;min-height:34px;}
+.cita-acc:hover{border-color:var(--primary,#1E3A8A);}
+.cita-acc-x{color:var(--alert,#b00020);border-color:#e9b8b8;}
+.pasar-lista{display:flex;flex-direction:column;gap:6px;}
+.pasar-op{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1.5px solid var(--line,#ddd);border-radius:12px;background:#fff;cursor:pointer;font:inherit;color:inherit;min-height:48px;}
+.pasar-op:hover:not([disabled]){border-color:var(--primary,#1E3A8A);background:#F3F7FC;}
+.pasar-op[disabled]{opacity:.5;cursor:default;}
+.pasar-op small{color:#777;font-size:11.5px;}
+.pasar-act{opacity:1 !important;border-color:#9cc9a8;background:#F2FBF4;}
+.cita-tec-av{flex:0 0 34px;width:34px;height:34px;border-radius:50%;background:#E6F0FA;color:#1F4E79;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;}
+.dest-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:4px 10px;max-height:240px;overflow:auto;border:1px solid var(--line,#ddd);border-radius:10px;padding:8px;}
+.dest-op{display:flex;gap:6px;align-items:center;font-size:13.5px;padding:4px 2px;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -1820,7 +1833,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v137'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v138'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -4815,11 +4828,93 @@ function contactoCitaHtml(p){
 window.__citasMapa = window.__citasMapa || {};
 function citaAccionesHtml(c, nombre){
   if(!c || c.estado === 'cancelada') return '';
-  window.__citasMapa[c.id] = { id: c.id, uid: c.usuario_id, nombre: nombre || '', fecha: c.fecha, hora: String(c.hora || '').slice(0, 5), motivo: c.motivo || '' };
-  return `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
-    <button class="link-btn" style="font-size:12px;" onclick="cambiarCitaStaff('${c.id}')">🔁 ${acL('Cambiar cita', 'Canviar cita')}</button>
-    <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="cancelarCitaStaff('${c.id}')">✖ ${acL('Cancelar cita', 'Cancel·lar cita')}</button>
+  const conTec = 'tecnico_email' in c;   // existe la columna (SQL 39)
+  window.__citasMapa[c.id] = { id: c.id, uid: c.usuario_id, nombre: nombre || '', fecha: c.fecha, hora: String(c.hora || '').slice(0, 5), motivo: c.motivo || '', tecnico: c.tecnico_email || '', conTec };
+  const mia = conTec && c.tecnico_email && c.tecnico_email.toLowerCase() === String(CURRENT_USER.email || '').toLowerCase();
+  return `<div class="cita-acciones">
+    ${conTec && !mia ? `<button class="cita-acc" onclick="quedarmeCitaStaff('${c.id}')">✋ ${acL('Me la quedo', 'Me la quedo')}</button>` : ''}
+    ${conTec ? `<button class="cita-acc" onclick="pasarCitaStaff('${c.id}')">👤 ${acL('Pasar a otra persona', 'Passar a una altra persona')}</button>` : ''}
+    <button class="cita-acc" onclick="cambiarCitaStaff('${c.id}')">🔁 ${acL('Cambiar día/hora', 'Canviar dia/hora')}</button>
+    <button class="cita-acc cita-acc-x" onclick="cancelarCitaStaff('${c.id}')">✖ ${acL('Cancelar', 'Cancel·lar')}</button>
   </div>`;
+}
+// Quién atiende la cita (SQL 39): chip con el nombre, «Tú» o «Sin asignar»
+function citaTecnicoChip(c){
+  if(!c || !('tecnico_email' in c)) return '';
+  if(!c.tecnico_email) return `<span class="chip" style="background:#F1F1F1;color:#777;">👤 ${acL('Sin asignar', 'Sense assignar')}</span>`;
+  const mia = c.tecnico_email.toLowerCase() === String(CURRENT_USER.email || '').toLowerCase();
+  return `<span class="chip" style="background:${mia ? '#DDF3E4' : '#E6F0FA'};color:${mia ? '#1E7A3E' : '#1F4E79'};">👤 ${mia ? acL('Tú', 'Tu') : escAttr(c.tecnico_nombre || equipoNombre(c.tecnico_email))}</span>`;
+}
+// Equipo que puede atender citas (para pasar una cita o elegir técnico en «Nueva cita»)
+async function cargarEquipoCitas(){
+  if(window.__equipoCitas && Date.now() - (window.__equipoCitasT || 0) < 5 * 60 * 1000) return window.__equipoCitas;
+  if(window.__citasTecOK === undefined){ try { const q = await sb.from('citas').select('tecnico_email').limit(1); window.__citasTecOK = !q.error; } catch(e){ window.__citasTecOK = false; } }
+  let r = await sb.from('staff').select('email, nombre, activo, ambito, acepta_citas');
+  if(r.error) r = await sb.from('staff').select('email, nombre, activo');
+  const lista = (r.data || []).filter(x => x.email && x.activo !== false && x.acepta_citas !== false && x.ambito !== 'rrhh' && x.ambito !== 'jovenes')
+    .map(x => ({ email: x.email.toLowerCase(), nombre: (x.nombre || '').trim() || x.email.split('@')[0] }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+  window.__equipoCitas = lista; window.__equipoCitasT = Date.now();
+  return lista;
+}
+function equipoNombre(email){
+  const e = String(email || '').toLowerCase();
+  const x = (window.__equipoCitas || []).find(t => t.email === e);
+  return x ? x.nombre : e.split('@')[0];
+}
+// Guarda el técnico de la cita (directo; si no hay permiso, con la función segura del SQL 39)
+async function asignarTecnicoCitaDB(id, email){
+  const { data, error } = await sb.from('citas').update({ tecnico_email: email || null }).eq('id', id).select('id, tecnico_email');
+  if(!error && data && data.length) return true;
+  if(error && /complet/i.test(error.message || '')){ alert(acL('Esa persona ya tiene otra cita a la misma hora. Elige a otra persona o cambia la hora.', 'Aquesta persona ja té una altra cita a la mateixa hora. Tria una altra persona o canvia l\'hora.')); return false; }
+  const r = await sb.rpc('asignar_tecnico_cita', { p_id: String(id), p_email: email || '' });
+  if(!r.error) return true;
+  const falta = /does not exist|schema cache|could not find|tecnico_email/i.test((r.error.message || '') + ' ' + ((error && error.message) || ''));
+  alert(falta ? acL('Para asignar técnicos a las citas hay que ejecutar el SQL 39 en Supabase (una sola vez).', 'Per assignar tècnics a les cites cal executar l\'SQL 39 a Supabase (una sola vegada).')
+    : (/complet/i.test(r.error.message || '') ? acL('Esa persona ya tiene otra cita a la misma hora.', 'Aquesta persona ja té una altra cita a la mateixa hora.') : r.error.message));
+  return false;
+}
+async function quedarmeCitaStaff(id){
+  const c = (window.__citasMapa || {})[id]; if(!c) return;
+  if(!(await asignarTecnicoCitaDB(id, CURRENT_USER.email))) return;
+  await refrescarTrasCambioCita(c.uid);
+  try { renderMiEspacio && document.getElementById('screen-miespacio') && document.getElementById('screen-miespacio').classList.contains('active') && recargarSinSaltar('miespacio-content', renderMiEspacio); } catch(e){}
+}
+async function pasarCitaStaff(id){
+  const c = (window.__citasMapa || {})[id]; if(!c) return;
+  const ca = LANG_I === 'ca';
+  const equipo = await cargarEquipoCitas();
+  // quién ya tiene una cita a esa misma hora
+  const ocupados = new Set();
+  try { const { data } = await sb.from('citas').select('id, hora, tecnico_email, estado').eq('fecha', c.fecha); (data || []).forEach(x => { if(x.id !== id && x.estado !== 'cancelada' && x.tecnico_email && String(x.hora).slice(0, 5) === c.hora) ocupados.add(x.tecnico_email.toLowerCase()); }); } catch(e){}
+  const f = new Date(c.fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, { weekday:'short', day:'numeric', month:'short' }) + ' · ' + c.hora;
+  const ov = document.createElement('div'); ov.id = 'pasar-cita-ov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.addEventListener('click', e => { if(e.target === ov) ov.remove(); });
+  const yo = String(CURRENT_USER.email || '').toLowerCase();
+  ov.innerHTML = `<div class="panel-card" style="width:100%;max-width:440px;max-height:88vh;overflow:auto;background:var(--card,#fff);margin:0;">
+    <div style="display:flex;justify-content:space-between;align-items:center;"><h3 style="margin:0;">👤 ${ca ? 'Passar la cita a…' : 'Pasar la cita a…'}</h3><button class="link-btn" onclick="document.getElementById('pasar-cita-ov').remove()">✕</button></div>
+    <p class="subtle" style="margin:4px 0 10px;font-size:12.5px;">${escAttr(c.nombre || '')} · ${f}</p>
+    <div class="pasar-lista">${equipo.map(t => { const oc = ocupados.has(t.email), act = t.email === (c.tecnico || '').toLowerCase();
+      return `<button class="pasar-op ${act ? 'pasar-act' : ''}" ${oc || act ? 'disabled' : ''} data-e="${escAttr(t.email)}" onclick="confirmarPasarCita('${id}', this.dataset.e)"><span class="cita-tec-av">${escAttr(t.nombre.split(/\s+/).slice(0, 2).map(x => x[0] || '').join('').toUpperCase())}</span><span style="flex:1;text-align:left;"><strong>${escAttr(t.nombre)}</strong>${t.email === yo ? ` <small>(${ca ? 'tu' : 'tú'})</small>` : ''}</span><small>${act ? (ca ? 'Ara la té' : 'La tiene ahora') : (oc ? (ca ? 'Ocupat a aquesta hora' : 'Ocupado a esa hora') : '')}</small></button>`; }).join('')}
+      ${c.tecnico ? `<button class="pasar-op" onclick="confirmarPasarCita('${id}', '')"><span class="cita-tec-av" style="background:#eee;color:#777;">—</span><span style="flex:1;text-align:left;">${ca ? 'Deixar-la sense assignar' : 'Dejarla sin asignar'}</span></button>` : ''}
+    </div>
+    <p class="subtle" style="font-size:11.5px;margin:10px 0 0;">${ca ? 'La persona nova rep una alerta i la veurà a «Les meves cites». La persona usuària veu el nom de qui l\'atendrà.' : 'La persona nueva recibe una alerta y la verá en «Mis citas». La persona usuaria ve el nombre de quien la atenderá.'}</p>
+  </div>`;
+  document.body.appendChild(ov);
+}
+async function confirmarPasarCita(id, email){
+  const c = (window.__citasMapa || {})[id]; if(!c) return;
+  const ov = document.getElementById('pasar-cita-ov'); if(ov) ov.remove();
+  if(!(await asignarTecnicoCitaDB(id, email))) return;
+  if(email && email.toLowerCase() !== String(CURRENT_USER.email || '').toLowerCase()){
+    const f = new Date(c.fecha + 'T00:00:00').toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric' });
+    const de = equipoNombre(CURRENT_USER.email);
+    const fila = { usuario_id: c.uid, tipo: 'cita_asignada', mensaje: `${de} te ha pasado la cita de ${c.nombre || 'una persona'} del ${f} a las ${c.hora}.`, asignada_a_email: email };
+    try { let r = await sb.from('notificaciones').insert(fila); if(r.error){ delete fila.asignada_a_email; await sb.from('notificaciones').insert(fila); } } catch(e){}
+  }
+  await refrescarTrasCambioCita(c.uid);
+  try { if(document.getElementById('screen-miespacio') && document.getElementById('screen-miespacio').classList.contains('active')) recargarSinSaltar('miespacio-content', renderMiEspacio); } catch(e){}
 }
 // Cancela la cita en la base de datos (directo; si no hay permiso, con la función segura del SQL 23)
 async function cancelarCitaDB(id){
@@ -4846,7 +4941,7 @@ async function cancelarCitaStaff(id){
 function cambiarCitaStaff(id){
   const c = (window.__citasMapa || {})[id]; if(!c) return;
   const f = new Date(c.fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha) + ' ' + c.hora;
-  abrirNuevaCitaStaff(c.uid, c.nombre, { reemplaza: id, motivo: c.motivo, antes: f });
+  abrirNuevaCitaStaff(c.uid, c.nombre, { reemplaza: id, motivo: c.motivo, antes: f, tecnico: c.tecnico });
 }
 
 // Lo que ha contestado la persona desde Logos Acompanya (confirma / pide otra hora / no puede)
@@ -4874,6 +4969,7 @@ async function renderAgendaCitas(fecha){
 
   const { data: citasDelDiaTodas } = await sb.from('citas').select('*').eq('fecha', __agendaFechaActual).order('hora', { ascending:true });
   const citasDelDia = sinBorrados(citasDelDiaTodas);
+  if((citasDelDia || []).some(c => c.tecnico_email && !c.tecnico_nombre)) await cargarEquipoCitas();
 
   const ids = [...new Set((citasDelDia || []).map(c => c.usuario_id).filter(Boolean))];
   let nombresAgenda = {};
@@ -4889,7 +4985,7 @@ async function renderAgendaCitas(fecha){
   const citasHtml = (citasDelDia && citasDelDia.length)
     ? citasDelDia.map(c => {
         const p = nombresAgenda[c.usuario_id] || {};
-        return `<details class="plegable" ${(citasDelDia || []).length <= 6 ? 'open' : ''}><summary><span><strong>${c.hora || '—'}</strong> · ${escAttr(p.nombre_completo || (LANG_I==='ca'?'Sense nom':'Sin nombre'))}</span><span class="chip ${c.estado==='confirmada'?'good':(c.estado==='cancelada'?'':'gold')}" style="${c.estado==='cancelada'?'background:#EEE;color:#888;':''}">${c.estado}</span></summary><div class="plegable-c">
+        return `<details class="plegable" ${(citasDelDia || []).length <= 6 ? 'open' : ''}><summary><span><strong>${String(c.hora || '—').slice(0, 5)}</strong> · ${escAttr(p.nombre_completo || (LANG_I==='ca'?'Sense nom':'Sin nombre'))} ${citaTecnicoChip(c)}</span><span class="chip ${c.estado==='confirmada'?'good':(c.estado==='cancelada'?'':'gold')}" style="${c.estado==='cancelada'?'background:#EEE;color:#888;':''}">${c.estado}</span></summary><div class="plegable-c">
           <div class="panel-stat-row"><span>${LANG_I==='ca'?'Persona usuària':'Persona usuaria'}</span><span><strong>${p.nombre_completo || (LANG_I==='ca'?'Sense nom':'Sin nombre')}</strong></span></div>
           ${p.telefono ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Telèfon':'Teléfono'}</span><span>${p.telefono}</span></div>` : ''}
           ${c.motivo ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Motiu':'Motivo'}</span><span>${c.motivo}</span></div>` : ''}
@@ -4922,7 +5018,8 @@ async function renderAgendaCitas(fecha){
 let __NC = { uid: null, nombre: '', fecha: '', hora: '', horario: null };
 function abrirNuevaCitaStaff(usuarioId, nombre, opts){
   opts = opts || {};
-  __NC = { uid: usuarioId || null, nombre: nombre || '', fecha: '', hora: '', horario: null, reemplaza: opts.reemplaza || null, motivo: opts.motivo || '', antes: opts.antes || '' };
+  __NC = { uid: usuarioId || null, nombre: nombre || '', fecha: '', hora: '', horario: null, reemplaza: opts.reemplaza || null, motivo: opts.motivo || '', antes: opts.antes || '', tecnico: (opts.tecnico !== undefined && opts.tecnico !== null ? opts.tecnico : String(CURRENT_USER.email || '').toLowerCase()) };
+  cargarEquipoCitas().then(() => { if(document.getElementById('nc-tecnico-wrap')) document.getElementById('nc-tecnico-wrap').innerHTML = ncTecnicoSelectHtml(); }).catch(() => {});
   let ov = document.getElementById('nc-ov');
   if(!ov){
     ov = document.createElement('div'); ov.id = 'nc-ov';
@@ -4932,6 +5029,17 @@ function abrirNuevaCitaStaff(usuarioId, nombre, opts){
   }
   ov.style.display = 'flex';
   pintarNuevaCitaStaff();
+}
+function ncTecnicoSelectHtml(){
+  const eq = window.__equipoCitas || [];
+  if(!eq.length || !window.__citasTecOK) return '';
+  const t = (__NC.tecnico || '').toLowerCase(), yo = String(CURRENT_USER.email || '').toLowerCase();
+  const ops = eq.slice().sort((a, b) => (b.email === yo) - (a.email === yo));
+  return `<label>${acL('¿Quién atiende?', 'Qui l\'atén?')}</label>
+    <select id="nc-tecnico" onchange="__NC.tecnico=this.value;if(__NC.fecha){__NC.hora='';elegirDiaNuevaCita(__NC.fecha);}">
+      ${ops.map(x => `<option value="${escAttr(x.email)}" ${x.email === t ? 'selected' : ''}>${escAttr(x.nombre)}${x.email === yo ? ' (' + acL('yo', 'jo') + ')' : ''}</option>`).join('')}
+      <option value="" ${!t ? 'selected' : ''}>${acL('Sin asignar (quien esté libre)', 'Sense assignar (qui estigui lliure)')}</option>
+    </select>`;
 }
 function cerrarNuevaCitaStaff(){ const ov = document.getElementById('nc-ov'); if(ov) ov.style.display = 'none'; }
 function pintarNuevaCitaStaff(){
@@ -4954,6 +5062,7 @@ function pintarNuevaCitaStaff(){
     ${__NC.reemplaza ? `<div class="info-box info-box-gold" style="font-size:12.5px;">🔁 ${acL('Esta cita sustituirá a la de', 'Aquesta cita substituirà la del')} <strong>${escAttr(__NC.antes)}</strong>. ${acL('La anterior se cancelará al crear la nueva.', 'L\'anterior es cancel·larà en crear la nova.')}</div>` : ''}
     <div style="margin-top:4px;">${persona}</div>
     ${__NC.uid ? `
+    <div class="field" style="margin-top:12px;" id="nc-tecnico-wrap">${ncTecnicoSelectHtml()}</div>
     <div class="field" style="margin-top:12px;"><label>${acL('Día', 'Dia')}</label>
       <input type="date" id="nc-fecha" min="${hoy}" value="${__NC.fecha}" onchange="elegirDiaNuevaCita(this.value)"></div>
     <div id="nc-horas"></div>
@@ -4999,8 +5108,13 @@ async function elegirDiaNuevaCita(fechaIso, mantener){
   const hd = (iso >= 1 && iso <= 5) ? { m:['08:00','14:00'], t: iso === 5 ? null : ['16:00','20:00'], cita:true } : null;
   if(!hd){ cont.innerHTML = `<div class="empty-note">${acL('Ese día Logos está cerrado. Elige otro.', 'Aquest dia Logos és tancat. Tria\'n un altre.')}</div><p class="subtle" style="font-size:12px;">${logosHorarioTexto()}</p>`; return; }
 
-  const { data: ocup } = await sb.rpc('citas_disponibilidad', { p_fecha: fechaIso });
+  const tecSel = (__NC.tecnico || '').toLowerCase();
+  const [{ data: ocup }, tecR] = await Promise.all([
+    sb.rpc('citas_disponibilidad', { p_fecha: fechaIso }),
+    tecSel ? sb.from('citas').select('id, hora, estado, tecnico_email').eq('fecha', fechaIso).then(r => r, () => ({ data: [] })) : Promise.resolve({ data: [] })
+  ]);
   const ocupadas = {}; (ocup || []).forEach(o => { ocupadas[String(o.hora).slice(0, 5)] = o.ocupadas; });
+  const ocupTec = new Set(((tecR && tecR.data) || []).filter(x => x.estado !== 'cancelada' && x.id !== __NC.reemplaza && x.tecnico_email && x.tecnico_email.toLowerCase() === tecSel).map(x => String(x.hora).slice(0, 5)));
   const slots = [];
   const bloque = (ini, fin) => {
     if(!ini || !fin) return;
@@ -5008,10 +5122,10 @@ async function elegirDiaNuevaCita(fechaIso, mantener){
     while(c < f){ slots.push(String(Math.floor(c / 60)).padStart(2, '0') + ':' + String(c % 60).padStart(2, '0')); c += h.duracion_cita_minutos; }
   };
   { const dur = h.duracion_cita_minutos || 30; const bl = (ini, fin) => { let c = logosMin(ini); const f = logosMin(fin); while(c < f){ slots.push(String(Math.floor(c / 60)).padStart(2, '0') + ':' + String(c % 60).padStart(2, '0')); c += dur; } }; [hd.m, hd.t].filter(Boolean).forEach(t => bl(t[0], t[1])); if(hd.sinCita){ const a = logosMin(hd.sinCita[0]), z = logosMin(hd.sinCita[1]); for(let i = slots.length - 1; i >= 0; i--){ const m = logosMin(slots[i]); if(m >= a && m < z) slots.splice(i, 1); } } }
-  const ahora = new Date(); const esHoy = fechaIso === ahora.toISOString().slice(0, 10);
+  const ahora = new Date(); const esHoy = fechaIso === isoLocal(ahora);
   const minAhora = ahora.getHours() * 60 + ahora.getMinutes();
   cont.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">` + slots.map(s => {
-    const lleno = (ocupadas[s] || 0) >= h.tecnicos_simultaneos;
+    const lleno = (ocupadas[s] || 0) >= h.tecnicos_simultaneos || ocupTec.has(s);
     const pasada = esHoy && (Number(s.slice(0, 2)) * 60 + Number(s.slice(3, 5)) <= minAhora);
     const sel = s === __NC.hora;
     return `<button class="link-btn" style="border:1.5px solid ${sel ? 'var(--primary,#1E3A8A)' : 'var(--line)'};border-radius:10px;padding:6px 12px;${sel ? 'font-weight:800;background:var(--primary-soft,#E8EEFB);' : ''}${(lleno || pasada) ? 'opacity:.4;' : ''}" ${(lleno || pasada) ? 'disabled' : `onclick="__NC.hora='${s}';elegirDiaNuevaCita('${fechaIso}', true);document.getElementById('nc-guardar').disabled=false;"`}>${s}${lleno ? ' ✕' : ''}</button>`;
@@ -5026,7 +5140,9 @@ async function guardarNuevaCitaStaff(){
   if(motivo) fila.motivo = motivo;
   const urgente = !!(document.getElementById('nc-urgente') && document.getElementById('nc-urgente').checked);
   if(urgente) fila.urgente = true;
+  if(__NC.tecnico && document.getElementById('nc-tecnico')) fila.tecnico_email = __NC.tecnico;
   let { error } = await sb.from('citas').insert(fila);
+  if(error && /tecnico_email|tecnico_nombre|tecnico_clave/.test(error.message || '')){ delete fila.tecnico_email; ({ error } = await sb.from('citas').insert(fila)); }
   if(error && /urgente/.test(error.message || '')){ delete fila.urgente; ({ error } = await sb.from('citas').insert(fila)); if(!error && urgente) alert(acL('La cita se ha creado, pero falta ejecutar el SQL 18 para marcarla como urgente.', 'La cita s\'ha creat, però falta executar l\'SQL 18 per marcar-la com a urgent.')); }
   if(error && /creada_por_email/.test(error.message || '')){ delete fila.creada_por_email; ({ error } = await sb.from('citas').insert(fila)); }
   if(error){
@@ -5041,6 +5157,10 @@ async function guardarNuevaCitaStaff(){
   const uid = __NC.uid, fecha = __NC.fecha, horaC = __NC.hora, nombreC = __NC.nombre || '';
   const reemplaza = __NC.reemplaza, antes = __NC.antes;
   if(reemplaza){ await cancelarCitaDB(reemplaza); }
+  if(fila.tecnico_email && fila.tecnico_email !== String(CURRENT_USER.email || '').toLowerCase()){
+    const fN = { usuario_id: uid, tipo: 'cita_asignada', mensaje: `${equipoNombre(CURRENT_USER.email)} te ha dado una cita con ${nombreC || 'una persona'} el ${new Date(fecha + 'T00:00:00').toLocaleDateString('es-ES')} a las ${horaC}.`, asignada_a_email: fila.tecnico_email };
+    try { const r = await sb.from('notificaciones').insert(fN); if(r.error){ delete fN.asignada_a_email; await sb.from('notificaciones').insert(fN); } } catch(e){}
+  }
   avisarCitaCreada(uid, nombreC, fecha, horaC, motivo, urgente, reemplaza ? { modo:'cambiada', antes } : null);
   if(document.getElementById('screen-persona') && document.getElementById('screen-persona').classList.contains('active') && window.__usuarioIdVisto === uid) verPersonaStaff(uid, window.__origenPersonaVista);
   else { __agendaVista = 'dia'; __agendaFechaActual = fecha; showScreen('agenda'); renderAgendaCitas(fecha); }
@@ -5110,18 +5230,22 @@ async function construirMisCitasHtml(email){
   const ca = LANG_I === 'ca';
   try {
     const desde = isoLocal();
-    const hasta = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+    const hasta = isoLocal(new Date(Date.now() + 7 * 86400000));
     const { data: asignadas } = await sb.from('perfiles').select('id').eq('tecnico_responsable_email', email).limit(500);
     const ids = (asignadas || []).map(x => x.id);
     let q = sb.from('citas').select('*').gte('fecha', desde).lte('fecha', hasta).neq('estado', 'cancelada').order('fecha', { ascending: true }).order('hora', { ascending: true });
     const { data: todas } = await q;
-    const mias = (todas || []).filter(c => c.creada_por_email === email || ids.includes(c.usuario_id));
+    const yo = String(email || '').toLowerCase();
+    const mias = (todas || []).filter(c => ('tecnico_email' in c && c.tecnico_email)
+      ? c.tecnico_email.toLowerCase() === yo
+      : (c.creada_por_email === email || ids.includes(c.usuario_id)));
+    const sinAsignar = (todas || []).filter(c => 'tecnico_email' in c && !c.tecnico_email && !mias.includes(c)).length;
     const nom = {}; const uids = [...new Set(mias.map(c => c.usuario_id))];
     if(uids.length){ const { data: ps } = await sb.from('perfiles').select('id, nombre_completo').in('id', uids); (ps || []).forEach(x => { nom[x.id] = x.nombre_completo; }); }
     const hoy = desde;
-    const fila = c => `<div class="panel-stat-row" style="cursor:pointer;" data-id="${escAttr(c.usuario_id)}" onclick="verPersonaStaff(this.dataset.id, 'miespacio')"><span><strong>${c.fecha === hoy ? (ca ? 'Avui' : 'Hoy') : new Date(c.fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha)}</strong> · ${String(c.hora || '').slice(0, 5)} · ${escAttr(nom[c.usuario_id] || '—')}${c.motivo ? `<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(c.motivo)}</span>` : ''}</span>${c.urgente ? '<span class="chip" style="background:#fde2e2;color:#b00020;">🔴 ' + (ca ? 'Urgent' : 'Urgente') + '</span>' : ''}</div>`;
+    const fila = c => `<div class="panel-stat-row" style="cursor:pointer;" data-id="${escAttr(c.usuario_id)}" onclick="verPersonaStaff(this.dataset.id, 'miespacio')"><span><strong>${c.fecha === hoy ? (ca ? 'Avui' : 'Hoy') : new Date(c.fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha)}</strong> · ${String(c.hora || '').slice(0, 5)} · ${escAttr(nom[c.usuario_id] || '—')}${c.motivo ? `<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(c.motivo)}</span>` : ''}</span>${c.urgente ? '<span class="chip" style="background:#fde2e2;color:#b00020;">🔴 ' + (ca ? 'Urgent' : 'Urgente') + '</span>' : ''}</div>${citaAccionesHtml(c, nom[c.usuario_id] || '')}`;
     window.__misCitasResumen = { hoy: mias.filter(c => c.fecha === hoy).length, urgentes: mias.filter(c => c.urgente).length };
-    return `<div class="panel-card" style="margin-top:14px;"><h3 style="margin:0 0 8px;">📅 ${ca ? 'Les meves cites (7 dies)' : 'Mis citas (7 días)'}</h3>${mias.length ? mias.map(fila).join('') : `<div class="empty-note">${ca ? 'No tens cites aquests dies.' : 'No tienes citas en estos días.'}</div>`}<button class="link-btn" style="font-size:12px;margin-top:6px;" onclick="showScreen('agenda');renderAgendaCitas()">${ca ? 'Veure tota l\'agenda' : 'Ver toda la agenda'}</button></div>`;
+    return `<div class="panel-card" style="margin-top:14px;"><h3 style="margin:0 0 8px;">📅 ${ca ? 'Les meves cites (7 dies)' : 'Mis citas (7 días)'}</h3>${mias.length ? mias.map(fila).join('') : `<div class="empty-note">${ca ? 'No tens cites aquests dies.' : 'No tienes citas en estos días.'}</div>`}${sinAsignar ? `<div class="info-box info-box-gold" style="font-size:12.5px;margin-top:8px;">👤 ${ca ? `Hi ha <strong>${sinAsignar}</strong> cita${sinAsignar > 1 ? 'es' : ''} sense assignar aquests dies (la persona va triar «la primera disponible»).` : `Hay <strong>${sinAsignar}</strong> cita${sinAsignar > 1 ? 's' : ''} sin asignar estos días (la persona eligió «la primera disponible»).`} <button class="link-btn" style="font-size:12px;" onclick="__agendaVista='proximas';showScreen('agenda');renderProximasCitas()">${ca ? 'Veure-les' : 'Verlas'}</button></div>` : ''}<button class="link-btn" style="font-size:12px;margin-top:6px;" onclick="showScreen('agenda');renderAgendaCitas()">${ca ? 'Veure tota l\'agenda' : 'Ver toda la agenda'}</button></div>`;
   } catch(e){ return ''; }
 }
 
@@ -5310,7 +5434,7 @@ async function renderProximasCitas(){
         const fechaFmt = new Date(fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, { weekday:'long', day:'numeric', month:'long' });
         const filas = porDia[fecha].map(c => {
           const p = nombres[c.usuario_id] || {};
-          return `<details class="plegable" open><summary><span><strong>${c.hora || '—'}</strong> · ${escAttr(p.nombre_completo || (esCA?'Sense nom':'Sin nombre'))}</span><span class="chip ${c.estado==='confirmada'?'good':'gold'}">${c.estado}</span></summary><div class="plegable-c">
+          return `<details class="plegable" open><summary><span><strong>${String(c.hora || '—').slice(0, 5)}</strong> · ${escAttr(p.nombre_completo || (esCA?'Sense nom':'Sin nombre'))} ${citaTecnicoChip(c)}</span><span class="chip ${c.estado==='confirmada'?'good':'gold'}">${c.estado}</span></summary><div class="plegable-c">
             ${respuestaCitaHtml(c)}
             ${contactoCitaHtml(p)}
             ${citaAccionesHtml(c, p.nombre_completo)}
@@ -7206,11 +7330,12 @@ async function renderAulaVirtualScreen(){
         return `
         <div class="panel-card">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
-            <h3 style="margin:0;">${iconoModalidad[c.modalidad] || '🏫'} ${c.nombre}${c.audiencia === 'equipo' ? ` <span class="chip" style="background:#33449E;color:#fff;font-size:10px;">👥 ${LANG_I==='ca'?'Equip':'Equipo'}</span>` : ''}</h3>
+            <h3 style="margin:0;">${iconoModalidad[c.modalidad] || '🏫'} ${c.nombre}${c.audiencia === 'equipo' ? ((c.destinatarios || []).length ? ` <span class="chip" style="background:#7A4A1F;color:#fff;font-size:10px;" title="${escAttr((c.destinatarios || []).map(equipoNombreTodo).join(', '))}">👤 ${(c.destinatarios || []).length} ${(c.destinatarios || []).length === 1 ? (LANG_I==='ca'?'persona':'persona') : (LANG_I==='ca'?'persones':'personas')}</span>` : ` <span class="chip" style="background:#33449E;color:#fff;font-size:10px;">👥 ${LANG_I==='ca'?'Equip':'Equipo'}</span>`) : ''}</h3>
             <span class="chip" style="background:${estadoCursoColor[c.estado] || '#999'};color:#fff;flex-shrink:0;">${textoEstadoCurso[c.estado] || c.estado}</span>
           </div>
           ${misStats ? `<span class="chip" style="background:var(--gold);color:#fff;font-size:10px;margin-top:4px;display:inline-block;">👨‍🏫 ${LANG_I==='ca'?'El teu curs':'Tu curso'}</span>` : ''}
           ${c.proyecto ? `<p class="subtle" style="margin:4px 0 8px;">${c.proyecto}</p>` : ''}
+          ${c.audiencia === 'equipo' && (c.destinatarios || []).length ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Adreçat a':'Dirigido a'}</span><span style="text-align:right;">${escAttr((c.destinatarios || []).map(equipoNombreTodo).join(', '))}</span></div>` : ''}
           <div class="panel-stat-row"><span>${LANG_I==='ca'?'Docent':'Docente'}</span><span>${c.docente_nombre || c.docente_email || '—'}</span></div>
           ${(c.fecha_inicio || c.fecha_final) ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Dates':'Fechas'}</span><span>${c.fecha_inicio ? new Date(c.fecha_inicio+'T00:00:00').toLocaleDateString(t.localeFecha) : '—'} – ${c.fecha_final ? new Date(c.fecha_final+'T00:00:00').toLocaleDateString(t.localeFecha) : '—'}</span></div>` : ''}
           ${c.horas_totales ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Hores':'Horas'}</span><span>${c.horas_totales} h</span></div>` : ''}
@@ -7226,12 +7351,15 @@ async function renderAulaVirtualScreen(){
             <button class="link-btn" style="font-size:12px;" onclick="verContenidoCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">📚 ${LANG_I==='ca'?'Contingut':'Contenido'}</button>
             <button class="link-btn" style="font-size:12px;" onclick="verProgresoCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">📊 ${LANG_I==='ca'?'Progrés':'Progreso'}</button>
             <button class="link-btn" style="font-size:12px;" onclick="verInscritosCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">👥 ${LANG_I==='ca'?'Inscrits':'Inscritos'}</button>
+            ${c.audiencia === 'equipo' && (IS_ADMIN || c.docente_email === CURRENT_USER.email || c.creado_por_email === CURRENT_USER.email) ? `<button class="link-btn" style="font-size:12px;" onclick="cursoEditarDestinatarios('${c.id}')">🎯 ${LANG_I==='ca'?'A qui va adreçat':'A quién va dirigido'}</button>` : ''}
             ${misStats ? `<button class="link-btn" style="font-size:12px;" onclick="showScreen('comunicacion');renderComunicacionScreen()">📩 ${LANG_I==='ca'?'Enviar avís':'Enviar aviso'}</button>` : ''}
             <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="borrarCurso('${c.id}')">${LANG_I==='ca'?'Esborrar':'Borrar'}</button>
           </div>
         </div>`;
       }).join('')
     : `<div class="empty-note">${LANG_I==='ca' ? 'Encara no hi ha cursos.' : 'Todavía no hay cursos.'}</div>`;
+  if((cursos || []).some(c => (c.destinatarios || []).length)) await cargarEquipoTodo();
+  window.__cursosAula = {}; (cursos || []).forEach(c => { window.__cursosAula[c.id] = c; });
   const cursosCiudadania = (cursos || []).filter(c => c.audiencia !== 'equipo');
   const cursosEquipo = (cursos || []).filter(c => c.audiencia === 'equipo');
   const cursosHtml = cursosHtmlDe(cursosCiudadania)
@@ -7254,10 +7382,12 @@ async function renderAulaVirtualScreen(){
       <div class="field"><input type="text" id="curso-nombre" placeholder="${LANG_I==='ca'?'Nom del curs (ex: Competències digitals bàsiques)':'Nombre del curso (ej: Competencias digitales básicas)'}"></div>
       <div class="field">
         <label>${LANG_I==='ca'?'Adreçat a':'Dirigido a'}</label>
-        <select id="curso-audiencia">
+        <select id="curso-audiencia" onchange="cursoAudienciaCambio(this.value)">
           <option value="ciudadania">${LANG_I==='ca'?'Ciutadania (Logos Acompanya)':'Ciudadanía (Logos Acompanya)'}</option>
-          <option value="equipo">${LANG_I==='ca'?"👥 Equip de Logos (tècnics i administradors)":'👥 Equipo de Logos (técnicos y administradores)'}</option>
+          <option value="equipo">${LANG_I==='ca'?"👥 Tot l'equip de Logos (tècnics i administradors)":'👥 Todo el equipo de Logos (técnicos y administradores)'}</option>
+          <option value="personas">${LANG_I==='ca'?"👤 Persones concretes de l'equip":'👤 Personas concretas del equipo'}</option>
         </select>
+        <div id="curso-dest-wrap" style="display:none;margin-top:8px;"></div>
       </div>
       <div class="field"><input type="text" id="curso-proyecto" placeholder="${LANG_I==='ca'?'Projecte (ex: Autonomia Digital Activa)':'Proyecto (ej: Autonomía Digital Activa)'}"></div>
       <div class="field"><input type="text" id="curso-docente" placeholder="${LANG_I==='ca'?'Docent':'Docente'}" value="${CURRENT_USER_NOMBRE || ''}"></div>
@@ -7344,7 +7474,8 @@ async function renderMiFormacion(){
     cont.innerHTML = `<div class="auth-error">${/audiencia|schema cache|does not exist/i.test(error.message || '') ? acL('Falta ejecutar el SQL 36 en Supabase para activar la formación del equipo.', 'Cal executar el SQL 36 a Supabase per activar la formació de l\'equip.') : escAttr(error.message)}</div>`;
     return;
   }
-  const lista = (cursos || []).filter(c => c.estado !== 'preparacion' || IS_ADMIN || c.docente_email === CURRENT_USER.email);
+  const lista = (cursos || []).filter(c => (c.estado !== 'preparacion' || IS_ADMIN || c.docente_email === CURRENT_USER.email) && cursoEsParaMi(c));
+  if(lista.some(c => (c.destinatarios || []).length)) await cargarEquipoTodo();
   const intro = `<p class="subtle" style="margin:0 0 12px;">${acL('Formación para el equipo de Logos: técnicos y administradores. Abre el contenido, márcalo como visto y sigue donde lo dejaste.', 'Formació per a l\'equip de Logos: tècnics i administradors. Obre el contingut, marca\'l com a vist i continua on ho vas deixar.')}</p>`;
   const crear = `<button class="link-btn" style="margin-bottom:12px;" onclick="showScreen('aulavirtual');renderAulaVirtualScreen()">➕ ${acL('Crear o gestionar cursos (Aula Virtual)', 'Crear o gestionar cursos (Aula Virtual)')}</button>`;
   if(!lista.length){
@@ -7396,7 +7527,7 @@ async function renderMiFormacion(){
       return `<div style="margin:10px 0 0;"><strong style="font-size:13px;">${acL('Módulo', 'Mòdul')} ${i + 1}. ${escAttr(m.titulo)}</strong>${m.descripcion ? `<p class="subtle" style="margin:2px 0 4px;font-size:12px;">${escAttr(m.descripcion)}</p>` : ''}${filasC}${filasA}${!filasC && !filasA ? `<div class="empty-note">${acL('Todavía sin contenido.', 'Encara sense contingut.')}</div>` : ''}</div>`;
     }).join('') || `<div class="empty-note">${acL('Este curso todavía no tiene módulos.', 'Aquest curs encara no té mòduls.')}</div>`;
     return `<details class="plegable" ${window.__mfAbiertos[c.id] ? 'open' : ''} ontoggle="window.__mfAbiertos['${c.id}']=this.open">
-      <summary><span>🎓 ${escAttr(c.nombre)}</span><span class="plegable-n">${pct}%</span></summary>
+      <summary><span>🎓 ${escAttr(c.nombre)}${(c.destinatarios || []).length ? ` <span class="chip" style="background:#F6E7D6;color:#7A4A1F;font-size:10px;">👤 ${(c.destinatarios || []).map(x => String(x).toLowerCase()).includes(String(CURRENT_USER.email || '').toLowerCase()) ? acL('Para ti', 'Per a tu') : (c.destinatarios.length + ' ' + acL('personas', 'persones'))}</span>` : ''}</span><span class="plegable-n">${pct}%</span></summary>
       <div class="plegable-c">
         <div style="height:8px;background:#E8EAF0;border-radius:6px;overflow:hidden;margin:2px 0 8px;"><i style="display:block;height:8px;width:${pct}%;background:var(--good);"></i></div>
         ${c.descripcion ? `<p class="subtle" style="margin:0 0 4px;">${escAttr(c.descripcion)}</p>` : ''}
@@ -7411,7 +7542,9 @@ async function renderMiFormacion(){
 async function mfResumenEspacio(){
   const el = document.getElementById('mi-formacion-n'); if(!el) return;
   try {
-    const { data } = await sb.from('cursos').select('id').eq('audiencia', 'equipo').in('estado', ['inscripcion', 'activo']);
+    let r = await sb.from('cursos').select('id, destinatarios, docente_email, creado_por_email').eq('audiencia', 'equipo').in('estado', ['inscripcion', 'activo']);
+    if(r.error) r = await sb.from('cursos').select('id').eq('audiencia', 'equipo').in('estado', ['inscripcion', 'activo']);
+    const data = (r.data || []).filter(cursoEsParaMi);
     if(data && data.length) el.textContent = '· ' + data.length + (LANG_I==='ca' ? ' en marxa' : ' en marcha');
   } catch(e){}
 }
@@ -7828,9 +7961,78 @@ async function exportarFichaHist(id, formato){
   } catch(e){ alert('No se pudo preparar la ficha: ' + (e.message || e)); }
 }
 
+// ---- Cursos dirigidos a personas concretas del equipo (SQL 39: cursos.destinatarios) ----
+async function cargarEquipoTodo(){
+  if(window.__equipoTodo && Date.now() - (window.__equipoTodoT || 0) < 5 * 60 * 1000) return window.__equipoTodo;
+  const { data } = await sb.from('staff').select('email, nombre, activo');
+  window.__equipoTodo = (data || []).filter(x => x.email && x.activo !== false).map(x => ({ email: x.email.toLowerCase(), nombre: (x.nombre || '').trim() || x.email.split('@')[0] })).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  window.__equipoTodoT = Date.now();
+  return window.__equipoTodo;
+}
+function equipoNombreTodo(email){
+  const e = String(email || '').toLowerCase();
+  const x = (window.__equipoTodo || []).find(t => t.email === e) || (window.__equipoCitas || []).find(t => t.email === e);
+  return x ? x.nombre : e.split('@')[0];
+}
+function destinatariosChecksHtml(marcados){
+  const sel = new Set((marcados || []).map(x => String(x).toLowerCase()));
+  const eq = window.__equipoTodo || [];
+  return `<input type="search" placeholder="${acL('Buscar persona…', 'Cercar persona…')}" oninput="const q=normTxt(this.value);this.parentElement.querySelectorAll('.dest-op').forEach(l=>l.style.display=normTxt(l.textContent).includes(q)?'':'none')" style="width:100%;box-sizing:border-box;margin-bottom:6px;">
+    <div class="dest-lista">${eq.map(t => `<label class="dest-op"><input type="checkbox" value="${escAttr(t.email)}" ${sel.has(t.email) ? 'checked' : ''} onchange="destContar(this)"> ${escAttr(t.nombre)}</label>`).join('')}</div>
+    <p class="subtle dest-n" style="font-size:12px;margin:6px 0 0;">${sel.size} ${acL('seleccionadas', 'seleccionades')} · ${acL('Solo estas personas (y quien imparte el curso y la administración) lo verán en «Mi formación».', 'Només aquestes persones (i qui imparteix el curs i l\'administració) el veuran a «La meva formació».')}</p>`;
+}
+function destContar(el){
+  const wrap = el.closest('.dest-lista').parentElement;
+  const n = wrap.querySelectorAll('input[type=checkbox]:checked').length;
+  const p = wrap.querySelector('.dest-n'); if(p) p.firstChild.textContent = n + ' ';
+}
+async function cursoAudienciaCambio(v){
+  const w = document.getElementById('curso-dest-wrap'); if(!w) return;
+  if(v !== 'personas'){ w.style.display = 'none'; return; }
+  w.style.display = ''; w.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  await cargarEquipoTodo();
+  w.innerHTML = destinatariosChecksHtml([]);
+}
+async function cursoEditarDestinatarios(id){
+  const c = (window.__cursosAula || {})[id]; if(!c) return;
+  await cargarEquipoTodo();
+  const ov = document.createElement('div'); ov.id = 'dest-ov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.addEventListener('click', e => { if(e.target === ov) ov.remove(); });
+  const personas = (c.destinatarios || []).length > 0;
+  ov.innerHTML = `<div class="panel-card" style="width:100%;max-width:440px;max-height:88vh;overflow:auto;background:var(--card,#fff);margin:0;">
+    <div style="display:flex;justify-content:space-between;align-items:center;"><h3 style="margin:0;">🎯 ${acL('A quién va dirigido', 'A qui va adreçat')}</h3><button class="link-btn" onclick="document.getElementById('dest-ov').remove()">✕</button></div>
+    <p class="subtle" style="margin:4px 0 10px;font-size:12.5px;">${escAttr(c.nombre || '')}</p>
+    <label style="display:flex;gap:8px;align-items:center;margin:4px 0;"><input type="radio" name="dest-modo" value="equipo" ${personas ? '' : 'checked'} onchange="document.getElementById('dest-edit').style.display='none'"> 👥 ${acL('Todo el equipo', 'Tot l\'equip')}</label>
+    <label style="display:flex;gap:8px;align-items:center;margin:4px 0 8px;"><input type="radio" name="dest-modo" value="personas" ${personas ? 'checked' : ''} onchange="document.getElementById('dest-edit').style.display=''"> 👤 ${acL('Personas concretas', 'Persones concretes')}</label>
+    <div id="dest-edit" style="${personas ? '' : 'display:none;'}">${destinatariosChecksHtml(c.destinatarios || [])}</div>
+    <button class="primary-btn" style="margin-top:12px;" onclick="cursoGuardarDestinatarios('${id}')">${acL('Guardar', 'Desar')}</button>
+  </div>`;
+  document.body.appendChild(ov);
+}
+async function cursoGuardarDestinatarios(id){
+  const modo = (document.querySelector('input[name="dest-modo"]:checked') || {}).value;
+  const dest = modo === 'personas' ? [...document.querySelectorAll('#dest-edit input[type=checkbox]:checked')].map(x => x.value) : [];
+  if(modo === 'personas' && !dest.length){ alert(acL('Marca al menos una persona.', 'Marca almenys una persona.')); return; }
+  const { error } = await sb.from('cursos').update({ destinatarios: dest }).eq('id', id);
+  if(error){ alert(/destinatarios/i.test(error.message || '') ? acL('Hay que ejecutar el SQL 39 en Supabase (una sola vez).', 'Cal executar l\'SQL 39 a Supabase (una sola vegada).') : error.message); return; }
+  const ov = document.getElementById('dest-ov'); if(ov) ov.remove();
+  renderAulaVirtualScreen();
+}
+// ¿Este curso del equipo es para mí? (vacío = para todo el equipo)
+function cursoEsParaMi(c){
+  const d = (c && c.destinatarios) || [];
+  if(!d.length || IS_ADMIN) return true;
+  const yo = String(CURRENT_USER.email || '').toLowerCase();
+  return d.map(x => String(x).toLowerCase()).includes(yo) || String(c.docente_email || '').toLowerCase() === yo || String(c.creado_por_email || '').toLowerCase() === yo;
+}
+
 async function crearCurso(){
   const nombre = document.getElementById('curso-nombre').value.trim();
   if(!nombre){ alert(LANG_I==='ca' ? 'Escriu el nom del curs.' : 'Escribe el nombre del curso.'); return; }
+  const audSel = document.getElementById('curso-audiencia') ? document.getElementById('curso-audiencia').value : 'ciudadania';
+  const dest = [...document.querySelectorAll('#curso-dest-wrap input[type=checkbox]:checked')].map(x => x.value);
+  if(audSel === 'personas' && !dest.length){ alert(acL('Marca al menos una persona del equipo.', 'Marca almenys una persona de l\'equip.')); return; }
   const { error } = await sb.from('cursos').insert({
     nombre,
     proyecto: document.getElementById('curso-proyecto').value.trim() || null,
@@ -7843,8 +8045,10 @@ async function crearCurso(){
     plazas: document.getElementById('curso-plazas').value || null,
     descripcion: document.getElementById('curso-descripcion').value.trim() || null,
     creado_por_email: CURRENT_USER.email,
-    ...(document.getElementById('curso-audiencia') && document.getElementById('curso-audiencia').value === 'equipo' ? { audiencia: 'equipo' } : {})
+    ...(audSel === 'equipo' || audSel === 'personas' ? { audiencia: 'equipo' } : {}),
+    ...(audSel === 'personas' ? { destinatarios: dest } : {})
   });
+  if(error && /destinatarios/i.test(error.message || '')){ alert(acL('Para dirigir un curso a personas concretas hay que ejecutar el SQL 39 en Supabase (una sola vez).', 'Per adreçar un curs a persones concretes cal executar l\'SQL 39 a Supabase (una sola vegada).')); return; }
   if(error){ alert(/audiencia/i.test(error.message) ? (LANG_I==='ca' ? 'Cal executar el SQL 36 a Supabase per crear cursos de l\'equip.' : 'Falta ejecutar el SQL 36 en Supabase para crear cursos del equipo.') : error.message); return; }
   renderAulaVirtualScreen();
 }
@@ -13495,7 +13699,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-26 · v137 (menú y Mi espacio por orden de trabajo, avisos sin accesos repetidos, agenda arreglada, recordatorio de sala, salida olvidada, histórico, estadísticas y memoria)';
+const APP_VERSION_INTRANET = '2026-10-26 · v138 (citas con técnico: pasar, quedármela, cambiar; cursos para personas concretas del equipo)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
