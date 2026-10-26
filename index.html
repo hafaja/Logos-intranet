@@ -1833,7 +1833,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v140'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v143'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -4829,7 +4829,7 @@ window.__citasMapa = window.__citasMapa || {};
 function citaAccionesHtml(c, nombre){
   if(!c || c.estado === 'cancelada') return '';
   const conTec = 'tecnico_email' in c;   // existe la columna (SQL 39)
-  window.__citasMapa[c.id] = { id: c.id, uid: c.usuario_id, nombre: nombre || '', fecha: c.fecha, hora: String(c.hora || '').slice(0, 5), motivo: c.motivo || '', tecnico: c.tecnico_email || '', conTec };
+  window.__citasMapa[c.id] = { id: c.id, uid: c.usuario_id, nombre: nombre || c.nombre_contacto || '', contacto: (!c.usuario_id && (c.historico_id || c.nombre_contacto)) ? { id: c.historico_id || '', nombre: c.nombre_contacto || nombre || '', telefono: c.telefono_contacto || '', email: c.email_contacto || '' } : null, fecha: c.fecha, hora: String(c.hora || '').slice(0, 5), motivo: c.motivo || '', tecnico: c.tecnico_email || '', conTec };
   const mia = conTec && c.tecnico_email && c.tecnico_email.toLowerCase() === String(CURRENT_USER.email || '').toLowerCase();
   return `<div class="cita-acciones">
     ${conTec && !mia ? `<button class="cita-acc" onclick="quedarmeCitaStaff('${c.id}')">✋ ${acL('Me la quedo', 'Me la quedo')}</button>` : ''}
@@ -4943,7 +4943,7 @@ async function cancelarCitaDB(id){
   return false;
 }
 function refrescarTrasCambioCita(uid){
-  const fichaAbierta = document.getElementById('screen-persona') && document.getElementById('screen-persona').classList.contains('active') && window.__usuarioIdVisto === uid;
+  const fichaAbierta = uid && document.getElementById('screen-persona') && document.getElementById('screen-persona').classList.contains('active') && window.__usuarioIdVisto === uid;
   if(fichaAbierta) return verPersonaStaff(uid, window.__origenPersonaVista);
   if(document.getElementById('screen-agenda') && document.getElementById('screen-agenda').classList.contains('active')) return (__agendaVista === 'proximas' ? renderProximasCitas() : renderAgendaCitas());
 }
@@ -4953,12 +4953,12 @@ async function cancelarCitaStaff(id){
   if(!confirm(acL(`¿Cancelar la cita de ${c.nombre || 'esta persona'} del ${f}? Se libera la hora.`, `Cancel·lar la cita de ${c.nombre || 'aquesta persona'} del ${f}? S\'allibera l\'hora.`))) return;
   if(!(await cancelarCitaDB(id))) return;
   await refrescarTrasCambioCita(c.uid);
-  avisarCitaCreada(c.uid, c.nombre, c.fecha, c.hora, c.motivo, false, { modo:'cancelada' });
+  avisarCitaCreada(c.uid, c.nombre, c.fecha, c.hora, c.motivo, false, Object.assign({ modo:'cancelada' }, c.contacto ? { contacto: c.contacto } : {}));
 }
 function cambiarCitaStaff(id){
   const c = (window.__citasMapa || {})[id]; if(!c) return;
   const f = new Date(c.fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha) + ' ' + c.hora;
-  abrirNuevaCitaStaff(c.uid, c.nombre, { reemplaza: id, motivo: c.motivo, antes: f, tecnico: c.tecnico });
+  abrirNuevaCitaStaff(c.uid, c.nombre, { reemplaza: id, motivo: c.motivo, antes: f, tecnico: c.tecnico, hist: c.contacto || null });
 }
 
 // Lo que ha contestado la persona desde Logos Acompanya (confirma / pide otra hora / no puede)
@@ -5001,15 +5001,15 @@ async function renderAgendaCitas(fecha){
 
   const citasHtml = (citasDelDia && citasDelDia.length)
     ? citasDelDia.map(c => {
-        const p = nombresAgenda[c.usuario_id] || {};
-        return `<details class="plegable" ${(citasDelDia || []).length <= 6 ? 'open' : ''}><summary><span><strong>${String(c.hora || '—').slice(0, 5)}</strong> · ${escAttr(p.nombre_completo || (LANG_I==='ca'?'Sense nom':'Sin nombre'))} ${citaTecnicoChip(c)}</span><span class="chip ${c.estado==='confirmada'?'good':(c.estado==='cancelada'?'':'gold')}" style="${c.estado==='cancelada'?'background:#EEE;color:#888;':''}">${c.estado}</span></summary><div class="plegable-c">
+        const p = citaPersona(c, nombresAgenda);
+        return `<details class="plegable" ${(citasDelDia || []).length <= 6 ? 'open' : ''}><summary><span><strong>${String(c.hora || '—').slice(0, 5)}</strong> · ${escAttr(p.nombre_completo || (LANG_I==='ca'?'Sense nom':'Sin nombre'))}${chipSinCuenta(p)} ${citaTecnicoChip(c)}</span><span class="chip ${c.estado==='confirmada'?'good':(c.estado==='cancelada'?'':'gold')}" style="${c.estado==='cancelada'?'background:#EEE;color:#888;':''}">${c.estado}</span></summary><div class="plegable-c">
           <div class="panel-stat-row"><span>${LANG_I==='ca'?'Persona usuària':'Persona usuaria'}</span><span><strong>${p.nombre_completo || (LANG_I==='ca'?'Sense nom':'Sin nombre')}</strong></span></div>
           ${p.telefono ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Telèfon':'Teléfono'}</span><span>${p.telefono}</span></div>` : ''}
           ${c.motivo ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Motiu':'Motivo'}</span><span>${c.motivo}</span></div>` : ''}
           ${respuestaCitaHtml(c)}
           ${contactoCitaHtml(p)}
           ${citaAccionesHtml(c, p.nombre_completo)}
-          ${c.usuario_id ? `<button class="link-btn" style="font-size:12px;margin-top:8px;" onclick="verPersonaStaff('${c.usuario_id}','agenda')">${t.verInfoCompleta}</button>` : ''}
+          ${botonFichaCita(c, 'agenda')}
         </div></details>`;
       }).join('')
     : `<div class="empty-note">${LANG_I==='ca' ? 'Sense cites aquest dia.' : 'Sin citas este día.'}</div>`;
@@ -5035,7 +5035,7 @@ async function renderAgendaCitas(fecha){
 let __NC = { uid: null, nombre: '', fecha: '', hora: '', horario: null };
 function abrirNuevaCitaStaff(usuarioId, nombre, opts){
   opts = opts || {};
-  __NC = { uid: usuarioId || null, nombre: nombre || '', fecha: '', hora: '', horario: null, reemplaza: opts.reemplaza || null, motivo: opts.motivo || '', antes: opts.antes || '', tecnico: (opts.tecnico !== undefined && opts.tecnico !== null ? opts.tecnico : String(CURRENT_USER.email || '').toLowerCase()) };
+  __NC = { uid: usuarioId || null, hist: opts.hist || null, nombre: nombre || '', fecha: '', hora: '', horario: null, reemplaza: opts.reemplaza || null, motivo: opts.motivo || '', antes: opts.antes || '', tecnico: (opts.tecnico !== undefined && opts.tecnico !== null ? opts.tecnico : String(CURRENT_USER.email || '').toLowerCase()) };
   cargarEquipoCitas().then(() => { if(document.getElementById('nc-tecnico-wrap')) document.getElementById('nc-tecnico-wrap').innerHTML = ncTecnicoSelectHtml(); }).catch(() => {});
   let ov = document.getElementById('nc-ov');
   if(!ov){
@@ -5062,9 +5062,10 @@ function cerrarNuevaCitaStaff(){ const ov = document.getElementById('nc-ov'); if
 function pintarNuevaCitaStaff(){
   const ov = document.getElementById('nc-ov'); if(!ov) return;
   const hoy = isoLocal();
-  const persona = __NC.uid
-    ? `<div class="panel-stat-row"><span>${acL('Persona', 'Persona')}</span><span><strong>${escAttr(__NC.nombre || '')}</strong>${''}</span></div>
-       <button class="link-btn" style="font-size:12px;" onclick="__NC.uid=null;__NC.nombre='';pintarNuevaCitaStaff()">${acL('Cambiar persona', 'Canviar persona')}</button>`
+  const persona = (__NC.uid || __NC.hist)
+    ? `<div class="panel-stat-row"><span>${acL('Persona', 'Persona')}</span><span><strong>${escAttr(__NC.nombre || '')}</strong>${__NC.hist ? ` <span class="chip" style="font-size:10px;background:#EEF2F7;color:var(--navy);">📄 ${acL('sin cuenta', 'sense compte')}</span>` : ''}</span></div>
+       ${__NC.hist ? `<p class="subtle" style="font-size:12px;margin:2px 0 4px;">${acL('No tiene cuenta en Logos Acompanya: al crear la cita podrás avisarle por WhatsApp, correo o llamándole.', 'No té compte a Logos Acompanya: en crear la cita podràs avisar-la per WhatsApp, correu o trucant-li.')}${__NC.hist.telefono ? ' 📞 ' + escAttr(__NC.hist.telefono) : ''}</p>` : ''}
+       <button class="link-btn" style="font-size:12px;" onclick="__NC.uid=null;__NC.hist=null;__NC.nombre='';pintarNuevaCitaStaff()">${acL('Cambiar persona', 'Canviar persona')}</button>`
     : `<div class="field"><label>${acL('Buscar persona (nombre, DNI/NIE o teléfono)', 'Cercar persona (nom, DNI/NIE o telèfon)')}</label>
          <input type="text" id="nc-buscar" oninput="buscarPersonaNuevaCita(this.value)" placeholder="${acL('Escribe al menos 2 letras', 'Escriu almenys 2 lletres')}" autocomplete="off"></div>
        <div id="nc-resultados"></div>
@@ -5078,7 +5079,7 @@ function pintarNuevaCitaStaff(){
     <div style="margin-top:6px;">${logosEstadoHtml()}</div>
     ${__NC.reemplaza ? `<div class="info-box info-box-gold" style="font-size:12.5px;">🔁 ${acL('Esta cita sustituirá a la de', 'Aquesta cita substituirà la del')} <strong>${escAttr(__NC.antes)}</strong>. ${acL('La anterior se cancelará al crear la nueva.', 'L\'anterior es cancel·larà en crear la nova.')}</div>` : ''}
     <div style="margin-top:4px;">${persona}</div>
-    ${__NC.uid ? `
+    ${(__NC.uid || __NC.hist) ? `
     <div class="field" style="margin-top:12px;" id="nc-tecnico-wrap">${ncTecnicoSelectHtml()}</div>
     <div class="field" style="margin-top:12px;"><label>${acL('Día', 'Dia')}</label>
       <input type="date" id="nc-fecha" min="${hoy}" value="${__NC.fecha}" onchange="elegirDiaNuevaCita(this.value)"></div>
@@ -5089,7 +5090,7 @@ function pintarNuevaCitaStaff(){
     <div id="nc-msg"></div>
     <button class="primary-btn" id="nc-guardar" style="margin-top:10px;" onclick="guardarNuevaCitaStaff()" ${__NC.hora ? '' : 'disabled'}>${acL('Crear cita', 'Crear cita')}</button>` : ''}
   </div>`;
-  if(__NC.uid && __NC.fecha) elegirDiaNuevaCita(__NC.fecha, true);
+  if((__NC.uid || __NC.hist) && __NC.fecha) elegirDiaNuevaCita(__NC.fecha, true);
 }
 let __ncTimeout = null;
 function buscarPersonaNuevaCita(texto){
@@ -5098,15 +5099,32 @@ function buscarPersonaNuevaCita(texto){
   const q = (texto || '').trim().replace(/[,()%*]/g, ' ').trim();
   if(q.length < 2){ cont.innerHTML = ''; return; }
   __ncTimeout = setTimeout(async () => {
-    const { data, error } = await buscarPerfiles(q, 8, false);
-    if(error || !data || !data.length){ cont.innerHTML = `<div class="empty-note">${acL('Sin resultados con cuenta en Logos Acompanya.', 'Sense resultats amb compte a Logos Acompanya.')}</div>`; return; }
-    cont.innerHTML = data.map(p => `
+    const [{ data, error }, hist] = await Promise.all([
+      buscarPerfiles(q, 8, false),
+      (typeof HISTORICAS_OK === 'undefined' || HISTORICAS_OK) ? sb.from('personas_historicas').select('*').or(`nombre_completo.ilike.%${q}%,dni_nie.ilike.%${q}%,telefono.ilike.%${q}%`).order('nombre_completo', { ascending: true }).limit(6).then(r => r, () => ({ data: [] })) : Promise.resolve({ data: [] })
+    ]);
+    // del histórico, solo quien todavía no tiene cuenta (y una vez por persona)
+    const vistos = new Set();
+    const sinCuenta = ((hist && hist.data) || []).filter(h => !h.perfil_id).filter(h => { const k = normTxt(h.dni_nie || h.nombre_completo || h.id); if(vistos.has(k)) return false; vistos.add(k); return true; });
+    sinCuenta.forEach(h => { __histCache[h.id] = h; });
+    const histHtml = sinCuenta.map(h => `
+      <div class="list-row" style="cursor:pointer;" data-id="${escAttr(h.id)}" onclick="elegirHistNuevaCita(this.dataset.id)">
+        <span>${escAttr(h.nombre_completo || '—')} <span class="chip" style="font-size:10px;background:#EEF2F7;color:var(--navy);">📄 ${acL('sin cuenta', 'sense compte')}</span></span><span class="subtle" style="margin:0;">${escAttr(h.telefono || h.municipio || '')}</span>
+      </div>`).join('');
+    if((error || !data || !data.length) && !histHtml){ cont.innerHTML = `<div class="empty-note">${acL('Sin resultados.', 'Sense resultats.')}</div>`; return; }
+    cont.innerHTML = ((data && !error) ? data : []).map(p => `
       <div class="list-row" style="cursor:pointer;" data-id="${p.id}" data-nombre="${escAttr(p.nombre_completo || '')}" onclick="elegirPersonaNuevaCita(this.dataset.id, this.dataset.nombre)">
         <span>${escAttr(p.nombre_completo || '—')}</span><span class="subtle" style="margin:0;">${escAttr(p.dni_nie || p.municipio || '')}</span>
-      </div>`).join('');
+      </div>`).join('') + histHtml;
   }, 300);
 }
-function elegirPersonaNuevaCita(id, nombre){ __NC.uid = id; __NC.nombre = nombre; pintarNuevaCitaStaff(); }
+function elegirPersonaNuevaCita(id, nombre){ __NC.uid = id; __NC.hist = null; __NC.nombre = nombre; pintarNuevaCitaStaff(); }
+function elegirHistNuevaCita(id){
+  const h = __histCache[id]; if(!h) return;
+  __NC.uid = null; __NC.nombre = h.nombre_completo || '';
+  __NC.hist = { id, nombre: h.nombre_completo || '', telefono: h.telefono || '', email: h.email || '' };
+  pintarNuevaCitaStaff();
+}
 async function elegirDiaNuevaCita(fechaIso, mantener){
   const cont = document.getElementById('nc-horas'); if(!cont) return;
   if(!mantener){ __NC.hora = ''; const g = document.getElementById('nc-guardar'); if(g) g.disabled = true; }
@@ -5150,10 +5168,12 @@ async function elegirDiaNuevaCita(fechaIso, mantener){
 }
 async function guardarNuevaCitaStaff(){
   const btn = document.getElementById('nc-guardar'), msg = document.getElementById('nc-msg');
-  if(!__NC.uid || !__NC.fecha || !__NC.hora) return;
+  if((!__NC.uid && !__NC.hist) || !__NC.fecha || !__NC.hora) return;
   btn.disabled = true; msg.innerHTML = '';
   const motivo = (document.getElementById('nc-motivo').value || '').trim();
-  const fila = { usuario_id: __NC.uid, fecha: __NC.fecha, hora: __NC.hora, creada_por_email: CURRENT_USER.email };
+  const fila = __NC.hist
+    ? { usuario_id: null, historico_id: String(__NC.hist.id), nombre_contacto: __NC.hist.nombre || __NC.nombre || '', telefono_contacto: __NC.hist.telefono || null, email_contacto: __NC.hist.email || null, fecha: __NC.fecha, hora: __NC.hora, creada_por_email: CURRENT_USER.email }
+    : { usuario_id: __NC.uid, fecha: __NC.fecha, hora: __NC.hora, creada_por_email: CURRENT_USER.email };
   if(motivo) fila.motivo = motivo;
   const urgente = !!(document.getElementById('nc-urgente') && document.getElementById('nc-urgente').checked);
   if(urgente) fila.urgente = true;
@@ -5162,6 +5182,10 @@ async function guardarNuevaCitaStaff(){
   if(error && /tecnico_email|tecnico_nombre|tecnico_clave/.test(error.message || '')){ delete fila.tecnico_email; ({ error } = await sb.from('citas').insert(fila)); }
   if(error && /urgente/.test(error.message || '')){ delete fila.urgente; ({ error } = await sb.from('citas').insert(fila)); if(!error && urgente) alert(acL('La cita se ha creado, pero falta ejecutar el SQL 18 para marcarla como urgente.', 'La cita s\'ha creat, però falta executar l\'SQL 18 per marcar-la com a urgent.')); }
   if(error && /creada_por_email/.test(error.message || '')){ delete fila.creada_por_email; ({ error } = await sb.from('citas').insert(fila)); }
+  if(error && __NC.hist && /historico_id|nombre_contacto|telefono_contacto|email_contacto|usuario_id|null value/i.test(error.message || '')){
+    msg.innerHTML = `<div class="auth-error">${acL('Para dar cita a personas sin cuenta hay que ejecutar el SQL 43 en Supabase (una sola vez). Mientras tanto puedes llamarle o escribirle por WhatsApp desde su ficha.', 'Per donar cita a persones sense compte cal executar l\'SQL 43 a Supabase (una sola vegada). Mentrestant pots trucar-li o escriure-li per WhatsApp des de la seva fitxa.')}</div>`;
+    btn.disabled = false; return;
+  }
   if(error){
     const lleno = /complet/i.test(error.message || '');
     const permiso = /row-level security|permission/i.test(error.message || '');
@@ -5171,14 +5195,15 @@ async function guardarNuevaCitaStaff(){
     return;
   }
   cerrarNuevaCitaStaff();
-  const uid = __NC.uid, fecha = __NC.fecha, horaC = __NC.hora, nombreC = __NC.nombre || '';
+  const uid = __NC.uid, fecha = __NC.fecha, horaC = __NC.hora, nombreC = __NC.nombre || '', histC = __NC.hist;
   const reemplaza = __NC.reemplaza, antes = __NC.antes;
   if(reemplaza){ await cancelarCitaDB(reemplaza); }
   if(fila.tecnico_email && fila.tecnico_email !== String(CURRENT_USER.email || '').toLowerCase()){
     const fN = { usuario_id: uid, tipo: 'cita_asignada', mensaje: `${equipoNombre(CURRENT_USER.email)} te ha dado una cita con ${nombreC || 'una persona'} el ${new Date(fecha + 'T00:00:00').toLocaleDateString('es-ES')} a las ${horaC}.`, asignada_a_email: fila.tecnico_email };
     try { const r = await sb.from('notificaciones').insert(fN); if(r.error){ delete fN.asignada_a_email; await sb.from('notificaciones').insert(fN); } } catch(e){}
   }
-  avisarCitaCreada(uid, nombreC, fecha, horaC, motivo, urgente, reemplaza ? { modo:'cambiada', antes } : null);
+  avisarCitaCreada(uid, nombreC, fecha, horaC, motivo, urgente, Object.assign(reemplaza ? { modo:'cambiada', antes } : {}, histC ? { contacto: histC } : {}));
+  if(histC){ __agendaVista = 'dia'; __agendaFechaActual = fecha; showScreen('agenda'); renderAgendaCitas(fecha); return; }
   if(document.getElementById('screen-persona') && document.getElementById('screen-persona').classList.contains('active') && window.__usuarioIdVisto === uid) verPersonaStaff(uid, window.__origenPersonaVista);
   else { __agendaVista = 'dia'; __agendaFechaActual = fecha; showScreen('agenda'); renderAgendaCitas(fecha); }
 }
@@ -5257,10 +5282,10 @@ async function construirMisCitasHtml(email){
       ? c.tecnico_email.toLowerCase() === yo
       : (c.creada_por_email === email || ids.includes(c.usuario_id)));
     const sinAsignar = (todas || []).filter(c => 'tecnico_email' in c && !c.tecnico_email && !mias.includes(c)).length;
-    const nom = {}; const uids = [...new Set(mias.map(c => c.usuario_id))];
+    const nom = {}; const uids = [...new Set(mias.map(c => c.usuario_id).filter(Boolean))];
     if(uids.length){ const { data: ps } = await sb.from('perfiles').select('id, nombre_completo').in('id', uids); (ps || []).forEach(x => { nom[x.id] = x.nombre_completo; }); }
     const hoy = desde;
-    const fila = c => `<div class="panel-stat-row" style="cursor:pointer;" data-id="${escAttr(c.usuario_id)}" onclick="verPersonaStaff(this.dataset.id, 'miespacio')"><span><strong>${c.fecha === hoy ? (ca ? 'Avui' : 'Hoy') : new Date(c.fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha)}</strong> · ${String(c.hora || '').slice(0, 5)} · ${escAttr(nom[c.usuario_id] || '—')}${c.motivo ? `<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(c.motivo)}</span>` : ''}</span>${c.urgente ? '<span class="chip" style="background:#fde2e2;color:#b00020;">🔴 ' + (ca ? 'Urgent' : 'Urgente') + '</span>' : ''}</div>${citaAccionesHtml(c, nom[c.usuario_id] || '')}`;
+    const fila = c => `<div class="panel-stat-row" style="cursor:pointer;" data-id="${escAttr(c.usuario_id || '')}" data-h="${escAttr(c.historico_id || '')}" onclick="this.dataset.id ? verPersonaStaff(this.dataset.id, 'miespacio') : histVerDesdeCita(this.dataset.h)"><span><strong>${c.fecha === hoy ? (ca ? 'Avui' : 'Hoy') : new Date(c.fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha)}</strong> · ${String(c.hora || '').slice(0, 5)} · ${escAttr(nom[c.usuario_id] || c.nombre_contacto || '—')}${c.usuario_id ? '' : chipSinCuenta({ sinCuenta: true })}${c.motivo ? `<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(c.motivo)}</span>` : ''}</span>${c.urgente ? '<span class="chip" style="background:#fde2e2;color:#b00020;">🔴 ' + (ca ? 'Urgent' : 'Urgente') + '</span>' : ''}</div>${citaAccionesHtml(c, nom[c.usuario_id] || c.nombre_contacto || '')}`;
     window.__misCitasResumen = { hoy: mias.filter(c => c.fecha === hoy).length, urgentes: mias.filter(c => c.urgente).length };
     return `<div class="panel-card" style="margin-top:14px;"><h3 style="margin:0 0 8px;">📅 ${ca ? 'Les meves cites (7 dies)' : 'Mis citas (7 días)'}</h3>${mias.length ? mias.map(fila).join('') : `<div class="empty-note">${ca ? 'No tens cites aquests dies.' : 'No tienes citas en estos días.'}</div>`}${sinAsignar ? `<div class="info-box info-box-gold" style="font-size:12.5px;margin-top:8px;">👤 ${ca ? `Hi ha <strong>${sinAsignar}</strong> cita${sinAsignar > 1 ? 'es' : ''} sense assignar aquests dies (la persona va triar «la primera disponible»).` : `Hay <strong>${sinAsignar}</strong> cita${sinAsignar > 1 ? 's' : ''} sin asignar estos días (la persona eligió «la primera disponible»).`} <button class="link-btn" style="font-size:12px;" onclick="__agendaVista='proximas';showScreen('agenda');renderProximasCitas()">${ca ? 'Veure-les' : 'Verlas'}</button></div>` : ''}<button class="link-btn" style="font-size:12px;margin-top:6px;" onclick="showScreen('agenda');renderAgendaCitas()">${ca ? 'Veure tota l\'agenda' : 'Ver toda la agenda'}</button></div>`;
   } catch(e){ return ''; }
@@ -5363,14 +5388,16 @@ async function esperaEnviar(canal){
 async function avisarCitaCreada(uid, nombre, fecha, hora, motivo, urgente, extra){
   const ca = LANG_I === 'ca';
   const modo = (extra && extra.modo) || 'creada';
-  const { data: p } = await sb.from('perfiles').select('telefono, email, nombre_completo').eq('id', uid).maybeSingle();
+  const sinCuenta = !uid && extra && extra.contacto;
+  const p = sinCuenta ? { telefono: extra.contacto.telefono || '', email: extra.contacto.email || '', nombre_completo: extra.contacto.nombre || nombre || '' }
+    : (await sb.from('perfiles').select('telefono, email, nombre_completo').eq('id', uid).maybeSingle()).data;
   if(!p) return;
-  if(!p.telefono && !p.email && modo !== 'cancelada') return;
+  if(!p.telefono && !p.email && modo !== 'cancelada' && !sinCuenta) return;
   const f = new Date(fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha);
   const h = String(hora || '').slice(0, 5);
   const primer = String(nombre || p.nombre_completo || '').split(' ')[0];
   const saludo = `Hola${primer ? ' ' + primer : ''}`;
-  const texto = modo === 'cancelada'
+  let texto = modo === 'cancelada'
     ? (ca ? `${saludo}, hem hagut de cancel·lar la teva cita de Logos del ${f} a les ${h}. Disculpa les molèsties; et donarem una altra data aviat o pots demanar-la a Logos Acompanya.`
           : `${saludo}, hemos tenido que cancelar tu cita en Logos del ${f} a las ${h}. Disculpa las molestias; te daremos otra fecha enseguida o puedes pedirla en Logos Acompanya.`)
     : modo === 'cambiada'
@@ -5379,20 +5406,27 @@ async function avisarCitaCreada(uid, nombre, fecha, hora, motivo, urgente, extra
     : ca
     ? `Hola${primer ? ' ' + primer : ''}, ${urgente ? 'tenim una cita important per a tu a Logos' : 't\'hem donat cita a Logos'}: ${f} a les ${h}.${motivo ? ' Motiu: ' + motivo + '.' : ''} Si no pots venir, cancel·la-la a Logos Acompanya o truca\'ns.`
     : `Hola${primer ? ' ' + primer : ''}, ${urgente ? 'tenemos una cita importante para ti en Logos' : 'te hemos dado cita en Logos'}: ${f} a las ${h}.${motivo ? ' Motivo: ' + motivo + '.' : ''} Si no puedes venir, cancélala en Logos Acompanya o llámanos.`;
-  window.__avisoCita = { uid, texto, tel: p.telefono || '', email: p.email || '', nombre: primer, f, h, motivo: motivo || '', modo, nombreCompleto: nombre || p.nombre_completo || '' };
+  if(sinCuenta) texto = texto.replace(/ o puedes pedirla en Logos Acompanya| o pots demanar-la a Logos Acompanya/, '')
+    .replace(/ Puedes confirmarla o pedir otro día en Logos Acompanya\./, ' Respóndenos a este mensaje para confirmarla o pedir otro día.')
+    .replace(/ Pots confirmar-la o demanar un altre dia a Logos Acompanya\./, ' Respon-nos aquest missatge per confirmar-la o demanar un altre dia.')
+    .replace(/ Si no puedes venir, cancélala en Logos Acompanya o llámanos\./, ' Si no puedes venir, respóndenos a este mensaje o llámanos.')
+    .replace(/ Si no pots venir, cancel·la-la a Logos Acompanya o truca'ns\./, ' Si no pots venir, respon-nos aquest missatge o truca\'ns.');
+  window.__avisoCita = { uid, contacto: sinCuenta ? extra.contacto : null, texto, tel: p.telefono || '', email: p.email || '', nombre: primer, f, h, motivo: motivo || '', modo, nombreCompleto: nombre || p.nombre_completo || '' };
   const ov = document.createElement('div'); ov.id = 'aviso-cita-ov';
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px;';
   ov.innerHTML = `<div style="background:#fff;border-radius:14px;max-width:440px;width:100%;padding:18px;max-height:90vh;overflow:auto;">
     <h3 style="margin:0 0 6px;">${modo === 'cancelada' ? '✖ ' + (ca ? 'Cita cancel·lada' : 'Cita cancelada') : modo === 'cambiada' ? '🔁 ' + (ca ? 'Cita canviada' : 'Cita cambiada') : '✅ ' + (ca ? 'Cita creada' : 'Cita creada')}</h3>
     <p style="font-size:13px;margin:0 0 8px;">${ca ? 'Vols avisar la persona? Revisa el missatge i envia\'l.' : '¿Quieres avisar a la persona? Revisa el mensaje y envíalo.'}</p>
+    ${sinCuenta ? `<div class="info-box info-box-gold" style="font-size:12px;margin:0 0 8px;">📄 ${ca ? 'No té compte a Logos Acompanya: avisa-la per WhatsApp, correu o trucant-li.' : 'No tiene cuenta en Logos Acompanya: avísale por WhatsApp, correo o llamándole.'}${!p.telefono && !p.email ? ' ' + (ca ? 'La fitxa no té telèfon ni correu.' : 'La ficha no tiene teléfono ni correo.') : ''}</div>` : ''}
     <div class="field" style="margin-bottom:8px;"><label style="font-size:12px;">${ca ? 'Plantilla de missatge' : 'Plantilla de mensaje'}</label>
       <select id="aviso-cita-plantilla" onchange="aplicarPlantillaAvisoCita(this.value)" style="width:100%;"><option value="">${ca ? 'Missatge de cita (per defecte)' : 'Mensaje de cita (por defecto)'}</option></select></div>
     <textarea id="aviso-cita-texto" rows="5" style="width:100%;box-sizing:border-box;">${escAttr(texto)}</textarea>
-    <p class="subtle" style="font-size:11.5px;margin:6px 0 0;">${ca ? 'WhatsApp s\'obre amb el missatge a punt: només cal prémer enviar. A més, la cita surt a Logos Acompanya, on la persona pot confirmar-la o demanar un altre dia.' : 'WhatsApp se abre con el mensaje listo: solo hay que pulsar enviar. Además la cita aparece en Logos Acompanya, donde la persona puede confirmarla o pedir otro día.'}</p>
+    <p class="subtle" style="font-size:11.5px;margin:6px 0 0;">${sinCuenta ? (ca ? 'WhatsApp i el correu s\'obren amb el missatge a punt. Si truques, pots llegir-li el missatge.' : 'WhatsApp y el correo se abren con el mensaje listo. Si llamas, puedes leerle el mensaje.') : (ca ? 'WhatsApp s\'obre amb el missatge a punt: només cal prémer enviar. A més, la cita surt a Logos Acompanya, on la persona pot confirmar-la o demanar un altre dia.' : 'WhatsApp se abre con el mensaje listo: solo hay que pulsar enviar. Además la cita aparece en Logos Acompanya, donde la persona puede confirmarla o pedir otro día.')}</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
       ${p.telefono ? `<button class="primary-btn" style="margin:0;width:auto;" onclick="enviarAvisoCita('whatsapp')">📲 WhatsApp</button>` : ''}
       ${p.email ? `<button class="primary-btn" style="margin:0;width:auto;background:#8a8a8a;" onclick="enviarAvisoCita('correo')">✉️ ${ca ? 'Correu' : 'Correo'}</button>` : ''}
-      ${modo === 'cancelada' ? `<button class="primary-btn" style="margin:0;width:auto;background:var(--gold);" onclick="const a=window.__avisoCita;document.getElementById('aviso-cita-ov').remove();abrirNuevaCitaStaff(a.uid,a.nombreCompleto)">➕ ${ca ? 'Donar una altra cita' : 'Dar otra cita'}</button>` : ''}
+      ${p.telefono ? `<button class="primary-btn" style="margin:0;width:auto;background:#1F4E79;" onclick="enviarAvisoCita('llamada')">📞 ${ca ? 'Trucar' : 'Llamar'}</button>` : ''}
+      ${modo === 'cancelada' ? `<button class="primary-btn" style="margin:0;width:auto;background:var(--gold);" onclick="const a=window.__avisoCita;document.getElementById('aviso-cita-ov').remove();abrirNuevaCitaStaff(a.uid,a.nombreCompleto,a.contacto?{hist:a.contacto}:{})">➕ ${ca ? 'Donar una altra cita' : 'Dar otra cita'}</button>` : ''}
       <button class="primary-btn" style="margin:0;width:auto;background:#bbb;" onclick="document.getElementById('aviso-cita-ov').remove()">${ca ? 'Ara no' : 'Ahora no'}</button>
     </div></div>`;
   document.body.appendChild(ov);
@@ -5417,13 +5451,15 @@ function aplicarPlantillaAvisoCita(id){
 async function enviarAvisoCita(canal){
   const a = window.__avisoCita; if(!a) return;
   const texto = (document.getElementById('aviso-cita-texto') || {}).value || a.texto;
-  if(canal === 'whatsapp'){
+  if(canal === 'llamada'){
+    window.location.href = 'tel:' + a.tel.replace(/[^\d+]/g, '');
+  } else if(canal === 'whatsapp'){
     let limpio = a.tel.replace(/[^\d+]/g, '').replace(/^\+/, ''); if(limpio.length === 9) limpio = '34' + limpio;
     window.open('https://wa.me/' + limpio + '?text=' + encodeURIComponent(texto), '_blank');
   } else {
     window.location.href = 'mailto:' + a.email + '?subject=' + encodeURIComponent('Cita en Logos') + '&body=' + encodeURIComponent(texto);
   }
-  await sb.from('mensajes_enviados').insert({ usuario_id: a.uid, tecnico_email: CURRENT_USER.email, plantilla_titulo: a.plantillaTitulo || (a.modo === 'cancelada' ? 'Aviso de cita cancelada' : a.modo === 'cambiada' ? 'Aviso de cita cambiada' : 'Aviso de cita'), contenido_final: texto, canal: canal === 'whatsapp' ? 'whatsapp' : 'email' });
+  if(a.uid && canal !== 'llamada') await sb.from('mensajes_enviados').insert({ usuario_id: a.uid, tecnico_email: CURRENT_USER.email, plantilla_titulo: a.plantillaTitulo || (a.modo === 'cancelada' ? 'Aviso de cita cancelada' : a.modo === 'cambiada' ? 'Aviso de cita cambiada' : 'Aviso de cita'), contenido_final: texto, canal: canal === 'whatsapp' ? 'whatsapp' : 'email' });
   const ov = document.getElementById('aviso-cita-ov'); if(ov) ov.remove();
 }
 
@@ -5450,12 +5486,12 @@ async function renderProximasCitas(){
     ? Object.keys(porDia).sort().map(fecha => {
         const fechaFmt = new Date(fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, { weekday:'long', day:'numeric', month:'long' });
         const filas = porDia[fecha].map(c => {
-          const p = nombres[c.usuario_id] || {};
-          return `<details class="plegable" open><summary><span><strong>${String(c.hora || '—').slice(0, 5)}</strong> · ${escAttr(p.nombre_completo || (esCA?'Sense nom':'Sin nombre'))} ${citaTecnicoChip(c)}</span><span class="chip ${c.estado==='confirmada'?'good':'gold'}">${c.estado}</span></summary><div class="plegable-c">
+          const p = citaPersona(c, nombres);
+          return `<details class="plegable" open><summary><span><strong>${String(c.hora || '—').slice(0, 5)}</strong> · ${escAttr(p.nombre_completo || (esCA?'Sense nom':'Sin nombre'))}${chipSinCuenta(p)} ${citaTecnicoChip(c)}</span><span class="chip ${c.estado==='confirmada'?'good':'gold'}">${c.estado}</span></summary><div class="plegable-c">
             ${respuestaCitaHtml(c)}
             ${contactoCitaHtml(p)}
             ${citaAccionesHtml(c, p.nombre_completo)}
-            ${c.usuario_id ? `<button class="link-btn" style="font-size:12px;margin-top:8px;" onclick="verPersonaStaff('${c.usuario_id}','agenda')">${TI[LANG_I].verInfoCompleta}</button>` : ''}
+            ${botonFichaCita(c, 'agenda')}
           </div></details>`;
         }).join('');
         return `<p class="subtle" style="font-weight:700;text-transform:capitalize;margin-top:14px;">${fechaFmt}</p><div class="cards-grid">${filas}</div>`;
@@ -7942,7 +7978,7 @@ async function exportarFichaPersona(usuarioId, formato){
       sb.from('actuaciones').select('*').eq('usuario_id', usuarioId).order('fecha', { ascending: true }),
       sb.from('tramites').select('*').eq('usuario_id', usuarioId).order('creado_en', { ascending: true }),
       sb.from('citas').select('*').eq('usuario_id', usuarioId).order('fecha', { ascending: true }),
-      sb.from('proyecto_participantes').select('*, proyectos(nombre, estado)').eq('usuario_id', usuarioId).eq('rol', 'beneficiario'),
+      sb.from('proyecto_participantes').select('*, proyectos(nombre, estado)').eq('usuario_id', usuarioId).eq('rol', 'beneficiario').then(dedupPart),
       sb.from('documentos').select('*').eq('usuario_id', usuarioId).order('subido_en', { ascending: true }),
       sb.from('consultas_orientacion').select('*').eq('usuario_id', usuarioId).order('creado_en', { ascending: true })
     ]);
@@ -9178,12 +9214,41 @@ function stepperItinerarioStaffHtml(etapaActualNum){
   }).join('<div style="flex:1;height:2px;background:var(--line);margin-top:15px;min-width:10px;"></div>')}</div>`;
 }
 
+
+// ---- Proyectos guiados: no crear ideas vacías repetidas ----
+const ITIN_META = ['id','usuario_id','modo','origen','estado','etapa_actual','creado_en','actualizado_en','created_at','updated_at','proyecto_id'];
+function itinVacio(it){
+  if(!it || (Number(it.etapa_actual) || 1) > 1) return false;
+  return Object.keys(it).every(k => ITIN_META.includes(k) || it[k] === null || it[k] === '' || it[k] === false || it[k] === 0
+    || (Array.isArray(it[k]) && !it[k].length) || (typeof it[k] === 'object' && it[k] && !Array.isArray(it[k]) && !Object.keys(it[k]).length));
+}
+async function itinDescartarDB(ids){
+  if(!ids.length) return true;
+  const d = await sb.from('itinerario_proyectos').delete().in('id', ids).select('id');
+  if(!d.error && (d.data || []).length === ids.length) return true;
+  const u = await sb.from('itinerario_proyectos').update({ estado: 'descartado' }).in('id', ids).select('id');
+  return !u.error && (u.data || []).length > 0;
+}
+// Si hay varias ideas vacías (sin nombre y sin nada escrito), se deja solo la más reciente
+function itinLimpiar(lista){
+  const vacios = (lista || []).filter(it => it.estado === 'en_curso' && itinVacio(it));
+  if(vacios.length <= 1) return lista || [];
+  const sobran = vacios.slice(1).map(x => x.id);
+  itinDescartarDB(sobran).catch(() => {});
+  return (lista || []).filter(x => !sobran.includes(x.id));
+}
+async function descartarItinerarioStaff(id){
+  if(!confirm(acL('¿Descartar esta idea de proyecto? Desaparecerá de la lista.', 'Descartar aquesta idea de projecte? Desapareixerà de la llista.'))) return;
+  if(!(await itinDescartarDB([id]))){ alert(acL('No se ha podido descartar.', 'No s\'ha pogut descartar.')); return; }
+  renderMiPropioProyectoEntrada();
+}
 async function renderMiPropioProyectoEntrada(){
   const cont = document.getElementById('mipropioproyecto-content');
   cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
   const esCA = LANG_I === 'ca';
 
-  const { data: itinerarios } = await sb.from('itinerario_proyectos').select('*').eq('usuario_id', CURRENT_USER.id).eq('origen', 'tecnico').order('creado_en', { ascending:false });
+  const { data: itinerariosTodos } = await sb.from('itinerario_proyectos').select('*').eq('usuario_id', CURRENT_USER.id).eq('origen', 'tecnico').order('creado_en', { ascending:false });
+  const itinerarios = itinLimpiar(itinerariosTodos);
   const enCurso = (itinerarios||[]).filter(it => it.estado === 'en_curso');
 
   const continuarHtml = enCurso.length ? enCurso.map((it, i) => {
@@ -9198,7 +9263,10 @@ async function renderMiPropioProyectoEntrada(){
       </button>
       <div class="modulo-cuerpo" id="${idAcordeon}" style="display:none;">
         ${stepperItinerarioStaffHtml(etapaNum)}
-        <button class="primary-btn" style="margin:6px 0 0;" onclick="renderEtapaProyectoStaff('${it.id}', ${it.etapa_actual > 7 ? 8 : it.etapa_actual})">${esCA?'Continuar':'Continuar'}</button>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+          <button class="primary-btn" style="margin:0;width:auto;" onclick="renderEtapaProyectoStaff('${it.id}', ${it.etapa_actual > 7 ? 8 : (it.etapa_actual || 1)})">${esCA?'Continuar':'Continuar'}</button>
+          <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="descartarItinerarioStaff('${it.id}')">🗑️ ${esCA?'Descartar':'Descartar'}</button>
+        </div>
       </div>
     </div>`;
   }).join('') : '';
@@ -9225,9 +9293,20 @@ async function renderMiPropioProyectoEntrada(){
 }
 
 async function iniciarItinerarioStaff(modo){
-  const { data, error } = await sb.from('itinerario_proyectos').insert({ usuario_id: CURRENT_USER.id, modo, origen: 'tecnico' }).select('id').single();
-  if(error){ alert(error.message); return; }
-  renderEtapaProyectoStaff(data.id, 1);
+  if(window.__iniciandoItin) return;   // evita crear varias ideas con dos o tres clics seguidos
+  window.__iniciandoItin = true;
+  try {
+    // si ya hay una idea vacía empezada, se continúa esa en vez de crear otra
+    const { data: ex } = await sb.from('itinerario_proyectos').select('*').eq('usuario_id', CURRENT_USER.id).eq('origen', 'tecnico').eq('estado', 'en_curso').order('creado_en', { ascending:false }).limit(20);
+    const vacio = (ex || []).find(it => itinVacio(it));
+    if(vacio){
+      if(vacio.modo !== modo) await sb.from('itinerario_proyectos').update({ modo }).eq('id', vacio.id);
+      renderEtapaProyectoStaff(vacio.id, 1); return;
+    }
+    const { data, error } = await sb.from('itinerario_proyectos').insert({ usuario_id: CURRENT_USER.id, modo, origen: 'tecnico' }).select('id').single();
+    if(error){ alert(error.message); return; }
+    renderEtapaProyectoStaff(data.id, 1);
+  } finally { setTimeout(() => { window.__iniciandoItin = false; }, 800); }
 }
 
 async function renderEtapaProyectoStaff(itinerarioId, etapaNum){
@@ -9447,7 +9526,7 @@ async function renderProyectosScreen(){
   const proyectoIds = (proyectos || []).map(p => p.id);
   let conteos = {};
   if(proyectoIds.length){
-    const { data: participantes } = await sb.from('proyecto_participantes').select('proyecto_id, rol').in('proyecto_id', proyectoIds);
+    const { data: participantes } = dedupPart(await sb.from('proyecto_participantes').select('proyecto_id, rol, usuario_id, tecnico_email').in('proyecto_id', proyectoIds));
     (participantes || []).forEach(pp => {
       if(!conteos[pp.proyecto_id]) conteos[pp.proyecto_id] = { beneficiarios: 0, profesionales: 0 };
       conteos[pp.proyecto_id][pp.rol === 'profesional' ? 'profesionales' : 'beneficiarios']++;
@@ -9557,7 +9636,7 @@ function celdaCSV(valor){
 
 async function obtenerDatosExportProyecto(proyectoId, nombreProyecto){
   const [{ data: participantes, error }, { data: asistencias }] = await Promise.all([
-    sb.from('proyecto_participantes').select('*').eq('proyecto_id', proyectoId),
+    sb.from('proyecto_participantes').select('*').eq('proyecto_id', proyectoId).then(dedupPart),
     sb.from('proyecto_asistencias').select('usuario_id').eq('proyecto_id', proyectoId)
   ]);
   if(error) throw error;
@@ -9854,7 +9933,7 @@ async function verProyecto(proyectoId, opts){
 
   const [{ data: proyecto, error: errorProyecto }, { data: participantes }, { data: actividades }, { data: avisos }, { data: seguimientos }, { data: staffLista }, { data: asistencias }, { data: exportaciones }, { data: documentosProyecto, error: errorDocsProyecto }] = await Promise.all([
     sb.from('proyectos').select('*').eq('id', proyectoId).maybeSingle(),
-    sb.from('proyecto_participantes').select('*').eq('proyecto_id', proyectoId),
+    sb.from('proyecto_participantes').select('*').eq('proyecto_id', proyectoId).then(dedupPart),
     sb.from('proyecto_actividades').select('*').eq('proyecto_id', proyectoId).order('fecha', { ascending:false }),
     sb.from('proyecto_avisos').select('*').eq('proyecto_id', proyectoId).order('creado_en', { ascending:false }),
     sb.from('actuaciones').select('*').eq('proyecto_id', proyectoId).order('fecha', { ascending:false }),
@@ -10168,10 +10247,21 @@ function buscarBeneficiarioProyecto(texto, proyectoId, inmediato){
   if(inmediato) ejecutar(); else __benefTimeout = setTimeout(ejecutar, 300);
 }
 
+// Una persona solo cuenta una vez por proyecto (aunque por error se haya añadido varias veces)
+function dedupPart(r){
+  if(r && Array.isArray(r.data)){
+    const vistos = new Set();
+    r.data = r.data.filter(x => { const k = [x.proyecto_id, x.rol, x.usuario_id || (x.tecnico_email || '').toLowerCase() || x.id].join('|'); if(vistos.has(k)) return false; vistos.add(k); return true; });
+  }
+  return r;
+}
+async function yaEnProyecto(proyectoId, campo, valor, rol){
+  const { data } = await sb.from('proyecto_participantes').select('id').eq('proyecto_id', proyectoId).eq(campo, valor).eq('rol', rol).limit(1);
+  return !!(data && data.length);
+}
 async function anadirBeneficiarioAProyecto(usuarioId, proyectoId){
   const esCA = LANG_I === 'ca';
-  const { data: yaEsta } = await sb.from('proyecto_participantes').select('id').eq('proyecto_id', proyectoId).eq('usuario_id', usuarioId).eq('rol', 'beneficiario').maybeSingle();
-  if(!yaEsta){
+  if(!(await yaEnProyecto(proyectoId, 'usuario_id', usuarioId, 'beneficiario'))){
     const { error } = await sb.from('proyecto_participantes').insert({ proyecto_id: proyectoId, rol: 'beneficiario', usuario_id: usuarioId, anadido_por_email: CURRENT_USER.email });
     if(error){ alert((esCA?'No s\'ha pogut afegir: ':'No se pudo añadir: ') + error.message); return; }
   }
@@ -13548,6 +13638,7 @@ const contaPagoDe = (q, ym) => __conta.pagos.find(p => p.cuotista_id === q.id &&
 async function anadirProfesionalAProyecto(proyectoId){
   const email = document.getElementById('select-anadir-profesional').value;
   if(!email) return;
+  if(await yaEnProyecto(proyectoId, 'tecnico_email', email, 'profesional')){ verProyecto(proyectoId); return; }
   const { error } = await sb.from('proyecto_participantes').insert({
     proyecto_id: proyectoId, rol: 'profesional', tecnico_email: email, anadido_por_email: CURRENT_USER.email
   });
@@ -13733,7 +13824,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-26 · v140 (elegir quién atiende citas; RR. HH. edita horarios; citas con técnico; cursos para personas concretas)';
+const APP_VERSION_INTRANET = '2026-10-26 · v143 (crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -13924,7 +14015,7 @@ async function renderInformesScreen(){
     sb.from('stats_actuaciones_categoria').select('*'),
     sb.from('stats_actuaciones_derivado').select('*'),
     sb.from('proyectos').select('id, nombre, estado'),
-    sb.from('proyecto_participantes').select('proyecto_id, rol'),
+    sb.from('proyecto_participantes').select('proyecto_id, rol, usuario_id, tecnico_email').then(dedupPart),
     sb.from('cursos').select('id, estado'),
     sb.from('cursos_inscripciones').select('id', { count:'exact', head:true }).eq('estado', 'inscrito'),
     sb.from('curso_actividad_entregas').select('estado')
@@ -14664,6 +14755,7 @@ async function anadirPersonaAProyecto(usuarioId, nombrePersona){
     proyectoId = nuevoProyecto.id;
   }
 
+  if(await yaEnProyecto(proyectoId, 'usuario_id', usuarioId, 'beneficiario')){ alert(LANG_I==='ca' ? 'Aquesta persona ja és en aquest projecte.' : 'Esta persona ya está en este proyecto.'); return; }
   const { error } = await sb.from('proyecto_participantes').insert({
     proyecto_id: proyectoId, rol: 'beneficiario', usuario_id: usuarioId, anadido_por_email: CURRENT_USER.email
   });
@@ -14765,7 +14857,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
     sb.from('staff').select('email, nombre, activo').order('email', { ascending:true }),
     sb.from('citas').select('*').eq('usuario_id', usuarioId).order('fecha', { ascending:false }),
     sb.from('mensajes_enviados').select('*').eq('usuario_id', usuarioId).order('fecha', { ascending:false }),
-    sb.from('proyecto_participantes').select('*, proyectos(id, nombre, estado)').eq('usuario_id', usuarioId).eq('rol', 'beneficiario'),
+    sb.from('proyecto_participantes').select('*, proyectos(id, nombre, estado)').eq('usuario_id', usuarioId).eq('rol', 'beneficiario').then(dedupPart),
     sb.from('proyectos').select('id, nombre').order('nombre', { ascending:true }),
     sb.from('emprendimiento').select('*').eq('usuario_id', usuarioId).maybeSingle(),
     sb.from('consultas_orientacion').select('*').eq('usuario_id', usuarioId).order('creado_en', { ascending:false })
@@ -15559,8 +15651,7 @@ async function crearActuacion(){
   // Como se está registrando la actuación desde la ficha de esta persona,
   // si se creó (o vinculó) un proyecto, la añadimos también como beneficiaria automáticamente.
   if(proyectoIdFinal){
-    const { data: yaParticipa } = await sb.from('proyecto_participantes').select('id').eq('proyecto_id', proyectoIdFinal).eq('usuario_id', window.__usuarioIdVisto).maybeSingle();
-    if(!yaParticipa){
+    if(!(await yaEnProyecto(proyectoIdFinal, 'usuario_id', window.__usuarioIdVisto, 'beneficiario'))){
       await sb.from('proyecto_participantes').insert({
         proyecto_id: proyectoIdFinal, rol: 'beneficiario', usuario_id: window.__usuarioIdVisto, anadido_por_email: CURRENT_USER.email
       });
@@ -15771,7 +15862,7 @@ async function renderAdministrador(){
     sb.from('avisos_intranet').select('*').order('creado_en', { ascending:false }),
     sb.from('configuracion_oficina').select('*').eq('id', 1).maybeSingle(),
     sb.from('proyectos').select('id, nombre, estado'),
-    sb.from('proyecto_participantes').select('proyecto_id, rol'),
+    sb.from('proyecto_participantes').select('proyecto_id, rol, usuario_id, tecnico_email').then(dedupPart),
     sb.from('fichajes_sala').select('*').order('inicio', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
     sb.from('fichajes_sala').select('id', { count: 'exact', head: true }),
     sb.from('traductor_historial').select('*').order('creado_en', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
@@ -17041,7 +17132,45 @@ function histVerExtraHtml(p){
       <div class="subtle" style="font-size:12px;margin:4px 0 0;">${esCA ? 'Fitxa sense compte: és a «Persones usuàries» i a les estadístiques, però no té usuari a Logos Acompanya.' : 'Ficha sin cuenta: aparece en «Personas usuarias» y en las estadísticas, pero no tiene usuario en Logos Acompanya.'}${unif && unif.registros > 1 ? ' ' + (esCA ? `Té ${unif.registros} registres (${unif.anios.join(', ')}).` : `Tiene ${unif.registros} registros (${unif.anios.join(', ')}).`) : ''}</div>
       ${HIST_CONS && IS_ADMIN ? `<label class="checkbox-row" style="margin:8px 0 0;font-size:12.5px;"><input type="checkbox" ${firmado ? 'checked' : ''} onchange="histMarcarConsentimiento('${p.id}', this.checked)"> ${esCA ? 'Ha signat el consentiment en paper' : 'Ha firmado el consentimiento en papel'}</label>` : ''}
     </div>
-    <button class="primary-btn" style="width:auto;margin:0 0 10px;background:var(--good);" onclick="histActivarCuenta('${p.id}')">🖊️ ${esCA ? 'Activar-li el compte (alta presencial)' : 'Activar su cuenta (alta presencial)'}</button>`;
+    ${histContactoHtml(unif || p)}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px;">
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="histDarCita('${p.id}')">📅 ${esCA ? 'Donar-li cita' : 'Darle cita'}</button>
+      <button class="primary-btn" style="width:auto;margin:0;background:var(--good);" onclick="histActivarCuenta('${p.id}')">🖊️ ${esCA ? 'Activar-li el compte (alta presencial)' : 'Activar su cuenta (alta presencial)'}</button>
+    </div>`;
+}
+// Personas sin cuenta: se las contacta por teléfono, WhatsApp o correo (no pueden recibir avisos en Logos Acompanya)
+function histContactoHtml(p){
+  if(!p || (!p.telefono && !p.email)) return `<p class="subtle" style="font-size:12px;margin:0 0 10px;">${acL('Sin teléfono ni correo en la ficha: para avisarle de una cita habrá que conseguir un contacto.', 'Sense telèfon ni correu a la fitxa: per avisar-la d\'una cita caldrà aconseguir un contacte.')}</p>`;
+  const tel = String(p.telefono || '').replace(/[^\d+]/g, '');
+  return `<div class="cita-acciones" style="margin:0 0 10px;">
+    ${tel ? `<a class="cita-acc" style="text-decoration:none;" href="tel:${escAttr(tel)}">📞 ${acL('Llamar', 'Trucar')}</a>` : ''}
+    ${tel ? `<a class="cita-acc" style="text-decoration:none;color:#1E9E52;" target="_blank" rel="noopener" href="${escAttr(enlaceWhatsApp(p.telefono, p.nombre_completo))}">💬 WhatsApp</a>` : ''}
+    ${p.email ? `<a class="cita-acc" style="text-decoration:none;" href="mailto:${escAttr(p.email)}?subject=${encodeURIComponent('Logos')}">✉️ ${acL('Correo', 'Correu')}</a>` : ''}
+  </div>`;
+}
+function histDarCita(id){
+  const p = __histCache[id]; if(!p) return;
+  const unif = (window.__personasHistUnif || []).find(x => x.histIds && x.histIds.includes(id)) || p;
+  histCerrar();
+  abrirNuevaCitaStaff(null, unif.nombre_completo, { hist: { id, nombre: unif.nombre_completo || '', telefono: unif.telefono || '', email: unif.email || '' } });
+}
+// Abre la ficha del histórico desde una cita (aunque no esté en la lista cargada)
+async function histVerDesdeCita(id){
+  if(!id) return;
+  if(!__histCache[id]){ const { data } = await sb.from('personas_historicas').select('*').eq('id', id).maybeSingle(); if(!data){ alert(acL('No se ha encontrado la ficha.', 'No s\'ha trobat la fitxa.')); return; } __histCache[id] = data; }
+  histVer(id);
+}
+// Datos para pintar una cita: persona con cuenta (perfiles) o ficha sin cuenta (nombre y teléfono guardados en la cita)
+function citaPersona(c, perfiles){
+  if(c.usuario_id && perfiles[c.usuario_id]) return perfiles[c.usuario_id];
+  if(!c.usuario_id && (c.nombre_contacto || c.historico_id)) return { nombre_completo: c.nombre_contacto || '', telefono: c.telefono_contacto || '', email: c.email_contacto || '', sinCuenta: true };
+  return {};
+}
+function chipSinCuenta(p){ return p && p.sinCuenta ? ` <span class="chip" style="font-size:10px;background:#EEF2F7;color:var(--navy);">📄 ${acL('sin cuenta', 'sense compte')}</span>` : ''; }
+function botonFichaCita(c, origen){
+  if(c.usuario_id) return `<button class="link-btn" style="font-size:12px;margin-top:8px;" onclick="verPersonaStaff('${c.usuario_id}','${origen}')">${TI[LANG_I].verInfoCompleta}</button>`;
+  if(c.historico_id) return `<button class="link-btn" style="font-size:12px;margin-top:8px;" onclick="histVerDesdeCita('${escAttr(c.historico_id)}')">📄 ${acL('Ver ficha (sin cuenta)', 'Veure fitxa (sense compte)')}</button>`;
+  return '';
 }
 async function histMarcarConsentimiento(id, valor){
   const unif = (window.__personasHistUnif || []).find(x => x.histIds && x.histIds.includes(id));
