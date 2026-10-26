@@ -1833,7 +1833,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v138'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v140'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -4845,13 +4845,30 @@ function citaTecnicoChip(c){
   const mia = c.tecnico_email.toLowerCase() === String(CURRENT_USER.email || '').toLowerCase();
   return `<span class="chip" style="background:${mia ? '#DDF3E4' : '#E6F0FA'};color:${mia ? '#1E7A3E' : '#1F4E79'};">👤 ${mia ? acL('Tú', 'Tu') : escAttr(c.tecnico_nombre || equipoNombre(c.tecnico_email))}</span>`;
 }
+// ¿Atiende citas? Sí = marcado a mano; No = quitado a mano; sin marcar = automático (todo el equipo menos «Solo RR. HH.» y «Solo Jóvenes»)
+function atiendeCitas(x){
+  if(!x || x.activo === false) return false;
+  if(x.acepta_citas === true) return true;
+  if(x.acepta_citas === false) return false;
+  return x.ambito !== 'rrhh' && x.ambito !== 'jovenes';
+}
+async function toggleAtiendeCitas(email){
+  const s = (window.__staffLista || []).find(x => x.email === email); if(!s) return;
+  if(!('acepta_citas' in s)){ alert(acL('Para elegir quién atiende citas hay que ejecutar el SQL 41 en Supabase (una sola vez).', 'Per triar qui atén cites cal executar l\'SQL 41 a Supabase (una sola vegada).')); return; }
+  const nuevo = !atiendeCitas(s);
+  let r = await sb.from('staff').update({ acepta_citas: nuevo }).eq('email', email).select('email');
+  if(r.error || !(r.data || []).length) r = await staffCambiar(email, { acepta_citas: nuevo });
+  if(r.error){ alert(r.error.message); return; }
+  window.__equipoCitas = null;
+  renderAdministrador();
+}
 // Equipo que puede atender citas (para pasar una cita o elegir técnico en «Nueva cita»)
 async function cargarEquipoCitas(){
   if(window.__equipoCitas && Date.now() - (window.__equipoCitasT || 0) < 5 * 60 * 1000) return window.__equipoCitas;
   if(window.__citasTecOK === undefined){ try { const q = await sb.from('citas').select('tecnico_email').limit(1); window.__citasTecOK = !q.error; } catch(e){ window.__citasTecOK = false; } }
   let r = await sb.from('staff').select('email, nombre, activo, ambito, acepta_citas');
   if(r.error) r = await sb.from('staff').select('email, nombre, activo');
-  const lista = (r.data || []).filter(x => x.email && x.activo !== false && x.acepta_citas !== false && x.ambito !== 'rrhh' && x.ambito !== 'jovenes')
+  const lista = (r.data || []).filter(x => x.email && atiendeCitas(x))
     .map(x => ({ email: x.email.toLowerCase(), nombre: (x.nombre || '').trim() || x.email.split('@')[0] }))
     .sort((a, b) => a.nombre.localeCompare(b.nombre));
   window.__equipoCitas = lista; window.__equipoCitasT = Date.now();
@@ -10946,6 +10963,7 @@ async function gpConfirmarLectura(i){
 // ---------- RR. HH. y comunicados ----------
 async function gpRenderRrhh(cuerpo){
   const subs = IS_RRHH ? [['resumen', '🔔 ' + acL('Pendientes', 'Pendents')], ['nominas', acL('Cargar nóminas', 'Carregar nòmines')], ['personas', acL('Por persona', 'Per persona')], ['comunicados', acL('Comunicados', 'Comunicats')], ['avisos', acL('Noticias y recordatorios', 'Notícies i recordatoris')], ['docgen', acL('Documentos generales', 'Documents generals')], ['registro', acL('Registro', 'Registre')]] : [['comunicados', acL('Comunicados', 'Comunicats')]];
+  if(IS_RRHH || IS_RRHH_SOLO || IS_ADMIN) subs.splice(IS_RRHH ? 3 : 1, 0, ['horarios', '🕘 ' + acL('Horarios del personal', 'Horaris del personal')]);
   if(!subs.some(s => s[0] === window.__gpSub)) window.__gpSub = subs[0][0];
   cuerpo.innerHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">${subs.map(([k, t]) => `<button class="link-btn" style="font-size:12.5px;border:1px solid ${window.__gpSub === k ? 'var(--gold)' : 'var(--line)'};background:${window.__gpSub === k ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:3px 12px;" onclick="window.__gpSub='${k}';renderGestionPersonal('rrhh')">${t}</button>`).join('')}</div><div id="gp-rrhh-cuerpo"></div>`;
   const c = document.getElementById('gp-rrhh-cuerpo');
@@ -10955,6 +10973,7 @@ async function gpRenderRrhh(cuerpo){
   else if(window.__gpSub === 'nominas') await gpRrhhNominas(c);
   else if(window.__gpSub === 'personas') await gpRrhhPersonas(c);
   else if(window.__gpSub === 'registro') await gpRrhhRegistro(c);
+  else if(window.__gpSub === 'horarios') await gpRrhhHorarios(c);
   else await gpRrhhComunicados(c);
 }
 async function gpPersonasActivas(){
@@ -11236,6 +11255,19 @@ async function gpBorrarComunicado(i){
   if(r.error){ alert(r.error.message); return; }
   renderGestionPersonal('rrhh');
 }
+// Recursos Humanos también edita los horarios del personal (el mismo editor que la administración)
+async function gpRrhhHorarios(c){
+  c.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  if(!window.__staffLista || !window.__staffLista.length){
+    const r = await sb.from('staff').select('email, nombre, activo').order('nombre', { ascending: true });
+    window.__staffLista = r.data || [];
+  }
+  await hrCargarAdmin();
+  document.querySelectorAll('#hr-admin-card').forEach(e => { e.innerHTML = ''; e.removeAttribute('id'); });   // nunca dos editores a la vez
+  c.innerHTML = `<p class="subtle" style="margin:0 0 10px;font-size:12.5px;">${acL('Horario general y horarios propios de cada persona. Se usa para el fichaje (horas previstas, salida olvidada) y para las horas de cita de cada técnico.', 'Horari general i horaris propis de cada persona. Es fa servir per al fitxatge (hores previstes, sortida oblidada) i per a les hores de cita de cada tècnic.')}</p>
+    <div class="panel-card" id="hr-admin-card">${hrAdminHtml()}</div>`;
+  hrActualizarTotal();
+}
 async function gpRrhhRegistro(c){
   const { data, error } = await sb.from('personal_registro').select('*').order('cuando', { ascending: false }).limit(100);
   if(error){ c.innerHTML = gpAviso(escAttr(error.message)); return; }
@@ -11393,11 +11425,12 @@ async function hrGuardar(){
   // Primero se guarda lo nuevo y solo después se quita lo viejo, para no dejar nunca a nadie sin horario si algo falla
   if(tramos.length){
     const ins = await sb.from('personal_horarios').insert(tramos.map(t => ({ persona_email: sel || null, dia: t.dia, desde: t.desde, hasta: t.hasta })));
-    if(ins.error){ alert(ins.error.message); return; }
+    if(ins.error){ alert(/row-level security|permission/i.test(ins.error.message || '') ? acL('No tienes permiso para guardar horarios. Hay que ejecutar el SQL 40 en Supabase (una sola vez).', 'No tens permís per desar horaris. Cal executar l\'SQL 40 a Supabase (una sola vegada).') : ins.error.message); return; }
   }
   if(antiguos.length){
-    const del = await sb.from('personal_horarios').delete().in('id', antiguos);
+    const del = await sb.from('personal_horarios').delete().in('id', antiguos).select('id');
     if(del.error){ alert(del.error.message); return; }
+    if(Array.isArray(del.data) && del.data.length < antiguos.length) alert(acL('El horario nuevo se ha guardado, pero no se ha podido borrar el anterior (falta permiso). Ejecuta el SQL 40 en Supabase y vuelve a guardar.', 'L\'horari nou s\'ha desat, però no s\'ha pogut esborrar l\'anterior (falta permís). Executa l\'SQL 40 a Supabase i torna a desar.'));
   }
   await hrCargarAdmin();
   document.getElementById('hr-admin-card').innerHTML = hrAdminHtml();
@@ -11408,8 +11441,9 @@ async function hrQuitarPropio(){
   const sel = window.__hrSel; if(!sel) return;
   if(!confirm(acL('¿Quitar el horario propio de esta persona? Volverá a usar el horario general.', 'Treure l\'horari propi d\'aquesta persona? Tornarà a fer servir l\'horari general.'))) return;
   const ids = (window.__hrTodos || []).filter(f => f.persona_email && String(f.persona_email).toLowerCase() === sel).map(f => f.id);
-  const del = await sb.from('personal_horarios').delete().in('id', ids);
+  const del = await sb.from('personal_horarios').delete().in('id', ids).select('id');
   if(del.error){ alert(del.error.message); return; }
+  if(Array.isArray(del.data) && del.data.length < ids.length){ alert(acL('No tienes permiso para cambiar horarios. Hay que ejecutar el SQL 40 en Supabase (una sola vez).', 'No tens permís per canviar horaris. Cal executar l\'SQL 40 a Supabase (una sola vegada).')); return; }
   await hrCargarAdmin();
   document.getElementById('hr-admin-card').innerHTML = hrAdminHtml();
   hrActualizarTotal();
@@ -13699,7 +13733,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-26 · v138 (citas con técnico: pasar, quedármela, cambiar; cursos para personas concretas del equipo)';
+const APP_VERSION_INTRANET = '2026-10-26 · v140 (elegir quién atiende citas; RR. HH. edita horarios; citas con técnico; cursos para personas concretas)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -15777,6 +15811,7 @@ async function renderAdministrador(){
   const totalAtenciones = (cargaRes.data || []).length;
 
   await hrCargarAdmin();
+  document.querySelectorAll('#hr-admin-card').forEach(e => { e.innerHTML = ''; e.removeAttribute('id'); });
   window.__alertasTipos = REPARTO_OK ? ((await sb.from('alertas_tipos').select('*')).data || []) : [];
   const staffHtml = window.__staffLista.map(s => `
     <div class="panel-stat-row" style="align-items:flex-start;gap:8px;flex-wrap:wrap;">
@@ -15787,6 +15822,7 @@ async function renderAdministrador(){
         ${(DELEGACION_OK && s.activo !== false && !s.es_admin && s.ambito !== 'jovenes') ? `<button class="link-btn" style="font-size:12px;" onclick="toggleGestorAlertas('${s.email}', ${!s.gestiona_alertas})">${s.gestiona_alertas ? acL('Quitar reparto de alertas', 'Treure repartiment d\'alertes') : acL('Delegar reparto de alertas', 'Delegar repartiment d\'alertes')}</button>` : ''}
         ${(GP_OK && s.activo !== false) ? `<button class="link-btn" style="font-size:12px;" onclick="toggleRRHH('${s.email}', ${!s.es_rrhh})">${s.es_rrhh ? acL('Quitar RR. HH.', 'Treure RR. HH.') : acL('Dar RR. HH.', 'Donar RR. HH.')}</button>` : ''}
         <button class="link-btn" style="font-size:12px;" onclick="editarNombreTecnico('${s.email}')">✏️ ${acL('Nombre', 'Nom')}</button>
+        ${('acepta_citas' in s && s.activo !== false) ? `<button class="link-btn" style="font-size:12px;${atiendeCitas(s) ? 'color:var(--good);' : 'color:#888;'}" title="${acL('Si sale en la lista de técnicos al pedir cita en Logos Acompanya', 'Si surt a la llista de tècnics en demanar cita a Logos Acompanya')}" onclick="toggleAtiendeCitas('${s.email}')">📅 ${atiendeCitas(s) ? acL('Atiende citas ✓', 'Atén cites ✓') : acL('No atiende citas', 'No atén cites')}</button>` : ''}
         ${(JOVENES_OK && !s.es_admin) ? `<select style="font-size:12px;max-width:150px;" title="${acL('Qué parte de la plataforma ve', 'Quina part de la plataforma veu')}" onchange="cambiarAmbitoTecnico('${s.email}', this.value)"><option value="general"${s.ambito !== 'jovenes' ? ' selected' : ''}>${acL('Equipo general', 'Equip general')}</option><option value="jovenes"${s.ambito === 'jovenes' ? ' selected' : ''}>🌱 ${acL('Solo Jóvenes en acción', 'Només Joves en acció')}</option><option value="rrhh"${s.ambito === 'rrhh' ? ' selected' : ''}>💼 ${acL('Solo Recursos Humanos', 'Només Recursos Humans')}</option></select>` : ''}
         <button class="link-btn" style="font-size:12px;" title="${acL('Enviar enlace para elegir contraseña', 'Enviar enllaç per triar contrasenya')}" onclick="enviarEnlaceClave('${s.email}')">🔑 ${acL('Enlace', 'Enllaç')}</button>
         <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="quitarTecnico('${s.email}')">${acL('Quitar', 'Treure')}</button>
