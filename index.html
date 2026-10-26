@@ -257,6 +257,47 @@
   .hint-deslizar{display:none;text-align:center;font-size:11.5px;color:var(--ink-soft);margin:-8px 0 14px;}
   .salas-grid-uniforme>.panel-card{min-height:168px;display:flex;flex-direction:column;justify-content:flex-start;flex:1 0 150px;scroll-snap-align:start;}
   .salas-grid-uniforme>.panel-card.fichaje-card{flex:2 0 250px;}
+  /* v135 · Estadísticas de personas y memoria de impacto */
+  .est-filtros{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 12px;}
+  .est-filtros label{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--ink-soft);font-weight:700;}
+  .est-filtros select,.est-filtros input{width:auto;padding:6px 8px;font-size:13px;}
+  .est-hero{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-end;background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);color:#fff;border-radius:16px;padding:18px 20px;margin-bottom:14px;}
+  .est-big{font-family:var(--font-display);font-size:34px;font-weight:700;line-height:1;} .est-big.sm{font-size:22px;color:var(--gold);}
+  .est-sub{font-size:12px;opacity:.8;margin-top:4px;}
+  .est-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;}
+  .est-grid .panel-card{margin:0;} .est-grid h3{margin:0 0 10px;font-size:15px;} .est-ancha{grid-column:1 / -1;}
+  .est-row{display:grid;grid-template-columns:minmax(90px,38%) 1fr auto;gap:8px;align-items:center;font-size:12.5px;margin:5px 0;}
+  .est-l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} .est-track{background:#EEF2F7;border-radius:99px;height:10px;overflow:hidden;}
+  .est-fill{display:block;height:100%;background:linear-gradient(90deg,var(--navy),#3E6FA3);border-radius:99px;} .est-v{font-weight:800;white-space:nowrap;} .est-v small{font-weight:400;color:var(--ink-soft);}
+  .mem-campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:6px;}
+  .mem-doc{background:#fff;color:#16233F;border:1px solid var(--line);border-radius:14px;padding:34px 40px;margin-top:16px;font-size:13.5px;line-height:1.55;}
+  .mem-portada{border-bottom:3px solid var(--gold);padding-bottom:22px;margin-bottom:10px;}
+  .mem-logo-band{background:var(--navy);border-radius:12px;padding:12px 18px;display:inline-block;margin-bottom:18px;} .mem-logo{height:54px;width:auto;display:block;}
+  .mem-blq,.mem-2col > div{break-inside:avoid;page-break-inside:avoid;} .mem-eyebrow{text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:#3E6FA3;font-weight:800;}
+  .mem-h1{font-family:var(--font-display);font-size:30px;margin:6px 0 8px;color:var(--navy);} .mem-meta{font-size:14px;margin-bottom:16px;}
+  .mem-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0;}
+  .mem-kpi{background:#F4F7FB;border-left:4px solid var(--gold);border-radius:10px;padding:12px 14px;} .mem-kpi-v{font-family:var(--font-display);font-size:26px;font-weight:700;color:var(--navy);line-height:1.1;} .mem-kpi-l{font-size:12px;color:#4A5B73;margin-top:3px;}
+  .mem-kpis.sm .mem-kpi-v{font-size:20px;}
+  .mem-fecha{font-size:11.5px;color:#6B7A90;margin-top:12px;}
+  .mem-h2{font-family:var(--font-display);font-size:19px;color:var(--navy);margin:26px 0 10px;padding-bottom:6px;border-bottom:1px solid #DCE3EC;display:flex;gap:10px;align-items:center;break-after:avoid;}
+  .mem-h2 span{background:var(--navy);color:#fff;border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;flex:none;}
+  .mem-doc h3{font-size:14px;margin:14px 0 6px;color:#1E3F66;}
+  .mem-2col{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:4px 22px;}
+  .mem-tabla{width:100%;border-collapse:collapse;font-size:12.5px;margin:4px 0 8px;break-inside:avoid;}
+  .mem-tabla th{background:var(--navy);color:#fff;text-align:left;padding:6px 8px;font-weight:700;} .mem-tabla td{padding:5px 8px;border-bottom:1px solid #E3E8EF;} .mem-tabla td.num{text-align:right;white-space:nowrap;} .mem-tabla tr:nth-child(even) td{background:#F7F9FC;}
+  .mem-nota{font-size:12px;color:#5B6B80;font-style:italic;}
+  .mem-ods{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;} .mem-ods-i{display:flex;gap:10px;align-items:center;background:#F4F7FB;border-radius:10px;padding:8px 10px;font-size:13px;}
+  .mem-ods-n{background:#C5192D;color:#fff;font-weight:800;border-radius:8px;min-width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;}
+  .mem-firma{display:flex;justify-content:space-between;align-items:flex-end;margin-top:40px;gap:20px;flex-wrap:wrap;} .mem-firma-l{border-top:1px solid #16233F;padding-top:6px;min-width:220px;text-align:center;font-size:12px;}
+  @media (max-width:640px){ .mem-doc{padding:18px 16px;} .mem-h1{font-size:23px;} .est-hero{gap:14px;} .est-big{font-size:28px;} }
+  @media print{
+    #screen-impacto .imp-tabs,#screen-impacto .topbar{display:none !important;}
+    .mem-doc{border:none;padding:0;margin:0;font-size:11.5pt;} .mem-portada{min-height:85vh;break-after:page;display:flex;flex-direction:column;justify-content:center;}
+    .mem-kpi,.mem-h2 span,.mem-tabla th,.mem-ods-n,.mem-tabla tr:nth-child(even) td,.mem-logo-band{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body > .asistente-btn,.asistente-btn,.asistente-panel{display:none !important;}
+    .mem-kpi,.mem-tabla,.mem-ods-i{break-inside:avoid;} .mem-h2{break-after:avoid;}
+  }
+
   .campo-falta{border-color:var(--alert) !important;background:#FFF5F3 !important;box-shadow:0 0 0 2px rgba(200,60,40,.12);}
   .mi-act-grid{display:grid;grid-template-columns:minmax(110px,1.4fr) repeat(3,1fr);gap:8px 6px;align-items:center;text-align:center;}
   .mi-act-grid strong{font-family:var(--font-display);font-size:22px;color:var(--navy);}
@@ -357,6 +398,25 @@
   .persona-tabs .ptab-btn.secundaria{font-size:13px;font-weight:600;color:var(--ink-soft);background:#faf8f2;}
   .persona-tabs .ptab-btn.secundaria.active{color:#fff;}
   body.con-fichaje{padding-bottom:52px;}
+  .fichaje-banner{position:fixed;left:0;right:0;bottom:0;z-index:9990;background:#7A1F1F;color:#fff;padding:9px 14px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:13.5px;box-shadow:0 -3px 12px rgba(0,0,0,.25);}
+  .fichaje-banner.tarde{background:#B23A0E;}
+  .fichaje-banner button{background:#fff;color:#7A1F1F;border:0;border-radius:8px;padding:7px 14px;font-weight:700;cursor:pointer;font-family:var(--font-body);}
+  .fichaje-banner .fb-corto{display:none;}
+  .fichaje-banner .fb-sala{background:var(--gold);color:var(--navy);}
+  .sala-pick-fila{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px;font-weight:700;}
+  .sala-pick-fila > div{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+  .sala-pick{min-width:58px;padding:7px 10px;border-radius:10px;border:2px solid var(--good);background:var(--good-soft,#E8F5EC);color:var(--navy);font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.1;font-family:var(--font-body);}
+  .sala-pick small{font-weight:400;font-size:10.5px;color:var(--ink-soft);}
+  .sala-pick:hover:not(:disabled){background:var(--good);color:#fff;} .sala-pick:hover:not(:disabled) small{color:#fff;}
+  .sala-pick.ocupada{border-color:var(--line);background:#F3F4F6;opacity:.6;cursor:not-allowed;}
+  body.con-fichaje > .asistente-btn{bottom:74px;}
+  @media (max-width:760px){
+    .fichaje-banner{top:0;bottom:auto;padding:6px 10px;gap:8px;font-size:13px;flex-wrap:nowrap;justify-content:space-between;box-shadow:0 3px 10px rgba(0,0,0,.25);}
+    .fichaje-banner .fb-largo{display:none;} .fichaje-banner .fb-corto{display:inline;}
+    .fichaje-banner button{padding:6px 12px;font-size:13px;white-space:nowrap;}
+    body.con-fichaje{padding-bottom:0;padding-top:44px;}
+    body.con-fichaje > .asistente-btn{bottom:134px !important;}
+  }
   .nota-trabajo{background:var(--ochre-soft);border:2px solid var(--ochre);border-radius:12px;padding:12px 14px;margin:0 0 10px;font-size:14px;line-height:1.5;}
   .nota-trabajo strong.t{display:block;font-size:15px;color:#7A4A1F;margin-bottom:2px;}
   .ptab-btn{background:none;border:none;padding:9px 14px;font-family:var(--font-body);font-weight:700;font-size:12.5px;color:var(--ink-soft);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;}
@@ -462,8 +522,11 @@
     .sidebar .ilang-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
     .mobile-menu-toggle{display:flex;flex:1;height:38px;align-items:center;justify-content:center;gap:8px;background:var(--navy);border:none;border-radius:999px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:var(--font-body);}
     /* En móvil: solo las flechas, el título en medio */
-    .main .nav-sec, .main #nav-fwd{width:42px;height:42px;padding:0;justify-content:center;}
-    .main .nav-sec-txt{display:none;}
+    .nav-sec-barra{left:0 !important;bottom:56px !important;padding:8px 10px !important;gap:8px !important;}
+    .nav-sec-barra .nav-sec{height:46px;font-size:13.5px;max-width:46%;}
+    .nav-sec-pos{display:none;}
+    body.con-barra-nav .main-content{padding-bottom:160px !important;}
+    body.con-barra-nav > .asistente-btn{bottom:134px !important;}
     .main .topbar.con-flechas{gap:8px;}
     .topbar.con-flechas > .brand{font-size:19px;}
     body > .asistente-btn{bottom:74px;right:14px;width:48px;height:48px;font-size:20px;}
@@ -491,8 +554,15 @@
   .nav-sec:hover:not(:disabled),.nav-sec:active:not(:disabled){background:var(--navy);color:#fff;}
   .nav-sec:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
   .nav-sec:disabled{visibility:hidden;}
+  /* Barra inferior fija con las flechas (ordenador: a la derecha del menú lateral) */
+  .nav-sec-barra{position:fixed;left:0;right:0;bottom:56px;z-index:150;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 28px;background:rgba(255,255,255,.97);border-top:3px solid var(--gold);box-shadow:0 -4px 16px rgba(30,63,102,.12);}
+  .nav-sec-barra .nav-sec{height:48px;font-size:14.5px;padding:0 18px 0 10px;max-width:42%;box-shadow:0 2px 10px rgba(30,63,102,.18);}
+  .nav-sec-barra #nav-fwd{padding:0 10px 0 18px;}
+  .nav-sec-barra .nav-sec svg{width:24px;height:24px;}
+  .nav-sec-pos{font-size:12px;font-weight:800;color:var(--ink-soft);letter-spacing:.04em;}
+
   .nav-hist-fila{margin:0 0 16px;}
-  @media print{ .nav-sec{display:none !important;} }
+  @media print{ .nav-sec,.nav-sec-barra{display:none !important;} }
 
   /* Asistente de orientación (chat con Claude) */
   .asistente-btn{position:fixed;bottom:22px;right:22px;width:56px;height:56px;border-radius:50%;background:var(--navy);color:var(--gold);border:none;font-size:23px;cursor:pointer;box-shadow:var(--shadow-lg);z-index:200;display:flex;align-items:center;justify-content:center;}
@@ -1736,7 +1806,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v134'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v136'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -1839,19 +1909,33 @@ function navColocar(b, f){
     if(!tb){ tb = document.createElement('div'); tb.className = 'topbar nav-hist-fila'; tb.innerHTML = '<span class="brand"></span>'; mc.insertBefore(tb, mc.firstChild); }
   }
   tb.classList.add('con-flechas');
-  if(b.parentNode !== tb) tb.insertBefore(b, tb.firstChild);
-  if(f.parentNode !== tb || tb.lastChild !== f) tb.appendChild(f);
+  // Ordenador: flechas arriba, a los lados del título. Móvil: en una barra fija abajo, encima del botón «Menú».
+  let barra = document.getElementById('nav-sec-barra');
+  if(window.innerWidth > 760){
+    if(barra) barra.style.display = 'none';
+    document.body.classList.remove('con-barra-nav');
+    if(b.parentNode !== tb) tb.insertBefore(b, tb.firstChild);
+    if(f.parentNode !== tb || tb.lastChild !== f) tb.appendChild(f);
+    return;
+  }
+  document.body.classList.add('con-barra-nav');
+  if(!barra){ barra = document.createElement('div'); barra.id = 'nav-sec-barra'; barra.className = 'nav-sec-barra'; barra.innerHTML = '<span class="nav-sec-pos" id="nav-sec-pos"></span>'; document.body.appendChild(barra); }
+  barra.style.display = '';
+  if(b.parentNode !== barra) barra.insertBefore(b, barra.firstChild);
+  if(f.parentNode !== barra || barra.lastChild !== f) barra.appendChild(f);
 }
+window.addEventListener('resize', () => { clearTimeout(window.__navRz); window.__navRz = setTimeout(() => { try { navPintar(); } catch(e){} }, 150); });
 function navPintar(){
   const b = document.getElementById('nav-back'), f = document.getElementById('nav-fwd');
   if(!b || !f) return;
   const dentro = (typeof CURRENT_USER !== 'undefined' && CURRENT_USER && navPantallaActiva() !== 'login');
-  if(!dentro){ const alm = document.getElementById('nav-sec-almacen'); if(alm && b.parentNode !== alm){ alm.appendChild(b); alm.appendChild(f); } return; }
+  if(!dentro){ const alm = document.getElementById('nav-sec-almacen'); if(alm && b.parentNode !== alm){ alm.appendChild(b); alm.appendChild(f); } const br = document.getElementById('nav-sec-barra'); if(br) br.style.display = 'none'; document.body.classList.remove('con-barra-nav'); return; }
   navColocar(b, f);
   const { lista, i } = navPosicion();
   const ant = i > 0 ? lista[i - 1] : null, sig = (i >= 0 && i < lista.length - 1) ? lista[i + 1] : null;
   // Título de las pantallas sin cabecera propia (Inicio)
-  const fila = b.parentNode && b.parentNode.classList.contains('nav-hist-fila') ? b.parentNode.querySelector('.brand') : null;
+  const fila = (() => { const a = document.querySelector('.screen.active'); const t = a && a.querySelector('.main-content > .nav-hist-fila'); return t ? t.querySelector('.brand') : null; })();
+  const pos = document.getElementById('nav-sec-pos'); if(pos) pos.textContent = i >= 0 ? (i + 1) + ' / ' + lista.length : '';
   if(fila && i >= 0) fila.textContent = navNombre(lista[i]);
   const ca = (typeof LANG_I !== 'undefined' && LANG_I === 'ca');
   b.disabled = !ant; f.disabled = !sig;
@@ -2235,6 +2319,20 @@ async function cerrarFichajesCaducados(){
     }
   } catch(e){}
 }
+// Final del tramo de horario en el que cae la entrada (p. ej. entrada 8:05 en un tramo 8–14 → 14:00)
+async function fichajeFinPrevisto(email, entradaIso){
+  try {
+    const h = await hrHorarioDe(email);
+    const e = new Date(entradaIso), dia = hrDiaSemanaJS(e), minE = e.getHours() * 60 + e.getMinutes();
+    const tramos = hrTramosDia(h.tramos, dia);
+    if(!tramos.length) return null;
+    // el tramo que contiene la entrada; si entró antes de un tramo, ese tramo; si entró después del último, el último
+    const t = tramos.find(x => minE >= hrMin(x.desde) - 60 && minE < hrMin(x.hasta)) || tramos.find(x => minE < hrMin(x.desde)) || null;
+    if(!t) return null;
+    const fin = new Date(e); fin.setHours(Math.floor(hrMin(t.hasta) / 60), hrMin(t.hasta) % 60, 0, 0);
+    return fin > e ? fin : null;
+  } catch(e){ return null; }
+}
 async function fichajeRefrescar(){
   await cerrarFichajesCaducados();
   try {
@@ -2242,9 +2340,115 @@ async function fichajeRefrescar(){
     else {
       const { data } = await sb.from('fichajes').select('id, entrada').eq('tecnico_email', CURRENT_USER.email).is('salida', null).order('entrada', { ascending: false }).limit(1);
       window.__fichajeAbierto = (data && data[0]) || null;
+      window.__fichajeFinTurno = window.__fichajeAbierto ? await fichajeFinPrevisto(CURRENT_USER.email, window.__fichajeAbierto.entrada) : null;
+      await salaEstadoRefrescar();
     }
   } catch(e){ window.__fichajeAbierto = null; }
   fichajePintarBanner();
+  fichajeRevisarOlvidos();
+}
+// --- Fichado pero sin sala marcada: recordatorio para marcar en qué sala/plaza está ---
+const SALA_AVISO_MIN = 10;   // minutos después de fichar la entrada
+window.__tengoSala = true;
+function salaHoyClave(){ return 'sinsala:' + (CURRENT_USER ? CURRENT_USER.email : '') + ':' + new Date().toISOString().slice(0, 10); }
+function salaHoyFuera(){ try { return localStorage.getItem(salaHoyClave()) === '1'; } catch(e){ return false; } }
+async function salaEstadoRefrescar(){
+  try {
+    if(!CURRENT_USER || !window.__fichajeAbierto){ window.__tengoSala = true; return; }
+    const ahoraIso = new Date().toISOString();
+    const { data, error } = await sb.from('fichajes_sala').select('id, sala, inicio').eq('tecnico_email', CURRENT_USER.email).is('fin', null).lte('inicio', ahoraIso).limit(5);
+    window.__tengoSala = error ? true : !!(data || []).filter(o => !(typeof ocupacionObsoleta === 'function' && ocupacionObsoleta(o))).length;
+  } catch(e){ window.__tengoSala = true; }
+}
+function salaFaltaMarcar(){
+  const f = window.__fichajeAbierto;
+  if(!f || window.__tengoSala || salaHoyFuera()) return false;
+  return Date.now() - new Date(f.entrada).getTime() >= SALA_AVISO_MIN * 60000;
+}
+// Ventana rápida: elegir la plaza libre donde estoy (o reunión, o «hoy no estoy en una sala»)
+async function salaElegirRapido(){
+  const ov0 = document.getElementById('sala-ov'); if(ov0) ov0.remove();
+  const ahoraIso = new Date().toISOString();
+  let ocup = {};
+  try { const { data } = await sb.from('fichajes_sala').select('sala, tecnico_email, inicio, fin').is('fin', null).lte('inicio', ahoraIso); (data || []).forEach(o => { if(!(typeof ocupacionObsoleta === 'function' && ocupacionObsoleta(o))) ocup[o.sala] = o; }); } catch(e){}
+  const ov = document.createElement('div'); ov.id = 'sala-ov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9995;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.addEventListener('click', e => { if(e.target === ov) ov.remove(); });
+  const boton = id => { const o = ocup[id]; return `<button class="sala-pick${o ? ' ocupada' : ''}" ${o ? 'disabled title="' + escAttr(nombreTecnico(o.tecnico_email)) + '"' : ''} onclick="salaElegirPlaza('${id}')">${escAttr(id)}${o ? `<small>${escAttr(String(nombreTecnico(o.tecnico_email)).split(/[ @]/)[0])}</small>` : `<small>${acL('libre', 'lliure')}</small>`}</button>`; };
+  ov.innerHTML = `<div class="panel-card" style="max-width:520px;width:100%;margin:0;background:#fff;max-height:88vh;overflow:auto;">
+    <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><h3 style="margin:0;">📍 ${acL('¿En qué sala estás?', 'A quina sala ets?')}</h3><button class="link-btn" onclick="document.getElementById('sala-ov').remove()">✕</button></div>
+    <p class="subtle" style="font-size:12.5px;margin:6px 0 12px;">${acL('Has fichado la entrada. Marca tu plaza para que el equipo sepa dónde estás y nadie la ocupe.', 'Has fitxat l\'entrada. Marca la teva plaça perquè l\'equip sàpiga on ets i ningú l\'ocupi.')}</p>
+    ${SALAS_LOGOS.map(sl => `<div class="sala-pick-fila"><span>${escAttr(nombreSala(sl))}</span><div>${sl.plazas.map(boton).join('')}</div></div>`).join('')}
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+      <button class="primary-btn" style="width:auto;margin:0;background:var(--gold);color:var(--navy);" onclick="salaElegirReunion()">👥 ${acL('Estoy en una reunión', 'Soc en una reunió')}</button>
+      <button class="link-btn" onclick="salaHoyNoEstoy()">🚶 ${acL('Hoy no estoy en ninguna sala (fuera, visita, teletrabajo)', 'Avui no soc a cap sala (fora, visita, teletreball)')}</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+}
+async function salaElegirPlaza(id){
+  const ov = document.getElementById('sala-ov'); if(ov) ov.remove();
+  window.__tengoSala = true;
+  await iniciarAtencionSala(id);
+  await salaEstadoRefrescar(); fichajePintarBanner();
+}
+async function salaElegirReunion(){
+  const ov = document.getElementById('sala-ov'); if(ov) ov.remove();
+  window.__tengoSala = true;
+  await iniciarReunion();
+  await salaEstadoRefrescar(); fichajePintarBanner();
+}
+function salaHoyNoEstoy(){
+  try { localStorage.setItem(salaHoyClave(), '1'); } catch(e){}
+  const ov = document.getElementById('sala-ov'); if(ov) ov.remove();
+  document.querySelectorAll('.sala-recordatorio').forEach(x => x.remove());
+  fichajePintarBanner();
+}
+// cada 5 minutos se vuelve a mirar si ya tiene sala (por si la marcó desde otro dispositivo)
+setInterval(async function(){ if(CURRENT_USER && window.__fichajeAbierto){ await salaEstadoRefrescar(); fichajePintarBanner(); } }, 5 * 60000);
+// --- Salida olvidada: si un fichaje se cerró solo, la persona indica a qué hora salió de verdad ---
+const FICHAJE_MARCA_REVISADO = /indicada por la persona|confirmada por la persona|corregida por (rrhh|la administraci)/i;
+window.__fichajeOlvidoPosponer = window.__fichajeOlvidoPosponer || {};
+async function fichajeRevisarOlvidos(){
+  try {
+    if(!CURRENT_USER || document.getElementById('fo-ov')) return;
+    const desde = new Date(Date.now() - 45 * 86400000).toISOString();
+    const { data } = await sb.from('fichajes').select('id, entrada, salida, nota, cerrado_automaticamente').eq('tecnico_email', CURRENT_USER.email).eq('cerrado_automaticamente', true).gte('entrada', desde).order('entrada', { ascending: true });
+    const pend = (data || []).filter(f => f.salida && f.cerrado_automaticamente && !FICHAJE_MARCA_REVISADO.test(f.nota || '') && !window.__fichajeOlvidoPosponer[f.id]);
+    if(!pend.length) return;
+    const f = pend[0];
+    const fin = await fichajeFinPrevisto(CURRENT_USER.email, f.entrada);
+    const hhmm = d => d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    const ent = new Date(f.entrada), sal = f.salida ? new Date(f.salida) : null;
+    const dia = ent.toLocaleDateString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+    const ov = document.createElement('div'); ov.id = 'fo-ov';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9995;display:flex;align-items:center;justify-content:center;padding:16px;';
+    ov.innerHTML = `<div class="panel-card" style="max-width:440px;width:100%;margin:0;background:#fff;">
+      <h3 style="margin:0 0 8px;">⏰ ${acL('Te olvidaste de fichar la salida', 'Et vas oblidar de fitxar la sortida')}</h3>
+      <p style="margin:0 0 8px;font-size:14px;">${acL('El', 'El')} <strong>${escAttr(dia)}</strong> ${acL('fichaste la entrada a las', 'vas fitxar l\'entrada a les')} <strong>${hhmm(ent)}</strong> ${acL('y no fichaste la salida.', 'i no vas fitxar la sortida.')} ${sal ? acL(`El sistema la cerró solo a las ${hhmm(sal)}.`, `El sistema la va tancar sol a les ${hhmm(sal)}.`) : ''}</p>
+      <div class="field"><label>${acL('¿A qué hora saliste realmente?', 'A quina hora vas sortir realment?')}</label>
+        <input type="time" id="fo-hora" value="${fin ? hhmm(fin) : (sal ? hhmm(sal) : '')}" style="font-size:18px;"></div>
+      ${fin ? `<p class="subtle" style="font-size:12px;margin:-6px 0 10px;">${acL('Te proponemos la hora en que acababa tu horario ese día. Cámbiala si saliste a otra hora.', 'Et proposem l\'hora en què acabava el teu horari aquell dia. Canvia-la si vas sortir a una altra hora.')}</p>` : ''}
+      <div id="fo-msg"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+        <button class="primary-btn" style="width:auto;margin:0;" onclick="fichajeGuardarOlvido('${f.id}', '${f.entrada}')">✅ ${acL('Guardar hora de salida', 'Desar hora de sortida')}</button>
+        <button class="link-btn" onclick="window.__fichajeOlvidoPosponer['${f.id}']=1;document.getElementById('fo-ov').remove()">${acL('Más tarde', 'Més tard')}</button>
+      </div>
+      <p class="subtle" style="font-size:11.5px;margin:10px 0 0;">${acL('Recursos Humanos verá que la salida la has indicado tú.', 'Recursos Humans veurà que la sortida l\'has indicat tu.')}</p></div>`;
+    document.body.appendChild(ov);
+  } catch(e){}
+}
+async function fichajeGuardarOlvido(id, entradaIso){
+  const v = (document.getElementById('fo-hora') || {}).value || '', msg = document.getElementById('fo-msg');
+  if(!/^\d{2}:\d{2}$/.test(v)){ msg.innerHTML = `<div class="auth-error">${acL('Escribe la hora (por ejemplo 14:00).', 'Escriu l\'hora (per exemple 14:00).')}</div>`; return; }
+  const ent = new Date(entradaIso), sal = new Date(ent); sal.setHours(Number(v.slice(0, 2)), Number(v.slice(3, 5)), 0, 0);
+  if(sal <= ent){ msg.innerHTML = `<div class="auth-error">${acL('La salida tiene que ser después de la entrada.', 'La sortida ha de ser després de l\'entrada.')}</div>`; return; }
+  const nota = `Salida olvidada: cerrado automáticamente; hora de salida indicada por la persona: ${v} (${new Date().toLocaleDateString('es-ES')}).`;
+  const { data, error } = await sb.from('fichajes').update({ salida: sal.toISOString(), nota }).eq('id', id).select('id');
+  if(error || !data || !data.length){ msg.innerHTML = `<div class="auth-error">${escAttr((error && error.message) || acL('No se ha podido guardar (permisos). Avisa a Recursos Humanos.', 'No s\'ha pogut desar (permisos). Avisa Recursos Humans.'))}</div>`; return; }
+  document.getElementById('fo-ov').remove();
+  alert(acL('✅ Hora de salida guardada.', '✅ Hora de sortida desada.'));
+  if(document.getElementById('screen-miespacio') && document.getElementById('screen-miespacio').classList.contains('active')) renderMiEspacio();
+  fichajeRevisarOlvidos();
 }
 function fichajePintarBanner(){
   let b = document.getElementById('fichaje-banner');
@@ -2253,9 +2457,16 @@ function fichajePintarBanner(){
   const hora = new Date(f.entrada).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
   if(!b){ b = document.createElement('div'); b.id = 'fichaje-banner'; document.body.appendChild(b); }
   document.body.classList.add('con-fichaje');
-  b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9990;background:#7A1F1F;color:#fff;padding:9px 14px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:13.5px;box-shadow:0 -3px 12px rgba(0,0,0,.25);';
-  b.innerHTML = `<span>🔴 ${acL('Tienes la entrada fichada desde las', 'Tens l\'entrada fitxada des de les')} <strong>${hora}</strong>. ${acL('Ficha la salida antes de cerrar el ordenador.', 'Fitxa la sortida abans de tancar l\'ordinador.')}</span>
-    <button onclick="ficharSalidaDesdeAviso()" style="background:#fff;color:#7A1F1F;border:0;border-radius:8px;padding:7px 14px;font-weight:700;">⏹ ${acL('Fichar salida', 'Fitxar sortida')}</button>`;
+  b.className = 'fichaje-banner';
+  b.style.cssText = '';
+  const finTurno = window.__fichajeFinTurno;   // hora prevista de salida según el horario (si se conoce)
+  const pasado = finTurno && Date.now() > finTurno.getTime() + 30 * 60000;
+  const hFin = finTurno ? finTurno.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '';
+  b.classList.toggle('tarde', !!pasado);
+  b.innerHTML = `<span class="fb-largo">${pasado ? `⏰ ${acL('Tu horario terminó a las', 'El teu horari va acabar a les')} <strong>${hFin}</strong>. ${acL('¿Te has olvidado de fichar la salida?', 'T\'has oblidat de fitxar la sortida?')}` : `🔴 ${acL('Tienes la entrada fichada desde las', 'Tens l\'entrada fitxada des de les')} <strong>${hora}</strong>. ${acL('Ficha la salida antes de cerrar el ordenador.', 'Fitxa la sortida abans de tancar l\'ordinador.')}`}</span>
+    <span class="fb-corto">${pasado ? `⏰ ${acL('Horario acabado', 'Horari acabat')} (${hFin})` : `🔴 ${acL('Entrada', 'Entrada')} ${hora}`}</span>
+    ${salaFaltaMarcar() && !pasado ? `<span class="fb-largo">📍 ${acL('Aún no has marcado en qué sala estás.', 'Encara no has marcat a quina sala ets.')}</span><button class="fb-sala" onclick="salaElegirRapido()">📍 ${acL('Elegir sala', 'Triar sala')}</button>` : ''}
+    <button onclick="ficharSalidaDesdeAviso()">⏹ ${acL('Fichar salida', 'Fitxar sortida')}</button>`;
 }
 async function ficharSalidaDesdeAviso(){
   const f = window.__fichajeAbierto; if(!f) return;
@@ -2266,7 +2477,7 @@ window.addEventListener('beforeunload', function(e){
   if(window.__fichajeAbierto){ e.preventDefault(); e.returnValue = ''; return ''; }
 });
 // Por si se deja el ordenador abierto: se comprueba de vez en cuando que el aviso sigue siendo correcto
-setInterval(function(){ if(CURRENT_USER && window.__fichajeAbierto) fichajePintarBanner(); }, 60000);
+setInterval(function(){ if(CURRENT_USER && window.__fichajeAbierto) fichajePintarBanner(); }, 60000);   // a los 30 min de acabar el horario el aviso cambia a «¿Te has olvidado de fichar la salida?»
 
 async function ficharEntrada(){
   const t = TI[LANG_I];
@@ -2281,7 +2492,8 @@ async function ficharEntrada(){
       : 'Se ha fichado, pero no se ha podido registrar la ubicación (revisa los permisos de localización del navegador).');
   }
   await fichajeRefrescar();
-  renderMiEspacio();
+  await renderMiEspacio();
+  if(!window.__tengoSala && !salaHoyFuera()) salaElegirRapido();
 }
 
 async function ficharSalida(id){
@@ -3181,6 +3393,7 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
     if(o.tecnico_email === CURRENT_USER.email && enCursoYa) ocupacionMiaActual = o;
   });
   window.__ocupacionMiaActual = ocupacionMiaActual;
+  if(window.__fichajeAbierto) window.__tengoSala = !!ocupacionMiaActual;
   window.__misOcupacionesObsoletas = misObsoletas;
   window.__ocupacionPorPlaza = ocupacionPorPlaza;
   window.__reservasPorPlaza = reservasPorPlaza;
@@ -3703,6 +3916,7 @@ async function renderMiEspacio(){
            <button class="primary-btn" style="background:var(--alert);" onclick="ficharSalida('${ultimoFichaje.id}')">${t.ficharSalida}</button>`
         : `<p style="margin:0 0 12px;font-size:13.5px;">${fichajesDeHoy.length ? t.yaFichadoSalida : t.todaviaNoFichado}</p>
            <button class="primary-btn" onclick="ficharEntrada()">${t.ficharEntrada}</button>`}
+      ${fichadoAhora && !window.__tengoSala && !salaHoyFuera() ? `<div class="info-box info-box-gold sala-recordatorio" style="text-align:left;margin:12px 0 0;font-size:13px;">📍 ${acL('Aún no has marcado en qué sala estás.', 'Encara no has marcat a quina sala ets.')} <button class="link-btn" style="font-weight:800;" onclick="salaElegirRapido()">${acL('Elegir sala', 'Triar sala')}</button></div>` : ''}
       ${historialHoyHtml ? `<div style="text-align:left;margin-top:14px;">${historialHoyHtml}</div>` : ''}
     </div>
   `;
@@ -3880,6 +4094,9 @@ async function renderMiEspacio(){
   animateNumber(document.getElementById('num-total-act'), totalCountAct);
   activarBarras();
   mfResumenEspacio();
+  // si ya tiene sala marcada, se quita el recordatorio y se actualiza el aviso de fichaje
+  if(window.__tengoSala || salaHoyFuera()) document.querySelectorAll('.sala-recordatorio').forEach(x => x.remove());
+  if(window.__fichajeAbierto) fichajePintarBanner();
 }
 
 // Secciones plegables: se recuerda en este navegador si la persona las dejó abiertas (si no se puede guardar, quedan cerradas).
@@ -3999,6 +4216,7 @@ function radioGroup(name, opts){
 }
 
 function renderAltaPresencial(){
+  window.__histActivarId = null;
   const esCA = LANG_I === 'ca';
   document.getElementById('altapresencial-content').innerHTML = `
     <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);margin-bottom:16px;">
@@ -4184,6 +4402,7 @@ async function guardarAltaPresencial(){
         : `\n\nEnlace para que elija su contraseña cuando quiera:\n${data.enlace_para_elegir_contrasena}`;
     }
     try { await sb.from('avisos_espera').insert({ usuario_id: data.usuario_id, clave: 'breve', creado_por_email: CURRENT_USER.email }); } catch(e){}
+    if(window.__histActivarId){ const hid = window.__histActivarId; window.__histActivarId = null; try { await histVincularPerfil(hid, data.usuario_id); } catch(e){} }
     alert(mensajeFinal);
     showScreen('personas'); verPersonaStaff(data.usuario_id, 'personas');
   } catch(e){
@@ -5139,9 +5358,10 @@ async function traerTodoPaginado(fabrica){
 }
 
 async function cargarTodasLasPersonas(){
-  const cols = FECHA_ALTA_OK ? 'id, nombre_completo, municipio, telefono, fecha_alta' : 'id, nombre_completo, municipio, telefono';
-  const res = await traerTodoPaginado((a, b) => sb.from('perfiles').select(cols).not('nombre_completo', 'is', null).order('nombre_completo', { ascending:true }).range(a, b));
+  const cols = (FECHA_ALTA_OK ? 'id, nombre_completo, municipio, telefono, fecha_alta' : 'id, nombre_completo, municipio, telefono') + ', dni_nie';
+  const res = await traerTodoParalelo((a, b) => sb.from('perfiles').select(cols).not('nombre_completo', 'is', null).order('nombre_completo', { ascending:true }).order('id', { ascending:true }).range(a, b));
   if(res.error && FECHA_ALTA_OK && /fecha_alta/i.test(res.error.message)){ FECHA_ALTA_OK = false; return cargarTodasLasPersonas(); }
+  if(res.error && /dni_nie/i.test(res.error.message)){ const r2 = await traerTodoPaginado((a, b) => sb.from('perfiles').select(FECHA_ALTA_OK ? 'id, nombre_completo, municipio, telefono, fecha_alta' : 'id, nombre_completo, municipio, telefono').not('nombre_completo', 'is', null).order('nombre_completo', { ascending:true }).range(a, b)); return r2.error ? { error: r2.error } : { data: r2.data }; }
   return res.error ? { error: res.error } : { data: res.data };
 }
 function letraInicialPersona(nombre){
@@ -5152,7 +5372,7 @@ function letraInicialPersona(nombre){
 function personasPestanasHtml(){
   const esCA = LANG_I === 'ca';
   const b = (id, txt) => `<button class="imp-tab${__personasVista === id ? ' on' : ''}" onclick="personasCambiarVista('${id}')">${txt}</button>`;
-  return `<div class="imp-tabs" style="margin-bottom:10px;">${FECHA_ALTA_OK ? b('fecha', '📅 ' + (esCA?'Per data d\'alta':'Por fecha de alta')) : ''}${b('az', '🔤 A–Z')}${HISTORICAS_OK ? b('hist', '🗄️ ' + (esCA?'Històric':'Histórico')) : ''}</div>`;
+  return `<div class="imp-tabs" style="margin-bottom:10px;">${FECHA_ALTA_OK ? b('fecha', '📅 ' + (esCA?'Per data d\'alta':'Por fecha de alta')) : ''}${b('az', '🔤 A–Z')}${b('stats', '📊 ' + (esCA?'Estadístiques':'Estadísticas'))}${HISTORICAS_OK ? b('hist', '🗄️ ' + (esCA?'Històric':'Histórico')) : ''}</div>`;
 }
 function personasCambiarVista(v){
   __personasVista = v;
@@ -5169,9 +5389,13 @@ async function renderPersonasScreen(texto){
   // Al teclear solo se vuelve a pintar la lista (así el cuadro de búsqueda no pierde el cursor)
   if(texto === undefined || !document.getElementById('personas-lista')){
     cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
+    const pHist = HISTORICAS_OK ? histCargarParaLista() : Promise.resolve([]);   // a la vez que las personas con cuenta
     const res = await cargarTodasLasPersonas();
     if(res.error){ cont.innerHTML = `<div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);">⚠️ ${escAttr(res.error.message)}</div>`; return; }
-    __personasTodas = res.data;
+    // Las personas del histórico entran en la lista como «ficha sin cuenta · consentimiento en papel»
+    window.__personasHistUnif = HISTORICAS_OK ? histUnificar(res.data, await pHist) : [];
+    __personasTodas = res.data.concat(window.__personasHistUnif)
+      .sort((a, b) => normTxt(a.nombre_completo).localeCompare(normTxt(b.nombre_completo)));
     if(!__personasVista || (__personasVista === 'fecha' && !FECHA_ALTA_OK) || (__personasVista === 'hist' && !HISTORICAS_OK)) __personasVista = FECHA_ALTA_OK ? 'fecha' : 'az';
     cont.innerHTML = `
       <div class="field"><input type="text" id="personas-buscar" placeholder="${esCA?'Cerca per nom, DNI o telèfon (també a l\'històric)...':'Buscar por nombre, DNI o teléfono (también en el histórico)...'}" value="${escAttr(texto || '')}" oninput="renderPersonasScreen(this.value)"></div>
@@ -5198,37 +5422,42 @@ function pintarListaPersonas(texto){
   if(!caja) return;
   const esCA = LANG_I === 'ca';
   const q = normTxt(texto.trim());
-  const fila = filaPersonaActual;
+  const fila = filaPersonaUnif;
+  const unificado = !!(window.__personasHistUnif && window.__personasHistUnif.length);
+  if(__personasVista === 'stats' && q.length < 2){ estPintar(caja); return; }
+  const lista = personasFiltradas();
 
   if(q.length >= 2){
-    const encontradas = __personasTodas.filter(p => normTxt(p.nombre_completo).includes(q) || String(p.telefono || '').replace(/\s/g, '').includes(q.replace(/\s/g, '')));
+    const qd = pNormDni(texto);
+    const encontradas = lista.filter(p => normTxt(p.nombre_completo).includes(q) || String(p.telefono || '').replace(/\s/g, '').includes(q.replace(/\s/g, '')) || (qd.length >= 4 && pNormDni(p.dni_nie).includes(qd)));
     const mostradas = encontradas.slice(0, 100);
-    caja.innerHTML = `<div class="section-label" style="margin-top:4px;">${esCA?'Persones actuals':'Personas actuales'} (${encontradas.length})</div>`
+    caja.innerHTML = personasFiltroHtml() + `<div class="section-label" style="margin-top:4px;">${unificado ? (esCA?'Persones':'Personas') : (esCA?'Persones actuals':'Personas actuales')} (${encontradas.length})</div>`
       + (mostradas.length
         ? `<div class="panel-card">${mostradas.map(fila).join('')}</div>${encontradas.length > 100 ? `<p class="subtle" style="font-size:12px;">${esCA?'Es mostren 100 de':'Se muestran 100 de'} ${encontradas.length}. ${esCA?'Afina la cerca.':'Afina la búsqueda.'}</p>` : ''}`
         : `<div class="empty-note">${esCA ? 'Sense resultats.' : 'Sin resultados.'}</div>`)
-      + (HISTORICAS_OK ? `<div class="section-label" style="margin-top:14px;">🗄️ ${esCA?'Històric (anys anteriors)':'Histórico (años anteriores)'}</div><div id="personas-hist-res"><div class="placeholder">${TI[LANG_I].cargando}</div></div>` : '');
-    if(HISTORICAS_OK) histBuscar(texto.trim());
+      + (HISTORICAS_OK && !unificado ? `<div class="section-label" style="margin-top:14px;">🗄️ ${esCA?'Històric (anys anteriors)':'Histórico (años anteriores)'}</div><div id="personas-hist-res"><div class="placeholder">${TI[LANG_I].cargando}</div></div>` : '');
+    if(HISTORICAS_OK && !unificado) histBuscar(texto.trim());
     return;
   }
   if(__personasVista === 'hist'){ histPintarVista(caja); return; }
-  if(!__personasTodas.length){ caja.innerHTML = `<div class="empty-note">${esCA ? 'Encara no hi ha persones.' : 'Todavía no hay personas.'}</div>`; return; }
+  if(!lista.length){ caja.innerHTML = personasFiltroHtml() + `<div class="empty-note">${esCA ? 'Encara no hi ha persones.' : 'Todavía no hay personas.'}</div>`; return; }
 
   if(__personasVista === 'fecha' && FECHA_ALTA_OK){
     // Año → mes de alta. Lo más reciente primero.
     const anios = {};
-    __personasTodas.forEach(p => {
+    lista.forEach(p => {
       const d = p.fecha_alta ? new Date(p.fecha_alta) : null;
-      const a = d && !isNaN(d) ? d.getFullYear() : 0, m = a ? d.getMonth() : 0;
+      let a = d && !isNaN(d) ? d.getFullYear() : 0, m = a ? d.getMonth() : 0;
+      if(!a && p.__hist && p.anio_alta){ a = p.anio_alta; m = -1; }   // histórico con año pero sin fecha exacta
       ((anios[a] = anios[a] || {})[m] = (anios[a][m] || [])).push(p);
     });
     const hoy = new Date();
     const claves = Object.keys(anios).map(Number).sort((x, y) => (x === 0 ? -1 : y === 0 ? 1 : y - x)).filter(a => a !== 0).concat(anios[0] ? [0] : []);
-    caja.innerHTML = `<div class="carpetas-lista">${carpetasBarra(`${__personasTodas.length} ${esCA?'persones':'personas'}`)}${claves.map(a => {
+    caja.innerHTML = personasFiltroHtml() + `<div class="carpetas-lista">${carpetasBarra(personasResumenTxt(lista))}${claves.map(a => {
       const meses = anios[a];
       const total = Object.values(meses).reduce((s, l) => s + l.length, 0);
       const cuerpo = Object.keys(meses).map(Number).sort((x, y) => y - x).map(m => carpetaDesplegable({
-        clave: `persf:${a}-${m}`, icono: '🗓️', titulo: a ? `${nombreMes(m)} ${a}` : (esCA?'Sense data d\'alta':'Sin fecha de alta'), cuenta: meses[m].length,
+        clave: `persf:${a}-${m}`, icono: '🗓️', titulo: a ? (m === -1 ? `${a} · ${esCA?'sense mes':'sin mes'}` : `${nombreMes(m)} ${a}`) : (esCA?'Sense data d\'alta':'Sin fecha de alta'), cuenta: meses[m].length,
         abierta: a === hoy.getFullYear() && m === hoy.getMonth(),
         cuerpo: meses[m].map(fila).join('')
       })).join('');
@@ -5237,9 +5466,9 @@ function pintarListaPersonas(texto){
     return;
   }
   const porLetra = {};
-  __personasTodas.forEach(p => { const l = letraInicialPersona(p.nombre_completo); (porLetra[l] = porLetra[l] || []).push(p); });
+  lista.forEach(p => { const l = letraInicialPersona(p.nombre_completo); (porLetra[l] = porLetra[l] || []).push(p); });
   const letras = Object.keys(porLetra).sort((a, b) => a === '#' ? 1 : b === '#' ? -1 : a.localeCompare(b));
-  caja.innerHTML = `<div class="carpetas-lista">${letras.length > 1 ? carpetasBarra(`${__personasTodas.length} ${esCA?'persones':'personas'}`) : ''}${letras.map(l => carpetaDesplegable({
+  caja.innerHTML = personasFiltroHtml() + `<div class="carpetas-lista">${letras.length > 1 ? carpetasBarra(personasResumenTxt(lista)) : ''}${letras.map(l => carpetaDesplegable({
     clave: 'pers:' + l, icono: '🔤', titulo: l, cuenta: porLetra[l].length, abierta: letras.length === 1, cuerpo: porLetra[l].map(fila).join('')
   })).join('')}</div>`;
 }
@@ -5315,6 +5544,7 @@ function histVer(id){
   const dato = (e, v) => v ? `<div class="ja-dato"><span>${escAttr(e)}</span>${escAttr(v)}</div>` : '';
   histOverlay(`<h3 style="margin:0 0 4px;">${escAttr(p.nombre_completo)}</h3>
     <p class="subtle" style="margin:0 0 10px;">${esCA?'Històric':'Histórico'} · ${escAttr(p.codigo || '')} · ${p.anio}</p>
+    ${histVerExtraHtml(p)}
     ${dato(esCA?'Data d\'alta':'Fecha de alta', p.fecha_alta ? fechaCorta(p.fecha_alta) : '')}${dato('DNI/NIE', p.dni_nie)}${dato(esCA?'Telèfon':'Teléfono', p.telefono)}${dato(esCA?'Correu':'Correo', p.email)}
     ${dato(esCA?'Municipi':'Municipio', p.municipio)}${dato(esCA?'Codi postal':'Código postal', p.cp)}${dato(esCA?'Sexe':'Sexo', p.sexo)}${dato(esCA?'Naixement':'Nacimiento', p.fecha_nacimiento ? fechaCorta(p.fecha_nacimiento) : (p.edad_alta != null ? p.edad_alta + (esCA?' anys':' años') : ''))}
     ${dato(esCA?'Nacionalitat':'Nacionalidad', p.nacionalidad)}${dato(esCA?'Tipus':'Tipo', p.tipo)}${dato(esCA?'Servei':'Servicio', p.servicio)}${dato(esCA?'Projecte':'Proyecto', p.proyecto)}${dato(esCA?'Notes':'Notas', p.notas)}${HIST_ETHOS ? (IS_ADMIN ? `<div class="ja-dato"><span>ETHOS</span><select onchange="histGuardarEthos('${p.id}', this.value)"><option value="">—</option>${ETHOS_OPTS.map(o => `<option value="${o[0]}" ${p.ethos===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div>` : dato('ETHOS', p.ethos ? etiquetaOpt(ETHOS_OPTS, p.ethos) : '')) : ''}${dato(esCA?'Lot':'Lote', p.origen)}
@@ -5334,6 +5564,7 @@ async function histGuardarEthos(id, valor){
   if(__histCache[id]) __histCache[id].ethos = valor || null;
 }
 async function histBorrar(id){
+  window.__histCacheLista = null;
   const esCA = LANG_I === 'ca';
   if(!confirm(esCA ? 'Segur que vols esborrar aquesta persona de l\'històric?' : '¿Seguro que quieres borrar a esta persona del histórico?')) return;
   const { error } = await sb.from('personas_historicas').delete().eq('id', id);
@@ -5500,6 +5731,7 @@ function histPreview(){
     <span id="hist-progreso" class="subtle" style="margin-left:10px;"></span>`;
 }
 async function histImportar(){
+  window.__histCacheLista = null;
   const esCA = LANG_I === 'ca', st = __histImp;
   const c = histConvertir(); if(!c.filas.length) return;
   if(!confirm(esCA ? `Importar ${c.filas.length} persones a l'històric? (segons la casella de duplicats)` : `¿Importar ${c.filas.length} personas al histórico? (según tengas marcada la casilla de duplicados)`)) return;
@@ -5543,6 +5775,7 @@ async function histVerLotes(){
   host.innerHTML = Object.keys(lotes).length ? Object.entries(lotes).map(([o, n]) => `<div class="panel-stat-row"><span>${escAttr(o)}<br><span class="subtle" style="font-size:11px;margin:0;">${n.toLocaleString()} ${esCA?'persones':'personas'}</span></span><button class="link-btn" style="color:var(--alert);font-size:12px;" onclick="histBorrarLote(decodeURIComponent('${encodeURIComponent(o)}'))">${esCA?'Desfer el lot':'Deshacer el lote'}</button></div>`).join('') : `<div class="empty-note">${esCA?'Cap lot importat.':'Ningún lote importado.'}</div>`;
 }
 async function histBorrarTodo(){
+  window.__histCacheLista = null;
   const esCA = LANG_I === 'ca';
   if(!IS_ADMIN){ alert(esCA ? 'Només l\'administració pot esborrar.' : 'Solo la administración puede borrar.'); return; }
   if(!confirm(esCA ? 'Esborrar TOT l\'històric (totes les persones importades)? No es pot desfer.' : '¿Borrar TODO el histórico (todas las personas importadas)? No se puede deshacer.')) return;
@@ -5552,6 +5785,7 @@ async function histBorrarTodo(){
   histVerLotes(); const caja = document.getElementById('personas-lista'); if(caja && __personasVista === 'hist') histPintarVista(caja);
 }
 async function histBorrarLote(origen){
+  window.__histCacheLista = null;
   const esCA = LANG_I === 'ca';
   if(!confirm(esCA ? `Esborrar TOTES les persones del lot «${origen}»? No es pot desfer.` : `¿Borrar TODAS las personas del lote «${origen}»? No se puede deshacer.`)) return;
   const q = origen === '—' ? sb.from('personas_historicas').delete().is('origen', null) : sb.from('personas_historicas').delete().eq('origen', origen);
@@ -5597,9 +5831,10 @@ async function obtenerPersonasParaExport(completo){
   if(completo){
     const ca = LANG_I === 'ca';
     return {
-      cabecera: CAMPOS_PERSONA.map(personaEtiqueta).concat(ca ? ['Any d\'alta', 'Mes d\'alta', 'Tràmits', 'Tràmits oberts', 'Serveis', 'Projectes', 'Propera cita'] : ['Año de alta', 'Mes de alta', 'Trámites', 'Trámites abiertos', 'Servicios', 'Proyectos', 'Próxima cita']),
+      cabecera: CAMPOS_PERSONA.map(personaEtiqueta).concat(ca ? ['Any d\'alta', 'Mes d\'alta', 'Tràmits', 'Tràmits oberts', 'Serveis', 'Projectes', 'Propera cita', 'Tipus de fitxa'] : ['Año de alta', 'Mes de alta', 'Trámites', 'Trámites abiertos', 'Servicios', 'Proyectos', 'Próxima cita', 'Tipo de ficha']),
       filas: perfiles.map(p => { const x = porPersona[p.id] || juntar(); const d = new Date(p.fecha_alta || p.creado_en || ''); const ok = !isNaN(d); const pc = proximaCita[p.id];
-        return CAMPOS_PERSONA.map(c => c[3](p)).concat([ok ? d.getFullYear() : '', ok ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` : '', lista(x.tr), abiertos[p.id] ? String(abiertos[p.id]) : '', lista(x.sv), lista(x.py), pc ? personaFecha(pc.fecha) + (pc.hora ? ' ' + String(pc.hora).slice(0, 5) : '') : '']); })
+        return CAMPOS_PERSONA.map(c => c[3](p)).concat([ok ? d.getFullYear() : '', ok ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` : '', lista(x.tr), abiertos[p.id] ? String(abiertos[p.id]) : '', lista(x.sv), lista(x.py), pc ? personaFecha(pc.fecha) + (pc.hora ? ' ' + String(pc.hora).slice(0, 5) : '') : '', ca ? 'Amb compte' : 'Con cuenta']); })
+        .concat(await histExportFilas(perfRes.data || [], hayTexto ? q : ''))
     };
   }
   return {
@@ -11017,12 +11252,13 @@ async function renderImpacto(tab){
   cont.innerHTML = impPestanasHtml() + `<div id="imp-cuerpo"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`;
   const cuerpo = document.getElementById('imp-cuerpo');
   if(st.tab === 'fichas') await impRenderFichas(cuerpo);
+  else if(st.tab === 'memoria') await memRenderControles(cuerpo);
   else if(st.tab === 'metodo') impRenderMetodo(cuerpo);
   else await impRenderPanel(cuerpo);
 }
 function impPestanasHtml(){
   const st = window.__imp;
-  const tabs = [['panel', '📊', acL('Panel de impacto', "Panell d'impacte")], ['fichas', '📝', acL('Mis fichas', 'Les meves fitxes')], ['metodo', '🧭', acL('Método', 'Mètode')]];
+  const tabs = [['panel', '📊', acL('Panel de impacto', "Panell d'impacte")], ['memoria', '📄', acL('Memoria para organismos', 'Memòria per a organismes')], ['fichas', '📝', acL('Mis fichas', 'Les meves fitxes')], ['metodo', '🧭', acL('Método', 'Mètode')]];
   return `<div class="imp-tabs imp-noprint">${tabs.map(([k, ic, t]) => `<button class="imp-tab${st.tab === k ? ' on' : ''}" onclick="renderImpacto('${k}')">${ic} ${t}</button>`).join('')}</div>`;
 }
 
@@ -13242,7 +13478,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-23 · v134 (Subvenciones: recordatorios 5 meses / 1 mes / 1 semana + correo)';
+const APP_VERSION_INTRANET = '2026-10-26 · v136 (recordatorio de sala al fichar, salida olvidada, aviso de fichaje en móvil arriba, flechas, histórico, estadísticas y memoria)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -16062,13 +16298,26 @@ function renderFilasFichajes(fichajes){
           <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             ${horaFmt(f.entrada)} ${ubicacionHtml(f.entrada_lat, f.entrada_lng)}
             ${f.salida ? `– ${horaFmt(f.salida)} ${ubicacionHtml(f.salida_lat, f.salida_lng)} (${duracionFmt(f.entrada, f.salida)})` : `<span class="chip gold">${t.enCurso}</span>`}
-            ${f.cerrado_automaticamente ? `<span class="chip alert" title="${f.nota||''}">⚠️ ${LANG_I==='ca'?'Tancat automàticament':'Cerrado automático'}</span>` : ''}
+            ${f.cerrado_automaticamente ? (FICHAJE_MARCA_REVISADO.test(f.nota || '') ? `<span class="chip gold" title="${escAttr(f.nota||'')}">✍️ ${LANG_I==='ca'?'Sortida indicada per la persona':'Salida indicada por la persona'}</span>` : `<span class="chip alert" title="${escAttr(f.nota||'')}">⚠️ ${LANG_I==='ca'?'Sortida oblidada · pendent':'Salida olvidada · pendiente'}</span>`) : ''}
+            ${f.cerrado_automaticamente && f.salida ? `<button class="link-btn" style="font-size:11px;" onclick="fichajeCorregirAdmin('${f.id}', '${f.entrada}')">✏️ ${LANG_I==='ca'?'Corregir sortida':'Corregir salida'}</button>` : ''}
             <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="borrarFichaje('${f.id}')">${LANG_I==='ca'?'Esborrar':'Borrar'}</button>
           </span>
         </div>`).join('')
     : `<div class="empty-note">${t.sinFichajes}</div>`;
 }
 
+async function fichajeCorregirAdmin(id, entradaIso){
+  const ent = new Date(entradaIso);
+  const v = prompt(acL(`Hora real de salida del ${ent.toLocaleDateString('es-ES')} (entrada a las ${ent.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}). Formato HH:MM:`, `Hora real de sortida del ${ent.toLocaleDateString('es-ES')} (entrada a les ${ent.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}). Format HH:MM:`));
+  if(v === null) return;
+  if(!/^\d{1,2}:\d{2}$/.test(v.trim())){ alert(acL('Formato: HH:MM, por ejemplo 14:00.', 'Format: HH:MM, per exemple 14:00.')); return; }
+  const [h, m] = v.trim().split(':').map(Number); const sal = new Date(ent); sal.setHours(h, m, 0, 0);
+  if(sal <= ent){ alert(acL('La salida tiene que ser después de la entrada.', 'La sortida ha de ser després de l\'entrada.')); return; }
+  const { error } = await sb.from('fichajes').update({ salida: sal.toISOString(), nota: `Salida olvidada: corregida por RRHH/la administración a las ${v.trim()} (${CURRENT_USER.email}, ${new Date().toLocaleDateString('es-ES')}).` }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  alert(acL('✅ Salida corregida.', '✅ Sortida corregida.'));
+  try { if(typeof renderGestionPersonal === 'function' && document.getElementById('screen-gestionpersonal').classList.contains('active')) renderGestionPersonal(); else renderAdministrador(); } catch(e){}
+}
 async function borrarFichaje(fichajeId){
   const esCA = LANG_I === 'ca';
   if(!confirm(esCA ? 'Segur que vols esborrar aquest fitxatge?' : '¿Seguro que quieres borrar este fichaje?')) return;
@@ -16428,6 +16677,521 @@ function guiaPrimeraVezIntranet(){
   revisar();
   try { new MutationObserver(revisar).observe(document.body, { childList:true, subtree:true }); } catch(e){}
 })();
+</script>
+<script>
+// =====================================================================================
+// v135 · HISTÓRICO COMO FICHAS SIN CUENTA + ESTADÍSTICAS DE PERSONAS + MEMORIA DE IMPACTO
+// =====================================================================================
+
+// ---------- 1) Histórico dentro de «Personas usuarias» (fichas sin cuenta, consentimiento en papel) ----------
+let HIST_CONS = false;                 // true cuando existe el SQL 38 (consentimiento_papel, perfil_id)
+let __personasFiltro = 'todas';        // todas | cuenta | papel
+window.__personasHistUnif = null;      // fichas del histórico ya unificadas (una por persona)
+
+const pNormDni = v => String(v || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+const pSoloDigitos = v => String(v || '').replace(/\D/g, '');
+
+// Trae todas las filas pidiendo varias tandas de 1000 A LA VEZ (antes, una detrás de otra)
+async function traerTodoParalelo(fabrica, aLaVez){
+  const n = aLaVez || 4, todo = [];
+  for(let base = 0; base < 60000; base += 1000 * n){
+    const r = await Promise.all(Array.from({ length: n }, (_, k) => fabrica(base + k * 1000, base + k * 1000 + 999)));
+    for(const x of r){ if(x.error) return { error: x.error, data: todo }; todo.push(...(x.data || [])); if(!x.data || x.data.length < 1000) return { data: todo }; }
+  }
+  return { data: todo };
+}
+window.__histCacheLista = null;   // { t, filas, cons }: el histórico casi no cambia; se guarda 5 minutos
+async function histCargarParaLista(){
+  if(!HISTORICAS_OK) return [];
+  const c = window.__histCacheLista;
+  if(c && Date.now() - c.t < 5 * 60000){ HIST_CONS = c.cons; return c.filas; }
+  const filas = await histCargarParaListaServidor();
+  window.__histCacheLista = { t: Date.now(), filas, cons: HIST_CONS };
+  return filas;
+}
+async function histCargarParaListaServidor(){
+  const base = 'id, codigo, anio, fecha_alta, nombre_completo, dni_nie, telefono, email, municipio, sexo, fecha_nacimiento, edad_alta, nacionalidad, tipo, servicio, proyecto'
+    + (HIST_V2 ? ', cp' : '') + (HIST_ETHOS ? ', ethos' : '');
+  let res = await traerTodoParalelo((a, b) => sb.from('personas_historicas').select(base + ', consentimiento_papel, consentimiento_fecha, perfil_id').order('id', { ascending: true }).range(a, b));
+  if(res.error){ HIST_CONS = false; res = await traerTodoParalelo((a, b) => sb.from('personas_historicas').select(base).order('id', { ascending: true }).range(a, b)); }
+  else HIST_CONS = true;
+  return res.error ? [] : (res.data || []);
+}
+// Una ficha por persona: une los registros de varios años y quita a quien ya tiene cuenta (mismo DNI o cuenta activada)
+function histUnificar(perfiles, filas){
+  const dniPerfil = new Set((perfiles || []).map(p => pNormDni(p.dni_nie)).filter(d => d.length >= 5));
+  const idsPerfil = new Set((perfiles || []).map(p => p.id));
+  const grupos = {};
+  (filas || []).forEach(h => {
+    if(!h.nombre_completo) return;
+    if(h.perfil_id && idsPerfil.has(h.perfil_id)) return;
+    const d = pNormDni(h.dni_nie);
+    if(d.length >= 5 && dniPerfil.has(d)) return;
+    const k = d.length >= 5 ? 'd:' + d : 'n:' + normTxt(h.nombre_completo).replace(/\s+/g, ' ').trim() + '|' + pSoloDigitos(h.telefono);
+    (grupos[k] = grupos[k] || []).push(h);
+  });
+  return Object.values(grupos).map(rows => {
+    rows.sort((a, b) => String(a.fecha_alta || (a.anio ? a.anio + '-12-31' : '9999')).localeCompare(String(b.fecha_alta || (b.anio ? b.anio + '-12-31' : '9999'))));
+    const ult = rows[rows.length - 1], pri = rows[0];
+    const val = k => { for(let i = rows.length - 1; i >= 0; i--){ const v = rows[i][k]; if(v !== null && v !== undefined && String(v).trim() !== '') return v; } return null; };
+    rows.forEach(r => { __histCache[r.id] = r; });
+    const anios = [...new Set(rows.map(r => r.anio).filter(Boolean))].sort();
+    const conF = rows.map(r => r.fecha_alta).filter(Boolean).sort();
+    return {
+      __hist: true, id: 'h:' + ult.id, histId: ult.id, histIds: rows.map(r => r.id), registros: rows.length,
+      nombre_completo: val('nombre_completo'), dni_nie: val('dni_nie'), telefono: val('telefono'), email: val('email'), municipio: val('municipio'),
+      codigo_postal: val('cp'), sexo: histSexo(val('sexo')) || val('sexo'), fecha_nacimiento: val('fecha_nacimiento'), edad_alta: val('edad_alta'),
+      nacionalidad: val('nacionalidad'), servicio: val('servicio'), proyecto: val('proyecto'), codigo: val('codigo'),
+      fecha_alta: conF[0] || null, anio_alta: conF[0] ? Number(conF[0].slice(0, 4)) : (anios[0] || null), anios,
+      consentimiento_papel: rows.every(r => r.consentimiento_papel !== false),
+      consentimiento_fecha: rows.map(r => r.consentimiento_fecha).filter(Boolean).sort()[0] || conF[0] || null
+    };
+  });
+}
+function personasFiltradas(){
+  const t = __personasTodas || [];
+  if(__personasFiltro === 'cuenta') return t.filter(p => !p.__hist);
+  if(__personasFiltro === 'papel') return t.filter(p => p.__hist);
+  return t;
+}
+function personasResumenTxt(lista){
+  const esCA = LANG_I === 'ca', h = lista.filter(p => p.__hist).length, c = lista.length - h;
+  return `${lista.length.toLocaleString()} ${esCA ? 'persones' : 'personas'}${h ? ` · ${c.toLocaleString()} ${esCA ? 'amb compte' : 'con cuenta'} · ${h.toLocaleString()} ${esCA ? 'fitxa sense compte (paper)' : 'ficha sin cuenta (papel)'}` : ''}`;
+}
+function personasFiltroHtml(){
+  if(!window.__personasHistUnif || !window.__personasHistUnif.length) return '';
+  const esCA = LANG_I === 'ca';
+  const op = [['todas', esCA ? 'Totes' : 'Todas'], ['cuenta', esCA ? 'Amb compte' : 'Con cuenta'], ['papel', esCA ? 'Sense compte · consentiment en paper' : 'Sin cuenta · consentimiento en papel']];
+  return `<label class="subtle" style="display:flex;gap:6px;align-items:center;font-size:12.5px;margin:0 0 10px;">${esCA ? 'Mostrar' : 'Mostrar'}
+    <select style="width:auto;max-width:300px;padding:5px 8px;font-size:12.5px;" onchange="__personasFiltro=this.value;pintarListaPersonas((document.getElementById('personas-buscar')||{}).value||'')">${op.map(([k, t]) => `<option value="${k}"${__personasFiltro === k ? ' selected' : ''}>${t}</option>`).join('')}</select></label>`;
+}
+function filaPersonaHist(p){
+  const esCA = LANG_I === 'ca';
+  const alta = p.fecha_alta ? ' · ' + (esCA ? 'alta ' : 'alta ') + fechaCorta(p.fecha_alta) : '';
+  const anys = p.anios && p.anios.length ? ' · ' + (esCA ? 'històric ' : 'histórico ') + p.anios.join(', ') : '';
+  return `<div class="panel-stat-row"><span>${escAttr(p.nombre_completo)} <span class="chip" style="font-size:10px;background:#EEF2F7;color:var(--navy);" title="${esCA ? 'Va signar el consentiment en paper. No té compte a Logos Acompanya.' : 'Firmó el consentimiento en papel. No tiene cuenta en Logos Acompanya.'}">📄 ${p.consentimiento_papel ? (esCA ? 'Consentiment en paper' : 'Consentimiento en papel') : (esCA ? 'Sense consentiment' : 'Sin consentimiento')}</span><br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(p.municipio || '')}${p.telefono ? ' · ' + escAttr(p.telefono) : ''}${alta}${anys}</span></span><button class="link-btn" style="font-size:12px;" onclick="histVer('${p.histId}')">${TI[LANG_I].ver}</button></div>`;
+}
+function filaPersonaUnif(p){ return p.__hist ? filaPersonaHist(p) : filaPersonaActual(p); }
+
+// Ficha del histórico: consentimiento y botón para activar su cuenta
+function histVerExtraHtml(p){
+  const esCA = LANG_I === 'ca';
+  const unif = (window.__personasHistUnif || []).find(x => x.histIds && x.histIds.includes(p.id));
+  const fecha = (unif && unif.consentimiento_fecha) || p.consentimiento_fecha || p.fecha_alta;
+  const firmado = p.consentimiento_papel !== false;
+  return `<div class="panel-card" style="margin:0 0 10px;padding:10px 12px;background:${firmado ? 'var(--good-soft,#E8F5EC)' : 'var(--alert-soft)'};">
+      <strong>${firmado ? '✅ ' + (esCA ? 'Consentiment signat en paper' : 'Consentimiento firmado en papel') : '⚠️ ' + (esCA ? 'Consentiment pendent' : 'Consentimiento pendiente')}</strong>${firmado && fecha ? ` · ${fechaCorta(fecha)}` : ''}
+      <div class="subtle" style="font-size:12px;margin:4px 0 0;">${esCA ? 'Fitxa sense compte: és a «Persones usuàries» i a les estadístiques, però no té usuari a Logos Acompanya.' : 'Ficha sin cuenta: aparece en «Personas usuarias» y en las estadísticas, pero no tiene usuario en Logos Acompanya.'}${unif && unif.registros > 1 ? ' ' + (esCA ? `Té ${unif.registros} registres (${unif.anios.join(', ')}).` : `Tiene ${unif.registros} registros (${unif.anios.join(', ')}).`) : ''}</div>
+      ${HIST_CONS && IS_ADMIN ? `<label class="checkbox-row" style="margin:8px 0 0;font-size:12.5px;"><input type="checkbox" ${firmado ? 'checked' : ''} onchange="histMarcarConsentimiento('${p.id}', this.checked)"> ${esCA ? 'Ha signat el consentiment en paper' : 'Ha firmado el consentimiento en papel'}</label>` : ''}
+    </div>
+    <button class="primary-btn" style="width:auto;margin:0 0 10px;background:var(--good);" onclick="histActivarCuenta('${p.id}')">🖊️ ${esCA ? 'Activar-li el compte (alta presencial)' : 'Activar su cuenta (alta presencial)'}</button>`;
+}
+async function histMarcarConsentimiento(id, valor){
+  const unif = (window.__personasHistUnif || []).find(x => x.histIds && x.histIds.includes(id));
+  const ids = unif ? unif.histIds : [id];
+  const { error } = await sb.from('personas_historicas').update({ consentimiento_papel: !!valor }).in('id', ids);
+  if(error){ alert(error.message); return; }
+  ids.forEach(i => { if(__histCache[i]) __histCache[i].consentimiento_papel = !!valor; });
+  window.__histCacheLista = null;
+  if(unif) unif.consentimiento_papel = !!valor;
+}
+function histActivarCuenta(id){
+  const p = __histCache[id]; if(!p) return;
+  const unif = (window.__personasHistUnif || []).find(x => x.histIds && x.histIds.includes(id)) || p;
+  histCerrar();
+  showScreen('altapresencial'); renderAltaPresencial();
+  window.__histActivarId = id;
+  const pon = (i, v) => { const el = document.getElementById(i); if(el && v) el.value = v; };
+  pon('ap-nombre', unif.nombre_completo); pon('ap-telefono', unif.telefono); pon('ap-dni', unif.dni_nie); pon('ap-email', unif.email); pon('ap-municipio', unif.municipio);
+  const cont = document.getElementById('altapresencial-content');
+  if(cont) cont.insertAdjacentHTML('afterbegin', `<div class="info-box info-box-gold" style="margin-bottom:12px;">📄 ${acL('Estás activando la cuenta de una persona del histórico. Hemos rellenado sus datos; al terminar, su ficha antigua quedará unida a la nueva cuenta (fecha de alta, sexo, nacionalidad…).', 'Estàs activant el compte d\'una persona de l\'històric. Hem omplert les seves dades; en acabar, la fitxa antiga quedarà unida al compte nou (data d\'alta, sexe, nacionalitat…).')}</div>`);
+}
+// Tras crear la cuenta: une la ficha del histórico con el perfil nuevo y le pasa los datos que faltan
+async function histVincularPerfil(histId, usuarioId){
+  const unif = (window.__personasHistUnif || []).find(x => x.histIds && x.histIds.includes(histId));
+  const p = unif || __histCache[histId]; if(!p || !usuarioId) return;
+  const ids = unif ? unif.histIds : [histId];
+  try { await sb.from('personas_historicas').update({ perfil_id: usuarioId }).in('id', ids); } catch(e){}
+  window.__histCacheLista = null;
+  const datos = {};
+  const sexo = histSexo(p.sexo); if(sexo) datos.sexo = sexo;
+  if(p.fecha_nacimiento) datos.fecha_nacimiento = p.fecha_nacimiento;
+  if(p.nacionalidad) datos.nacionalidad = p.nacionalidad;
+  if(p.codigo_postal || p.cp) datos.codigo_postal = p.codigo_postal || p.cp;
+  if(FECHA_ALTA_OK && p.fecha_alta) datos.fecha_alta = p.fecha_alta;
+  if(!Object.keys(datos).length) return;
+  let r = await sb.from('perfiles').update(datos).eq('id', usuarioId);
+  if(r.error){ delete datos.fecha_alta; try { await sb.from('perfiles').update(datos).eq('id', usuarioId); } catch(e){} }
+  window.__personasHistUnif = null;
+}
+
+// ---------- 2) ESTADÍSTICAS DE PERSONAS (sexo, edad, nacionalidad, municipio, año) ----------
+const EST_TRAMOS = ['0-17', '18-24', '25-29', '30-44', '45-54', '55-64', '65+'];
+const NAC_MAPA = [
+  [/^(espan|spain|espa$)/, 'España'], [/^(marr|moroc|marroqu)/, 'Marruecos'], [/^seneg/, 'Senegal'], [/^colomb/, 'Colombia'], [/^(ucra|ukra)/, 'Ucrania'],
+  [/^(ruman|romani|roman[ae]s|rumana)/, 'Rumanía'], [/^(argel|alger)/, 'Argelia'], [/^pakist/, 'Pakistán'], [/^hondur/, 'Honduras'], [/^venez/, 'Venezuela'],
+  [/^peru/, 'Perú'], [/^ecuad/, 'Ecuador'], [/^bolivi/, 'Bolivia'], [/^argent/, 'Argentina'], [/^nigeri/, 'Nigeria'], [/^gambi/, 'Gambia'], [/^mali/, 'Mali'],
+  [/^ghan/, 'Ghana'], [/^guinea ec/, 'Guinea Ecuatorial'], [/^guin/, 'Guinea'], [/^(rusi|russ|rus$|rusa)/, 'Rusia'], [/^(china|xina|chin)/, 'China'],
+  [/^bangl/, 'Bangladés'], [/^paragu/, 'Paraguay'], [/^(rep.*domin|domin)/, 'República Dominicana'], [/^cub/, 'Cuba'], [/^bras/, 'Brasil'], [/^chil/, 'Chile'],
+  [/^maurit/, 'Mauritania'], [/^(india|indi$)/, 'India'], [/^georg/, 'Georgia'], [/^armen/, 'Armenia'], [/^ital/, 'Italia'], [/^(franc|fran[cç]a)/, 'Francia'],
+  [/^portug/, 'Portugal'], [/^bulgar/, 'Bulgaria'], [/^ruand|^rwand/, 'Ruanda'], [/^camer/, 'Camerún'], [/^costa de marfil|^costa d.ivori|^ivory/, 'Costa de Marfil'],
+  [/^nicarag/, 'Nicaragua'], [/^salvad|^el salvad/, 'El Salvador'], [/^guatem/, 'Guatemala'], [/^mexic|^mejic/, 'México'], [/^urugu/, 'Uruguay'], [/^tunez|^tunisi|^tuni/, 'Túnez'],
+  [/^egipt|^egypt/, 'Egipto'], [/^siria|^syri/, 'Siria'], [/^afgan|^afghan/, 'Afganistán'], [/^iran/, 'Irán'], [/^irak|^iraq/, 'Irak'], [/^filipin/, 'Filipinas'], [/^polon|^polsk/, 'Polonia'],
+  [/^aleman|^alemany|^german/, 'Alemania'], [/^reino unido|^regne unit|^uk$|^brit/, 'Reino Unido']
+];
+function estNacionalidad(v){
+  const s = normTxt(v).replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+  if(!s || /^(no consta|nc|n\/c|desconoc|sin dato|-)$/.test(s)) return '';
+  const m = NAC_MAPA.find(([re]) => re.test(s));
+  if(m) return m[1];
+  return String(v).trim().toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
+}
+function estMunicipio(v){
+  const s = String(v || '').trim(); if(!s) return '';
+  return s.toLowerCase().replace(/(^|[\s'·-])\S/g, c => c.toUpperCase());
+}
+function estEdad(fnac, ref, edadDada){
+  let e = null;
+  if(fnac){ const n = new Date(String(fnac).slice(0, 10) + 'T00:00:00'), r = ref ? new Date(String(ref).slice(0, 10) + 'T00:00:00') : new Date();
+    if(!isNaN(n) && !isNaN(r)){ e = r.getFullYear() - n.getFullYear(); if(r.getMonth() < n.getMonth() || (r.getMonth() === n.getMonth() && r.getDate() < n.getDate())) e--; } }
+  if((e === null || isNaN(e)) && edadDada !== null && edadDada !== undefined && edadDada !== '') e = Number(edadDada);
+  if(e === null || isNaN(e) || e < 0 || e > 110) return '';
+  return e < 18 ? '0-17' : e < 25 ? '18-24' : e < 30 ? '25-29' : e < 45 ? '30-44' : e < 55 ? '45-54' : e < 65 ? '55-64' : '65+';
+}
+function estSexoTxt(k){ return k === 'mujer' ? acL('Mujeres', 'Dones') : k === 'hombre' ? acL('Hombres', 'Homes') : k === 'otro' ? acL('Otro', 'Altre') : acL('No consta', 'No consta'); }
+// Registro común para estadísticas y memoria: una persona = una fila
+function estPersonaDePerfil(p){
+  const alta = p.fecha_alta || p.creado_en || null;
+  return { origen: 'cuenta', id: p.id, sexo: ['mujer', 'hombre', 'otro'].includes(p.sexo) ? p.sexo : '', tramo: estEdad(p.fecha_nacimiento, alta, null),
+    nacionalidad: estNacionalidad(p.nacionalidad), municipio: estMunicipio(p.municipio), anio: alta ? Number(String(alta).slice(0, 4)) : null, alta: alta ? String(alta).slice(0, 10) : null };
+}
+function estPersonaDeHist(h){
+  return { origen: 'papel', id: h.id, sexo: histSexo(h.sexo) || '', tramo: estEdad(h.fecha_nacimiento, h.fecha_alta || (h.anio_alta ? h.anio_alta + '-07-01' : null), h.edad_alta),
+    nacionalidad: estNacionalidad(h.nacionalidad), municipio: estMunicipio(h.municipio), anio: h.anio_alta || null, alta: h.fecha_alta ? String(h.fecha_alta).slice(0, 10) : null };
+}
+async function estCargarPersonas(){
+  const cols = 'id, sexo, nacionalidad, fecha_nacimiento, municipio, creado_en' + (FECHA_ALTA_OK ? ', fecha_alta' : '') + ', dni_nie';
+  const pr = await traerTodoPaginado((a, b) => sb.from('perfiles').select(cols).not('nombre_completo', 'is', null).range(a, b));
+  const perfiles = pr.data || [];
+  if(!window.__personasHistUnif) window.__personasHistUnif = histUnificar(perfiles, await histCargarParaLista());
+  return { perfiles, hist: window.__personasHistUnif, filas: perfiles.map(estPersonaDePerfil).concat(window.__personasHistUnif.map(estPersonaDeHist)) };
+}
+function estContar(filas, clave, orden){
+  const c = {}; filas.forEach(f => { const k = f[clave] || ''; c[k] = (c[k] || 0) + 1; });
+  let ent = Object.entries(c);
+  if(orden) ent.sort((a, b) => orden.indexOf(a[0] === '' ? '~' : a[0]) - orden.indexOf(b[0] === '' ? '~' : b[0]));
+  else ent.sort((a, b) => (a[0] === '') - (b[0] === '') || b[1] - a[1]);
+  return ent;
+}
+function estTablas(filas){
+  const tot = filas.length;
+  const pct = n => tot ? (Math.round(n / tot * 1000) / 10).toString().replace('.', ',') + ' %' : '0 %';
+  const sexo = estContar(filas, 'sexo', ['mujer', 'hombre', 'otro', '~']).map(([k, n]) => [estSexoTxt(k), n, pct(n)]);
+  const edad = estContar(filas, 'tramo', EST_TRAMOS.concat('~')).map(([k, n]) => [k ? k + ' ' + acL('años', 'anys') : acL('No consta', 'No consta'), n, pct(n)]);
+  const nac = estContar(filas, 'nacionalidad').map(([k, n]) => [k || acL('No consta', 'No consta'), n, pct(n)]);
+  const conNac = filas.filter(f => f.nacionalidad), esp = conNac.filter(f => f.nacionalidad === 'España').length;
+  const origen = [[acL('Nacionalidad española', 'Nacionalitat espanyola'), esp, pct(esp)], [acL('Otras nacionalidades', 'Altres nacionalitats'), conNac.length - esp, pct(conNac.length - esp)], [acL('No consta', 'No consta'), tot - conNac.length, pct(tot - conNac.length)]].filter((r, i) => i < 2 || r[1] > 0);
+  const muni = estContar(filas, 'municipio').map(([k, n]) => [k || acL('No consta', 'No consta'), n, pct(n)]);
+  const anios = {}; filas.forEach(f => { const a = f.anio || 0; anios[a] = anios[a] || { cuenta: 0, papel: 0 }; anios[a][f.origen]++; });
+  const anio = Object.keys(anios).map(Number).sort((a, b) => (a === 0) - (b === 0) || a - b).map(a => [a || acL('Sin fecha', 'Sense data'), anios[a].cuenta + anios[a].papel, anios[a].cuenta, anios[a].papel]);
+  const cruce = EST_TRAMOS.concat('').map(tr => { const g = filas.filter(f => (f.tramo || '') === tr); return [tr ? tr + ' ' + acL('años', 'anys') : acL('No consta', 'No consta'), g.filter(f => f.sexo === 'mujer').length, g.filter(f => f.sexo === 'hombre').length, g.filter(f => f.sexo !== 'mujer' && f.sexo !== 'hombre').length, g.length]; }).filter(r => r[4] > 0);
+  return { tot, sexo, edad, nac, origen, muni, anio, cruce };
+}
+window.__est = window.__est || { origen: 'todas', anio: '' };
+function estFiltrar(filas){
+  const st = window.__est;
+  return filas.filter(f => (st.origen === 'todas' || f.origen === st.origen) && (!st.anio || String(f.anio) === String(st.anio)));
+}
+function estBarras(filas, max){
+  const m = max || Math.max(1, ...filas.map(f => f[1]));
+  return filas.map(f => `<div class="est-row"><span class="est-l">${escAttr(String(f[0]))}</span><span class="est-track"><span class="est-fill" style="width:${Math.max(f[1] ? 2 : 0, f[1] / m * 100)}%"></span></span><span class="est-v">${f[1].toLocaleString()} <small>${f[2] || ''}</small></span></div>`).join('');
+}
+async function estPintar(caja){
+  const esCA = LANG_I === 'ca';
+  caja.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const datos = await estCargarPersonas(); window.__estDatos = datos;
+  estPintarDatos(caja);
+}
+function estPintarDatos(caja){
+  caja = caja || document.getElementById('personas-lista'); if(!caja || !window.__estDatos) return;
+  const st = window.__est, esCA = LANG_I === 'ca';
+  const todas = window.__estDatos.filas, filas = estFiltrar(todas), T = estTablas(filas);
+  const anios = [...new Set(todas.map(f => f.anio).filter(Boolean))].sort((a, b) => b - a);
+  const nacTop = T.nac.slice(0, 15), nacResto = T.nac.slice(15).reduce((s, r) => s + r[1], 0);
+  const muniTop = T.muni.slice(0, 12);
+  const sel = (id, ops, val, fn) => `<select style="width:auto;padding:6px 8px;font-size:13px;" onchange="${fn}">${ops.map(([k, t]) => `<option value="${k}"${String(val) === String(k) ? ' selected' : ''}>${t}</option>`).join('')}</select>`;
+  caja.innerHTML = `
+    <div class="est-filtros imp-noprint">
+      <label>${esCA ? 'Persones' : 'Personas'} ${sel('o', [['todas', esCA ? 'Totes' : 'Todas'], ['cuenta', esCA ? 'Amb compte (actuals)' : 'Con cuenta (actuales)'], ['papel', esCA ? 'Històric (paper)' : 'Histórico (papel)']], st.origen, "window.__est.origen=this.value;estPintarDatos()")}</label>
+      <label>${esCA ? 'Any d\'alta' : 'Año de alta'} ${sel('a', [['', esCA ? 'Tots' : 'Todos']].concat(anios.map(a => [a, a])), st.anio, "window.__est.anio=this.value;estPintarDatos()")}</label>
+      <span style="flex:1"></span>
+      <button class="link-btn" onclick="estExcel()">⬇️ Excel</button>
+      <button class="link-btn" onclick="showScreen('impacto');window.__imp.tab='memoria';renderImpacto('memoria')">📄 ${esCA ? 'Memòria d\'impacte' : 'Memoria de impacto'}</button>
+    </div>
+    <div class="est-hero"><div><div class="est-big">${T.tot.toLocaleString()}</div><div class="est-sub">${esCA ? 'persones' : 'personas'}${st.anio ? ' · ' + (esCA ? 'alta el ' : 'alta en ') + st.anio : ''}</div></div>
+      ${T.sexo.filter(r => r[1]).map(r => `<div><div class="est-big sm">${r[2]}</div><div class="est-sub">${r[0]}</div></div>`).join('')}
+      <div><div class="est-big sm">${T.origen[1][2]}</div><div class="est-sub">${esCA ? 'altres nacionalitats' : 'otras nacionalidades'}</div></div></div>
+    <div class="est-grid">
+      <div class="panel-card"><h3>👥 ${esCA ? 'Per sexe' : 'Por sexo'}</h3>${estBarras(T.sexo)}</div>
+      <div class="panel-card"><h3>🎂 ${esCA ? 'Per edat (en el moment de l\'alta)' : 'Por edad (en el momento del alta)'}</h3>${estBarras(T.edad)}</div>
+      <div class="panel-card"><h3>🌍 ${esCA ? 'Per nacionalitat' : 'Por nacionalidad'}</h3>${estBarras(T.origen)}<div style="height:10px"></div>${estBarras(nacTop.concat(nacResto ? [[esCA ? 'Altres' : 'Otras', nacResto, '']] : []))}</div>
+      <div class="panel-card"><h3>📍 ${esCA ? 'Per municipi' : 'Por municipio'}</h3>${estBarras(muniTop)}</div>
+      <div class="panel-card est-ancha"><h3>📅 ${esCA ? 'Altes per any' : 'Altas por año'}</h3>
+        <div class="imp-tabla-w"><table class="imp-tabla"><thead><tr><th>${esCA ? 'Any' : 'Año'}</th><th>${esCA ? 'Total' : 'Total'}</th><th>${esCA ? 'Amb compte' : 'Con cuenta'}</th><th>${esCA ? 'Històric (paper)' : 'Histórico (papel)'}</th></tr></thead>
+        <tbody>${T.anio.map(r => `<tr><td>${r[0]}</td><td><strong>${r[1].toLocaleString()}</strong></td><td>${r[2].toLocaleString()}</td><td>${r[3].toLocaleString()}</td></tr>`).join('')}</tbody></table></div></div>
+      <div class="panel-card est-ancha"><h3>⚖️ ${esCA ? 'Sexe per tram d\'edat' : 'Sexo por tramo de edad'}</h3>
+        <div class="imp-tabla-w"><table class="imp-tabla"><thead><tr><th>${esCA ? 'Edat' : 'Edad'}</th><th>${esCA ? 'Dones' : 'Mujeres'}</th><th>${esCA ? 'Homes' : 'Hombres'}</th><th>${esCA ? 'Altre / no consta' : 'Otro / no consta'}</th><th>Total</th></tr></thead>
+        <tbody>${T.cruce.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td><strong>${r[4]}</strong></td></tr>`).join('')}</tbody></table></div></div>
+    </div>
+    <p class="subtle" style="font-size:12px;">${esCA ? 'Cada persona compta una sola vegada (encara que tingui registres de diversos anys). L\'edat es calcula en el moment de l\'alta. Les nacionalitats escrites de maneres diferents (Marroc, Marruecos…) s\'agrupen.' : 'Cada persona cuenta una sola vez (aunque tenga registros de varios años). La edad se calcula en el momento del alta. Las nacionalidades escritas de formas distintas (Marroc, Marruecos…) se agrupan.'}</p>`;
+}
+async function estExcel(){
+  if(!window.ExcelJS){ alert(acL('No se ha podido cargar el generador de Excel. Recarga la página.', 'No s\'ha pogut carregar el generador d\'Excel. Recarrega la pàgina.')); return; }
+  const T = estTablas(estFiltrar(window.__estDatos.filas)), st = window.__est, esCA = LANG_I === 'ca';
+  const libro = new window.ExcelJS.Workbook(); libro.creator = 'Logos Intranet'; libro.created = new Date();
+  const filtro = (st.origen === 'todas' ? acL('Todas las personas', 'Totes les persones') : st.origen === 'cuenta' ? acL('Con cuenta', 'Amb compte') : acL('Histórico (papel)', 'Històric (paper)')) + (st.anio ? ' · ' + acL('alta en ', 'alta el ') + st.anio : '');
+  fichaHoja(libro, acL('Resumen', 'Resum'), [acL('Indicador', 'Indicador'), acL('Valor', 'Valor')], [[acL('Filtro', 'Filtre'), filtro], [acL('Total personas', 'Total persones'), T.tot], [acL('Fecha del informe', 'Data de l\'informe'), new Date().toLocaleDateString('es-ES')]].concat(T.sexo.map(r => [r[0], r[1] + ' (' + r[2] + ')'])));
+  const cab = [acL('Categoría', 'Categoria'), acL('Personas', 'Persones'), '%'];
+  fichaHoja(libro, acL('Sexo', 'Sexe'), cab, T.sexo);
+  fichaHoja(libro, acL('Edad', 'Edat'), cab, T.edad);
+  fichaHoja(libro, acL('Nacionalidad', 'Nacionalitat'), cab, T.origen.concat([['', '', '']]).concat(T.nac));
+  fichaHoja(libro, acL('Municipio', 'Municipi'), cab, T.muni);
+  fichaHoja(libro, acL('Altas por año', 'Altes per any'), [acL('Año', 'Any'), 'Total', acL('Con cuenta', 'Amb compte'), acL('Histórico (papel)', 'Històric (paper)')], T.anio);
+  fichaHoja(libro, acL('Sexo x edad', 'Sexe x edat'), [acL('Edad', 'Edat'), acL('Mujeres', 'Dones'), acL('Hombres', 'Homes'), acL('Otro / no consta', 'Altre / no consta'), 'Total'], T.cruce);
+  const buf = await libro.xlsx.writeBuffer();
+  expDescargarBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'Estadisticas-personas-' + new Date().toISOString().slice(0, 10) + '.xlsx');
+}
+
+// ---------- 3) MEMORIA DE IMPACTO PARA ORGANISMOS ----------
+const MEM_ODS = [
+  ['1', 'Fin de la pobreza', 'Fi de la pobresa', ['inclusion', 'insercion', 'general']],
+  ['4', 'Educación de calidad', 'Educació de qualitat', ['formacion', 'digital', 'juventud', 'general']],
+  ['5', 'Igualdad de género', 'Igualtat de gènere', ['igualdad', 'general']],
+  ['8', 'Trabajo decente y crecimiento económico', 'Treball digne i creixement econòmic', ['insercion', 'general']],
+  ['10', 'Reducción de las desigualdades', 'Reducció de les desigualtats', ['inclusion', 'igualdad', 'digital', 'juventud', 'general']],
+  ['3', 'Salud y bienestar', 'Salut i benestar', ['psicologico']],
+  ['16', 'Paz, justicia e instituciones sólidas (acceso a derechos)', 'Pau, justícia i institucions sòlides (accés a drets)', ['inclusion', 'general']],
+  ['17', 'Alianzas para lograr los objetivos', 'Aliances per assolir els objectius', ['general']]
+];
+function memTextosDefecto(){
+  return {
+    destinatario: '', proyecto: '',
+    presentacion: acL('Associació Logos – Projectes Socials (NIF G55725436) es una entidad sin ánimo de lucro con sede en Carrer de la Pau del Protectorat, 14, 43004 Tarragona. Acompaña a personas y familias en situación de vulnerabilidad en el acceso a derechos, trámites, formación, empleo y participación comunitaria, con una atención cercana, profesional y orientada a la autonomía de cada persona.',
+      'Associació Logos – Projectes Socials (NIF G55725436) és una entitat sense ànim de lucre amb seu al Carrer de la Pau del Protectorat, 14, 43004 Tarragona. Acompanya persones i famílies en situació de vulnerabilitat en l\'accés a drets, tràmits, formació, ocupació i participació comunitària, amb una atenció propera, professional i orientada a l\'autonomia de cada persona.'),
+    objetivos: acL('• Facilitar el acceso a derechos, prestaciones y trámites administrativos.\n• Mejorar la empleabilidad y la inserción sociolaboral.\n• Reducir la brecha digital y aumentar la autonomía de las personas.\n• Favorecer el bienestar emocional y la participación comunitaria.',
+      '• Facilitar l\'accés a drets, prestacions i tràmits administratius.\n• Millorar l\'ocupabilitat i la inserció sociolaboral.\n• Reduir la bretxa digital i augmentar l\'autonomia de les persones.\n• Afavorir el benestar emocional i la participació comunitària.'),
+    actividades: acL('Atención individual (presencial y a distancia), acompañamiento en trámites, orientación sociolaboral, formación, derivación a recursos y seguimiento de cada itinerario. Toda la actividad se registra en la Intranet de Logos, lo que permite medir el volumen y los resultados con datos reales.',
+      'Atenció individual (presencial i a distància), acompanyament en tràmits, orientació sociolaboral, formació, derivació a recursos i seguiment de cada itinerari. Tota l\'activitat es registra a la Intranet de Logos, cosa que permet mesurar el volum i els resultats amb dades reals.'),
+    conclusiones: ''
+  };
+}
+function memCargarTextos(){ let t = memTextosDefecto(); try { const g = JSON.parse(localStorage.getItem('memoria-textos') || 'null'); if(g) t = Object.assign(t, g); } catch(e){} return t; }
+function memGuardarTextos(){
+  const t = {}; ['destinatario', 'proyecto', 'presentacion', 'objetivos', 'actividades', 'conclusiones'].forEach(k => { const el = document.getElementById('mem-' + k); if(el) t[k] = el.value; });
+  try { localStorage.setItem('memoria-textos', JSON.stringify(t)); } catch(e){}
+  return t;
+}
+window.__mem = window.__mem || { anio: String(new Date().getFullYear()), desde: '', hasta: '', programa: '' };
+function memRango(){
+  const m = window.__mem;
+  if(m.anio === 'rango' && m.desde && m.hasta) return { desde: m.desde, hasta: m.hasta };
+  const a = m.anio && m.anio !== 'rango' ? m.anio : String(new Date().getFullYear());
+  const hoy = new Date().toISOString().slice(0, 10);
+  return { desde: a + '-01-01', hasta: (a + '-12-31') < hoy ? a + '-12-31' : hoy };
+}
+async function memRenderControles(cuerpo){
+  const m = window.__mem, t = memCargarTextos(), esCA = LANG_I === 'ca';
+  const anioAct = new Date().getFullYear(), anios = []; for(let a = anioAct; a >= anioAct - 8; a--) anios.push(a);
+  cuerpo.innerHTML = `<div class="imp-noprint">
+    <div class="panel-card" style="border-color:var(--gold);">
+      <h3 style="margin-top:0;">📄 ${acL('Memoria de impacto para organismos', 'Memòria d\'impacte per a organismes')}</h3>
+      <p class="subtle" style="margin:0 0 12px;">${acL('Genera un informe listo para presentar a la Generalitat, la Diputació, el Ajuntament o una fundación: alcance, perfil de las personas, actividad, resultados de impacto y alineación con los ODS. Solo usa cifras agregadas.', 'Genera un informe llest per presentar a la Generalitat, la Diputació, l\'Ajuntament o una fundació: abast, perfil de les persones, activitat, resultats d\'impacte i alineació amb els ODS. Només fa servir xifres agregades.')}</p>
+      <div class="est-filtros">
+        <label>${acL('Periodo', 'Període')}<select id="mem-anio" onchange="window.__mem.anio=this.value;document.getElementById('mem-rango').style.display=this.value==='rango'?'flex':'none'">${anios.map(a => `<option value="${a}"${String(m.anio) === String(a) ? ' selected' : ''}>${a}</option>`).join('')}<option value="rango"${m.anio === 'rango' ? ' selected' : ''}>${acL('Fechas concretas…', 'Dates concretes…')}</option></select></label>
+        <span id="mem-rango" style="display:${m.anio === 'rango' ? 'flex' : 'none'};gap:6px;align-items:center;"><input type="date" id="mem-desde" value="${m.desde}" onchange="window.__mem.desde=this.value" style="width:auto;"> – <input type="date" id="mem-hasta" value="${m.hasta}" onchange="window.__mem.hasta=this.value" style="width:auto;"></span>
+        <label>${acL('Programa', 'Programa')}<select onchange="window.__mem.programa=this.value"><option value="">${acL('Todo Logos', 'Tot Logos')}</option>${IMP_PROGRAMAS.filter(p => p[0] !== 'general').map(p => `<option value="${p[0]}"${m.programa === p[0] ? ' selected' : ''}>${acL(p[1], p[2])}</option>`).join('')}</select></label>
+      </div>
+      <div class="mem-campos">
+        <div class="field"><label>${acL('Organismo destinatario (opcional)', 'Organisme destinatari (opcional)')}</label><input type="text" id="mem-destinatario" value="${escAttr(t.destinatario)}" placeholder="${acL('Ej.: Diputació de Tarragona', 'Ex.: Diputació de Tarragona')}"></div>
+        <div class="field"><label>${acL('Proyecto o subvención (opcional)', 'Projecte o subvenció (opcional)')}</label><input type="text" id="mem-proyecto" value="${escAttr(t.proyecto)}" placeholder="${acL('Ej.: Mirada Endavant 2026', 'Ex.: Mirada Endavant 2026')}"></div>
+      </div>
+      <details class="plegable"><summary><span>✏️ ${acL('Textos de la memoria (editables)', 'Textos de la memòria (editables)')}</span></summary><div class="plegable-c">
+        <div class="field"><label>${acL('1. Presentación de la entidad', '1. Presentació de l\'entitat')}</label><textarea id="mem-presentacion" rows="4">${escAttr(t.presentacion)}</textarea></div>
+        <div class="field"><label>${acL('2. Objetivos', '2. Objectius')}</label><textarea id="mem-objetivos" rows="4">${escAttr(t.objetivos)}</textarea></div>
+        <div class="field"><label>${acL('4. Actividades y metodología', '4. Activitats i metodologia')}</label><textarea id="mem-actividades" rows="4">${escAttr(t.actividades)}</textarea></div>
+        <div class="field"><label>${acL('8. Valoración y conclusiones (si lo dejas vacío, se redacta solo con los datos)', '8. Valoració i conclusions (si ho deixes buit, es redacta sol amb les dades)')}</label><textarea id="mem-conclusiones" rows="4">${escAttr(t.conclusiones)}</textarea></div>
+        <button class="link-btn" onclick="if(confirm('${acL('¿Volver a los textos por defecto?', 'Tornar als textos per defecte?')}')){try{localStorage.removeItem('memoria-textos')}catch(e){};renderImpacto('memoria')}">↺ ${acL('Textos por defecto', 'Textos per defecte')}</button>
+      </div></details>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+        <button class="primary-btn" style="width:auto;margin:0;" onclick="memGenerar()">📊 ${acL('Generar memoria', 'Generar memòria')}</button>
+        <button class="link-btn" id="mem-imprimir" style="display:none;" onclick="window.print()">🖨️ ${acL('Descargar PDF / imprimir', 'Descarregar PDF / imprimir')}</button>
+        <button class="link-btn" id="mem-excel" style="display:none;" onclick="memExcel()">⬇️ ${acL('Anexo de datos (Excel)', 'Annex de dades (Excel)')}</button>
+      </div>
+    </div></div>
+    <div id="mem-doc"></div>`;
+}
+function memEnRango(f, desde, hasta){ if(!f) return false; const d = String(f).slice(0, 10); return d >= desde && d <= hasta; }
+async function memDatos(desde, hasta, programa){
+  const sig = new Date(new Date(hasta + 'T00:00:00').getTime() + 86400000).toISOString().slice(0, 10);
+  const rango = (q, col) => q.gte(col, desde).lt(col, sig);
+  const [per, at, ac, tr, ci, imp, act] = await Promise.all([
+    estCargarPersonas(),
+    traerTodoPaginado((a, b) => rango(sb.from('atenciones').select('usuario_id, creado_en, prestaciones, tramites_bretxa, derivacion, como_conocio, duracion_minutos'), 'creado_en').range(a, b)),
+    traerTodoPaginado((a, b) => rango(sb.from('actuaciones').select('usuario_id, fecha, categoria, resultado, derivado_a'), 'fecha').range(a, b)),
+    traerTodoPaginado((a, b) => rango(sb.from('tramites').select('usuario_id, nombre_servicio, estado, creado_en, fecha_fin'), 'creado_en').range(a, b)),
+    traerTodoPaginado((a, b) => rango(sb.from('citas').select('usuario_id, fecha, estado'), 'fecha').range(a, b)),
+    IMPACTO_OK ? sb.rpc('impacto_resumen', { p_desde: desde, p_hasta: hasta, p_programa: programa || null }) : Promise.resolve({ data: null }),
+    impActividad(desde, hasta)
+  ]);
+  const atenciones = at.data || [], actuaciones = ac.data || [], tramites = sinBorrados(tr.data), citas = sinBorrados(ci.data);
+  // Personas atendidas en el periodo: con alguna atención, actuación, trámite o cita + fichas del histórico con alta en el periodo
+  const idsAtendidas = new Set([...atenciones, ...actuaciones, ...tramites, ...citas].map(x => x.usuario_id).filter(Boolean));
+  const perfPorId = {}; per.filas.filter(f => f.origen === 'cuenta').forEach(f => { perfPorId[f.id] = f; });
+  const filasCuenta = [...idsAtendidas].map(id => perfPorId[id]).filter(Boolean);
+  const filasHist = per.filas.filter(f => f.origen === 'papel' && memEnRango(f.alta || (f.anio ? f.anio + '-07-01' : null), desde, hasta));
+  const sinCuenta = atenciones.filter(a => !a.usuario_id).length;
+  const atendidas = filasCuenta.concat(filasHist);
+  const nuevas = per.filas.filter(f => memEnRango(f.alta || (f.origen === 'papel' && f.anio ? f.anio + '-07-01' : null), desde, hasta));
+  // Servicios más frecuentes
+  const cuenta = {}; const suma = k => { if(!k) return; cuenta[k] = (cuenta[k] || 0) + 1; };
+  atenciones.forEach(a => { [...(a.prestaciones || []), ...(a.tramites_bretxa || [])].forEach(suma); });
+  tramites.forEach(t => suma(t.nombre_servicio));
+  actuaciones.forEach(x => suma(x.categoria));
+  const servicios = Object.entries(cuenta).sort((a, b) => b[1] - a[1]).slice(0, 12);
+  const conocio = {}; atenciones.forEach(a => { if(a.como_conocio){ const o = COMO_CONOCIO_OPTS.find(x => x[0] === a.como_conocio); const k = o ? ((typeof TXT_ES_CA !== 'undefined' && LANG_I === 'ca' && TXT_ES_CA[o[1]]) ? TXT_ES_CA[o[1]] : o[1]) : a.como_conocio; conocio[k] = (conocio[k] || 0) + 1; } });
+  const minutos = atenciones.reduce((s, a) => s + (Number(a.duracion_minutos) || 0), 0);
+  const tramFin = tramites.filter(t => t.estado === 'hecho').length;
+  const derivaciones = atenciones.filter(a => a.derivacion && a.derivacion !== 'no' && a.derivacion !== 'ninguna').length + actuaciones.filter(x => x.derivado_a && !/^no/i.test(x.derivado_a)).length;
+  const resultados = {}; actuaciones.forEach(x => { if(x.resultado) resultados[x.resultado] = (resultados[x.resultado] || 0) + 1; });
+  return { desde, hasta, programa, atendidas, filasHist, sinCuenta, nuevas, T: estTablas(atendidas), act: act || {}, atencionesN: atenciones.length, actuacionesN: actuaciones.length,
+    tramitesN: tramites.length, tramFin, citasN: citas.length, minutos, servicios, conocio: Object.entries(conocio).sort((a, b) => b[1] - a[1]), derivaciones, resultados,
+    imp: (imp && imp.data) || null };
+}
+function memFrasesConclusion(d){
+  const r = d.imp || {}, g = r.global || {}, T = d.T, esCA = LANG_I === 'ca';
+  const muj = (T.sexo.find(x => x[0] === estSexoTxt('mujer')) || [0, 0, '0 %'])[2];
+  const ext = T.origen[1][2];
+  const f = [];
+  f.push(acL(`Durante el periodo, Logos ha acompañado a ${T.tot.toLocaleString()} personas (${muj} mujeres; ${ext} de nacionalidad extranjera), con ${d.atencionesN.toLocaleString()} atenciones, ${d.actuacionesN.toLocaleString()} actuaciones y ${d.tramitesN.toLocaleString()} trámites iniciados.`,
+    `Durant el període, Logos ha acompanyat ${T.tot.toLocaleString()} persones (${muj} dones; ${ext} de nacionalitat estrangera), amb ${d.atencionesN.toLocaleString()} atencions, ${d.actuacionesN.toLocaleString()} actuacions i ${d.tramitesN.toLocaleString()} tràmits iniciats.`));
+  if(g.mejora !== null && g.mejora !== undefined) f.push(acL(`De las ${g.n} personas con medición inicial y de cierre, el ${impPct(g.mejora)} mejoró al menos en una dimensión (empleo, aprendizaje, autonomía o bienestar).`, `De les ${g.n} persones amb mesura inicial i de tancament, el ${impPct(g.mejora)} ha millorat almenys en una dimensió (ocupació, aprenentatge, autonomia o benestar).`));
+  const ins = r.insercion || {};
+  if(ins.tasa !== null && ins.tasa !== undefined) f.push(acL(`La tasa de inserción laboral de las personas que empezaron sin empleo fue del ${impPct(ins.tasa)}.`, `La taxa d'inserció laboral de les persones que van començar sense feina va ser del ${impPct(ins.tasa)}.`));
+  f.push(acL('Estos resultados muestran la contribución de Logos a la inclusión y la autonomía de las personas atendidas; la entidad seguirá ampliando la medición de seguimiento a 6 y 12 meses para reforzar la evidencia de impacto.', 'Aquests resultats mostren la contribució de Logos a la inclusió i l\'autonomia de les persones ateses; l\'entitat continuarà ampliant la mesura de seguiment a 6 i 12 mesos per reforçar l\'evidència d\'impacte.'));
+  return f.join('\n\n');
+}
+function memTablaHtml(cab, filas){ return `<table class="mem-tabla"><thead><tr>${cab.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${filas.map(f => `<tr>${f.map((c, i) => `<td${i ? ' class="num"' : ''}>${escAttr(String(c))}</td>`).join('')}</tr>`).join('')}</tbody></table>`; }
+function memTextoHtml(t){ return escAttr(t || '').split(/\n{2,}/).map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join(''); }
+async function memGenerar(){
+  const t = memGuardarTextos(), m = window.__mem;
+  if(m.anio === 'rango' && !(m.desde && m.hasta)){ alert(acL('Elige las dos fechas del periodo.', 'Tria les dues dates del període.')); return; }
+  const { desde, hasta } = memRango();
+  const doc = document.getElementById('mem-doc');
+  doc.innerHTML = `<div class="placeholder">${acL('Preparando la memoria… (puede tardar unos segundos)', 'Preparant la memòria… (pot trigar uns segons)')}</div>`;
+  let d; try { d = await memDatos(desde, hasta, m.programa); } catch(e){ doc.innerHTML = gpAviso(escAttr(e.message || String(e))); return; }
+  window.__memDatos = d; window.__memTextos = t;
+  const r = d.imp || {}, g = r.global || {}, T = d.T, esCA = LANG_I === 'ca';
+  const logo = (document.querySelector('.brand-logo-sidebar') || {}).src || '';
+  const periodo = `${impFecha(desde)} – ${impFecha(hasta)}`;
+  const prog = m.programa ? impProg(m.programa) : acL('Todos los programas', 'Tots els programes');
+  const kpi = (v, l) => `<div class="mem-kpi"><div class="mem-kpi-v">${v}</div><div class="mem-kpi-l">${l}</div></div>`;
+  const pct = (n, tot) => tot ? (Math.round(n / tot * 1000) / 10).toString().replace('.', ',') + ' %' : '–';
+  const nacTop = T.nac.slice(0, 12), nacResto = T.nac.slice(12).reduce((s, x) => s + x[1], 0);
+  const ods = MEM_ODS.filter(o => !m.programa ? o[3].includes('general') : o[3].includes(m.programa));
+  const horas = Math.round(d.minutos / 60);
+  const dims = r.dims || {};
+  const dimFila = (k, nom) => { const x = dims[k] || {}; return [nom, x.n || 0, x.mejora === null || x.mejora === undefined ? acL('datos insuficientes', 'dades insuficients') : impPct(x.mejora)]; };
+  let n = 0; const sec = tit => `<h2 class="mem-h2"><span>${++n}</span> ${tit}</h2>`;
+  doc.innerHTML = `<article class="mem-doc">
+    <section class="mem-portada">
+      ${logo ? `<div class="mem-logo-band"><img src="${logo}" alt="Logos" class="mem-logo"></div>` : ''}
+      <div class="mem-eyebrow">${acL('Memoria de impacto social', 'Memòria d\'impacte social')}</div>
+      <h1 class="mem-h1">${t.proyecto ? escAttr(t.proyecto) : 'Associació Logos – Projectes Socials'}</h1>
+      <div class="mem-meta">${acL('Periodo', 'Període')}: <strong>${periodo}</strong> · ${escAttr(prog)}${t.destinatario ? `<br>${acL('Presentada a', 'Presentada a')}: <strong>${escAttr(t.destinatario)}</strong>` : ''}</div>
+      <div class="mem-kpis">
+        ${kpi(T.tot.toLocaleString(), acL('personas atendidas', 'persones ateses'))}
+        ${kpi(d.atencionesN.toLocaleString(), acL('atenciones', 'atencions'))}
+        ${kpi(d.actuacionesN.toLocaleString(), acL('actuaciones', 'actuacions'))}
+        ${kpi(g.mejora === null || g.mejora === undefined ? '–' : impPct(g.mejora), acL('mejora en alguna dimensión', 'millora en alguna dimensió'))}
+      </div>
+      <div class="mem-fecha">Associació Logos – Projectes Socials · NIF G55725436 · Carrer de la Pau del Protectorat, 14 · 43004 Tarragona · ${acL('Informe generado el', 'Informe generat el')} ${new Date().toLocaleDateString(esCA ? 'ca-ES' : 'es-ES')}</div>
+    </section>
+    ${sec(acL('Presentación de la entidad', 'Presentació de l\'entitat'))}${memTextoHtml(t.presentacion)}
+    ${sec(acL('Objetivos', 'Objectius'))}${memTextoHtml(t.objetivos)}
+    ${sec(acL('Alcance y perfil de las personas atendidas', 'Abast i perfil de les persones ateses'))}
+    <div class="mem-kpis sm">${kpi(T.tot.toLocaleString(), acL('personas distintas atendidas', 'persones diferents ateses'))}${kpi(d.nuevas.length.toLocaleString(), acL('nuevas altas en el periodo', 'noves altes en el període'))}${kpi(pct((T.sexo.find(x => x[0] === estSexoTxt('mujer')) || [0, 0])[1], T.tot), acL('mujeres', 'dones'))}${kpi(T.origen[1][2], acL('nacionalidad extranjera', 'nacionalitat estrangera'))}</div>
+    <div class="mem-2col">
+      <div><h3>${acL('Por sexo', 'Per sexe')}</h3>${memTablaHtml([acL('Sexo', 'Sexe'), acL('Personas', 'Persones'), '%'], T.sexo)}</div>
+      <div><h3>${acL('Por edad', 'Per edat')}</h3>${memTablaHtml([acL('Tramo', 'Tram'), acL('Personas', 'Persones'), '%'], T.edad)}</div>
+      <div><h3>${acL('Por nacionalidad', 'Per nacionalitat')}</h3>${memTablaHtml([acL('Nacionalidad', 'Nacionalitat'), acL('Personas', 'Persones'), '%'], T.origen.concat(nacTop).concat(nacResto ? [[acL('Otras', 'Altres'), nacResto, pct(nacResto, T.tot)]] : []))}</div>
+      <div><h3>${acL('Por municipio', 'Per municipi')}</h3>${memTablaHtml([acL('Municipio', 'Municipi'), acL('Personas', 'Persones'), '%'], T.muni.slice(0, 10))}</div>
+    </div>
+    <h3>${acL('Sexo por tramo de edad', 'Sexe per tram d\'edat')}</h3>${memTablaHtml([acL('Edad', 'Edat'), acL('Mujeres', 'Dones'), acL('Hombres', 'Homes'), acL('Otro / no consta', 'Altre / no consta'), 'Total'], T.cruce)}
+    ${d.sinCuenta ? `<p class="mem-nota">${acL(`Además, se registraron ${d.sinCuenta} atenciones a personas sin ficha en la plataforma (consultas puntuales), que no se incluyen en el perfil.`, `A més, es van registrar ${d.sinCuenta} atencions a persones sense fitxa a la plataforma (consultes puntuals), que no s'inclouen en el perfil.`)}</p>` : ''}
+    ${sec(acL('Actividades y metodología', 'Activitats i metodologia'))}${memTextoHtml(t.actividades)}
+    <div class="mem-kpis sm">${kpi(d.atencionesN.toLocaleString(), acL('atenciones', 'atencions'))}${kpi(horas.toLocaleString() + ' h', acL('de atención registrada', 'd\'atenció registrada'))}${kpi(d.tramitesN.toLocaleString(), acL('trámites iniciados', 'tràmits iniciats'))}${kpi(d.tramFin.toLocaleString(), acL('trámites finalizados', 'tràmits finalitzats'))}${kpi(d.citasN.toLocaleString(), acL('citas', 'cites'))}${kpi(d.derivaciones.toLocaleString(), acL('derivaciones a recursos', 'derivacions a recursos'))}${d.act.certificados ? kpi(d.act.certificados.toLocaleString(), acL('certificados de formación', 'certificats de formació')) : ''}</div>
+    ${d.servicios.length ? `<h3>${acL('Servicios y trámites más frecuentes', 'Serveis i tràmits més freqüents')}</h3>${memTablaHtml([acL('Servicio / trámite', 'Servei / tràmit'), acL('Veces', 'Vegades')], d.servicios)}` : ''}
+    ${d.conocio.length ? `<h3>${acL('Cómo llegan las personas a Logos', 'Com arriben les persones a Logos')}</h3>${memTablaHtml([acL('Vía', 'Via'), acL('Atenciones', 'Atencions')], d.conocio.slice(0, 10))}` : ''}
+    ${sec(acL('Resultados e impacto', 'Resultats i impacte'))}
+    ${g.mejora === null || g.mejora === undefined
+      ? `<p>${acL('En este periodo todavía no hay suficientes personas con medición inicial y de cierre (mínimo 5) para presentar resultados de cambio. La entidad está implantando las fichas de impacto (bienestar WHO-5, soledad UCLA-3, empleo, competencias y autonomía), que permitirán mostrarlos en próximas memorias.', 'En aquest període encara no hi ha prou persones amb mesura inicial i de tancament (mínim 5) per presentar resultats de canvi. L\'entitat està implantant les fitxes d\'impacte (benestar WHO-5, solitud UCLA-3, ocupació, competències i autonomia), que permetran mostrar-los en properes memòries.')}</p>`
+      : `<div class="mem-kpis sm">${kpi(impPct(g.mejora), acL('mejoró en al menos una dimensión', 'ha millorat en almenys una dimensió'))}${kpi(g.n, acL('personas con inicio y cierre', 'persones amb inici i tancament'))}${(r.insercion || {}).tasa !== null && (r.insercion || {}).tasa !== undefined ? kpi(impPct(r.insercion.tasa), acL('inserción laboral', 'inserció laboral')) : ''}${((r.medias || {}).satisfaccion || {}).media ? kpi(impNum(r.medias.satisfaccion.media, 1) + ' / 5', acL('satisfacción', 'satisfacció')) : ''}</div>
+        ${memTablaHtml([acL('Dimensión', 'Dimensió'), 'n', acL('Con mejora', 'Amb millora')], [dimFila('empleo', acL('Económica · empleo', 'Econòmica · ocupació')), dimFila('aprendizaje', acL('Aprendizaje', 'Aprenentatge')), dimFila('autonomia', acL('Autonomía', 'Autonomia')), dimFila('bienestar', acL('Bienestar emocional', 'Benestar emocional'))])}`}
+    ${(r.equidad && ((r.equidad.genero || []).length || (r.equidad.edad || []).length)) ? `<h3>${acL('Equidad: mejora por grupo', 'Equitat: millora per grup')}</h3>${memTablaHtml([acL('Grupo', 'Grup'), 'n', acL('Con mejora', 'Amb millora')], [...(r.equidad.genero || []).map(x => [estSexoTxt(x.clave), x.n, x.mejora === null || x.mejora === undefined ? '<5' : impPct(x.mejora)]), ...(r.equidad.edad || []).map(x => [x.clave + ' ' + acL('años', 'anys'), x.n, x.mejora === null || x.mejora === undefined ? '<5' : impPct(x.mejora)])])}` : ''}
+    ${sec(acL('Contribución a los Objetivos de Desarrollo Sostenible', 'Contribució als Objectius de Desenvolupament Sostenible'))}
+    <div class="mem-ods">${ods.map(o => `<div class="mem-ods-i"><span class="mem-ods-n">${o[0]}</span><span>${acL(o[1], o[2])}</span></div>`).join('')}</div>
+    ${sec(acL('Metodología de medición y protección de datos', 'Metodologia de mesura i protecció de dades'))}
+    <p>${acL('Los datos proceden de los registros diarios de la Intranet de Logos (atenciones, actuaciones, trámites y citas) y de las fichas de impacto, que recogen la situación de cada persona al inicio, al cierre y a los 6 y 12 meses con instrumentos validados (WHO-5 para el bienestar, UCLA-3 para la soledad) y escalas de competencias y autonomía. Cada persona se cuenta una sola vez en el periodo; la edad se calcula en el momento del alta.', 'Les dades provenen dels registres diaris de la Intranet de Logos (atencions, actuacions, tràmits i cites) i de les fitxes d\'impacte, que recullen la situació de cada persona a l\'inici, al tancament i als 6 i 12 mesos amb instruments validats (WHO-5 per al benestar, UCLA-3 per a la solitud) i escales de competències i autonomia. Cada persona es compta una sola vegada en el període; l\'edat es calcula en el moment de l\'alta.')}</p>
+    <p>${acL('La memoria solo contiene cifras agregadas: no incluye nombres ni datos que permitan identificar a nadie, y los resultados de grupos de menos de 5 personas no se muestran. Todas las personas atendidas han firmado su consentimiento de protección de datos (en papel o de forma digital), conforme al RGPD y a la LOPDGDD. Las cifras de cambio muestran asociación entre el acompañamiento y la mejora, no causalidad.', 'La memòria només conté xifres agregades: no inclou noms ni dades que permetin identificar ningú, i els resultats de grups de menys de 5 persones no es mostren. Totes les persones ateses han signat el consentiment de protecció de dades (en paper o de forma digital), d\'acord amb el RGPD i la LOPDGDD. Les xifres de canvi mostren associació entre l\'acompanyament i la millora, no causalitat.')}</p>
+    ${sec(acL('Valoración y conclusiones', 'Valoració i conclusions'))}${memTextoHtml(t.conclusiones || memFrasesConclusion(d))}
+    <div class="mem-firma"><div>${acL('Tarragona,', 'Tarragona,')} ${new Date().toLocaleDateString(esCA ? 'ca-ES' : 'es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</div><div class="mem-firma-l">${acL('Firma y sello de la entidad', 'Signatura i segell de l\'entitat')}</div></div>
+  </article>`;
+  // Cada título con su tabla, juntos (para que al imprimir no queden separados en páginas distintas)
+  doc.querySelectorAll('.mem-doc > h3').forEach(h => { const t = h.nextElementSibling; if(t && t.classList.contains('mem-tabla')){ const w = document.createElement('div'); w.className = 'mem-blq'; h.before(w); w.appendChild(h); w.appendChild(t); } });
+  ['mem-imprimir', 'mem-excel'].forEach(id => { const b = document.getElementById(id); if(b) b.style.display = ''; });
+  doc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+async function memExcel(){
+  const d = window.__memDatos; if(!d) return;
+  if(!window.ExcelJS){ alert(acL('No se ha podido cargar el generador de Excel. Recarga la página.', 'No s\'ha pogut carregar el generador d\'Excel. Recarrega la pàgina.')); return; }
+  const T = d.T, r = d.imp || {}, g = r.global || {}, libro = new window.ExcelJS.Workbook(); libro.creator = 'Logos Intranet'; libro.created = new Date();
+  const cab = [acL('Categoría', 'Categoria'), acL('Personas', 'Persones'), '%'];
+  fichaHoja(libro, acL('Indicadores', 'Indicadors'), [acL('Indicador', 'Indicador'), acL('Valor', 'Valor')], [
+    [acL('Periodo', 'Període'), impFecha(d.desde) + ' – ' + impFecha(d.hasta)], [acL('Programa', 'Programa'), d.programa ? impProg(d.programa) : acL('Todos', 'Tots')],
+    [acL('Personas distintas atendidas', 'Persones diferents ateses'), T.tot], [acL('Nuevas altas en el periodo', 'Noves altes en el període'), d.nuevas.length],
+    [acL('Atenciones', 'Atencions'), d.atencionesN], [acL('Horas de atención registradas', 'Hores d\'atenció registrades'), Math.round(d.minutos / 60)],
+    [acL('Actuaciones', 'Actuacions'), d.actuacionesN], [acL('Trámites iniciados', 'Tràmits iniciats'), d.tramitesN], [acL('Trámites finalizados', 'Tràmits finalitzats'), d.tramFin],
+    [acL('Citas', 'Cites'), d.citasN], [acL('Derivaciones a recursos', 'Derivacions a recursos'), d.derivaciones], [acL('Certificados de formación', 'Certificats de formació'), d.act.certificados || 0],
+    [acL('% mejora en alguna dimensión', '% millora en alguna dimensió'), g.mejora === null || g.mejora === undefined ? acL('datos insuficientes', 'dades insuficients') : impPct(g.mejora)],
+    [acL('Personas con inicio y cierre (n)', 'Persones amb inici i tancament (n)'), g.n || 0],
+    [acL('Inserción laboral', 'Inserció laboral'), (r.insercion || {}).tasa === null || (r.insercion || {}).tasa === undefined ? '–' : impPct(r.insercion.tasa)]]);
+  fichaHoja(libro, acL('Sexo', 'Sexe'), cab, T.sexo);
+  fichaHoja(libro, acL('Edad', 'Edat'), cab, T.edad);
+  fichaHoja(libro, acL('Nacionalidad', 'Nacionalitat'), cab, T.origen.concat([['', '', '']]).concat(T.nac));
+  fichaHoja(libro, acL('Municipio', 'Municipi'), cab, T.muni);
+  fichaHoja(libro, acL('Sexo x edad', 'Sexe x edat'), [acL('Edad', 'Edat'), acL('Mujeres', 'Dones'), acL('Hombres', 'Homes'), acL('Otro / no consta', 'Altre / no consta'), 'Total'], T.cruce);
+  fichaHoja(libro, acL('Servicios', 'Serveis'), [acL('Servicio / trámite', 'Servei / tràmit'), acL('Veces', 'Vegades')], d.servicios);
+  if(d.conocio.length) fichaHoja(libro, acL('Cómo nos conocen', 'Com ens coneixen'), [acL('Vía', 'Via'), acL('Atenciones', 'Atencions')], d.conocio);
+  const buf = await libro.xlsx.writeBuffer();
+  expDescargarBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'Memoria-impacto-anexo-' + d.desde + '_' + d.hasta + '.xlsx');
+}
+
+// Filas del histórico para el Excel/PDF de «Personas usuarias» (mismas columnas que las personas con cuenta)
+async function histExportFilas(perfiles, q){
+  if(!HISTORICAS_OK) return [];
+  if(!window.__personasHistUnif) window.__personasHistUnif = histUnificar(perfiles, await histCargarParaLista());
+  const ca = LANG_I === 'ca';
+  const iC = CAMPOS_PERSONA.findIndex(c => c[0] === 'consentimiento_firmado');
+  return window.__personasHistUnif.filter(h => !q || normTxt(h.nombre_completo).includes(q)).map(h => {
+    const p = { nombre_completo: h.nombre_completo, dni_nie: h.dni_nie, fecha_nacimiento: h.fecha_nacimiento, sexo: histSexo(h.sexo), nacionalidad: h.nacionalidad,
+      telefono: h.telefono, email: h.email, codigo_postal: h.codigo_postal, municipio: h.municipio, fecha_alta: h.fecha_alta,
+      consentimiento_firmado: h.consentimiento_papel, consentimiento_fecha: h.consentimiento_fecha };
+    const fila = CAMPOS_PERSONA.map(c => c[3](p));
+    if(iC >= 0 && h.consentimiento_papel) fila[iC] = ca ? 'Signat en paper' : 'Firmado en papel';
+    return fila.concat([h.anio_alta || '', h.fecha_alta ? String(h.fecha_alta).slice(0, 7) : '', '', '', h.servicio || '', h.proyecto || '', '', ca ? 'Històric (paper)' : 'Histórico (papel)']);
+  });
+}
+
 </script>
 </body>
 </html>
