@@ -175,6 +175,13 @@
     .imp-card,.imp-ab{break-inside:avoid;}
   }
 
+  .nav-pista{font-size:10.5px;color:rgba(255,255,255,.55);padding:0 12px 6px 30px;margin-top:-2px;}
+  .me-paso{display:flex;align-items:center;gap:10px;margin:22px 0 10px;font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--navy);}
+  .me-paso::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,var(--gold),transparent);}
+  .me-paso small{font-family:var(--font-body);font-size:12px;font-weight:400;color:var(--ink-soft);}
+  .agenda-dia-btn{display:inline-flex;align-items:center;gap:6px;height:42px;padding:0 16px;border:2px solid var(--navy);border-radius:999px;background:#fff;color:var(--navy);font-family:var(--font-body);font-size:15px;font-weight:800;cursor:pointer;}
+  .agenda-dia-btn:hover,.agenda-dia-btn:active{background:var(--navy);color:#fff;}
+  @media (max-width:520px){ .agenda-dia-btn span{display:none;} .agenda-dia-btn{padding:0 14px;font-size:20px;} }
   .nav-grupo summary{cursor:pointer;list-style:none;color:rgba(255,255,255,.5);font-family:var(--font-body);font-weight:700;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;padding:10px 12px 4px;user-select:none;}
   .nav-grupo summary::-webkit-details-marker{display:none;}
   .nav-grupo summary::before{content:'▸ ';}
@@ -645,50 +652,52 @@
         <span>Menú</span>
         <button onclick="document.querySelector('.sidebar').classList.remove('menu-open')">✕</button>
       </div>
-      <div class="mobile-menu-scroll" onclick="document.querySelector('.sidebar').classList.remove('menu-open')">
+      <div class="mobile-menu-scroll" onclick="if(event.target.closest('button')) document.querySelector('.sidebar').classList.remove('menu-open')">
     <nav>
       <button class="active" data-target="panel" onclick="showScreen('panel');renderPanelGeneral()">Inicio</button>
       <button data-target="miespacio" onclick="showScreen('miespacio');renderMiEspacio()">Mi espacio</button>
-      <button id="nav-guia-btn" onclick="guiaAbrirIntranet()">📖 Guía rápida</button>
-      <button data-target="gestionpersonal" id="nav-gp-btn" onclick="showScreen('gestionpersonal');renderGestionPersonal('inicio')">👤 Mi gestión personal</button>
-      <button data-target="impacto" id="nav-impacto-btn" onclick="showScreen('impacto');renderImpacto()">📊 Impacto</button>
+      <div class="nav-pista">⏱️ Fichar · sala · alertas · atender</div>
 
       <details class="nav-grupo" open>
-        <summary>📁 Personas y casos</summary>
-        <button data-target="personas" onclick="showScreen('personas');renderPersonasScreen()">Personas usuarias</button>
+        <summary>🗓️ Mi día a día</summary>
+        <button data-target="agenda" onclick="showScreen('agenda');renderAgendaCitas()">📅 Citas y calendario</button>
+        <button data-target="personas" onclick="showScreen('personas');renderPersonasScreen()">👥 Personas usuarias</button>
+        <button data-target="seguimiento" onclick="showScreen('seguimiento');renderSeguimientoScreen()">📂 Expedientes</button>
         <button onclick="abrirEscanerQR()">📷 Escanear QR</button>
-        <button data-target="seguimiento" onclick="showScreen('seguimiento');renderSeguimientoScreen()">Expedientes</button>
-        <button data-target="agenda" onclick="showScreen('agenda');renderAgendaCitas()">Citas y calendario</button>
+        <button data-target="docsglobal" onclick="showScreen('docsglobal');renderDocsGlobalScreen()">📎 Gestión documental</button>
       </details>
 
       <details class="nav-grupo" open>
-        <summary>📚 Formación y proyectos</summary>
-        <button data-target="jovenes" onclick="showScreen('jovenes');renderJovenesScreen()">🌱 Jóvenes en acción</button>
+        <summary>💬 Equipo y yo</summary>
+        <button data-target="comunicacion" onclick="showScreen('comunicacion');renderComunicacionScreen()">✉️ Comunicación</button>
+        <button data-target="equipo" onclick="showScreen('equipo');renderEquipoScreen()">🤝 Trabajo en equipo</button>
+        <button data-target="gestionpersonal" id="nav-gp-btn" onclick="showScreen('gestionpersonal');renderGestionPersonal('inicio')">👤 Mi gestión personal</button>
         <button data-target="miformacion" onclick="showScreen('miformacion');renderMiFormacion()">🎓 Mi formación</button>
+      </details>
+
+      <details class="nav-grupo" id="nav-g-proyectos" ontoggle="plegableGuardar('nav-proyectos', this.open)">
+        <summary>📚 Proyectos y formación</summary>
+        <button data-target="proyectos" onclick="showScreen('proyectos');renderProyectosScreen()">📁 Proyectos</button>
+        <button data-target="mipropioproyecto" onclick="showScreen('mipropioproyecto');renderMiPropioProyectoEntrada()">🏛️ Crea un proyecto de Logos</button>
+        <button data-target="ideasproyecto" onclick="showScreen('ideasproyecto');renderEmprendimientoListaStaff()">🚀 Emprendimiento</button>
+        <button data-target="jovenes" onclick="showScreen('jovenes');renderJovenesScreen()">🌱 Jóvenes en acción</button>
         <button data-target="aulavirtual" onclick="showScreen('aulavirtual');renderAulaVirtualScreen()">🎥 Aula Virtual · Hub Logos</button>
         <button data-target="formaciones" onclick="showScreen('formaciones');renderFormacionesScreen()">🎓 Formaciones</button>
+      </details>
+
+      <details class="nav-grupo" id="nav-g-datos" ontoggle="plegableGuardar('nav-datos', this.open)">
+        <summary>📊 Datos y gestión</summary>
+        <button data-target="impacto" id="nav-impacto-btn" onclick="showScreen('impacto');renderImpacto()">📊 Impacto</button>
+        <button data-target="informes" onclick="showScreen('informes');renderInformesScreen()">📈 Informes y datos</button>
         <button data-target="subvenciones" onclick="showScreen('subvenciones');renderSubvencionesScreen()">💶 Subvenciones</button>
-        <button data-target="proyectos" onclick="showScreen('proyectos');renderProyectosScreen()">📁 Proyectos</button>
-        <button data-target="ideasproyecto" onclick="showScreen('ideasproyecto');renderEmprendimientoListaStaff()">🚀 Emprendimiento</button>
-        <button data-target="mipropioproyecto" onclick="showScreen('mipropioproyecto');renderMiPropioProyectoEntrada()">🏛️ Crea un proyecto de Logos</button>
-      </details>
-
-      <details class="nav-grupo" open>
-        <summary>🛠️ Herramientas del equipo</summary>
-        <button data-target="docsglobal" onclick="showScreen('docsglobal');renderDocsGlobalScreen()">Gestión documental</button>
-        <button data-target="comunicacion" onclick="showScreen('comunicacion');renderComunicacionScreen()">Comunicación</button>
-        <button data-target="equipo" onclick="showScreen('equipo');renderEquipoScreen()">Trabajo en equipo</button>
         <button data-target="noticias" onclick="showScreen('noticias');renderNoticiasScreen()">📰 Portales del día</button>
+        <button data-target="contabilidad" id="nav-conta-btn" onclick="showScreen('contabilidad');renderContabilidad()" style="display:none;">🧾 Contabilidad</button>
+        <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
+        <button data-target="qrapp" onclick="showScreen('qrapp');renderQrAppScreen()">📲 QR de Logos Acompanya</button>
+        <button data-target="config" onclick="showScreen('config');renderConfigScreen()">⚙️ Configuración</button>
       </details>
 
-      <details class="nav-grupo" open>
-        <summary>📊 Gestión</summary>
-        <button data-target="informes" onclick="showScreen('informes');renderInformesScreen()">Informes y datos</button>
-        <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
-        <button data-target="contabilidad" id="nav-conta-btn" onclick="showScreen('contabilidad');renderContabilidad()" style="display:none;">🧾 Contabilidad</button>
-        <button data-target="qrapp" onclick="showScreen('qrapp');renderQrAppScreen()">📲 QR de Logos Acompanya</button>
-        <button data-target="config" onclick="showScreen('config');renderConfigScreen()">Configuración</button>
-      </details>
+      <button id="nav-guia-btn" onclick="guiaAbrirIntranet()">📖 Guía rápida</button>
     </nav>
       </div>
     </div>
@@ -929,6 +938,8 @@
 </div>
 
 <script>
+function isoLocal(d){ d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+
 // Mantener la posición de la pantalla cuando una sección se vuelve a pintar (anular, marcar, guardar…): no salta al inicio.
 (function(){
   try {
@@ -1186,7 +1197,10 @@ const TXT_ES_CA = {
   // Menú lateral
   'Personal y administración':'Personal i administració','☰ Menú':'☰ Menú','Menú':'Menú','Inicio':'Inici','Mi espacio':'El meu espai',
   '📖 Guía rápida':'📖 Guia ràpida','👤 Mi gestión personal':'👤 La meva gestió personal','📊 Impacto':'📊 Impacte',
-  '📁 Personas y casos':'📁 Persones i casos','Personas usuarias':'Persones usuàries','📷 Escanear QR':'📷 Escanejar QR','Expedientes':'Expedients',
+  '📁 Personas y casos':'📁 Persones i casos','🗓️ Mi día a día':'🗓️ El meu dia a dia','💬 Equipo y yo':'💬 Equip i jo','📊 Datos y gestión':'📊 Dades i gestió','📚 Proyectos y formación':'📚 Projectes i formació',
+  '⏱️ Fichar · sala · alertas · atender':'⏱️ Fitxar · sala · alertes · atendre','📅 Citas y calendario':'📅 Cites i calendari','👥 Personas usuarias':'👥 Persones usuàries','📂 Expedientes':'📂 Expedients','📎 Gestión documental':'📎 Gestió documental',
+  '✉️ Comunicación':'✉️ Comunicació','🤝 Trabajo en equipo':'🤝 Treball en equip','📈 Informes y datos':'📈 Informes i dades','⚙️ Configuración':'⚙️ Configuració',
+  '① Empezar el día':'① Començar el dia','② Hoy':'② Avui','③ Atender':'③ Atendre','④ Pendiente':'④ Pendent','⑤ Mi actividad':'⑤ La meva activitat','Personas usuarias':'Persones usuàries','📷 Escanear QR':'📷 Escanejar QR','Expedientes':'Expedients',
   'Citas y calendario':'Cites i calendari','📚 Formación y proyectos':'📚 Formació i projectes','🌱 Jóvenes en acción':'🌱 Joves en acció',
   '🎓 Mi formación':'🎓 La meva formació','🎓 Formaciones':'🎓 Formacions','💶 Subvenciones':'💶 Subvencions','📁 Proyectos':'📁 Projectes',
   '🚀 Emprendimiento':'🚀 Emprenedoria','🏛️ Crea un proyecto de Logos':'🏛️ Crea un projecte de Logos','🛠️ Herramientas del equipo':'🛠️ Eines de l\'equip',
@@ -1679,8 +1693,8 @@ let _trTimer = null;
 function aplicarTraduccionesSidebar(){
   const t = TI[LANG_I];
   try { navPintar(); } catch(e){}
-  document.querySelector('.sidebar nav button[data-target="miespacio"]').innerHTML = t.miEspacio;
-  document.querySelector('.sidebar nav button[data-target="panel"]').innerHTML = `${t.panelGeneral} <span id="badge-panel" class="nav-badge" style="display:none;">0</span>`;
+  document.querySelector('.sidebar nav button[data-target="miespacio"]').innerHTML = '🧑‍💼 ' + t.miEspacio;
+  document.querySelector('.sidebar nav button[data-target="panel"]').innerHTML = `🏠 ${t.panelGeneral} <span id="badge-panel" class="nav-badge" style="display:none;">0</span>`;
   document.getElementById('nav-admin-btn').innerHTML = t.administrador;
   document.getElementById('nav-conta-btn').innerHTML = '🧾 ' + (LANG_I === 'ca' ? 'Comptabilitat' : 'Contabilidad');
   document.getElementById('sidebar-logout-btn').innerHTML = t.cerrarSesion;
@@ -1806,7 +1820,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v136'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v137'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -2001,13 +2015,15 @@ window.addEventListener('popstate', function(e){
 function showScreen(name){
   if(IS_JOVENES && !PANTALLAS_JOVENES.includes(name)) name = 'panel';
   if(IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(name)) name = 'gestionpersonal';
+  const previa = document.querySelector('.screen.active');
+  if(!previa || previa.id !== 'screen-' + name){ try { window.scrollTo(0, 0); } catch(e){} }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.querySelectorAll('.sidebar nav button').forEach(b=>b.classList.remove('active'));
   const group = { atencion:'miespacio', persona:'panel' };
   const target = group[name] || name;
   const btn = document.querySelector('.sidebar nav button[data-target="'+target+'"]');
-  if(btn) btn.classList.add('active');
+  if(btn){ btn.classList.add('active'); const g = btn.closest('details.nav-grupo'); if(g && !g.open) g.open = true; }
   navRegistrar(name);
   if(name !== 'login' && CURRENT_USER) recuerdoGuardar({ pantalla: name, persona: name === 'persona' ? (window.__usuarioIdVisto || null) : null, origen: window.__origenPersonaVista || null });
 }
@@ -2350,7 +2366,7 @@ async function fichajeRefrescar(){
 // --- Fichado pero sin sala marcada: recordatorio para marcar en qué sala/plaza está ---
 const SALA_AVISO_MIN = 10;   // minutos después de fichar la entrada
 window.__tengoSala = true;
-function salaHoyClave(){ return 'sinsala:' + (CURRENT_USER ? CURRENT_USER.email : '') + ':' + new Date().toISOString().slice(0, 10); }
+function salaHoyClave(){ return 'sinsala:' + (CURRENT_USER ? CURRENT_USER.email : '') + ':' + isoLocal(); }
 function salaHoyFuera(){ try { return localStorage.getItem(salaHoyClave()) === '1'; } catch(e){ return false; } }
 async function salaEstadoRefrescar(){
   try {
@@ -2767,7 +2783,7 @@ const JA_SALIDA = {
 // vigente = ya puede salir solo/a; futura = empieza otro día; revocada = ya no vale
 function jaSalidaEstado(a){
   if(a.estado === 'revocada') return 'revocada';
-  const hoy = new Date().toISOString().slice(0,10);
+  const hoy = isoLocal();
   return String(a.fecha_inicio).slice(0,10) > hoy ? 'futura' : 'vigente';
 }
 
@@ -2849,7 +2865,7 @@ async function jaiResumenDatos(){
     sb.from('autorizaciones_salida').select('menor_id, estado, fecha_inicio')
   ]);
   if(act.error || aut.error || men.error || sal.error) return null;
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = isoLocal();
   const abiertas = (act.data || []).filter(a => a.estado === 'abierta' && (!a.fecha_salida || a.fecha_salida >= hoy)).sort((a, b) => String(a.fecha_salida || '9').localeCompare(String(b.fecha_salida || '9')));
   const prox = abiertas.find(a => a.fecha_salida) || null;
   const menores = men.data || [];
@@ -4014,31 +4030,40 @@ async function renderMiEspacio(){
     : `<div class="empty-note">${t.noTienesRevisiones}</div>`;
 
   cont.innerHTML = `
-    <div class="hero" style="margin:-1px -20px 16px;border-radius:0;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+    <div class="hero" style="margin:-1px -20px 6px;border-radius:0;display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:16px 22px;">
       <div>
-        <div class="hero-brand">${t.hola}</div>
-        <h1 class="hero-title" style="font-size:20px;">${CURRENT_USER_NOMBRE || email}</h1>
-        <p class="hero-sub">${t.espacioTrabajo}</p>
+        <div class="hero-brand">${t.hola} · ${new Date().toLocaleDateString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+        <h1 class="hero-title" style="font-size:20px;margin:0;">${CURRENT_USER_NOMBRE || email}</h1>
       </div>
     </div>
 
-    <div class="acciones-rapidas" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 14px;">
-      <button class="primary-btn" style="margin:0;background:var(--navy,#1d3557);" onclick="abrirEscanerQR()">📷 ${LANG_I==='ca'?'Escanejar QR':'Escanear QR'}</button>
-      <button class="primary-btn" style="margin:0;" onclick="showScreen('personas');renderPersonasScreen()">🔎 ${LANG_I==='ca'?'Cercar persona':'Buscar persona'}</button>
-      <button class="primary-btn" style="margin:0;" onclick="showScreen('atencion');renderAtencionForm()">📋 ${LANG_I==='ca'?'Fitxa d\'atenció':'Ficha de atención'}</button>
-      <button class="primary-btn" style="margin:0;background:var(--gold);" onclick="showScreen('buscarpersona');renderBuscarPersonaActuacion()">📂 ${LANG_I==='ca'?'Expedient / Actuació':'Expediente / Actuación'}</button>
-      <button class="primary-btn" style="margin:0;background:var(--good);" onclick="showScreen('altapresencial');renderAltaPresencial()">🖊️ Alta presencial</button>
-      <button class="primary-btn" style="margin:0;background:#33449E;" onclick="showScreen('miformacion');renderMiFormacion()">🎓 ${LANG_I==='ca'?'La meva formació':'Mi formación'} <span id="mi-formacion-n" style="font-weight:400;font-size:12px;"></span></button>
-      <button class="primary-btn" style="margin:0;background:#2E7D8C;" onclick="abrirNuevaCitaStaff()">📅 ${LANG_I==='ca'?'Nova cita':'Nueva cita'}</button>
-    </div>
+    <div class="me-paso">① ${acL('Empezar el día', 'Començar el dia')} <small>${acL('fichar y marcar la sala', 'fitxar i marcar la sala')}</small></div>
+    ${salasAtencionHtml}
 
+    <div class="me-paso">② ${acL('Hoy', 'Avui')} <small>${acL('quién espera, citas y alertas', 'qui espera, cites i alertes')}</small></div>
     ${enEsperaHtml}
-    ${fichasPendientesTecnicoHtml(fichasPend)}
+    ${misCitasHtml}
     ${avisosMiEspacioHtml}
 
-    ${misCitasHtml}
+    <div class="me-paso">③ ${acL('Atender', 'Atendre')} <small>${acL('registrar el trabajo', 'registrar la feina')}</small></div>
+    <div class="acciones-rapidas" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 14px;">
+      <button class="primary-btn" style="margin:0;" onclick="showScreen('atencion');renderAtencionForm()">📋 ${LANG_I==='ca'?'Fitxa d\'atenció':'Ficha de atención'}</button>
+      <button class="primary-btn" style="margin:0;background:var(--gold);" onclick="showScreen('buscarpersona');renderBuscarPersonaActuacion()">📂 ${LANG_I==='ca'?'Expedient / Actuació':'Expediente / Actuación'}</button>
+      <button class="primary-btn" style="margin:0;background:#2E7D8C;" onclick="abrirNuevaCitaStaff()">📅 ${LANG_I==='ca'?'Nova cita':'Nueva cita'}</button>
+      <button class="primary-btn" style="margin:0;" onclick="showScreen('personas');renderPersonasScreen()">🔎 ${LANG_I==='ca'?'Cercar persona':'Buscar persona'}</button>
+      <button class="primary-btn" style="margin:0;background:var(--navy,#1d3557);" onclick="abrirEscanerQR()">📷 ${LANG_I==='ca'?'Escanejar QR':'Escanear QR'}</button>
+      <button class="primary-btn" style="margin:0;background:var(--good);" onclick="showScreen('altapresencial');renderAltaPresencial()">🖊️ Alta presencial</button>
+      <button class="primary-btn" style="margin:0;background:#33449E;" onclick="showScreen('miformacion');renderMiFormacion()">🎓 ${LANG_I==='ca'?'La meva formació':'Mi formación'} <span id="mi-formacion-n" style="font-weight:400;font-size:12px;"></span></button>
+    </div>
 
-    ${salasAtencionHtml}
+    <div class="me-paso">④ ${acL('Pendiente', 'Pendent')} <small>${acL('revisiones y fichas por completar', 'revisions i fitxes per completar')}</small></div>
+    ${fichasPendientesTecnicoHtml(fichasPend) || `<div class="empty-note" style="margin:0 0 8px;">✅ ${acL('No tienes fichas con datos pendientes.', 'No tens fitxes amb dades pendents.')}</div>`}
+    <details class="plegable" ${plegableAbierto('mi-revisiones', false) ? 'open' : ''} ontoggle="plegableGuardar('mi-revisiones', this.open)">
+      <summary><span>${t.tusProximasRevisiones}</span><span class="plegable-n">${misRevisiones.length}</span></summary>
+      <div class="plegable-c">${revisionesHtml}</div>
+    </details>
+
+    <div class="me-paso">⑤ ${acL('Mi actividad', 'La meva activitat')}</div>
 
 
     <div class="panel-card mi-actividad">
@@ -4062,10 +4087,6 @@ async function renderMiEspacio(){
     </details>
 
 
-    <details class="plegable" ${plegableAbierto('mi-revisiones') ? 'open' : ''} ontoggle="plegableGuardar('mi-revisiones', this.open)">
-      <summary><span>${t.tusProximasRevisiones}</span><span class="plegable-n">${misRevisiones.length}</span></summary>
-      <div class="plegable-c">${revisionesHtml}</div>
-    </details>
 
     ${topServicios.length ? `
     <details class="plegable" ${plegableAbierto('mi-servicios') ? 'open' : ''} ontoggle="plegableGuardar('mi-servicios', this.open); if(this.open) activarBarras();">
@@ -4102,6 +4123,7 @@ async function renderMiEspacio(){
 // Secciones plegables: se recuerda en este navegador si la persona las dejó abiertas (si no se puede guardar, quedan cerradas).
 function plegableAbierto(clave, porDefecto){ try { const v = localStorage.getItem('plegable:' + clave); return v === null ? !!porDefecto : v === '1'; } catch(e){ return !!porDefecto; } }
 function plegableGuardar(clave, abierto){ try { localStorage.setItem('plegable:' + clave, abierto ? '1' : '0'); } catch(e){} }
+document.addEventListener('DOMContentLoaded', () => { [['nav-g-proyectos', 'nav-proyectos'], ['nav-g-datos', 'nav-datos']].forEach(([id, k]) => { const g = document.getElementById(id); if(g && plegableAbierto(k, false)) g.open = true; }); });
 
 // ================= REGISTRAR ATENCIÓN =================
 
@@ -4741,7 +4763,7 @@ async function exportarAtencionesExcel(uid){
       a.ethos ? etiquetaOpt(ETHOS_OPTS, a.ethos) : '', a.derivacion ? etiquetaOpt(DERIVACION_OPTS, a.derivacion) : '', lista(a.emprendeduria, EMPRENDEDURIA_OPTS),
       a.como_conocio ? etiquetaOpt(COMO_CONOCIO_OPTS, a.como_conocio) : '', a.necesidades_no_catalogadas || '', a.notas || ''];
   });
-  const nombre = uid ? 'Atenciones-' + String((perfiles[uid] || {}).nombre_completo || 'persona').replace(/[^a-zA-Z0-9]+/g, '-') + '.xlsx' : 'Atenciones-Logos-' + new Date().toISOString().slice(0, 10) + '.xlsx';
+  const nombre = uid ? 'Atenciones-' + String((perfiles[uid] || {}).nombre_completo || 'persona').replace(/[^a-zA-Z0-9]+/g, '-') + '.xlsx' : 'Atenciones-Logos-' + isoLocal() + '.xlsx';
   await descargarXLSX(cabecera, filasXls, nombre, 'Atenciones');
 }
 
@@ -4775,7 +4797,8 @@ async function responderConsulta(id){
   renderPanelGeneral();
 }
 
-let __agendaFechaActual = new Date().toISOString().slice(0,10);
+// Fecha AAAA-MM-DD en hora local (toISOString usa la hora de Londres y en España cambia el día de madrugada)
+let __agendaFechaActual = isoLocal();
 
 let __agendaVista = 'dia'; // 'dia' | 'proximas'
 
@@ -4861,7 +4884,7 @@ async function renderAgendaCitas(fecha){
 
   const fechaObj = new Date(__agendaFechaActual + 'T00:00:00');
   const fechaFormateada = fechaObj.toLocaleDateString(t.localeFecha, { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  const esHoy = __agendaFechaActual === new Date().toISOString().slice(0,10);
+  const esHoy = __agendaFechaActual === isoLocal();
 
   const citasHtml = (citasDelDia && citasDelDia.length)
     ? citasDelDia.map(c => {
@@ -4881,12 +4904,12 @@ async function renderAgendaCitas(fecha){
   cont.innerHTML = `
     ${tabsAgendaHtml()}
     <div class="panel-card" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;">
-      <button class="link-btn" onclick="cambiarDiaAgenda(-1)">←</button>
+      <button class="agenda-dia-btn" onclick="cambiarDiaAgenda(-1)" aria-label="${LANG_I==='ca'?'Dia anterior':'Día anterior'}" title="${LANG_I==='ca'?'Dia anterior':'Día anterior'}">‹ <span>${LANG_I==='ca'?'Anterior':'Anterior'}</span></button>
       <div style="text-align:center;">
         <div style="font-weight:700;font-size:14px;text-transform:capitalize;">${fechaFormateada}</div>
         ${esHoy ? `<span class="chip good" style="margin-top:4px;display:inline-block;">${LANG_I==='ca'?'Avui':'Hoy'}</span>` : `<button class="link-btn" style="font-size:11px;" onclick="irAHoyAgenda()">${LANG_I==='ca'?'Anar a avui':'Ir a hoy'}</button>`}
       </div>
-      <button class="link-btn" onclick="cambiarDiaAgenda(1)">→</button>
+      <button class="agenda-dia-btn" onclick="cambiarDiaAgenda(1)" aria-label="${LANG_I==='ca'?'Dia següent':'Día siguiente'}" title="${LANG_I==='ca'?'Dia següent':'Día siguiente'}"><span>${LANG_I==='ca'?'Següent':'Siguiente'}</span> ›</button>
     </div>
     <input type="date" id="agenda-selector-fecha" value="${__agendaFechaActual}" onchange="renderAgendaCitas(this.value)" style="width:100%;margin-bottom:16px;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-family:var(--font-body);font-size:14px;">
     <div class="cards-grid">${citasHtml}</div>
@@ -4913,7 +4936,7 @@ function abrirNuevaCitaStaff(usuarioId, nombre, opts){
 function cerrarNuevaCitaStaff(){ const ov = document.getElementById('nc-ov'); if(ov) ov.style.display = 'none'; }
 function pintarNuevaCitaStaff(){
   const ov = document.getElementById('nc-ov'); if(!ov) return;
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = isoLocal();
   const persona = __NC.uid
     ? `<div class="panel-stat-row"><span>${acL('Persona', 'Persona')}</span><span><strong>${escAttr(__NC.nombre || '')}</strong>${''}</span></div>
        <button class="link-btn" style="font-size:12px;" onclick="__NC.uid=null;__NC.nombre='';pintarNuevaCitaStaff()">${acL('Cambiar persona', 'Canviar persona')}</button>`
@@ -5048,14 +5071,8 @@ async function construirAvisosMiEspacioHtml(misRevisiones){
   const tiles = [
     tile('🔔', ca ? 'Alertes' : 'Alertas', nAlertas, 'irAAlertas()', nAlertas > 0),
     tile('💬', ca ? 'Consultes pendents' : 'Consultas pendientes', nConsultas, 'irAAlertas()', false),
-    tile('🔁', ca ? 'Revisions (7 dies)' : 'Revisiones (7 días)', nRev, "mostrarSeccionMiEspacio('mi-revisiones')", false),
-    visible('seguimiento') ? tile('🗂️', ca ? 'Expedients' : 'Expedientes', 0, "showScreen('seguimiento');renderSeguimientoScreen()") : '',
-    visible('agenda') ? tile(window.__misCitasResumen && window.__misCitasResumen.urgentes ? '🔴' : '📅', (ca ? 'Agenda' : 'Agenda') + (window.__misCitasResumen && window.__misCitasResumen.hoy ? (ca ? ' · avui' : ' · hoy') : ''), (window.__misCitasResumen || {}).hoy || 0, "showScreen('agenda');renderAgendaCitas()", !!(window.__misCitasResumen && window.__misCitasResumen.urgentes)) : '',
-    visible('proyectos') ? tile('📁', ca ? 'Projectes' : 'Proyectos', 0, "showScreen('proyectos');renderProyectosScreen()") : '',
-    visible('comunicacion') ? tile('✉️', ca ? 'Comunicació' : 'Comunicación', 0, "showScreen('comunicacion');renderComunicacionScreen()") : '',
-    visible('equipo') ? tile('👥', ca ? 'Treball en equip' : 'Trabajo en equipo', 0, "showScreen('equipo');renderEquipoScreen()") : '',
-    visible('docsglobal') ? tile('📎', ca ? 'Gestió documental' : 'Gestión documental', 0, "showScreen('docsglobal');renderDocsGlobalScreen()") : '',
-    tile('📖', ca ? 'Guia ràpida' : 'Guía rápida', 0, 'guiaAbrirIntranet()')
+    tile('🔁', ca ? 'Revisions (7 dies)' : 'Revisiones (7 días)', nRev, "mostrarSeccionMiEspacio('mi-revisiones')", false)
+    // (los accesos sin aviso —Expedientes, Proyectos, Comunicación…— ya están en el menú: aquí solo lo que tiene número)
   ].join('');
   const corto = (x, n) => { x = String(x || '').replace(/\s+/g, ' ').trim(); return x.length > n ? x.slice(0, n - 1) + '…' : x; };
   const fechaCorta = f => { try { return new Date(f).toLocaleString(TI[LANG_I].localeFecha, { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }); } catch(e){ return ''; } };
@@ -5081,7 +5098,7 @@ async function construirAvisosMiEspacioHtml(misRevisiones){
         ${nAlertas > ultimas.length ? `<button class="link-btn" style="font-size:12px;margin-top:6px;" onclick="irAAlertas()">${ca ? `Veure les ${nAlertas} alertes` : `Ver las ${nAlertas} alertas`}</button>` : `<button class="link-btn" style="font-size:12px;margin-top:6px;" onclick="irAAlertas()">${ca ? 'Obrir totes les alertes' : 'Abrir todas las alertas'}</button>`}
       </div>
     </details>` : '';
-  return `<div class="panel-card" style="margin-bottom:14px;"><h3 style="margin:0 0 10px;">🔔 ${ca ? 'Avisos i accessos' : 'Avisos y accesos'}</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;">${tiles}</div>${ultimasHtml}</div>`;
+  return `<div class="panel-card" style="margin-bottom:14px;"><h3 style="margin:0 0 10px;">🔔 ${ca ? 'Avisos' : 'Avisos'}</h3><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;">${tiles}</div>${ultimasHtml}</div>`;
 }
 function mostrarSeccionMiEspacio(clave){
   const d = [...document.querySelectorAll('#screen-miespacio details.plegable')].find(x => (x.getAttribute('ontoggle') || '').includes("'" + clave + "'"));
@@ -5092,7 +5109,7 @@ function mostrarSeccionMiEspacio(clave){
 async function construirMisCitasHtml(email){
   const ca = LANG_I === 'ca';
   try {
-    const desde = new Date().toISOString().slice(0, 10);
+    const desde = isoLocal();
     const hasta = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
     const { data: asignadas } = await sb.from('perfiles').select('id').eq('tecnico_responsable_email', email).limit(500);
     const ids = (asignadas || []).map(x => x.id);
@@ -5275,7 +5292,7 @@ async function renderProximasCitas(){
   const esCA = LANG_I === 'ca';
   cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
 
-  const hoyIso = new Date().toISOString().slice(0,10);
+  const hoyIso = isoLocal();
   const { data: proximas } = await sb.from('citas').select('*').gte('fecha', hoyIso).neq('estado', 'cancelada').order('fecha', { ascending:true }).order('hora', { ascending:true }).limit(60);
 
   const ids = [...new Set((proximas || []).map(c => c.usuario_id).filter(Boolean))];
@@ -5313,14 +5330,14 @@ async function renderProximasCitas(){
 
 function cambiarDiaAgenda(delta){
   __agendaVista = 'dia';
-  const d = new Date(__agendaFechaActual + 'T00:00:00');
+  const d = new Date(__agendaFechaActual + 'T12:00:00');
   d.setDate(d.getDate() + delta);
-  renderAgendaCitas(d.toISOString().slice(0,10));
+  renderAgendaCitas(isoLocal(d));
 }
 
 function irAHoyAgenda(){
   __agendaVista = 'dia';
-  renderAgendaCitas(new Date().toISOString().slice(0,10));
+  renderAgendaCitas(isoLocal());
 }
 
 let __busquedaPersonasTimeout = null;
@@ -5805,7 +5822,7 @@ async function obtenerPersonasParaExport(completo){
       filas: datos.map(p => [p.codigo || '', p.anio || '', personaFecha(p.fecha_alta), p.nombre_completo || '', p.dni_nie || '', p.telefono || '', p.email || '', p.cp || '', p.municipio || '', p.sexo || '', personaFecha(p.fecha_nacimiento), p.edad_alta != null ? p.edad_alta : '', p.nacionalidad || '', p.tipo || '', p.servicio || '', p.proyecto || '', p.notas || '', ethosLargo(p.ethos) || ((p.datos && (p.datos.ETHOS || p.datos.Ethos || p.datos.ethos)) || ''), p.origen || ''].concat(extra.map(k => (p.datos && p.datos[k]) || ''))) };
   }
   const cols = completo ? '*' : 'id, nombre_completo, dni_nie, telefono, municipio, calle' + (FECHA_ALTA_OK ? ', fecha_alta' : '') + (PERFIL_ETHOS ? ', ethos' : '');
-  const hoyIsoExp = new Date().toISOString().slice(0, 10);
+  const hoyIsoExp = isoLocal();
   const [perfRes, trRes, atRes, acRes, pyRes, ciRes, stRes] = await Promise.all([
     traerTodoPaginado((a, b) => sb.from('perfiles').select(cols).not('nombre_completo', 'is', null).order('nombre_completo', { ascending:true }).range(a, b)),
     traerTodoPaginado((a, b) => sb.from('tramites').select('usuario_id, nombre_servicio, estado').range(a, b)),
@@ -6958,7 +6975,7 @@ async function subvActualizar(id, cambios){
   return true;
 }
 async function subvEstado(id, estado){ if(await subvActualizar(id, { estado })) renderSubvencionesScreen(); }
-async function subvRevisada(id){ if(await subvActualizar(id, { ultima_revision: new Date().toISOString().slice(0, 10) })) renderSubvencionesScreen(); }
+async function subvRevisada(id){ if(await subvActualizar(id, { ultima_revision: isoLocal() })) renderSubvencionesScreen(); }
 async function subvEditarPlazo(id){
   const nuevo = prompt(acL('Nueva fecha límite (AAAA-MM-DD). Déjalo vacío para quitarla:', 'Nova data límit (AAAA-MM-DD). Deixa-ho buit per treure-la:'));
   if(nuevo === null) return;
@@ -7042,7 +7059,7 @@ async function renderAulaVirtualScreen(){
   const t = TI[LANG_I];
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
 
-  const hoyIso = new Date().toISOString().slice(0,10);
+  const hoyIso = isoLocal();
   const [{ data: clases }, { data: cursos }] = await Promise.all([
     sb.from('aula_virtual_clases').select('*').gte('fecha', hoyIso).order('fecha', { ascending:true }).order('hora', { ascending:true }),
     sb.from('cursos').select('*').order('creado_en', { ascending:false })
@@ -7764,7 +7781,7 @@ async function fichaDescargar(ficha, formato, nombreBase){
   expDescargarBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), nombreBase + '.xlsx');
 }
 function fichaNombreArchivo(prefijo, nombre){
-  return prefijo + '-' + String(nombre || 'persona').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + new Date().toISOString().slice(0, 10);
+  return prefijo + '-' + String(nombre || 'persona').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + isoLocal();
 }
 // Ficha de una persona usuaria registrada (datos + atenciones + actuaciones + trámites + citas + proyectos + documentos + consultas)
 async function exportarFichaPersona(usuarioId, formato){
@@ -9696,7 +9713,7 @@ async function verProyecto(proyectoId, opts){
         </div>`).join('')
     : `<div class="empty-note">${esCA?'Encara no hi ha seguiments vinculats a aquest projecte.':'Todavía no hay seguimientos vinculados a este proyecto.'}</div>`;
 
-  const fechaAsistenciaSel = window.__fechaAsistenciaProyecto || new Date().toISOString().slice(0,10);
+  const fechaAsistenciaSel = window.__fechaAsistenciaProyecto || isoLocal();
   const asistenciasFecha = (asistencias || []).filter(a => a.fecha === fechaAsistenciaSel);
   const asistioHoy = new Set(asistenciasFecha.map(a => a.usuario_id));
   const conteoAsistencias = {};
@@ -9963,7 +9980,7 @@ function abrirSeguimientoProyecto(proyectoId){
       <h3 style="margin-top:0;">📌 ${esCA?'Registrar seguiment':'Registrar seguimiento'} · ${escAttr(ctx.nombre)}</h3>
       <div class="field"><label>${esCA?'Persona':'Persona'} *</label>
         <select id="seg-persona">${ctx.beneficiarios.map(b => `<option value="${b.id}">${escAttr(b.nombre)}</option>`).join('')}</select></div>
-      <div class="field"><label>${esCA?'Data':'Fecha'}</label><input type="date" id="seg-fecha" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div class="field"><label>${esCA?'Data':'Fecha'}</label><input type="date" id="seg-fecha" value="${isoLocal()}"></div>
       <div class="field"><label>${esCA?'Què s\'ha treballat? *':'¿Qué se ha trabajado? *'}</label><textarea id="seg-descripcion" rows="3" placeholder="${esCA?'En poques paraules':'En pocas palabras'}"></textarea></div>
       <div class="field"><label>${esCA?'Resultat':'Resultado'}</label>
         <select id="seg-resultado"><option value="">—</option><option value="conseguido">${t.conseguido}</option><option value="en_tramite">${t.enTramite}</option><option value="no_conseguido">${t.noConseguido}</option></select></div>
@@ -9981,7 +9998,7 @@ async function guardarSeguimientoProyecto(proyectoId){
   const v = id => document.getElementById(id).value.trim();
   if(!v('seg-persona') || !v('seg-descripcion')){ alert(esCA ? 'Cal triar la persona i explicar què s\'ha treballat.' : 'Hay que elegir la persona y explicar qué se ha trabajado.'); return; }
   const { error } = await sb.from('actuaciones').insert({
-    usuario_id: v('seg-persona'), tecnico_email: CURRENT_USER.email, fecha: v('seg-fecha') || new Date().toISOString().slice(0,10),
+    usuario_id: v('seg-persona'), tecnico_email: CURRENT_USER.email, fecha: v('seg-fecha') || isoLocal(),
     categoria: ctx ? ctx.nombre : null, descripcion: v('seg-descripcion'), resultado: v('seg-resultado') || null,
     proximo_paso: v('seg-proximo') || null, proyecto_id: proyectoId
   });
@@ -10152,7 +10169,7 @@ async function limpiarRegistrosAntiguos(tipo){
     ? [nombreTecnico(r.tecnico_email), f(r.entrada), f(r.salida), minutos(r.entrada, r.salida), r.cerrado_automaticamente ? 'Sí' : 'No', r.nota || '']
     : [nombreTecnico(r.tecnico_email), r.sala === 'reunion' ? 'Reunión' : nombrePlaza(r.sala), r.motivo || '', f(r.inicio), f(r.fin), minutos(r.inicio, r.fin)]);
   try {
-    await descargarXLSX(cabecera, filas, `${cfg.archivo}-anteriores-${new Date().toISOString().slice(0,10)}.xlsx`, cfg.hoja);
+    await descargarXLSX(cabecera, filas, `${cfg.archivo}-anteriores-${isoLocal()}.xlsx`, cfg.hoja);
   } catch(e) {
     alert((esCA ? 'No s\'ha pogut descarregar la còpia, per això no s\'ha esborrat res: ' : 'No se pudo descargar la copia, por eso no se ha borrado nada: ') + e.message);
     return;
@@ -10395,7 +10412,7 @@ const ALERTA_TIPOS_TXT = {
 };
 function repartoHtmlAdmin(){
   if(!REPARTO_OK) return `<div class="info-box info-box-gold">⚠️ ${acL('Falta ejecutar el SQL de personal y alertas en Supabase para activar el reparto.', 'Falta executar l\'SQL de personal i alertes a Supabase per activar el repartiment.')}</div>`;
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = isoLocal();
   const activos = (window.__staffLista || []).filter(s => s.activo !== false && s.ambito !== 'jovenes');
   const turno = activos.filter(s => s.orden_alertas != null).sort((a, b) => a.orden_alertas - b.orden_alertas || a.email.localeCompare(b.email));
   const fuera = activos.filter(s => s.orden_alertas == null);
@@ -11410,7 +11427,7 @@ function impIndicadoresCsv(r){
 function impExportarCsv(){
   const r = window.__imp.resumen; if(!r) return;
   const blob = new Blob(['﻿' + impIndicadoresCsv(r)], { type: 'text/csv;charset=utf-8' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'impacto-logos-' + new Date().toISOString().slice(0, 10) + '.csv';
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'impacto-logos-' + isoLocal() + '.csv';
   document.body.appendChild(a); a.click(); a.remove();
 }
 
@@ -11524,7 +11541,7 @@ async function impGuardarFicha(){
   if(!cons && areas.includes('bienestar')){ areas = areas.filter(a => a !== 'bienestar'); alert(acL('Sin consentimiento no se medirá el bienestar emocional en esta ficha.', 'Sense consentiment no es mesurarà el benestar emocional en aquesta fitxa.')); }
   if(!areas.length){ alert(acL('Marca al menos un cambio que vayas a medir.', 'Marca almenys un canvi que mesuraràs.')); return; }
   const fila = { referencia: ref, tecnico_email: impYo(), programa: document.getElementById('imp-prog').value, genero: document.getElementById('imp-gen').value || null, tramo_edad: document.getElementById('imp-edad').value || null,
-    areas, consentimiento: cons, consentimiento_fecha: cons ? new Date().toISOString().slice(0, 10) : null };
+    areas, consentimiento: cons, consentimiento_fecha: cons ? isoLocal() : null };
   const r = await sb.from('impacto_fichas').insert(fila).select();
   if(r.error){ alert(r.error.message); return; }
   const f = Array.isArray(r.data) ? r.data[0] : r.data;
@@ -11548,7 +11565,7 @@ async function impConsentimiento(id, valor){
   if(!valor && !confirm(acL('Se borrarán las respuestas de bienestar y soledad de esta ficha. ¿Continuar?', 'S\'esborraran les respostes de benestar i solitud d\'aquesta fitxa. Continuar?'))) return;
   const f = (window.__imp.fichas || []).find(x => x.id === id);
   const areas = (f && f.areas) || [];
-  const cambios = { consentimiento: valor, consentimiento_fecha: valor ? new Date().toISOString().slice(0, 10) : null };
+  const cambios = { consentimiento: valor, consentimiento_fecha: valor ? isoLocal() : null };
   if(!valor) cambios.areas = areas.filter(a => a !== 'bienestar');
   else if(!areas.includes('bienestar')) cambios.areas = areas.concat(['bienestar']);
   const r = await sb.from('impacto_fichas').update(cambios).eq('id', id);
@@ -11576,7 +11593,7 @@ async function impFormMedida(fichaId, momento){
   const sec = (ic, t, cuerpo) => `<div class="imp-sec"><div class="imp-sec-h">${ic} ${t}</div>${cuerpo}</div>`;
   let h = `<button class="link-btn" onclick="renderImpacto('fichas')">← ${acL('Volver a mis fichas', 'Tornar a les meves fitxes')}</button>
     <div class="imp-card imp-form"><h3 style="margin:0 0 2px;">${impMomento(momento)} · ${escAttr(f.referencia)}</h3><p class="imp-mini" style="margin:0 0 14px;">${impProg(f.programa)} · ${acL('Rellena solo lo que sepas; puedes completar el resto más tarde.', 'Omple només el que sàpigues; pots completar la resta més tard.')}</p>
-    <div class="field" style="max-width:220px;"><label>${acL('Fecha', 'Data')}</label><input type="date" id="imp-fecha" value="${escAttr(m.fecha || new Date().toISOString().slice(0, 10))}"></div>`;
+    <div class="field" style="max-width:220px;"><label>${acL('Fecha', 'Data')}</label><input type="date" id="imp-fecha" value="${escAttr(m.fecha || isoLocal())}"></div>`;
   if(areas.includes('empleo')){
     h += sec('💼', acL('Situación económica', 'Situació econòmica'),
       `<div class="field"><label>${acL('Situación laboral', 'Situació laboral')}</label>${impOpciones('imp-empleo', IMP_EMPLEO, m.empleo, true)}</div>
@@ -11616,7 +11633,7 @@ async function impGuardarMedida(){
   const v = n => { const e = document.querySelector(`input[name="${n}"]:checked`); return e ? e.value : null; };
   const num = (id, ent) => { const e = document.getElementById(id); if(!e || e.value === '') return null; const x = Number(e.value); return isFinite(x) && x >= 0 ? (ent ? Math.round(x) : x) : null; };
   const nul = x => x === null ? null : Number(x);
-  const fila = { ficha_id: ctx.fichaId, momento: ctx.momento, tecnico_email: impYo(), fecha: document.getElementById('imp-fecha').value || new Date().toISOString().slice(0, 10),
+  const fila = { ficha_id: ctx.fichaId, momento: ctx.momento, tecnico_email: impYo(), fecha: document.getElementById('imp-fecha').value || isoLocal(),
     empleo: v('imp-empleo'), ingresos_tramo: nul(v('imp-ingresos')), competencia: nul(v('imp-comp')), autonomia: nul(v('imp-aut')), competencia_digital: nul(v('imp-dig')),
     horas_formacion: num('imp-horas', false), certificaciones: num('imp-cert', true), satisfaccion: nul(v('imp-sat')) };
   if(f.consentimiento && (f.areas || []).includes('bienestar')){
@@ -11686,7 +11703,7 @@ async function gestorPintarTarjeta(cont){
   if(!IS_GESTOR || IS_ADMIN || !DELEGACION_OK || !cont) return;
   try {
     const r = await sb.from('staff').select('*').order('email', { ascending: true });
-    const hoy = new Date().toISOString().slice(0, 10);
+    const hoy = isoLocal();
     const lista = (r.data || []).filter(x => x.activo !== false && x.ambito !== 'jovenes' && !x.es_admin);
     if(!lista.length || document.getElementById('gestor-tarjeta')) return;
     cont.insertAdjacentHTML('afterbegin', `<div class="panel-card" id="gestor-tarjeta" style="margin-bottom:14px;">
@@ -11707,7 +11724,7 @@ async function renderPanelJovenes(){
   const cont = document.getElementById('panel-content');
   const t = TI[LANG_I], ca = LANG_I === 'ca';
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
-  const hoyIso = new Date().toISOString().slice(0, 10);
+  const hoyIso = isoLocal();
   const [notifs, acts, auts] = await Promise.all([
     filtrarAlertas(sb.from('notificaciones').select('*').eq('leida', false).order('creado_en', { ascending: false }), false),
     sb.from('actividades_jovenes').select('*').eq('estado', 'abierta').gte('fecha_salida', hoyIso).order('fecha_salida', { ascending: true }).limit(8),
@@ -11780,7 +11797,7 @@ function jmFechaTxt(iso, ca){
 }
 function jmDias(a){
   if(!a || !a.fecha_salida) return null;
-  return Math.round((new Date(a.fecha_salida + 'T00:00:00') - new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00')) / 86400000);
+  return Math.round((new Date(a.fecha_salida + 'T00:00:00') - new Date(isoLocal() + 'T00:00:00')) / 86400000);
 }
 // Valores con los que se rellenan las marcas {familia}, {menor}… para CADA familia
 function jmValores(a, fam){
@@ -11971,7 +11988,7 @@ async function jmPintarZona(actId, nPart, nPend){
   const zona = document.getElementById('jm-zona'); if(!zona) return;
   __jmZona = { actId, nPart, nPend };
   const a = (typeof __jaiActividades !== 'undefined' ? __jaiActividades : []).find(x => x.id === actId) || {};
-  const ca = LANG_I === 'ca', d = jmDias(a), hoy = new Date().toISOString().slice(0, 10);
+  const ca = LANG_I === 'ca', d = jmDias(a), hoy = isoLocal();
   const vencido = !!(a.plazo_autorizacion && a.plazo_autorizacion < hoy);
   const avisos = [];
   if(a.estado !== 'cerrada' && d != null && d >= 0 && d <= 7 && nPart > 0)
@@ -12261,7 +12278,7 @@ function contaBalance(){
   const cuentas = __conta.cuentas.filter(c => c.activo || __conta.movs.some(m => m.cuenta_id === c.id));
   const por = {};
   let sinTasa = 0, futuros = 0, devoluciones = 0;
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = isoLocal();
   const trasp = {};
   const res = { cuentas, filas: por, porMedio: {}, saldoAnt: {}, ingresos: {}, gastos: {}, traspasos: {}, saldoFin: {}, total: { saldoAnt: 0, ingresos: 0, gastos: 0, traspasos: 0, saldoFin: 0 }, avisos: [] };
   cuentas.forEach(c => { res.saldoAnt[c.id] = contaSaldoAnteriorCent(c, desde); res.ingresos[c.id] = 0; res.gastos[c.id] = 0; res.traspasos[c.id] = 0; });
@@ -12518,7 +12535,7 @@ function contaAbrirMovimiento(id){
       <label style="display:inline-flex;gap:6px;align-items:center;"><input type="radio" name="cm-dir" value="salida"${dir === 'salida' ? ' checked' : ''} onchange="contaRellenarCodigosMov()"> ${ct('salida')}</label></div>
     ${nuevo ? `<div class="field"><label>${ct('medioPago')} *</label><select id="cm-medio" onchange="contaCambioMedioMov()">${opcionesMedio}</select></div>` : ''}
     <div class="field"><label>${ct('cuenta')}</label><select id="cm-cuenta" onchange="contaCambioMov(true)"></select></div>
-    <div class="field"><label>${ct('fecha')} *</label><input type="date" id="cm-fecha" value="${m ? m.fecha : new Date().toISOString().slice(0, 10)}" onchange="contaCambioMov(true)"></div>
+    <div class="field"><label>${ct('fecha')} *</label><input type="date" id="cm-fecha" value="${m ? m.fecha : isoLocal()}" onchange="contaCambioMov(true)"></div>
     <div class="field"><label>${ct('codigo')} *</label><select id="cm-codigo"></select></div>
     <div class="field"><label>${ct('detalle')}</label><input type="text" id="cm-detalle" value="${escAttr(m ? m.detalle || '' : '')}"></div>
     ${nuevo ? `<div class="field"><label>${ct('referencia')}</label><input type="text" id="cm-ref" value="${escAttr(m ? m.referencia || '' : '')}"></div>` : ''}
@@ -12608,7 +12625,7 @@ function contaAbrirTraspaso(){
     <div class="field"><label>${ct('origen')}</label><select id="ct-origen" onchange="contaCambioTraspaso(true)">${opt(orig)}</select></div>
     <div class="field"><label>${ct('destino')}</label><select id="ct-destino" onchange="contaCambioTraspaso(true)">${opt(dest)}</select></div>
     ${__conta.sqlNuevo ? `<div class="field"><label>${ct('medioPago')}</label><select id="ct-medio" onchange="this.dataset.tocado='1'">${['efectivo', 'transferencia', 'bizum', 'otro'].map(k => `<option value="${k}">${contaMedioTxt(k)}</option>`).join('')}</select></div>` : ''}
-    <div class="field"><label>${ct('fecha')} *</label><input type="date" id="ct-fecha" value="${new Date().toISOString().slice(0, 10)}" onchange="contaCambioTraspaso(true)"></div>
+    <div class="field"><label>${ct('fecha')} *</label><input type="date" id="ct-fecha" value="${isoLocal()}" onchange="contaCambioTraspaso(true)"></div>
     <div class="field"><label>${ct('importeOrigen')} *</label><input type="text" inputmode="decimal" id="ct-imp-o" oninput="contaCambioTraspaso(false)"></div>
     <div class="field" id="ct-imp-d-wrap" style="display:none;"><label>${ct('importeDestino')} *</label><input type="text" inputmode="decimal" id="ct-imp-d" oninput="this.dataset.tocado='1'"><div class="subtle" id="ct-tasa" style="font-size:12px;"></div></div>
     <div class="field"><label>${ct('detalle')}</label><input type="text" id="ct-detalle"></div>
@@ -13015,7 +13032,7 @@ function contaAbrirArqueo(cuentaId){
   window.__arqueoCuenta = cuentaId;
   contaModal(`
     <h3 style="margin-top:0;">${cu.tipo === 'caja' ? ct('arqueoTitulo') : ct('conciliacionTitulo')} · ${escAttr(cu.nombre)}</h3>
-    <div class="field"><label>${ct('fecha')}</label><input type="date" id="aq-fecha" value="${new Date().toISOString().slice(0, 10)}" onchange="contaCambioArqueo()"></div>
+    <div class="field"><label>${ct('fecha')}</label><input type="date" id="aq-fecha" value="${isoLocal()}" onchange="contaCambioArqueo()"></div>
     ${desglose
       ? `<div class="field"><label>${ct('desgloseTxt')}</label><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:6px;">${CONTA_DENOM_EUR.map((d, i) => `<label style="font-size:12px;">${contaFmt(d, 'EUR')}<input type="text" inputmode="numeric" id="aq-d-${i}" oninput="contaCambioArqueo()" style="width:100%;"></label>`).join('')}</div></div>`
       : `<div class="field"><label>${cu.tipo === 'caja' ? ct('totalContado') : ct('segunExtracto')}</label><input type="text" inputmode="decimal" id="aq-total" oninput="contaCambioArqueo()"></div>`}
@@ -13036,7 +13053,7 @@ function contaContadoArqueoCent(){
 }
 function contaCambioArqueo(){
   const cu = contaCuentaPorId(window.__arqueoCuenta); if(!cu) return;
-  const libros = contaSaldoEnCent(cu, contaV('aq-fecha') || new Date().toISOString().slice(0, 10));
+  const libros = contaSaldoEnCent(cu, contaV('aq-fecha') || isoLocal());
   const contado = contaContadoArqueoCent();
   document.getElementById('aq-libros').textContent = contaFmt(libros, cu.moneda);
   document.getElementById('aq-contado').textContent = contado == null ? '—' : contaFmt(contado, cu.moneda);
@@ -13192,13 +13209,13 @@ async function contaBorrarCuotista(id){
 }
 function contaAbrirCobro(qId, ym){
   const q = __conta.cuotistas.find(x => x.id === qId); if(!q) return;
-  if(contaMesCerrado(new Date().toISOString().slice(0, 10))) { /* se avisa al guardar si la fecha cae en un mes cerrado */ }
+  if(contaMesCerrado(isoLocal())) { /* se avisa al guardar si la fecha cae en un mes cerrado */ }
   const medioIni = q.cuenta_id && contaCuentaPorId(q.cuenta_id) && contaCuentaPorId(q.cuenta_id).tipo === 'caja' ? 'efectivo' : (__conta.ultimoMedio['cuota'] || 'transferencia');
   window.__cobro = { qId, ym };
   contaModal(`
     <h3 style="margin-top:0;">${ct('cobrar')} · ${escAttr(q.nombre)}</h3>
     <p class="subtle" style="margin:0 0 8px;">${contaMayus(contaNombreMes(+ym.slice(5)))} ${ym.slice(0, 4)} · ${contaFmt(contaCent(q.importe), q.moneda)}</p>
-    <div class="field"><label>${ct('fecha')} *</label><input type="date" id="cb-fecha" value="${new Date().toISOString().slice(0, 10)}" onchange="contaCambioCobro(true)"></div>
+    <div class="field"><label>${ct('fecha')} *</label><input type="date" id="cb-fecha" value="${isoLocal()}" onchange="contaCambioCobro(true)"></div>
     <div class="field"><label>${ct('medioPago')} *</label><select id="cb-medio" onchange="contaCambioMedioCobro()">${CONTA_MEDIOS.map(k => `<option value="${k}"${k === medioIni ? ' selected' : ''}>${contaMedioTxt(k)}</option>`).join('')}</select></div>
     <div class="field"><label>${ct('cuentaCuota')}</label><select id="cb-cuenta" onchange="contaCambioCobro(true)"></select></div>
     <div class="field"><label>${ct('importeCobrado')} *</label><input type="text" inputmode="decimal" id="cb-importe" oninput="this.dataset.tocado='1'"></div>
@@ -13478,7 +13495,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-26 · v136 (recordatorio de sala al fichar, salida olvidada, aviso de fichaje en móvil arriba, flechas, histórico, estadísticas y memoria)';
+const APP_VERSION_INTRANET = '2026-10-26 · v137 (menú y Mi espacio por orden de trabajo, avisos sin accesos repetidos, agenda arreglada, recordatorio de sala, salida olvidada, histórico, estadísticas y memoria)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -13832,7 +13849,7 @@ async function renderPanelGeneral(){
   const t = TI[LANG_I];
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
 
-  const hoyIso = new Date().toISOString().slice(0,10);
+  const hoyIso = isoLocal();
   const [total, porSexo, porNacionalidad, depDis, situFam, tramEstado, interesesForm, notifs, satisfaccion, consultasPend, prestaciones, tramitesBretxa, derivacion, emprendeduria, comoConocio, actTotal, actResultado, actCategoria, actDerivado, citasHoyRes, docsRecientesRes, tramitesEnCursoRes, revisionesPendRes, actuacionesLigeroRes, avisosRes, equipoRes] = await Promise.all([
     sb.from('stats_total_personas').select('*').maybeSingle(),
     sb.from('stats_por_sexo').select('*'),
@@ -14865,7 +14882,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
             <option value="__otra__">➕ ${acL('Otra formación…', 'Una altra formació…')}</option>
           </select>
           <input type="text" id="form-otra" placeholder="${acL('Nombre de la formación', 'Nom de la formació')}" style="display:none;margin-top:6px;width:100%;"></div>
-        <div class="field" style="margin-bottom:8px;"><label>${acL('Fecha de inicio', 'Data d\'inici')}</label><input type="date" id="form-fecha" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="field" style="margin-bottom:8px;"><label>${acL('Fecha de inicio', 'Data d\'inici')}</label><input type="date" id="form-fecha" value="${isoLocal()}"></div>
         <div class="field" style="margin-bottom:8px;"><label>${acL('Estado / resultado', 'Estat / resultat')}</label>
           <select id="form-estado"><option value="en_tramite">${acL('Inscrita / en curso', 'Inscrita / en curs')}</option><option value="conseguido">${acL('Finalizada', 'Finalitzada')}</option><option value="no_conseguido">${acL('Abandonada / no finalizada', 'Abandonada / no finalitzada')}</option></select></div>
         <div class="field" style="margin-bottom:8px;"><label>${acL('Observaciones', 'Observacions')}</label><textarea id="form-obs" rows="2" style="width:100%;"></textarea></div>
@@ -14881,7 +14898,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
       <div class="panel-card">
         ${actuacionesHtml}
         <div class="doc-upload-row" style="margin-top:10px;text-align:left;">
-          <div class="field"><label>${t.fechaLbl}</label><input type="date" id="act-fecha" value="${new Date().toISOString().slice(0,10)}"></div>
+          <div class="field"><label>${t.fechaLbl}</label><input type="date" id="act-fecha" value="${isoLocal()}"></div>
           <div class="field">
             <label>${t.proyectoTramiteFormacion}</label>
             <select id="act-categoria" onchange="document.getElementById('act-categoria-otro').style.display = this.value==='__otro__' ? 'block' : 'none';">
@@ -14933,7 +14950,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
       <div class="panel-card" style="margin-top:10px;background:var(--ochre-soft);border-color:var(--ochre);">
         <h3 style="color:#7A4A1F;">📄 ${LANG_I==='ca'?'Obrir un nou tràmit':'Abrir un nuevo trámite'}</h3>
         <div class="field" style="margin-bottom:8px;"><input type="text" id="nuevo-tramite-nombre" placeholder="${t.nombreTramitePlaceholder}"></div>
-        <div class="field" style="margin-bottom:8px;"><label>${t.fechaInicioLbl}</label><input type="date" id="nuevo-tramite-fecha" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="field" style="margin-bottom:8px;"><label>${t.fechaInicioLbl}</label><input type="date" id="nuevo-tramite-fecha" value="${isoLocal()}"></div>
         <button class="link-btn" onclick="crearTramite()">${t.abrirTramiteBtn}</button>
       </div>
     </div>
@@ -15289,7 +15306,7 @@ async function crearActuacion(){
   const { error } = await sb.from('actuaciones').insert({
     usuario_id: window.__usuarioIdVisto,
     tecnico_email: CURRENT_USER.email,
-    fecha: val('act-fecha') || new Date().toISOString().slice(0,10),
+    fecha: val('act-fecha') || isoLocal(),
     categoria: categoriaFinal,
     objetivo: val('act-objetivo') || null,
     descripcion: val('act-descripcion') || null,
@@ -15322,7 +15339,7 @@ async function registrarFormacionFicha(){
   if(!nombre){ alert(acL('Elige o escribe la formación.', 'Tria o escriu la formació.')); return; }
   const { error } = await sb.from('actuaciones').insert({
     usuario_id: window.__usuarioIdVisto, tecnico_email: CURRENT_USER.email,
-    fecha: v('form-fecha') || new Date().toISOString().slice(0,10),
+    fecha: v('form-fecha') || isoLocal(),
     categoria: nombre, objetivo: 'Formación', descripcion: v('form-obs').trim() || null, resultado: v('form-estado') || null
   });
   if(error){ alert(error.message); return; }
@@ -15339,7 +15356,7 @@ async function crearTramite(){
     usuario_id: window.__usuarioIdVisto,
     nombre_servicio: nombre,
     estado: 'en_curso',
-    fecha_inicio: fecha || new Date().toISOString().slice(0,10)
+    fecha_inicio: fecha || isoLocal()
   });
   if(error){ alert(error.message); return; }
   verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
@@ -15348,7 +15365,7 @@ async function crearTramite(){
 async function marcarTramiteHecho(tramiteId){
   const { error } = await sb.from('tramites').update({
     estado: 'hecho',
-    fecha_fin: new Date().toISOString().slice(0,10)
+    fecha_fin: isoLocal()
   }).eq('id', tramiteId);
   if(error){ alert(error.message); return; }
   verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
@@ -15356,7 +15373,7 @@ async function marcarTramiteHecho(tramiteId){
 
 async function anularTramite(id){
   if(!confirm(acL('¿Anular este trámite? Quedará en el historial como «Anulado» y dejará de contar como abierto.', 'Anul·lar aquest tràmit? Quedarà a l\'historial com «Anul·lat» i deixarà de comptar com a obert.'))) return;
-  const { data, error } = await sb.from('tramites').update({ estado:'anulado', fecha_fin: new Date().toISOString().slice(0,10) }).eq('id', id).select();
+  const { data, error } = await sb.from('tramites').update({ estado:'anulado', fecha_fin: isoLocal() }).eq('id', id).select();
   if(error){ alert(error.message + '\n\n' + acL('Si dice «violates check constraint», falta ejecutar el SQL 30.', 'Si diu «violates check constraint», falta executar l\'SQL 30.')); return; }
   if(!data || !data.length){ alert(acL('No se pudo anular (sin permiso).', 'No s\'ha pogut anul·lar (sense permís).')); return; }
   verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
@@ -15427,7 +15444,7 @@ async function responderConsultaFicha(id){
 async function anadirNecesidadRapida(){
   const el = document.getElementById('necesidad-rapida'); const nombre = el ? el.value.trim() : '';
   if(!nombre){ alert(acL('Escribe el trámite o la necesidad.', 'Escriu el tràmit o la necessitat.')); return; }
-  const { error } = await sb.from('tramites').insert({ usuario_id: window.__usuarioIdVisto, nombre_servicio: nombre, estado:'en_curso', fecha_inicio: new Date().toISOString().slice(0,10) });
+  const { error } = await sb.from('tramites').insert({ usuario_id: window.__usuarioIdVisto, nombre_servicio: nombre, estado:'en_curso', fecha_inicio: isoLocal() });
   if(error){ alert(error.message); return; }
   verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
 }
@@ -16959,7 +16976,7 @@ async function estExcel(){
   fichaHoja(libro, acL('Altas por año', 'Altes per any'), [acL('Año', 'Any'), 'Total', acL('Con cuenta', 'Amb compte'), acL('Histórico (papel)', 'Històric (paper)')], T.anio);
   fichaHoja(libro, acL('Sexo x edad', 'Sexe x edat'), [acL('Edad', 'Edat'), acL('Mujeres', 'Dones'), acL('Hombres', 'Homes'), acL('Otro / no consta', 'Altre / no consta'), 'Total'], T.cruce);
   const buf = await libro.xlsx.writeBuffer();
-  expDescargarBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'Estadisticas-personas-' + new Date().toISOString().slice(0, 10) + '.xlsx');
+  expDescargarBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'Estadisticas-personas-' + isoLocal() + '.xlsx');
 }
 
 // ---------- 3) MEMORIA DE IMPACTO PARA ORGANISMOS ----------
@@ -16996,7 +17013,7 @@ function memRango(){
   const m = window.__mem;
   if(m.anio === 'rango' && m.desde && m.hasta) return { desde: m.desde, hasta: m.hasta };
   const a = m.anio && m.anio !== 'rango' ? m.anio : String(new Date().getFullYear());
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = isoLocal();
   return { desde: a + '-01-01', hasta: (a + '-12-31') < hoy ? a + '-12-31' : hoy };
 }
 async function memRenderControles(cuerpo){
