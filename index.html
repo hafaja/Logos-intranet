@@ -1910,7 +1910,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v147'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v149'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -11965,6 +11965,65 @@ function impHeroHtml(r){
     </div>
     <p class="imp-nota">${acL('Estas cifras muestran asociación entre el servicio y el cambio, no causalidad: otros factores también influyen.', 'Aquestes xifres mostren associació entre el servei i el canvi, no causalitat: altres factors també hi influeixen.')}</p></section>`;
 }
+// ---------- Cambio calculado automáticamente (sin fichas de impacto) ----------
+// Para cada persona atendida en el periodo se mira si hay un logro registrado en cada dimensión.
+const IMP_AUTO_DIM = {
+  empleo: { act: /labor|empleo|ocupa|feina|treball|trabajo|inserci|currícul|curricul|entrevista|contrat/i, tram: /prestaci|imv|ingr[eé]s m[ií]nim|renta|subsidi|paro|atur|sepe|pensi|ayuda|ajut|bono|beca|alta aut[oò]nom/i },
+  aprendizaje: { act: /formaci|curs|taller|aprend|idioma|catal|castell|alfabet|estudi|titul/i, tram: /homolog|matr[ií]cula|titul|curs/i },
+  autonomia: { act: /tr[aà]mit|document|nie|tie|padr[oó]|empadron|digital|certificad|cl@ve|clave|idcat|cita previa|gesti/i, tram: /./ },
+  bienestar: { act: /psic|emocion|benestar|bienestar|acompa|soledad|solitud|salut|salud|vincul|comunit|social/i, tram: /^$/ }
+};
+async function impCambioAuto(desde, hasta){
+  const sig = hasta ? new Date(new Date(hasta + 'T00:00:00').getTime() + 86400000).toISOString().slice(0, 10) : null;
+  const rango = (q, col) => { if(desde) q = q.gte(col, desde); if(sig) q = q.lt(col, sig); return q; };
+  const [ac, tr, at, ce] = await Promise.all([
+    traerTodoPaginado((a, b) => rango(sb.from('actuaciones').select('usuario_id, categoria, resultado, fecha'), 'fecha').range(a, b)),
+    traerTodoPaginado((a, b) => rango(sb.from('tramites').select('usuario_id, nombre_servicio, estado, creado_en, fecha_fin'), 'creado_en').range(a, b)),
+    traerTodoPaginado((a, b) => rango(sb.from('atenciones').select('usuario_id, creado_en'), 'creado_en').range(a, b)),
+    rango(sb.from('certificados_curso').select('usuario_id, creado_en'), 'creado_en').then(r => r, () => ({ data: [] }))
+  ]);
+  const acts = (ac.data || []).filter(x => x.usuario_id), trams = sinBorrados(tr.data).filter(x => x.usuario_id);
+  const base = new Set([...acts, ...trams, ...(at.data || [])].map(x => x.usuario_id).filter(Boolean));
+  const logros = { empleo: new Set(), aprendizaje: new Set(), autonomia: new Set(), bienestar: new Set() };
+  acts.filter(x => x.resultado === 'conseguido').forEach(x => { Object.keys(IMP_AUTO_DIM).forEach(k => { if(IMP_AUTO_DIM[k].act.test(x.categoria || '')) logros[k].add(x.usuario_id); }); });
+  trams.filter(x => x.estado === 'hecho').forEach(x => { Object.keys(IMP_AUTO_DIM).forEach(k => { if(IMP_AUTO_DIM[k].tram.test(x.nombre_servicio || '')) logros[k].add(x.usuario_id); }); });
+  ((ce && ce.data) || []).forEach(x => { if(x.usuario_id){ logros.aprendizaje.add(x.usuario_id); base.add(x.usuario_id); } });
+  const alguna = new Set([...logros.empleo, ...logros.aprendizaje, ...logros.autonomia, ...logros.bienestar]);
+  const pctN = n => base.size ? Math.round(n / base.size * 1000) / 10 : null;
+  return { base: base.size, alguna: alguna.size, pct: pctN(alguna.size),
+    dims: Object.fromEntries(Object.entries(logros).map(([k, v]) => [k, { n: v.size, pct: pctN(v.size) }])) };
+}
+function impHeroAutoHtml(a, r){
+  const stat = (v, t, sub) => `<div class="imp-stat"><div class="imp-big">${v}</div><div class="imp-stat-t">${t}</div><div class="imp-stat-s">${sub}</div></div>`;
+  return `<section class="imp-hero"><div class="imp-eyebrow">${acL('Cambio observado en las personas · registro automático', 'Canvi observat en les persones · registre automàtic')}</div>
+    <h2 class="imp-frase">${acL(`De ${a.base.toLocaleString()} personas atendidas en el periodo, el ${impPct(a.pct)} logró al menos un resultado registrado (empleo o prestación, formación, trámite resuelto o apoyo).`, `De ${a.base.toLocaleString()} persones ateses en el període, el ${impPct(a.pct)} ha aconseguit almenys un resultat registrat (feina o prestació, formació, tràmit resolt o suport).`)}</h2>
+    <div class="imp-stats">
+      ${stat(impPct(a.pct), acL('con algún logro registrado', 'amb algun assoliment registrat'), a.alguna.toLocaleString() + ' ' + acL('personas', 'persones'))}
+      ${stat(a.base.toLocaleString(), acL('personas atendidas en el periodo', 'persones ateses en el període'), acL('con cuenta en la plataforma', 'amb compte a la plataforma'))}
+      ${stat(r.fichas || 0, acL('personas con ficha de impacto', 'persones amb fitxa d\'impacte'), (r.con_final || 0) + ' ' + acL('con cierre', 'amb tancament'))}
+    </div>
+    <p class="imp-nota">${acL('Se calcula solo con las actuaciones «conseguidas», los trámites finalizados y los certificados de formación. Cuando haya 5 personas con ficha de impacto inicial y de cierre, aquí se mostrará el cambio medido (bienestar, empleo, autonomía…).', 'Es calcula sol amb les actuacions «aconseguides», els tràmits finalitzats i els certificats de formació. Quan hi hagi 5 persones amb fitxa d\'impacte inicial i de tancament, aquí es mostrarà el canvi mesurat (benestar, ocupació, autonomia…).')}</p></section>`;
+}
+function impDimsAutoHtml(a){
+  const defs = [
+    ['empleo', '💼', acL('Económica', 'Econòmica'), acL('Empleo, inserción o prestación conseguida (IMV, subsidio, ayuda…)', 'Feina, inserció o prestació aconseguida (IMV, subsidi, ajut…)')],
+    ['aprendizaje', '🎓', acL('Aprendizaje', 'Aprenentatge'), acL('Formación o curso completado, certificado obtenido', 'Formació o curs completat, certificat obtingut')],
+    ['autonomia', '🧭', acL('Autonomía y derechos', 'Autonomia i drets'), acL('Trámite resuelto: documentación, padrón, NIE, cita, certificado digital…', 'Tràmit resolt: documentació, padró, NIE, cita, certificat digital…')],
+    ['bienestar', '💚', acL('Bienestar y apoyo', 'Benestar i suport'), acL('Acompañamiento emocional o social con objetivo conseguido', 'Acompanyament emocional o social amb objectiu aconseguit')]];
+  return `<div class="imp-seccion">${acL('Logros por dimensión (registro automático)', 'Assoliments per dimensió (registre automàtic)')}</div><div class="imp-grid">${defs.map(([k, ic, t, crit]) => {
+    const x = a.dims[k] || {};
+    return `<div class="imp-card"><div class="imp-card-h"><span class="imp-ic">${ic}</span><strong>${t}</strong></div>
+      <div class="imp-card-v"><span class="imp-big sm">${impPct(x.pct)}</span></div>
+      <div class="imp-card-s">${(x.n || 0).toLocaleString()} ${acL('personas con logro', 'persones amb assoliment')} · ${acL('de', 'de')} ${a.base.toLocaleString()}</div><div class="imp-crit">${crit}</div></div>`;
+  }).join('')}</div>`;
+}
+function impFichasPendHtml(r){
+  const cerr = r.con_final || 0, falta = Math.max(0, 5 - cerr);
+  return `<div class="imp-seccion">${acL('Cambio medido con fichas de impacto', 'Canvi mesurat amb fitxes d\'impacte')}</div>
+    <div class="imp-card" style="margin-bottom:16px;"><p style="margin:0 0 6px;"><strong>${cerr} / 5</strong> ${acL('personas con situación inicial y cierre.', 'persones amb situació inicial i tancament.')} ${falta ? acL(`Faltan ${falta} para mostrar bienestar (WHO-5), soledad, competencias y autonomía antes y después.`, `En falten ${falta} per mostrar benestar (WHO-5), solitud, competències i autonomia abans i després.`) : ''}</p>
+    <div class="ficha-barra"><i style="width:${Math.min(100, cerr / 5 * 100)}%;background:#2F5DA8;"></i></div>
+    <button class="link-btn" style="margin-top:8px;" onclick="renderImpacto('fichas')">📝 ${acL('Abrir o cerrar fichas de impacto', 'Obrir o tancar fitxes d\'impacte')}</button></div>`;
+}
 function impDimsHtml(r){
   const d = r.dims || {};
   const defs = [
@@ -12045,6 +12104,21 @@ async function impRenderPanel(cuerpo){
   if(res.error || !res.data){ cuerpo.innerHTML = impFiltrosHtml() + gpAviso(escAttr((res.error && res.error.message) || 'Sin datos')); return; }
   const r = res.data; st.resumen = r;
   const vacio = !r.fichas;
+  // Sin 5 fichas de impacto cerradas, el cambio se calcula automáticamente con los logros registrados en el día a día
+  const sinFichas = !r.global || r.global.mejora === null || r.global.mejora === undefined;
+  const auto = sinFichas ? await impCambioAuto(desde, hasta).catch(() => null) : null;
+  if(auto && auto.base){
+    cuerpo.innerHTML = impFiltrosHtml() + `<div id="imp-total"></div><div id="imp-auto"></div><div id="imp-informe">` + impHeroAutoHtml(auto, r) + impDimsAutoHtml(auto) + impFichasPendHtml(r)
+      + impCoberturaHtml(r) + impSerieHtml(r) + impActividadHtml(act)
+      + `<p class="imp-pie">${acL('Periodo', 'Període')}: ${desde ? impFecha(desde) : acL('inicio', 'inici')} – ${impFecha(hasta || new Date().toISOString())} · ${st.programa ? impProg(st.programa) : acL('Todo Logos', 'Tot Logos')}</p></div>`
+      + `<div class="imp-seccion">${acL('Atención en Bretxa Logos', 'Atenció a Bretxa Logos')}</div><div id="imp-atencion" class="cards-grid"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`
+      + `<div id="imp-alcance"></div><div id="imp-carga"></div>`;
+    impAlcanceTotal(); impResultadosAuto(desde, hasta);
+    statsAtencionNuevos(desde, hasta).then(d => { const h = document.getElementById('imp-atencion'); if(h) h.innerHTML = bloqueAtencionNuevos(d); });
+    alcancePersonasPintar('imp-alcance');
+    if(IS_ADMIN) impCargaAdmin();
+    return;
+  }
   cuerpo.innerHTML = impFiltrosHtml() + `<div id="imp-total"></div><div id="imp-auto"></div><div id="imp-informe">` + impHeroHtml(r)
     + (vacio ? `<div class="imp-vacio"><strong>${acL('Todavía no hay fichas en este periodo.', 'Encara no hi ha fitxes en aquest període.')}</strong><br>${acL('Cada técnico crea sus fichas en la pestaña «Mis fichas». En cuanto haya 5 personas con situación inicial y cierre, aparecerán aquí los cambios.', 'Cada tècnic crea les seves fitxes a la pestanya «Les meves fitxes». Quan hi hagi 5 persones amb situació inicial i tancament, hi apareixeran els canvis.')}<br><button class="primary-btn" style="width:auto;margin-top:10px;" onclick="renderImpacto('fichas')">📝 ${acL('Crear mi primera ficha', 'Crear la meva primera fitxa')}</button></div>` : '')
     + impDimsHtml(r) + impAntesDespuesHtml(r) + impEmpleoFormacionHtml(r) + impCoberturaHtml(r) + impSerieHtml(r) + impEquidadHtml(r) + impActividadHtml(act)
@@ -14196,7 +14270,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-27 · v147 (estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-27 · v149 (informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -14502,19 +14576,17 @@ async function renderInformesScreen(){
     </div>
 
     <div class="section-label">👥 ${LANG_I==='ca'?'Persones ateses':'Personas atendidas'}</div>
-    <p class="subtle">${LANG_I==='ca'
-      ? 'Estadístiques completes de totes les persones ateses per Logos.'
-      : 'Estadísticas completas de todas las personas atendidas por Logos.'}</p>
+    <div id="inf-total"></div>
     <div class="cards-grid" style="margin-bottom:24px;">
       <div class="panel-card" id="inf-sexo"><h3>${t.porSexo}</h3><div class="placeholder">${t.cargando}</div></div>
       <div class="panel-card" id="inf-edad"><h3>${LANG_I==='ca'?'Per edat':'Por edad'}</h3><div class="placeholder">${t.cargando}</div></div>
       <div class="panel-card" id="inf-nac"><h3>${t.porNacionalidad}</h3><div class="placeholder">${t.cargando}</div></div>
-      <div class="panel-card">
+      <div class="panel-card" id="inf-depdis">
         <h3>${t.dependenciaDiscapacidad}</h3>
         <div class="panel-stat-row"><span>${t.conDependencia}</span><span><strong>${dd.con_dependencia_reconocida || 0}</strong></span></div>
         <div class="panel-stat-row"><span>${t.conDiscapacidad}</span><span><strong>${dd.con_discapacidad_reconocida || 0}</strong></span></div>
       </div>
-      <div class="panel-card">
+      <div class="panel-card" id="inf-familia">
         <h3>${t.situFamiliares}</h3>
         <div class="panel-stat-row"><span>${t.monoparentales}</span><span><strong>${sf.monoparentales || 0}</strong></span></div>
         <div class="panel-stat-row"><span>${t.familiasNumerosas}</span><span><strong>${sf.numerosas || 0}</strong></span></div>
@@ -14535,6 +14607,7 @@ async function renderInformesScreen(){
       <div class="panel-card"><h3>${t.emprendeduriaTitulo}</h3>${graficoCircular((emprendeduria.data||[]).map(r => ({label: etiquetaOpt(EMPRENDEDURIA_OPTS, r.accion) || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
       <div class="panel-card"><h3>${t.comoConocioTitulo}</h3>${graficoCircular((comoConocio.data||[]).map(r => ({label: etiquetaOpt(COMO_CONOCIO_OPTS, r.como_conocio) || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
       ${bloqueAtencionNuevos(atNuevos)}
+      <p class="subtle" style="grid-column:1/-1;margin:4px 0 0;font-size:12px;">ℹ️ ${LANG_I==='ca' ? 'Prestacions, tràmits de Bretxa, derivacions, emprenedoria i com ens coneixen surten de les atencions registrades a la plataforma (l\'històric en paper no té aquestes dades).' : 'Prestaciones, trámites de Bretxa, derivaciones, emprendeduría y cómo nos conocen salen de las atenciones registradas en la plataforma (el histórico en papel no tiene estos datos).'}</p>
       <div class="panel-card"><h3>${t.resultadosActuaciones}</h3><p class="subtle" style="margin:0 0 8px;">${totalActStats} ${t.actuacionesRegistradasTotal}</p>${resultadosHtml}</div>
       <div class="panel-card"><h3>${t.actuacionesPorCategoria}</h3>${categoriaHtml}</div>
       <div class="panel-card"><h3>${t.derivacionesDeActuaciones}</h3>${derivadoHtml}</div>
@@ -14548,11 +14621,40 @@ async function renderInformesScreen(){
 async function infPerfilTodas(){
   try {
     const per = await estCargarPersonas(); const T = estTablas(per.filas), t = TI[LANG_I], ca = LANG_I === 'ca';
+    // Total de personas atendidas hasta hoy (con cuenta + histórico + sin ficha)
+    const TR = estTrayectoria(per.filas), tot = document.getElementById('inf-total');
+    if(tot) tot.innerHTML = `<div class="imp-total" style="margin-bottom:14px;"><div class="imp-total-cab"><div><div class="imp-total-n">${TR.total.toLocaleString()}</div><div>${ca ? `persones ateses${TR.primero ? ' des de ' + TR.primero : ''} fins avui` : `personas atendidas${TR.primero ? ' desde ' + TR.primero : ''} hasta hoy`}</div></div>
+      <div class="imp-total-chips"><span>📄 ${TR.porOrigen.papel.toLocaleString()} ${ca ? 'històric' : 'histórico'}</span><span>💻 ${TR.porOrigen.cuenta.toLocaleString()} ${ca ? 'amb compte' : 'con cuenta'}</span>${TR.porOrigen.sinficha ? `<span>📝 ${TR.porOrigen.sinficha.toLocaleString()} ${ca ? 'sense fitxa' : 'sin ficha'}</span>` : ''}<span>🔁 ${TR.repiten.toLocaleString()} ${ca ? 'han tornat un altre any' : 'han vuelto otro año'}</span></div></div>
+      <button class="link-btn" style="color:#fff;font-size:12.5px;padding:0;" onclick="showScreen('personas');__personasVista='stats';renderPersonasScreen()">📊 ${ca ? 'Veure totes les estadístiques (sexe, edat, nacionalitat, municipi, any…)' : 'Ver todas las estadísticas (sexo, edad, nacionalidad, municipio, año…)'} →</button></div>`;
+    // Dependencia, discapacidad y situación familiar: con todas las fichas (no solo las de las atenciones)
+    const si = v => v === true || /^(s[ií]|si|yes|true|1)$/i.test(String(v || '').trim());
+    const pr = await traerTodoPaginado((a, b) => sb.from('perfiles').select('*').not('nombre_completo', 'is', null).range(a, b));
+    const ps = pr.data || [];
+    const cuenta = f => ps.filter(f).length;
+    const conDato = k => ps.filter(p => p[k] !== null && p[k] !== undefined && String(p[k]).trim() !== '').length;
+    const fila = (txt, n, base) => `<div class="panel-stat-row"><span>${txt}</span><span><strong>${n.toLocaleString()}</strong>${base ? ` <span class="subtle" style="font-size:11px;margin:0;">${ca ? 'de' : 'de'} ${base.toLocaleString()}</span>` : ''}</span></div>`;
+    const dd = document.getElementById('inf-depdis');
+    if(dd && ps.length) dd.innerHTML = `<h3>${t.dependenciaDiscapacidad}</h3>
+      ${fila(t.conDependencia, cuenta(p => si(p.dependencia_reconocida)), conDato('dependencia_reconocida'))}
+      ${fila(t.conDiscapacidad, cuenta(p => si(p.discapacidad_reconocida)), conDato('discapacidad_reconocida'))}
+      <p class="subtle" style="font-size:11.5px;margin:6px 0 0;">${ca ? '«de» = persones amb aquesta dada a la fitxa.' : '«de» = personas con este dato en la ficha.'}</p>`;
+    const fam = document.getElementById('inf-familia');
+    const paro = p => si(p.situacion_desempleo) || /paro|desemple|atur|sin empleo|sense feina|desocupad/i.test(String(p.situacion_laboral || ''));
+    const prev = fam ? [...fam.querySelectorAll('.panel-stat-row')].map(r => r.textContent) : [];
+    const vistaN = txt => { const r = prev.find(x => x.includes(txt)); const m = r && r.match(/(\d+)\s*$/); return m ? Number(m[1]) : 0; };
+    if(fam && ps.length) fam.innerHTML = `<h3>${t.situFamiliares}</h3>
+      ${fila(t.monoparentales, cuenta(p => si(p.familia_monoparental)), conDato('familia_monoparental'))}
+      ${fila(t.familiasNumerosas, cuenta(p => si(p.familia_numerosa)), conDato('familia_numerosa'))}
+      ${fila(t.conHijosCargo, cuenta(p => si(p.hijos_a_cargo) || Number(p.numero_hijos) > 0), ps.filter(p => p.hijos_a_cargo != null || p.numero_hijos != null).length)}
+      ${fila(t.enDesempleo, cuenta(paro), ps.filter(p => p.situacion_desempleo != null || p.situacion_laboral).length)}
+      ${fila(t.violenciaGenero, vistaN(t.violenciaGenero))}
+      ${fila(t.dificultadesEmocionales, vistaN(t.dificultadesEmocionales))}
+      <p class="subtle" style="font-size:11.5px;margin:6px 0 0;">${ca ? 'Sobre les fitxes amb compte (' + ps.length.toLocaleString() + '). L\'històric en paper no té aquestes dades.' : 'Sobre las fichas con cuenta (' + ps.length.toLocaleString() + '). El histórico en papel no tiene estos datos.'}</p>`;
     const pinta = (id, titulo, filas) => { const el = document.getElementById(id); if(el) el.innerHTML = `<h3>${titulo}</h3><p class="subtle" style="margin:0 0 6px;font-size:12px;">${T.tot.toLocaleString()} ${ca ? 'persones (amb compte, històric i sense fitxa)' : 'personas (con cuenta, histórico y sin ficha)'}</p>${estBarras(filas)}`; };
     pinta('inf-sexo', t.porSexo, T.sexo);
     pinta('inf-edad', ca ? 'Per edat (en l\'alta)' : 'Por edad (en el alta)', T.edad);
-    const nacTop = T.nac.slice(0, 10), resto = T.nac.slice(10).reduce((x, r) => x + r[1], 0);
-    pinta('inf-nac', t.porNacionalidad, T.origen.concat(nacTop).concat(resto ? [[ca ? 'Altres' : 'Otras', resto, '']] : []));
+    const sinEsp = T.nac.filter(x => x[0] !== 'España'), nacTop = sinEsp.slice(0, 10), resto = sinEsp.slice(10).reduce((x, r) => x + r[1], 0);
+    pinta('inf-nac', t.porNacionalidad, T.origen.slice(0, 1).concat(nacTop).concat(resto ? [[ca ? 'Altres' : 'Otras', resto, '']] : []));
     const tr = document.getElementById('inf-tram');
     if(tr && tr.querySelector('.placeholder')){
       const r = await traerTodoPaginado((a, b) => sb.from('tramites').select('estado').range(a, b));
@@ -17875,6 +17977,7 @@ async function memDatos(desde, hasta, programa){
     IMPACTO_OK ? sb.rpc('impacto_resumen', { p_desde: desde, p_hasta: hasta, p_programa: programa || null }) : Promise.resolve({ data: null }),
     impActividad(desde, hasta)
   ]);
+  const autoCambio = await impCambioAuto(desde, hasta).catch(() => null);
   const atenciones = at.data || [], actuaciones = ac.data || [], tramites = sinBorrados(tr.data), citas = sinBorrados(ci.data);
   // Personas atendidas en el periodo: con alguna atención, actuación, trámite o cita + fichas del histórico con alta en el periodo
   const idsAtendidas = new Set([...atenciones, ...actuaciones, ...tramites, ...citas].map(x => x.usuario_id).filter(Boolean));
@@ -17905,7 +18008,7 @@ async function memDatos(desde, hasta, programa){
   const tray = estTrayectoria(per.filas);
   return { desde, hasta, programa, atendidas, filasHist, sinCuenta, tray, nuevas, T: estTablas(atendidas), act: act || {}, atencionesN: atenciones.length, actuacionesN: actuaciones.length,
     tramitesN: tramites.length, tramFin, citasN: citas.length, minutos, servicios, conocio: Object.entries(conocio).sort((a, b) => b[1] - a[1]), derivaciones, resultados,
-    imp: (imp && imp.data) || null };
+    imp: (imp && imp.data) || null, autoCambio };
 }
 function memFrasesConclusion(d){
   const r = d.imp || {}, g = r.global || {}, T = d.T, esCA = LANG_I === 'ca';
@@ -17982,6 +18085,9 @@ async function memGenerar(){
     ${sec(acL('Resultados e impacto', 'Resultats i impacte'))}
     ${(() => { const rs = d.resultados || {}, conR = Object.values(rs).reduce((x, v) => x + v, 0), cons = rs.conseguido || 0;
       return `<h3>${acL('Resultados registrados en la actividad diaria', 'Resultats registrats a l\'activitat diària')}</h3><div class="mem-kpis sm">${kpi(conR ? Math.round(cons / conR * 100) + ' %' : '–', acL(`actuaciones con el objetivo conseguido (${cons} de ${conR})`, `actuacions amb l'objectiu aconseguit (${cons} de ${conR})`))}${kpi(d.tramitesN ? Math.round(d.tramFin / d.tramitesN * 100) + ' %' : '–', acL(`trámites finalizados (${d.tramFin} de ${d.tramitesN})`, `tràmits finalitzats (${d.tramFin} de ${d.tramitesN})`))}${kpi(d.derivaciones.toLocaleString(), acL('derivaciones a otros recursos', 'derivacions a altres recursos'))}${kpi((d.tray ? d.tray.repiten : 0).toLocaleString(), acL('personas que han vuelto otro año', 'persones que han tornat un altre any'))}</div>`; })()}
+    ${(g.mejora === null || g.mejora === undefined) && d.autoCambio && d.autoCambio.base ? `<h3>${acL('Logros por dimensión (registro automático)', 'Assoliments per dimensió (registre automàtic)')}</h3>
+      <p>${acL(`De ${d.autoCambio.base} personas atendidas en el periodo, el ${impPct(d.autoCambio.pct)} logró al menos un resultado registrado.`, `De ${d.autoCambio.base} persones ateses en el període, el ${impPct(d.autoCambio.pct)} ha aconseguit almenys un resultat registrat.`)}</p>
+      ${memTablaHtml([acL('Dimensión', 'Dimensió'), acL('Personas con logro', 'Persones amb assoliment'), '%'], [['empleo', acL('Económica (empleo, inserción o prestación)', 'Econòmica (feina, inserció o prestació)')], ['aprendizaje', acL('Aprendizaje (formación, certificados)', 'Aprenentatge (formació, certificats)')], ['autonomia', acL('Autonomía y acceso a derechos (trámites resueltos)', 'Autonomia i accés a drets (tràmits resolts)')], ['bienestar', acL('Bienestar y apoyo', 'Benestar i suport')]].map(([k, n]) => [n, d.autoCambio.dims[k].n, impPct(d.autoCambio.dims[k].pct)]))}` : ''}
     <h3>${acL('Cambio medido en las personas (fichas de impacto)', 'Canvi mesurat en les persones (fitxes d\'impacte)')}</h3>
     ${g.mejora === null || g.mejora === undefined
       ? `<p>${acL('En este periodo todavía no hay suficientes personas con medición inicial y de cierre (mínimo 5) para presentar resultados de cambio. La entidad está implantando las fichas de impacto (bienestar WHO-5, soledad UCLA-3, empleo, competencias y autonomía), que permitirán mostrarlos en próximas memorias.', 'En aquest període encara no hi ha prou persones amb mesura inicial i de tancament (mínim 5) per presentar resultats de canvi. L\'entitat està implantant les fitxes d\'impacte (benestar WHO-5, solitud UCLA-3, ocupació, competències i autonomia), que permetran mostrar-los en properes memòries.')}</p>`
