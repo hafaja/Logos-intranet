@@ -632,6 +632,56 @@
 .cita-tec-av{flex:0 0 34px;width:34px;height:34px;border-radius:50%;background:#E6F0FA;color:#1F4E79;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;}
 .dest-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:4px 10px;max-height:240px;overflow:auto;border:1px solid var(--line,#ddd);border-radius:10px;padding:8px;}
 .dest-op{display:flex;gap:6px;align-items:center;font-size:13.5px;padding:4px 2px;cursor:pointer;}
+
+/* ---- Aula Virtual ---- */
+.av-hero{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:linear-gradient(120deg,#1E3F66,#2F5DA8);color:#fff;border-radius:16px;padding:16px 18px;margin-bottom:14px;}
+.av-hero-t{font-family:var(--font-display,inherit);font-size:21px;font-weight:700;}
+.av-hero-s{font-size:13px;opacity:.9;margin-top:4px;line-height:1.45;}
+.av-guia-btn{background:#F2BC2C;color:#16304F;border:none;border-radius:999px;padding:10px 16px;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;}
+.av-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px;}
+.av-tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:none;border-radius:14px;padding:12px;cursor:pointer;text-align:left;font-family:inherit;color:#16304F;}
+.av-tile strong{font-size:22px;line-height:1.1;}
+.av-tile span:last-child{font-size:12px;font-weight:600;}
+.av-tile-i{font-size:18px;}
+.av-c-azul{background:#E5EEFB;} .av-c-verde{background:#E2F4E8;} .av-c-oro{background:#FCF1D3;} .av-c-morado{background:#EEE8F8;}
+.av-tabs{display:flex;gap:6px;background:#EEF1F6;border-radius:999px;padding:4px;margin-bottom:14px;overflow-x:auto;}
+.av-tab{flex:1;white-space:nowrap;border:none;background:transparent;border-radius:999px;padding:9px 12px;font-weight:700;font-size:13.5px;color:#4A5A70;cursor:pointer;font-family:inherit;}
+.av-tab-on{background:#1E3F66;color:#fff;box-shadow:0 2px 6px rgba(30,63,102,.25);}
+.av-filtros{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px;}
+.av-filtro{border:1.5px solid #D5DCE6;background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:#33445C;}
+.av-filtro-on{border-color:#1E3F66;background:#1E3F66;color:#fff;}
+.av-leyenda{display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:#5A6B80;margin-bottom:10px;}
+.av-leyenda i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
+.av-curso{border-left:6px solid #2E8B47;}
+.av-est-preparacion{border-left-color:#94A3B8;} .av-leyenda i.av-est-preparacion{background:#94A3B8;}
+.av-est-inscripcion{border-left-color:#E0A526;} .av-leyenda i.av-est-inscripcion{background:#E0A526;}
+.av-est-activo{border-left-color:#2E8B47;} .av-leyenda i.av-est-activo{background:#2E8B47;}
+.av-est-finalizado{border-left-color:#2F5DA8;} .av-leyenda i.av-est-finalizado{background:#2F5DA8;}
+.av-est-cerrado{border-left-color:#555;} .av-leyenda i.av-est-cerrado{background:#555;}
+.av-crear-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start;}
+.av-card-crear{border-top:5px solid #2F5DA8;} .av-c-verde-b{border-top-color:#2E8B47;} .av-c-azul-b{border-top-color:#2F5DA8;}
+#av-guia-ov{position:fixed;inset:0;background:rgba(10,20,35,.6);z-index:9500;display:flex;align-items:center;justify-content:center;padding:16px;}
+.av-guia{position:relative;width:100%;max-width:440px;border-radius:22px;padding:28px 24px 18px;color:#16304F;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.3);animation:avIn .25s ease;}
+@keyframes avIn{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+.av-g-azul{background:linear-gradient(160deg,#FFFFFF 40%,#DCE8FB);} .av-g-verde{background:linear-gradient(160deg,#FFFFFF 40%,#D7F0DF);}
+.av-g-oro{background:linear-gradient(160deg,#FFFFFF 40%,#FBEBC0);} .av-g-morado{background:linear-gradient(160deg,#FFFFFF 40%,#E6DDF6);}
+.av-g-coral{background:linear-gradient(160deg,#FFFFFF 40%,#F9DDD6);}
+.av-guia-ico{font-size:58px;line-height:1;margin-bottom:10px;}
+.av-guia h3{margin:0 0 8px;font-size:20px;}
+.av-guia p{margin:0 auto;font-size:15px;line-height:1.55;max-width:360px;color:#2B3B52;}
+.av-guia-x{position:absolute;top:10px;right:12px;border:none;background:transparent;font-size:18px;cursor:pointer;color:#5A6B80;}
+.av-guia-dots{display:flex;gap:7px;justify-content:center;margin:18px 0 12px;}
+.av-guia-dots button{width:9px;height:9px;border-radius:50%;border:none;background:#C3CCD8;padding:0;cursor:pointer;}
+.av-guia-dots button.on{background:#1E3F66;width:22px;border-radius:6px;}
+.av-guia-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;color:#5A6B80;}
+.av-guia-b1{background:#1E3F66;color:#fff;border:none;border-radius:999px;padding:10px 18px;font-weight:800;cursor:pointer;font-family:inherit;font-size:14px;}
+.av-guia-b2{background:transparent;border:1.5px solid #C3CCD8;color:#33445C;border-radius:999px;padding:9px 14px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;}
+@media (max-width:700px){ .av-tiles{gap:6px;} .av-tile{padding:8px 7px;border-radius:12px;} .av-tile strong{font-size:18px;} .av-tile span:last-child{font-size:10.5px;line-height:1.2;} .av-tile-i{font-size:15px;} .av-crear-grid{grid-template-columns:1fr;} .av-tab{font-size:12px;padding:8px 7px;} .av-hero{padding:14px;} .av-hero-t{font-size:19px;} .av-guia{padding:24px 18px 16px;} }
+
+.ficha-barra{height:9px;background:#E8EAF0;border-radius:6px;overflow:hidden;margin:6px 0 2px;}
+.ficha-barra i{display:block;height:9px;border-radius:6px;transition:width .4s;}
+.fichas-pend-roja{border:1.5px solid #E9A79F !important;background:#FFF6F5 !important;}
+.fichas-pend-roja > summary{color:#8E2A1F;}
 </style>
 </head>
 <body>
@@ -1833,7 +1883,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v143'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v145'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -4745,11 +4795,14 @@ async function guardarAtencion(){
     await verPersonaStaff(uid, window.__origenPersonaVista);
     mostrarTabPersona('atencion'); abrirAtencionEnFicha();
     alert('✅ Ficha guardada.');
+    fichaAviso(uid, 'guardado');
     return;
   }
+  const uidAt = window.__atencionUsuarioVinculado;
   showScreen('miespacio');
   await renderMiEspacio();
   alert(LANG_I === 'ca' ? '✅ Atenció desada.' : '✅ Atención guardada.');
+  if(uidAt) fichaAviso(uidAt, 'guardado');
 }
 
 // ---------- Excel de atenciones: una fila por atención, con todos los datos; se vuelve a generar con las nuevas cada vez ----------
@@ -4835,6 +4888,7 @@ function citaAccionesHtml(c, nombre){
     ${conTec && !mia ? `<button class="cita-acc" onclick="quedarmeCitaStaff('${c.id}')">✋ ${acL('Me la quedo', 'Me la quedo')}</button>` : ''}
     ${conTec ? `<button class="cita-acc" onclick="pasarCitaStaff('${c.id}')">👤 ${acL('Pasar a otra persona', 'Passar a una altra persona')}</button>` : ''}
     <button class="cita-acc" onclick="cambiarCitaStaff('${c.id}')">🔁 ${acL('Cambiar día/hora', 'Canviar dia/hora')}</button>
+    <button class="cita-acc" onclick="otraCitaStaff('${c.id}')">➕ ${acL('Otra cita', 'Una altra cita')}</button>
     <button class="cita-acc cita-acc-x" onclick="cancelarCitaStaff('${c.id}')">✖ ${acL('Cancelar', 'Cancel·lar')}</button>
   </div>`;
 }
@@ -4891,6 +4945,21 @@ async function asignarTecnicoCitaDB(id, email){
     : (/complet/i.test(r.error.message || '') ? acL('Esa persona ya tiene otra cita a la misma hora.', 'Aquesta persona ja té una altra cita a la mateixa hora.') : r.error.message));
   return false;
 }
+// Horario de cada persona del equipo para un día: { email: [['09:00','14:00'], …] } (solo quien tiene horario propio)
+async function horariosDelDia(fechaIso){
+  const out = {};
+  if(!fechaIso) return out;
+  try {
+    const r = await sb.rpc('horarios_del_dia', { p_fecha: fechaIso });
+    if(!r.error && Array.isArray(r.data)){ r.data.forEach(x => { if(x && x.email) out[String(x.email).toLowerCase()] = [...new Set((x.tramos || []).map(t => String(t[0]).slice(0, 5) + '|' + String(t[1]).slice(0, 5)))].map(k => k.split('|')); }); return out; }
+  } catch(e){}
+  try {
+    const d = new Date(fechaIso + 'T00:00:00'); const dia = d.getDay() === 0 ? 7 : d.getDay();
+    const { data } = await sb.from('personal_horarios').select('persona_email, dia, desde, hasta').eq('dia', dia);
+    (data || []).forEach(f => { if(!f.persona_email) return; const e = String(f.persona_email).toLowerCase(); (out[e] = out[e] || []).push([String(f.desde).slice(0, 5), String(f.hasta).slice(0, 5)]); });
+  } catch(e){}
+  return out;
+}
 async function quedarmeCitaStaff(id){
   const c = (window.__citasMapa || {})[id]; if(!c) return;
   if(!(await asignarTecnicoCitaDB(id, CURRENT_USER.email))) return;
@@ -4901,6 +4970,8 @@ async function pasarCitaStaff(id){
   const c = (window.__citasMapa || {})[id]; if(!c) return;
   const ca = LANG_I === 'ca';
   const equipo = await cargarEquipoCitas();
+  const horDia = await horariosDelDia(c.fecha);
+  const fueraDe = e => { const t = horDia[e]; return !!(t && t.length) && !t.some(x => logosMin(c.hora) >= logosMin(x[0]) && logosMin(c.hora) < logosMin(x[1])); };
   // quién ya tiene una cita a esa misma hora
   const ocupados = new Set();
   try { const { data } = await sb.from('citas').select('id, hora, tecnico_email, estado').eq('fecha', c.fecha); (data || []).forEach(x => { if(x.id !== id && x.estado !== 'cancelada' && x.tecnico_email && String(x.hora).slice(0, 5) === c.hora) ocupados.add(x.tecnico_email.toLowerCase()); }); } catch(e){}
@@ -4913,7 +4984,7 @@ async function pasarCitaStaff(id){
     <div style="display:flex;justify-content:space-between;align-items:center;"><h3 style="margin:0;">👤 ${ca ? 'Passar la cita a…' : 'Pasar la cita a…'}</h3><button class="link-btn" onclick="document.getElementById('pasar-cita-ov').remove()">✕</button></div>
     <p class="subtle" style="margin:4px 0 10px;font-size:12.5px;">${escAttr(c.nombre || '')} · ${f}</p>
     <div class="pasar-lista">${equipo.map(t => { const oc = ocupados.has(t.email), act = t.email === (c.tecnico || '').toLowerCase();
-      return `<button class="pasar-op ${act ? 'pasar-act' : ''}" ${oc || act ? 'disabled' : ''} data-e="${escAttr(t.email)}" onclick="confirmarPasarCita('${id}', this.dataset.e)"><span class="cita-tec-av">${escAttr(t.nombre.split(/\s+/).slice(0, 2).map(x => x[0] || '').join('').toUpperCase())}</span><span style="flex:1;text-align:left;"><strong>${escAttr(t.nombre)}</strong>${t.email === yo ? ` <small>(${ca ? 'tu' : 'tú'})</small>` : ''}</span><small>${act ? (ca ? 'Ara la té' : 'La tiene ahora') : (oc ? (ca ? 'Ocupat a aquesta hora' : 'Ocupado a esa hora') : '')}</small></button>`; }).join('')}
+      return `<button class="pasar-op ${act ? 'pasar-act' : ''}" ${oc || act ? 'disabled' : ''} data-e="${escAttr(t.email)}" onclick="confirmarPasarCita('${id}', this.dataset.e)"><span class="cita-tec-av">${escAttr(t.nombre.split(/\s+/).slice(0, 2).map(x => x[0] || '').join('').toUpperCase())}</span><span style="flex:1;text-align:left;"><strong>${escAttr(t.nombre)}</strong>${t.email === yo ? ` <small>(${ca ? 'tu' : 'tú'})</small>` : ''}</span><small>${act ? (ca ? 'Ara la té' : 'La tiene ahora') : (oc ? (ca ? 'Ocupat a aquesta hora' : 'Ocupado a esa hora') : (fueraDe(t.email) ? '⚠️ ' + (ca ? 'Fora del seu horari' : 'Fuera de su horario') : ''))}</small></button>`; }).join('')}
       ${c.tecnico ? `<button class="pasar-op" onclick="confirmarPasarCita('${id}', '')"><span class="cita-tec-av" style="background:#eee;color:#777;">—</span><span style="flex:1;text-align:left;">${ca ? 'Deixar-la sense assignar' : 'Dejarla sin asignar'}</span></button>` : ''}
     </div>
     <p class="subtle" style="font-size:11.5px;margin:10px 0 0;">${ca ? 'La persona nova rep una alerta i la veurà a «Les meves cites». La persona usuària veu el nom de qui l\'atendrà.' : 'La persona nueva recibe una alerta y la verá en «Mis citas». La persona usuaria ve el nombre de quien la atenderá.'}</p>
@@ -4954,6 +5025,11 @@ async function cancelarCitaStaff(id){
   if(!(await cancelarCitaDB(id))) return;
   await refrescarTrasCambioCita(c.uid);
   avisarCitaCreada(c.uid, c.nombre, c.fecha, c.hora, c.motivo, false, Object.assign({ modo:'cancelada' }, c.contacto ? { contacto: c.contacto } : {}));
+}
+// Dar una cita más a la misma persona (sin tocar la que ya tiene)
+function otraCitaStaff(id){
+  const c = (window.__citasMapa || {})[id]; if(!c) return;
+  abrirNuevaCitaStaff(c.uid, c.nombre, Object.assign({ tecnico: c.tecnico || undefined }, c.contacto ? { hist: c.contacto } : {}));
 }
 function cambiarCitaStaff(id){
   const c = (window.__citasMapa || {})[id]; if(!c) return;
@@ -5144,10 +5220,13 @@ async function elegirDiaNuevaCita(fechaIso, mantener){
   if(!hd){ cont.innerHTML = `<div class="empty-note">${acL('Ese día Logos está cerrado. Elige otro.', 'Aquest dia Logos és tancat. Tria\'n un altre.')}</div><p class="subtle" style="font-size:12px;">${logosHorarioTexto()}</p>`; return; }
 
   const tecSel = (__NC.tecnico || '').toLowerCase();
-  const [{ data: ocup }, tecR] = await Promise.all([
+  const [{ data: ocup }, tecR, horDia] = await Promise.all([
     sb.rpc('citas_disponibilidad', { p_fecha: fechaIso }),
-    tecSel ? sb.from('citas').select('id, hora, estado, tecnico_email').eq('fecha', fechaIso).then(r => r, () => ({ data: [] })) : Promise.resolve({ data: [] })
+    tecSel ? sb.from('citas').select('id, hora, estado, tecnico_email').eq('fecha', fechaIso).then(r => r, () => ({ data: [] })) : Promise.resolve({ data: [] }),
+    horariosDelDia(fechaIso)
   ]);
+  const tramosTec = tecSel && horDia[tecSel] && horDia[tecSel].length ? horDia[tecSel] : null;
+  const fueraHorario = s => !!tramosTec && !tramosTec.some(t => logosMin(s) >= logosMin(t[0]) && logosMin(s) < logosMin(t[1]));
   const ocupadas = {}; (ocup || []).forEach(o => { ocupadas[String(o.hora).slice(0, 5)] = o.ocupadas; });
   const ocupTec = new Set(((tecR && tecR.data) || []).filter(x => x.estado !== 'cancelada' && x.id !== __NC.reemplaza && x.tecnico_email && x.tecnico_email.toLowerCase() === tecSel).map(x => String(x.hora).slice(0, 5)));
   const slots = [];
@@ -5162,9 +5241,10 @@ async function elegirDiaNuevaCita(fechaIso, mantener){
   cont.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">` + slots.map(s => {
     const lleno = (ocupadas[s] || 0) >= h.tecnicos_simultaneos || ocupTec.has(s);
     const pasada = esHoy && (Number(s.slice(0, 2)) * 60 + Number(s.slice(3, 5)) <= minAhora);
+    if(fueraHorario(s)) return '';   // fuera del horario de la persona que atiende
     const sel = s === __NC.hora;
     return `<button class="link-btn" style="border:1.5px solid ${sel ? 'var(--primary,#1E3A8A)' : 'var(--line)'};border-radius:10px;padding:6px 12px;${sel ? 'font-weight:800;background:var(--primary-soft,#E8EEFB);' : ''}${(lleno || pasada) ? 'opacity:.4;' : ''}" ${(lleno || pasada) ? 'disabled' : `onclick="__NC.hora='${s}';elegirDiaNuevaCita('${fechaIso}', true);document.getElementById('nc-guardar').disabled=false;"`}>${s}${lleno ? ' ✕' : ''}</button>`;
-  }).join('') + `</div>` + (slots.length ? '' : `<div class="empty-note">${acL('Sin horas ese día.', 'Sense hores aquest dia.')}</div>`) + (hd.sinCita ? `<p class="subtle" style="font-size:12px;margin-top:8px;">${acL('Los miércoles de 9 a 13 h se atiende sin cita previa; por eso solo se dan citas fuera de esa franja.', 'Els dimecres de 9 a 13 h s\'atén sense cita prèvia; per això només es donen cites fora d\'aquesta franja.')}</p>` : '');
+  }).join('') + `</div>` + (tramosTec ? `<p class="subtle" style="font-size:12px;margin:6px 0 0;">🕘 ${acL('Horario de', 'Horari de')} ${escAttr(equipoNombre(tecSel))} ${acL('ese día', 'aquest dia')}: ${tramosTec.map(t => t[0] + '–' + t[1]).join(' · ')}</p>` : '') + (tramosTec && !slots.some(s => !fueraHorario(s)) ? `<div class="empty-note">${acL('Esa persona no trabaja ese día. Elige otro día u otra persona.', 'Aquesta persona no treballa aquest dia. Tria un altre dia o una altra persona.')}</div>` : '') + (slots.length ? '' : `<div class="empty-note">${acL('Sin horas ese día.', 'Sense hores aquest dia.')}</div>`) + (hd.sinCita ? `<p class="subtle" style="font-size:12px;margin-top:8px;">${acL('Los miércoles de 9 a 13 h se atiende sin cita previa; por eso solo se dan citas fuera de esa franja.', 'Els dimecres de 9 a 13 h s\'atén sense cita prèvia; per això només es donen cites fora d\'aquesta franja.')}</p>` : '');
 }
 async function guardarNuevaCitaStaff(){
   const btn = document.getElementById('nc-guardar'), msg = document.getElementById('nc-msg');
@@ -5182,8 +5262,13 @@ async function guardarNuevaCitaStaff(){
   if(error && /tecnico_email|tecnico_nombre|tecnico_clave/.test(error.message || '')){ delete fila.tecnico_email; ({ error } = await sb.from('citas').insert(fila)); }
   if(error && /urgente/.test(error.message || '')){ delete fila.urgente; ({ error } = await sb.from('citas').insert(fila)); if(!error && urgente) alert(acL('La cita se ha creado, pero falta ejecutar el SQL 18 para marcarla como urgente.', 'La cita s\'ha creat, però falta executar l\'SQL 18 per marcar-la com a urgent.')); }
   if(error && /creada_por_email/.test(error.message || '')){ delete fila.creada_por_email; ({ error } = await sb.from('citas').insert(fila)); }
-  if(error && __NC.hist && /historico_id|nombre_contacto|telefono_contacto|email_contacto|usuario_id|null value/i.test(error.message || '')){
-    msg.innerHTML = `<div class="auth-error">${acL('Para dar cita a personas sin cuenta hay que ejecutar el SQL 43 en Supabase (una sola vez). Mientras tanto puedes llamarle o escribirle por WhatsApp desde su ficha.', 'Per donar cita a persones sense compte cal executar l\'SQL 43 a Supabase (una sola vegada). Mentrestant pots trucar-li o escriure-li per WhatsApp des de la seva fitxa.')}</div>`;
+  if(error && __NC.hist){
+    // se enseña siempre el error real (para saber qué pasa) y, si es de la base de datos, qué SQL lo arregla
+    const m = error.message || '';
+    const faltaSql = /historico_id|nombre_contacto|telefono_contacto|email_contacto|citas_persona_chk|"?usuario_id"?.*(not-null|null value)|null value.*"?usuario_id"?|row-level security/i.test(m);
+    msg.innerHTML = `<div class="auth-error">${faltaSql ? acL('Para dar cita a personas sin cuenta hay que ejecutar el SQL 43 (versión 2) en Supabase.', 'Per donar cita a persones sense compte cal executar l\'SQL 43 (versió 2) a Supabase.') : acL('No se ha podido guardar la cita.', 'No s\'ha pogut desar la cita.')}
+      <br><small style="opacity:.8;">${acL('Detalle', 'Detall')}: ${escAttr(m)}</small>
+      <br><small>${acL('Mientras tanto puedes llamarle o escribirle por WhatsApp desde su ficha.', 'Mentrestant pots trucar-li o escriure-li per WhatsApp des de la seva fitxa.')}</small></div>`;
     btn.disabled = false; return;
   }
   if(error){
@@ -7231,6 +7316,67 @@ async function formacionBorrar(id){
   recargarSinSaltar('formaciones-content', renderFormacionesScreen);
 }
 
+
+// ---------- Aula Virtual: pestañas, filtros y guía en diapositivas ----------
+function avTabActual(){ try { return localStorage.getItem('logos_aula_tab') || 'cursos'; } catch(e){ return 'cursos'; } }
+function avTab(t, sinScroll){
+  document.querySelectorAll('#aulavirtual-content .av-tab').forEach(b => b.classList.toggle('av-tab-on', b.dataset.tab === t));
+  document.querySelectorAll('#aulavirtual-content .av-sec').forEach(sc => { sc.style.display = sc.dataset.sec === t ? '' : 'none'; });
+  try { localStorage.setItem('logos_aula_tab', t); } catch(e){}
+  if(!sinScroll){ const tabs = document.querySelector('#aulavirtual-content .av-tabs'); if(tabs) tabs.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+function avFiltrar(f){
+  window.__avFiltro = f;
+  document.querySelectorAll('#aulavirtual-content .av-filtro').forEach(b => b.classList.toggle('av-filtro-on', b.dataset.f === f));
+  let visibles = 0;
+  document.querySelectorAll('#aulavirtual-content .av-curso').forEach(c => {
+    const ok = f === 'todos' || (f === 'mios' ? c.dataset.mio === '1' : c.dataset.aud === f);
+    c.style.display = ok ? '' : 'none'; if(ok) visibles++;
+  });
+  document.querySelectorAll('#aulavirtual-content .section-label').forEach(l => { if(/Formació de l|Formación del equipo/.test(l.textContent)) l.style.display = (f === 'ciudadania') ? 'none' : ''; });
+  const v = document.querySelector('#aulavirtual-content .av-vacio'); if(v) v.style.display = visibles ? 'none' : '';
+}
+const AV_GUIA = [
+  { c: 'av-g-azul', i: '🎓', es: ['Bienvenida al Aula Virtual', 'Aquí se crean los cursos para la ciudadanía (los ven en Logos Acompanya) y para el equipo (los ven en «Mi formación»), y se programan las clases en línea.'], ca: ['Benvinguda a l\'Aula Virtual', 'Aquí es creen els cursos per a la ciutadania (els veuen a Logos Acompanya) i per a l\'equip (els veuen a «La meva formació»), i es programen les classes en línia.'] },
+  { c: 'av-g-verde', i: '➕', es: ['1. Crea el curso', 'Pestaña «➕ Crear»: pon el nombre y elige a quién va dirigido: ciudadanía, todo el equipo o personas concretas del equipo. Fechas, horas y plazas son opcionales.'], ca: ['1. Crea el curs', 'Pestanya «➕ Crear»: posa el nom i tria a qui va adreçat: ciutadania, tot l\'equip o persones concretes de l\'equip. Dates, hores i places són opcionals.'] },
+  { c: 'av-g-oro', i: '📚', es: ['2. Añade el contenido', 'En la tarjeta del curso pulsa «📚 Contenido»: crea módulos y dentro sube vídeos, PDF o presentaciones, y actividades o tests.'], ca: ['2. Afegeix el contingut', 'A la targeta del curs prem «📚 Contingut»: crea mòduls i a dins puja vídeos, PDF o presentacions, i activitats o tests.'] },
+  { c: 'av-g-morado', i: '🎥', es: ['3. Programa las clases', '«➕ Crear» → «Crear clase en línea»: fecha, hora y enlace de Meet, Zoom o Teams. Salen en «📅 Clases», y desde allí se pasa asistencia.'], ca: ['3. Programa les classes', '«➕ Crear» → «Crear classe en línia»: data, hora i enllaç de Meet, Zoom o Teams. Surten a «📅 Classes», i des d\'allà es passa assistència.'] },
+  { c: 'av-g-coral', i: '🚦', es: ['4. Cambia el estado', 'Cada curso tiene un color: gris = en preparación (nadie lo ve), amarillo = inscripción abierta, verde = activo, azul = finalizado. Se cambia en el desplegable de la tarjeta.'], ca: ['4. Canvia l\'estat', 'Cada curs té un color: gris = en preparació (ningú el veu), groc = inscripció oberta, verd = actiu, blau = finalitzat. Es canvia al desplegable de la targeta.'] },
+  { c: 'av-g-azul', i: '📊', es: ['5. Sigue el progreso', '«👥 Inscritos» muestra quién participa y «📊 Progreso» cuánto ha avanzado cada persona. En «📈 Indicadores» tienes las cifras por proyecto.'], ca: ['5. Segueix el progrés', '«👥 Inscrits» mostra qui hi participa i «📊 Progrés» quant ha avançat cada persona. A «📈 Indicadors» tens les xifres per projecte.'] }
+];
+function avMostrarGuia(){
+  try { localStorage.setItem('logos_aula_guia_vista', '1'); } catch(e){}
+  let ov = document.getElementById('av-guia-ov'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'av-guia-ov';
+  ov.addEventListener('click', e => { if(e.target === ov) ov.remove(); });
+  document.body.appendChild(ov);
+  window.__avG = 0; avPintarGuia();
+  let x0 = null;
+  ov.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+  ov.addEventListener('touchend', e => { if(x0 === null) return; const dx = e.changedTouches[0].clientX - x0; if(Math.abs(dx) > 50) avPasoGuia(dx < 0 ? 1 : -1); x0 = null; });
+  document.addEventListener('keydown', avTeclaGuia);
+}
+function avTeclaGuia(e){
+  if(!document.getElementById('av-guia-ov')){ document.removeEventListener('keydown', avTeclaGuia); return; }
+  if(e.key === 'ArrowRight') avPasoGuia(1); else if(e.key === 'ArrowLeft') avPasoGuia(-1); else if(e.key === 'Escape') document.getElementById('av-guia-ov').remove();
+}
+function avPasoGuia(d){ const n = window.__avG + d; if(n < 0) return; if(n >= AV_GUIA.length){ const o = document.getElementById('av-guia-ov'); if(o) o.remove(); return; } window.__avG = n; avPintarGuia(); }
+function avPintarGuia(){
+  const ov = document.getElementById('av-guia-ov'); if(!ov) return;
+  const ca = LANG_I === 'ca', i = window.__avG, d = AV_GUIA[i], tx = ca ? d.ca : d.es, ult = i === AV_GUIA.length - 1;
+  ov.innerHTML = `<div class="av-guia ${d.c}" role="dialog" aria-label="${ca ? 'Guia de l\'Aula Virtual' : 'Guía del Aula Virtual'}">
+    <button class="av-guia-x" onclick="document.getElementById('av-guia-ov').remove()" aria-label="${ca ? 'Tancar' : 'Cerrar'}">✕</button>
+    <div class="av-guia-ico">${d.i}</div>
+    <h3>${tx[0]}</h3>
+    <p>${tx[1]}</p>
+    <div class="av-guia-dots">${AV_GUIA.map((_, k) => `<button class="${k === i ? 'on' : ''}" onclick="window.__avG=${k};avPintarGuia()" aria-label="${k + 1}"></button>`).join('')}</div>
+    <div class="av-guia-nav">
+      <button class="av-guia-b2" ${i === 0 ? 'style="visibility:hidden"' : ''} onclick="avPasoGuia(-1)">‹ ${ca ? 'Anterior' : 'Anterior'}</button>
+      <span>${i + 1} / ${AV_GUIA.length}</span>
+      <button class="av-guia-b1" onclick="avPasoGuia(1)">${ult ? (ca ? 'Començar ✓' : 'Empezar ✓') : (ca ? 'Següent ›' : 'Siguiente ›')}</button>
+    </div>
+  </div>`;
+}
 async function renderAulaVirtualScreen(){
   const cont = document.getElementById('aulavirtual-content');
   const t = TI[LANG_I];
@@ -7381,7 +7527,7 @@ async function renderAulaVirtualScreen(){
     ? lista.map(c => {
         const misStats = misCursosStats[c.id];
         return `
-        <div class="panel-card">
+        <div class="panel-card av-curso av-est-${escAttr(c.estado || 'activo')}" data-aud="${c.audiencia === 'equipo' ? 'equipo' : 'ciudadania'}" data-mio="${misStats ? '1' : '0'}">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
             <h3 style="margin:0;">${iconoModalidad[c.modalidad] || '🏫'} ${c.nombre}${c.audiencia === 'equipo' ? ((c.destinatarios || []).length ? ` <span class="chip" style="background:#7A4A1F;color:#fff;font-size:10px;" title="${escAttr((c.destinatarios || []).map(equipoNombreTodo).join(', '))}">👤 ${(c.destinatarios || []).length} ${(c.destinatarios || []).length === 1 ? (LANG_I==='ca'?'persona':'persona') : (LANG_I==='ca'?'persones':'personas')}</span>` : ` <span class="chip" style="background:#33449E;color:#fff;font-size:10px;">👥 ${LANG_I==='ca'?'Equip':'Equipo'}</span>`) : ''}</h3>
             <span class="chip" style="background:${estadoCursoColor[c.estado] || '#999'};color:#fff;flex-shrink:0;">${textoEstadoCurso[c.estado] || c.estado}</span>
@@ -7418,19 +7564,58 @@ async function renderAulaVirtualScreen(){
   const cursosHtml = cursosHtmlDe(cursosCiudadania)
     + (cursosEquipo.length ? `</div><div class="section-label" style="margin:16px 0 8px;">👥 ${LANG_I==='ca'?"Formació de l'equip (tècnics i administradors)":'Formación del equipo (técnicos y administradores)'} <button class="link-btn" style="font-size:12px;margin-left:8px;" onclick="showScreen('miformacion');renderMiFormacion()">${LANG_I==='ca'?'Fer-los com a alumne →':'Hacerlos como alumno/a →'}</button></div><div class="cards-grid" style="margin-bottom:16px;">${cursosHtmlDe(cursosEquipo)}` : '');
 
+  const avCa = LANG_I === 'ca';
+  const nActivos = (cursos || []).filter(c => ['activo', 'inscripcion'].includes(c.estado)).length;
+  const avTile = (cls, icono, n, txt, tab) => `<button class="av-tile ${cls}" onclick="avTab('${tab}')"><span class="av-tile-i">${icono}</span><strong>${n}</strong><span>${txt}</span></button>`;
   cont.innerHTML = `
-    <p class="subtle">${LANG_I==='ca'
-      ? "Classes en línia amb Google Meet. Genera l'enllaç a Google Meet o Calendar i enganxa'l aquí en crear la classe."
-      : 'Clases en línea con Google Meet. Genera el enlace en Google Meet o Calendar y pégalo aquí al crear la clase.'}</p>
+    <div class="av-hero">
+      <div style="flex:1;min-width:200px;">
+        <div class="av-hero-t">🎓 ${avCa ? 'Aula Virtual' : 'Aula Virtual'}</div>
+        <div class="av-hero-s">${avCa ? 'Cursos per a la ciutadania i per a l\'equip, i classes en línia (Meet, Zoom o Teams).' : 'Cursos para la ciudadanía y para el equipo, y clases en línea (Meet, Zoom o Teams).'}</div>
+      </div>
+      <button class="av-guia-btn" onclick="avMostrarGuia()">▶️ ${avCa ? 'Com funciona (1 min)' : 'Cómo funciona (1 min)'}</button>
+    </div>
+    <div class="av-tiles">
+      ${avTile('av-c-azul', '📚', nActivos, avCa ? 'cursos en marxa' : 'cursos en marcha', 'cursos')}
+      ${avTile('av-c-verde', '🟢', clasesHoy.length, avCa ? 'classes avui' : 'clases hoy', 'clases')}
+      ${avTile('av-c-oro', '📅', clasesProximas.length, avCa ? 'properes classes' : 'próximas clases', 'clases')}
+      ${avTile('av-c-morado', '👨‍🏫', misCursos.length, avCa ? 'els meus cursos' : 'mis cursos', 'cursos')}
+    </div>
+    <div class="av-tabs" role="tablist">
+      <button class="av-tab" data-tab="cursos" onclick="avTab('cursos')">📚 ${avCa ? 'Cursos' : 'Cursos'}</button>
+      <button class="av-tab" data-tab="clases" onclick="avTab('clases')">📅 ${avCa ? 'Classes' : 'Clases'}</button>
+      <button class="av-tab" data-tab="crear" onclick="avTab('crear')">➕ ${avCa ? 'Crear' : 'Crear'}</button>
+      <button class="av-tab" data-tab="indicadores" onclick="avTab('indicadores');renderIndicadoresProyecto()">📈 ${avCa ? 'Indicadors' : 'Indicadores'}</button>
+    </div>
 
-    <button class="link-btn" style="margin-bottom:16px;" onclick="renderIndicadoresProyecto()">📈 ${LANG_I==='ca'?'Indicadors per projecte':'Indicadores por proyecto'}</button>
-    <div id="indicadores-proyecto-wrap"></div>
+    <div id="contenido-curso-wrap"></div>
+    <div id="inscritos-curso-wrap"></div>
+    <div id="participantes-clase-wrap"></div>
+
+    <section class="av-sec" data-sec="indicadores">
+      <div id="indicadores-proyecto-wrap"></div>
+    </section>
+
+    <section class="av-sec" data-sec="cursos">
+    <div class="av-filtros">
+      <span class="subtle" style="margin:0;font-size:12.5px;">${avCa ? 'Mostrar' : 'Mostrar'}:</span>
+      <button class="av-filtro" data-f="todos" onclick="avFiltrar('todos')">${avCa ? 'Tots' : 'Todos'}</button>
+      <button class="av-filtro" data-f="ciudadania" onclick="avFiltrar('ciudadania')">🧑‍🤝‍🧑 ${avCa ? 'Ciutadania' : 'Ciudadanía'}</button>
+      <button class="av-filtro" data-f="equipo" onclick="avFiltrar('equipo')">👥 ${avCa ? 'Equip' : 'Equipo'}</button>
+      ${misCursos.length ? `<button class="av-filtro" data-f="mios" onclick="avFiltrar('mios')">👨‍🏫 ${avCa ? 'Els meus' : 'Míos'}</button>` : ''}
+    </div>
+    <div class="av-leyenda">${['preparacion', 'inscripcion', 'activo', 'finalizado', 'cerrado'].map(k => `<span><i class="av-est-${k}"></i>${textoEstadoCurso[k]}</span>`).join('')}</div>
 
     ${misCursos.length ? `<p class="subtle" style="margin-bottom:12px;">👨‍🏫 ${LANG_I==='ca'?'Els cursos marcats amb':'Los cursos marcados con'} <span class="chip" style="background:var(--gold);color:#fff;font-size:10px;">${LANG_I==='ca'?'El teu curs':'Tu curso'}</span> ${LANG_I==='ca'?'són els que imparteixes tu.':'son los que impartes tú.'}</p>` : ''}
     <div class="section-label" style="margin-bottom:8px;">${LANG_I==='ca'?'Cursos':'Cursos'}</div>
     <div class="cards-grid" style="margin-bottom:16px;">${cursosHtml}</div>
+    <div class="empty-note av-vacio" style="display:none;">${avCa ? 'Cap curs amb aquest filtre.' : 'Ningún curso con este filtro.'}</div>
+    </section>
 
-    <div class="panel-card" style="margin-bottom:16px;">
+    <section class="av-sec" data-sec="crear">
+    <p class="subtle" style="margin:0 0 10px;">${avCa ? 'Primer crea el curs; després hi afegeixes contingut (📚 Contingut a la seva targeta) i, si vols, classes en línia.' : 'Primero crea el curso; después le añades contenido (📚 Contenido en su tarjeta) y, si quieres, clases en línea.'}</p>
+    <div class="av-crear-grid">
+    <div class="panel-card av-card-crear av-c-azul-b" style="margin-bottom:16px;">
       <h3>➕ ${LANG_I==='ca' ? 'Crear curs' : 'Crear curso'}</h3>
       <div class="field"><input type="text" id="curso-nombre" placeholder="${LANG_I==='ca'?'Nom del curs (ex: Competències digitals bàsiques)':'Nombre del curso (ej: Competencias digitales básicas)'}"></div>
       <div class="field">
@@ -7464,16 +7649,9 @@ async function renderAulaVirtualScreen(){
       <button class="primary-btn" onclick="crearCurso()">➕ ${LANG_I==='ca'?'Crear curs':'Crear curso'}</button>
     </div>
 
-    <div id="contenido-curso-wrap"></div>
-    <div id="inscritos-curso-wrap"></div>
-
-    <div class="panel-card" style="margin-bottom:16px;">
-      <h3>📅 ${LANG_I==='ca' ? 'Calendari de classes' : 'Calendario de clases'}</h3>
-      ${tablaCalendarioHtml}
-    </div>
-
-    <div class="panel-card" style="margin-bottom:16px;">
-      <h3>➕ ${LANG_I==='ca' ? 'Crear classe' : 'Crear clase'}</h3>
+    <div class="panel-card av-card-crear av-c-verde-b" style="margin-bottom:16px;">
+      <h3>🎥 ${LANG_I==='ca' ? 'Crear classe en línia' : 'Crear clase en línea'}</h3>
+      <p class="subtle" style="margin:0 0 8px;font-size:12.5px;">${LANG_I==='ca' ? "Genera l'enllaç a Google Meet o Calendar i enganxa'l aquí." : 'Genera el enlace en Google Meet o Calendar y pégalo aquí.'}</p>
       <div class="field"><input type="text" id="clase-titulo" placeholder="${LANG_I==='ca'?'Curs (ex: TIC, Orientació, Català, Ocupació)':'Curso (ej: TIC, Orientación, Català, Empleo)'}"></div>
       <div class="field"><input type="text" id="clase-docente" placeholder="${LANG_I==='ca'?'Docent':'Docente'}" value="${CURRENT_USER_NOMBRE || ''}"></div>
       <div class="field">
@@ -7499,9 +7677,21 @@ async function renderAulaVirtualScreen(){
       <div class="field"><label>${LANG_I==='ca'?'Enllaç de la videotrucada':'Enlace de la videollamada'}</label><input type="text" id="clase-meet" placeholder="https://..."></div>
       <button class="primary-btn" onclick="crearClaseAula()">➕ ${LANG_I==='ca'?'Crear classe':'Crear clase'}</button>
     </div>
+    </div>
+    </section>
 
-    <div id="participantes-clase-wrap"></div>
+    <section class="av-sec" data-sec="clases">
+    ${clasesHoy.length ? `<div class="info-box" style="background:#E7F6EC;border-color:#9fd4b0;margin-bottom:12px;">🟢 <strong>${avCa ? 'Avui' : 'Hoy'}:</strong> ${clasesHoy.map(c => `${String(c.hora || '').slice(0, 5)} · ${escAttr(c.titulo || '')}${c.enlace_meet ? ` <a href="${escAttr(c.enlace_meet)}" target="_blank" rel="noopener">${avCa ? 'Entrar' : 'Entrar'} ↗</a>` : ''}`).join(' &nbsp;|&nbsp; ')}</div>` : ''}
+    <div class="panel-card" style="margin-bottom:16px;">
+      <h3>📅 ${LANG_I==='ca' ? 'Calendari de classes' : 'Calendario de clases'}</h3>
+      ${tablaCalendarioHtml}
+      <button class="link-btn" style="margin-top:10px;" onclick="avTab('crear')">➕ ${avCa ? 'Programar una classe' : 'Programar una clase'}</button>
+    </div>
+    </section>
   `;
+  avTab(avTabActual(), true);
+  avFiltrar(window.__avFiltro || 'todos');
+  try { if(!localStorage.getItem('logos_aula_guia_vista')) setTimeout(avMostrarGuia, 400); } catch(e){}
 
   // Si estabas trabajando en el contenido de un curso, lo volvemos a abrir automáticamente
   // (para no perder tu sitio si navegas a otra pantalla, o si el móvil recarga la pestaña en segundo plano)
@@ -7743,6 +7933,44 @@ function fichaDatosQueFaltan(p){
   if(!p.consentimiento_firmado) falta.push(LANG_I === 'ca' ? 'Consentiment signat' : 'Consentimiento firmado');
   return falta;
 }
+// % de la ficha completa (datos obligatorios + consentimiento)
+function fichaPorcentaje(p){ const total = CAMPOS_FICHA_OBLIGATORIOS.length + 1; return Math.round((total - fichaDatosQueFaltan(p).length) / total * 100); }
+function fichaBarraHtml(pct){
+  const col = pct >= 100 ? 'var(--good,#2E8B47)' : (pct >= 70 ? '#E0A526' : 'var(--alert,#C0392B)');
+  return `<div class="ficha-barra"><i style="width:${pct}%;background:${col};"></i></div>`;
+}
+// Ventana «Esta ficha está al X %» al abrir la ficha (una vez al día por persona) y siempre después de guardar una atención o actuación
+async function fichaAviso(uid, motivo){
+  if(!uid) return;
+  const clave = 'logos_ficha_aviso_' + uid + '_' + isoLocal();
+  if(motivo === 'abrir'){ try { if(localStorage.getItem(clave)) return; } catch(e){} }
+  let p = null;
+  try { p = (await sb.from('perfiles').select('*').eq('id', uid).maybeSingle()).data; } catch(e){}
+  if(!p) return;
+  const falta = fichaDatosQueFaltan(p); if(!falta.length) return;
+  try { localStorage.setItem(clave, '1'); } catch(e){}
+  const ca = LANG_I === 'ca', pct = fichaPorcentaje(p);
+  let ov = document.getElementById('ficha-aviso-ov'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'ficha-aviso-ov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9400;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML = `<div class="panel-card" style="width:100%;max-width:440px;margin:0;background:#fff;border-top:6px solid var(--alert,#C0392B);">
+    <h3 style="margin:0 0 4px;">⚠️ ${motivo === 'guardado' ? (ca ? 'Desat. Però a la fitxa encara falten dades' : 'Guardado. Pero a la ficha aún le faltan datos') : (ca ? 'Aquesta fitxa està incompleta' : 'Esta ficha está incompleta')}</h3>
+    <p style="margin:0 0 8px;font-size:13.5px;"><strong>${escAttr(p.nombre_completo || '')}</strong> · ${ca ? 'fitxa al' : 'ficha al'} <strong>${pct}%</strong></p>
+    ${fichaBarraHtml(pct)}
+    <p style="margin:10px 0 6px;font-size:13px;">${ca ? 'Falten' : 'Faltan'} <strong>${falta.length}</strong>: ${escAttr(falta.join(', '))}</p>
+    <p class="subtle" style="margin:0 0 12px;font-size:12px;">${ca ? 'Aquestes dades són obligatòries: sense elles la persona no compta bé a les estadístiques, les memòries i les justificacions de subvencions. La direcció veu el % de fitxes completes de cada tècnic.' : 'Estos datos son obligatorios: sin ellos la persona no cuenta bien en las estadísticas, las memorias y las justificaciones de subvenciones. La dirección ve el % de fichas completas de cada técnico.'}</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="primary-btn" style="margin:0;width:auto;" onclick="document.getElementById('ficha-aviso-ov').remove();fichaIrACompletar('${escAttr(uid)}')">✏️ ${ca ? 'Completar ara' : 'Completar ahora'}</button>
+      <button class="primary-btn" style="margin:0;width:auto;background:#bbb;" onclick="document.getElementById('ficha-aviso-ov').remove()">${ca ? 'Més tard' : 'Más tarde'}</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+}
+async function fichaIrACompletar(uid){
+  const abierta = document.getElementById('screen-persona') && document.getElementById('screen-persona').classList.contains('active') && window.__usuarioIdVisto === uid;
+  if(!abierta) await verPersonaStaff(uid, window.__origenPersonaVista || 'miespacio');
+  mostrarTabPersona('datos');
+  try { fichaMarcarFaltan(); const prim = CAMPOS_FICHA_OBLIGATORIOS.map(([, id]) => document.getElementById(id)).find(el => el && fichaVacio(el.value)); if(prim){ prim.scrollIntoView({ behavior: 'smooth', block: 'center' }); prim.focus({ preventScroll: true }); } } catch(e){}
+}
 // En el formulario de datos de la ficha, marca en rojo las casillas vacías (y se quita al rellenarlas)
 function fichaMarcarFaltan(){
   CAMPOS_FICHA_OBLIGATORIOS.forEach(([, id]) => {
@@ -7773,9 +8001,10 @@ async function fichasPendientesTecnico(email, idsAtendidas){
       sb.from('perfiles').select('*').eq('tecnico_responsable_email', email).not('nombre_completo', 'is', null).limit(1000),
       idsAtendidas.length ? sb.from('perfiles').select('*').in('id', idsAtendidas.slice(0, 300)).not('nombre_completo', 'is', null) : Promise.resolve({ data: [] })
     ]);
-    const vistos = new Set(), lista = [];
+    const vistos = new Set(), lista = []; window.__misFichasTotal = 0;
     [...(asig.data || []), ...(aten.data || []).filter(p => !p.tecnico_responsable_email || p.tecnico_responsable_email === email)].forEach(p => {
       if(vistos.has(p.id)) return; vistos.add(p.id);
+      window.__misFichasTotal = vistos.size;
       const falta = fichaDatosQueFaltan(p); if(falta.length) lista.push({ p, falta });
     });
     lista.sort((a, b) => b.falta.length - a.falta.length);
@@ -7785,13 +8014,37 @@ async function fichasPendientesTecnico(email, idsAtendidas){
 function fichasPendientesTecnicoHtml(lista){
   if(!lista.length) return '';
   const ca = LANG_I === 'ca';
-  return `<details class="plegable gold fichas-pend" ${plegableAbierto('me-fichas-pend', false) ? 'open' : ''} ontoggle="plegableGuardar('me-fichas-pend', this.open)">
-    <summary><span>⚠️ ${ca ? 'Fitxes amb dades pendents' : 'Fichas con datos pendientes'}</span><span class="plegable-n">${lista.length}</span></summary>
+  const total = Math.max(window.__misFichasTotal || 0, lista.length);
+  const pctOk = total ? Math.round((total - lista.length) / total * 100) : 100;
+  return `<details class="plegable fichas-pend fichas-pend-roja" ${plegableAbierto('me-fichas-pend2', true) ? 'open' : ''} ontoggle="plegableGuardar('me-fichas-pend2', this.open)">
+    <summary><span>⚠️ ${ca ? `Tens ${lista.length} fitxes incompletes` : `Tienes ${lista.length} fichas incompletas`}</span><span class="plegable-n" style="background:var(--alert);color:#fff;">${lista.length}</span></summary>
     <div class="plegable-c">
+      <p style="margin:0 0 4px;font-size:13px;"><strong>${pctOk}%</strong> ${ca ? `de les teves fitxes estan completes (${total - lista.length} de ${total})` : `de tus fichas están completas (${total - lista.length} de ${total})`}</p>
+      ${fichaBarraHtml(pctOk)}
+      <p class="subtle" style="font-size:12px;margin:6px 0 4px;">${ca ? '🎯 Objectiu: 100%. La direcció veu aquest percentatge. Cada dilluns reps aquesta llista per correu.' : '🎯 Objetivo: 100 %. La dirección ve este porcentaje. Cada lunes recibes esta lista por correo.'}</p>
+      <button class="link-btn" style="font-size:12px;margin:0 0 10px;" onclick="fichasCorreoPrueba(this)">✉️ ${ca ? 'Envia-m\'ho ara per correu' : 'Envíamelo ahora por correo'}</button>
       <p class="subtle" style="font-size:12.5px;margin:0 0 8px;">${ca ? 'A aquestes persones (les teves) els falten dades a la fitxa. Completa-les quan puguis: la informació serveix per als informes i les subvencions.' : 'A estas personas (las tuyas) les faltan datos en la ficha. Complétalas cuando puedas: la información sirve para los informes y las subvenciones.'}</p>
       ${fichasPendientesListaHtml(lista, 'miespacio')}
     </div>
   </details>`;
+}
+// Correo con mis fichas incompletas al momento (el normal llega solo cada lunes · función «avisos-fichas»)
+async function fichasCorreoPrueba(btn){
+  const ca = LANG_I === 'ca';
+  if(btn){ btn.disabled = true; btn.textContent = ca ? 'Enviant…' : 'Enviando…'; }
+  let msg;
+  try {
+    const { data, error } = await sb.functions.invoke('avisos-fichas', { body: {} });
+    if(error){
+      let det = error.message || '';
+      try { const j = await error.context.json(); if(j && j.error) det = j.error; } catch(e){}
+      msg = /not found|404|failed to send|fetch/i.test(det)
+        ? (ca ? 'Encara no està creada la funció «avisos-fichas» a Supabase.' : 'Todavía no está creada la función «avisos-fichas» en Supabase.')
+        : (ca ? 'No s\'ha pogut enviar: ' : 'No se ha podido enviar: ') + det;
+    } else msg = ca ? `✅ Enviat a ${CURRENT_USER.email}.` : `✅ Enviado a ${CURRENT_USER.email}.`;
+  } catch(e){ msg = (ca ? 'No s\'ha pogut enviar: ' : 'No se ha podido enviar: ') + (e.message || e); }
+  alert(msg);
+  if(btn){ btn.disabled = false; btn.textContent = '✉️ ' + (ca ? 'Envia-m\'ho ara per correu' : 'Envíamelo ahora por correo'); }
 }
 // Administración (Inicio): fichas incompletas agrupadas por técnico. Se carga después de pintar el Inicio, para no hacerlo más lento.
 async function pintarFichasPendientesAdmin(){
@@ -7805,20 +8058,22 @@ async function pintarFichasPendientesAdmin(){
     ]);
     ((st && st.data) || []).forEach(x => { if(x.nombre) __mapaNombresTecnicos[x.email] = x.nombre; });
     const ultimo = {}; ((aten && aten.data) || []).forEach(a => { ultimo[a.usuario_id] = a.creado_por_email; });
-    const grupos = {}; let total = 0;
+    const grupos = {}, totales = {}; let total = 0;
     ((perf && perf.data) || []).forEach(p => {
-      const falta = fichaDatosQueFaltan(p); if(!falta.length) return;
       const tec = p.tecnico_responsable_email || ultimo[p.id] || '';
+      totales[tec] = (totales[tec] || 0) + 1;
+      const falta = fichaDatosQueFaltan(p); if(!falta.length) return;
       (grupos[tec] = grupos[tec] || []).push({ p, falta }); total++;
     });
+    const pctTec = tec => { const t = totales[tec] || 0; return t ? Math.round((t - (grupos[tec] || []).length) / t * 100) : 100; };
     if(!total){ host.innerHTML = ''; return; }
-    const orden = Object.keys(grupos).sort((a, b) => (a === '') - (b === '') || grupos[b].length - grupos[a].length);
+    const orden = Object.keys(grupos).sort((a, b) => (a === '') - (b === '') || pctTec(a) - pctTec(b) || grupos[b].length - grupos[a].length);
     host.innerHTML = `<details class="plegable gold" id="plg-fichas-pend" ${plegableAbierto('inicio-fichas-pend', false) ? 'open' : ''} ontoggle="plegableGuardar('inicio-fichas-pend', this.open)">
       <summary><span>⚠️ ${ca ? 'Fitxes incompletes per tècnic' : 'Fichas incompletas por técnico'}</span><span class="plegable-n">${total}</span></summary>
       <div class="plegable-c">
         <p class="subtle" style="font-size:12.5px;margin:0 0 8px;">${ca ? 'Persones a les quals falten dades obligatòries a la fitxa, agrupades pel tècnic responsable (o, si no en tenen, per qui les va atendre per última vegada).' : 'Personas a las que les faltan datos obligatorios en la ficha, agrupadas por su técnico responsable (o, si no tienen, por quien las atendió por última vez).'}</p>
         ${orden.map(tec => `<details class="plegable" style="margin-bottom:6px;">
-          <summary><span>${tec ? '👤 ' + escAttr(nombreTecnico(tec)) : '❔ ' + (ca ? 'Sense tècnic assignat' : 'Sin técnico asignado')}</span><span class="plegable-n">${grupos[tec].length}</span></summary>
+          <summary><span>${tec ? '👤 ' + escAttr(nombreTecnico(tec)) : '❔ ' + (ca ? 'Sense tècnic assignat' : 'Sin técnico asignado')} <span class="chip" style="font-size:10.5px;background:${pctTec(tec) >= 90 ? '#DFF3E3' : (pctTec(tec) >= 70 ? '#FCF1D3' : '#FBE4E1')};color:#16304F;">${pctTec(tec)}% ${ca ? 'completes' : 'completas'}</span></span><span class="plegable-n">${grupos[tec].length}</span></summary>
           <div class="plegable-c">${fichasPendientesListaHtml(grupos[tec].sort((a, b) => b.falta.length - a.falta.length), 'panel', 40)}</div>
         </details>`).join('')}
       </div>
@@ -8103,7 +8358,9 @@ async function crearCurso(){
   });
   if(error && /destinatarios/i.test(error.message || '')){ alert(acL('Para dirigir un curso a personas concretas hay que ejecutar el SQL 39 en Supabase (una sola vez).', 'Per adreçar un curs a persones concretes cal executar l\'SQL 39 a Supabase (una sola vegada).')); return; }
   if(error){ alert(/audiencia/i.test(error.message) ? (LANG_I==='ca' ? 'Cal executar el SQL 36 a Supabase per crear cursos de l\'equip.' : 'Falta ejecutar el SQL 36 en Supabase para crear cursos del equipo.') : error.message); return; }
-  renderAulaVirtualScreen();
+  try { localStorage.setItem('logos_aula_tab', 'cursos'); } catch(e){}
+  await renderAulaVirtualScreen();
+  alert(acL('✅ Curso creado. Ahora añádele contenido con «📚 Contenido».', '✅ Curs creat. Ara afegeix-hi contingut amb «📚 Contingut».'));
 }
 
 async function cambiarEstadoCurso(id, nuevoEstado){
@@ -8712,6 +8969,7 @@ async function crearClaseAula(){
     curso_id: cursoId, fecha, hora, plataforma, enlace_meet: enlace || null, creado_por_email: CURRENT_USER.email
   });
   if(error){ alert(error.message); return; }
+  try { localStorage.setItem('logos_aula_tab', 'clases'); } catch(e){}
   renderAulaVirtualScreen();
 }
 
@@ -11354,6 +11612,7 @@ async function gpRrhhHorarios(c){
   }
   await hrCargarAdmin();
   document.querySelectorAll('#hr-admin-card').forEach(e => { e.innerHTML = ''; e.removeAttribute('id'); });   // nunca dos editores a la vez
+  window.__hrSoloYo = false; { const o = document.getElementById('hr-mio-ov'); if(o) o.remove(); }
   c.innerHTML = `<p class="subtle" style="margin:0 0 10px;font-size:12.5px;">${acL('Horario general y horarios propios de cada persona. Se usa para el fichaje (horas previstas, salida olvidada) y para las horas de cita de cada técnico.', 'Horari general i horaris propis de cada persona. Es fa servir per al fitxatge (hores previstes, sortida oblidada) i per a les hores de cita de cada tècnic.')}</p>
     <div class="panel-card" id="hr-admin-card">${hrAdminHtml()}</div>`;
   hrActualizarTotal();
@@ -11431,10 +11690,32 @@ async function hrInfoMiEspacio(email, fichadoAhora){
     if(!aviso && fichadoAhora && !tramoActual && ultimo && min > hrMin(ultimo.hasta) + HR_TOLERANCIA_MIN && !hoy.some(t => min < hrMin(t.desde)))
       aviso = `⏰ ${acL('Tu horario terminó a las', 'El teu horari va acabar a les')} ${ultimo.hasta}. ${acL('Recuerda fichar la salida.', 'Recorda fitxar la sortida.')}`;
     return `<div style="text-align:left;margin:0 0 12px;font-size:13px;line-height:1.6;">
-      <div>🕘 <strong>${acL('Tu horario de hoy', 'El teu horari d\'avui')}:</strong> ${hoy.length ? hrTxtTramos(hoy) : acL('hoy no tienes horario', 'avui no tens horari')}${h.propio ? ` <span class="chip" style="font-size:10.5px;">${acL('personal', 'personal')}</span>` : ''}</div>
+      <div>🕘 <strong>${acL('Tu horario de hoy', 'El teu horari d\'avui')}:</strong> ${hoy.length ? hrTxtTramos(hoy) : acL('hoy no tienes horario', 'avui no tens horari')}${h.propio ? ` <span class="chip" style="font-size:10.5px;">${acL('personal', 'personal')}</span>` : ''}${HR_OK ? ` <button class="link-btn" style="font-size:12px;margin-left:6px;" onclick="hrAbrirMiHorario()">✏️ ${acL('Ajustar mi horario', 'Ajustar el meu horari')}</button>` : ''}</div>
       <div class="subtle" style="margin:2px 0 0;font-size:12px;">${acL('Esta semana: previstas', 'Aquesta setmana: previstes')} ${hrTxtMin(previstasSemana)} · ${acL('fichadas hasta ahora', 'fitxades fins ara')} ${hrTxtMin(fichados)} ${acL('(previstas hasta ahora', '(previstes fins ara')} ${hrTxtMin(previstasHastaAhora)})</div>
       ${aviso ? `<div class="info-box info-box-gold" style="margin:8px 0 0;">${aviso}</div>` : ''}</div>`;
   } catch(e) { return ''; }
+}
+
+// ---------- «Mi horario»: cada técnico ajusta el suyo ----------
+async function hrAbrirMiHorario(){
+  window.__hrSoloYo = true;
+  window.__hrSel = String(CURRENT_USER.email || '').toLowerCase();
+  await hrCargarAdmin();
+  document.querySelectorAll('#hr-admin-card').forEach(e => { e.innerHTML = ''; e.removeAttribute('id'); });
+  let ov = document.getElementById('hr-mio-ov'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'hr-mio-ov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:16px;';
+  ov.addEventListener('click', e => { if(e.target === ov) hrCerrarMiHorario(); });
+  ov.innerHTML = `<div class="panel-card" style="width:100%;max-width:560px;margin:16px 0;background:var(--card,#fff);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><h3 style="margin:0;">✏️ ${acL('Ajustar mi horario', 'Ajustar el meu horari')}</h3><button class="link-btn" onclick="hrCerrarMiHorario()">✕</button></div>
+    <div id="hr-admin-card">${hrAdminHtml()}</div></div>`;
+  document.body.appendChild(ov);
+  hrActualizarTotal();
+}
+function hrCerrarMiHorario(){
+  const o = document.getElementById('hr-mio-ov'); if(o) o.remove();
+  window.__hrSoloYo = false;
+  try { if(document.getElementById('screen-miespacio').classList.contains('active')) recargarSinSaltar('miespacio-content', renderMiEspacio); } catch(e){}
 }
 
 // ---------- editor para la administración ----------
@@ -11471,6 +11752,12 @@ function hrEditorHtml(){
 }
 function hrAdminHtml(){
   if(!HR_OK) return `<div class="info-box info-box-gold">⚠️ ${acL('Falta ejecutar el SQL «horarios-supabase» en Supabase para poder editar los horarios.', 'Falta executar l\'SQL «horarios-supabase» a Supabase per poder editar els horaris.')}</div>`;
+  if(window.__hrSoloYo || !(IS_ADMIN || IS_RRHH || IS_RRHH_SOLO)){
+    window.__hrSel = String(CURRENT_USER.email || '').toLowerCase();
+    return `<p style="margin:0 0 8px;font-size:13px;">🕘 <strong>${acL('Mi horario de trabajo', 'El meu horari de feina')}</strong> · ${escAttr(CURRENT_USER_NOMBRE || CURRENT_USER.email)}</p>
+      <div class="info-box" style="font-size:12.5px;margin:0 0 10px;">📅 ${acL('Tu horario se usa para las citas: en Logos Acompanya y en «Nueva cita» solo se ofrecen horas dentro de tu horario. También sirve para el fichaje.', 'El teu horari es fa servir per a les cites: a Logos Acompanya i a «Nova cita» només s\'ofereixen hores dins del teu horari. També serveix per al fitxatge.')}</div>
+      <div id="hr-editor">${hrEditorHtml()}</div>`;
+  }
   const personas = (window.__staffLista || []).filter(s => s.activo !== false);
   return `<div class="field"><label>${acL('¿De quién es el horario?', 'De qui és l\'horari?')}</label>
       <select id="hr-sel" onchange="window.__hrSel=this.value;document.getElementById('hr-editor').innerHTML=hrEditorHtml();hrActualizarTotal();">
@@ -11515,7 +11802,7 @@ async function hrGuardar(){
   // Primero se guarda lo nuevo y solo después se quita lo viejo, para no dejar nunca a nadie sin horario si algo falla
   if(tramos.length){
     const ins = await sb.from('personal_horarios').insert(tramos.map(t => ({ persona_email: sel || null, dia: t.dia, desde: t.desde, hasta: t.hasta })));
-    if(ins.error){ alert(/row-level security|permission/i.test(ins.error.message || '') ? acL('No tienes permiso para guardar horarios. Hay que ejecutar el SQL 40 en Supabase (una sola vez).', 'No tens permís per desar horaris. Cal executar l\'SQL 40 a Supabase (una sola vegada).') : ins.error.message); return; }
+    if(ins.error){ alert(/row-level security|permission/i.test(ins.error.message || '') ? acL('No tienes permiso para guardar horarios. Hay que ejecutar en Supabase el SQL 40 (RR. HH.) y el SQL 45 (cada técnico su horario).', 'No tens permís per desar horaris. Cal executar a Supabase l\'SQL 40 (RR. HH.) i l\'SQL 45 (cada tècnic el seu horari).') : ins.error.message); return; }
   }
   if(antiguos.length){
     const del = await sb.from('personal_horarios').delete().in('id', antiguos).select('id');
@@ -13824,7 +14111,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-26 · v143 (crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-27 · v145 (correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -14665,9 +14952,10 @@ function construirVistaUnica(p, d, cardAtencion, extra){
   const faltanFicha = fichaDatosQueFaltan(p);
   return `
     ${faltanFicha.length ? `<div class="panel-card" style="background:var(--alert-soft,#FDECEA);border-color:var(--alert);">
-      <strong>⚠️ ${ca ? 'Falten dades a la fitxa' : 'Faltan datos en la ficha'} (${faltanFicha.length})</strong>
+      <strong>⚠️ ${ca ? 'Falten dades a la fitxa' : 'Faltan datos en la ficha'} (${faltanFicha.length}) · ${ca ? 'fitxa al' : 'ficha al'} ${fichaPorcentaje(p)}%</strong>
+      ${fichaBarraHtml(fichaPorcentaje(p))}
       <p style="margin:6px 0 10px;font-size:13px;">${h(faltanFicha.join(', '))}</p>
-      <button class="primary-btn" style="width:auto;margin:0;" onclick="mostrarTabPersona('datos')">✏️ ${ca ? 'Completar ara' : 'Completar ahora'}</button>
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="fichaIrACompletar(window.__usuarioIdVisto)">✏️ ${ca ? 'Completar ara' : 'Completar ahora'}</button>
     </div>` : ''}
     <div class="panel-card">
       <h3 style="margin:0 0 8px;">${ca ? 'Resum' : 'Resumen'}</h3>
@@ -14825,6 +15113,7 @@ async function verPersonaStaff(usuarioId, origen){
   const yaAbierta = !!(document.getElementById('screen-persona') && document.getElementById('screen-persona').classList.contains('active') && window.__usuarioIdVisto === usuarioId);
   const r = !yaAbierta ? await verPersonaStaffInterno(usuarioId, origen) : await recargarSinSaltar('persona-content', () => verPersonaStaffInterno(usuarioId, origen));
   try { fichaMarcarFaltan(); } catch(e){}
+  if(!yaAbierta) fichaAviso(usuarioId, 'abrir');
   return r;
 }
 async function verPersonaStaffInterno(usuarioId, origen){
@@ -15658,7 +15947,8 @@ async function crearActuacion(){
     }
   }
 
-  verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
+  await verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
+  fichaAviso(window.__usuarioIdVisto, 'guardado');
 }
 
 async function registrarFormacionFicha(){
@@ -15903,6 +16193,7 @@ async function renderAdministrador(){
 
   await hrCargarAdmin();
   document.querySelectorAll('#hr-admin-card').forEach(e => { e.innerHTML = ''; e.removeAttribute('id'); });
+  window.__hrSoloYo = false; { const o = document.getElementById('hr-mio-ov'); if(o) o.remove(); }
   window.__alertasTipos = REPARTO_OK ? ((await sb.from('alertas_tipos').select('*')).data || []) : [];
   const staffHtml = window.__staffLista.map(s => `
     <div class="panel-stat-row" style="align-items:flex-start;gap:8px;flex-wrap:wrap;">
