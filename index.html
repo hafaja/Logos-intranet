@@ -682,6 +682,24 @@
 .ficha-barra i{display:block;height:9px;border-radius:6px;transition:width .4s;}
 .fichas-pend-roja{border:1.5px solid #E9A79F !important;background:#FFF6F5 !important;}
 .fichas-pend-roja > summary{color:#8E2A1F;}
+
+.mem-tray{margin:8px 0 10px;}
+.mem-tray-f{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:12.5px;}
+.mem-tray-a{width:42px;font-weight:700;color:#1E3F66;}
+.mem-tray-b{flex:1;display:flex;height:14px;background:#EEF1F6;border-radius:4px;overflow:hidden;}
+.mem-tray-b i{display:block;height:14px;}
+.mem-tray-n{width:56px;text-align:right;font-weight:700;}
+.mem-tray i.c1,.mem-tray-ley i.c1{background:#2F5DA8;} .mem-tray i.c2,.mem-tray-ley i.c2{background:#2E8B47;} .mem-tray i.c3,.mem-tray-ley i.c3{background:#E0A526;}
+.mem-tray-ley{display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:#4A5A70;margin-top:6px;}
+.mem-tray-ley i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px;}
+.imp-total{background:linear-gradient(120deg,#1E3F66,#2F5DA8);color:#fff;border-radius:16px;padding:16px 18px;margin:0 0 16px;}
+.imp-total .mem-tray-b{background:rgba(255,255,255,.18);} .imp-total .mem-tray-a{color:#fff;} .imp-total .subtle{color:rgba(255,255,255,.8);}
+.imp-total .mem-tray i.c1{background:#9EC3FF;} .imp-total .mem-tray i.c2{background:#7FD69A;} .imp-total .mem-tray i.c3{background:#F2BC2C;}
+.imp-total-cab{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-end;margin-bottom:8px;}
+.imp-total-n{font-size:34px;font-weight:800;line-height:1;}
+.imp-total-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.imp-total-chips span{background:rgba(255,255,255,.15);border-radius:999px;padding:4px 10px;font-size:12px;}
+@media print{ .imp-total{-webkit-print-color-adjust:exact;print-color-adjust:exact;} .mem-tray-b i{-webkit-print-color-adjust:exact;print-color-adjust:exact;} }
 </style>
 </head>
 <body>
@@ -1883,7 +1901,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v145'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v146'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -12015,15 +12033,31 @@ async function impRenderPanel(cuerpo){
   if(res.error || !res.data){ cuerpo.innerHTML = impFiltrosHtml() + gpAviso(escAttr((res.error && res.error.message) || 'Sin datos')); return; }
   const r = res.data; st.resumen = r;
   const vacio = !r.fichas;
-  cuerpo.innerHTML = impFiltrosHtml() + `<div id="imp-informe">` + impHeroHtml(r)
+  cuerpo.innerHTML = impFiltrosHtml() + `<div id="imp-total"></div><div id="imp-informe">` + impHeroHtml(r)
     + (vacio ? `<div class="imp-vacio"><strong>${acL('Todavía no hay fichas en este periodo.', 'Encara no hi ha fitxes en aquest període.')}</strong><br>${acL('Cada técnico crea sus fichas en la pestaña «Mis fichas». En cuanto haya 5 personas con situación inicial y cierre, aparecerán aquí los cambios.', 'Cada tècnic crea les seves fitxes a la pestanya «Les meves fitxes». Quan hi hagi 5 persones amb situació inicial i tancament, hi apareixeran els canvis.')}<br><button class="primary-btn" style="width:auto;margin-top:10px;" onclick="renderImpacto('fichas')">📝 ${acL('Crear mi primera ficha', 'Crear la meva primera fitxa')}</button></div>` : '')
     + impDimsHtml(r) + impAntesDespuesHtml(r) + impEmpleoFormacionHtml(r) + impCoberturaHtml(r) + impSerieHtml(r) + impEquidadHtml(r) + impActividadHtml(act)
     + `<p class="imp-pie">${acL('Periodo', 'Període')}: ${desde ? impFecha(desde) : acL('inicio', 'inici')} – ${impFecha(hasta || new Date().toISOString())} · ${st.programa ? impProg(st.programa) : acL('Todo Logos', 'Tot Logos')} · ${acL('Los grupos de menos de 5 personas se ocultan para proteger la privacidad.', 'Els grups de menys de 5 persones s\'oculten per protegir la privadesa.')}</p></div>`
     + `<div class="imp-seccion">${acL('Atención en Bretxa Logos', 'Atenció a Bretxa Logos')}</div><div id="imp-atencion" class="cards-grid"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`
     + `<div id="imp-alcance"></div><div id="imp-carga"></div>`;
+  impAlcanceTotal();
   statsAtencionNuevos(desde, hasta).then(d => { const h = document.getElementById('imp-atencion'); if(h) h.innerHTML = bloqueAtencionNuevos(d); });
   alcancePersonasPintar('imp-alcance');
   if(IS_ADMIN) impCargaAdmin();
+}
+// Alcance hasta la fecha: todas las personas atendidas (con cuenta, histórico en papel y sin ficha)
+async function impAlcanceTotal(){
+  const host = document.getElementById('imp-total'); if(!host) return;
+  try {
+    const per = await estCargarPersonas(); const T = estTrayectoria(per.filas);
+    if(!T.total){ host.innerHTML = ''; return; }
+    const mx = Math.max(1, ...T.anios.map(a => T.por[a].cuenta + T.por[a].papel + T.por[a].sinficha));
+    host.innerHTML = `<div class="imp-total">
+      <div class="imp-total-cab"><div><div class="imp-total-n">${T.total.toLocaleString()}</div><div>${acL(`personas acompañadas desde ${T.primero} hasta hoy`, `persones acompanyades des de ${T.primero} fins avui`)}</div></div>
+        <div class="imp-total-chips"><span>📄 ${T.porOrigen.papel.toLocaleString()} ${acL('histórico', 'històric')}</span><span>💻 ${T.porOrigen.cuenta.toLocaleString()} ${acL('con cuenta', 'amb compte')}</span>${T.porOrigen.sinficha ? `<span>📝 ${T.porOrigen.sinficha.toLocaleString()} ${acL('sin ficha', 'sense fitxa')}</span>` : ''}<span>🔁 ${T.repiten.toLocaleString()} ${acL('han vuelto otro año', 'han tornat un altre any')}</span></div></div>
+      <div class="mem-tray">${T.anios.map(a => { const x = T.por[a], t = x.cuenta + x.papel + x.sinficha; return `<div class="mem-tray-f"><span class="mem-tray-a">${a}</span><span class="mem-tray-b"><i class="c1" style="width:${x.papel / mx * 100}%"></i><i class="c2" style="width:${x.cuenta / mx * 100}%"></i><i class="c3" style="width:${x.sinficha / mx * 100}%"></i></span><span class="mem-tray-n">${t.toLocaleString()}</span></div>`; }).join('')}</div>
+      <p class="subtle" style="margin:6px 0 0;font-size:11.5px;">${acL('Personas atendidas cada año (una persona cuenta en cada año en que se la atendió). Los indicadores de cambio de abajo salen de las fichas de impacto.', 'Persones ateses cada any (una persona compta en cada any en què se l\'ha atès). Els indicadors de canvi de sota surten de les fitxes d\'impacte.')}</p>
+    </div>`;
+  } catch(e){ host.innerHTML = ''; }
 }
 function impIndicadoresCsv(r){
   const g = r.global || {}, d = r.dims || {}, m = r.medias || {}, ins = r.insercion || {}, fo = r.formacion || {};
@@ -14111,7 +14145,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-27 · v145 (correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-27 · v146 (todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -17546,12 +17580,51 @@ function estPersonaDeHist(h){
   return { origen: 'papel', id: h.id, sexo: histSexo(h.sexo) || '', tramo: estEdad(h.fecha_nacimiento, h.fecha_alta || (h.anio_alta ? h.anio_alta + '-07-01' : null), h.edad_alta),
     nacionalidad: estNacionalidad(h.nacionalidad), municipio: estMunicipio(h.municipio), anio: h.anio_alta || null, alta: h.fecha_alta ? String(h.fecha_alta).slice(0, 10) : null };
 }
+// TODAS las personas atendidas hasta la fecha: con cuenta + histórico (papel) + atendidas sin ficha (solo nombre en la atención).
+// Cada persona cuenta una vez; además se apunta en qué años se la atendió (para «personas atendidas cada año»).
+const estClaveNombre = n => normTxt(n).replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
 async function estCargarPersonas(){
-  const cols = 'id, sexo, nacionalidad, fecha_nacimiento, municipio, creado_en' + (FECHA_ALTA_OK ? ', fecha_alta' : '') + ', dni_nie';
-  const pr = await traerTodoPaginado((a, b) => sb.from('perfiles').select(cols).not('nombre_completo', 'is', null).range(a, b));
+  if(window.__estCache && Date.now() - window.__estCache.t < 120000) return window.__estCache.d;
+  const cols = 'id, nombre_completo, sexo, nacionalidad, fecha_nacimiento, municipio, creado_en' + (FECHA_ALTA_OK ? ', fecha_alta' : '') + ', dni_nie';
+  const [pr, at, ac] = await Promise.all([
+    traerTodoPaginado((a, b) => sb.from('perfiles').select(cols).not('nombre_completo', 'is', null).range(a, b)),
+    traerTodoPaginado((a, b) => sb.from('atenciones').select('usuario_id, nombre_referencia, creado_en').order('creado_en', { ascending: true }).range(a, b)).catch(() => ({ data: [] })),
+    traerTodoPaginado((a, b) => sb.from('actuaciones').select('usuario_id, fecha').not('usuario_id', 'is', null).range(a, b)).catch(() => ({ data: [] }))
+  ]);
   const perfiles = pr.data || [];
   if(!window.__personasHistUnif) window.__personasHistUnif = histUnificar(perfiles, await histCargarParaLista());
-  return { perfiles, hist: window.__personasHistUnif, filas: perfiles.map(estPersonaDePerfil).concat(window.__personasHistUnif.map(estPersonaDeHist)) };
+  const hist = window.__personasHistUnif;
+  // años de actividad de cada persona con cuenta
+  const aniosCuenta = {};
+  const marca = (id, f) => { if(!id || !f) return; const y = Number(String(f).slice(0, 4)); if(y > 1990) (aniosCuenta[id] = aniosCuenta[id] || new Set()).add(y); };
+  (at.data || []).forEach(a => marca(a.usuario_id, a.creado_en));
+  (ac.data || []).forEach(a => marca(a.usuario_id, a.fecha));
+  const filasCuenta = perfiles.map(p => { const f = estPersonaDePerfil(p); const s = aniosCuenta[p.id] || new Set(); if(f.anio) s.add(f.anio); f.anios = [...s].sort(); return f; });
+  const filasHist = hist.map(h => { const f = estPersonaDeHist(h); const s = new Set((h.anios || []).map(Number).filter(Boolean)); if(f.anio) s.add(f.anio); f.anios = [...s].sort(); return f; });
+  // atendidas sin ficha: se agrupan por nombre y no se cuentan si ese nombre ya está en una ficha (con cuenta o del histórico)
+  const conocidos = new Set(perfiles.map(p => estClaveNombre(p.nombre_completo)).concat(hist.map(h => estClaveNombre(h.nombre_completo))));
+  const sinFicha = {};
+  (at.data || []).forEach(a => {
+    if(a.usuario_id) return;
+    const k = estClaveNombre(a.nombre_referencia); if(k.length < 3 || conocidos.has(k)) return;
+    const x = sinFicha[k] = sinFicha[k] || { fechas: [] }; if(a.creado_en) x.fechas.push(String(a.creado_en).slice(0, 10));
+  });
+  const filasSinFicha = Object.entries(sinFicha).map(([k, x]) => {
+    const f = x.fechas.sort(); const anios = [...new Set(f.map(d => Number(d.slice(0, 4))))].sort();
+    return { origen: 'sinficha', id: 'sf:' + k, sexo: '', tramo: '', nacionalidad: '', municipio: '', anio: anios[0] || null, alta: f[0] || null, anios, fechas: f };
+  });
+  const d = { perfiles, hist, filas: filasCuenta.concat(filasHist).concat(filasSinFicha) };
+  window.__estCache = { t: Date.now(), d };
+  return d;
+}
+// Personas atendidas cada año (una persona cuenta en cada año en que se la atendió) y cuántas han vuelto en más de un año
+function estTrayectoria(filas){
+  const por = {}; let repiten = 0;
+  filas.forEach(f => { const an = (f.anios && f.anios.length) ? f.anios : (f.anio ? [f.anio] : []); if(an.length > 1) repiten++;
+    an.forEach(a => { const x = por[a] = por[a] || { cuenta: 0, papel: 0, sinficha: 0 }; x[f.origen]++; }); });
+  const anios = Object.keys(por).map(Number).sort((a, b) => a - b);
+  return { anios, por, repiten, primero: anios[0] || null, total: filas.length,
+    porOrigen: { cuenta: filas.filter(f => f.origen === 'cuenta').length, papel: filas.filter(f => f.origen === 'papel').length, sinficha: filas.filter(f => f.origen === 'sinficha').length } };
 }
 function estContar(filas, clave, orden){
   const c = {}; filas.forEach(f => { const k = f[clave] || ''; c[k] = (c[k] || 0) + 1; });
@@ -17569,15 +17642,15 @@ function estTablas(filas){
   const conNac = filas.filter(f => f.nacionalidad), esp = conNac.filter(f => f.nacionalidad === 'España').length;
   const origen = [[acL('Nacionalidad española', 'Nacionalitat espanyola'), esp, pct(esp)], [acL('Otras nacionalidades', 'Altres nacionalitats'), conNac.length - esp, pct(conNac.length - esp)], [acL('No consta', 'No consta'), tot - conNac.length, pct(tot - conNac.length)]].filter((r, i) => i < 2 || r[1] > 0);
   const muni = estContar(filas, 'municipio').map(([k, n]) => [k || acL('No consta', 'No consta'), n, pct(n)]);
-  const anios = {}; filas.forEach(f => { const a = f.anio || 0; anios[a] = anios[a] || { cuenta: 0, papel: 0 }; anios[a][f.origen]++; });
-  const anio = Object.keys(anios).map(Number).sort((a, b) => (a === 0) - (b === 0) || a - b).map(a => [a || acL('Sin fecha', 'Sense data'), anios[a].cuenta + anios[a].papel, anios[a].cuenta, anios[a].papel]);
+  const anios = {}; filas.forEach(f => { const a = f.anio || 0; anios[a] = anios[a] || { cuenta: 0, papel: 0, sinficha: 0 }; anios[a][f.origen]++; });
+  const anio = Object.keys(anios).map(Number).sort((a, b) => (a === 0) - (b === 0) || a - b).map(a => [a || acL('Sin fecha', 'Sense data'), anios[a].cuenta + anios[a].papel + anios[a].sinficha, anios[a].cuenta, anios[a].papel, anios[a].sinficha]);
   const cruce = EST_TRAMOS.concat('').map(tr => { const g = filas.filter(f => (f.tramo || '') === tr); return [tr ? tr + ' ' + acL('años', 'anys') : acL('No consta', 'No consta'), g.filter(f => f.sexo === 'mujer').length, g.filter(f => f.sexo === 'hombre').length, g.filter(f => f.sexo !== 'mujer' && f.sexo !== 'hombre').length, g.length]; }).filter(r => r[4] > 0);
   return { tot, sexo, edad, nac, origen, muni, anio, cruce };
 }
 window.__est = window.__est || { origen: 'todas', anio: '' };
 function estFiltrar(filas){
   const st = window.__est;
-  return filas.filter(f => (st.origen === 'todas' || f.origen === st.origen) && (!st.anio || String(f.anio) === String(st.anio)));
+  return filas.filter(f => (st.origen === 'todas' || f.origen === st.origen) && (!st.anio || (st.anioModo === 'atendidas' ? (f.anios || [f.anio]).map(String).includes(String(st.anio)) : String(f.anio) === String(st.anio))));
 }
 function estBarras(filas, max){
   const m = max || Math.max(1, ...filas.map(f => f[1]));
@@ -17593,19 +17666,21 @@ function estPintarDatos(caja){
   caja = caja || document.getElementById('personas-lista'); if(!caja || !window.__estDatos) return;
   const st = window.__est, esCA = LANG_I === 'ca';
   const todas = window.__estDatos.filas, filas = estFiltrar(todas), T = estTablas(filas);
-  const anios = [...new Set(todas.map(f => f.anio).filter(Boolean))].sort((a, b) => b - a);
+  const anios = [...new Set(todas.flatMap(f => (f.anios && f.anios.length) ? f.anios : [f.anio]).filter(Boolean))].sort((a, b) => b - a);
+  const TR = estTrayectoria(todas), TRf = estTrayectoria(filas);
   const nacTop = T.nac.slice(0, 15), nacResto = T.nac.slice(15).reduce((s, r) => s + r[1], 0);
   const muniTop = T.muni.slice(0, 12);
   const sel = (id, ops, val, fn) => `<select style="width:auto;padding:6px 8px;font-size:13px;" onchange="${fn}">${ops.map(([k, t]) => `<option value="${k}"${String(val) === String(k) ? ' selected' : ''}>${t}</option>`).join('')}</select>`;
   caja.innerHTML = `
     <div class="est-filtros imp-noprint">
-      <label>${esCA ? 'Persones' : 'Personas'} ${sel('o', [['todas', esCA ? 'Totes' : 'Todas'], ['cuenta', esCA ? 'Amb compte (actuals)' : 'Con cuenta (actuales)'], ['papel', esCA ? 'Històric (paper)' : 'Histórico (papel)']], st.origen, "window.__est.origen=this.value;estPintarDatos()")}</label>
-      <label>${esCA ? 'Any d\'alta' : 'Año de alta'} ${sel('a', [['', esCA ? 'Tots' : 'Todos']].concat(anios.map(a => [a, a])), st.anio, "window.__est.anio=this.value;estPintarDatos()")}</label>
+      <label>${esCA ? 'Persones' : 'Personas'} ${sel('o', [['todas', esCA ? 'Totes' : 'Todas'], ['cuenta', esCA ? 'Amb compte (actuals)' : 'Con cuenta (actuales)'], ['papel', esCA ? 'Històric (paper)' : 'Histórico (papel)'], ['sinficha', esCA ? 'Ateses sense fitxa' : 'Atendidas sin ficha']], st.origen, "window.__est.origen=this.value;estPintarDatos()")}</label>
+      <label>${esCA ? 'Any' : 'Año'} ${sel('a', [['', esCA ? 'Tots (fins avui)' : 'Todos (hasta hoy)']].concat(anios.map(a => [a, a])), st.anio, "window.__est.anio=this.value;estPintarDatos()")}</label>
+      ${st.anio ? `<label>${sel('m', [['alta', esCA ? 'Altes d\'aquell any' : 'Altas de ese año'], ['atendidas', esCA ? 'Ateses aquell any' : 'Atendidas ese año']], st.anioModo || 'alta', "window.__est.anioModo=this.value;estPintarDatos()")}</label>` : ''}
       <span style="flex:1"></span>
       <button class="link-btn" onclick="estExcel()">⬇️ Excel</button>
       <button class="link-btn" onclick="showScreen('impacto');window.__imp.tab='memoria';renderImpacto('memoria')">📄 ${esCA ? 'Memòria d\'impacte' : 'Memoria de impacto'}</button>
     </div>
-    <div class="est-hero"><div><div class="est-big">${T.tot.toLocaleString()}</div><div class="est-sub">${esCA ? 'persones' : 'personas'}${st.anio ? ' · ' + (esCA ? 'alta el ' : 'alta en ') + st.anio : ''}</div></div>
+    <div class="est-hero"><div><div class="est-big">${T.tot.toLocaleString()}</div><div class="est-sub">${esCA ? 'persones' : 'personas'}${st.anio ? ' · ' + ((st.anioModo === 'atendidas') ? (esCA ? 'ateses el ' : 'atendidas en ') : (esCA ? 'alta el ' : 'alta en ')) + st.anio : (TR.primero ? ' ' + (esCA ? `ateses des de ${TR.primero} fins avui` : `atendidas desde ${TR.primero} hasta hoy`) : '')}</div></div>
       ${T.sexo.filter(r => r[1]).map(r => `<div><div class="est-big sm">${r[2]}</div><div class="est-sub">${r[0]}</div></div>`).join('')}
       <div><div class="est-big sm">${T.origen[1][2]}</div><div class="est-sub">${esCA ? 'altres nacionalitats' : 'otras nacionalidades'}</div></div></div>
     <div class="est-grid">
@@ -17614,8 +17689,11 @@ function estPintarDatos(caja){
       <div class="panel-card"><h3>🌍 ${esCA ? 'Per nacionalitat' : 'Por nacionalidad'}</h3>${estBarras(T.origen)}<div style="height:10px"></div>${estBarras(nacTop.concat(nacResto ? [[esCA ? 'Altres' : 'Otras', nacResto, '']] : []))}</div>
       <div class="panel-card"><h3>📍 ${esCA ? 'Per municipi' : 'Por municipio'}</h3>${estBarras(muniTop)}</div>
       <div class="panel-card est-ancha"><h3>📅 ${esCA ? 'Altes per any' : 'Altas por año'}</h3>
-        <div class="imp-tabla-w"><table class="imp-tabla"><thead><tr><th>${esCA ? 'Any' : 'Año'}</th><th>${esCA ? 'Total' : 'Total'}</th><th>${esCA ? 'Amb compte' : 'Con cuenta'}</th><th>${esCA ? 'Històric (paper)' : 'Histórico (papel)'}</th></tr></thead>
-        <tbody>${T.anio.map(r => `<tr><td>${r[0]}</td><td><strong>${r[1].toLocaleString()}</strong></td><td>${r[2].toLocaleString()}</td><td>${r[3].toLocaleString()}</td></tr>`).join('')}</tbody></table></div></div>
+        <div class="imp-tabla-w"><table class="imp-tabla"><thead><tr><th>${esCA ? 'Any' : 'Año'}</th><th>${esCA ? 'Total' : 'Total'}</th><th>${esCA ? 'Amb compte' : 'Con cuenta'}</th><th>${esCA ? 'Històric (paper)' : 'Histórico (papel)'}</th><th>${esCA ? 'Sense fitxa' : 'Sin ficha'}</th></tr></thead>
+        <tbody>${T.anio.map(r => `<tr><td>${r[0]}</td><td><strong>${r[1].toLocaleString()}</strong></td><td>${r[2].toLocaleString()}</td><td>${r[3].toLocaleString()}</td><td>${r[4].toLocaleString()}</td></tr>`).join('')}</tbody></table></div></div>
+      <div class="panel-card est-ancha"><h3>🧭 ${esCA ? 'Persones ateses cada any (trajectòria)' : 'Personas atendidas cada año (trayectoria)'}</h3>
+        <p class="subtle" style="margin:0 0 8px;font-size:12px;">${esCA ? `Una persona compta en cada any en què se l'ha atès. ${TRf.repiten.toLocaleString()} persones han tornat en més d'un any.` : `Una persona cuenta en cada año en que se la atendió. ${TRf.repiten.toLocaleString()} personas han vuelto en más de un año.`}</p>
+        ${estBarras(TRf.anios.slice().reverse().map(a => [a, TRf.por[a].cuenta + TRf.por[a].papel + TRf.por[a].sinficha, '']))}</div>
       <div class="panel-card est-ancha"><h3>⚖️ ${esCA ? 'Sexe per tram d\'edat' : 'Sexo por tramo de edad'}</h3>
         <div class="imp-tabla-w"><table class="imp-tabla"><thead><tr><th>${esCA ? 'Edat' : 'Edad'}</th><th>${esCA ? 'Dones' : 'Mujeres'}</th><th>${esCA ? 'Homes' : 'Hombres'}</th><th>${esCA ? 'Altre / no consta' : 'Otro / no consta'}</th><th>Total</th></tr></thead>
         <tbody>${T.cruce.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td><strong>${r[4]}</strong></td></tr>`).join('')}</tbody></table></div></div>
@@ -17626,14 +17704,15 @@ async function estExcel(){
   if(!window.ExcelJS){ alert(acL('No se ha podido cargar el generador de Excel. Recarga la página.', 'No s\'ha pogut carregar el generador d\'Excel. Recarrega la pàgina.')); return; }
   const T = estTablas(estFiltrar(window.__estDatos.filas)), st = window.__est, esCA = LANG_I === 'ca';
   const libro = new window.ExcelJS.Workbook(); libro.creator = 'Logos Intranet'; libro.created = new Date();
-  const filtro = (st.origen === 'todas' ? acL('Todas las personas', 'Totes les persones') : st.origen === 'cuenta' ? acL('Con cuenta', 'Amb compte') : acL('Histórico (papel)', 'Històric (paper)')) + (st.anio ? ' · ' + acL('alta en ', 'alta el ') + st.anio : '');
+  const filtro = (st.origen === 'todas' ? acL('Todas las personas', 'Totes les persones') : st.origen === 'cuenta' ? acL('Con cuenta', 'Amb compte') : st.origen === 'sinficha' ? acL('Atendidas sin ficha', 'Ateses sense fitxa') : acL('Histórico (papel)', 'Històric (paper)')) + (st.anio ? ' · ' + acL('alta en ', 'alta el ') + st.anio : '');
   fichaHoja(libro, acL('Resumen', 'Resum'), [acL('Indicador', 'Indicador'), acL('Valor', 'Valor')], [[acL('Filtro', 'Filtre'), filtro], [acL('Total personas', 'Total persones'), T.tot], [acL('Fecha del informe', 'Data de l\'informe'), new Date().toLocaleDateString('es-ES')]].concat(T.sexo.map(r => [r[0], r[1] + ' (' + r[2] + ')'])));
   const cab = [acL('Categoría', 'Categoria'), acL('Personas', 'Persones'), '%'];
   fichaHoja(libro, acL('Sexo', 'Sexe'), cab, T.sexo);
   fichaHoja(libro, acL('Edad', 'Edat'), cab, T.edad);
   fichaHoja(libro, acL('Nacionalidad', 'Nacionalitat'), cab, T.origen.concat([['', '', '']]).concat(T.nac));
   fichaHoja(libro, acL('Municipio', 'Municipi'), cab, T.muni);
-  fichaHoja(libro, acL('Altas por año', 'Altes per any'), [acL('Año', 'Any'), 'Total', acL('Con cuenta', 'Amb compte'), acL('Histórico (papel)', 'Històric (paper)')], T.anio);
+  fichaHoja(libro, acL('Altas por año', 'Altes per any'), [acL('Año', 'Any'), 'Total', acL('Con cuenta', 'Amb compte'), acL('Histórico (papel)', 'Històric (paper)'), acL('Sin ficha', 'Sense fitxa')], T.anio);
+  { const TR = estTrayectoria(estFiltrar(window.__estDatos.filas)); fichaHoja(libro, acL('Atendidas cada año', 'Ateses cada any'), [acL('Año', 'Any'), 'Total', acL('Con cuenta', 'Amb compte'), acL('Histórico (papel)', 'Històric (paper)'), acL('Sin ficha', 'Sense fitxa')], TR.anios.map(a => [a, TR.por[a].cuenta + TR.por[a].papel + TR.por[a].sinficha, TR.por[a].cuenta, TR.por[a].papel, TR.por[a].sinficha])); }
   fichaHoja(libro, acL('Sexo x edad', 'Sexe x edat'), [acL('Edad', 'Edat'), acL('Mujeres', 'Dones'), acL('Hombres', 'Homes'), acL('Otro / no consta', 'Altre / no consta'), 'Total'], T.cruce);
   const buf = await libro.xlsx.writeBuffer();
   expDescargarBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'Estadisticas-personas-' + isoLocal() + '.xlsx');
@@ -17672,6 +17751,7 @@ window.__mem = window.__mem || { anio: String(new Date().getFullYear()), desde: 
 function memRango(){
   const m = window.__mem;
   if(m.anio === 'rango' && m.desde && m.hasta) return { desde: m.desde, hasta: m.hasta };
+  if(m.anio === 'todo') return { desde: '1990-01-01', hasta: isoLocal(), todo: true };
   const a = m.anio && m.anio !== 'rango' ? m.anio : String(new Date().getFullYear());
   const hoy = isoLocal();
   return { desde: a + '-01-01', hasta: (a + '-12-31') < hoy ? a + '-12-31' : hoy };
@@ -17684,7 +17764,7 @@ async function memRenderControles(cuerpo){
       <h3 style="margin-top:0;">📄 ${acL('Memoria de impacto para organismos', 'Memòria d\'impacte per a organismes')}</h3>
       <p class="subtle" style="margin:0 0 12px;">${acL('Genera un informe listo para presentar a la Generalitat, la Diputació, el Ajuntament o una fundación: alcance, perfil de las personas, actividad, resultados de impacto y alineación con los ODS. Solo usa cifras agregadas.', 'Genera un informe llest per presentar a la Generalitat, la Diputació, l\'Ajuntament o una fundació: abast, perfil de les persones, activitat, resultats d\'impacte i alineació amb els ODS. Només fa servir xifres agregades.')}</p>
       <div class="est-filtros">
-        <label>${acL('Periodo', 'Període')}<select id="mem-anio" onchange="window.__mem.anio=this.value;document.getElementById('mem-rango').style.display=this.value==='rango'?'flex':'none'">${anios.map(a => `<option value="${a}"${String(m.anio) === String(a) ? ' selected' : ''}>${a}</option>`).join('')}<option value="rango"${m.anio === 'rango' ? ' selected' : ''}>${acL('Fechas concretas…', 'Dates concretes…')}</option></select></label>
+        <label>${acL('Periodo', 'Període')}<select id="mem-anio" onchange="window.__mem.anio=this.value;document.getElementById('mem-rango').style.display=this.value==='rango'?'flex':'none'">${anios.map(a => `<option value="${a}"${String(m.anio) === String(a) ? ' selected' : ''}>${a}</option>`).join('')}<option value="todo"${m.anio === 'todo' ? ' selected' : ''}>${acL('Desde el inicio hasta hoy', 'Des de l\'inici fins avui')}</option><option value="rango"${m.anio === 'rango' ? ' selected' : ''}>${acL('Fechas concretas…', 'Dates concretes…')}</option></select></label>
         <span id="mem-rango" style="display:${m.anio === 'rango' ? 'flex' : 'none'};gap:6px;align-items:center;"><input type="date" id="mem-desde" value="${m.desde}" onchange="window.__mem.desde=this.value" style="width:auto;"> – <input type="date" id="mem-hasta" value="${m.hasta}" onchange="window.__mem.hasta=this.value" style="width:auto;"></span>
         <label>${acL('Programa', 'Programa')}<select onchange="window.__mem.programa=this.value"><option value="">${acL('Todo Logos', 'Tot Logos')}</option>${IMP_PROGRAMAS.filter(p => p[0] !== 'general').map(p => `<option value="${p[0]}"${m.programa === p[0] ? ' selected' : ''}>${acL(p[1], p[2])}</option>`).join('')}</select></label>
       </div>
@@ -17724,10 +17804,17 @@ async function memDatos(desde, hasta, programa){
   // Personas atendidas en el periodo: con alguna atención, actuación, trámite o cita + fichas del histórico con alta en el periodo
   const idsAtendidas = new Set([...atenciones, ...actuaciones, ...tramites, ...citas].map(x => x.usuario_id).filter(Boolean));
   const perfPorId = {}; per.filas.filter(f => f.origen === 'cuenta').forEach(f => { perfPorId[f.id] = f; });
+  // con cuenta: con actividad en el periodo o dadas de alta en el periodo (todas, si es «desde el inicio»)
+  per.filas.filter(f => f.origen === 'cuenta' && memEnRango(f.alta, desde, hasta)).forEach(f => idsAtendidas.add(f.id));
   const filasCuenta = [...idsAtendidas].map(id => perfPorId[id]).filter(Boolean);
-  const filasHist = per.filas.filter(f => f.origen === 'papel' && memEnRango(f.alta || (f.anio ? f.anio + '-07-01' : null), desde, hasta));
-  const sinCuenta = atenciones.filter(a => !a.usuario_id).length;
-  const atendidas = filasCuenta.concat(filasHist);
+  const anioD = Number(desde.slice(0, 4)), anioH = Number(hasta.slice(0, 4));
+  const enAnios = f => (f.anios && f.anios.length ? f.anios : (f.anio ? [f.anio] : [])).some(a => a >= anioD && a <= anioH);
+  // histórico: se le atendió en algún año del periodo (o se dio de alta dentro del periodo)
+  const filasHist = per.filas.filter(f => f.origen === 'papel' && (memEnRango(f.alta, desde, hasta) || enAnios(f)));
+  // atendidas sin ficha: alguna atención dentro del periodo
+  const filasSinFicha = per.filas.filter(f => f.origen === 'sinficha' && (f.fechas || []).some(x => x >= desde && x <= hasta));
+  const sinCuenta = filasSinFicha.length;
+  const atendidas = filasCuenta.concat(filasHist).concat(filasSinFicha);
   const nuevas = per.filas.filter(f => memEnRango(f.alta || (f.origen === 'papel' && f.anio ? f.anio + '-07-01' : null), desde, hasta));
   // Servicios más frecuentes
   const cuenta = {}; const suma = k => { if(!k) return; cuenta[k] = (cuenta[k] || 0) + 1; };
@@ -17740,7 +17827,8 @@ async function memDatos(desde, hasta, programa){
   const tramFin = tramites.filter(t => t.estado === 'hecho').length;
   const derivaciones = atenciones.filter(a => a.derivacion && a.derivacion !== 'no' && a.derivacion !== 'ninguna').length + actuaciones.filter(x => x.derivado_a && !/^no/i.test(x.derivado_a)).length;
   const resultados = {}; actuaciones.forEach(x => { if(x.resultado) resultados[x.resultado] = (resultados[x.resultado] || 0) + 1; });
-  return { desde, hasta, programa, atendidas, filasHist, sinCuenta, nuevas, T: estTablas(atendidas), act: act || {}, atencionesN: atenciones.length, actuacionesN: actuaciones.length,
+  const tray = estTrayectoria(per.filas);
+  return { desde, hasta, programa, atendidas, filasHist, sinCuenta, tray, nuevas, T: estTablas(atendidas), act: act || {}, atencionesN: atenciones.length, actuacionesN: actuaciones.length,
     tramitesN: tramites.length, tramFin, citasN: citas.length, minutos, servicios, conocio: Object.entries(conocio).sort((a, b) => b[1] - a[1]), derivaciones, resultados,
     imp: (imp && imp.data) || null };
 }
@@ -17769,7 +17857,7 @@ async function memGenerar(){
   window.__memDatos = d; window.__memTextos = t;
   const r = d.imp || {}, g = r.global || {}, T = d.T, esCA = LANG_I === 'ca';
   const logo = (document.querySelector('.brand-logo-sidebar') || {}).src || '';
-  const periodo = `${impFecha(desde)} – ${impFecha(hasta)}`;
+  const periodo = m.anio === 'todo' ? `${acL('Desde el inicio', 'Des de l\'inici')}${d.tray && d.tray.primero ? ' (' + d.tray.primero + ')' : ''} – ${impFecha(hasta)}` : `${impFecha(desde)} – ${impFecha(hasta)}`;
   const prog = m.programa ? impProg(m.programa) : acL('Todos los programas', 'Tots els programes');
   const kpi = (v, l) => `<div class="mem-kpi"><div class="mem-kpi-v">${v}</div><div class="mem-kpi-l">${l}</div></div>`;
   const pct = (n, tot) => tot ? (Math.round(n / tot * 1000) / 10).toString().replace('.', ',') + ' %' : '–';
@@ -17804,7 +17892,14 @@ async function memGenerar(){
       <div><h3>${acL('Por municipio', 'Per municipi')}</h3>${memTablaHtml([acL('Municipio', 'Municipi'), acL('Personas', 'Persones'), '%'], T.muni.slice(0, 10))}</div>
     </div>
     <h3>${acL('Sexo por tramo de edad', 'Sexe per tram d\'edat')}</h3>${memTablaHtml([acL('Edad', 'Edat'), acL('Mujeres', 'Dones'), acL('Hombres', 'Homes'), acL('Otro / no consta', 'Altre / no consta'), 'Total'], T.cruce)}
-    ${d.sinCuenta ? `<p class="mem-nota">${acL(`Además, se registraron ${d.sinCuenta} atenciones a personas sin ficha en la plataforma (consultas puntuales), que no se incluyen en el perfil.`, `A més, es van registrar ${d.sinCuenta} atencions a persones sense fitxa a la plataforma (consultes puntuals), que no s'inclouen en el perfil.`)}</p>` : ''}
+    ${d.sinCuenta ? `<p class="mem-nota">${acL(`El total incluye ${d.sinCuenta} personas atendidas sin ficha completa (solo consta su nombre en la atención): cuentan como atendidas, con «no consta» en sexo, edad y nacionalidad.`, `El total inclou ${d.sinCuenta} persones ateses sense fitxa completa (només hi consta el nom a l'atenció): compten com a ateses, amb «no consta» en sexe, edat i nacionalitat.`)}</p>` : ''}
+    ${sec(acL('Trayectoria: personas acompañadas hasta la fecha', 'Trajectòria: persones acompanyades fins avui'))}
+    <div class="mem-kpis sm">${kpi(d.tray.total.toLocaleString(), acL(`personas distintas desde ${d.tray.primero || ''}`, `persones diferents des de ${d.tray.primero || ''}`))}${kpi(d.tray.repiten.toLocaleString(), acL('han vuelto en más de un año', 'han tornat en més d\'un any'))}${kpi(d.tray.anios.length.toLocaleString(), acL('años de actividad', 'anys d\'activitat'))}</div>
+    <div class="mem-tray">${(() => { const mx = Math.max(1, ...d.tray.anios.map(a => d.tray.por[a].cuenta + d.tray.por[a].papel + d.tray.por[a].sinficha)); return d.tray.anios.map(a => { const x = d.tray.por[a], t = x.cuenta + x.papel + x.sinficha; return `<div class="mem-tray-f"><span class="mem-tray-a">${a}</span><span class="mem-tray-b"><i class="c1" style="width:${x.papel / mx * 100}%"></i><i class="c2" style="width:${x.cuenta / mx * 100}%"></i><i class="c3" style="width:${x.sinficha / mx * 100}%"></i></span><span class="mem-tray-n">${t.toLocaleString()}</span></div>`; }).join(''); })()}
+      <div class="mem-tray-ley"><span><i class="c1"></i>${acL('Histórico (consentimiento en papel)', 'Històric (consentiment en paper)')}</span><span><i class="c2"></i>${acL('Con cuenta en la plataforma', 'Amb compte a la plataforma')}</span><span><i class="c3"></i>${acL('Atendidas sin ficha', 'Ateses sense fitxa')}</span></div></div>
+    ${memTablaHtml([acL('Año', 'Any'), acL('Personas atendidas', 'Persones ateses'), acL('Histórico', 'Històric'), acL('Con cuenta', 'Amb compte'), acL('Sin ficha', 'Sense fitxa')], d.tray.anios.map(a => [a, (d.tray.por[a].cuenta + d.tray.por[a].papel + d.tray.por[a].sinficha).toLocaleString(), d.tray.por[a].papel.toLocaleString(), d.tray.por[a].cuenta.toLocaleString(), d.tray.por[a].sinficha.toLocaleString()]))}
+    <p class="mem-nota">${acL('Una persona cuenta en cada año en que fue atendida; en el total de arriba, una sola vez. Incluye el histórico anterior a la plataforma (fichas en papel con consentimiento firmado).', 'Una persona compta en cada any en què va ser atesa; en el total de dalt, una sola vegada. Inclou l\'històric anterior a la plataforma (fitxes en paper amb consentiment signat).')}</p>
+    ${'' ? `<p class="mem-nota">${acL(`Además, se registraron ${d.sinCuenta} atenciones a personas sin ficha en la plataforma (consultas puntuales), que no se incluyen en el perfil.`, `A més, es van registrar ${d.sinCuenta} atencions a persones sense fitxa a la plataforma (consultes puntuals), que no s'inclouen en el perfil.`)}</p>` : ''}
     ${sec(acL('Actividades y metodología', 'Activitats i metodologia'))}${memTextoHtml(t.actividades)}
     <div class="mem-kpis sm">${kpi(d.atencionesN.toLocaleString(), acL('atenciones', 'atencions'))}${kpi(horas.toLocaleString() + ' h', acL('de atención registrada', 'd\'atenció registrada'))}${kpi(d.tramitesN.toLocaleString(), acL('trámites iniciados', 'tràmits iniciats'))}${kpi(d.tramFin.toLocaleString(), acL('trámites finalizados', 'tràmits finalitzats'))}${kpi(d.citasN.toLocaleString(), acL('citas', 'cites'))}${kpi(d.derivaciones.toLocaleString(), acL('derivaciones a recursos', 'derivacions a recursos'))}${d.act.certificados ? kpi(d.act.certificados.toLocaleString(), acL('certificados de formación', 'certificats de formació')) : ''}</div>
     ${d.servicios.length ? `<h3>${acL('Servicios y trámites más frecuentes', 'Serveis i tràmits més freqüents')}</h3>${memTablaHtml([acL('Servicio / trámite', 'Servei / tràmit'), acL('Veces', 'Vegades')], d.servicios)}` : ''}
@@ -17849,6 +17944,7 @@ async function memExcel(){
   fichaHoja(libro, acL('Sexo x edad', 'Sexe x edat'), [acL('Edad', 'Edat'), acL('Mujeres', 'Dones'), acL('Hombres', 'Homes'), acL('Otro / no consta', 'Altre / no consta'), 'Total'], T.cruce);
   fichaHoja(libro, acL('Servicios', 'Serveis'), [acL('Servicio / trámite', 'Servei / tràmit'), acL('Veces', 'Vegades')], d.servicios);
   if(d.conocio.length) fichaHoja(libro, acL('Cómo nos conocen', 'Com ens coneixen'), [acL('Vía', 'Via'), acL('Atenciones', 'Atencions')], d.conocio);
+  if(d.tray) fichaHoja(libro, acL('Trayectoria', 'Trajectòria'), [acL('Año', 'Any'), acL('Personas atendidas', 'Persones ateses'), acL('Histórico', 'Històric'), acL('Con cuenta', 'Amb compte'), acL('Sin ficha', 'Sense fitxa')], d.tray.anios.map(a => [a, d.tray.por[a].cuenta + d.tray.por[a].papel + d.tray.por[a].sinficha, d.tray.por[a].papel, d.tray.por[a].cuenta, d.tray.por[a].sinficha]).concat([[acL('Personas distintas (total)', 'Persones diferents (total)'), d.tray.total, d.tray.porOrigen.papel, d.tray.porOrigen.cuenta, d.tray.porOrigen.sinficha]]));
   const buf = await libro.xlsx.writeBuffer();
   expDescargarBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'Memoria-impacto-anexo-' + d.desde + '_' + d.hasta + '.xlsx');
 }
