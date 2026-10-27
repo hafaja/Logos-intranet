@@ -709,6 +709,33 @@
 .imp-auto-l{font-size:12.5px;font-weight:700;color:#16304F;margin-top:2px;}
 .imp-auto-s{font-size:11.5px;color:#5A6B80;}
 .imp-auto-p{font-size:12px;color:#5A6B80;margin:10px 0 0;}
+
+.mh-pasos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px;}
+.mh-paso{background:#EEF4FB;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.4;display:flex;gap:8px;align-items:flex-start;}
+.mh-paso span{flex:0 0 24px;height:24px;border-radius:50%;background:#1E3F66;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:12.5px;}
+@media (max-width:700px){ .mh-pasos{grid-template-columns:1fr;} }
+.cchat{border:1.5px solid #D6E2F2;border-radius:16px;background:#fff;overflow:hidden;margin:0 0 16px;display:flex;flex-direction:column;}
+.cchat-cab{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;background:linear-gradient(120deg,#1E3F66,#2F5DA8);color:#fff;padding:10px 14px;font-weight:700;font-size:14px;}
+.cchat-wa{display:flex;gap:6px;flex-wrap:wrap;}
+.cchat-wa-btn{background:#25D366;color:#fff !important;text-decoration:none;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:700;}
+.cchat-lista{height:340px;overflow-y:auto;padding:10px 12px;background:#F4F7FB;display:flex;flex-direction:column;gap:6px;}
+.cchat-vacio{margin:auto;color:#6B7A90;font-size:13px;text-align:center;padding:20px;}
+.cchat-dia{align-self:center;font-size:11px;color:#6B7A90;background:#E6ECF4;border-radius:999px;padding:2px 10px;margin:6px 0;text-transform:capitalize;}
+.cchat-m{max-width:80%;align-self:flex-start;background:#fff;border:1px solid #E2E8F0;border-radius:14px 14px 14px 4px;padding:7px 10px;}
+.cchat-m.staff{border-color:#F2BC2C;background:#FFFBEA;}
+.cchat-m.mio{align-self:flex-end;background:#DCEBFF;border-color:#BCD5F5;border-radius:14px 14px 4px 14px;}
+.cchat-a{font-size:11.5px;font-weight:700;color:#1E3F66;margin-bottom:2px;}
+.cchat-tag{background:#F2BC2C;color:#16304F;border-radius:6px;padding:0 5px;font-size:10px;}
+.cchat-wa-mini{color:#128C3E;font-weight:700;font-size:10.5px;text-decoration:none;margin-left:4px;}
+.cchat-t{font-size:14px;line-height:1.4;word-wrap:break-word;overflow-wrap:anywhere;}
+.cchat-h{font-size:10.5px;color:#8090A6;text-align:right;margin-top:2px;}
+.cchat-h button{border:none;background:none;color:#B04A3A;font-size:10.5px;cursor:pointer;padding:0;}
+.cchat-form{display:flex;gap:8px;padding:8px 10px;border-top:1px solid #E2E8F0;align-items:flex-end;}
+.cchat-form textarea{flex:1;resize:none;border:1.5px solid #D6E2F2;border-radius:12px;padding:9px 11px;font:inherit;font-size:14px;min-height:40px;box-sizing:border-box;}
+.cchat-env{flex:0 0 42px;height:42px;border-radius:50%;border:none;background:#1E3F66;color:#fff;font-size:18px;cursor:pointer;}
+.cchat-pie{font-size:11px;color:#8090A6;padding:0 12px 8px;}
+.cchat-badge{background:#C0392B;color:#fff;border-radius:999px;padding:0 6px;font-size:11px;margin-left:4px;}
+@media (max-width:600px){ .cchat-lista{height:300px;} .cchat-m{max-width:88%;} }
 </style>
 </head>
 <body>
@@ -751,6 +778,7 @@
       <details class="nav-grupo" open>
         <summary>🗓️ Mi día a día</summary>
         <button data-target="agenda" onclick="showScreen('agenda');renderAgendaCitas()">📅 Citas y calendario</button>
+        <button data-target="mihorario" onclick="showScreen('mihorario');renderMiHorario()">🕘 Mi horario de citas</button>
         <button data-target="personas" onclick="showScreen('personas');renderPersonasScreen()">👥 Personas usuarias</button>
         <button data-target="seguimiento" onclick="showScreen('seguimiento');renderSeguimientoScreen()">📂 Expedientes</button>
         <button onclick="abrirEscanerQR()">📷 Escanear QR</button>
@@ -867,6 +895,12 @@
     </div>
   </div>
 
+  <div class="screen" id="screen-mihorario">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Mi horario de citas</span></div>
+      <div class="content" id="mihorario-content"></div>
+    </div>
+  </div>
   <div class="screen" id="screen-agenda">
     <div class="main-content">
       <div class="topbar"><span class="brand">Agenda</span></div>
@@ -1284,6 +1318,7 @@ function setLangI(lang){
 // TXT_ES_CA: texto en español → catalán. Se aplica a todo texto que coincida exactamente, tanto en la página fija
 // como en lo que se dibuja después (un observador vigila los cambios). Al volver a ES se restauran los originales.
 const TXT_ES_CA = {
+  '🕘 Mi horario de citas':'🕘 El meu horari de cites', 'Mi horario de citas':'El meu horari de cites',
   // Menú lateral
   'Personal y administración':'Personal i administració','☰ Menú':'☰ Menú','Menú':'Menú','Inicio':'Inici','Mi espacio':'El meu espai',
   '📖 Guía rápida':'📖 Guia ràpida','👤 Mi gestión personal':'👤 La meva gestió personal','📊 Impacto':'📊 Impacte',
@@ -1910,7 +1945,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v149'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v152'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -2159,6 +2194,8 @@ async function checkStaff(){
   IS_RRHH_SOLO = !!(IS_STAFF && !IS_ADMIN && data && data.ambito === 'rrhh');
   IS_GESTOR = !!(IS_STAFF && !IS_JOVENES && !IS_RRHH_SOLO && data && data.gestiona_alertas);
   CURRENT_USER_NOMBRE = (data && data.nombre) || null;
+  window.__staffYo = data || null;
+  if(IS_STAFF) setTimeout(() => { try { staffPedirTelefono(false); } catch(e){} }, 2500);
   document.getElementById('nav-admin-btn').style.display = IS_ADMIN ? '' : 'none';
   document.getElementById('nav-conta-btn').style.display = IS_ADMIN ? '' : 'none';
   aplicarMenuPorRol();
@@ -7372,6 +7409,7 @@ const AV_GUIA = [
   { c: 'av-g-oro', i: '📚', es: ['2. Añade el contenido', 'En la tarjeta del curso pulsa «📚 Contenido»: crea módulos y dentro sube vídeos, PDF o presentaciones, y actividades o tests.'], ca: ['2. Afegeix el contingut', 'A la targeta del curs prem «📚 Contingut»: crea mòduls i a dins puja vídeos, PDF o presentacions, i activitats o tests.'] },
   { c: 'av-g-morado', i: '🎥', es: ['3. Programa las clases', '«➕ Crear» → «Crear clase en línea»: fecha, hora y enlace de Meet, Zoom o Teams. Salen en «📅 Clases», y desde allí se pasa asistencia.'], ca: ['3. Programa les classes', '«➕ Crear» → «Crear classe en línia»: data, hora i enllaç de Meet, Zoom o Teams. Surten a «📅 Classes», i des d\'allà es passa assistència.'] },
   { c: 'av-g-coral', i: '🚦', es: ['4. Cambia el estado', 'Cada curso tiene un color: gris = en preparación (nadie lo ve), amarillo = inscripción abierta, verde = activo, azul = finalizado. Se cambia en el desplegable de la tarjeta.'], ca: ['4. Canvia l\'estat', 'Cada curs té un color: gris = en preparació (ningú el veu), groc = inscripció oberta, verd = actiu, blau = finalitzat. Es canvia al desplegable de la targeta.'] },
+  { c: 'av-g-verde', i: '💬', es: ['Mensajes y WhatsApp', 'Cada curso tiene su chat «💬 Mensajes»: escriben el docente, el equipo y las personas inscritas (también desde Logos Acompanya). Desde «Participantes» puedes escribir a cada persona por WhatsApp.'], ca: ['Missatges i WhatsApp', 'Cada curs té el seu xat «💬 Missatges»: hi escriuen el docent, l\'equip i les persones inscrites (també des de Logos Acompanya). Des de «Participants» pots escriure a cada persona per WhatsApp.'] },
   { c: 'av-g-azul', i: '📊', es: ['5. Sigue el progreso', '«👥 Inscritos» muestra quién participa y «📊 Progreso» cuánto ha avanzado cada persona. En «📈 Indicadores» tienes las cifras por proyecto.'], ca: ['5. Segueix el progrés', '«👥 Inscrits» mostra qui hi participa i «📊 Progrés» quant ha avançat cada persona. A «📈 Indicadors» tens les xifres per projecte.'] }
 ];
 function avMostrarGuia(){
@@ -7407,6 +7445,160 @@ function avPintarGuia(){
     </div>
   </div>`;
 }
+
+// ================= MENSAJES DEL CURSO (Aula Virtual) · común a la Intranet y a Logos Acompanya (SQL 47) =================
+const chL = () => (typeof LANG_I !== 'undefined' ? LANG_I : (typeof LANG !== 'undefined' ? LANG : 'es'));
+const chT = (es, ca) => chL() === 'ca' ? ca : es;
+const chEsc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+window.__chat = window.__chat || {};
+function chYoEsStaff(){ return (typeof IS_STAFF !== 'undefined' && IS_STAFF) || (typeof LANG_I !== 'undefined'); }
+function chMiNombre(){
+  if(typeof CURRENT_USER_NOMBRE !== 'undefined' && CURRENT_USER_NOMBRE) return CURRENT_USER_NOMBRE;
+  const p = window.__perfilActual || {}; return p.nombre_completo || (CURRENT_USER && CURRENT_USER.email ? CURRENT_USER.email.split('@')[0] : '');
+}
+function chWaLink(tel, texto){ let t = String(tel || '').replace(/[^\d+]/g, '').replace(/^\+/, ''); if(t.length === 9) t = '34' + t; return 'https://wa.me/' + t + (texto ? '?text=' + encodeURIComponent(texto) : ''); }
+function chVistoClave(id){ return 'logos_chat_visto_' + id; }
+// Caja de mensajes (se pone dentro de cualquier pantalla)
+function cursoChatHtml(cursoId, titulo){
+  return `<div class="cchat" id="cchat-${chEsc(cursoId)}" data-curso="${chEsc(cursoId)}">
+    <div class="cchat-cab"><span>💬 ${chT('Mensajes del curso', 'Missatges del curs')}${titulo ? ' · ' + chEsc(titulo) : ''}</span><span class="cchat-wa" id="cchat-wa-${chEsc(cursoId)}"></span></div>
+    <div class="cchat-lista" id="cchat-lista-${chEsc(cursoId)}"><div class="cchat-vacio">${chT('Cargando…', 'Carregant…')}</div></div>
+    <div class="cchat-form">
+      <textarea id="cchat-txt-${chEsc(cursoId)}" rows="1" maxlength="2000" placeholder="${chT('Escribe un mensaje para el grupo…', 'Escriu un missatge per al grup…')}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();cursoChatEnviar('${chEsc(cursoId)}');}" oninput="this.style.height='auto';this.style.height=Math.min(120,this.scrollHeight)+'px'"></textarea>
+      <button class="cchat-env" onclick="cursoChatEnviar('${chEsc(cursoId)}')" aria-label="${chT('Enviar', 'Enviar')}">➤</button>
+    </div>
+    <div class="cchat-pie">${chT('Lo ven todas las personas del curso y el equipo de Logos. No compartas datos personales (DNI, dirección…).', 'Ho veuen totes les persones del curs i l\'equip de Logos. No comparteixis dades personals (DNI, adreça…).')}</div>
+  </div>`;
+}
+async function cursoChatIniciar(cursoId){
+  const st = window.__chat[cursoId] = window.__chat[cursoId] || { msgs: [], canal: null, timer: null };
+  await cursoChatCargar(cursoId);
+  cursoChatContactos(cursoId);
+  try {
+    if(st.canal) sb.removeChannel(st.canal);
+    st.canal = sb.channel('cchat-' + cursoId).on('postgres_changes', { event: '*', schema: 'public', table: 'curso_mensajes', filter: 'curso_id=eq.' + cursoId }, () => cursoChatCargar(cursoId)).subscribe();
+  } catch(e){}
+  clearInterval(st.timer);
+  st.timer = setInterval(() => { if(!document.getElementById('cchat-lista-' + cursoId)){ clearInterval(st.timer); try { if(st.canal) sb.removeChannel(st.canal); } catch(e){} return; } cursoChatCargar(cursoId); }, 20000);
+}
+async function cursoChatCargar(cursoId){
+  const lista = document.getElementById('cchat-lista-' + cursoId); if(!lista) return;
+  const { data, error } = await sb.from('curso_mensajes').select('*').eq('curso_id', String(cursoId)).order('creado_en', { ascending: true }).limit(300);
+  if(error){ lista.innerHTML = `<div class="cchat-vacio">${/curso_mensajes|does not exist|schema cache/i.test(error.message || '') ? chT('Los mensajes del curso se activan con el SQL 47 en Supabase.', 'Els missatges del curs s\'activen amb l\'SQL 47 a Supabase.') : chEsc(error.message)}</div>`; return; }
+  const st = window.__chat[cursoId] || (window.__chat[cursoId] = {});
+  st.msgs = (data || []).filter(m => !m.borrado);
+  const yo = CURRENT_USER && CURRENT_USER.id, staffVe = typeof LANG_I !== 'undefined';
+  const abajo = lista.scrollHeight - lista.scrollTop - lista.clientHeight < 60;
+  let diaPrev = '';
+  lista.innerHTML = st.msgs.length ? st.msgs.map(m => {
+    const mio = m.autor_id && m.autor_id === yo, d = m.creado_en ? new Date(m.creado_en) : new Date();
+    const dia = d.toLocaleDateString(chL() === 'ca' ? 'ca-ES' : 'es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+    const sep = dia !== diaPrev ? `<div class="cchat-dia">${dia}</div>` : ''; diaPrev = dia;
+    const tel = m.es_staff && st.tels ? st.tels[String(m.autor_email || '').toLowerCase()] : '';
+    return `${sep}<div class="cchat-m ${mio ? 'mio' : ''} ${m.es_staff ? 'staff' : ''}">
+      ${mio ? '' : `<div class="cchat-a">${chEsc(m.autor_nombre || chT('Participante', 'Participant'))}${m.es_staff ? ` <span class="cchat-tag">Logos</span>` : ''}${tel ? ` <a class="cchat-wa-mini" href="${chWaLink(tel)}" target="_blank" rel="noopener" title="WhatsApp">🟢 WhatsApp</a>` : ''}</div>`}
+      <div class="cchat-t">${chEsc(m.texto).replace(/\n/g, '<br>').replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')}</div>
+      <div class="cchat-h">${d.toLocaleTimeString(chL() === 'ca' ? 'ca-ES' : 'es-ES', { hour: '2-digit', minute: '2-digit' })}${(mio || staffVe) ? ` · <button onclick="cursoChatBorrar('${chEsc(cursoId)}','${m.id}')">${chT('borrar', 'esborrar')}</button>` : ''}</div></div>`;
+  }).join('') : `<div class="cchat-vacio">${chT('Todavía no hay mensajes. ¡Escribe el primero para saludar al grupo!', 'Encara no hi ha missatges. Escriu el primer per saludar el grup!')}</div>`;
+  if(abajo || !st.yaVisto){ lista.scrollTop = lista.scrollHeight; st.yaVisto = true; }
+  try { localStorage.setItem(chVistoClave(cursoId), String(st.msgs.length ? st.msgs[st.msgs.length - 1].creado_en : '')); } catch(e){}
+}
+async function cursoChatContactos(cursoId){
+  const host = document.getElementById('cchat-wa-' + cursoId); if(!host) return;
+  try {
+    const { data, error } = await sb.rpc('curso_contactos', { p_curso: String(cursoId) });
+    if(error || !Array.isArray(data)) return;
+    const st = window.__chat[cursoId]; st.tels = {}; data.forEach(c => { st.tels[c.email] = c.telefono; });
+    const doc = data[0];
+    host.innerHTML = data.slice(0, 2).map(c => `<a class="cchat-wa-btn" href="${chWaLink(c.telefono, chT('Hola ' + c.nombre + ', te escribo por el curso.', 'Hola ' + c.nombre + ', t\'escric pel curs.'))}" target="_blank" rel="noopener">🟢 WhatsApp ${chEsc(String(c.nombre).split(' ')[0])}</a>`).join('');
+    if(doc) cursoChatCargar(cursoId);
+  } catch(e){}
+}
+async function cursoChatEnviar(cursoId){
+  const ta = document.getElementById('cchat-txt-' + cursoId); if(!ta) return;
+  const texto = ta.value.trim(); if(!texto) return;
+  if(/\b\d{8}[A-Z]\b|\b[XYZ]\d{7}[A-Z]\b/i.test(texto) && !confirm(chT('Parece que el mensaje contiene un DNI/NIE. Lo verá todo el grupo. ¿Enviar igualmente?', 'Sembla que el missatge conté un DNI/NIE. Ho veurà tot el grup. Enviar igualment?'))) return;
+  ta.disabled = true;
+  const fila = { curso_id: String(cursoId), autor_id: CURRENT_USER.id, autor_email: CURRENT_USER.email, autor_nombre: chMiNombre(), es_staff: typeof LANG_I !== 'undefined' || !!(typeof IS_STAFF !== 'undefined' && IS_STAFF), texto };
+  const { error } = await sb.from('curso_mensajes').insert(fila);
+  ta.disabled = false;
+  if(error){ alert(/curso_mensajes|does not exist|schema cache/i.test(error.message || '') ? chT('Falta ejecutar el SQL 47 en Supabase.', 'Cal executar l\'SQL 47 a Supabase.') : (/row-level|permission/i.test(error.message || '') ? chT('Solo pueden escribir las personas inscritas en el curso.', 'Només hi poden escriure les persones inscrites al curs.') : error.message)); return; }
+  ta.value = ''; ta.style.height = 'auto'; ta.focus();
+  const st = window.__chat[cursoId]; if(st) st.yaVisto = false;
+  await cursoChatCargar(cursoId);
+}
+async function cursoChatBorrar(cursoId, id){
+  if(!confirm(chT('¿Borrar este mensaje?', 'Esborrar aquest missatge?'))) return;
+  const { error } = await sb.from('curso_mensajes').update({ borrado: true }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  cursoChatCargar(cursoId);
+}
+// Número de mensajes nuevos de un curso (desde la última vez que se abrió)
+async function cursoChatNuevos(cursoId){
+  try {
+    let visto = ''; try { visto = localStorage.getItem(chVistoClave(cursoId)) || ''; } catch(e){}
+    let q = sb.from('curso_mensajes').select('id', { count: 'exact', head: true }).eq('curso_id', String(cursoId)).eq('borrado', false);
+    if(visto) q = q.gt('creado_en', visto);
+    const { count, error } = await q; return error ? 0 : (count || 0);
+  } catch(e){ return 0; }
+}
+
+// ----- Intranet: ventana de mensajes de un curso (con la lista de participantes y su WhatsApp) -----
+async function cursoChatAbrir(cursoId, nombre){
+  let ov = document.getElementById('cchat-ov'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'cchat-ov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:14px;';
+  ov.addEventListener('click', e => { if(e.target === ov) ov.remove(); });
+  ov.innerHTML = `<div style="width:100%;max-width:720px;margin:10px 0;background:var(--card,#fff);border-radius:18px;padding:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:0 4px 8px;"><strong>${chEsc(nombre || '')}</strong><button class="link-btn" onclick="document.getElementById('cchat-ov').remove()">✕</button></div>
+    ${cursoChatHtml(cursoId)}
+    <details class="plegable"><summary><span>👥 ${chT('Participantes y WhatsApp', 'Participants i WhatsApp')}</span><span class="plegable-n" id="cchat-np">…</span></summary><div class="plegable-c" id="cchat-part"><div class="placeholder">${TI[LANG_I].cargando}</div></div></details>
+  </div>`;
+  document.body.appendChild(ov);
+  cursoChatIniciar(cursoId);
+  try {
+    const { data: ins } = await sb.from('cursos_inscripciones').select('usuario_id').eq('curso_id', cursoId).eq('estado', 'inscrito');
+    const ids = [...new Set((ins || []).map(i => i.usuario_id).filter(Boolean))];
+    const { data: ps } = ids.length ? await sb.from('perfiles').select('id, nombre_completo, telefono').in('id', ids) : { data: [] };
+    const host = document.getElementById('cchat-part'), n = document.getElementById('cchat-np'); if(n) n.textContent = (ps || []).length;
+    if(host) host.innerHTML = (ps || []).length ? (ps || []).sort((a, b) => String(a.nombre_completo).localeCompare(String(b.nombre_completo))).map(p => `<div class="panel-stat-row"><span>${chEsc(p.nombre_completo || '—')}</span>${p.telefono ? `<a class="cchat-wa-btn" href="${chWaLink(p.telefono, chT('Hola ' + String(p.nombre_completo || '').split(' ')[0] + ', te escribo por el curso «' + (nombre || '') + '».', 'Hola ' + String(p.nombre_completo || '').split(' ')[0] + ', t\'escric pel curs «' + (nombre || '') + '».'))}" target="_blank" rel="noopener">🟢 WhatsApp</a>` : `<span class="subtle" style="margin:0;font-size:11.5px;">${chT('sin teléfono', 'sense telèfon')}</span>`}</div>`).join('')
+      : `<div class="empty-note">${chT('Todavía no hay personas inscritas (en los cursos del equipo participa todo el equipo).', 'Encara no hi ha persones inscrites (als cursos de l\'equip hi participa tot l\'equip).')}</div>`;
+  } catch(e){}
+}
+// Insignias de mensajes nuevos en las tarjetas de curso
+async function cursoChatInsignias(){
+  for(const b of document.querySelectorAll('[data-chat-curso]')){
+    const n = await cursoChatNuevos(b.dataset.chatCurso);
+    const viejo = b.querySelector('.cchat-badge'); if(viejo) viejo.remove();
+    if(n) b.insertAdjacentHTML('beforeend', `<span class="cchat-badge">${n}</span>`);
+  }
+}
+// ----- Teléfono / WhatsApp de cada persona del equipo (se pide al entrar si falta) -----
+async function staffGuardarTelefono(tel){
+  let r = await sb.rpc('staff_mi_telefono', { p_tel: tel });
+  if(r.error){ r = await sb.from('staff').update({ telefono: tel }).eq('email', CURRENT_USER.email).select('email'); if(!r.error && !(r.data || []).length) r = { error: { message: acL('Falta ejecutar el SQL 47 en Supabase.', 'Cal executar l\'SQL 47 a Supabase.') } }; }
+  if(r.error){ alert(/staff_mi_telefono|telefono|schema cache/i.test(r.error.message || '') ? acL('Falta ejecutar el SQL 47 en Supabase.', 'Cal executar l\'SQL 47 a Supabase.') : r.error.message); return false; }
+  if(window.__staffYo) window.__staffYo.telefono = tel;
+  return true;
+}
+function staffPedirTelefono(forzar){
+  const yo = window.__staffYo; if(!yo || !('telefono' in yo)) { if(forzar) alert(acL('Falta ejecutar el SQL 47 en Supabase.', 'Cal executar l\'SQL 47 a Supabase.')); return; }
+  if(!forzar){ if(yo.telefono) return; try { if(localStorage.getItem('logos_tel_preguntado') === isoLocal()) return; localStorage.setItem('logos_tel_preguntado', isoLocal()); } catch(e){} }
+  let ov = document.getElementById('tel-ov'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'tel-ov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9600;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML = `<div class="panel-card" style="width:100%;max-width:420px;margin:0;background:#fff;">
+    <h3 style="margin:0 0 6px;">📱 ${acL('Tu número de móvil (WhatsApp)', 'El teu número de mòbil (WhatsApp)')}</h3>
+    <p class="subtle" style="margin:0 0 10px;font-size:13px;">${acL('Lo usarán los participantes de tus cursos y el equipo para escribirte por WhatsApp desde la plataforma (botón «🟢 WhatsApp»). No se muestra a nadie más.', 'El faran servir els participants dels teus cursos i l\'equip per escriure\'t per WhatsApp des de la plataforma (botó «🟢 WhatsApp»). No es mostra a ningú més.')}</p>
+    <input type="tel" id="tel-input" placeholder="600 000 000" value="${chEsc(yo.telefono || '')}" style="width:100%;box-sizing:border-box;font-size:16px;padding:10px;border:1.5px solid var(--line);border-radius:10px;">
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+      <button class="primary-btn" style="margin:0;width:auto;" onclick="(async()=>{const v=document.getElementById('tel-input').value.trim(); if(v.replace(/[^0-9]/g,'').length<9){alert(acL('Escribe un número válido (9 cifras o con prefijo).','Escriu un número vàlid (9 xifres o amb prefix).'));return;} if(await staffGuardarTelefono(v)){document.getElementById('tel-ov').remove();alert(acL('✅ Guardado.','✅ Desat.'));}})()">${acL('Guardar', 'Desar')}</button>
+      <button class="primary-btn" style="margin:0;width:auto;background:#bbb;" onclick="document.getElementById('tel-ov').remove()">${acL('Más tarde', 'Més tard')}</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+  setTimeout(() => { const i = document.getElementById('tel-input'); if(i) i.focus(); }, 50);
+}
+
 async function renderAulaVirtualScreen(){
   const cont = document.getElementById('aulavirtual-content');
   const t = TI[LANG_I];
@@ -7580,6 +7772,7 @@ async function renderAulaVirtualScreen(){
             <button class="link-btn" style="font-size:12px;" onclick="verContenidoCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">📚 ${LANG_I==='ca'?'Contingut':'Contenido'}</button>
             <button class="link-btn" style="font-size:12px;" onclick="verProgresoCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">📊 ${LANG_I==='ca'?'Progrés':'Progreso'}</button>
             <button class="link-btn" style="font-size:12px;" onclick="verInscritosCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">👥 ${LANG_I==='ca'?'Inscrits':'Inscritos'}</button>
+            <button class="link-btn" style="font-size:12px;font-weight:800;" data-chat-curso="${c.id}" data-n="${escAttr(c.nombre || '')}" onclick="cursoChatAbrir(this.dataset.chatCurso, this.dataset.n)">💬 ${LANG_I==='ca'?'Missatges':'Mensajes'}</button>
             ${c.audiencia === 'equipo' && (IS_ADMIN || c.docente_email === CURRENT_USER.email || c.creado_por_email === CURRENT_USER.email) ? `<button class="link-btn" style="font-size:12px;" onclick="cursoEditarDestinatarios('${c.id}')">🎯 ${LANG_I==='ca'?'A qui va adreçat':'A quién va dirigido'}</button>` : ''}
             ${misStats ? `<button class="link-btn" style="font-size:12px;" onclick="showScreen('comunicacion');renderComunicacionScreen()">📩 ${LANG_I==='ca'?'Enviar avís':'Enviar aviso'}</button>` : ''}
             <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="borrarCurso('${c.id}')">${LANG_I==='ca'?'Esborrar':'Borrar'}</button>
@@ -7721,6 +7914,7 @@ async function renderAulaVirtualScreen(){
   `;
   avTab(avTabActual(), true);
   avFiltrar(window.__avFiltro || 'todos');
+  cursoChatInsignias();
   try { if(!localStorage.getItem('logos_aula_guia_vista')) setTimeout(avMostrarGuia, 400); } catch(e){}
 
   // Si estabas trabajando en el contenido de un curso, lo volvemos a abrir automáticamente
@@ -7806,11 +8000,13 @@ async function renderMiFormacion(){
         ${c.descripcion ? `<p class="subtle" style="margin:0 0 4px;">${escAttr(c.descripcion)}</p>` : ''}
         <p class="subtle" style="font-size:12px;margin:0;">${total ? `${hechos}/${total} ${acL('completados', 'completats')}` : ''}${c.docente_nombre ? ` · ${acL('Docente', 'Docent')}: ${escAttr(c.docente_nombre)}` : ''}${c.horas_totales ? ` · ${c.horas_totales} h` : ''}</p>
         ${modsHtml}
+        <button class="link-btn" style="margin-top:12px;font-size:12.5px;font-weight:800;" data-chat-curso="${c.id}" data-n="${escAttr(c.nombre || '')}" onclick="cursoChatAbrir(this.dataset.chatCurso, this.dataset.n)">💬 ${acL('Mensajes del curso', 'Missatges del curs')}</button>
         ${IS_ADMIN ? `<button class="link-btn" style="margin-top:12px;font-size:12px;" onclick="mfSeguimiento('${c.id}')">📊 ${acL('Ver seguimiento del equipo', 'Veure seguiment de l\'equip')}</button><div id="mf-seg-${c.id}"></div>` : ''}
       </div>
     </details>`;
   };
   cont.innerHTML = intro + lista.map(tarjeta).join('') + crear;
+  cursoChatInsignias();
 }
 async function mfResumenEspacio(){
   const el = document.getElementById('mi-formacion-n'); if(!el) return;
@@ -11643,6 +11839,7 @@ async function gpRrhhHorarios(c){
   await hrCargarAdmin();
   document.querySelectorAll('#hr-admin-card').forEach(e => { e.innerHTML = ''; e.removeAttribute('id'); });   // nunca dos editores a la vez
   window.__hrSoloYo = false; { const o = document.getElementById('hr-mio-ov'); if(o) o.remove(); }
+  { const m = document.getElementById('mihorario-content'); if(m) m.innerHTML = ''; }
   c.innerHTML = `<p class="subtle" style="margin:0 0 10px;font-size:12.5px;">${acL('Horario general y horarios propios de cada persona. Se usa para el fichaje (horas previstas, salida olvidada) y para las horas de cita de cada técnico.', 'Horari general i horaris propis de cada persona. Es fa servir per al fitxatge (hores previstes, sortida oblidada) i per a les hores de cita de cada tècnic.')}</p>
     <div class="panel-card" id="hr-admin-card">${hrAdminHtml()}</div>`;
   hrActualizarTotal();
@@ -11720,10 +11917,53 @@ async function hrInfoMiEspacio(email, fichadoAhora){
     if(!aviso && fichadoAhora && !tramoActual && ultimo && min > hrMin(ultimo.hasta) + HR_TOLERANCIA_MIN && !hoy.some(t => min < hrMin(t.desde)))
       aviso = `⏰ ${acL('Tu horario terminó a las', 'El teu horari va acabar a les')} ${ultimo.hasta}. ${acL('Recuerda fichar la salida.', 'Recorda fitxar la sortida.')}`;
     return `<div style="text-align:left;margin:0 0 12px;font-size:13px;line-height:1.6;">
-      <div>🕘 <strong>${acL('Tu horario de hoy', 'El teu horari d\'avui')}:</strong> ${hoy.length ? hrTxtTramos(hoy) : acL('hoy no tienes horario', 'avui no tens horari')}${h.propio ? ` <span class="chip" style="font-size:10.5px;">${acL('personal', 'personal')}</span>` : ''}${HR_OK ? ` <button class="link-btn" style="font-size:12px;margin-left:6px;" onclick="hrAbrirMiHorario()">✏️ ${acL('Ajustar mi horario', 'Ajustar el meu horari')}</button>` : ''}</div>
+      <div>🕘 <strong>${acL('Tu horario de hoy', 'El teu horari d\'avui')}:</strong> ${hoy.length ? hrTxtTramos(hoy) : acL('hoy no tienes horario', 'avui no tens horari')}${h.propio ? ` <span class="chip" style="font-size:10.5px;">${acL('personal', 'personal')}</span>` : ''}${HR_OK ? ` <button class="link-btn" style="font-size:12px;margin-left:6px;" onclick="showScreen('mihorario');renderMiHorario()">✏️ ${acL('Ajustar mi horario', 'Ajustar el meu horari')}</button>` : ''}</div>
       <div class="subtle" style="margin:2px 0 0;font-size:12px;">${acL('Esta semana: previstas', 'Aquesta setmana: previstes')} ${hrTxtMin(previstasSemana)} · ${acL('fichadas hasta ahora', 'fitxades fins ara')} ${hrTxtMin(fichados)} ${acL('(previstas hasta ahora', '(previstes fins ara')} ${hrTxtMin(previstasHastaAhora)})</div>
       ${aviso ? `<div class="info-box info-box-gold" style="margin:8px 0 0;">${aviso}</div>` : ''}</div>`;
   } catch(e) { return ''; }
+}
+
+// ---------- Pantalla «Mi horario de citas»: cada técnico pone su horario (según contrato y disponibilidad) y ve las horas que se ofrecen en las citas ----------
+async function renderMiHorario(){
+  const cont = document.getElementById('mihorario-content'); if(!cont) return;
+  const ca = LANG_I === 'ca';
+  cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  if(!HR_OK){ cont.innerHTML = `<div class="info-box info-box-gold">⚠️ ${acL('Falta activar los horarios en Supabase (SQL de horarios).', 'Falta activar els horaris a Supabase (SQL d\'horaris).')}</div>`; return; }
+  window.__hrSoloYo = true; window.__hrSel = String(CURRENT_USER.email || '').toLowerCase();
+  await hrCargarAdmin();
+  document.querySelectorAll('#hr-admin-card').forEach(e => { e.innerHTML = ''; e.removeAttribute('id'); });
+  { const o = document.getElementById('hr-mio-ov'); if(o) o.remove(); }
+  cont.innerHTML = `
+    <div class="mh-pasos">
+      <div class="mh-paso"><span>1</span>${ca ? 'Posa les hores que treballes cada dia (segons el teu contracte i disponibilitat).' : 'Pon las horas que trabajas cada día (según tu contrato y disponibilidad).'}</div>
+      <div class="mh-paso"><span>2</span>${ca ? 'Prem «Desar horari».' : 'Pulsa «Guardar horario».'}</div>
+      <div class="mh-paso"><span>3</span>${ca ? 'Les cites (Logos Acompanya i «Nova cita») només oferiran hores dins del teu horari.' : 'Las citas (Logos Acompanya y «Nueva cita») solo ofrecerán horas dentro de tu horario.'}</div>
+    </div>
+    <div class="panel-card" id="hr-admin-card">${hrAdminHtml()}</div>
+    <div class="panel-card" id="mh-previa"><div class="placeholder">${TI[LANG_I].cargando}</div></div>
+    ${(IS_ADMIN || IS_RRHH || IS_RRHH_SOLO) ? `<p class="subtle" style="font-size:12.5px;">👥 ${ca ? 'Per canviar l\'horari d\'una altra persona o l\'horari general:' : 'Para cambiar el horario de otra persona o el horario general:'} <button class="link-btn" style="font-size:12.5px;" onclick="showScreen('admin');renderAdministrador()">${ca ? 'Administrador → Horaris del personal' : 'Administrador → Horarios del personal'}</button></p>` : ''}`;
+  hrActualizarTotal();
+  mhPintarPrevia();
+}
+// Vista previa: horas de cita de los próximos días laborables según el horario guardado (y citas ya asignadas)
+async function mhPintarPrevia(){
+  const host = document.getElementById('mh-previa'); if(!host) return;
+  const ca = LANG_I === 'ca', yo = String(CURRENT_USER.email || '').toLowerCase();
+  const dias = []; const d = new Date(); while(dias.length < 5){ d.setDate(d.getDate() + 1); const w = d.getDay(); if(w >= 1 && w <= 5) dias.push(isoLocal(d)); }
+  let citas = [];
+  try { const r = await sb.from('citas').select('fecha, hora, estado, tecnico_email').gte('fecha', dias[0]).lte('fecha', dias[dias.length - 1]); citas = (r.data || []).filter(c => c.estado !== 'cancelada' && String(c.tecnico_email || '').toLowerCase() === yo); } catch(e){}
+  const { tramos, propio } = hrTramosAmbito(yo);
+  const filas = dias.map(f => {
+    const dt = new Date(f + 'T00:00:00'), dia = dt.getDay() === 0 ? 7 : dt.getDay();
+    const t = hrTramosDia(tramos, dia);
+    const mias = citas.filter(c => c.fecha === f).map(c => String(c.hora).slice(0, 5));
+    return `<div class="panel-stat-row" style="align-items:flex-start;gap:8px;"><span style="min-width:120px;text-transform:capitalize;"><strong>${dt.toLocaleDateString(TI[LANG_I].localeFecha, { weekday: 'long', day: 'numeric', month: 'short' })}</strong></span>
+      <span style="text-align:right;">${t.length ? t.map(x => `<span class="chip good" style="margin:2px;">${x.desde}–${x.hasta}</span>`).join('') : `<span class="chip" style="background:#eee;color:#777;">${ca ? 'No hi ha cites' : 'Sin citas'}</span>`}${mias.length ? `<br><span class="subtle" style="font-size:11.5px;margin:0;">📅 ${mias.length} ${ca ? 'cita(es) ja donada(es)' : 'cita(s) ya dada(s)'}: ${mias.join(', ')}</span>` : ''}</span></div>`;
+  }).join('');
+  host.innerHTML = `<h3 style="margin:0 0 6px;">📅 ${ca ? 'Així et veuen a les cites (propers dies)' : 'Así te ven en las citas (próximos días)'}</h3>
+    ${propio ? '' : `<p class="subtle" style="font-size:12px;margin:0 0 6px;">${ca ? 'Encara fas servir l\'horari general. Desa el teu per personalitzar-lo.' : 'Todavía usas el horario general. Guarda el tuyo para personalizarlo.'}</p>`}
+    ${filas}
+    <p class="subtle" style="font-size:11.5px;margin:8px 0 0;">${ca ? 'Les hores de cita també tenen en compte l\'horari d\'obertura de Logos i les cites que ja tens.' : 'Las horas de cita también tienen en cuenta el horario de apertura de Logos y las citas que ya tienes.'}</p>`;
 }
 
 // ---------- «Mi horario»: cada técnico ajusta el suyo ----------
@@ -11771,7 +12011,8 @@ function hrEditorHtml(){
     return `<div class="panel-stat-row" style="align-items:center;gap:8px;flex-wrap:wrap;"><span style="min-width:92px;font-weight:600;">${hrDia(d)}</span>
       <span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${celda(0, 'desde')}–${celda(0, 'hasta')} <span class="subtle" style="margin:0 4px;">+</span> ${celda(1, 'desde')}–${celda(1, 'hasta')}</span></div>`;
   }).join('');
-  const nota = sel ? (propio ? acL('Esta persona tiene un horario propio.', 'Aquesta persona té un horari propi.') : acL('Esta persona usa ahora el horario general. Si cambias algo y guardas, se creará uno propio para ella.', 'Aquesta persona fa servir ara l\'horari general. Si canvies alguna cosa i deses, se\'n crearà un de propi.'))
+  const nota = (sel && window.__hrSoloYo) ? (propio ? acL('Ya tienes un horario propio.', 'Ja tens un horari propi.') : acL('Ahora usas el horario general. Cambia lo que haga falta y guarda: será tu horario propio.', 'Ara fas servir l\'horari general. Canvia el que calgui i desa: serà el teu horari propi.'))
+    : sel ? (propio ? acL('Esta persona tiene un horario propio.', 'Aquesta persona té un horari propi.') : acL('Esta persona usa ahora el horario general. Si cambias algo y guardas, se creará uno propio para ella.', 'Aquesta persona fa servir ara l\'horari general. Si canvies alguna cosa i deses, se\'n crearà un de propi.'))
     : acL('Es el horario que usa todo el personal que no tenga uno propio.', 'És l\'horari que fa servir tot el personal que no en tingui un de propi.');
   return `<p class="subtle" style="margin:0 0 8px;font-size:12.5px;">${nota} ${acL('Cada día admite dos tramos (por ejemplo, mañana y tarde). Deja vacío lo que no se trabaja.', 'Cada dia admet dos trams (per exemple, matí i tarda). Deixa buit el que no es treballa.')}</p>
     ${filas}
@@ -11842,7 +12083,8 @@ async function hrGuardar(){
   await hrCargarAdmin();
   document.getElementById('hr-admin-card').innerHTML = hrAdminHtml();
   hrActualizarTotal();
-  alert(acL('Horario guardado.', 'Horari desat.'));
+  try { mhPintarPrevia(); } catch(e){}
+  alert(acL('Horario guardado. Las citas ya usan este horario.', 'Horari desat. Les cites ja fan servir aquest horari.'));
 }
 async function hrQuitarPropio(){
   const sel = window.__hrSel; if(!sel) return;
@@ -11965,6 +12207,53 @@ function impHeroHtml(r){
     </div>
     <p class="imp-nota">${acL('Estas cifras muestran asociación entre el servicio y el cambio, no causalidad: otros factores también influyen.', 'Aquestes xifres mostren associació entre el servei i el canvi, no causalitat: altres factors també hi influeixen.')}</p></section>`;
 }
+// ---------- Ámbitos de lo que hace Logos: se reconocen por el nombre del servicio, trámite o categoría ----------
+const AMBITOS_RE = {
+  empleo: /sepe|soc\b|ocupa|feina|treball|trabajo|empleo|ocupacional|labor|inserci|curr[ií]cul|\bcv\b|entrevista|atur|paro|imv|ingr[eé]s m[ií]nim|prestaci|subsidi|renda|renta|ajut|ayuda|pensi|emprene|emprend|aut[oò]nom|capitalitz|capitaliz|microcr|cooperativ/i,
+  aprendizaje: /formaci|curs|taller|aprend|catal|castell|idioma|alfabet|digital|inform[aà]tic|competenc|actic|tic\b|dispositiu|dispositivo|escola|estudi|titul|homolog/i,
+  autonomia: /tr[aà]mit|gesti[oó]|document|\bnie\b|\btie\b|padr[oó]|empadron|cita pr[eè]via|cita previa|estranger|extranjer|arrel|arraigo|certificat|cl@ve|idcat|regularitz|regulariz|nacionalitat|nacionalidad|acc[eé]s|acceso|recursos socials|recursos sociales|assessorament|asesoramiento|informaci/i,
+  bienestar: /seguiment|seguimiento|acompany|acompa[ñn]|psic|emocion|benestar|bienestar|famil|vincle|comunit|soledat|soledad|salut|salud/i
+};
+const AMBITOS_TXT = { empleo: ['💼', 'Empleo y economía', 'Ocupació i economia'], aprendizaje: ['🎓', 'Formación y aprendizaje', 'Formació i aprenentatge'], autonomia: ['🧭', 'Trámites y derechos', 'Tràmits i drets'], bienestar: ['💚', 'Acompañamiento y bienestar', 'Acompanyament i benestar'] };
+function ambitosDe(txt){ const t = String(txt || ''); return Object.keys(AMBITOS_RE).filter(k => AMBITOS_RE[k].test(t)); }
+// Personas acompañadas en cada ámbito en un periodo: histórico (servicios en papel) + con cuenta (atenciones, actuaciones, trámites)
+async function ambitosPeriodo(desde, hasta){
+  const sig = hasta ? new Date(new Date(hasta + 'T00:00:00').getTime() + 86400000).toISOString().slice(0, 10) : null;
+  const rango = (q, col) => { if(desde) q = q.gte(col, desde); if(sig) q = q.lt(col, sig); return q; };
+  const [per, at, ac, tr] = await Promise.all([
+    estCargarPersonas(),
+    traerTodoPaginado((a, b) => rango(sb.from('atenciones').select('usuario_id, prestaciones, tramites_bretxa, emprendeduria, talleres, derivacion_programas, creado_en'), 'creado_en').range(a, b)).catch(() => traerTodoPaginado((a, b) => rango(sb.from('atenciones').select('usuario_id, prestaciones, tramites_bretxa, creado_en'), 'creado_en').range(a, b))),
+    traerTodoPaginado((a, b) => rango(sb.from('actuaciones').select('usuario_id, categoria, resultado, fecha'), 'fecha').range(a, b)),
+    traerTodoPaginado((a, b) => rango(sb.from('tramites').select('usuario_id, nombre_servicio, estado, creado_en'), 'creado_en').range(a, b))
+  ]);
+  const aD = desde ? Number(desde.slice(0, 4)) : 0, aH = hasta ? Number(hasta.slice(0, 4)) : 9999;
+  const acomp = { empleo: new Set(), aprendizaje: new Set(), autonomia: new Set(), bienestar: new Set() };
+  const logro = { empleo: new Set(), aprendizaje: new Set(), autonomia: new Set(), bienestar: new Set() };
+  const todas = new Set();
+  const mete = (id, txt, conLogro) => { if(!id) return; todas.add(id); ambitosDe(txt).forEach(k => { acomp[k].add(id); if(conLogro) logro[k].add(id); }); };
+  // histórico: cada registro del periodo con su servicio
+  per.filas.filter(f => f.origen === 'papel').forEach(f => (f.regs || []).forEach(r => { if(r.anio && r.anio >= aD && r.anio <= aH) mete('h:' + f.id, r.txt); }));
+  const opt = (lista, k) => { const o = (lista || []).find(x => x[0] === k); return o ? o[1] + ' ' + k : k; };
+  (at.data || []).forEach(a => {
+    const id = a.usuario_id ? a.usuario_id : null; if(!id) return; todas.add(id);
+    (a.prestaciones || []).filter(x => x && !/^(cap|ninguna|no)$/i.test(x)).forEach(x => mete(id, 'prestación ' + opt(typeof PRESTACIONES_OPTS !== 'undefined' ? PRESTACIONES_OPTS : [], x)));
+    (a.tramites_bretxa || []).forEach(x => mete(id, opt(TRAMITES_BRETXA_OPTS, x)));
+    (a.emprendeduria || []).filter(x => x && x !== 'cap').forEach(x => mete(id, 'emprendeduría ' + x));
+    (a.talleres || []).forEach(x => mete(id, 'taller formación ' + x));
+    (a.derivacion_programas || []).forEach(x => mete(id, x));
+  });
+  (ac.data || []).forEach(x => mete(x.usuario_id, x.categoria, x.resultado === 'conseguido'));
+  sinBorrados(tr.data).forEach(x => mete(x.usuario_id, 'trámite ' + (x.nombre_servicio || ''), x.estado === 'hecho'));
+  return { total: todas.size, acomp: Object.fromEntries(Object.entries(acomp).map(([k, v]) => [k, v.size])), logro: Object.fromEntries(Object.entries(logro).map(([k, v]) => [k, v.size])) };
+}
+function ambitosTarjetasHtml(am, titulo){
+  const ca = LANG_I === 'ca';
+  return `<div class="imp-seccion">${titulo}</div><div class="imp-grid">${Object.keys(AMBITOS_TXT).map(k => { const [ic, es, cat] = AMBITOS_TXT[k];
+    return `<div class="imp-card"><div class="imp-card-h"><span class="imp-ic">${ic}</span><strong>${ca ? cat : es}</strong></div>
+      <div class="imp-card-v"><span class="imp-big sm">${(am.acomp[k] || 0).toLocaleString()}</span></div>
+      <div class="imp-card-s">${ca ? 'persones acompanyades' : 'personas acompañadas'}${am.total ? ` · ${Math.round((am.acomp[k] || 0) / am.total * 100)}%` : ''}</div>
+      <div class="imp-crit">${am.logro[k] ? `✅ ${am.logro[k].toLocaleString()} ${ca ? 'amb assoliment registrat' : 'con logro registrado'}` : (ca ? 'Assoliment: marca «aconseguit» a l\'actuació o «fet» al tràmit' : 'Logro: marca «conseguido» en la actuación o «hecho» en el trámite')}</div></div>`; }).join('')}</div>`;
+}
 // ---------- Cambio calculado automáticamente (sin fichas de impacto) ----------
 // Para cada persona atendida en el periodo se mira si hay un logro registrado en cada dimensión.
 const IMP_AUTO_DIM = {
@@ -11992,6 +12281,18 @@ async function impCambioAuto(desde, hasta){
   const pctN = n => base.size ? Math.round(n / base.size * 1000) / 10 : null;
   return { base: base.size, alguna: alguna.size, pct: pctN(alguna.size),
     dims: Object.fromEntries(Object.entries(logros).map(([k, v]) => [k, { n: v.size, pct: pctN(v.size) }])) };
+}
+function impHeroAmbitosHtml(am, a, r){
+  const ca = LANG_I === 'ca', stat = (v, t, sub) => `<div class="imp-stat"><div class="imp-big">${v}</div><div class="imp-stat-t">${t}</div><div class="imp-stat-s">${sub}</div></div>`;
+  const part = k => `${(am.acomp[k] || 0).toLocaleString()} ${ca ? 'en ' + AMBITOS_TXT[k][2].toLowerCase() : 'en ' + AMBITOS_TXT[k][1].toLowerCase()}`;
+  return `<section class="imp-hero"><div class="imp-eyebrow">${acL('Lo que Logos ha hecho por las personas en el periodo', 'El que Logos ha fet per les persones en el període')}</div>
+    <h2 class="imp-frase">${acL(`Logos acompañó a ${am.total.toLocaleString()} personas: ${part('empleo')}, ${part('autonomia')}, ${part('aprendizaje')} y ${part('bienestar')}.`, `Logos ha acompanyat ${am.total.toLocaleString()} persones: ${part('empleo')}, ${part('autonomia')}, ${part('aprendizaje')} i ${part('bienestar')}.`)}</h2>
+    <div class="imp-stats">
+      ${stat(am.total.toLocaleString(), acL('personas acompañadas', 'persones acompanyades'), acL('histórico + plataforma', 'històric + plataforma'))}
+      ${stat(a.base ? impPct(a.pct) : '–', acL('con logro registrado', 'amb assoliment registrat'), a.base ? `${a.alguna} ${acL('de', 'de')} ${a.base} ${acL('con registro en la plataforma', 'amb registre a la plataforma')}` : acL('se registra en actuaciones y trámites', 'es registra a actuacions i tràmits'))}
+      ${stat(r.fichas || 0, acL('personas con ficha de impacto', 'persones amb fitxa d\'impacte'), (r.con_final || 0) + ' ' + acL('con cierre', 'amb tancament'))}
+    </div>
+    <p class="imp-nota">${acL('Los ámbitos se reconocen por el servicio de cada registro del histórico (p. ej. «Tràmit gestió (cita prèvia SEPE)» cuenta en empleo y en trámites) y por las atenciones, actuaciones y trámites de la plataforma. Una persona puede estar en varios ámbitos.', 'Els àmbits es reconeixen pel servei de cada registre de l\'històric (p. ex. «Tràmit gestió (cita prèvia SEPE)» compta a ocupació i a tràmits) i per les atencions, actuacions i tràmits de la plataforma. Una persona pot ser a diversos àmbits.')}</p></section>`;
 }
 function impHeroAutoHtml(a, r){
   const stat = (v, t, sub) => `<div class="imp-stat"><div class="imp-big">${v}</div><div class="imp-stat-t">${t}</div><div class="imp-stat-s">${sub}</div></div>`;
@@ -12107,6 +12408,20 @@ async function impRenderPanel(cuerpo){
   // Sin 5 fichas de impacto cerradas, el cambio se calcula automáticamente con los logros registrados en el día a día
   const sinFichas = !r.global || r.global.mejora === null || r.global.mejora === undefined;
   const auto = sinFichas ? await impCambioAuto(desde, hasta).catch(() => null) : null;
+  const amb = await ambitosPeriodo(desde, hasta).catch(() => null);
+  if(auto && amb && amb.total && !auto.base) auto.base = 0;
+  if(sinFichas && amb && amb.total){
+    cuerpo.innerHTML = impFiltrosHtml() + `<div id="imp-total"></div><div id="imp-auto"></div><div id="imp-informe">` + impHeroAmbitosHtml(amb, auto || { base: 0, alguna: 0, pct: null }, r) + ambitosTarjetasHtml(amb, acL('Personas acompañadas por ámbito (histórico + plataforma)', 'Persones acompanyades per àmbit (històric + plataforma)')) + impFichasPendHtml(r)
+      + impCoberturaHtml(r) + impSerieHtml(r) + impActividadHtml(act)
+      + `<p class="imp-pie">${acL('Periodo', 'Període')}: ${desde ? impFecha(desde) : acL('inicio', 'inici')} – ${impFecha(hasta || new Date().toISOString())} · ${st.programa ? impProg(st.programa) : acL('Todo Logos', 'Tot Logos')}</p></div>`
+      + `<div class="imp-seccion">${acL('Atención en Bretxa Logos', 'Atenció a Bretxa Logos')}</div><div id="imp-atencion" class="cards-grid"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`
+      + `<div id="imp-alcance"></div><div id="imp-carga"></div>`;
+    impAlcanceTotal(); impResultadosAuto(desde, hasta);
+    statsAtencionNuevos(desde, hasta).then(d => { const h = document.getElementById('imp-atencion'); if(h) h.innerHTML = bloqueAtencionNuevos(d); });
+    alcancePersonasPintar('imp-alcance');
+    if(IS_ADMIN) impCargaAdmin();
+    return;
+  }
   if(auto && auto.base){
     cuerpo.innerHTML = impFiltrosHtml() + `<div id="imp-total"></div><div id="imp-auto"></div><div id="imp-informe">` + impHeroAutoHtml(auto, r) + impDimsAutoHtml(auto) + impFichasPendHtml(r)
       + impCoberturaHtml(r) + impSerieHtml(r) + impActividadHtml(act)
@@ -12119,7 +12434,7 @@ async function impRenderPanel(cuerpo){
     if(IS_ADMIN) impCargaAdmin();
     return;
   }
-  cuerpo.innerHTML = impFiltrosHtml() + `<div id="imp-total"></div><div id="imp-auto"></div><div id="imp-informe">` + impHeroHtml(r)
+  cuerpo.innerHTML = impFiltrosHtml() + `<div id="imp-total"></div><div id="imp-auto"></div><div id="imp-informe">` + impHeroHtml(r) + (amb && amb.total ? ambitosTarjetasHtml(amb, acL('Personas acompañadas por ámbito (histórico + plataforma)', 'Persones acompanyades per àmbit (històric + plataforma)')) : '')
     + (vacio ? `<div class="imp-vacio"><strong>${acL('Todavía no hay fichas en este periodo.', 'Encara no hi ha fitxes en aquest període.')}</strong><br>${acL('Cada técnico crea sus fichas en la pestaña «Mis fichas». En cuanto haya 5 personas con situación inicial y cierre, aparecerán aquí los cambios.', 'Cada tècnic crea les seves fitxes a la pestanya «Les meves fitxes». Quan hi hagi 5 persones amb situació inicial i tancament, hi apareixeran els canvis.')}<br><button class="primary-btn" style="width:auto;margin-top:10px;" onclick="renderImpacto('fichas')">📝 ${acL('Crear mi primera ficha', 'Crear la meva primera fitxa')}</button></div>` : '')
     + impDimsHtml(r) + impAntesDespuesHtml(r) + impEmpleoFormacionHtml(r) + impCoberturaHtml(r) + impSerieHtml(r) + impEquidadHtml(r) + impActividadHtml(act)
     + `<p class="imp-pie">${acL('Periodo', 'Període')}: ${desde ? impFecha(desde) : acL('inicio', 'inici')} – ${impFecha(hasta || new Date().toISOString())} · ${st.programa ? impProg(st.programa) : acL('Todo Logos', 'Tot Logos')} · ${acL('Los grupos de menos de 5 personas se ocultan para proteger la privacidad.', 'Els grups de menys de 5 persones s\'oculten per protegir la privadesa.')}</p></div>`
@@ -14270,7 +14585,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-27 · v149 (informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-27 · v152 (mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -14402,6 +14717,12 @@ function renderConfigScreen(){
         <input type="text" id="config-nombre-input" placeholder="${esCA?'Ex: Irene M.':'Ej: Irene M.'}" value="${CURRENT_USER_NOMBRE || ''}" style="flex:1;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-family:var(--font-body);font-size:14px;">
         <button class="link-btn" onclick="guardarMiNombreConfig()">${esCA?'Desar':'Guardar'}</button>
       </div>
+    </div>
+
+    <div class="panel-card" style="margin-top:14px;">
+      <h3>📱 ${esCA?'El meu WhatsApp':'Mi WhatsApp'}</h3>
+      <p class="subtle" style="margin:0 0 10px;">${(window.__staffYo && window.__staffYo.telefono) ? (esCA?'Número: ':'Número: ') + '<strong>' + chEsc(window.__staffYo.telefono) + '</strong>' : (esCA?'Encara no l\'has posat. Els participants dels teus cursos et podran escriure per WhatsApp.':'Todavía no lo has puesto. Los participantes de tus cursos podrán escribirte por WhatsApp.')}</p>
+      <button class="link-btn" onclick="staffPedirTelefono(true)">${(window.__staffYo && window.__staffYo.telefono) ? (esCA?'Canviar el número':'Cambiar el número') : (esCA?'Afegir el meu número':'Añadir mi número')}</button>
     </div>
 
     <div class="panel-card" style="margin-top:14px;">
@@ -14653,6 +14974,11 @@ async function infPerfilTodas(){
     const pinta = (id, titulo, filas) => { const el = document.getElementById(id); if(el) el.innerHTML = `<h3>${titulo}</h3><p class="subtle" style="margin:0 0 6px;font-size:12px;">${T.tot.toLocaleString()} ${ca ? 'persones (amb compte, històric i sense fitxa)' : 'personas (con cuenta, histórico y sin ficha)'}</p>${estBarras(filas)}`; };
     pinta('inf-sexo', t.porSexo, T.sexo);
     pinta('inf-edad', ca ? 'Per edat (en l\'alta)' : 'Por edad (en el alta)', T.edad);
+    try {
+      const am = await ambitosPeriodo(null, null);
+      const host = document.getElementById('inf-total');
+      if(host && am.total) host.insertAdjacentHTML('afterend', `<div style="margin-bottom:14px;">${ambitosTarjetasHtml(am, ca ? 'Persones acompanyades per àmbit (des de l\'inici, històric + plataforma)' : 'Personas acompañadas por ámbito (desde el inicio, histórico + plataforma)')}</div>`);
+    } catch(e){}
     const sinEsp = T.nac.filter(x => x[0] !== 'España'), nacTop = sinEsp.slice(0, 10), resto = sinEsp.slice(10).reduce((x, r) => x + r[1], 0);
     pinta('inf-nac', t.porNacionalidad, T.origen.slice(0, 1).concat(nacTop).concat(resto ? [[ca ? 'Altres' : 'Otras', resto, '']] : []));
     const tr = document.getElementById('inf-tram');
@@ -16402,6 +16728,7 @@ async function renderAdministrador(){
   await hrCargarAdmin();
   document.querySelectorAll('#hr-admin-card').forEach(e => { e.innerHTML = ''; e.removeAttribute('id'); });
   window.__hrSoloYo = false; { const o = document.getElementById('hr-mio-ov'); if(o) o.remove(); }
+  { const m = document.getElementById('mihorario-content'); if(m) m.innerHTML = ''; }
   window.__alertasTipos = REPARTO_OK ? ((await sb.from('alertas_tipos').select('*')).data || []) : [];
   const staffHtml = window.__staffLista.map(s => `
     <div class="panel-stat-row" style="align-items:flex-start;gap:8px;flex-wrap:wrap;">
@@ -17591,6 +17918,7 @@ function histUnificar(perfiles, filas){
       nacionalidad: val('nacionalidad'), servicio: val('servicio'), proyecto: val('proyecto'), codigo: val('codigo'),
       fecha_alta: conF[0] || null, anio_alta: conF[0] ? Number(conF[0].slice(0, 4)) : (anios[0] || null), anios,
       consentimiento_papel: rows.every(r => r.consentimiento_papel !== false),
+      regs: rows.map(r => ({ anio: Number(r.anio) || (r.fecha_alta ? Number(String(r.fecha_alta).slice(0, 4)) : null), txt: [r.servicio, r.proyecto, r.tipo].filter(Boolean).join(' · ') })),
       consentimiento_fecha: rows.map(r => r.consentimiento_fecha).filter(Boolean).sort()[0] || conF[0] || null
     };
   });
@@ -17751,7 +18079,7 @@ function estPersonaDePerfil(p){
     nacionalidad: estNacionalidad(p.nacionalidad), municipio: estMunicipio(p.municipio), anio: alta ? Number(String(alta).slice(0, 4)) : null, alta: alta ? String(alta).slice(0, 10) : null };
 }
 function estPersonaDeHist(h){
-  return { origen: 'papel', id: h.id, sexo: histSexo(h.sexo) || '', tramo: estEdad(h.fecha_nacimiento, h.fecha_alta || (h.anio_alta ? h.anio_alta + '-07-01' : null), h.edad_alta),
+  return { origen: 'papel', id: h.id, regs: h.regs || [], sexo: histSexo(h.sexo) || '', tramo: estEdad(h.fecha_nacimiento, h.fecha_alta || (h.anio_alta ? h.anio_alta + '-07-01' : null), h.edad_alta),
     nacionalidad: estNacionalidad(h.nacionalidad), municipio: estMunicipio(h.municipio), anio: h.anio_alta || null, alta: h.fecha_alta ? String(h.fecha_alta).slice(0, 10) : null };
 }
 // TODAS las personas atendidas hasta la fecha: con cuenta + histórico (papel) + atendidas sin ficha (solo nombre en la atención).
@@ -17978,6 +18306,7 @@ async function memDatos(desde, hasta, programa){
     impActividad(desde, hasta)
   ]);
   const autoCambio = await impCambioAuto(desde, hasta).catch(() => null);
+  const ambitos = await ambitosPeriodo(desde, hasta).catch(() => null);
   const atenciones = at.data || [], actuaciones = ac.data || [], tramites = sinBorrados(tr.data), citas = sinBorrados(ci.data);
   // Personas atendidas en el periodo: con alguna atención, actuación, trámite o cita + fichas del histórico con alta en el periodo
   const idsAtendidas = new Set([...atenciones, ...actuaciones, ...tramites, ...citas].map(x => x.usuario_id).filter(Boolean));
@@ -18008,7 +18337,7 @@ async function memDatos(desde, hasta, programa){
   const tray = estTrayectoria(per.filas);
   return { desde, hasta, programa, atendidas, filasHist, sinCuenta, tray, nuevas, T: estTablas(atendidas), act: act || {}, atencionesN: atenciones.length, actuacionesN: actuaciones.length,
     tramitesN: tramites.length, tramFin, citasN: citas.length, minutos, servicios, conocio: Object.entries(conocio).sort((a, b) => b[1] - a[1]), derivaciones, resultados,
-    imp: (imp && imp.data) || null, autoCambio };
+    imp: (imp && imp.data) || null, autoCambio, ambitos };
 }
 function memFrasesConclusion(d){
   const r = d.imp || {}, g = r.global || {}, T = d.T, esCA = LANG_I === 'ca';
@@ -18071,6 +18400,7 @@ async function memGenerar(){
     </div>
     <h3>${acL('Sexo por tramo de edad', 'Sexe per tram d\'edat')}</h3>${memTablaHtml([acL('Edad', 'Edat'), acL('Mujeres', 'Dones'), acL('Hombres', 'Homes'), acL('Otro / no consta', 'Altre / no consta'), 'Total'], T.cruce)}
     ${d.sinCuenta ? `<p class="mem-nota">${acL(`El total incluye ${d.sinCuenta} personas atendidas sin ficha completa (solo consta su nombre en la atención): cuentan como atendidas, con «no consta» en sexo, edad y nacionalidad.`, `El total inclou ${d.sinCuenta} persones ateses sense fitxa completa (només hi consta el nom a l'atenció): compten com a ateses, amb «no consta» en sexe, edat i nacionalitat.`)}</p>` : ''}
+    ${d.ambitos && d.ambitos.total ? `<h3>${acL('Personas acompañadas por ámbito', 'Persones acompanyades per àmbit')}</h3>${memTablaHtml([acL('Ámbito', 'Àmbit'), acL('Personas', 'Persones'), '%', acL('Con logro registrado', 'Amb assoliment registrat')], Object.keys(AMBITOS_TXT).map(k => [acL(AMBITOS_TXT[k][1], AMBITOS_TXT[k][2]), d.ambitos.acomp[k].toLocaleString(), Math.round(d.ambitos.acomp[k] / d.ambitos.total * 100) + ' %', d.ambitos.logro[k].toLocaleString()]))}<p class="mem-nota">${acL('Incluye el histórico (según el servicio de cada registro) y la actividad de la plataforma. Una persona puede estar en varios ámbitos.', 'Inclou l\'històric (segons el servei de cada registre) i l\'activitat de la plataforma. Una persona pot ser a diversos àmbits.')}</p>` : ''}
     ${sec(acL('Trayectoria: personas acompañadas hasta la fecha', 'Trajectòria: persones acompanyades fins avui'))}
     <div class="mem-kpis sm">${kpi(d.tray.total.toLocaleString(), acL(`personas distintas desde ${d.tray.primero || ''}`, `persones diferents des de ${d.tray.primero || ''}`))}${kpi(d.tray.repiten.toLocaleString(), acL('han vuelto en más de un año', 'han tornat en més d\'un any'))}${kpi(d.tray.anios.length.toLocaleString(), acL('años de actividad', 'anys d\'activitat'))}</div>
     <div class="mem-tray">${(() => { const mx = Math.max(1, ...d.tray.anios.map(a => d.tray.por[a].cuenta + d.tray.por[a].papel + d.tray.por[a].sinficha)); return d.tray.anios.map(a => { const x = d.tray.por[a], t = x.cuenta + x.papel + x.sinficha; return `<div class="mem-tray-f"><span class="mem-tray-a">${a}</span><span class="mem-tray-b"><i class="c1" style="width:${x.papel / mx * 100}%"></i><i class="c2" style="width:${x.cuenta / mx * 100}%"></i><i class="c3" style="width:${x.sinficha / mx * 100}%"></i></span><span class="mem-tray-n">${t.toLocaleString()}</span></div>`; }).join(''); })()}
