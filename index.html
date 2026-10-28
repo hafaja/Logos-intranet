@@ -856,6 +856,11 @@
 .pg-hero .sn-ic:hover{background:rgba(255,255,255,.24);border-color:#F2BC2C;}
 .pg-hero .sn-ic-n{background:#F2BC2C;color:#163F7A;}
 .pg-area{margin:0 0 14px;}
+.ap-modo{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 16px;}
+.ap-m{display:flex;flex-direction:column;gap:4px;text-align:left;background:#fff;border:2px solid var(--line);border-radius:16px;padding:12px 14px;font:700 14.5px/1.25 var(--font-body);color:var(--ink);cursor:pointer;}
+.ap-m small{font-weight:500;font-size:12px;color:var(--ink-soft);}
+.ap-m.on{border-color:var(--navy);background:#EEF4FC;box-shadow:0 8px 18px -12px rgba(36,99,184,.7);}
+@media (max-width:520px){ .ap-modo{grid-template-columns:1fr;} }
 .rh-tira{background:linear-gradient(135deg,#FFF8E1,#FDF0C2);border:1px solid #F2BC2C;border-radius:16px;padding:10px 12px;margin:10px 0 14px;}
 .rh-tira-t{display:flex;align-items:baseline;gap:8px;font-weight:700;font-size:14px;color:#163F7A;margin:0 0 8px;}
 .rh-tira-t small{font-weight:500;font-size:11.5px;color:#8A6100;}
@@ -2330,7 +2335,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v165'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v166'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -4924,6 +4929,86 @@ function radioGroup(name, opts){
   return opts.map(([v,l]) => `<label class="checkbox-row"><input type="radio" name="${name}" value="${v}">${l}</label>`).join('');
 }
 
+// ---------- Alta sin la persona delante: ya firmó el consentimiento en papel ----------
+// Se crea una «ficha sin cuenta · consentimiento en papel» (personas_historicas). Cuando venga, «Activar su cuenta» la une a su cuenta nueva.
+function apPapelHtml(){
+  if(window.__histActivarId) return '';
+  const hoy = isoLocal();
+  return `<div class="ap-modo ap-keep">
+      <button type="button" class="ap-m on" data-m="aqui" onclick="apModo('aqui')">✍️ ${acL('La persona está aquí', 'La persona és aquí')}<small>${acL('Lee y firma en la pantalla. Se crea su cuenta.', 'Llegeix i signa a la pantalla. Es crea el seu compte.')}</small></button>
+      <button type="button" class="ap-m" data-m="papel" onclick="apModo('papel')">📄 ${acL('No está aquí', 'No és aquí')}<small>${acL('Ya firmó el consentimiento en papel. Ficha sin cuenta ni correo.', 'Ja va signar el consentiment en paper. Fitxa sense compte ni correu.')}</small></button>
+    </div>
+    <div id="ap-papel" class="ap-keep" style="display:none;">
+      <div class="panel-card">
+        <h3 style="margin-top:0;">📄 ${acL('Alta con consentimiento en papel', 'Alta amb consentiment en paper')}</h3>
+        <p class="subtle" style="margin:0 0 12px;font-size:12.5px;">${acL('Para cuando la persona ya firmó el papel pero hoy no está. No se le crea usuario ni hace falta correo: queda como <strong>ficha sin cuenta</strong> en «Personas usuarias», se le pueden dar citas y cuenta en las estadísticas. El día que venga, «Activar su cuenta» la pasa a cuenta normal sin perder nada.', 'Per quan la persona ja va signar el paper però avui no hi és. No se li crea usuari ni cal correu: queda com a <strong>fitxa sense compte</strong> a «Persones usuàries», se li poden donar cites i compta a les estadístiques. El dia que vingui, «Activar el compte» la passa a compte normal sense perdre res.')}</p>
+        <div class="field"><label>${acL('Nombre y apellidos', 'Nom i cognoms')} *</label><input type="text" id="app-nombre"></div>
+        <div class="field"><label>${acL('Teléfono', 'Telèfon')} *</label><input type="tel" id="app-telefono"></div>
+        <div class="field"><label>DNI/NIE <span class="subtle">(${acL('si lo tienes', 'si el tens')})</span></label><input type="text" id="app-dni"></div>
+        <div class="field"><label>${acL('Correo (opcional)', 'Correu (opcional)')}</label><input type="email" id="app-email"></div>
+        <div class="field"><label>${acL('Municipio', 'Municipi')}</label><input type="text" id="app-municipio" value="Tarragona"></div>
+        <div class="field"><label>${acL('¿Qué necesita? (servicio o motivo)', 'Què necessita? (servei o motiu)')}</label><input type="text" id="app-servicio" placeholder="${acL('Ej.: renovación NIE, búsqueda de empleo…', 'Ex.: renovació NIE, cerca de feina…')}"></div>
+        <div class="field"><label>${acL('Fecha en que firmó el papel', 'Data en què va signar el paper')} *</label><input type="date" id="app-fecha" value="${hoy}" max="${hoy}"></div>
+        <div class="field"><label>📷 ${acL('Foto o PDF del consentimiento firmado (recomendado)', 'Foto o PDF del consentiment signat (recomanat)')}</label><input type="file" id="app-archivo" accept="image/*,application/pdf"><p class="subtle" style="font-size:11.5px;margin:4px 0 0;">${acL('Desde el móvil puedes hacerle una foto al papel. Queda guardado de forma privada; solo lo ve el equipo.', 'Des del mòbil pots fer una foto al paper. Queda desat de manera privada; només el veu l\'equip.')}</p></div>
+        <div class="field"><label>${acL('Notas (dónde está archivado el papel, quién lo recogió…)', 'Notes (on és arxivat el paper, qui el va recollir…)')}</label><textarea id="app-notas" rows="2"></textarea></div>
+        <label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:6px 0 12px;"><input type="checkbox" id="app-confirmo" style="margin-top:3px;"> <span>${acL('Confirmo que la persona <strong>firmó el consentimiento de protección de datos en papel</strong> y que el original queda archivado en Logos.', 'Confirmo que la persona <strong>va signar el consentiment de protecció de dades en paper</strong> i que l\'original queda arxivat a Logos.')}</span></label>
+        <button class="primary-btn" id="app-btn" onclick="apGuardarPapel()">📄 ${acL('Dar de alta (ficha sin cuenta)', 'Donar d\'alta (fitxa sense compte)')}</button>
+      </div>
+    </div>`;
+}
+function apModo(m){
+  const cont = document.getElementById('altapresencial-content'); if(!cont) return;
+  cont.querySelectorAll('.ap-m').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+  const papel = m === 'papel';
+  [...cont.children].forEach((el, i) => { if(i === 0 || el.classList.contains('ap-keep')) return; el.style.display = papel ? 'none' : ''; });
+  const pp = document.getElementById('ap-papel'); if(pp) pp.style.display = papel ? '' : 'none';
+  if(papel){ const n = document.getElementById('app-nombre'); if(n) n.focus(); }
+}
+async function apGuardarPapel(){
+  const v = id => ((document.getElementById(id) || {}).value || '').trim();
+  const nombre = v('app-nombre'), telefono = v('app-telefono'), dni = v('app-dni'), email = v('app-email'), municipio = v('app-municipio'), servicio = v('app-servicio'), fecha = v('app-fecha'), notas = v('app-notas');
+  if(!nombre || !telefono || !fecha){ alert(acL('Faltan datos obligatorios: nombre, teléfono y fecha en que firmó.', 'Falten dades obligatòries: nom, telèfon i data en què va signar.')); return; }
+  if(!document.getElementById('app-confirmo').checked){ alert(acL('Marca la casilla para confirmar que el consentimiento en papel está firmado y archivado.', 'Marca la casella per confirmar que el consentiment en paper està signat i arxivat.')); return; }
+  if(!HISTORICAS_OK){ alert(acL('Las fichas sin cuenta aún no están activadas en la base de datos (SQL del histórico).', 'Les fitxes sense compte encara no estan activades a la base de dades (SQL de l\'històric).')); return; }
+  const btn = document.getElementById('app-btn'); btn.disabled = true; btn.textContent = acL('Guardando…', 'Desant…');
+  const fin = () => { btn.disabled = false; btn.textContent = '📄 ' + acL('Dar de alta (ficha sin cuenta)', 'Donar d\'alta (fitxa sense compte)'); };
+  // ¿Ya existe? (por DNI/NIE o teléfono)
+  try {
+    const nd = dni.replace(/[\s.\-]/g, ''), nt = telefono.replace(/\D/g, '').slice(-9);
+    const ors = [nd ? `dni_nie.ilike.%${nd}%` : '', nt.length >= 9 ? `telefono.ilike.%${nt}%` : ''].filter(Boolean).join(',');
+    if(ors){
+      const [a, b] = await Promise.all([sb.from('perfiles').select('id, nombre_completo').or(ors).limit(3), sb.from('personas_historicas').select('id, nombre_completo').or(ors).limit(3)]);
+      const ya = [...(a.data || []).map(x => '💻 ' + x.nombre_completo), ...(b.data || []).map(x => '📄 ' + x.nombre_completo)];
+      if(ya.length && !confirm(acL('Ya hay alguien con ese DNI/NIE o teléfono:\n', 'Ja hi ha algú amb aquest DNI/NIE o telèfon:\n') + ya.join('\n') + acL('\n\n¿Crear la ficha igualmente?', '\n\nCrear la fitxa igualment?'))){ fin(); return; }
+    }
+  } catch(e){}
+  // Foto/PDF del papel (privado, bucket «documentos»)
+  let ruta = null;
+  const f = (document.getElementById('app-archivo') || {}).files; const file = f && f[0];
+  if(file){
+    ruta = `consentimientos-papel/${Date.now()}_${rutaSeguraArchivo(file.name)}`;
+    const { error: eUp } = await sb.storage.from('documentos').upload(ruta, file);
+    if(eUp){ ruta = null; if(!confirm(acL('No se pudo subir la foto del consentimiento: ', 'No s\'ha pogut pujar la foto del consentiment: ') + eUp.message + acL('\n\n¿Crear la ficha sin la foto?', '\n\nCrear la fitxa sense la foto?'))){ fin(); return; } }
+  }
+  const fila = { nombre_completo: nombre, telefono, dni_nie: dni || null, email: email || null, municipio: municipio || null, servicio: servicio || null,
+    notas: [notas, acL('Alta sin la persona delante (consentimiento en papel)', 'Alta sense la persona davant (consentiment en paper)') + ' · ' + (CURRENT_USER_NOMBRE || CURRENT_USER.email)].filter(Boolean).join(' · '),
+    anio: new Date().getFullYear(), fecha_alta: isoLocal(), origen: 'Alta con consentimiento en papel', importado_por: CURRENT_USER.email,
+    consentimiento_papel: true, consentimiento_fecha: fecha };
+  if(HIST_V2 && ruta) fila.datos = { consentimiento_archivo: ruta };
+  let r = await sb.from('personas_historicas').insert(fila).select();
+  if(r.error && /consentimiento|datos/i.test(r.error.message)){ const { consentimiento_papel: _a, consentimiento_fecha: _b, datos: _c, ...resto } = fila; r = await sb.from('personas_historicas').insert(resto).select(); }
+  if(r.error){ alert(acL('No se pudo crear la ficha: ', 'No s\'ha pogut crear la fitxa: ') + r.error.message); fin(); return; }
+  const row = Array.isArray(r.data) ? r.data[0] : r.data;
+  window.__histCacheLista = null; window.__personasHistUnif = null;
+  alert('✅ ' + acL(`Ficha creada: ${nombre}.\n\nEstá en «Personas usuarias» como ficha sin cuenta (consentimiento en papel). Puedes darle cita ya. Cuando venga, abre su ficha y pulsa «Activar su cuenta».`, `Fitxa creada: ${nombre}.\n\nÉs a «Persones usuàries» com a fitxa sense compte (consentiment en paper). Ja li pots donar cita. Quan vingui, obre la seva fitxa i prem «Activar el compte».`));
+  fin();
+  if(row && row.id){ __histCache[row.id] = row; showScreen('personas'); try { await renderPersonasScreen(); } catch(e){} histVer(row.id); }
+}
+async function histVerConsentimiento(ruta){
+  const { data, error } = await sb.storage.from('documentos').createSignedUrl(ruta, 300);
+  if(error || !data){ alert(error ? error.message : 'Error'); return; }
+  window.open(data.signedUrl, '_blank', 'noopener');
+}
 function renderAltaPresencial(){
   window.__histActivarId = null;
   const esCA = LANG_I === 'ca';
@@ -4933,6 +5018,7 @@ function renderAltaPresencial(){
         ? 'Sempre que sigui possible, és preferible que la persona es registri ella mateixa des de <strong>Logos Acompanya</strong>, al seu propi ritme. Fes servir aquesta opció només quan la persona ho necessiti fer presencialment amb tu (no té dispositiu, necessita ajuda, etc.).'
         : 'Siempre que sea posible, es preferible que la persona se registre ella misma desde <strong>Logos Acompanya</strong>, a su propio ritmo. Usa esta opción solo cuando la persona lo necesite hacer presencialmente contigo (no tiene dispositivo, necesita ayuda, etc.).'}</p>
     </div>
+    ${apPapelHtml()}
 
     <div class="panel-card">
       <h3>${esCA ? 'Dades de la persona' : 'Datos de la persona'}</h3>
@@ -15526,7 +15612,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-28 · v165 (técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-28 · v166 (alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -19146,6 +19232,7 @@ function histVerExtraHtml(p){
   return `<div class="panel-card" style="margin:0 0 10px;padding:10px 12px;background:${firmado ? 'var(--good-soft,#E8F5EC)' : 'var(--alert-soft)'};">
       <strong>${firmado ? '✅ ' + (esCA ? 'Consentiment signat en paper' : 'Consentimiento firmado en papel') : '⚠️ ' + (esCA ? 'Consentiment pendent' : 'Consentimiento pendiente')}</strong>${firmado && fecha ? ` · ${fechaCorta(fecha)}` : ''}
       <div class="subtle" style="font-size:12px;margin:4px 0 0;">${esCA ? 'Fitxa sense compte: és a «Persones usuàries» i a les estadístiques, però no té usuari a Logos Acompanya.' : 'Ficha sin cuenta: aparece en «Personas usuarias» y en las estadísticas, pero no tiene usuario en Logos Acompanya.'}${unif && unif.registros > 1 ? ' ' + (esCA ? `Té ${unif.registros} registres (${unif.anios.join(', ')}).` : `Tiene ${unif.registros} registros (${unif.anios.join(', ')}).`) : ''}</div>
+      ${p.datos && p.datos.consentimiento_archivo ? `<button class="link-btn" style="font-size:12px;margin:6px 10px 0 0;" data-r="${escAttr(p.datos.consentimiento_archivo)}" onclick="histVerConsentimiento(this.dataset.r)">📷 ${esCA ? 'Veure el paper signat' : 'Ver el papel firmado'}</button>` : ''}
       ${HIST_CONS && IS_ADMIN ? `<button class="link-btn" style="font-size:12px;margin:6px 0 0;" onclick="histMarcarConsentimiento('${p.id}', ${firmado ? 'false' : 'true'})">✏️ ${firmado ? (esCA ? 'Corregir: encara no l\'ha signat' : 'Corregir: todavía no lo ha firmado') : (esCA ? 'Marcar com a signat en paper' : 'Marcar como firmado en papel')}</button>` : ''}
     </div>
     ${histContactoHtml(unif || p)}
