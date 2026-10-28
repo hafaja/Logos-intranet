@@ -856,6 +856,19 @@
 .pg-hero .sn-ic:hover{background:rgba(255,255,255,.24);border-color:#F2BC2C;}
 .pg-hero .sn-ic-n{background:#F2BC2C;color:#163F7A;}
 .pg-area{margin:0 0 14px;}
+.rh-tira{background:linear-gradient(135deg,#FFF8E1,#FDF0C2);border:1px solid #F2BC2C;border-radius:16px;padding:10px 12px;margin:10px 0 14px;}
+.rh-tira-t{display:flex;align-items:baseline;gap:8px;font-weight:700;font-size:14px;color:#163F7A;margin:0 0 8px;}
+.rh-tira-t small{font-weight:500;font-size:11.5px;color:#8A6100;}
+.rh-tira-g{display:flex;flex-wrap:wrap;gap:8px;}
+.rh-tira-b{position:relative;border:1px solid rgba(22,63,122,.18);background:#fff;color:#163F7A;border-radius:999px;padding:7px 14px;font:600 13px/1.2 inherit;font-family:inherit;cursor:pointer;}
+.rh-tira-b:hover{border-color:#163F7A;}
+.rh-tira-n{display:inline-block;margin-left:6px;background:#B42318;color:#fff;border-radius:999px;font-size:11px;padding:1px 7px;}
+.mesa-box{background:#fff;border:1px dashed var(--gold);border-radius:12px;padding:8px 10px;margin:0 0 10px;text-align:center;}
+.mesa-t{font-size:12.5px;font-weight:700;margin:0 0 6px;}
+.mesa-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:0 0 4px;}
+.mesa-chip{display:inline-flex;align-items:center;gap:4px;background:#E6EEF9;color:#163F7A;border-radius:999px;padding:3px 4px 3px 10px;font-size:12.5px;font-weight:600;}
+.mesa-chip a{color:inherit;text-decoration:none;}
+.mesa-chip button{border:none;background:rgba(22,63,122,.12);color:#163F7A;border-radius:50%;width:20px;height:20px;line-height:18px;cursor:pointer;font-size:13px;padding:0;}
 .pg-area-t{display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:700;color:#FFE08A;margin:0 0 8px;letter-spacing:.01em;}
 .pg-area-t small{font-size:11.5px;font-weight:500;color:rgba(255,255,255,.75);}
 .pg-area-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
@@ -2205,7 +2218,7 @@ function aplicarTraduccionesSidebar(){
 // Jóvenes en acción (y su pestaña de Familias) queda oculto del menú para el equipo general. Para volver a mostrarlo: MOSTRAR_JOVENES = true.
 const MOSTRAR_JOVENES = false;
 const PANTALLAS_JOVENES = ['login', 'panel', 'miespacio', 'gestionpersonal', 'jovenes', 'miformacion', 'config', 'incidencias'];
-const PANTALLAS_RRHH_SOLO = ['login', 'miespacio', 'gestionpersonal', 'subvenciones', 'miformacion', 'config', 'incidencias'];
+const PANTALLAS_RRHH_SOLO = ['login', 'panel', 'miespacio', 'gestionpersonal', 'subvenciones', 'miformacion', 'config', 'incidencias'];
 function aplicarMenuPorRol(){
   document.querySelectorAll('.sidebar nav button[data-target]').forEach(b => {
     b.classList.toggle('rol-oculto', (IS_JOVENES && !PANTALLAS_JOVENES.includes(b.dataset.target)) || (IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(b.dataset.target)) || (!MOSTRAR_JOVENES && !IS_JOVENES && b.dataset.target === 'jovenes') || (b.dataset.target === 'subvenciones' && !(IS_ADMIN || IS_RRHH)));
@@ -2317,7 +2330,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v163'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v165'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -2370,7 +2383,7 @@ function irAPantallaInicial(){
       if(b && !b.classList.contains('rol-oculto')){ b.click(); return; }
     } catch(e){}
   }
-  if(IS_RRHH_SOLO){ showScreen('gestionpersonal'); renderGestionPersonal('rrhh'); return; }   // Recursos Humanos entra directamente en su panel
+  if(IS_RRHH_SOLO){ showScreen('panel'); renderPanelRRHH(); return; }   // Recursos Humanos entra en su propio Inicio
   if(!IS_ADMIN && !IS_JOVENES){ showScreen('miespacio'); renderMiEspacio(); return; }   // el personal técnico entra directamente en su página de trabajo
   showScreen('panel');
   renderPanelGeneral();
@@ -2381,7 +2394,7 @@ window.__navIdx = 0; window.__navMax = 0; window.__navRestaurando = false;
 window.__navUltimoPaso = 0;
 function navPantallaActiva(){ const a = document.querySelector('.screen.active'); return a ? a.id.replace('screen-', '') : null; }
 function navPantallaInicio(){
-  if(typeof IS_RRHH_SOLO !== 'undefined' && IS_RRHH_SOLO) return 'gestionpersonal';
+  if(typeof IS_RRHH_SOLO !== 'undefined' && IS_RRHH_SOLO) return 'panel';
   if(typeof IS_ADMIN !== 'undefined' && !IS_ADMIN && !IS_JOVENES) return 'miespacio';
   return 'panel';
 }
@@ -2511,7 +2524,7 @@ window.addEventListener('popstate', function(e){
 
 function showScreen(name){
   if(IS_JOVENES && !PANTALLAS_JOVENES.includes(name)) name = 'panel';
-  if(IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(name)) name = 'gestionpersonal';
+  if(IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(name)) name = 'panel';
   const previa = document.querySelector('.screen.active');
   if(!previa || previa.id !== 'screen-' + name){ try { window.scrollTo(0, 0); } catch(e){} }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -4075,8 +4088,8 @@ async function construirSalasAtencionHtml(fichajeCardHtml){
         <p style="margin:0 0 4px;font-size:13.5px;">🔴 ${esCA?'Ocupada':'Ocupada'}</p>
         <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-soft);">${nombreTecnico(ocup.tecnico_email)}${esCA?' · des de les ':' · desde las '}${horaFmt(ocup.inicio)}</p>
         ${esMia
-          ? `<button class="primary-btn" style="background:var(--alert);" onclick="abrirNotaAtencion('${ocup.id}','${plazaId}')">${esCA?'Finalitzar atenció':'Finalizar atención'}</button>`
-          : `<p class="subtle" style="margin:0;">${esCA?'En ús per un altre tècnic':'En uso por otro técnico'}</p>`}
+          ? `${mesaBloqueHtml(ocup)}<button class="primary-btn" style="background:var(--alert);" onclick="abrirNotaAtencion('${ocup.id}','${plazaId}')">${esCA?'Finalitzar atenció':'Finalizar atención'}</button>`
+          : `<p class="subtle" style="margin:0;">${esCA?'En ús per un altre tècnic':'En uso por otro técnico'}${mesaPersonas(ocup).length > 1 ? ` · 👥 ${mesaPersonas(ocup).length} ${esCA?'persones':'personas'}` : ''}</p>`}
         ${reservasHtmlPlaza(plazaId)}
       </div>`;
   };
@@ -4356,6 +4369,7 @@ async function iniciarAtencionSala(plazaId){
   if(!confirmarSiHayReservaProxima([plazaId])) return;
   const { error } = await sb.from('fichajes_sala').insert({ sala: plazaId, tecnico_email: CURRENT_USER.email, inicio: new Date().toISOString() });
   if(error){ alert((LANG_I==='ca'?'No s\'ha pogut guardar: ':'No se pudo guardar: ') + error.message); return; }
+  if(window.__mesaPendiente){ await renderMiEspacio(); await mesaPendienteAplicar(); return; }
   renderMiEspacio();
 }
 
@@ -4380,16 +4394,76 @@ async function finalizarReunion(id){
   renderMiEspacio();
 }
 
-let __notaAtencionPersonaId = null;
+// ---------- Mesa compartida: varias personas atendidas a la vez en la misma mesa (familia, pareja, amigas…) ----------
+function mesaClave(fid){ return 'mesa:' + fid; }
+function miMesaActual(){ const o = window.__ocupacionMiaActual; return o && o.sala !== 'reunion' ? o : null; }
+function mesaPersonas(o){
+  if(!o) return [];
+  if(Array.isArray(o.personas) && o.personas.length) return o.personas.slice();
+  try { const l = JSON.parse(localStorage.getItem(mesaClave(o.id)) || '[]'); return Array.isArray(l) ? l : []; } catch(e){ return []; }
+}
+async function mesaGuardar(o, lista){
+  o.personas = lista;
+  try { if(lista.length) localStorage.setItem(mesaClave(o.id), JSON.stringify(lista)); else localStorage.removeItem(mesaClave(o.id)); } catch(e){}
+  try { await sb.from('fichajes_sala').update({ personas: lista }).eq('id', o.id); } catch(e){}   // sin el SQL-53 se queda en este dispositivo
+}
+async function mesaAnadir(id, nombre){
+  if(!id) return;
+  const o = miMesaActual();
+  if(!o){ window.__mesaPendiente = { id, nombre, t: Date.now() }; salaElegirRapido(); return; }   // primero elige la mesa; luego se añade sola
+  const lista = mesaPersonas(o).filter(p => p.id !== id);
+  lista.push({ id, nombre: nombre || '' });
+  await mesaGuardar(o, lista);
+  try { await sb.from('avisos_espera').update({ atendido_en: new Date().toISOString(), atendido_por_email: CURRENT_USER.email }).eq('usuario_id', id).is('atendido_en', null); } catch(e){}
+  await recargarSinSaltar('miespacio-content', renderMiEspacio);
+}
+async function mesaQuitar(id){
+  const o = miMesaActual(); if(!o) return;
+  await mesaGuardar(o, mesaPersonas(o).filter(p => p.id !== id));
+  await recargarSinSaltar('miespacio-content', renderMiEspacio);
+}
+async function mesaPendienteAplicar(){
+  const x = window.__mesaPendiente; window.__mesaPendiente = null;
+  if(x && Date.now() - x.t < 5 * 60000 && miMesaActual()) await mesaAnadir(x.id, x.nombre);
+}
+function mesaBuscarAbrir(){ const b = document.getElementById('mesa-buscar'); if(!b) return; b.style.display = b.style.display === 'none' ? '' : 'none'; const i = document.getElementById('mesa-q'); if(i && b.style.display === '') i.focus(); }
+let __mesaBuscarT = null;
+function mesaBuscar(texto){
+  clearTimeout(__mesaBuscarT);
+  const cont = document.getElementById('mesa-res'); if(!cont) return;
+  if(!texto || texto.trim().length < 2){ cont.innerHTML = ''; return; }
+  __mesaBuscarT = setTimeout(async () => {
+    const { data } = await buscarPerfiles(texto.trim(), 6, true);
+    cont.innerHTML = (data || []).length ? data.map(p => `<div class="list-row" style="cursor:pointer;text-align:left;" data-id="${escAttr(p.id)}" data-nombre="${escAttr(p.nombre_completo || '')}" onclick="mesaAnadir(this.dataset.id,this.dataset.nombre)"><span>➕ ${escAttr(p.nombre_completo || '')}</span><span class="subtle">${escAttr(p.municipio || '')}</span></div>`).join('') : `<div class="empty-note">${acL('Sin resultados.', 'Cap resultat.')}</div>`;
+  }, 300);
+}
+function mesaBloqueHtml(o){
+  const l = mesaPersonas(o);
+  return `<div class="mesa-box">
+    <div class="mesa-t">👥 ${acL('En esta mesa', 'En aquesta taula')}${l.length ? ` <span class="chip gold" style="margin-left:4px;">${l.length}</span>` : ''}</div>
+    <div class="mesa-chips">${l.length ? l.map(p => `<span class="mesa-chip"><a href="#" data-id="${escAttr(p.id)}" onclick="verPersonaStaff(this.dataset.id,'miespacio');return false;">${escAttr(p.nombre || '—')}</a><button title="${acL('Quitar', 'Treure')}" data-id="${escAttr(p.id)}" onclick="mesaQuitar(this.dataset.id)">×</button></span>`).join('') : `<span class="subtle" style="font-size:12px;margin:0;">${acL('Aún no has añadido a nadie.', 'Encara no has afegit ningú.')}</span>`}</div>
+    <button class="link-btn" style="font-size:12.5px;" onclick="mesaBuscarAbrir()">＋ ${acL('Añadir persona', 'Afegir persona')}</button>
+    <div id="mesa-buscar" style="display:none;margin-top:6px;"><input type="text" id="mesa-q" placeholder="${acL('Escribe el nombre…', 'Escriu el nom…')}" oninput="mesaBuscar(this.value)" style="width:100%;box-sizing:border-box;"><div id="mesa-res"></div></div>
+    <p class="subtle" style="font-size:11px;margin:6px 0 0;">${acL('¿Atiendes a dos o más personas a la vez? Añádelas aquí: al finalizar, la nota se guarda en la ficha de cada una.', 'Atens dues o més persones alhora? Afegeix-les aquí: en finalitzar, la nota es desa a la fitxa de cadascuna.')}</p>
+  </div>`;
+}
+
+let __notaPersonas = [];
 
 function cerrarNotaOverlay(){
   const o = document.getElementById('nota-overlay');
   if(o) o.remove();
 }
+function notaPintarPersonas(){
+  const el = document.getElementById('nota-personas'); if(!el) return;
+  el.innerHTML = __notaPersonas.map((p, i) => `<span class="mesa-chip">${escAttr(p.nombre || '—')}<button title="${acL('Quitar', 'Treure')}" onclick="__notaPersonas.splice(${i},1);notaPintarPersonas()">×</button></span>`).join('')
+    || `<span class="subtle" style="font-size:12px;margin:0;">${acL('Ninguna persona vinculada.', 'Cap persona vinculada.')}</span>`;
+}
 
 function abrirNotaAtencion(fichajeSalaId, plazaId){
   const esCA = LANG_I === 'ca';
-  __notaAtencionPersonaId = null;
+  const ocup = (window.__ocupacionPorPlaza || {})[plazaId];
+  __notaPersonas = ocup && ocup.id === fichajeSalaId ? mesaPersonas(ocup) : [];
   cerrarNotaOverlay();
   const ov = document.createElement('div');
   ov.id = 'nota-overlay';
@@ -4403,16 +4477,17 @@ function abrirNotaAtencion(fichajeSalaId, plazaId){
         <textarea id="nota-descripcion" rows="3" placeholder="${esCA?'Ex: vam preparar la renovació del NIE':'Ej: preparamos la renovación del NIE'}"></textarea>
       </div>
 
-      <details style="margin-bottom:12px;">
-        <summary style="cursor:pointer;font-size:13px;font-weight:700;">${esCA?'Vincular a una persona i tipus (opcional)':'Vincular a una persona y tipo (opcional)'}</summary>
+      <details style="margin-bottom:12px;" ${__notaPersonas.length ? 'open' : ''}>
+        <summary style="cursor:pointer;font-size:13px;font-weight:700;">${esCA?'Persones ateses i tipus':'Personas atendidas y tipo'}${__notaPersonas.length ? ` (${__notaPersonas.length})` : ` (${esCA?'opcional':'opcional'})`}</summary>
         <div class="field" style="margin-top:10px;">
-          <label>${esCA?'Persona atesa':'Persona atendida'}</label>
-          <input type="text" id="nota-buscar-usuario" placeholder="${esCA?'Escriu el nom per buscar el seu compte':'Escribe el nombre para buscar su cuenta'}" oninput="buscarUsuarioNotaAtencion(this.value)">
+          <label>${esCA?'Persones ateses (pots afegir-ne més d\'una)':'Personas atendidas (puedes añadir más de una)'}</label>
+          <div id="nota-personas" class="mesa-chips" style="justify-content:flex-start;margin-bottom:6px;"></div>
+          <input type="text" id="nota-buscar-usuario" placeholder="${esCA?'Escriu el nom per afegir una persona':'Escribe el nombre para añadir una persona'}" oninput="buscarUsuarioNotaAtencion(this.value)">
           <div id="nota-resultados-busqueda"></div>
-          <div id="nota-usuario-vinculado" style="display:none;margin-top:6px;" class="chip hecho">
-            <span id="nota-usuario-vinculado-texto"></span>
-            <button class="link-btn" style="margin-left:8px;font-size:11px;" onclick="__notaAtencionPersonaId=null;document.getElementById('nota-usuario-vinculado').style.display='none';">${esCA?'Treure':'Quitar'}</button>
-          </div>
+        </div>
+        <div class="field">
+          <label>${esCA?'Altres persones sense compte (acompanyants)':'Otras personas sin cuenta (acompañantes)'}</label>
+          <input type="number" id="nota-extra" min="0" max="20" value="0" style="width:90px;">
         </div>
         <div class="field">
           <label>${esCA?'Tipus d\'actuació':'Tipo de actuación'}</label>
@@ -4430,6 +4505,7 @@ function abrirNotaAtencion(fichajeSalaId, plazaId){
       <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="cerrarNotaOverlay()">${esCA?'Tornar enrere':'Volver atrás'}</button>
     </div>`;
   document.body.appendChild(ov);
+  notaPintarPersonas();
   setTimeout(() => { const t = document.getElementById('nota-descripcion'); if(t) t.focus(); }, 60);
 }
 
@@ -4444,45 +4520,46 @@ function buscarUsuarioNotaAtencion(texto){
     if(error || !data || !data.length){ cont.innerHTML = `<div class="empty-note">${esCA?'Cap resultat.':'Sin resultados.'}</div>`; return; }
     cont.innerHTML = data.map(p => `
       <div class="list-row" style="cursor:pointer;" data-id="${p.id}" data-nombre="${escAttr(p.nombre_completo || '')}" onclick="vincularUsuarioNotaAtencion(this.dataset.id, this.dataset.nombre)">
-        <span>${p.nombre_completo}</span><span class="subtle">${p.municipio || ''}</span>
+        <span>➕ ${escAttr(p.nombre_completo || '')}</span><span class="subtle">${escAttr(p.municipio || '')}</span>
       </div>`).join('');
   }, 300);
 }
 
 function vincularUsuarioNotaAtencion(usuarioId, nombre){
-  __notaAtencionPersonaId = usuarioId;
+  if(!__notaPersonas.some(p => p.id === usuarioId)) __notaPersonas.push({ id: usuarioId, nombre });
   document.getElementById('nota-buscar-usuario').value = '';
   document.getElementById('nota-resultados-busqueda').innerHTML = '';
-  const chip = document.getElementById('nota-usuario-vinculado');
-  chip.style.display = 'inline-flex';
-  document.getElementById('nota-usuario-vinculado-texto').textContent = (LANG_I==='ca' ? 'Vinculat a: ' : 'Vinculado a: ') + nombre;
+  notaPintarPersonas();
 }
 
 async function guardarNotaYFinalizarAtencion(fichajeSalaId){
   const esCA = LANG_I === 'ca';
   const ahora = new Date();
   const categoria = document.getElementById('nota-categoria').value || null;
-  const descripcion = document.getElementById('nota-descripcion').value.trim() || null;
+  let descripcion = document.getElementById('nota-descripcion').value.trim() || null;
+  const extra = Math.max(0, Math.min(20, parseInt((document.getElementById('nota-extra') || {}).value, 10) || 0));
+  const personas = __notaPersonas.slice();
 
-  if(!descripcion && !categoria && !__notaAtencionPersonaId){
+  if(!descripcion && !categoria && !personas.length){
     const sinNota = confirm(esCA ? 'No has escrit què has treballat. Vols finalitzar l\'atenció sense nota?' : 'No has escrito qué has trabajado. ¿Quieres finalizar la atención sin nota?');
     if(!sinNota) return;
   }
+  const total = personas.length + extra;
+  if(total > 1) descripcion = (descripcion ? descripcion + '\n' : '') + (esCA ? `(Atenció conjunta: ${total} persones a la mateixa taula)` : `(Atención conjunta: ${total} personas en la misma mesa)`);
 
-  if(descripcion || categoria || __notaAtencionPersonaId){
-    const fila = {
-      usuario_id: __notaAtencionPersonaId,
+  if(descripcion || categoria || personas.length){
+    const base = {
       tecnico_email: CURRENT_USER.email,
-      fecha: ahora.toISOString().slice(0,10),
+      fecha: isoLocal(ahora),
       hora: ahora.toTimeString().slice(0,8),
       categoria,
       descripcion
     };
-    let { error: errorAct } = await sb.from('actuaciones').insert(fila);
+    const filas = personas.length ? personas.map(p => ({ ...base, usuario_id: p.id })) : [{ ...base, usuario_id: null }];
+    let { error: errorAct } = await sb.from('actuaciones').insert(filas);
     if(errorAct && /hora/i.test(errorAct.message)){
       // La columna "hora" todavía no existe en la base de datos: se guarda la nota igualmente, sin la hora.
-      const { hora: _h, ...sinHora } = fila;
-      ({ error: errorAct } = await sb.from('actuaciones').insert(sinHora));
+      ({ error: errorAct } = await sb.from('actuaciones').insert(filas.map(({ hora: _h, ...sinHora }) => sinHora)));
     }
     if(errorAct){
       const seguir = confirm((esCA?'No s\'ha pogut desar la nota: ':'No se pudo guardar la nota: ') + errorAct.message + '\n\n' + (esCA?'Vols finalitzar l\'atenció igualment (sense la nota)?':'¿Quieres finalizar la atención igualmente (sin la nota)?'));
@@ -4492,6 +4569,8 @@ async function guardarNotaYFinalizarAtencion(fichajeSalaId){
 
   const { error } = await sb.from('fichajes_sala').update({ fin: ahora.toISOString() }).eq('id', fichajeSalaId);
   if(error){ alert((esCA?'No s\'ha pogut finalitzar: ':'No se pudo finalizar: ') + error.message); return; }
+  try { localStorage.removeItem(mesaClave(fichajeSalaId)); } catch(e){}
+  __notaPersonas = [];
   cerrarNotaOverlay();
   renderMiEspacio();
 }
@@ -4643,6 +4722,7 @@ async function renderMiEspacio(){
         <h1 class="hero-title" style="font-size:20px;margin:0;">${CURRENT_USER_NOMBRE || email}</h1>
       </div>
     </div>
+    ${rrhhTiraHtml()}
 
     <div class="me-paso">① ${acL('Empezar el día', 'Començar el dia')} <small>${acL('fichar y marcar la sala', 'fitxar i marcar la sala')}</small></div>
     ${salasAtencionHtml}
@@ -5976,7 +6056,7 @@ async function construirEnEsperaHtml(){
     if(ids.length){ const { data: ps } = await sb.from('perfiles').select('id, nombre_completo').in('id', ids); (ps || []).forEach(x => { nom[x.id] = x.nombre_completo; }); }
     const fila = id => { const a = porPersona[id]; const hora = new Date(a.creado_en).toLocaleTimeString(TI[LANG_I].localeFecha, { hour: '2-digit', minute: '2-digit' }); const mins = Math.max(0, Math.round((Date.now() - new Date(a.creado_en)) / 60000));
       return `<div class="panel-stat-row" style="align-items:center;gap:6px;flex-wrap:wrap;"><span style="cursor:pointer;" data-id="${escAttr(id)}" onclick="verPersonaStaff(this.dataset.id,'miespacio')"><strong>${escAttr(nom[id] || '—')}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${ca ? 'Ha arribat a les' : 'Llegó a las'} ${hora} · ${ca ? 'fa' : 'hace'} ${mins} min</span></span>
-        <span style="display:flex;gap:6px;"><button class="link-btn" style="font-size:12px;" data-id="${escAttr(id)}" data-nombre="${escAttr(nom[id] || '')}" onclick="avisarEspera(this.dataset.id,this.dataset.nombre)">🕓 ${ca ? 'Avisar' : 'Avisar'}</button><button class="link-btn" style="font-size:12px;color:var(--good);" data-id="${escAttr(id)}" onclick="marcarAtendidoEspera(this.dataset.id)">✔ ${ca ? 'Ja atès' : 'Ya atendido'}</button></span></div>`; };
+        <span style="display:flex;gap:6px;flex-wrap:wrap;"><button class="link-btn" style="font-size:12px;color:var(--navy);font-weight:700;" title="${ca ? 'L\'atens tu: s\'afegeix a la teva taula (pots afegir-ne més d\'una)' : 'La atiendes tú: se añade a tu mesa (puedes añadir más de una)'}" data-id="${escAttr(id)}" data-nombre="${escAttr(nom[id] || '')}" onclick="mesaAnadir(this.dataset.id,this.dataset.nombre)">🪑 ${ca ? 'A la meva taula' : 'A mi mesa'}</button><button class="link-btn" style="font-size:12px;" data-id="${escAttr(id)}" data-nombre="${escAttr(nom[id] || '')}" onclick="avisarEspera(this.dataset.id,this.dataset.nombre)">🕓 ${ca ? 'Avisar' : 'Avisar'}</button><button class="link-btn" style="font-size:12px;color:var(--good);" data-id="${escAttr(id)}" onclick="marcarAtendidoEspera(this.dataset.id)">✔ ${ca ? 'Ja atès' : 'Ya atendido'}</button></span></div>`; };
     return `<div class="panel-card" style="margin-bottom:14px;border-color:var(--gold);background:var(--gold-soft);"><h3 style="margin:0 0 8px;">🕓 ${ca ? 'En espera' : 'En espera'} ${ids.length ? `<span class="chip gold">${ids.length}</span>` : ''}</h3>${ids.length ? ids.map(fila).join('') : `<div class="empty-note">${ca ? 'Ningú esperant ara mateix.' : 'Nadie esperando ahora mismo.'}</div>`}<p class="subtle" style="font-size:11px;margin:6px 0 0;">${ca ? 'Apareixen en acabar el registre. «Avisar» envia un missatge amable a la persona.' : 'Aparecen al acabar el registro. «Avisar» envía un mensaje amable a la persona.'}</p></div>`;
   } catch(e){ return ''; }
 }
@@ -15446,7 +15526,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-28 · v163 (incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-28 · v165 (técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -15865,7 +15945,8 @@ function snAccesosIntranet(nAlertas){
     snAcc('🔔', ca ? 'Alertes' : 'Alertas', "irAAlertas()", nAlertas),
     snAcc('⏰', ca ? 'El meu horari' : 'Mi horario', "showScreen('mihorario');renderMiHorario()"),
     snAcc('🎓', ca ? 'Aula Virtual' : 'Aula Virtual', "showScreen('aulavirtual');renderAulaVirtualScreen()"),
-    snAcc('📊', ca ? 'Impacte' : 'Impacto', "showScreen('impacto');renderImpacto()")
+    snAcc('📊', ca ? 'Impacte' : 'Impacto', "showScreen('impacto');renderImpacto()"),
+    (IS_RRHH && !IS_ADMIN) ? snAcc('💼', 'RR. HH.', "showScreen('gestionpersonal');renderGestionPersonal('rrhh')") : ''
   ].join('');
 }
 function snCitaHtml(c, nombre, onclick){
@@ -15979,9 +16060,91 @@ function snFichaHtml(c, t, d, on){
   const ic = m && !/[A-Za-zÀ-ÿ0-9]/.test(m[1]) ? m[1] : '✨', tit = m && ic === m[1] ? m[2] : t;
   return `<button class="sn-ficha ${c}" onclick="${on}"><span class="sn-ficha-i">${ic}</span><strong>${tit}</strong><span class="d">${d}</span></button>`;
 }
+// Técnico/a que además lleva RR. HH. (ámbito general + es_rrhh): atiende personas como el resto y tiene aquí sus herramientas de RR. HH.
+function rrhhTiraHtml(){
+  if(!(IS_RRHH && !IS_ADMIN && !IS_RRHH_SOLO)) return '';
+  setTimeout(rrhhTiraContar, 0);
+  const gp = tab => `showScreen('gestionpersonal');renderGestionPersonal('${tab}')`;
+  const b = (ic, txt, on, id) => `<button class="rh-tira-b" onclick="${on}">${ic} ${txt}${id ? `<span class="rh-tira-n" id="${id}" style="display:none;"></span>` : ''}</button>`;
+  return `<div class="rh-tira"><div class="rh-tira-t">💼 ${acL('Recursos Humanos', 'Recursos Humans')}<small>${acL('También eres RR. HH.', 'També ets RR. HH.')}</small></div><div class="rh-tira-g">
+    ${b('🧾', acL('Nóminas', 'Nòmines'), gp('rrhh'))}${b('📣', acL('Comunicados', 'Comunicats'), gp('rrhh'))}${b('👥', acL('Personal', 'Personal'), gp('rrhh'))}${b('🕘', acL('Horarios', 'Horaris'), gp('rrhh'))}${b('🆘', acL('Incidencias', 'Incidències'), "showScreen('incidencias');renderIncidencias()", 'rh-tira-inc')}
+  </div></div>`;
+}
+async function rrhhTiraContar(){
+  try {
+    const { data, error } = await sb.from('incidencias').select('id, destino, autor_id').neq('estado', 'resuelta').eq('destino', 'rrhh').limit(300);
+    const n = error ? 0 : (data || []).filter(i => i.autor_id !== CURRENT_USER.id).length;
+    document.querySelectorAll('#rh-tira-inc').forEach(e => { e.textContent = n; e.style.display = n ? '' : 'none'; });
+  } catch(e){}
+}
+// Inicio de Recursos Humanos (sin datos de las personas atendidas): cabecera, «Mi área privada», el equipo hoy y accesos
+async function renderPanelRRHH(){
+  const cont = document.getElementById('panel-content'); if(!cont) return;
+  const ca = LANG_I === 'ca', h = new Date().getHours();
+  const saludo = h < 13 ? acL('Buenos días', 'Bon dia') : (h < 20 ? acL('Buenas tardes', 'Bona tarda') : acL('Buenas noches', 'Bona nit'));
+  const nombre = CURRENT_USER_NOMBRE || (CURRENT_USER && CURRENT_USER.email) || '';
+  const primer = escAttr(String(nombre).split(/[ @]/)[0]);
+  const inic = String(nombre).trim().split(/\s+/).map(x => x[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?';
+  const gp = tab => `showScreen('gestionpersonal');renderGestionPersonal('${tab}')`;
+  const stat = (id, ic, bg, col, label, cta, on) => `<div class="stat-icon-card" onclick="${on}"><div class="icon-badge" style="background:${bg};color:${col};">${ic}</div><div class="stat-icon-num" id="${id}">…</div><div class="stat-icon-label">${label}</div><div class="link-btn" style="font-size:11px;padding:6px 0 0;">${cta}</div></div>`;
+  const mesAnt = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
+  cont.innerHTML = `
+    <div class="sn-wrap">
+      <div class="pg-hero"><div class="pg-deco"></div>
+        <div class="pg-hero-fila">
+          <div class="pg-estado">${logosEstadoHtml()}</div>
+          <div class="pg-user"><div class="avatar-circle">${escAttr(inic)}</div><div><div class="pg-user-n">${escAttr(nombre)}</div><div class="pg-user-r">${acL('Recursos Humanos', 'Recursos Humans')}</div></div></div>
+        </div>
+        <div class="sn-top">
+          <div class="sn-hola" style="margin:0;">${saludo}, ${primer} <span class="pg-mano">👋</span></div>
+          <div class="sn-top-ic">
+            <button class="sn-ic" title="${acL('Incidencias', 'Incidències')}" onclick="showScreen('incidencias');renderIncidencias()">🆘<span class="sn-ic-n" id="rh-n-inc" style="display:none;"></span></button>
+            <button class="sn-ic" title="${acL('Gestión de personal', 'Gestió de personal')}" onclick="${gp('rrhh')}">👥</button>
+          </div>
+        </div>
+        <div class="sn-fecha">${new Date().toLocaleDateString(TI[LANG_I].localeFecha, { weekday: 'long', day: 'numeric', month: 'long' })} · ${acL('Recursos Humanos', 'Recursos Humans')}</div>
+        <div class="pg-area" id="pg-area"></div>
+      </div>
+      <div class="sn-sec-t">${acL('El equipo hoy', 'L\'equip avui')}</div>
+      <div class="sn-stats" id="rh-stats">
+        ${stat('rh-s-pers', '👥', '#E6EEF9', '#163F7A', acL('Personas en plantilla', 'Persones en plantilla'), acL('Ver personal', 'Veure personal'), gp('rrhh'))}
+        ${stat('rh-s-dentro', '🕘', '#E5F5EC', '#1F7A4A', acL('Han fichado hoy', 'Han fitxat avui'), acL('Horarios', 'Horaris'), gp('rrhh'))}
+        ${stat('rh-s-nom', '🧾', '#FFF4D6', '#8A6100', acL('Nóminas de', 'Nòmines de') + ' ' + escAttr(gpMes(mesAnt.getMonth() + 1)), acL('Subir / corregir', 'Pujar / corregir'), gp('rrhh'))}
+        ${stat('rh-s-inc', '🆘', '#FDE8E8', '#B42318', acL('Incidencias por atender', 'Incidències per atendre'), acL('Abrir', 'Obrir'), "showScreen('incidencias');renderIncidencias()")}
+      </div>
+      <div class="sn-sec-t">${acL('Accesos rápidos', 'Accessos ràpids')}</div>
+      <div class="sn-accesos">${[
+        snAcc('🧾', acL('Nóminas', 'Nòmines'), gp('rrhh'), 0, true),
+        snAcc('📣', acL('Comunicados', 'Comunicats'), gp('rrhh')),
+        snAcc('👥', acL('Personal', 'Personal'), gp('rrhh')),
+        snAcc('🆘', acL('Incidencias', 'Incidències'), "showScreen('incidencias');renderIncidencias()"),
+        snAcc('🕘', acL('Fichar', 'Fitxar'), "showScreen('miespacio');renderMiEspacio()"),
+        snAcc('💶', acL('Subvenciones', 'Subvencions'), "showScreen('subvenciones');renderSubvencionesScreen()"),
+        snAcc('🎓', acL('Mi formación', 'La meva formació'), "showScreen('miformacion');renderMiFormacion()"),
+        snAcc('📖', acL('Guía rápida', 'Guia ràpida'), "typeof guiaAbrirIntranet==='function'?guiaAbrirIntranet():null")
+      ].join('')}</div>
+    </div>`;
+  pgAreaPrivada(); incBadge();
+  const pon = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
+  const hoy0 = new Date(); hoy0.setHours(0, 0, 0, 0);
+  const [st, fi, nm, ic] = await Promise.all([
+    sb.from('staff').select('email').eq('activo', true),
+    sb.from('fichajes').select('tecnico_email, salida').gte('entrada', hoy0.toISOString()),
+    sb.from('personal_nominas').select('persona_email').eq('anio', mesAnt.getFullYear()).eq('mes', mesAnt.getMonth() + 1),
+    sb.from('incidencias').select('id, destino, autor_id').neq('estado', 'resuelta').limit(500)
+  ].map(q => Promise.resolve(q).catch(() => ({ error: true }))));
+  const nPers = st.error ? null : (st.data || []).length;
+  pon('rh-s-pers', nPers == null ? '—' : nPers);
+  if(fi.error) pon('rh-s-dentro', '—');
+  else { const em = new Set((fi.data || []).map(f => String(f.tecnico_email).toLowerCase())); const dentro = new Set((fi.data || []).filter(f => !f.salida).map(f => String(f.tecnico_email).toLowerCase())); pon('rh-s-dentro', em.size + (dentro.size ? ` · ${dentro.size} ${acL('dentro', 'dins')}` : '')); }
+  if(nm.error) pon('rh-s-nom', '—'); else { const n = new Set((nm.data || []).map(x => String(x.persona_email).toLowerCase())).size; pon('rh-s-nom', nPers ? `${n}/${nPers}` : String(n)); }
+  const nInc = ic.error ? null : (ic.data || []).filter(i => i.autor_id !== CURRENT_USER.id && incMeToca(i.destino)).length;
+  pon('rh-s-inc', nInc == null ? '—' : nInc);
+  const b = document.getElementById('rh-n-inc'); if(b && nInc){ b.textContent = nInc; b.style.display = ''; }
+}
 async function renderPanelGeneral(){
   if(IS_JOVENES) return renderPanelJovenes();
-  if(IS_RRHH_SOLO){ showScreen('gestionpersonal'); return renderGestionPersonal('rrhh'); }
+  if(IS_RRHH_SOLO) return renderPanelRRHH();
   const cont = document.getElementById('panel-content');
   const t = TI[LANG_I];
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
@@ -16286,6 +16449,7 @@ async function renderPanelGeneral(){
           <div id="topbar-search-results" class="search-results" style="display:none;"></div>
         </div>
       </div>
+      ${rrhhTiraHtml()}
       <div class="sn-sec-t">${LANG_I==='ca' ? 'Les meves properes cites' : 'Mis próximas citas'}<button onclick="showScreen('agenda');renderAgendaCitas()">${LANG_I==='ca' ? 'Agenda' : 'Agenda'}</button></div>
       <div class="sn-citas" id="sn-mis-citas"><div class="sn-vacio">${t.cargando}</div></div>
       <button class="sn-cta" onclick="abrirNuevaCitaStaff()">${LANG_I==='ca' ? 'Nova cita / Cercar persona' : 'Nueva cita / Buscar persona'}</button>
@@ -17720,7 +17884,7 @@ async function renderAdministrador(){
         ${('es_soporte' in s && s.activo !== false) ? `<button class="link-btn" style="font-size:12px;${s.es_soporte ? 'color:var(--good);' : 'color:#888;'}" title="${acL('Recibe las incidencias de soporte técnico', 'Rep les incidències de suport tècnic')}" onclick="toggleSoporte('${s.email}', ${!s.es_soporte})">🛠️ ${s.es_soporte ? acL('Soporte técnico ✓', 'Suport tècnic ✓') : acL('Soporte técnico', 'Suport tècnic')}</button>` : ''}
         <button class="link-btn" style="font-size:12px;" onclick="editarNombreTecnico('${s.email}')">✏️ ${acL('Nombre', 'Nom')}</button>
         ${('acepta_citas' in s && s.activo !== false) ? `<button class="link-btn" style="font-size:12px;${atiendeCitas(s) ? 'color:var(--good);' : 'color:#888;'}" title="${acL('Si sale en la lista de técnicos al pedir cita en Logos Acompanya', 'Si surt a la llista de tècnics en demanar cita a Logos Acompanya')}" onclick="toggleAtiendeCitas('${s.email}')">📅 ${atiendeCitas(s) ? acL('Atiende citas ✓', 'Atén cites ✓') : acL('No atiende citas', 'No atén cites')}</button>` : ''}
-        ${(JOVENES_OK && !s.es_admin) ? `<select style="font-size:12px;max-width:150px;" title="${acL('Qué parte de la plataforma ve', 'Quina part de la plataforma veu')}" onchange="cambiarAmbitoTecnico('${s.email}', this.value)"><option value="general"${s.ambito !== 'jovenes' ? ' selected' : ''}>${acL('Equipo general', 'Equip general')}</option><option value="jovenes"${s.ambito === 'jovenes' ? ' selected' : ''}>🌱 ${acL('Solo Jóvenes en acción', 'Només Joves en acció')}</option><option value="rrhh"${s.ambito === 'rrhh' ? ' selected' : ''}>💼 ${acL('Solo Recursos Humanos', 'Només Recursos Humans')}</option></select>` : ''}
+        ${(JOVENES_OK && !s.es_admin) ? `<select style="font-size:12px;max-width:150px;" title="${acL('Qué parte de la plataforma ve', 'Quina part de la plataforma veu')}" onchange="cambiarAmbitoTecnico('${s.email}', this.value)"><option value="general"${s.ambito !== 'jovenes' && s.ambito !== 'rrhh' && !s.es_rrhh ? ' selected' : ''}>${acL('Equipo general', 'Equip general')}</option><option value="tecnico_rrhh"${s.ambito !== 'jovenes' && s.ambito !== 'rrhh' && s.es_rrhh ? ' selected' : ''}>🧑‍💼 ${acL('Técnico/a + RR. HH.', 'Tècnic/a + RR. HH.')}</option><option value="jovenes"${s.ambito === 'jovenes' ? ' selected' : ''}>🌱 ${acL('Solo Jóvenes en acción', 'Només Joves en acció')}</option><option value="rrhh"${s.ambito === 'rrhh' ? ' selected' : ''}>💼 ${acL('Solo Recursos Humanos', 'Només Recursos Humans')}</option></select>` : ''}
         <button class="link-btn" style="font-size:12px;" title="${acL('Enviar enlace para elegir contraseña', 'Enviar enllaç per triar contrasenya')}" onclick="enviarEnlaceClave('${s.email}')">🔑 ${acL('Enlace', 'Enllaç')}</button>
         <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="quitarTecnico('${s.email}')">${acL('Quitar', 'Treure')}</button>
       </span>
@@ -17885,7 +18049,7 @@ async function renderAdministrador(){
         </div>
         ${JOVENES_OK ? `<div class="field">
           <label>${acL('¿Qué parte de la plataforma verá?', 'Quina part de la plataforma veurà?')}</label>
-          <select id="admin-nuevo-ambito"><option value="general">${acL('Equipo general (todo)', 'Equip general (tot)')}</option><option value="jovenes">🌱 ${acL('Solo Jóvenes en acción (panel propio)', 'Només Joves en acció (panell propi)')}</option><option value="rrhh">💼 ${acL('Solo Recursos Humanos (nóminas, avisos y archivos)', 'Només Recursos Humans (nòmines, avisos i arxius)')}</option></select>
+          <select id="admin-nuevo-ambito"><option value="general">${acL('Equipo general (todo)', 'Equip general (tot)')}</option><option value="tecnico_rrhh">🧑‍💼 ${acL('Técnico/a + Recursos Humanos', 'Tècnic/a + Recursos Humans')}</option><option value="jovenes">🌱 ${acL('Solo Jóvenes en acción (panel propio)', 'Només Joves en acció (panell propi)')}</option><option value="rrhh">💼 ${acL('Solo Recursos Humanos (nóminas, avisos y archivos)', 'Només Recursos Humans (nòmines, avisos i arxius)')}</option></select>
         </div>` : ''}
         <button class="link-btn" onclick="agregarTecnico()">${t.anadirPlataforma}</button>
       </div>
@@ -18543,6 +18707,7 @@ async function agregarTecnico(){
   const ambito = (document.getElementById('admin-nuevo-ambito') || {}).value;
   if(JOVENES_OK && ambito === 'jovenes') fila.ambito = 'jovenes';
   if(JOVENES_OK && ambito === 'rrhh'){ fila.ambito = 'rrhh'; fila.es_rrhh = true; }
+  if(ambito === 'tecnico_rrhh') fila.es_rrhh = true;
   const { error } = await sb.from('staff').insert(fila);
   if(error){ alert(error.message); return; }
   renderAdministrador();
@@ -18560,8 +18725,9 @@ async function cambiarAmbitoTecnico(email, ambito){
   if(s && s.es_admin){ alert(acL('La administración siempre ve toda la plataforma.', 'L\'administració sempre veu tota la plataforma.')); renderAdministrador(); return; }
   if(ambito === 'jovenes' && !confirm(acL(`¿Dejar a ${nombre} solo con Jóvenes en acción?\n\nVerá únicamente su panel, la gestión de Jóvenes en acción y su fichaje. No verá personas usuarias, expedientes ni contabilidad, y las alertas de la convocatoria le llegarán a su panel.`, `Deixar ${nombre} només amb Joves en acció?\n\nVeurà únicament el seu panell, la gestió de Joves en acció i el seu fitxatge. No veurà persones usuàries, expedients ni comptabilitat, i les alertes de la convocatòria li arribaran al seu panell.`))){ renderAdministrador(); return; }
   if(ambito === 'rrhh' && !confirm(acL(`¿Dejar a ${nombre} solo con Recursos Humanos?\n\nPodrá subir nóminas y archivos, enviar comunicados y gestionar avisos y recordatorios. No verá personas usuarias, expedientes ni contabilidad.`, `Deixar ${nombre} només amb Recursos Humans?\n\nPodrà pujar nòmines i arxius, enviar comunicats i gestionar avisos i recordatoris. No veurà persones usuàries, expedients ni comptabilitat.`))){ renderAdministrador(); return; }
-  const cambios = { ambito };
-  if(ambito === 'rrhh') cambios.es_rrhh = true;
+  if(ambito === 'tecnico_rrhh' && !confirm(acL(`¿${nombre} será técnico/a y también RR. HH.?\n\nAtenderá personas como el resto del equipo (fichas, citas, mesa, Aula Virtual…) y además tendrá nóminas, comunicados, personal e incidencias de RR. HH.`, `${nombre} serà tècnic/a i també RR. HH.?\n\nAtendrà persones com la resta de l'equip (fitxes, cites, taula, Aula Virtual…) i a més tindrà nòmines, comunicats, personal i incidències de RR. HH.`))){ renderAdministrador(); return; }
+  const cambios = { ambito: ambito === 'tecnico_rrhh' ? 'general' : ambito };
+  if(ambito === 'rrhh' || ambito === 'tecnico_rrhh') cambios.es_rrhh = true;
   if(ambito === 'jovenes' || ambito === 'rrhh') cambios.orden_alertas = null;     // sale del turno general
   const { error } = await staffCambiar(email, cambios);
   if(error){ alert(error.message); return; }
