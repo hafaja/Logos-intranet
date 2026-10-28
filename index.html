@@ -2425,7 +2425,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v168'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v170'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -11979,11 +11979,11 @@ async function limpiarRegistrosAntiguos(tipo){
 const acL = (es, ca) => LANG_I === 'ca' ? ca : es;
 
 // ---------- Horario de atención de Logos (1 = lunes … 7 = domingo) ----------
-// Lunes, martes y jueves: 8–14 y 16–20, con cita. Miércoles: de 9 a 13:30 sin cita previa (no se dan citas). Viernes: 8–14 con cita; tarde cerrado.
+// Lunes, martes y jueves: 8–14 y 16–20, con cita. Miércoles: 9–13:30 sin cita previa (atención al público) y 16–20 con cita. Viernes: 8–14 con cita; tarde cerrado.
 const LOGOS_HORARIO = {
   1: { m:['08:00','14:00'], t:['16:00','20:00'], cita:true },
   2: { m:['08:00','14:00'], t:['16:00','20:00'], cita:true },
-  3: { m:['09:00','13:30'], t:null, cita:false },
+  3: { m:['09:00','13:30'], t:['16:00','20:00'], cita:true, sinCita:['09:00','13:30'] },
   4: { m:['08:00','14:00'], t:['16:00','20:00'], cita:true },
   5: { m:['08:00','14:00'], t:null, cita:true }
 };
@@ -11999,7 +11999,7 @@ function logosTramosDia(dia){ const h = LOGOS_HORARIO[dia]; return h ? [h.m, h.t
 function logosEstadoAhora(){
   const n = logosMadridAhora(), h = LOGOS_HORARIO[n.dia];
   const tramo = logosTramosDia(n.dia).find(t => n.min >= logosMin(t[0]) && n.min < logosMin(t[1]));
-  if(tramo) return { abierto:true, sinCita: !h.cita, hasta: tramo[1], hoy: logosTramosDia(n.dia).map(t => t[0].replace(/^0/, '') + '–' + t[1]).join(' · ') };
+  if(tramo) return { abierto:true, sinCita: !h.cita || !!(h.sinCita && tramo[0] === h.sinCita[0]), hasta: tramo[1], hoy: logosTramosDia(n.dia).map(t => t[0].replace(/^0/, '') + '–' + t[1]).join(' · ') };
   // Próxima apertura
   for(let i = 0; i < 8; i++){
     const dia = ((n.dia - 1 + i) % 7) + 1;
@@ -12026,8 +12026,8 @@ function logosEstadoHtml(){
 }
 function logosHorarioTexto(){
   const ca = LANG_I === 'ca';
-  return ca ? 'Dilluns, dimarts i dijous: 8–14 h i 16–20 h (amb cita). Dimecres: de 9 a 13:30 h sense cita prèvia (no es donen cites). Divendres: 8–14 h (amb cita); tarda tancat.'
-            : 'Lunes, martes y jueves: 8–14 h y 16–20 h (con cita). Miércoles: de 9 a 13:30 h sin cita previa (no se dan citas). Viernes: 8–14 h (con cita); tarde cerrado.';
+  return ca ? 'Dilluns, dimarts i dijous: 8–14 h i 16–20 h (amb cita). Dimecres: de 9 a 13:30 h sense cita prèvia (atenció al públic) i de 16 a 20 h amb cita. Divendres: 8–14 h (amb cita); tarda tancat.'
+            : 'Lunes, martes y jueves: 8–14 h y 16–20 h (con cita). Miércoles: de 9 a 13:30 h sin cita previa (atención al público) y de 16 a 20 h con cita. Viernes: 8–14 h (con cita); tarde cerrado.';
 }
 let CLAVE_CAMBIADA = true;    // true = no se le pide nada (también si el SQL nuevo aún no está en Supabase)
 let REPARTO_OK = false;       // true cuando la base de datos ya tiene el reparto de alertas
@@ -15715,7 +15715,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-28 · v168 (menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-28 · v170 (miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
