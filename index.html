@@ -856,6 +856,24 @@
 .pg-hero .sn-ic:hover{background:rgba(255,255,255,.24);border-color:#F2BC2C;}
 .pg-hero .sn-ic-n{background:#F2BC2C;color:#163F7A;}
 .pg-area{margin:0 0 14px;}
+.nav-solo{font-size:10px;font-weight:600;background:rgba(242,188,44,.25);color:#FFE08A;border-radius:999px;padding:1px 7px;margin-left:4px;}
+.adm-grupo{background:#fff;border:1px solid var(--line);border-radius:18px;margin:0 0 14px;box-shadow:var(--shadow);overflow:hidden;}
+.adm-grupo > summary{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;list-style:none;}
+.adm-grupo > summary::-webkit-details-marker{display:none;}
+.adm-grupo > summary::after{content:'▾';margin-left:6px;color:var(--ink-soft);transition:transform .15s;}
+.adm-grupo:not([open]) > summary::after{transform:rotate(-90deg);}
+.adm-g-ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;background:#E6EEF9;}
+.adm-g-t{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
+.adm-g-t strong{font-size:16px;color:var(--ink);}
+.adm-g-t small{font-size:12px;color:var(--ink-soft);}
+.adm-g-n{background:#EEF2F7;color:var(--ink);border-radius:999px;font-size:12px;font-weight:700;padding:2px 9px;}
+.adm-g-c{padding:0 12px 12px;border-top:1px solid var(--line);}
+.adm-g-c > details.carpeta{margin-top:10px;}
+.adm-g-dir{border-left:5px solid #163F7A;} .adm-g-dir .adm-g-ic{background:#E6EEF9;}
+.adm-g-rrhh{border-left:5px solid #F2BC2C;} .adm-g-rrhh .adm-g-ic{background:#FFF4D6;}
+.adm-g-per{border-left:5px solid #2E8B47;} .adm-g-per .adm-g-ic{background:#E5F5EC;}
+.adm-g-esp{border-left:5px solid #7A5AF8;} .adm-g-esp .adm-g-ic{background:#EFEAFE;}
+.adm-g-ir{margin:10px 0 0;border:1px dashed #F2BC2C;background:#FFFBEA;color:#163F7A;border-radius:12px;padding:9px 14px;font:600 13.5px var(--font-body);cursor:pointer;width:100%;text-align:left;}
 .pg-bandeja{position:relative;z-index:6;background:#fff;color:var(--ink);border-radius:16px;padding:10px 14px 12px;margin:0 0 14px;box-shadow:0 14px 30px -16px rgba(0,0,0,.45);max-height:60vh;overflow:auto;animation:pgBj .18s ease-out;}
 @keyframes pgBj{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
 .pg-bj-cab{display:flex;align-items:center;gap:8px;position:sticky;top:-10px;background:#fff;padding:2px 0 8px;margin:0 0 6px;border-bottom:1px solid var(--line);z-index:1;}
@@ -1192,14 +1210,33 @@ body{font-size:15.5px;}
         <button data-target="formaciones" onclick="showScreen('formaciones');renderFormacionesScreen()">🎓 Formaciones</button>
       </details>
 
+      <details class="nav-grupo nav-g-rol" id="nav-g-admin" data-rol="admin" ontoggle="plegableGuardar('nav-admin', this.open)">
+        <summary>🛡️ Administración <small class="nav-solo">solo tú</small></summary>
+        <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()">🛡️ Panel de administración</button>
+        <button data-target="admin" data-adm="personal" onclick="admIr('personal', this)">👥 Equipo y permisos</button>
+        <button data-target="admin" data-adm="reparto" onclick="admIr('reparto', this)">🔔 Reparto de alertas</button>
+        <button data-target="admin" data-adm="atenciones" onclick="admIr('atenciones', this)">🗂️ Registros de atención</button>
+        <button data-target="contabilidad" id="nav-conta-btn" onclick="showScreen('contabilidad');renderContabilidad()">🧾 Contabilidad</button>
+      </details>
+
+      <details class="nav-grupo nav-g-rol" id="nav-g-rrhh" data-rol="rrhh" ontoggle="plegableGuardar('nav-rrhh', this.open)">
+        <summary>💼 Recursos Humanos</summary>
+        <button data-target="gestionpersonal" data-rh="resumen" onclick="rrhhIr('resumen', this)">🔔 Pendientes</button>
+        <button data-target="gestionpersonal" data-rh="nominas" onclick="rrhhIr('nominas', this)">🧾 Nóminas</button>
+        <button data-target="gestionpersonal" data-rh="personas" onclick="rrhhIr('personas', this)">👥 Por persona</button>
+        <button data-target="gestionpersonal" data-rh="horarios" onclick="rrhhIr('horarios', this)">🕘 Horarios del personal</button>
+        <button data-target="gestionpersonal" data-rh="comunicados" onclick="rrhhIr('comunicados', this)">📣 Comunicados</button>
+        <button data-target="gestionpersonal" data-rh="avisos" onclick="rrhhIr('avisos', this)">📰 Noticias y recordatorios</button>
+        <button data-target="gestionpersonal" data-rh="docgen" onclick="rrhhIr('docgen', this)">📄 Documentos generales</button>
+        <button data-target="gestionpersonal" data-rh="registro" onclick="rrhhIr('registro', this)">📋 Registro</button>
+      </details>
+
       <details class="nav-grupo" id="nav-g-datos" ontoggle="plegableGuardar('nav-datos', this.open)">
         <summary>📊 Datos y gestión</summary>
         <button data-target="impacto" id="nav-impacto-btn" onclick="showScreen('impacto');renderImpacto()">📊 Impacto</button>
         <button data-target="informes" onclick="showScreen('informes');renderInformesScreen()">📈 Informes y datos</button>
         <button data-target="subvenciones" onclick="showScreen('subvenciones');renderSubvencionesScreen()">💶 Subvenciones</button>
         <button data-target="noticias" onclick="showScreen('noticias');renderNoticiasScreen()">📰 Portales del día</button>
-        <button data-target="contabilidad" id="nav-conta-btn" onclick="showScreen('contabilidad');renderContabilidad()" style="display:none;">🧾 Contabilidad</button>
-        <button data-target="admin" id="nav-admin-btn" onclick="showScreen('admin');renderAdministrador()" style="display:none;">Administrador</button>
         <button data-target="qrapp" onclick="showScreen('qrapp');renderQrAppScreen()">📲 QR de Logos Acompanya</button>
         <button data-target="config" onclick="showScreen('config');renderConfigScreen()">⚙️ Configuración</button>
       </details>
@@ -2216,7 +2253,7 @@ function aplicarTraduccionesSidebar(){
   try { navPintar(); } catch(e){}
   document.querySelector('.sidebar nav button[data-target="miespacio"]').innerHTML = '🧑‍💼 ' + t.miEspacio;
   document.querySelector('.sidebar nav button[data-target="panel"]').innerHTML = `🏠 ${t.panelGeneral} <span id="badge-panel" class="nav-badge" style="display:none;">0</span>`;
-  document.getElementById('nav-admin-btn').innerHTML = t.administrador;
+  document.getElementById('nav-admin-btn').innerHTML = '🛡️ ' + (LANG_I === 'ca' ? 'Panell d\'administració' : 'Panel de administración');
   document.getElementById('nav-conta-btn').innerHTML = '🧾 ' + (LANG_I === 'ca' ? 'Comptabilitat' : 'Contabilidad');
   document.getElementById('sidebar-logout-btn').innerHTML = t.cerrarSesion;
   const heroTitle = document.querySelector('.hero-title');
@@ -2236,6 +2273,53 @@ function aplicarMenuPorRol(){
   });
   document.querySelectorAll('.sidebar nav .nav-grupo').forEach(g => {
     g.classList.toggle('rol-oculto', (IS_JOVENES || IS_RRHH_SOLO) && !g.querySelector('button[data-target]:not(.rol-oculto)'));
+  });
+  // Grupos propios de cada rol: «Administración» solo para administración; «Recursos Humanos» para RR. HH. (y administración)
+  const gA = document.getElementById('nav-g-admin'), gR = document.getElementById('nav-g-rrhh');
+  if(gA) gA.classList.toggle('rol-oculto', !IS_ADMIN);
+  if(gR) gR.classList.toggle('rol-oculto', !(IS_ADMIN || IS_RRHH || IS_RRHH_SOLO));
+}
+function navMarcar(btn){ if(!btn) return; document.querySelectorAll('.sidebar nav button').forEach(b => b.classList.remove('active')); btn.classList.add('active'); const g = btn.closest('details.nav-grupo'); if(g && !g.open) g.open = true; }
+async function rrhhIr(sub, btn){
+  window.__gpSub = sub;
+  showScreen('gestionpersonal'); await renderGestionPersonal('rrhh');
+  navMarcar(btn || document.querySelector('.sidebar nav button[data-rh="' + sub + '"]'));
+}
+async function admIr(clave, btn){
+  showScreen('admin'); await renderAdministrador();
+  navMarcar(btn);
+  const d = document.querySelector('#admin-content details.carpeta[data-clave="adm-sec:' + clave + '"]');
+  if(d){ d.open = true; carpetaAlternar(d.dataset.clave, true); const g = d.closest('details.adm-grupo'); if(g) g.open = true; setTimeout(() => d.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60); }
+}
+// Pantalla Administrador: las carpetas se agrupan por a quién le tocan
+const ADM_GRUPOS = [
+  { id: 'dir', ic: '🛡️', es: 'Dirección · solo administración', ca: 'Direcció · només administració', des: ['Equipo, permisos y lo que solo decides tú.', 'Equip, permisos i el que només decideixes tu.'], claves: ['personal', 'reparto', 'carga', 'oficina', 'proyectos', 'historia', 'noticias'] },
+  { id: 'rrhh', ic: '💼', es: 'Recursos Humanos', ca: 'Recursos Humans', des: ['Horarios y fichajes del personal. Nóminas y comunicados están en Recursos Humanos.', 'Horaris i fitxatges del personal. Nòmines i comunicats són a Recursos Humans.'], claves: ['horarios', 'fichajes'], rrhh: true },
+  { id: 'per', ic: '🗂️', es: 'Personas atendidas y registros', ca: 'Persones ateses i registres', des: ['Fichas, revisiones y todo lo registrado.', 'Fitxes, revisions i tot el que s\'ha registrat.'], claves: ['revisiones', 'incompletos', 'historial', 'fuera', 'atenciones', 'actuaciones'] },
+  { id: 'esp', ic: '🏢', es: 'Espacios y herramientas', ca: 'Espais i eines', des: ['Salas, reuniones y traductor.', 'Sales, reunions i traductor.'], claves: ['salas', 'traductor'] }
+];
+function admAgrupar(cont){
+  if(!cont) return;
+  const carpetas = [...cont.children].filter(el => el.matches && el.matches('details.carpeta[data-clave^="adm-sec:"]'));
+  if(!carpetas.length) return;
+  const ancla = document.createElement('div'); ancla.className = 'adm-grupos';
+  cont.insertBefore(ancla, carpetas[0]);
+  const usadas = new Set();
+  const ca = LANG_I === 'ca';
+  [...ADM_GRUPOS, { id: 'otros', ic: '📦', es: 'Otros', ca: 'Altres', des: ['', ''], claves: null }].forEach(gr => {
+    const mias = carpetas.filter(c => { const k = c.dataset.clave.slice(8); return gr.claves ? gr.claves.includes(k) : !usadas.has(c); });
+    if(!mias.length) return;
+    if(gr.claves) mias.sort((x, y) => gr.claves.indexOf(x.dataset.clave.slice(8)) - gr.claves.indexOf(y.dataset.clave.slice(8)));
+    mias.forEach(c => usadas.add(c));
+    const g = document.createElement('details'); g.className = 'adm-grupo adm-g-' + gr.id;
+    let abierto = true; try { const v = localStorage.getItem('adm-grupo:' + gr.id); if(v !== null) abierto = v === '1'; } catch(e){}
+    g.open = abierto;
+    g.addEventListener('toggle', () => { try { localStorage.setItem('adm-grupo:' + gr.id, g.open ? '1' : '0'); } catch(e){} });
+    g.innerHTML = `<summary><span class="adm-g-ic">${gr.ic}</span><span class="adm-g-t"><strong>${ca ? gr.ca : gr.es}</strong>${gr.des[ca ? 1 : 0] ? `<small>${gr.des[ca ? 1 : 0]}</small>` : ''}</span><span class="adm-g-n">${mias.length}</span></summary><div class="adm-g-c"></div>`;
+    const c = g.querySelector('.adm-g-c');
+    if(gr.rrhh) c.insertAdjacentHTML('beforeend', `<button class="adm-g-ir" onclick="rrhhIr('nominas')">🧾 ${ca ? 'Nòmines, comunicats i personal' : 'Nóminas, comunicados y personal'} →</button>`);
+    mias.forEach(x => c.appendChild(x));
+    ancla.appendChild(g);
   });
 }
 // Las funciones del servidor comprueban quién llama a partir de la sesión: se envía el token de la persona.
@@ -2341,7 +2425,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v167'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v168'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -2412,7 +2496,7 @@ function navPantallaInicio(){
 // Apartados del menú en orden (solo los que ve cada perfil)
 function navSecciones(){
   return Array.from(document.querySelectorAll('.sidebar nav button[data-target]')).filter(b => {
-    if(b.classList.contains('rol-oculto') || b.style.display === 'none') return false;
+    if(b.classList.contains('rol-oculto') || b.style.display === 'none' || b.dataset.adm || b.dataset.rh) return false;
     const g = b.closest('.nav-grupo'); return !(g && g.classList.contains('rol-oculto'));
   });
 }
@@ -2592,8 +2676,6 @@ async function checkStaff(){
   CURRENT_USER_NOMBRE = (data && data.nombre) || null;
   window.__staffYo = data || null;
   if(IS_STAFF) setTimeout(() => { try { staffPedirTelefono(false); } catch(e){} }, 2500);
-  document.getElementById('nav-admin-btn').style.display = IS_ADMIN ? '' : 'none';
-  document.getElementById('nav-conta-btn').style.display = IS_ADMIN ? '' : 'none';
   aplicarMenuPorRol();
   if(IS_STAFF) fichajeRefrescar();
   // Datos nuevos (contraseña propia y reparto de alertas). Si el SQL aún no está en Supabase se ignoran y todo sigue como antes.
@@ -15633,7 +15715,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-28 · v167 (Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-28 · v168 (menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -18255,6 +18337,7 @@ async function renderAdministrador(){
     ${carpetaCierra()}
   `;
 
+  admAgrupar(cont);
   activarBarras();
   historiaPintar();
   renderHorasEquipo();
