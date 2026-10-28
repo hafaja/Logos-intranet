@@ -899,6 +899,45 @@
 @keyframes avisoAt{0%{box-shadow:0 0 0 0 rgba(229,72,77,.65);background:#E5484D;}50%{box-shadow:0 0 0 7px rgba(229,72,77,0);background:#F97316;}100%{box-shadow:0 0 0 0 rgba(229,72,77,0);background:#E5484D;}}
 @media (prefers-reduced-motion: reduce){ .aviso-at{animation:none;} }
 .mesa-chip.sin-at{background:#FDE8E8;color:#B42318;animation:avisoAt 1.6s ease-in-out infinite;}
+.pj-hero{position:relative;background:linear-gradient(135deg,#163F7A 0%,#2463B8 60%,#3B82D9 100%);color:#fff;border-radius:22px;padding:18px 20px;margin:16px 0 16px;box-shadow:0 18px 36px -22px rgba(22,63,122,.9);overflow:hidden;}
+.pj-hero::after{content:'λ';position:absolute;right:18px;bottom:-34px;font-size:150px;font-family:Georgia,serif;color:rgba(255,255,255,.08);pointer-events:none;}
+.pj-hero-top{display:flex;gap:14px;align-items:flex-start;}
+.pj-ic{width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:27px;flex:0 0 auto;}
+.pj-hero-t{flex:1;min-width:0;}
+.pj-hero-t small{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.8);font-weight:700;}
+.pj-hero-t h2{margin:2px 0 4px;font-size:26px;line-height:1.15;color:#fff;}
+.pj-hero-t p{margin:0;color:rgba(255,255,255,.88);font-size:14px;}
+.pj-estado{display:inline-block;border-radius:999px;padding:1px 9px;font-size:11px;letter-spacing:0;text-transform:none;background:#2E8B47;color:#fff;}
+.pj-e-pausado{background:#F2BC2C;color:#163F7A;} .pj-e-finalizado{background:#6B7280;}
+.pj-x{border:none;background:rgba(255,255,255,.16);color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:15px;flex:0 0 auto;}
+.pj-x:hover{background:rgba(255,255,255,.28);}
+.pj-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0 14px;position:relative;z-index:1;}
+.pj-kpi{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.24);border-radius:16px;padding:10px 12px;color:#fff;font-family:inherit;text-align:left;cursor:pointer;transition:background .15s,transform .15s;}
+.pj-kpi:hover{background:rgba(255,255,255,.22);transform:translateY(-2px);}
+.pj-kpi-i{width:38px;height:38px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;flex:0 0 auto;}
+.pj-kpi strong{display:block;font-size:22px;line-height:1;color:#fff;}
+.pj-kpi small{font-size:12px;color:rgba(255,255,255,.85);}
+.pj-acc{display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:relative;z-index:1;}
+.pj-btn{border:none;background:#F2BC2C;color:#163F7A;font:700 14px var(--font-body);border-radius:999px;padding:10px 18px;cursor:pointer;}
+.pj-btn:hover{background:#FFD45A;}
+.pj-sel{display:flex;align-items:center;gap:6px;font-size:13px;color:rgba(255,255,255,.9);}
+.pj-sel select{border:none;border-radius:999px;padding:8px 12px;font:600 13px var(--font-body);color:#163F7A;background:#fff;}
+.pj-borrar{margin-left:auto;border:1px solid rgba(255,255,255,.35);background:none;color:#fff;border-radius:999px;padding:8px 14px;font:600 12.5px var(--font-body);cursor:pointer;opacity:.85;}
+.pj-borrar:hover{background:#C0392B;border-color:#C0392B;opacity:1;}
+.pj-cmp{grid-template-columns:220px minmax(0,1fr) !important;}
+.pj-main .pj-sec{margin:0 0 14px;}
+.pj-main > .panel-card, .pj-main > section{background:#fff;border:1px solid #E2E7EF;border-radius:18px;padding:16px 18px;box-shadow:0 8px 22px -18px rgba(27,42,68,.6);}
+.pj-main h3, .pj-h{font-size:19px;margin:0 0 10px;color:var(--ink);}
+.pj-pasos{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;}
+.pj-paso{position:relative;display:flex;flex-direction:column;gap:3px;text-align:left;background:#F5F9FE;border:1.5px solid #D9E6F7;border-radius:16px;padding:14px 14px 12px;font-family:inherit;cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;}
+.pj-paso:hover{transform:translateY(-2px);border-color:#2463B8;box-shadow:0 10px 20px -14px rgba(36,99,184,.7);}
+.pj-paso.dest{background:#FFF8E1;border-color:#F2BC2C;}
+.pj-paso-i{font-size:24px;margin-bottom:4px;}
+.pj-paso strong{font-size:15px;color:var(--ink);}
+.pj-paso small{font-size:12.5px;color:var(--ink-soft);}
+.pj-paso-f{position:absolute;right:12px;top:12px;color:#2463B8;font-weight:800;}
+.pj-ult{margin-top:12px;background:#F7F9FC;border-radius:12px;padding:10px 12px;font-size:13px;}
+@media (max-width:820px){ .pj-kpis{grid-template-columns:repeat(2,minmax(0,1fr));} .pj-hero-t h2{font-size:21px;} .pj-borrar{margin-left:0;} .pj-cmp{grid-template-columns:1fr !important;} }
 .rh-tira{background:linear-gradient(135deg,#FFF8E1,#FDF0C2);border:1px solid #F2BC2C;border-radius:16px;padding:10px 12px;margin:10px 0 14px;}
 .rh-tira-t{display:flex;align-items:baseline;gap:8px;font-weight:700;font-size:14px;color:#163F7A;margin:0 0 8px;}
 .rh-tira-t small{font-weight:500;font-size:11.5px;color:#8A6100;}
@@ -2439,7 +2478,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v172'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v175'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -2647,17 +2686,44 @@ function showScreen(name){
   if(name !== 'login' && CURRENT_USER) recuerdoGuardar({ pantalla: name, persona: name === 'persona' ? (window.__usuarioIdVisto || null) : null, origen: window.__origenPersonaVista || null });
 }
 
-function animateNumber(el, target){
+function animateNumber(el, target){ contarHasta(el, Number(target) || 0); }
+// Cifras que suben de 0 hasta su valor (como en la web de Logos), cuando se ven en pantalla
+const CONTAR_SEL = '.stat-icon-num, .stat-num, .imp-total-n, .imp-big, .mi-act-grid strong, .rh-num';
+function contarFormato(n){ return Math.round(n).toLocaleString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES'); }
+function contarHasta(el, objetivo, ms){
   if(!el) return;
-  let cur = 0;
-  const step = Math.max(1, Math.ceil(target / 24));
-  const tick = () => {
-    cur = Math.min(target, cur + step);
-    el.textContent = cur;
-    if(cur < target) requestAnimationFrame(tick);
+  el.dataset.ct = '1';
+  objetivo = Number(objetivo) || 0;
+  if(!objetivo){ el.textContent = '0'; return; }
+  const dur = ms || Math.min(2200, 900 + Math.log10(objetivo + 1) * 400);
+  const arrancar = () => {
+    const t0 = performance.now();
+    const paso = ahora => { const k = Math.min(1, (ahora - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = contarFormato(objetivo * e); if(k < 1) requestAnimationFrame(paso); else el.textContent = contarFormato(objetivo); };
+    requestAnimationFrame(paso);
   };
-  tick();
+  if('IntersectionObserver' in window){
+    const r = el.getBoundingClientRect();
+    if(r.top < window.innerHeight && r.bottom > 0 && r.width){ arrancar(); return; }
+    el.textContent = '0';
+    const io = new IntersectionObserver(ent => { if(ent.some(x => x.isIntersecting)){ io.disconnect(); arrancar(); } }, { threshold: .3 });
+    io.observe(el);
+  } else arrancar();
 }
+function contarAuto(raiz){
+  (raiz || document).querySelectorAll(CONTAR_SEL).forEach(el => {
+    if(el.dataset.ct || el.children.length) return;
+    const t = el.textContent.trim();
+    if(!/^\d[\d.,\s]*$/.test(t) || /[.,]\d{1,2}$/.test(t)) return;   // solo enteros (los decimales se dejan como están)
+    const n = Number(t.replace(/[.,\s]/g, ''));
+    if(!n || n > 10000000) { el.dataset.ct = '1'; return; }
+    contarHasta(el, n);
+  });
+}
+(function(){
+  let pend = false;
+  const mo = new MutationObserver(() => { if(pend) return; pend = true; requestAnimationFrame(() => { pend = false; try { contarAuto(document.querySelector('.screen.active') || document); } catch(e){} }); });
+  document.addEventListener('DOMContentLoaded', () => { try { mo.observe(document.body, { childList: true, subtree: true }); } catch(e){} });
+})();
 
 function barRow(label, val, max){
   const pct = max > 0 ? Math.round((val / max) * 100) : 0;
@@ -8336,13 +8402,13 @@ function chVistoClave(id){ return 'logos_chat_visto_' + id; }
 // Caja de mensajes (se pone dentro de cualquier pantalla)
 function cursoChatHtml(cursoId, titulo){
   return `<div class="cchat" id="cchat-${chEsc(cursoId)}" data-curso="${chEsc(cursoId)}">
-    <div class="cchat-cab"><span>💬 ${chT('Mensajes del curso', 'Missatges del curs')}${titulo ? ' · ' + chEsc(titulo) : ''}</span><span class="cchat-wa" id="cchat-wa-${chEsc(cursoId)}"></span></div>
+    <div class="cchat-cab"><span>💬 ${String(cursoId).startsWith('proy:') ? chT('Mensajes del proyecto', 'Missatges del projecte') : chT('Mensajes del curso', 'Missatges del curs')}${titulo ? ' · ' + chEsc(titulo) : ''}</span><span class="cchat-wa" id="cchat-wa-${chEsc(cursoId)}"></span></div>
     <div class="cchat-lista" id="cchat-lista-${chEsc(cursoId)}"><div class="cchat-vacio">${chT('Cargando…', 'Carregant…')}</div></div>
     <div class="cchat-form">
       <textarea id="cchat-txt-${chEsc(cursoId)}" rows="1" maxlength="2000" placeholder="${chT('Escribe un mensaje para el grupo…', 'Escriu un missatge per al grup…')}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();cursoChatEnviar('${chEsc(cursoId)}');}" oninput="this.style.height='auto';this.style.height=Math.min(120,this.scrollHeight)+'px'"></textarea>
       <button class="cchat-env" onclick="cursoChatEnviar('${chEsc(cursoId)}')" aria-label="${chT('Enviar', 'Enviar')}">➤</button>
     </div>
-    <div class="cchat-pie">${chT('Lo ven todas las personas del curso y el equipo de Logos. No compartas datos personales (DNI, dirección…).', 'Ho veuen totes les persones del curs i l\'equip de Logos. No comparteixis dades personals (DNI, adreça…).')}</div>
+    <div class="cchat-pie">${String(cursoId).startsWith('proy:') ? chT('Lo ven todas las personas del proyecto y el equipo de Logos.', 'Ho veuen totes les persones del projecte i l\'equip de Logos.') + ' ' + chT('No compartas datos personales (DNI, dirección…).', 'No comparteixis dades personals (DNI, adreça…).') : chT('Lo ven todas las personas del curso y el equipo de Logos. No compartas datos personales (DNI, dirección…).', 'Ho veuen totes les persones del curs i l\'equip de Logos. No comparteixis dades personals (DNI, adreça…).')}</div>
   </div>`;
 }
 async function cursoChatIniciar(cursoId){
@@ -11346,7 +11412,49 @@ function tamanoLegible(bytes){
 
 function elegirArchivosProyecto(){ const i = document.getElementById('proyecto-doc-input'); if(i) i.click(); }
 
+// ---------- Proyecto con menú lateral (como el Aula Virtual) ----------
+const PROY_SECCIONES = [
+  ['resumen', '🏠', 'Resumen', 'Resum', 'proyecto-card-resumen'],
+  ['benef', '👥', 'Beneficiarios', 'Beneficiaris', 'proyecto-card-beneficiarios'],
+  ['asis', '📆', 'Asistencia', 'Assistència', 'proyecto-card-asistencia'],
+  ['seg', '📌', 'Seguimiento', 'Seguiment', 'proyecto-card-seguimiento'],
+  ['act', '📋', 'Actividades', 'Activitats', 'proyecto-card-actividades'],
+  ['avisos', '📢', 'Avisos', 'Avisos', 'proyecto-card-avisos'],
+  ['chat', '💬', 'Mensajes', 'Missatges', 'proyecto-card-chat'],
+  ['sep'],
+  ['docs', '📎', 'Documentos', 'Documents', 'proyecto-docs-card'],
+  ['prof', '👨‍💼', 'Profesionales', 'Professionals', 'proyecto-card-profesionales'],
+  ['export', '⬇️', 'Exportaciones', 'Exportacions', 'proyecto-card-export']
+];
+window.__proySec = window.__proySec || {};
+function proyMontarMenu(wrap, proyectoId, n){
+  const hero = document.getElementById('pj-hero'); if(!hero) return;
+  const ca = LANG_I === 'ca';
+  const cmp = document.createElement('div'); cmp.className = 'cmp pj-cmp';
+  cmp.innerHTML = `<nav class="cmp-menu pj-menu">${PROY_SECCIONES.map(x => x[0] === 'sep' ? '<div class="cmp-mi-sep"></div>' : `<button class="cmp-mi" data-sec="${x[0]}" onclick="proySec('${x[0]}')"><span>${x[1]}</span>${ca ? x[3] : x[2]}${n[x[0]] ? `<span class="cmp-n">${n[x[0]]}</span>` : ''}</button>`).join('')}</nav><div class="cmp-main pj-main"></div>`;
+  const main = cmp.querySelector('.pj-main');
+  // Mensajes del proyecto: el mismo intercambio que en el Aula Virtual (beneficiarios del proyecto + equipo de Logos)
+  wrap.insertAdjacentHTML('beforeend', `<section class="panel-card" id="proyecto-card-chat">
+      <h3 class="pj-h">💬 ${ca ? 'Missatges del projecte' : 'Mensajes del proyecto'}</h3>
+      <p class="subtle" style="margin:0 0 10px;">${ca ? 'Conversa del grup: els beneficiaris del projecte (des de Logos Acompanya) i l\'equip de Logos. Ideal per recordar una sessió, resoldre dubtes o compartir un enllaç.' : 'Conversación del grupo: los beneficiarios del proyecto (desde Logos Acompanya) y el equipo de Logos. Ideal para recordar una sesión, resolver dudas o compartir un enlace.'}</p>
+      ${cursoChatHtml('proy:' + proyectoId)}
+    </section>`);
+  PROY_SECCIONES.filter(x => x[4]).forEach(x => { const el = document.getElementById(x[4]); if(!el) return; el.classList.add('pj-sec'); el.dataset.sec = x[0]; main.appendChild(el); });
+  [...wrap.children].filter(el => el !== hero && el !== cmp && !el.classList.contains('pj-sec')).forEach(el => main.appendChild(el));   // cualquier otra tarjeta queda dentro
+  hero.after(cmp);
+  proySec(window.__proySec[proyectoId] || 'resumen', true);
+  // mensajes nuevos desde la última vez que se abrió el chat del proyecto
+  cursoChatNuevos('proy:' + proyectoId).then(k => { const b = cmp.querySelector('.cmp-mi[data-sec="chat"]'); if(b && k && window.__proySec[proyectoId] !== 'chat') b.insertAdjacentHTML('beforeend', `<span class="cmp-n" style="background:#E5484D;color:#fff;">${k}</span>`); }).catch(() => {});
+}
+function proySec(sec, sinScroll){
+  const pid = window.__proyectoActual; if(pid) window.__proySec[pid] = sec;
+  document.querySelectorAll('#proyecto-detalle-wrap .pj-menu .cmp-mi').forEach(b => b.classList.toggle('on', b.dataset.sec === sec));
+  document.querySelectorAll('#proyecto-detalle-wrap .pj-sec').forEach(el => { el.style.display = el.dataset.sec === sec ? '' : 'none'; });
+  if(sec === 'chat' && pid){ const c = document.getElementById('proyecto-card-chat'); if(c && !c.dataset.ini){ c.dataset.ini = '1'; cursoChatIniciar('proy:' + pid); } const n = document.querySelector('#proyecto-detalle-wrap .cmp-mi[data-sec="chat"] .cmp-n'); if(n) n.remove(); }
+  if(!sinScroll){ const c = document.querySelector('#proyecto-detalle-wrap .pj-cmp'); if(c && c.getBoundingClientRect().top < 0) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
 function irASubirDocumentosProyecto(){
+  proySec('docs');
   const card = document.getElementById('proyecto-docs-card');
   if(card) card.scrollIntoView({ behavior:'smooth', block:'start' });
   setTimeout(elegirArchivosProyecto, 350);
@@ -11610,24 +11718,54 @@ async function verProyecto(proyectoId, opts){
       ${avisoDocs.fallos.length ? `<div><strong>⚠️ ${avisoDocs.fallos.length} ${esCA ? 'no s\'han pogut pujar:' : 'no se pudieron subir:'}</strong>${avisoDocs.fallos.map(f => `<div style="font-size:12.5px;">· ${escAttr(f)}</div>`).join('')}</div>` : ''}
     </div>` : '';
 
+  const nSesiones = new Set((asistencias || []).map(a => a.fecha)).size;
+  const estadoTxt = { activo: esCA ? 'Actiu' : 'Activo', pausado: esCA ? 'Pausat' : 'Pausado', finalizado: esCA ? 'Finalitzat' : 'Finalizado' };
+  const kpi = (ic, n, t, sec) => `<button class="pj-kpi" onclick="proySec('${sec}')"><span class="pj-kpi-i">${ic}</span><span><strong class="stat-icon-num">${n}</strong><small>${t}</small></span></button>`;
   wrap.innerHTML = `
-    <div class="panel-card" style="margin-top:16px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <h2 style="margin:0;">📁 ${proyecto.nombre}</h2>
-        <button class="link-btn" onclick="document.getElementById('proyecto-detalle-wrap').innerHTML='';window.__proyectoActual=null;__docsProyectoPendientes=[];">✕ ${esCA?'Tancar':'Cerrar'}</button>
+    <div class="pj-hero" id="pj-hero">
+      <div class="pj-hero-top">
+        <span class="pj-ic">📁</span>
+        <div class="pj-hero-t">
+          <small>${esCA ? 'Projecte' : 'Proyecto'} · <span class="pj-estado pj-e-${escAttr(proyecto.estado || 'activo')}">${estadoTxt[proyecto.estado] || escAttr(proyecto.estado || '')}</span></small>
+          <h2>${escAttr(proyecto.nombre)}</h2>
+          ${proyecto.descripcion ? `<p>${escAttr(proyecto.descripcion)}</p>` : ''}
+        </div>
+        <button class="pj-x" title="${esCA?'Tancar':'Cerrar'}" onclick="document.getElementById('proyecto-detalle-wrap').innerHTML='';window.__proyectoActual=null;__docsProyectoPendientes=[];">✕</button>
       </div>
-      ${proyecto.descripcion ? `<p class="subtle">${proyecto.descripcion}</p>` : ''}
-      <div id="proyecto-nav" style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 10px;">
-        ${[['proyecto-card-beneficiarios','👥 ' + (esCA?'Beneficiaris':'Beneficiarios')],['proyecto-card-asistencia','📆 ' + (esCA?'Assistència':'Asistencia')],['proyecto-card-seguimiento','📌 ' + (esCA?'Seguiment':'Seguimiento')],['proyecto-docs-card','📎 ' + (esCA?'Documents':'Documentos')],['proyecto-card-profesionales','👨‍💼 ' + (esCA?'Professionals':'Profesionales')],['proyecto-card-actividades','📋 ' + (esCA?'Activitats':'Actividades')],['proyecto-card-avisos','📢 ' + (esCA?'Avisos':'Avisos')]].map(([id, txt]) => `<button class="link-btn" style="font-size:12px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;" onclick="document.getElementById('${id}').scrollIntoView({behavior:'smooth',block:'start'})">${txt}</button>`).join('')}
+      <div class="pj-kpis">
+        ${kpi('👥', beneficiarios.length, esCA ? 'Beneficiaris' : 'Beneficiarios', 'benef')}
+        ${kpi('📌', (seguimientos || []).length, esCA ? 'Seguiments' : 'Seguimientos', 'seg')}
+        ${kpi('📆', nSesiones, esCA ? 'Sessions amb llista' : 'Sesiones con lista', 'asis')}
+        ${kpi('📎', (documentosProyecto || []).length, esCA ? 'Documents' : 'Documentos', 'docs')}
       </div>
-      <button class="primary-btn" id="proyecto-btn-subir-arriba" style="width:auto;margin:6px 0 10px;" onclick="irASubirDocumentosProyecto()">⬆️ ${esCA?'Pujar documents del projecte':'Subir documentos del proyecto'}${(documentosProyecto && documentosProyecto.length) ? ` · ${documentosProyecto.length}` : ''}</button><br>
-      <select onchange="cambiarEstadoProyecto('${proyectoId}', this.value)">
-        <option value="activo" ${proyecto.estado==='activo'?'selected':''}>${esCA?'Actiu':'Activo'}</option>
-        <option value="pausado" ${proyecto.estado==='pausado'?'selected':''}>${esCA?'Pausat':'Pausado'}</option>
-        <option value="finalizado" ${proyecto.estado==='finalizado'?'selected':''}>${esCA?'Finalitzat':'Finalizado'}</option>
-      </select>
-      <button class="link-btn" style="color:var(--alert);margin-left:8px;" onclick="borrarProyecto('${proyectoId}')">${esCA?'Esborrar projecte':'Borrar proyecto'}</button>
+      <div class="pj-acc">
+        <button class="pj-btn" id="proyecto-btn-subir-arriba" onclick="irASubirDocumentosProyecto()">⬆️ ${esCA?'Pujar documents':'Subir documentos'}</button>
+        <label class="pj-sel">${esCA ? 'Estat' : 'Estado'}
+          <select onchange="cambiarEstadoProyecto('${proyectoId}', this.value)">
+            <option value="activo" ${proyecto.estado==='activo'?'selected':''}>${esCA?'Actiu':'Activo'}</option>
+            <option value="pausado" ${proyecto.estado==='pausado'?'selected':''}>${esCA?'Pausat':'Pausado'}</option>
+            <option value="finalizado" ${proyecto.estado==='finalizado'?'selected':''}>${esCA?'Finalitzat':'Finalizado'}</option>
+          </select></label>
+        <button class="pj-borrar" onclick="borrarProyecto('${proyectoId}')">🗑️ ${esCA?'Esborrar projecte':'Borrar proyecto'}</button>
+      </div>
     </div>
+
+    <section class="pj-sec" data-sec="resumen" id="proyecto-card-resumen">
+      <h3 class="pj-h">🏠 ${esCA ? 'Resum del projecte' : 'Resumen del proyecto'}</h3>
+      <p class="subtle" style="margin:0 0 12px;">${esCA ? 'Què vols fer ara?' : '¿Qué quieres hacer ahora?'}</p>
+      <div class="pj-pasos">
+        ${[
+          ['👥', esCA ? 'Afegir beneficiaris' : 'Añadir beneficiarios', beneficiarios.length ? `${beneficiarios.length} ${esCA ? 'persones al projecte' : 'personas en el proyecto'}` : (esCA ? 'Encara no n\'hi ha cap: comença aquí' : 'Aún no hay ninguno: empieza aquí'), 'benef', !beneficiarios.length],
+          ['📆', esCA ? 'Passar llista d\'avui' : 'Pasar lista de hoy', asistioHoy.size ? `${asistioHoy.size} ${esCA ? 'assistents marcats' : 'asistentes marcados'}` : (esCA ? 'Marca qui ha vingut' : 'Marca quién ha venido'), 'asis', false],
+          ['📌', esCA ? 'Registrar seguiment' : 'Registrar seguimiento', esCA ? 'El treballat amb cada persona' : 'Lo trabajado con cada persona', 'seg', false],
+          ['💬', esCA ? 'Missatges del grup' : 'Mensajes del grupo', esCA ? 'Conversa amb els participants' : 'Conversación con los participantes', 'chat', false],
+          ['📢', esCA ? 'Enviar un avís' : 'Enviar un aviso', (avisos || []).length ? `${(avisos || []).length} ${esCA ? 'enviats' : 'enviados'}` : (esCA ? 'A tots els participants' : 'A todos los participantes'), 'avisos', false],
+          ['📋', esCA ? 'Activitats' : 'Actividades', (actividades || []).length ? `${(actividades || []).length} ${esCA ? 'registrades' : 'registradas'}` : (esCA ? 'Tallers, sessions, sortides…' : 'Talleres, sesiones, salidas…'), 'act', false],
+          ['👨‍💼', esCA ? 'Equip del projecte' : 'Equipo del proyecto', profesionales.length ? profesionales.map(pf => escAttr(String((staffLista||[]).find(s=>s.email===pf.tecnico_email)?.nombre || pf.tecnico_email).split(' ')[0])).join(', ') : (esCA ? 'Assigna professionals' : 'Asigna profesionales'), 'prof', false]
+        ].map(([ic, t, d, sec, dest]) => `<button class="pj-paso${dest ? ' dest' : ''}" onclick="proySec('${sec}')"><span class="pj-paso-i">${ic}</span><strong>${t}</strong><small>${d}</small><span class="pj-paso-f">→</span></button>`).join('')}
+      </div>
+      ${(avisos && avisos.length) ? `<div class="pj-ult"><span>📢 ${esCA ? 'Últim avís' : 'Último aviso'}:</span> <strong>${escAttr(avisos[0].titulo)}</strong> · ${new Date(avisos[0].creado_en).toLocaleDateString(TI[LANG_I].localeFecha)}</div>` : ''}
+    </section>
 
     <div class="panel-card" id="proyecto-card-beneficiarios">
       <h3>👥 ${esCA?'Beneficiaris':'Beneficiarios'}${beneficiarios.length ? ` (${beneficiarios.length})` : ''}</h3>
@@ -11662,7 +11800,7 @@ async function verProyecto(proyectoId, opts){
       ${beneficiarios.length ? `<button class="primary-btn" style="margin-top:10px;" onclick="guardarAsistenciaProyecto('${proyectoId}')">💾 ${esCA?'Desar assistència del dia':'Guardar asistencia del día'}</button>` : ''}
     </div>
 
-    <div class="panel-card">
+    <div class="panel-card" id="proyecto-card-export">
       <h3>⬇️ ${esCA?'Exportacions anteriors':'Exportaciones anteriores'}</h3>
       ${(exportaciones && exportaciones.length)
         ? exportaciones.map(ex => `
@@ -11752,6 +11890,10 @@ async function verProyecto(proyectoId, opts){
       </div>` : ''}
     </div>
   `;
+  proyMontarMenu(wrap, proyectoId, {
+    benef: beneficiarios.length, seg: (seguimientos || []).length, docs: (documentosProyecto || []).length,
+    prof: profesionales.length, act: (actividades || []).length, avisos: (avisos || []).length, export: (exportaciones || []).length
+  });
   pintarWhatsAppAviso();
   if(opts.silencioso && window.__benefBusquedaTexto){
     const inputBenef = document.getElementById('benef-buscar');
@@ -15794,7 +15936,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-28 · v172 (primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-28 · v175 (Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -16691,7 +16833,7 @@ async function renderPanelGeneral(){
     </div>`).join('');
 
   const statsIconos = [
-    { icon:'👥', bg:'var(--good-soft)', color:'var(--good)', num:totalPersonas, label:t.personasAtendidasTotal, cta: LANG_I==='ca'?'Veure llistat →':'Ver listado →', onclick:"showScreen('personas');renderPersonasScreen()" },
+    { icon:'👥', bg:'var(--good-soft)', color:'var(--good)', num:'…', id:'sn-num-personas', label:t.personasAtendidasTotal, cta: LANG_I==='ca'?'Veure llistat →':'Ver listado →', onclick:"showScreen('personas');renderPersonasScreen()" },
     { icon:'📁', bg:'var(--gold-soft)', color:'#7A5A16', num:tramitesEnCursoCount, label: LANG_I==='ca'?'Tràmits en curs':'Trámites en curso', cta: LANG_I==='ca'?'Veure tràmits →':'Ver trámites →', onclick:"showScreen('seguimiento');renderSeguimientoScreen().then(()=>{document.getElementById('seguimiento-solo-tramites').checked=true;toggleSoloTramitesSeguimiento(true);})" },
     { icon:'📅', bg:'#E7ECFF', color:'#33449E', num:citasHoyCount, label: LANG_I==='ca'?'Cites avui':'Citas hoy', cta: LANG_I==='ca'?'Veure calendari →':'Ver calendario →', onclick:"showScreen('agenda');renderAgendaCitas()", cta2: LANG_I==='ca'?'Properes cites →':'Próximas citas →', onclick2:"showScreen('agenda');renderProximasCitas()" },
     { icon:'📋', bg:'var(--alert-soft)', color:'var(--alert)', num:tareasPendCount, label: LANG_I==='ca'?'Tasques pendents':'Tareas pendientes', cta: LANG_I==='ca'?'Veure tasques →':'Ver tareas →', onclick:"showScreen('seguimiento');renderSeguimientoScreen()" }
@@ -16699,7 +16841,7 @@ async function renderPanelGeneral(){
   const statsIconosHtml = statsIconos.map(s => `
     <div class="stat-icon-card" onclick="${s.onclick}">
       <div class="icon-badge" style="background:${s.bg};color:${s.color};">${s.icon}</div>
-      <div class="stat-icon-num">${s.num}</div>
+      <div class="stat-icon-num"${s.id ? ` id="${s.id}"` : ''}>${s.num}</div>
       <div class="stat-icon-label">${s.label}</div>
       <div class="link-btn" style="font-size:11px;padding:6px 0 0;">${s.cta}</div>
       ${s.cta2 ? `<div class="link-btn" style="font-size:11px;padding:2px 0 0;" onclick="event.stopPropagation();${s.onclick2}">${s.cta2}</div>` : ''}
@@ -16788,7 +16930,9 @@ async function renderPanelGeneral(){
 
   if(IS_ADMIN) pintarFichasPendientesAdmin();
   if(window.__pgBandeja) pgBandeja(window.__pgBandeja, true);
-  animateNumber(document.getElementById('num-total-personas'), totalPersonas);
+  // Personas atendidas en total: las mismas que en Impacto (con cuenta + histórico en papel + atendidas sin ficha)
+  estCargarPersonas().then(d => { const n = (d && d.filas ? d.filas.length : 0) || totalPersonas; contarHasta(document.getElementById('sn-num-personas'), n); contarHasta(document.getElementById('num-total-personas'), n); })
+    .catch(() => { contarHasta(document.getElementById('sn-num-personas'), totalPersonas); contarHasta(document.getElementById('num-total-personas'), totalPersonas); });
   actualizarBadgePanel();
   activarBarras();
   if(!document.getElementById('pg-area')) gpPintarTarjetas(cont);   // ya están dentro de la cabecera («Mi área privada»)
