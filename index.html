@@ -925,6 +925,32 @@
 .pj-borrar{margin-left:auto;border:1px solid rgba(255,255,255,.35);background:none;color:#fff;border-radius:999px;padding:8px 14px;font:600 12.5px var(--font-body);cursor:pointer;opacity:.85;}
 .pj-borrar:hover{background:#C0392B;border-color:#C0392B;opacity:1;}
 .pj-cmp{grid-template-columns:220px minmax(0,1fr) !important;}
+.pj-volver{position:relative;z-index:1;border:none;background:rgba(255,255,255,.16);color:#fff;border-radius:999px;padding:6px 14px;font:700 12.5px var(--font-body);cursor:pointer;margin:0 0 12px;}
+.pj-volver:hover{background:rgba(255,255,255,.28);}
+#proyectos-content.pj-abierto .pjl{display:none;}
+.pjl-hero{margin-top:0;}
+.pjl-bar{margin:4px 0 14px;}
+.pjl-filtros{display:flex;gap:6px;flex-wrap:wrap;}
+.pjl-f{border:1.5px solid #D5DCE6;background:#fff;border-radius:999px;padding:7px 12px;font:600 13px var(--font-body);color:var(--ink);cursor:pointer;}
+.pjl-f b{background:#EEF2F7;border-radius:999px;padding:0 7px;margin-left:4px;font-size:11.5px;}
+.pjl-f.on{background:#1B4E95;border-color:#1B4E95;color:#fff;} .pjl-f.on b{background:#F2BC2C;color:#163F7A;}
+.pjl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:18px;}
+.pjl-card{--c:#2E8B47;display:flex;flex-direction:column;background:#fff;border:1px solid #E2E7EF;border-top:6px solid var(--c);border-radius:18px;padding:14px 16px;box-shadow:0 8px 22px -18px rgba(27,42,68,.6);transition:transform .15s,box-shadow .15s;}
+.pjl-card:hover{transform:translateY(-3px);box-shadow:0 16px 30px -18px rgba(27,42,68,.6);}
+.pjl-pausado{--c:#F2BC2C;} .pjl-finalizado{--c:#9CA3AF;}
+.pjl-top{display:flex;justify-content:space-between;align-items:center;}
+.pjl-x{border:none;background:none;color:#B42318;font-weight:800;cursor:pointer;opacity:.5;font-size:14px;} .pjl-x:hover{opacity:1;}
+.pjl-tit{font-size:18px;margin:8px 0 4px;color:var(--ink);cursor:pointer;line-height:1.25;} .pjl-tit:hover{color:#2463B8;}
+.pjl-desc{margin:0 0 8px;font-size:13px;color:var(--ink-soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.pjl-meta{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12.5px;color:var(--ink-soft);margin:auto 0 10px;padding-top:4px;}
+.pjl-meta b{color:var(--ink);}
+.pjl-acc{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.pjl-abrir{padding:8px 14px;font-size:13px;}
+.pjl-guia{font-size:13px;}
+.ct-hero .pj-kpi strong{font-size:19px;}
+.ct-kpi-av{background:rgba(229,72,77,.28) !important;border-color:rgba(255,180,180,.6) !important;}
+.ct-sec{background:#fff;border:1px solid #E2E7EF;border-radius:18px;padding:16px 18px;box-shadow:0 8px 22px -18px rgba(27,42,68,.6);overflow-x:auto;}
+.ct-cmp .cmp-main{min-width:0;}
 .pj-main .pj-sec{margin:0 0 14px;}
 .pj-main > .panel-card, .pj-main > section{background:#fff;border:1px solid #E2E7EF;border-radius:18px;padding:16px 18px;box-shadow:0 8px 22px -18px rgba(27,42,68,.6);}
 .pj-main h3, .pj-h{font-size:19px;margin:0 0 10px;color:var(--ink);}
@@ -2478,7 +2504,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v175'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v176'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -11136,6 +11162,7 @@ async function agregarSeguimientoItinerarioStaff(itinerarioId){
 
 async function renderProyectosScreen(){
   const cont = document.getElementById('proyectos-content');
+  cont.classList.remove('pj-abierto'); window.__proyectoActual = null;
   cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
   const esCA = LANG_I === 'ca';
 
@@ -11177,16 +11204,32 @@ async function renderProyectosScreen(){
   };
 
   const listaProy = proyectos || [];
-  const gruposProy = [['activo', esCA?'Projectes en curs':'Proyectos en curso'], ['pausado', esCA?'Projectes pausats':'Proyectos pausados'], ['finalizado', esCA?'Projectes finalitzats':'Proyectos finalizados']];
-  const conocidos = gruposProy.map(g => g[0]);
-  const carpetaProy = (clave, titulo, l, abierta) => carpetaDesplegable({ clave: 'proy:' + clave, icono: '📁', titulo, cuenta: l.length, abierta, cuerpo: `<div class="cards-grid" style="padding-top:10px;">${l.map(tarjetaProyecto).join('')}</div>` });
-  const proyectosHtml = listaProy.length
-    ? `<div class="carpetas-lista">${gruposProy.map(([est, titulo]) => { const l = listaProy.filter(pr => pr.estado === est); return l.length ? carpetaProy(est, titulo, l, est === 'activo' && l.length <= 3) : ''; }).join('')}${(() => { const l = listaProy.filter(pr => !conocidos.includes(pr.estado)); return l.length ? carpetaProy('otros', esCA?'Altres projectes':'Otros proyectos', l, false) : ''; })()}</div>`
-    : `<div class="empty-note">${esCA ? 'Encara no hi ha projectes.' : 'Todavía no hay proyectos.'}</div>`;
+  window.__pjlDatos = { lista: listaProy, conteos };
+  const nEst = e => listaProy.filter(pr => pr.estado === e).length;
+  const totBenef = Object.values(conteos).reduce((a, c) => a + c.beneficiarios, 0);
+  const totProf = Object.values(conteos).reduce((a, c) => a + c.profesionales, 0);
+  const kpiL = (ic, n, t, on) => `<button class="pj-kpi" onclick="${on}"><span class="pj-kpi-i">${ic}</span><span><strong class="stat-icon-num">${n}</strong><small>${t}</small></span></button>`;
   cont.innerHTML = `
-    <div class="panel-card" style="margin-bottom:16px;background:var(--bg);">
+    <div class="pjl">
+    <div class="pj-hero pjl-hero">
+      <div class="pj-hero-top">
+        <span class="pj-ic">🧩</span>
+        <div class="pj-hero-t"><small>${esCA ? 'Associació Logos' : 'Associació Logos'}</small><h2>${esCA ? 'Projectes' : 'Proyectos'}</h2><p>${esCA ? 'Beneficiaris, assistència, seguiment i avisos de cada projecte, en un sol lloc.' : 'Beneficiarios, asistencia, seguimiento y avisos de cada proyecto, en un solo lugar.'}</p></div>
+      </div>
+      <div class="pj-kpis">
+        ${kpiL('🟢', nEst('activo'), esCA ? 'En curs' : 'En curso', "pjlFiltro('activo')")}
+        ${kpiL('👥', totBenef, esCA ? 'Beneficiaris' : 'Beneficiarios', "pjlFiltro('todos')")}
+        ${kpiL('👨‍💼', totProf, esCA ? 'Professionals' : 'Profesionales', "pjlFiltro('todos')")}
+        ${kpiL('📁', listaProy.length, esCA ? 'Projectes en total' : 'Proyectos en total', "pjlFiltro('todos')")}
+      </div>
+      <div class="pj-acc">
+        <button class="pj-btn" onclick="pjlNuevo()">➕ ${esCA?'Projecte nou':'Proyecto nuevo'}</button>
+        <button class="pj-borrar" style="margin-left:0;" onclick="const g=document.getElementById('pjl-guia'); g.style.display = g.style.display==='none' ? 'block' : 'none';">📖 ${esCA ? 'Guia: com funciona' : 'Guía: cómo funciona'}</button>
+      </div>
+    </div>
+    <div class="panel-card pjl-guia" id="pjl-guia" style="display:none;margin-bottom:16px;">
       <button onclick="document.getElementById('guia-crear-proyecto').style.display = document.getElementById('guia-crear-proyecto').style.display==='none' ? 'block' : 'none';" class="link-btn" style="font-weight:700;">📖 ${esCA ? 'Guia: com crear i gestionar un projecte' : 'Guía: cómo crear y gestionar un proyecto'}</button>
-      <div id="guia-crear-proyecto" style="display:none;margin-top:10px;font-size:13px;line-height:1.6;">
+      <div id="guia-crear-proyecto" style="display:block;margin-top:10px;font-size:13px;line-height:1.6;">
         <p><strong>1. ${esCA?'Crea el projecte':'Crea el proyecto'}</strong><br>${esCA
           ? 'Emplena el nom (obligatori), una descripció breu i les dates si les coneixes, i prem \"Crear projecte\". Apareixerà a la llista de sobre.'
           : 'Rellena el nombre (obligatorio), una descripción breve y las fechas si las conoces, y pulsa \"Crear proyecto\". Aparecerá en la lista de arriba.'}</p>
@@ -11208,10 +11251,6 @@ async function renderProyectosScreen(){
       </div>
     </div>
 
-    <div style="margin-bottom:16px;">${proyectosHtml}</div>
-
-    <button class="primary-btn" style="margin-bottom:16px;" onclick="document.getElementById('form-nuevo-proyecto').style.display = document.getElementById('form-nuevo-proyecto').style.display==='none' ? 'block' : 'none';">➕ ${esCA?'Afegir projecte nou':'Añadir proyecto nuevo'}</button>
-
     <div class="panel-card" style="margin-bottom:16px;display:none;" id="form-nuevo-proyecto">
       <h3>➕ ${esCA?'Crear projecte':'Crear proyecto'}</h3>
       <div class="field"><input type="text" id="proyecto-nombre" placeholder="${esCA?'Nom del projecte':'Nombre del proyecto'}"></div>
@@ -11223,8 +11262,47 @@ async function renderProyectosScreen(){
       <button class="primary-btn" onclick="crearProyecto()">➕ ${esCA?'Crear projecte':'Crear proyecto'}</button>
     </div>
 
+    <div class="pjl-lista">
+      <div class="cmp-bar pjl-bar">
+        <div class="cmp-buscar"><input type="text" id="pjl-q" placeholder="${esCA ? 'Cercar projecte…' : 'Buscar proyecto…'}" oninput="pjlPintar()"></div>
+        <div class="pjl-filtros">${[['todos', esCA ? 'Tots' : 'Todos', listaProy.length], ['activo', esCA ? 'En curs' : 'En curso', nEst('activo')], ['pausado', esCA ? 'Pausats' : 'Pausados', nEst('pausado')], ['finalizado', esCA ? 'Finalitzats' : 'Finalizados', nEst('finalizado')]].map(([k, t, n]) => `<button class="pjl-f" data-f="${k}" onclick="pjlFiltro('${k}')">${t} <b>${n}</b></button>`).join('')}</div>
+      </div>
+      <div class="pjl-grid" id="pjl-grid"></div>
+    </div>
+    </div>
     <div id="proyecto-detalle-wrap"></div>
   `;
+  pjlFiltro(window.__pjlFiltro || 'activo', true);
+}
+// Lista de proyectos: filtro por estado y buscador
+function pjlFiltro(f, sinScroll){
+  window.__pjlFiltro = f;
+  document.querySelectorAll('.pjl-f').forEach(b => b.classList.toggle('on', b.dataset.f === f));
+  pjlPintar();
+  if(!sinScroll){ const g = document.querySelector('.pjl-lista'); if(g) g.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+function pjlNuevo(){
+  const f = document.getElementById('form-nuevo-proyecto'); if(!f) return;
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+  if(f.style.display === 'block'){ f.scrollIntoView({ behavior: 'smooth', block: 'center' }); const n = document.getElementById('proyecto-nombre'); if(n) setTimeout(() => n.focus(), 250); }
+}
+function pjlPintar(){
+  const host = document.getElementById('pjl-grid'), d = window.__pjlDatos; if(!host || !d) return;
+  const esCA = LANG_I === 'ca', f = window.__pjlFiltro || 'todos', q = normTxt((document.getElementById('pjl-q') || {}).value || '').trim();
+  const estTxt = { activo: esCA ? 'Actiu' : 'Activo', pausado: esCA ? 'Pausat' : 'Pausado', finalizado: esCA ? 'Finalitzat' : 'Finalizado' };
+  const lista = d.lista.filter(pr => (f === 'todos' || pr.estado === f) && (!q || normTxt(pr.nombre + ' ' + (pr.descripcion || '')).includes(q)));
+  const fecha = x => x ? new Date(x + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha) : '';
+  host.innerHTML = lista.length ? lista.map(pr => { const c = d.conteos[pr.id] || { beneficiarios: 0, profesionales: 0 };
+    return `<div class="pjl-card pjl-${escAttr(pr.estado || 'activo')}">
+      <div class="pjl-top"><span class="pj-estado pj-e-${escAttr(pr.estado || 'activo')}">${estTxt[pr.estado] || escAttr(pr.estado || '')}</span><button class="pjl-x" title="${esCA?'Esborrar projecte':'Borrar proyecto'}" onclick="borrarProyecto('${pr.id}')">✕</button></div>
+      <h3 class="pjl-tit" onclick="verProyecto('${pr.id}')">${escAttr(pr.nombre)}</h3>
+      ${pr.descripcion ? `<p class="pjl-desc">${escAttr(pr.descripcion)}</p>` : ''}
+      <div class="pjl-meta"><span>👥 <b>${c.beneficiarios}</b> ${esCA ? 'beneficiaris' : 'beneficiarios'}</span><span>👨‍💼 <b>${c.profesionales}</b> ${esCA ? 'professionals' : 'profesionales'}</span>${(pr.fecha_inicio || pr.fecha_final) ? `<span>📅 ${fecha(pr.fecha_inicio) || '—'} – ${fecha(pr.fecha_final) || '—'}</span>` : ''}</div>
+      <div class="pjl-acc"><button class="pj-btn pjl-abrir" onclick="verProyecto('${pr.id}')">${esCA?'Obrir projecte':'Abrir proyecto'} →</button>
+        <button class="link-btn" data-n="${escAttr(pr.nombre)}" onclick="exportarProyectoExcel('${pr.id}', this.dataset.n)">⬇️ Excel</button>
+        <button class="link-btn" data-n="${escAttr(pr.nombre)}" onclick="exportarProyectoPDF('${pr.id}', this.dataset.n)">⬇️ PDF</button></div>
+    </div>`; }).join('')
+    : `<div class="empty-note" style="grid-column:1/-1;">${d.lista.length ? (esCA ? 'Cap projecte amb aquest filtre.' : 'Ningún proyecto con este filtro.') : (esCA ? 'Encara no hi ha projectes. Crea el primer amb «➕ Projecte nou».' : 'Todavía no hay proyectos. Crea el primero con «➕ Proyecto nuevo».')}</div>`;
 }
 
 async function crearProyecto(){
@@ -11446,6 +11524,13 @@ function proyMontarMenu(wrap, proyectoId, n){
   // mensajes nuevos desde la última vez que se abrió el chat del proyecto
   cursoChatNuevos('proy:' + proyectoId).then(k => { const b = cmp.querySelector('.cmp-mi[data-sec="chat"]'); if(b && k && window.__proySec[proyectoId] !== 'chat') b.insertAdjacentHTML('beforeend', `<span class="cmp-n" style="background:#E5484D;color:#fff;">${k}</span>`); }).catch(() => {});
 }
+function proyCerrar(){
+  const w = document.getElementById('proyecto-detalle-wrap'); if(w) w.innerHTML = '';
+  window.__proyectoActual = null; try { __docsProyectoPendientes = []; } catch(e){}
+  const pc = document.getElementById('proyectos-content'); if(pc) pc.classList.remove('pj-abierto');
+  renderProyectosScreen();
+  try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e){}
+}
 function proySec(sec, sinScroll){
   const pid = window.__proyectoActual; if(pid) window.__proySec[pid] = sec;
   document.querySelectorAll('#proyecto-detalle-wrap .pj-menu .cmp-mi').forEach(b => b.classList.toggle('on', b.dataset.sec === sec));
@@ -11583,9 +11668,10 @@ async function verProyecto(proyectoId, opts){
   window.__proyectoActual = proyectoId;
   const esCA = LANG_I === 'ca';
   const wrap = document.getElementById('proyecto-detalle-wrap');
+  { const pc = document.getElementById('proyectos-content'); if(pc) pc.classList.add('pj-abierto'); }
   if(!opts.silencioso){
     wrap.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
-    wrap.scrollIntoView({ behavior:'smooth' });
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e){ wrap.scrollIntoView({ behavior:'smooth' }); }
   }
 
   try {
@@ -11723,6 +11809,7 @@ async function verProyecto(proyectoId, opts){
   const kpi = (ic, n, t, sec) => `<button class="pj-kpi" onclick="proySec('${sec}')"><span class="pj-kpi-i">${ic}</span><span><strong class="stat-icon-num">${n}</strong><small>${t}</small></span></button>`;
   wrap.innerHTML = `
     <div class="pj-hero" id="pj-hero">
+      <button class="pj-volver" onclick="proyCerrar()">← ${esCA ? 'Tots els projectes' : 'Todos los proyectos'}</button>
       <div class="pj-hero-top">
         <span class="pj-ic">📁</span>
         <div class="pj-hero-t">
@@ -11730,7 +11817,7 @@ async function verProyecto(proyectoId, opts){
           <h2>${escAttr(proyecto.nombre)}</h2>
           ${proyecto.descripcion ? `<p>${escAttr(proyecto.descripcion)}</p>` : ''}
         </div>
-        <button class="pj-x" title="${esCA?'Tancar':'Cerrar'}" onclick="document.getElementById('proyecto-detalle-wrap').innerHTML='';window.__proyectoActual=null;__docsProyectoPendientes=[];">✕</button>
+        <button class="pj-x" title="${esCA?'Tancar':'Cerrar'}" onclick="proyCerrar()">✕</button>
       </div>
       <div class="pj-kpis">
         ${kpi('👥', beneficiarios.length, esCA ? 'Beneficiaris' : 'Beneficiarios', 'benef')}
@@ -14835,14 +14922,42 @@ function contaRender(){
   if(!tabs.some(t => t[0] === __conta.tab)) __conta.tab = 'diario';
   const periodo = (__conta.tab === 'diario' || __conta.tab === 'balance') ? contaHtmlPeriodo() : (__conta.tab === 'cuotas' ? contaHtmlPeriodo(true) : '');
   const cuerpo = { diario: contaHtmlDiario, balance: contaHtmlBalance, cuotas: contaHtmlCuotas, codigos: contaHtmlCodigos, cuentas: contaHtmlCuentas, ajustes: contaHtmlAjustes }[__conta.tab]();
+  // Cabecera azul con las cifras del periodo y menú lateral (como Proyectos y el Aula Virtual)
+  const ca = LANG_I === 'ca', aj = __conta.ajustes, mon = aj.moneda_principal;
+  let bal = null; try { bal = contaBalance(); } catch(e){}
+  const iconos = { diario: '📒', balance: '📊', cuotas: '🤝', codigos: '🏷️', cuentas: '🏦', ajustes: '⚙️' };
+  const nAvisos = bal ? bal.avisos.filter(a => a.nivel === 'aviso').length : 0;
+  const kpiC = (ic, v, t, tab, cls) => `<button class="pj-kpi${cls ? ' ' + cls : ''}" onclick="__conta.tab='${tab}';contaRender()"><span class="pj-kpi-i">${ic}</span><span><strong>${v}</strong><small>${t}</small></span></button>`;
+  const periodoTxt = __conta.mes ? contaMayus(contaNombreMes(__conta.mes)) + ' ' + __conta.anio : String(__conta.anio);
   cont.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-      <h2 style="margin:0;font-size:20px;">🧾 ${escAttr(__conta.ajustes.nombre_entidad)} · ${ct('titulo')}</h2>
+    <div class="pj-hero ct-hero">
+      <div class="pj-hero-top">
+        <span class="pj-ic">🧾</span>
+        <div class="pj-hero-t"><small>${ct('titulo')} · ${escAttr(periodoTxt)}</small><h2>${escAttr(aj.nombre_entidad)}</h2><p>${ca ? 'Diari, balanç, quotes i comptes de l\'entitat. Només ho veu l\'administració.' : 'Diario, balance, cuotas y cuentas de la entidad. Solo lo ve la administración.'}</p></div>
+      </div>
+      <div class="pj-kpis">
+        ${kpiC('💰', bal ? contaFmt(bal.total.saldoFin, mon) : '—', ca ? 'Saldo al final del període' : 'Saldo al final del periodo', 'balance')}
+        ${kpiC('⬆️', bal ? contaFmt(bal.total.ingresos, mon) : '—', ca ? 'Ingressos' : 'Ingresos', 'balance')}
+        ${kpiC('⬇️', bal ? contaFmt(bal.total.gastos, mon) : '—', ca ? 'Despeses' : 'Gastos', 'balance')}
+        ${kpiC(nAvisos ? '⚠️' : '✅', nAvisos ? String(nAvisos) : (ca ? 'Tot quadra' : 'Todo cuadra'), nAvisos ? (ca ? 'Avisos per revisar' : 'Avisos para revisar') : (ca ? 'Sense avisos' : 'Sin avisos'), 'balance', nAvisos ? 'ct-kpi-av' : '')}
+      </div>
+      <div class="pj-acc">
+        <button class="pj-btn" onclick="contaAbrirMovimiento()">➕ ${ct('nuevoMov')}</button>
+        <button class="pj-borrar" style="margin-left:0;" onclick="contaAbrirTraspaso()">↔️ ${ct('traspaso')}</button>
+        <button class="pj-borrar" style="margin-left:auto;" onclick="contaExportarBalance('xlsx')">⬇️ ${ca ? 'Balanç en Excel' : 'Balance en Excel'}</button>
+      </div>
     </div>
     ${__conta.sqlNuevo ? '' : `<div class="info-box info-box-gold" style="margin-bottom:10px;">⚠️ ${ct('sqlViejo')}</div>`}
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">${tabs.map(([id, k]) => `<button class="link-btn" style="font-size:13px;font-weight:${__conta.tab === id ? 800 : 500};border:1px solid ${__conta.tab === id ? 'var(--gold)' : 'var(--line)'};background:${__conta.tab === id ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:5px 14px;" onclick="__conta.tab='${id}';contaRender()">${ct(k)}</button>`).join('')}</div>
-    ${periodo}
-    <div id="conta-cuerpo">${cuerpo}</div>`;
+    <div class="cmp pj-cmp ct-cmp">
+      <nav class="cmp-menu">${tabs.map(([id, k], n) => `${id === 'codigos' ? '<div class="cmp-mi-sep"></div>' : ''}<button class="cmp-mi${__conta.tab === id ? ' on' : ''}" onclick="__conta.tab='${id}';contaRender()"><span>${iconos[id] || '•'}</span>${ct(k)}${id === 'balance' && nAvisos ? `<span class="cmp-n" style="background:#E5484D;color:#fff;">${nAvisos}</span>` : ''}</button>`).join('')}</nav>
+      <div class="cmp-main">
+        <section class="ct-sec">
+          <h3 class="pj-h">${iconos[__conta.tab] || ''} ${ct(tabs.find(t => t[0] === __conta.tab)[1])}</h3>
+          ${periodo}
+          <div id="conta-cuerpo">${cuerpo}</div>
+        </section>
+      </div>
+    </div>`;
 }
 
 function contaHtmlPeriodo(soloAnio){
@@ -15936,7 +16051,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-28 · v175 (Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-28 · v176 (Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
