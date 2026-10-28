@@ -811,6 +811,24 @@
 .sn-banner span{font-size:15px;opacity:.9;line-height:1.35;}
 .sn-banner.sn-b2{background:#2463B8;} .sn-banner.sn-b3{background:#0E7A5F;} .sn-banner.sn-b4{background:#7A4A1F;}
 .sn-wrap{max-width:900px;}
+.gp-hist-cab{display:flex;align-items:center;gap:8px;}
+.gp-hist-f{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px;}
+.gp-hist-f select{border:1.5px solid var(--line);border-radius:10px;padding:7px 10px;font-family:inherit;font-size:13px;background:#fff;}
+.gp-hist-g{border:1.5px solid var(--line);border-radius:14px;margin:0 0 10px;overflow:hidden;background:#fff;}
+.gp-hist-g > summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:11px 14px;background:#F5F8FC;cursor:pointer;font-size:14px;}
+.gp-hist-g > summary::-webkit-details-marker{display:none;}
+.gp-hist-r{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid #EEF1F6;}
+.gp-hist-x{display:flex;flex-direction:column;min-width:0;line-height:1.35;}
+.gp-hist-x strong{font-size:14px;} .gp-hist-x span{font-size:12.5px;color:var(--ink);word-break:break-all;} .gp-hist-x small{font-size:11.5px;color:var(--ink-soft);}
+.gp-hist-a{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.gp-hist-a button, .gp-hist-g summary button{border:1.5px solid #CFE0F5;background:#fff;color:#1B4E95;border-radius:999px;padding:5px 11px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;}
+.gp-hist-del{border-color:#F3C9C4 !important;color:#B0392F !important;}
+.gp-hist-ok{background:#2463B8 !important;border-color:#2463B8 !important;color:#fff !important;}
+.gp-hist-ed{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+.gp-hist-ed label{display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:600;color:var(--ink-soft);}
+.gp-hist-ed select{border:1.5px solid var(--line);border-radius:8px;padding:5px 8px;font-family:inherit;font-size:12.5px;}
+.cita-tel-aviso{background:#F3EFFC;border:1.5px solid #D9CCF3;color:#3F2A78;border-radius:12px;padding:9px 12px;font-size:13px;margin:0 0 8px;line-height:1.4;}
+.cita-tel-aviso a{color:#5B3FA0;font-weight:800;}
 .inact-ov{position:fixed;inset:0;z-index:9997;background:rgba(15,25,45,.6);display:flex;align-items:center;justify-content:center;padding:18px;}
 .inact-card{background:#fff;border-radius:20px;max-width:380px;width:100%;padding:24px 22px 16px;text-align:center;box-shadow:0 24px 60px -20px rgba(0,0,0,.5);border-top:5px solid #F2BC2C;}
 .inact-i{font-size:38px;margin-bottom:4px;}
@@ -837,6 +855,22 @@
 .pg-hero .sn-ic{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);box-shadow:none;}
 .pg-hero .sn-ic:hover{background:rgba(255,255,255,.24);border-color:#F2BC2C;}
 .pg-hero .sn-ic-n{background:#F2BC2C;color:#163F7A;}
+.pg-area{margin:0 0 14px;}
+.pg-area-t{display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:700;color:#FFE08A;margin:0 0 8px;letter-spacing:.01em;}
+.pg-area-t small{font-size:11.5px;font-weight:500;color:rgba(255,255,255,.75);}
+.pg-area-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+.pg-ap{display:flex;align-items:center;gap:10px;text-align:left;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.26);border-radius:16px;padding:10px 12px;color:#fff;font-family:inherit;cursor:pointer;transition:background .15s,transform .15s;min-height:66px;}
+.pg-ap:hover{background:rgba(255,255,255,.22);transform:translateY(-2px);}
+.pg-ap-load{background:rgba(255,255,255,.08);animation:pgLoad 1.2s ease-in-out infinite;}
+@keyframes pgLoad{50%{opacity:.5}}
+.pg-ap-i{position:relative;width:40px;height:40px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto;}
+.pg-ap-dot{position:absolute;top:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:#F2BC2C;border:2px solid #2463B8;}
+.pg-ap-x{display:flex;flex-direction:column;min-width:0;line-height:1.2;}
+.pg-ap-x strong{font-size:12.5px;font-weight:600;opacity:.9;}
+.pg-ap-x span{font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pg-ap-x small{font-size:11px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media (max-width:900px){ .pg-area-g{grid-template-columns:repeat(2,minmax(0,1fr));} }
+@media (max-width:420px){ .pg-ap{padding:8px 9px;gap:8px;} .pg-ap-i{width:34px;height:34px;font-size:17px;} .pg-ap-x span{font-size:14.5px;} }
 .pg-search input{border:none;border-radius:14px;padding:14px 16px 14px 40px;font-size:15px;box-shadow:0 8px 20px -12px rgba(0,0,0,.5);}
 .pg-search input:focus{box-shadow:0 0 0 3px rgba(242,188,44,.6);}
 .pg-search .topbar-search-icon{opacity:.7;left:14px;font-size:15px;}
@@ -879,6 +913,155 @@ body.con-bloqueo #fichaje-banner, body.con-bloqueo > .asistente-btn{display:none
 @media (max-width:700px){ .sn-hola{font-size:24px;} .sn-cita{padding:14px;} .sn-cita-t{font-size:17px;} .sn-acc{flex-basis:82px;} .sn-acc-i{width:60px;height:60px;font-size:27px;} .sn-acc-l{font-size:13.5px;} }
 
 body{font-size:15.5px;}
+
+/* ===== Guía rápida en carrusel (como «La nostra feina en imatges» de la web) ===== */
+#guia-ov{background:radial-gradient(120% 90% at 50% 0%,#1F4F93 0%,#12305C 55%,#0B1E3D 100%) !important;padding:0 !important;align-items:stretch !important;}
+#guia-ov .gi-wrap{width:100%;max-width:1200px;margin:0 auto;display:flex;flex-direction:column;padding:18px 16px 16px;box-sizing:border-box;min-height:100%;}
+#guia-ov .gi-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;text-align:center;}
+#guia-ov .gi-head > div{flex:1;}
+#guia-ov .gi-head h2{margin:0;color:#fff;font-family:Georgia,'Fraunces',serif;font-size:clamp(26px,4vw,40px);font-weight:700;letter-spacing:-.01em;text-shadow:0 2px 0 rgba(0,0,0,.25);}
+#guia-ov .gi-head p{margin:4px 0 0;color:#F2BC2C;font-size:clamp(13px,1.8vw,17px);font-weight:600;font-style:italic;}
+#guia-ov .gi-x{color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);width:40px;height:40px;border-radius:50%;font-size:18px;padding:0;flex:0 0 auto;}
+#guia-ov .gi-stage{position:relative;flex:1;display:flex;align-items:center;justify-content:center;perspective:1400px;margin:14px 0 6px;min-height:0;}
+#guia-ov .gi-card{position:relative;z-index:3;width:min(560px,82vw);max-height:min(74vh,700px);background:#fff;border:5px solid #fff;border-radius:26px;box-shadow:0 0 0 2px rgba(242,188,44,.55),0 30px 70px -20px rgba(0,0,0,.65);animation:giCovR .35s ease;display:flex;flex-direction:column;overflow:hidden;}
+@keyframes giCovR{from{opacity:0;transform:translateX(50px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes giCovL{from{opacity:0;transform:translateX(-50px) scale(.96)}to{opacity:1;transform:none}}
+#guia-ov .gi-cov{position:relative;background:linear-gradient(135deg,#2463B8,#3B82D9 60%,#7FB0EE);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+#guia-ov .gi-cov-main{height:clamp(120px,22vh,200px);flex:0 0 auto;border-radius:20px 20px 0 0;}
+#guia-ov .gi-cov-img{width:100%;height:100%;object-fit:cover;object-position:50% 15%;}
+#guia-ov .gi-cov-av{width:clamp(80px,13vh,120px);height:clamp(80px,13vh,120px);border-radius:50%;object-fit:cover;border:4px solid #F2BC2C;background:#fff;}
+#guia-ov .gi-cov-e{font-size:clamp(54px,9vh,84px);line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.25));}
+#guia-ov .gi-cov-e2{position:absolute;right:16px;bottom:10px;font-size:34px;}
+#guia-ov .gi-cap{position:absolute;left:12px;bottom:10px;right:12px;color:#fff;font-weight:800;font-size:13.5px;text-shadow:0 1px 3px rgba(0,0,0,.6);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#guia-ov .gi-cov-main::after{content:'';position:absolute;inset:auto 0 0 0;height:50%;background:linear-gradient(transparent,rgba(0,0,0,.45));}
+#guia-ov .gi-cov-main .gi-cap{z-index:1;}
+#guia-ov .gi-prog{margin:0;border-radius:0;height:4px;background:#E7EDF6;}
+#guia-ov .gi-prog i{background:#F2BC2C;}
+#guia-ov .gi-body{padding:14px 22px 6px;}
+#guia-ov .gi-bub{display:inline-block;margin:0 0 8px;}
+#guia-ov .gi-t{color:#163F7A;}
+#guia-ov .gi-nav{padding:10px 16px 14px;border-top:1px solid #EEF1F6;}
+#guia-ov .gi-side{position:absolute;top:50%;z-index:1;width:min(360px,30vw);height:min(330px,50vh);border:4px solid rgba(255,255,255,.85);border-radius:22px;padding:0;overflow:hidden;cursor:pointer;background:#2463B8;box-shadow:0 20px 40px -18px rgba(0,0,0,.7);opacity:.8;transition:opacity .2s,transform .2s;}
+#guia-ov .gi-side .gi-cov{position:absolute;inset:0;}
+#guia-ov .gi-side::after{content:'';position:absolute;inset:0;background:linear-gradient(transparent 45%,rgba(0,0,0,.55));}
+#guia-ov .gi-side .gi-cap{z-index:1;font-size:13px;}
+#guia-ov .gi-izq{left:max(0px,calc(50% - min(560px,82vw)/2 - min(300px,24vw)));transform:translateY(-50%) rotateY(28deg) scale(.88);}
+#guia-ov .gi-der{right:max(0px,calc(50% - min(560px,82vw)/2 - min(300px,24vw)));transform:translateY(-50%) rotateY(-28deg) scale(.88);}
+#guia-ov .gi-side:hover{opacity:1;}
+#guia-ov .gi-vacia{visibility:hidden;}
+#guia-ov .gi-arr{position:absolute;top:50%;transform:translateY(-50%);z-index:4;width:48px;height:48px;border-radius:50%;border:none;background:rgba(11,30,61,.75);color:#fff;font-size:30px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0 0 4px;box-shadow:0 6px 16px rgba(0,0,0,.35);}
+#guia-ov .gi-arr:hover{background:#2463B8;} #guia-ov .gi-arr:disabled{opacity:.25;cursor:default;}
+#guia-ov .gi-arr-l{left:4px;} #guia-ov .gi-arr-r{right:4px;}
+#guia-ov .gi-foot{display:flex;justify-content:center;align-items:center;gap:14px;padding:4px 0 2px;}
+#guia-ov .gi-dots{padding:0;gap:8px;}
+#guia-ov .gi-dot{width:10px;height:10px;background:rgba(255,255,255,.55);transition:width .2s,background .2s;}
+#guia-ov .gi-dot.on{width:30px;border-radius:6px;background:#F2BC2C;}
+#guia-ov .gi-pp{width:40px;height:40px;border-radius:50%;background:#F2BC2C;color:#0B1E3D;font-size:13px;font-weight:800;padding:0;margin:0;display:flex;align-items:center;justify-content:center;}
+@media (max-width:760px){
+  #guia-ov .gi-wrap{padding:12px 10px 10px;}
+  #guia-ov .gi-card{width:84vw;max-height:72vh;}
+  #guia-ov .gi-side{width:40vw;height:44vh;}
+  #guia-ov .gi-izq{left:-30vw;transform:translateY(-50%) rotateY(25deg) scale(.85);}
+  #guia-ov .gi-der{right:-30vw;transform:translateY(-50%) rotateY(-25deg) scale(.85);}
+  #guia-ov .gi-side .gi-cap{display:none;}
+  #guia-ov .gi-arr{width:38px;height:38px;font-size:24px;}
+  #guia-ov .gi-arr-l{left:0;} #guia-ov .gi-arr-r{right:0;}
+  #guia-ov .gi-body{padding:12px 16px 4px;}
+  #guia-ov .gi-dot{width:8px;height:8px;} #guia-ov .gi-dot.on{width:22px;}
+}
+
+/* ===== Aula Virtual con aspecto de campus (menú, lista de cursos y tareas pendientes) ===== */
+.cmp{display:grid;grid-template-columns:220px minmax(0,1fr) 270px;gap:18px;align-items:start;}
+.cmp-menu{position:sticky;top:12px;background:linear-gradient(180deg,#1B4E95,#2463B8);border-radius:20px;padding:14px 10px;color:#fff;box-shadow:0 14px 30px -18px rgba(22,63,122,.8);}
+.cmp-yo{display:flex;align-items:center;gap:10px;padding:4px 8px 12px;border-bottom:1px solid rgba(255,255,255,.18);margin-bottom:8px;}
+.cmp-yo-av{width:38px;height:38px;border-radius:50%;background:#F2BC2C;color:#163F7A;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.cmp-yo strong{display:block;font-size:14px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;}
+.cmp-yo small{font-size:11.5px;opacity:.8;}
+.cmp-mi{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:#fff;font-family:inherit;font-size:14.5px;font-weight:600;padding:11px 12px;border-radius:12px;cursor:pointer;text-align:left;position:relative;}
+.cmp-mi:hover{background:rgba(255,255,255,.12);}
+.cmp-mi.on, .cmp-mi.av-tab-on{background:#fff;color:#1B4E95;box-shadow:none;}
+.cmp-mi .cmp-n{margin-left:auto;background:#F2BC2C;color:#163F7A;border-radius:999px;font-size:11px;font-weight:800;min-width:20px;height:20px;line-height:20px;text-align:center;padding:0 5px;}
+.cmp-mi-sep{height:1px;background:rgba(255,255,255,.18);margin:8px 6px;}
+.cmp-main{min-width:0;}
+.cmp-h1{font-family:Georgia,'Fraunces',serif;font-size:30px;font-weight:700;color:var(--ink);margin:2px 0 12px;}
+.cmp-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px;}
+.cmp-vista{display:flex;border:1.5px solid #D5DCE6;border-radius:10px;overflow:hidden;}
+.cmp-vista button{border:none;background:#fff;padding:8px 10px;cursor:pointer;font-size:15px;line-height:1;}
+.cmp-vista button.on{background:#1B2A44;color:#fff;}
+.cmp-buscar{flex:1;min-width:170px;position:relative;}
+.cmp-buscar input{width:100%;box-sizing:border-box;border:1.5px solid #D5DCE6;border-radius:10px;padding:9px 12px 9px 34px;font-family:inherit;font-size:14px;background:#fff;}
+.cmp-buscar::before{content:'🔎';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.6;}
+.cmp-sel{border:1.5px solid #D5DCE6;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;background:#fff;}
+.cmp-res{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);margin:0 0 10px;}
+.cmp-res b{background:#1B2A44;color:#fff;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;}
+.cmp-grupo{font-size:15.5px;font-weight:700;color:var(--ink);margin:16px 0 8px;}
+.cmp-lista{display:flex;flex-direction:column;gap:10px;}
+.cmp-row{--c:#2463B8;position:relative;background:#fff;border:1px solid #E2E7EF;border-left:7px solid var(--c);border-radius:12px;padding:14px 46px 12px 16px;box-shadow:0 4px 14px -12px rgba(27,42,68,.5);transition:box-shadow .15s,transform .15s;}
+.cmp-row:hover{box-shadow:0 10px 22px -14px rgba(27,42,68,.55);}
+.cmp-cod{font-size:12.5px;color:#5B6B82;letter-spacing:.02em;}
+.cmp-tit{font-size:17px;font-weight:700;color:var(--ink);margin:2px 0 4px;line-height:1.3;cursor:pointer;}
+.cmp-tit:hover{color:#2463B8;text-decoration:underline;}
+.cmp-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:13px;color:#5B6B82;}
+.cmp-meta i{font-style:normal;color:#C3CCDA;}
+.cmp-meta .cmp-ok{color:#1E8A4C;font-weight:600;}
+.cmp-mas-b{background:none;border:none;color:#2463B8;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:0;}
+.cmp-star{position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:#9AA6B8;line-height:1;}
+.cmp-star.on{color:#F2BC2C;}
+.cmp-prog{height:6px;background:#EEF1F6;border-radius:4px;margin:10px 0 2px;overflow:hidden;max-width:420px;}
+.cmp-prog i{display:block;height:100%;background:linear-gradient(90deg,#2463B8,#3B82D9);border-radius:4px;}
+.cmp-acc{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.cmp-acc button, .cmp-acc a{border:1.5px solid #CFE0F5;background:#fff;color:#1B4E95;border-radius:999px;padding:6px 12px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;position:relative;}
+.cmp-acc .cmp-pri{background:#2463B8;border-color:#2463B8;color:#fff;}
+.cmp-acc .cmp-oro{background:#F2BC2C;border-color:#F2BC2C;color:#163F7A;}
+.cmp-acc .cmp-x{border-color:#F3C9C4;color:#B0392F;}
+.cmp-mas{margin-top:10px;padding-top:10px;border-top:1px dashed #E2E7EF;font-size:13.5px;color:var(--ink);}
+.cmp-mas[hidden]{display:none;}
+.cmp-mas .panel-stat-row{padding:5px 0;}
+.cmp-lista.cmp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));}
+.cmp-grid .cmp-row{border-left-width:1px;border-top:7px solid var(--c);}
+.cmp-der{position:sticky;top:12px;display:flex;flex-direction:column;gap:12px;}
+.cmp-caja{background:#fff;border:1px solid #E2E7EF;border-radius:16px;padding:14px 14px 10px;box-shadow:0 6px 18px -16px rgba(27,42,68,.5);}
+.cmp-caja h3{margin:0 0 8px;font-size:17px;color:var(--ink);}
+.cmp-caja details{border:none !important;border-top:1px solid #EEF1F6 !important;border-radius:0 !important;padding:8px 0 !important;margin:0 !important;background:none !important;box-shadow:none !important;}
+.cmp-caja summary{padding:0 !important;background:none !important;}
+.cmp-caja summary{list-style:none;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-weight:600;font-size:14px;}
+.cmp-caja summary::-webkit-details-marker{display:none;}
+.cmp-caja summary::after{content:'⌃';transform:rotate(180deg);color:#5B6B82;}
+.cmp-caja details[open] summary::after{transform:none;}
+.cmp-caja summary span{display:flex;align-items:center;gap:6px;}
+.cmp-caja summary b{border-radius:999px;font-size:11px;padding:1px 7px;color:#fff;background:#9AA6B8;}
+.cmp-vencida b{background:#C0392B !important;} .cmp-hoy b{background:#E0A81A !important;} .cmp-pronto b{background:#2463B8 !important;}
+.cmp-vacio{background:#F6F8FB;border-radius:10px;padding:12px;font-size:12.5px;color:#7A8698;text-align:center;margin-top:6px;}
+.cmp-tarea{display:block;width:100%;text-align:left;background:#F6F8FB;border:none;border-radius:10px;padding:9px 10px;margin-top:6px;font-family:inherit;cursor:pointer;color:var(--ink);}
+.cmp-tarea:hover{background:#EAF1FB;}
+.cmp-tarea strong{display:block;font-size:13.5px;} .cmp-tarea small{font-size:12px;color:#5B6B82;}
+.cmp-clase{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #EEF1F6;font-size:13px;}
+.cmp-clase:first-of-type{border-top:none;}
+.cmp-clase-f{width:44px;text-align:center;background:#EAF1FB;color:#1B4E95;border-radius:10px;padding:4px 0;line-height:1.1;flex:0 0 auto;}
+.cmp-clase-f strong{display:block;font-size:17px;} .cmp-clase-f small{font-size:10.5px;text-transform:uppercase;}
+.cmp-clase a{margin-left:auto;font-weight:700;color:#2463B8;white-space:nowrap;}
+.cmp-sec[hidden]{display:none;}
+@media (max-width:1180px){ .cmp{grid-template-columns:200px minmax(0,1fr);} .cmp-der{grid-column:2;position:static;} }
+@media (max-width:820px){
+  .cmp{grid-template-columns:1fr;gap:12px;}
+  .cmp-menu{position:static;display:flex;gap:6px;overflow-x:auto;padding:8px;border-radius:16px;scrollbar-width:none;}
+  .cmp-menu::-webkit-scrollbar{display:none;}
+  .cmp-yo, .cmp-mi-sep{display:none;}
+  .cmp-mi{flex:0 0 auto;width:auto;padding:9px 12px;font-size:13.5px;white-space:nowrap;}
+  .cmp-menu{order:0;} .cmp-der{grid-column:auto;order:1;} .cmp-main{order:2;}
+  .cmp-der .cmp-caja:not(.cmp-tareas){display:none;}
+  .cmp-h1{font-size:24px;}
+  .cmp-row{padding:12px 40px 10px 12px;}
+}
+
+#aulavirtual-content .av-filtros{margin-bottom:6px;}
+#aulavirtual-content .cmp-bar .av-filtro{padding:8px 12px;border-radius:10px;}
+#aulavirtual-content #contenido-curso-wrap:not(:empty), #aulavirtual-content #inscritos-curso-wrap:not(:empty), #aulavirtual-content #participantes-clase-wrap:not(:empty){margin-bottom:14px;}
+#aulavirtual-content .av-sec .av-crear-grid{margin-top:4px;}
+#aulavirtual-content .cmp .av-crear-grid{grid-template-columns:1fr;max-width:560px;}
+#aulavirtual-content .cmp-main .panel-card{max-width:100%;box-sizing:border-box;}
+#aulavirtual-content .cmp-main table{font-size:12.5px;}
+@media (max-width:820px){ #aulavirtual-content .cmp-der .cmp-caja:not(.cmp-tareas){display:none;} }
 </style>
 </head>
 <body>
@@ -2088,7 +2271,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v160'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v162'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -5199,13 +5382,28 @@ function citaAccionesHtml(c, nombre){
   const conTec = 'tecnico_email' in c;   // existe la columna (SQL 39)
   window.__citasMapa[c.id] = { id: c.id, uid: c.usuario_id, nombre: nombre || c.nombre_contacto || '', contacto: (!c.usuario_id && (c.historico_id || c.nombre_contacto)) ? { id: c.historico_id || '', nombre: c.nombre_contacto || nombre || '', telefono: c.telefono_contacto || '', email: c.email_contacto || '' } : null, fecha: c.fecha, hora: String(c.hora || '').slice(0, 5), motivo: c.motivo || '', tecnico: c.tecnico_email || '', conTec };
   const mia = conTec && c.tecnico_email && c.tecnico_email.toLowerCase() === String(CURRENT_USER.email || '').toLowerCase();
-  return `<div class="cita-acciones">
+  const telLlamar = citaEsTelefono(c) ? String(citaTelDe(c) || c.telefono || '').replace(/[^\d+]/g, '') : '';
+  return `${citaEsTelefono(c) ? `<div class="cita-tel-aviso">📞 <strong>${acL('Cita por teléfono', 'Cita per telèfon')}</strong>: ${acL('llámale a la hora de la cita desde el 630 46 15 60', 'truca-li a l\'hora de la cita des del 630 46 15 60')}${telLlamar ? ` · <a href="tel:${escAttr(telLlamar)}">${escAttr(citaTelDe(c))}</a>` : ` · ${acL('mira el teléfono en su ficha', 'mira el telèfon a la seva fitxa')}`}</div>` : ''}<div class="cita-acciones">
+    ${telLlamar ? `<a class="cita-acc" style="text-decoration:none;background:#5B3FA0;color:#fff;border-color:#5B3FA0;" href="tel:${escAttr(telLlamar)}">📞 ${acL('Llamar ahora', 'Trucar ara')}</a>` : ''}
+    ${'modalidad' in c ? (citaEsTelefono(c) ? `<button class="cita-acc" onclick="cambiarModoCitaStaff('${c.id}','presencial')">🏢 ${acL('Pasar a presencial', 'Passar a presencial')}</button>` : `<button class="cita-acc" onclick="cambiarModoCitaStaff('${c.id}','telefono')">📞 ${acL('Pasar a teléfono', 'Passar a telèfon')}</button>`) : ''}
     ${conTec && !mia ? `<button class="cita-acc" onclick="quedarmeCitaStaff('${c.id}')">✋ ${acL('Me la quedo', 'Me la quedo')}</button>` : ''}
     ${conTec ? `<button class="cita-acc" onclick="pasarCitaStaff('${c.id}')">👤 ${acL('Pasar a otra persona', 'Passar a una altra persona')}</button>` : ''}
     <button class="cita-acc" onclick="cambiarCitaStaff('${c.id}')">🔁 ${acL('Cambiar día/hora', 'Canviar dia/hora')}</button>
     <button class="cita-acc" onclick="otraCitaStaff('${c.id}')">➕ ${acL('Otra cita', 'Una altra cita')}</button>
     <button class="cita-acc cita-acc-x" onclick="cancelarCitaStaff('${c.id}')">✖ ${acL('Cancelar', 'Cancel·lar')}</button>
   </div>`;
+}
+// Presencial o por teléfono (SQL 48). Sin el SQL, una cita por teléfono lleva «📞» al principio del motivo.
+function citaEsTelefono(c){ return !!c && (c.modalidad === 'telefono' || /^📞/.test(String(c.motivo || ''))); }
+function citaTelDe(c){ return (c && c.telefono_contacto) || (String((c && c.motivo) || '').match(/(\+?\d[\d\s]{7,})/) || [])[1] || ''; }
+function citaModoChip(c){
+  if(!c) return '';
+  return citaEsTelefono(c) ? ` <span class="chip" style="background:#EFEAFB;color:#5B3FA0;">📞 ${acL('Por teléfono', 'Per telèfon')}</span>` : ('modalidad' in c ? ` <span class="chip" style="background:#EAF1FB;color:#1B4E95;">🏢 ${acL('Presencial', 'Presencial')}</span>` : '');
+}
+async function cambiarModoCitaStaff(id, modo){
+  const { error } = await sb.from('citas').update({ modalidad: modo }).eq('id', id);
+  if(error){ alert(/modalidad|column|schema/i.test(error.message || '') ? acL('Falta ejecutar el SQL 48 (citas por teléfono) en Supabase.', 'Falta executar l\'SQL 48 (cites per telèfon) a Supabase.') : error.message); return; }
+  try { if(typeof renderAgendaCitas === 'function' && document.getElementById('screen-agenda') && document.getElementById('screen-agenda').classList.contains('active')) renderAgendaCitas(); else if(typeof renderPanelGeneral === 'function') renderPanelGeneral(); } catch(e){}
 }
 // Quién atiende la cita (SQL 39): chip con el nombre, «Tú» o «Sin asignar»
 function citaTecnicoChip(c){
@@ -5393,7 +5591,7 @@ async function renderAgendaCitas(fecha){
   const citasHtml = (citasDelDia && citasDelDia.length)
     ? citasDelDia.map(c => {
         const p = citaPersona(c, nombresAgenda);
-        return `<details class="plegable" ${(citasDelDia || []).length <= 6 ? 'open' : ''}><summary><span><strong>${String(c.hora || '—').slice(0, 5)}</strong> · ${escAttr(p.nombre_completo || (LANG_I==='ca'?'Sense nom':'Sin nombre'))}${chipSinCuenta(p)} ${citaTecnicoChip(c)}</span><span class="chip ${c.estado==='confirmada'?'good':(c.estado==='cancelada'?'':'gold')}" style="${c.estado==='cancelada'?'background:#EEE;color:#888;':''}">${c.estado}</span></summary><div class="plegable-c">
+        return `<details class="plegable" ${(citasDelDia || []).length <= 6 ? 'open' : ''}><summary><span><strong>${String(c.hora || '—').slice(0, 5)}</strong> · ${escAttr(p.nombre_completo || (LANG_I==='ca'?'Sense nom':'Sin nombre'))}${chipSinCuenta(p)} ${citaTecnicoChip(c)}${citaModoChip(c)}</span><span class="chip ${c.estado==='confirmada'?'good':(c.estado==='cancelada'?'':'gold')}" style="${c.estado==='cancelada'?'background:#EEE;color:#888;':''}">${c.estado}</span></summary><div class="plegable-c">
           <div class="panel-stat-row"><span>${LANG_I==='ca'?'Persona usuària':'Persona usuaria'}</span><span><strong>${p.nombre_completo || (LANG_I==='ca'?'Sense nom':'Sin nombre')}</strong></span></div>
           ${p.telefono ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Telèfon':'Teléfono'}</span><span>${p.telefono}</span></div>` : ''}
           ${c.motivo ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Motiu':'Motivo'}</span><span>${c.motivo}</span></div>` : ''}
@@ -5477,6 +5675,7 @@ function pintarNuevaCitaStaff(){
     <div id="nc-horas"></div>
     <div class="field" style="margin-top:12px;"><label>${acL('Motivo (opcional)', 'Motiu (opcional)')}</label>
       <textarea id="nc-motivo" rows="2" placeholder="${acL('Para qué es la cita', 'Per a què és la cita')}">${escAttr(__NC.motivo || '')}</textarea></div>
+    <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px;"><input type="checkbox" id="nc-telefono"> 📞 ${acL('Por teléfono: la llamamos nosotros (no hace falta que venga)', 'Per telèfon: la truquem nosaltres (no cal que vingui)')}</label>
     <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px;"><input type="checkbox" id="nc-urgente"> 🔴 ${acL('Urgente: la persona verá un aviso destacado', 'Urgent: la persona veurà un avís destacat')}</label>
     <div id="nc-msg"></div>
     <button class="primary-btn" id="nc-guardar" style="margin-top:10px;" onclick="guardarNuevaCitaStaff()" ${__NC.hora ? '' : 'disabled'}>${acL('Crear cita', 'Crear cita')}</button>` : ''}
@@ -5573,7 +5772,10 @@ async function guardarNuevaCitaStaff(){
   const urgente = !!(document.getElementById('nc-urgente') && document.getElementById('nc-urgente').checked);
   if(urgente) fila.urgente = true;
   if(__NC.tecnico && document.getElementById('nc-tecnico')) fila.tecnico_email = __NC.tecnico;
+  const porTel = !!(document.getElementById('nc-telefono') && document.getElementById('nc-telefono').checked);
+  if(porTel) fila.modalidad = 'telefono';
   let { error } = await sb.from('citas').insert(fila);
+  if(error && porTel && /modalidad/.test(error.message || '')){ delete fila.modalidad; fila.motivo = '📞 Cita por teléfono' + (fila.motivo ? ' · ' + fila.motivo : ''); ({ error } = await sb.from('citas').insert(fila)); }
   if(error && /tecnico_email|tecnico_nombre|tecnico_clave/.test(error.message || '')){ delete fila.tecnico_email; ({ error } = await sb.from('citas').insert(fila)); }
   if(error && /urgente/.test(error.message || '')){ delete fila.urgente; ({ error } = await sb.from('citas').insert(fila)); if(!error && urgente) alert(acL('La cita se ha creado, pero falta ejecutar el SQL 18 para marcarla como urgente.', 'La cita s\'ha creat, però falta executar l\'SQL 18 per marcar-la com a urgent.')); }
   if(error && /creada_por_email/.test(error.message || '')){ delete fila.creada_por_email; ({ error } = await sb.from('citas').insert(fila)); }
@@ -5887,7 +6089,7 @@ async function renderProximasCitas(){
         const fechaFmt = new Date(fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, { weekday:'long', day:'numeric', month:'long' });
         const filas = porDia[fecha].map(c => {
           const p = citaPersona(c, nombres);
-          return `<details class="plegable" open><summary><span><strong>${String(c.hora || '—').slice(0, 5)}</strong> · ${escAttr(p.nombre_completo || (esCA?'Sense nom':'Sin nombre'))}${chipSinCuenta(p)} ${citaTecnicoChip(c)}</span><span class="chip ${c.estado==='confirmada'?'good':'gold'}">${c.estado}</span></summary><div class="plegable-c">
+          return `<details class="plegable" open><summary><span><strong>${String(c.hora || '—').slice(0, 5)}</strong> · ${escAttr(p.nombre_completo || (esCA?'Sense nom':'Sin nombre'))}${chipSinCuenta(p)} ${citaTecnicoChip(c)}${citaModoChip(c)}</span><span class="chip ${c.estado==='confirmada'?'good':'gold'}">${c.estado}</span></summary><div class="plegable-c">
             ${respuestaCitaHtml(c)}
             ${contactoCitaHtml(p)}
             ${citaAccionesHtml(c, p.nombre_completo)}
@@ -7655,18 +7857,32 @@ function avTab(t, sinScroll){
   document.querySelectorAll('#aulavirtual-content .av-tab').forEach(b => b.classList.toggle('av-tab-on', b.dataset.tab === t));
   document.querySelectorAll('#aulavirtual-content .av-sec').forEach(sc => { sc.style.display = sc.dataset.sec === t ? '' : 'none'; });
   try { localStorage.setItem('logos_aula_tab', t); } catch(e){}
-  if(!sinScroll){ const tabs = document.querySelector('#aulavirtual-content .av-tabs'); if(tabs) tabs.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  if(!sinScroll){ const tabs = document.querySelector('#aulavirtual-content .cmp-main') || document.querySelector('#aulavirtual-content .av-tabs'); if(tabs && window.innerWidth < 820) tabs.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 }
 function avFiltrar(f){
   window.__avFiltro = f;
   document.querySelectorAll('#aulavirtual-content .av-filtro').forEach(b => b.classList.toggle('av-filtro-on', b.dataset.f === f));
   let visibles = 0;
+  const q = normTxt((document.getElementById('av-q') || {}).value || '');
+  const favs = (() => { try { return JSON.parse(localStorage.getItem('logos_av_fav') || '[]'); } catch(e){ return []; } })();
   document.querySelectorAll('#aulavirtual-content .av-curso').forEach(c => {
-    const ok = f === 'todos' || (f === 'mios' ? c.dataset.mio === '1' : c.dataset.aud === f);
+    const ok = (f === 'todos' || (f === 'fav' ? favs.includes(c.dataset.id) : (f === 'mios' ? c.dataset.mio === '1' : c.dataset.aud === f))) && (!q || normTxt(c.dataset.txt || '').includes(q));
     c.style.display = ok ? '' : 'none'; if(ok) visibles++;
   });
-  document.querySelectorAll('#aulavirtual-content .section-label').forEach(l => { if(/Formació de l|Formación del equipo/.test(l.textContent)) l.style.display = (f === 'ciudadania') ? 'none' : ''; });
+  document.querySelectorAll('#aulavirtual-content .section-label, #aulavirtual-content .av-grupo-eq').forEach(l => { if(/Formació de l|Formación del equipo/.test(l.textContent)){ const lista = l.nextElementSibling; l.style.display = (lista && [...lista.children].some(x => x.style.display !== 'none')) ? '' : 'none'; } });
   const v = document.querySelector('#aulavirtual-content .av-vacio'); if(v) v.style.display = visibles ? 'none' : '';
+}
+function avVista(v){
+  try { localStorage.setItem('logos_av_vista', v); } catch(e){}
+  document.querySelectorAll('#aulavirtual-content .av-lista').forEach(l => l.classList.toggle('cmp-grid', v === 'grid'));
+  document.querySelectorAll('#aulavirtual-content .cmp-vista button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+}
+function avMas(btn){ const r = btn.closest('.cmp-row'); const m = r && r.querySelector('.cmp-mas'); if(!m) return; m.hidden = !m.hidden; btn.textContent = m.hidden ? acL('Más información ⌄', 'Més informació ⌄') : acL('Menos información ⌃', 'Menys informació ⌃'); }
+function avFav(id, btn){
+  let f = []; try { f = JSON.parse(localStorage.getItem('logos_av_fav') || '[]'); } catch(e){}
+  const i = f.indexOf(id); if(i >= 0) f.splice(i, 1); else f.push(id);
+  try { localStorage.setItem('logos_av_fav', JSON.stringify(f)); } catch(e){}
+  if(btn){ btn.classList.toggle('on', i < 0); btn.textContent = i < 0 ? '★' : '☆'; }
 }
 const AV_GUIA = [
   { c: 'av-g-azul', i: '🎓', es: ['Bienvenida al Aula Virtual', 'Aquí se crean los cursos para la ciudadanía (los ven en Logos Acompanya) y para el equipo (los ven en «Mi formación»), y se programan las clases en línea.'], ca: ['Benvinguda a l\'Aula Virtual', 'Aquí es creen els cursos per a la ciutadania (els veuen a Logos Acompanya) i per a l\'equip (els veuen a «La meva formació»), i es programen les classes en línia.'] },
@@ -7885,6 +8101,7 @@ async function renderAulaVirtualScreen(){
   const clasesProximas = (clases || []).filter(c => c.fecha !== hoyIso);
 
   // Panel del docente: solo los cursos donde el técnico actual es el docente
+  window.__avRevisar = [];
   const misCursos = (cursos || []).filter(c => c.docente_email === CURRENT_USER.email);
   let misCursosStats = {};
   if(misCursos.length){
@@ -7965,6 +8182,9 @@ async function renderAulaVirtualScreen(){
 
       misCursosStats[c.id] = { participantes, asistenciaMedia, progresoMedio, proximaClaseTexto };
     });
+    const actCurso = {}; misActividades.forEach(a => { const m = (misModulos || []).find(x => x.id === a.modulo_id); if(m) actCurso[a.id] = { curso: m.curso_id, a }; });
+    window.__avRevisar = misEntregas.filter(e => e.estado === 'pendiente' && actCurso[e.actividad_id] && actCurso[e.actividad_id].a.tipo !== 'test').map(e => Object.assign({ e }, actCurso[e.actividad_id]));
+    Object.keys(misCursosStats).forEach(id => { misCursosStats[id].revisar = window.__avRevisar.filter(x => x.curso === id).length; });
   }
 
   const iconoEstado = { programada:'🟢', en_curso:'🟡', finalizada:'⚪', cancelada:'🔴' };
@@ -8010,16 +8230,25 @@ async function renderAulaVirtualScreen(){
     cerrado: LANG_I==='ca' ? 'Tancat' : 'Cerrado'
   };
 
+  const avColor = { preparacion:'#94A3B8', inscripcion:'#E0A526', activo:'#2E8B47', finalizado:'#2F5DA8', cerrado:'#555' };
+  const avFavs = (() => { try { return JSON.parse(localStorage.getItem('logos_av_fav') || '[]'); } catch(e){ return []; } })();
   const cursosHtmlDe = (lista) => (lista && lista.length)
     ? lista.map(c => {
         const misStats = misCursosStats[c.id];
+        const fav = avFavs.includes(c.id);
+        const codigo = c.codigo || ('LOGOS' + (c.fecha_inicio ? '-' + String(c.fecha_inicio).slice(0, 4) : (c.creado_en ? '-' + String(c.creado_en).slice(0, 4) : '')) + '-' + String(c.id || '').replace(/[^a-z0-9]/gi, '').slice(0, 4).toUpperCase());
         return `
-        <div class="panel-card av-curso av-est-${escAttr(c.estado || 'activo')}" data-aud="${c.audiencia === 'equipo' ? 'equipo' : 'ciudadania'}" data-mio="${misStats ? '1' : '0'}">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
-            <h3 style="margin:0;">${iconoModalidad[c.modalidad] || '🏫'} ${c.nombre}${c.audiencia === 'equipo' ? ((c.destinatarios || []).length ? ` <span class="chip" style="background:#7A4A1F;color:#fff;font-size:10px;" title="${escAttr((c.destinatarios || []).map(equipoNombreTodo).join(', '))}">👤 ${(c.destinatarios || []).length} ${(c.destinatarios || []).length === 1 ? (LANG_I==='ca'?'persona':'persona') : (LANG_I==='ca'?'persones':'personas')}</span>` : ` <span class="chip" style="background:#33449E;color:#fff;font-size:10px;">👥 ${LANG_I==='ca'?'Equip':'Equipo'}</span>`) : ''}</h3>
-            <span class="chip" style="background:${estadoCursoColor[c.estado] || '#999'};color:#fff;flex-shrink:0;">${textoEstadoCurso[c.estado] || c.estado}</span>
+        <div class="cmp-row av-curso av-est-${escAttr(c.estado || 'activo')}" style="--c:${avColor[c.estado] || '#2E8B47'}" data-id="${escAttr(c.id)}" data-aud="${c.audiencia === 'equipo' ? 'equipo' : 'ciudadania'}" data-mio="${misStats ? '1' : '0'}" data-txt="${escAttr([c.nombre, c.docente_nombre, c.docente_email, c.proyecto, codigo].join(' '))}">
+          <div class="cmp-cod">${escAttr(codigo)}${c.audiencia === 'equipo' ? ` · <span style="color:#7A4A1F;font-weight:700;">👥 ${LANG_I==='ca'?'Equip':'Equipo'}${(c.destinatarios || []).length ? ' (' + (c.destinatarios || []).length + ')' : ''}</span>` : ''}${misStats ? ` · <span style="color:#B8901A;font-weight:700;">👨‍🏫 ${LANG_I==='ca'?'El teu curs':'Tu curso'}</span>` : ''}</div>
+          <div class="cmp-tit" onclick="verContenidoCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">${iconoModalidad[c.modalidad] || '🏫'} ${escAttr(c.nombre || '')}</div>
+          <div class="cmp-meta"><span style="color:${avColor[c.estado] || '#2E8B47'};font-weight:700;">${textoEstadoCurso[c.estado] || c.estado}</span><i>|</i><span>${escAttr(c.docente_nombre || c.docente_email || '—')}</span><i>|</i><span>👥 ${inscritosPorCurso[c.id] || 0}${c.plazas ? ' / ' + c.plazas : ''}</span>${misStats ? `<i>|</i><span>📊 ${misStats.progresoMedio}%</span>${misStats.revisar ? `<i>|</i><span style="color:#C0392B;font-weight:700;">✏️ ${misStats.revisar} ${LANG_I==='ca'?'per revisar':'por revisar'}</span>` : ''}` : ''}<i>|</i><button class="cmp-mas-b" onclick="avMas(this)">${LANG_I==='ca'?'Més informació ⌄':'Más información ⌄'}</button></div>
+          <div class="cmp-acc">
+            <button class="cmp-pri" onclick="verContenidoCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">📚 ${LANG_I==='ca'?'Contingut':'Contenido'}</button>
+            <button data-chat-curso="${c.id}" data-n="${escAttr(c.nombre || '')}" onclick="cursoChatAbrir(this.dataset.chatCurso, this.dataset.n)">💬 ${LANG_I==='ca'?'Missatges':'Mensajes'}</button>
+            <button onclick="verInscritosCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">👥 ${LANG_I==='ca'?'Inscrits':'Inscritos'}</button>
+            <button onclick="verProgresoCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">📊 ${LANG_I==='ca'?'Progrés':'Progreso'}</button>
           </div>
-          ${misStats ? `<span class="chip" style="background:var(--gold);color:#fff;font-size:10px;margin-top:4px;display:inline-block;">👨‍🏫 ${LANG_I==='ca'?'El teu curs':'Tu curso'}</span>` : ''}
+          <div class="cmp-mas" hidden>
           ${c.proyecto ? `<p class="subtle" style="margin:4px 0 8px;">${c.proyecto}</p>` : ''}
           ${c.audiencia === 'equipo' && (c.destinatarios || []).length ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Adreçat a':'Dirigido a'}</span><span style="text-align:right;">${escAttr((c.destinatarios || []).map(equipoNombreTodo).join(', '))}</span></div>` : ''}
           <div class="panel-stat-row"><span>${LANG_I==='ca'?'Docent':'Docente'}</span><span>${c.docente_nombre || c.docente_email || '—'}</span></div>
@@ -8034,14 +8263,12 @@ async function renderAulaVirtualScreen(){
             <select style="font-size:11px;padding:2px 4px;" onchange="cambiarEstadoCurso('${c.id}', this.value)">
               ${Object.keys(textoEstadoCurso).map(k => `<option value="${k}" ${c.estado===k?'selected':''}>${textoEstadoCurso[k]}</option>`).join('')}
             </select>
-            <button class="link-btn" style="font-size:12px;" onclick="verContenidoCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">📚 ${LANG_I==='ca'?'Contingut':'Contenido'}</button>
-            <button class="link-btn" style="font-size:12px;" onclick="verProgresoCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">📊 ${LANG_I==='ca'?'Progrés':'Progreso'}</button>
-            <button class="link-btn" style="font-size:12px;" onclick="verInscritosCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">👥 ${LANG_I==='ca'?'Inscrits':'Inscritos'}</button>
-            <button class="link-btn" style="font-size:12px;font-weight:800;" data-chat-curso="${c.id}" data-n="${escAttr(c.nombre || '')}" onclick="cursoChatAbrir(this.dataset.chatCurso, this.dataset.n)">💬 ${LANG_I==='ca'?'Missatges':'Mensajes'}</button>
             ${c.audiencia === 'equipo' && (IS_ADMIN || c.docente_email === CURRENT_USER.email || c.creado_por_email === CURRENT_USER.email) ? `<button class="link-btn" style="font-size:12px;" onclick="cursoEditarDestinatarios('${c.id}')">🎯 ${LANG_I==='ca'?'A qui va adreçat':'A quién va dirigido'}</button>` : ''}
             ${misStats ? `<button class="link-btn" style="font-size:12px;" onclick="showScreen('comunicacion');renderComunicacionScreen()">📩 ${LANG_I==='ca'?'Enviar avís':'Enviar aviso'}</button>` : ''}
             <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="borrarCurso('${c.id}')">${LANG_I==='ca'?'Esborrar':'Borrar'}</button>
           </div>
+          </div>
+          <button class="cmp-star ${fav ? 'on' : ''}" onclick="avFav('${c.id}', this)" aria-label="${LANG_I==='ca'?'Preferit':'Favorito'}">${fav ? '★' : '☆'}</button>
         </div>`;
       }).join('')
     : `<div class="empty-note">${LANG_I==='ca' ? 'Encara no hi ha cursos.' : 'Todavía no hay cursos.'}</div>`;
@@ -8050,32 +8277,28 @@ async function renderAulaVirtualScreen(){
   const cursosCiudadania = (cursos || []).filter(c => c.audiencia !== 'equipo');
   const cursosEquipo = (cursos || []).filter(c => c.audiencia === 'equipo');
   const cursosHtml = cursosHtmlDe(cursosCiudadania)
-    + (cursosEquipo.length ? `</div><div class="section-label" style="margin:16px 0 8px;">👥 ${LANG_I==='ca'?"Formació de l'equip (tècnics i administradors)":'Formación del equipo (técnicos y administradores)'} <button class="link-btn" style="font-size:12px;margin-left:8px;" onclick="showScreen('miformacion');renderMiFormacion()">${LANG_I==='ca'?'Fer-los com a alumne →':'Hacerlos como alumno/a →'}</button></div><div class="cards-grid" style="margin-bottom:16px;">${cursosHtmlDe(cursosEquipo)}` : '');
+    + (cursosEquipo.length ? `</div><div class="cmp-grupo av-grupo-eq">👥 ${LANG_I==='ca'?"Formació de l'equip (tècnics i administradors)":'Formación del equipo (técnicos y administradores)'} <button class="link-btn" style="font-size:12px;margin-left:8px;" onclick="showScreen('miformacion');renderMiFormacion()">${LANG_I==='ca'?'Fer-los com a alumne →':'Hacerlos como alumno/a →'}</button></div><div class="cmp-lista av-lista">${cursosHtmlDe(cursosEquipo)}` : '');
 
   const avCa = LANG_I === 'ca';
   const nActivos = (cursos || []).filter(c => ['activo', 'inscripcion'].includes(c.estado)).length;
   const avTile = (cls, icono, n, txt, tab) => `<button class="av-tile ${cls}" onclick="avTab('${tab}')"><span class="av-tile-i">${icono}</span><strong>${n}</strong><span>${txt}</span></button>`;
-  cont.innerHTML = `
-    <div class="av-hero">
-      <div style="flex:1;min-width:200px;">
-        <div class="av-hero-t">🎓 ${avCa ? 'Aula Virtual' : 'Aula Virtual'}</div>
-        <div class="av-hero-s">${avCa ? 'Cursos per a la ciutadania i per a l\'equip, i classes en línia (Meet, Zoom o Teams).' : 'Cursos para la ciudadanía y para el equipo, y clases en línea (Meet, Zoom o Teams).'}</div>
-      </div>
-      <button class="av-guia-btn" onclick="avMostrarGuia()">▶️ ${avCa ? 'Com funciona (1 min)' : 'Cómo funciona (1 min)'}</button>
-    </div>
-    <div class="av-tiles">
-      ${avTile('av-c-azul', '📚', nActivos, avCa ? 'cursos en marxa' : 'cursos en marcha', 'cursos')}
-      ${avTile('av-c-verde', '🟢', clasesHoy.length, avCa ? 'classes avui' : 'clases hoy', 'clases')}
-      ${avTile('av-c-oro', '📅', clasesProximas.length, avCa ? 'properes classes' : 'próximas clases', 'clases')}
-      ${avTile('av-c-morado', '👨‍🏫', misCursos.length, avCa ? 'els meus cursos' : 'mis cursos', 'cursos')}
-    </div>
-    <div class="av-tabs" role="tablist">
-      <button class="av-tab" data-tab="cursos" onclick="avTab('cursos')">📚 ${avCa ? 'Cursos' : 'Cursos'}</button>
-      <button class="av-tab" data-tab="clases" onclick="avTab('clases')">📅 ${avCa ? 'Classes' : 'Clases'}</button>
-      <button class="av-tab" data-tab="crear" onclick="avTab('crear')">➕ ${avCa ? 'Crear' : 'Crear'}</button>
-      <button class="av-tab" data-tab="indicadores" onclick="avTab('indicadores');renderIndicadoresProyecto()">📈 ${avCa ? 'Indicadors' : 'Indicadores'}</button>
-    </div>
-
+  const avRev = window.__avRevisar || [];
+  const avMi = (tab, ic, txt, n, extra) => `<button class="cmp-mi av-tab" data-tab="${tab}" onclick="avTab('${tab}')${extra || ''}">${ic} ${txt}${n ? `<span class="cmp-n">${n}</span>` : ''}</button>`;
+  const avClaseMini = cl => { const d = new Date(cl.fecha + 'T00:00:00'); return `<div class="cmp-clase"><div class="cmp-clase-f"><strong>${d.getDate()}</strong><small>${d.toLocaleDateString(t.localeFecha, { month: 'short' }).replace('.', '')}</small></div><div><strong>${String(cl.hora || '').slice(0, 5)}</strong> · ${escAttr(cl.titulo || '')}</div>${cl.enlace_meet ? `<a href="${escAttr(cl.enlace_meet)}" target="_blank" rel="noopener">${avCa ? 'Entrar' : 'Entrar'} →</a>` : ''}</div>`; };
+  const avRevPorCurso = {}; avRev.forEach(x => { avRevPorCurso[x.curso] = (avRevPorCurso[x.curso] || 0) + 1; });
+  cont.innerHTML = `<div class="cmp av-cmp">
+    <nav class="cmp-menu">
+      <div class="cmp-yo"><span class="cmp-yo-av">${escAttr(String(CURRENT_USER_NOMBRE || CURRENT_USER.email || '?').trim().charAt(0).toUpperCase())}</span><span><strong>${escAttr(String(CURRENT_USER_NOMBRE || CURRENT_USER.email || '').split(' ').slice(0, 2).join(' '))}</strong><small>${avCa ? 'Docent · Aula Virtual' : 'Docente · Aula Virtual'}</small></span></div>
+      ${avMi('cursos', '📚', avCa ? 'Cursos' : 'Cursos', nActivos)}
+      ${avMi('clases', '📅', avCa ? 'Calendari' : 'Calendario', clasesHoy.length)}
+      ${avMi('mensajes', '💬', avCa ? 'Missatges' : 'Mensajes', '')}
+      ${avMi('calificaciones', '📊', avCa ? 'Qualificacions' : 'Calificaciones', avRev.length)}
+      ${avMi('crear', '➕', avCa ? 'Crear' : 'Crear', '')}
+      ${avMi('indicadores', '📈', avCa ? 'Indicadors' : 'Indicadores', '', ';renderIndicadoresProyecto()')}
+      <div class="cmp-mi-sep"></div>
+      <button class="cmp-mi" onclick="avMostrarGuia()">▶️ ${avCa ? 'Com funciona' : 'Cómo funciona'}</button>
+    </nav>
+    <main class="cmp-main">
     <div id="contenido-curso-wrap"></div>
     <div id="inscritos-curso-wrap"></div>
     <div id="participantes-clase-wrap"></div>
@@ -8085,6 +8308,12 @@ async function renderAulaVirtualScreen(){
     </section>
 
     <section class="av-sec" data-sec="cursos">
+    <h2 class="cmp-h1">${avCa ? 'Cursos' : 'Cursos'}</h2>
+    <div class="cmp-bar">
+      <div class="cmp-vista"><button data-v="lista" onclick="avVista('lista')" aria-label="Lista">☰</button><button data-v="grid" onclick="avVista('grid')" aria-label="Cuadrícula">▦</button></div>
+      <div class="cmp-buscar"><input id="av-q" type="search" placeholder="${avCa ? 'Cerca cursos, docents, projectes…' : 'Busca cursos, docentes, proyectos…'}" oninput="avFiltrar(window.__avFiltro || 'todos')"></div>
+      <button class="av-filtro" data-f="fav" onclick="avFiltrar('fav')">★ ${avCa ? 'Preferits' : 'Favoritos'}</button>
+    </div>
     <div class="av-filtros">
       <span class="subtle" style="margin:0;font-size:12.5px;">${avCa ? 'Mostrar' : 'Mostrar'}:</span>
       <button class="av-filtro" data-f="todos" onclick="avFiltrar('todos')">${avCa ? 'Tots' : 'Todos'}</button>
@@ -8095,8 +8324,7 @@ async function renderAulaVirtualScreen(){
     <div class="av-leyenda">${['preparacion', 'inscripcion', 'activo', 'finalizado', 'cerrado'].map(k => `<span><i class="av-est-${k}"></i>${textoEstadoCurso[k]}</span>`).join('')}</div>
 
     ${misCursos.length ? `<p class="subtle" style="margin-bottom:12px;">👨‍🏫 ${LANG_I==='ca'?'Els cursos marcats amb':'Los cursos marcados con'} <span class="chip" style="background:var(--gold);color:#fff;font-size:10px;">${LANG_I==='ca'?'El teu curs':'Tu curso'}</span> ${LANG_I==='ca'?'són els que imparteixes tu.':'son los que impartes tú.'}</p>` : ''}
-    <div class="section-label" style="margin-bottom:8px;">${LANG_I==='ca'?'Cursos':'Cursos'}</div>
-    <div class="cards-grid" style="margin-bottom:16px;">${cursosHtml}</div>
+    <div class="cmp-lista av-lista" style="margin-bottom:16px;">${cursosHtml}</div>
     <div class="empty-note av-vacio" style="display:none;">${avCa ? 'Cap curs amb aquest filtre.' : 'Ningún curso con este filtro.'}</div>
     </section>
 
@@ -8176,9 +8404,41 @@ async function renderAulaVirtualScreen(){
       <button class="link-btn" style="margin-top:10px;" onclick="avTab('crear')">➕ ${avCa ? 'Programar una classe' : 'Programar una clase'}</button>
     </div>
     </section>
-  `;
+
+    <section class="av-sec" data-sec="mensajes">
+      <h2 class="cmp-h1">${avCa ? 'Missatges' : 'Mensajes'}</h2>
+      <p class="subtle" style="margin:0 0 12px;">${avCa ? 'El xat de cada curs: hi escriuen el docent, l\'equip i les persones inscrites (també des de Logos Acompanya).' : 'El chat de cada curso: escriben el docente, el equipo y las personas inscritas (también desde Logos Acompanya).'}</p>
+      <div class="cmp-lista">${(cursos || []).filter(c => ['inscripcion', 'activo'].includes(c.estado)).map(c => `<div class="cmp-row" style="--c:${avColor[c.estado] || '#2463B8'};padding-right:16px;"><div class="cmp-tit" data-chat-curso="${c.id}" data-n="${escAttr(c.nombre || '')}" onclick="cursoChatAbrir(this.dataset.chatCurso, this.dataset.n)">💬 ${escAttr(c.nombre || '')}</div><div class="cmp-meta"><span>👥 ${inscritosPorCurso[c.id] || 0}</span><i>|</i><span>${escAttr(c.docente_nombre || c.docente_email || '')}</span></div></div>`).join('') || `<div class="cmp-vacio">${avCa ? 'No hi ha cursos actius.' : 'No hay cursos activos.'}</div>`}</div>
+    </section>
+
+    <section class="av-sec" data-sec="calificaciones">
+      <h2 class="cmp-h1">${avCa ? 'Qualificacions' : 'Calificaciones'}</h2>
+      ${misCursos.length ? `<div class="cmp-lista">${misCursos.map(c => { const st = misCursosStats[c.id] || {}; return `<div class="cmp-row" style="--c:${avColor[c.estado] || '#2463B8'};padding-right:16px;">
+        <div class="cmp-tit" onclick="verProgresoCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">${escAttr(c.nombre || '')}</div>
+        <div class="cmp-prog"><i style="width:${st.progresoMedio || 0}%"></i></div>
+        <div class="cmp-meta"><span>${avCa ? 'Progrés mitjà' : 'Progreso medio'}: <strong>${st.progresoMedio || 0}%</strong></span><i>|</i><span>${avCa ? 'Assistència' : 'Asistencia'}: <strong>${st.asistenciaMedia != null ? st.asistenciaMedia + '%' : '—'}</strong></span><i>|</i><span>👥 ${st.participantes || 0}</span>${st.revisar ? `<i>|</i><span style="color:#C0392B;font-weight:700;">✏️ ${st.revisar} ${avCa ? 'per revisar' : 'por revisar'}</span>` : ''}</div>
+        <div class="cmp-acc"><button class="cmp-pri" onclick="verProgresoCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">📊 ${avCa ? 'Progrés i entregues' : 'Progreso y entregas'}</button><button onclick="verInscritosCurso('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">👥 ${avCa ? 'Inscrits' : 'Inscritos'}</button></div></div>`; }).join('')}</div>`
+        : `<div class="cmp-vacio">${avCa ? 'Quan siguis docent d\'un curs, aquí veuràs el progrés i les entregues.' : 'Cuando seas docente de un curso, aquí verás el progreso y las entregas.'}</div>`}
+    </section>
+    </main>
+
+    <aside class="cmp-der">
+      <div class="cmp-caja cmp-tareas"><h3>${avCa ? 'Tasques pendents' : 'Tareas pendientes'}</h3>
+        <details class="cmp-vencida" open><summary><span>✏️ ${avCa ? 'Entregues per revisar' : 'Entregas por revisar'} <b>${avRev.length}</b></span></summary>
+          ${avRev.length ? Object.keys(avRevPorCurso).map(id => { const c = (window.__cursosAula || {})[id] || {}; return `<button class="cmp-tarea" onclick="verProgresoCurso('${id}','${String(c.nombre || '').replace(/'/g,"\\'")}')"><strong>${escAttr(c.nombre || '')}</strong><small>${avRevPorCurso[id]} ${avCa ? 'entregues pendents' : 'entregas pendientes'}</small></button>`; }).join('') : `<div class="cmp-vacio">${avCa ? 'Res per revisar.' : 'Nada por revisar.'}</div>`}</details>
+        <details class="cmp-hoy" open><summary><span>🟢 ${avCa ? 'Classes avui' : 'Clases hoy'} <b>${clasesHoy.length}</b></span></summary>${clasesHoy.length ? clasesHoy.map(avClaseMini).join('') : `<div class="cmp-vacio">${avCa ? 'Cap classe avui.' : 'Ninguna clase hoy.'}</div>`}</details>
+        <details class="cmp-pronto" open><summary><span>📅 ${avCa ? 'Properes classes' : 'Próximas clases'} <b>${clasesProximas.length}</b></span></summary>${clasesProximas.length ? clasesProximas.slice(0, 4).map(avClaseMini).join('') : `<div class="cmp-vacio">${avCa ? 'Sense classes programades.' : 'Sin clases programadas.'}</div>`}</details>
+      </div>
+      <div class="cmp-caja"><h3>📌 ${avCa ? 'Resum' : 'Resumen'}</h3>
+        <div class="panel-stat-row"><span>📚 ${avCa ? 'Cursos en marxa' : 'Cursos en marcha'}</span><strong>${nActivos}</strong></div>
+        <div class="panel-stat-row"><span>👨‍🏫 ${avCa ? 'Els meus cursos' : 'Mis cursos'}</span><strong>${misCursos.length}</strong></div>
+        <div class="panel-stat-row"><span>👥 ${avCa ? 'Persones inscrites' : 'Personas inscritas'}</span><strong>${Object.values(inscritosPorCurso).reduce((a, b) => a + b, 0)}</strong></div>
+      </div>
+    </aside>
+  </div>`;
   avTab(avTabActual(), true);
   avFiltrar(window.__avFiltro || 'todos');
+  avVista((() => { try { return localStorage.getItem('logos_av_vista') || 'lista'; } catch(e){ return 'lista'; } })());
   cursoChatInsignias();
   try { if(!localStorage.getItem('logos_aula_guia_vista')) setTimeout(avMostrarGuia, 400); } catch(e){}
 
@@ -8984,6 +9244,7 @@ async function verContenidoCurso(cursoId, nombreCurso){
               </select>
               <input type="text" id="titulo-actividad-${m.id}" placeholder="${LANG_I==='ca' ? "Títol de l'activitat" : 'Título de la actividad'}" style="margin-bottom:6px;">
               <textarea id="instrucciones-actividad-${m.id}" rows="2" placeholder="${LANG_I==='ca'?'Instruccions':'Instrucciones'}"></textarea>
+              <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;margin-top:6px;">⏰ ${LANG_I==='ca'?'Data límit (opcional)':'Fecha límite (opcional)'} <input type="date" id="fecha-actividad-${m.id}" style="width:auto;margin:0;"></label>
               <button class="link-btn" style="margin-top:6px;" onclick="crearActividad('${m.id}')">➕ ${LANG_I==='ca'?'Crear activitat':'Crear actividad'}</button>
             </div>
           </div>
@@ -9119,9 +9380,14 @@ async function crearActividad(moduloId){
   const titulo = document.getElementById(`titulo-actividad-${moduloId}`).value.trim();
   const instrucciones = document.getElementById(`instrucciones-actividad-${moduloId}`).value.trim();
   if(!titulo){ alert(LANG_I==='ca' ? "Escriu el títol de l'activitat." : 'Escribe el título de la actividad.'); return; }
-  const { error } = await sb.from('curso_actividades').insert({
+  const fechaLim = (document.getElementById(`fecha-actividad-${moduloId}`) || {}).value || '';
+  let { error } = await sb.from('curso_actividades').insert(Object.assign({
     modulo_id: moduloId, tipo, titulo, instrucciones: instrucciones || null
-  });
+  }, fechaLim ? { fecha_limite: fechaLim } : {}));
+  if(error && fechaLim && /fecha_limite/.test(error.message || '')){
+    ({ error } = await sb.from('curso_actividades').insert({ modulo_id: moduloId, tipo, titulo, instrucciones: instrucciones || null }));
+    if(!error) alert(acL('La actividad se ha creado sin fecha límite: falta ejecutar el SQL 49 en Supabase.', 'L\'activitat s\'ha creat sense data límit: cal executar l\'SQL 49 a Supabase.'));
+  }
   if(error){ alert(error.message); return; }
   verContenidoCurso(curso.id, curso.nombre);
 }
@@ -11944,7 +12210,118 @@ async function gpRrhhNominas(c){
       <select id="gp-n-persona" onchange="gpPrepararNominas()"><option value="">${acL('— Cada PDF a la persona que le corresponda (elegir abajo) —', '— Cada PDF a la persona que li correspongui (triar a sota) —')}</option>${personas.map(p => `<option value="${escAttr(p.email)}">${escAttr(p.nombre)}</option>`).join('')}</select>
       <div class="subtle" style="font-size:11.5px;margin-top:4px;">${acL('Si es una sola nómina, elige aquí a la persona. Si subes varias de golpe, déjalo así y asigna cada PDF abajo.', 'Si és una sola nòmina, tria aquí la persona. Si en puges diverses de cop, deixa-ho així i assigna cada PDF a sota.')}</div></div>
     <div class="field"><label>${acL('PDF de nóminas', 'PDF de nòmines')}</label><input type="file" id="gp-n-files" accept=".pdf" multiple onchange="gpPrepararNominas()"></div>
-    <div id="gp-n-previa"></div></div>`;
+    <div id="gp-n-previa"></div></div>
+    <div class="panel-card gp-hist" id="gp-n-hist"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`;
+  window.__gpHist = window.__gpHist || { anio: String(anioAct), mes: '', persona: '' };
+  gpNomHistorial();
+}
+// ---------- Histórico de nóminas subidas: ver, corregir (persona o mes) y borrar ----------
+function gpNomArchivo(ruta){ const n = String(ruta || '').split('/').pop() || ''; return n.replace(/^\d{4}-\d{2}_\d+_/, ''); }
+function gpNomPersona(email){ const p = (window.__gpPersonas || []).find(x => x.email === String(email || '').toLowerCase()); return p ? p.nombre : (email || '—'); }
+async function gpNomHistorial(){
+  const host = document.getElementById('gp-n-hist'); if(!host) return;
+  const F = window.__gpHist || {};
+  if(!window.__gpPersonas) await gpPersonasActivas();
+  let q = sb.from('personal_nominas').select('*');
+  if(F.anio) q = q.eq('anio', Number(F.anio));
+  if(F.mes) q = q.eq('mes', Number(F.mes));
+  if(F.persona) q = q.eq('persona_email', F.persona);
+  const { data, error } = await q.order('anio', { ascending: false }).order('mes', { ascending: false }).limit(2000);
+  const lista = (data || []).slice().sort((a, b) => (b.anio - a.anio) || (b.mes - a.mes) || String(b.subido_en || '').localeCompare(String(a.subido_en || '')));
+  window.__gpDatos = window.__gpDatos || {}; window.__gpDatos.hn = lista;
+  const anioAct = new Date().getFullYear();
+  const grupos = {}; lista.forEach((n, i) => { const k = n.anio + '-' + String(n.mes).padStart(2, '0'); (grupos[k] = grupos[k] || []).push(i); });
+  const filtros = `<div class="gp-hist-f">
+      <select onchange="window.__gpHist.anio=this.value;gpNomHistorial()"><option value="">${acL('Todos los años', 'Tots els anys')}</option>${[anioAct + 1, anioAct, anioAct - 1, anioAct - 2, anioAct - 3].map(a => `<option value="${a}"${String(F.anio) === String(a) ? ' selected' : ''}>${a}</option>`).join('')}</select>
+      <select onchange="window.__gpHist.mes=this.value;gpNomHistorial()"><option value="">${acL('Todos los meses', 'Tots els mesos')}</option>${Array.from({ length: 14 }, (_, i) => i + 1).map(m => `<option value="${m}"${String(F.mes) === String(m) ? ' selected' : ''}>${escAttr(gpMes(m))}</option>`).join('')}</select>
+      <select onchange="window.__gpHist.persona=this.value;gpNomHistorial()"><option value="">${acL('Todas las personas', 'Totes les persones')}</option>${(window.__gpPersonas || []).map(p => `<option value="${escAttr(p.email)}"${F.persona === p.email ? ' selected' : ''}>${escAttr(p.nombre)}</option>`).join('')}</select>
+    </div>`;
+  const fila = i => { const n = lista[i];
+    return `<div class="gp-hist-r" id="gp-hn-${i}">
+      <div class="gp-hist-x"><strong>${escAttr(gpNomPersona(n.persona_email))}</strong>
+        <span>📄 ${escAttr(gpNomArchivo(n.archivo_ruta))}</span>
+        <small>${acL('Subida el', 'Pujada el')} ${gpFecha(n.subido_en)}${n.subido_por_email ? ' · ' + acL('por', 'per') + ' ' + escAttr(gpNomPersona(n.subido_por_email)) : ''} · ${n.visto_en ? '👁️ ' + acL('ya abierta', 'ja oberta') : '🔵 ' + acL('sin abrir', 'sense obrir')}</small></div>
+      <div class="gp-hist-a">
+        <button onclick="gpRrhhAbrir('hn', ${i}, 'nómina')">👁️ ${acL('Ver', 'Veure')}</button>
+        <button onclick="gpNomCorregir(${i})">✏️ ${acL('Corregir', 'Corregir')}</button>
+        <button class="gp-hist-del" onclick="gpNomBorrar([${i}])">🗑️ ${acL('Borrar', 'Esborrar')}</button>
+      </div></div>`; };
+  host.innerHTML = `<div class="gp-hist-cab"><h3 style="margin:0;">📚 ${acL('Histórico de nóminas subidas', 'Històric de nòmines pujades')}</h3><span class="chip">${lista.length}</span></div>
+    <p class="subtle" style="margin:4px 0 10px;font-size:12.5px;">${acL('Todas las nóminas que se han subido, por mes. Si alguna está mal, pulsa <strong>✏️ Corregir</strong> (otra persona u otro mes) o <strong>🗑️ Borrar</strong>.', 'Totes les nòmines que s\'han pujat, per mes. Si n\'hi ha alguna malament, prem <strong>✏️ Corregir</strong> (una altra persona o un altre mes) o <strong>🗑️ Esborrar</strong>.')}</p>
+    ${filtros}
+    ${error ? `<div class="auth-error">${escAttr(error.message)}</div>` : ''}
+    ${lista.length ? Object.keys(grupos).sort().reverse().map(k => { const ids = grupos[k], n0 = lista[ids[0]];
+      return `<details class="gp-hist-g" ${Object.keys(grupos).length <= 3 ? 'open' : ''}><summary><span>🗓️ <strong>${escAttr(gpMes(n0.mes))} ${n0.anio}</strong> · ${ids.length} ${ids.length === 1 ? acL('nómina', 'nòmina') : acL('nóminas', 'nòmines')}</span>
+        <button class="gp-hist-del" onclick="event.preventDefault();event.stopPropagation();gpNomBorrar([${ids.join(',')}], true)">🗑️ ${acL('Borrar todo el mes', 'Esborrar tot el mes')}</button></summary>
+        ${ids.map(fila).join('')}</details>`; }).join('')
+      : `<div class="empty-note">${acL('No hay nóminas con estos filtros.', 'No hi ha nòmines amb aquests filtres.')}</div>`}`;
+}
+function gpNomCorregir(i){
+  const n = (window.__gpDatos.hn || [])[i], r = document.getElementById('gp-hn-' + i); if(!n || !r) return;
+  const a = r.querySelector('.gp-hist-a'), anioAct = new Date().getFullYear();
+  a.innerHTML = `<div class="gp-hist-ed">
+    <label>👤 ${acL('Persona', 'Persona')}<select id="gp-hc-p-${i}">${(window.__gpPersonas || []).map(p => `<option value="${escAttr(p.email)}"${p.email === String(n.persona_email).toLowerCase() ? ' selected' : ''}>${escAttr(p.nombre)}</option>`).join('')}</select></label>
+    <label>🗓️ ${acL('Mes', 'Mes')}<span style="display:flex;gap:6px;"><select id="gp-hc-m-${i}">${Array.from({ length: 14 }, (_, k) => k + 1).map(m => `<option value="${m}"${m === n.mes ? ' selected' : ''}>${escAttr(gpMes(m))}</option>`).join('')}</select><select id="gp-hc-a-${i}">${[anioAct + 1, anioAct, anioAct - 1, anioAct - 2, anioAct - 3].map(y => `<option value="${y}"${y === n.anio ? ' selected' : ''}>${y}</option>`).join('')}</select></span></label>
+    <span style="display:flex;gap:6px;"><button class="gp-hist-ok" onclick="gpNomGuardarCorreccion(${i})">💾 ${acL('Guardar', 'Desar')}</button><button onclick="gpNomHistorial()">${acL('Cancelar', 'Cancel·lar')}</button></span></div>`;
+}
+const gpSinPermisoNom = () => acL('No tienes permiso para cambiar o borrar nóminas. Hay que ejecutar el SQL 50 en Supabase.', 'No tens permís per canviar o esborrar nòmines. Cal executar l\'SQL 50 a Supabase.');
+async function gpNomGuardarCorreccion(i){
+  const n = (window.__gpDatos.hn || [])[i]; if(!n) return;
+  const persona = document.getElementById('gp-hc-p-' + i).value, mes = Number(document.getElementById('gp-hc-m-' + i).value), anio = Number(document.getElementById('gp-hc-a-' + i).value);
+  const cambiaPersona = persona && persona !== String(n.persona_email).toLowerCase();
+  if(!cambiaPersona && mes === n.mes && anio === n.anio) { gpNomHistorial(); return; }
+  const cambios = { mes, anio };
+  let rutaNueva = n.archivo_ruta;
+  if(cambiaPersona){
+    // el PDF se mueve a la carpeta de la persona correcta (así solo la ve ella)
+    rutaNueva = persona + '/nominas/' + String(n.archivo_ruta).split('/').pop();
+    const mv = await sb.storage.from('personal').move(n.archivo_ruta, rutaNueva);
+    if(mv.error){ alert(/row-level|permission|policy|not found/i.test(mv.error.message || '') ? gpSinPermisoNom() : mv.error.message); return; }
+    Object.assign(cambios, { persona_email: persona, archivo_ruta: rutaNueva, visto_en: null });
+  }
+  const up = await sb.from('personal_nominas').update(cambios).eq('id', n.id).select('id');
+  if(up.error || !(up.data || []).length){
+    if(cambiaPersona) await sb.storage.from('personal').move(rutaNueva, n.archivo_ruta);
+    alert(up.error && !/row-level|permission|policy/i.test(up.error.message || '') ? up.error.message : gpSinPermisoNom()); return;
+  }
+  await gpRegistrar('corrección', 'nómina', cambiaPersona ? persona : n.persona_email, `${gpMes(n.mes)} ${n.anio} ${n.persona_email} → ${gpMes(mes)} ${anio} ${cambiaPersona ? persona : ''}`.trim());
+  if(cambiaPersona){
+    try { await sb.from('personal_comunicados').insert({ titulo: acL('Nueva nómina disponible', 'Nova nòmina disponible'), texto: acL(`Ya puedes consultar tu nómina de ${gpMes(mes)} ${anio} en Mi gestión personal › Nóminas.`, `Ja pots consultar la teva nòmina de ${gpMes(mes)} ${anio} a La meva gestió personal › Nòmines.`), para_todos: false, persona_email: persona, requiere_lectura: false, creado_por_email: gpYo() }); } catch(e){}
+  }
+  gpNomHistorial();
+}
+async function gpNomBorrar(idx, todoElMes){
+  const lista = (window.__gpDatos.hn || []), sel = idx.map(i => lista[i]).filter(Boolean); if(!sel.length) return;
+  const n0 = sel[0];
+  const msg = todoElMes
+    ? acL(`¿Borrar las ${sel.length} nóminas de ${gpMes(n0.mes)} ${n0.anio}? Se borran también los PDF. No se puede deshacer.`, `Esborrar les ${sel.length} nòmines de ${gpMes(n0.mes)} ${n0.anio}? També s'esborren els PDF. No es pot desfer.`)
+    : acL(`¿Borrar la nómina de ${gpMes(n0.mes)} ${n0.anio} de ${gpNomPersona(n0.persona_email)}? Se borra también el PDF. No se puede deshacer.`, `Esborrar la nòmina de ${gpMes(n0.mes)} ${n0.anio} de ${gpNomPersona(n0.persona_email)}? També s'esborra el PDF. No es pot desfer.`);
+  if(!confirm(msg)) return;
+  const r = await gpNomBorrarFilas(sel);
+  if(r.sinPermiso) alert(gpSinPermisoNom());
+  else if(r.fallos.length) alert(r.fallos.join('\n'));
+  gpNomHistorial();
+}
+async function gpNomBorrarFilas(sel){
+  const res = { ok: 0, fallos: [], sinPermiso: false };
+  for(const n of sel){
+    const d = await sb.from('personal_nominas').delete().eq('id', n.id).select('id');
+    if(d.error){ if(/row-level|permission|policy/i.test(d.error.message || '')) res.sinPermiso = true; else res.fallos.push(d.error.message); continue; }
+    if(!(d.data || []).length){ res.sinPermiso = true; continue; }   // la base de datos no lo ha dejado borrar
+    try { await sb.storage.from('personal').remove([n.archivo_ruta]); } catch(e){}
+    await gpRegistrar('borrado', 'nómina', n.persona_email, `${gpMes(n.mes)} ${n.anio} · ${gpNomArchivo(n.archivo_ruta)}`);
+    res.ok++;
+  }
+  return res;
+}
+async function gpNomDeshacer(){
+  const sel = window.__gpUltimaSubida || []; if(!sel.length) return;
+  if(!confirm(acL(`¿Deshacer esta subida? Se borran las ${sel.length} nóminas que acabas de subir.`, `Desfer aquesta pujada? S'esborren les ${sel.length} nòmines que acabes de pujar.`))) return;
+  const r = await gpNomBorrarFilas(sel);
+  window.__gpUltimaSubida = [];
+  const box = document.getElementById('gp-n-res');
+  if(box) box.innerHTML = `<div class="info-box" style="margin-top:10px;">${r.sinPermiso ? '⚠️ ' + gpSinPermisoNom() : '↩️ ' + acL(`Subida deshecha: ${r.ok} nóminas borradas.`, `Pujada desfeta: ${r.ok} nòmines esborrades.`)}</div>`;
+  gpNomHistorial();
 }
 function gpPrepararNominas(){
   const files = [...document.getElementById('gp-n-files').files];
@@ -11970,22 +12347,26 @@ async function gpSubirNominas(){
   const repetidas = Object.keys(dup).filter(k => dup[k] > 1);
   if(repetidas.length && !confirm(acL(`Hay personas con más de una nómina en este mes (${repetidas.length}). ¿Subir todas igualmente?`, `Hi ha persones amb més d'una nòmina aquest mes (${repetidas.length}). Pujar-les totes igualment?`))) return;
   const btn = document.getElementById('gp-n-subir'); btn.disabled = true;
-  const ok = [], fallo = [];
+  const ok = [], fallo = []; window.__gpUltimaSubida = [];
   for(const x of asign){
     const ruta = `${x.persona}/nominas/${anio}-${String(mes).padStart(2, '0')}_${Date.now()}_${rutaSeguraArchivo(x.f.name)}`;
     const up = await sb.storage.from('personal').upload(ruta, x.f);
     if(up.error){ fallo.push(`${x.f.name}: ${up.error.message}`); continue; }
-    const ins = await sb.from('personal_nominas').insert({ persona_email: x.persona, anio, mes, archivo_ruta: ruta, subido_por_email: gpYo() });
+    const ins = await sb.from('personal_nominas').insert({ persona_email: x.persona, anio, mes, archivo_ruta: ruta, subido_por_email: gpYo() }).select('*');
     if(ins.error){ await sb.storage.from('personal').remove([ruta]); fallo.push(`${x.f.name}: ${ins.error.message}`); continue; }
     ok.push(x.persona);
+    window.__gpUltimaSubida.push(((ins.data || [])[0]) || { persona_email: x.persona, anio, mes, archivo_ruta: ruta });
   }
   await gpRegistrar('subida', 'nóminas', null, `${gpMes(mes)} ${anio}: ${ok.length}`);
   if(ok.length){
     // Aviso interno a cada persona para que sepa que tiene una nómina nueva
     try { await Promise.all(ok.map(p => sb.from('personal_comunicados').insert({ titulo: acL('Nueva nómina disponible', 'Nova nòmina disponible'), texto: acL(`Ya puedes consultar tu nómina de ${gpMes(mes)} ${anio} en Mi gestión personal › Nóminas.`, `Ja pots consultar la teva nòmina de ${gpMes(mes)} ${anio} a La meva gestió personal › Nòmines.`), para_todos: false, persona_email: p, requiere_lectura: false, creado_por_email: gpYo() }))); } catch(e) {}
   }
-  document.getElementById('gp-n-res').innerHTML = `<div class="info-box info-box-gold" style="margin-top:10px;">✅ ${ok.length} ${acL('nóminas subidas.', 'nòmines pujades.')}${fallo.length ? '<br>⚠️ ' + fallo.map(escAttr).join('<br>') : ''}</div>`;
+  document.getElementById('gp-n-res').innerHTML = `<div class="info-box info-box-gold" style="margin-top:10px;">✅ ${ok.length} ${acL('nóminas subidas.', 'nòmines pujades.')}${fallo.length ? '<br>⚠️ ' + fallo.map(escAttr).join('<br>') : ''}
+    ${ok.length ? `<br><button class="link-btn" style="margin-top:6px;color:var(--alert);" onclick="gpNomDeshacer()">↩️ ${acL('Me he equivocado: deshacer esta subida', 'M\'he equivocat: desfer aquesta pujada')}</button>` : ''}</div>`;
   btn.disabled = false;
+  window.__gpHist = { anio: String(anio), mes: String(mes), persona: '' };
+  gpNomHistorial();
 }
 
 async function gpRrhhPersonas(c){
@@ -12024,8 +12405,9 @@ async function gpRrhhBorrar(clave, i){
   const x = (window.__gpDatos[clave] || [])[i]; if(!x) return;
   if(!confirm(acL('¿Borrar definitivamente? No se puede deshacer.', 'Esborrar definitivament? No es pot desfer.'))) return;
   const tabla = clave === 'rn' ? 'personal_nominas' : 'personal_documentos';
-  const r = await sb.from(tabla).delete().eq('id', x.id);
+  const r = await sb.from(tabla).delete().eq('id', x.id).select('id');
   if(r.error){ alert(r.error.message); return; }
+  if(!(r.data || []).length){ alert(clave === 'rn' ? gpSinPermisoNom() : acL('No se ha podido borrar (sin permiso).', 'No s\'ha pogut esborrar (sense permís).')); return; }
   await sb.storage.from('personal').remove([x.archivo_ruta]);
   await gpRegistrar('borrado', clave === 'rn' ? 'nómina' : 'archivo', x.persona_email, x.archivo_ruta);
   gpRrhhAbrirPersona();
@@ -14876,7 +15258,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-28 · v160 (la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-28 · v162 (RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -15302,8 +15684,10 @@ function snCitaHtml(c, nombre, onclick){
   const d = new Date(c.fecha + 'T00:00:00'), ca = (typeof LANG_I !== 'undefined' ? LANG_I : LANG) === 'ca';
   const mes = d.toLocaleDateString(ca ? 'ca-ES' : 'es-ES', { month: 'short' }).replace('.', '');
   return `<div class="sn-cita" onclick="${onclick || ''}"><div class="sn-cita-f"><div class="sn-cita-d">${d.getDate()}</div><div class="sn-cita-m">${mes}</div><div class="sn-cita-h">${String(c.hora || '').slice(0, 5)}h</div></div>
-    <div class="sn-cita-i"><div class="sn-cita-p">${nombre || ''}</div><div class="sn-cita-t">${c.motivo ? String(c.motivo).replace(/</g, '&lt;') : (ca ? 'Cita a Logos' : 'Cita en Logos')}</div>
-    ${c.tecnico_nombre ? `<div class="sn-cita-tec">${String(c.tecnico_nombre).replace(/</g, '&lt;')}</div>` : ''}<div class="sn-cita-l">Associació Logos · C/ de la Pau del Protectorat, 14</div></div></div>`;
+    <div class="sn-cita-i"><div class="sn-cita-p">${nombre || ''}</div><div class="sn-cita-t">${c.motivo && !/^📞 Cita por teléfono/.test(c.motivo) ? String(c.motivo).replace(/</g, '&lt;') : (citaEsTelefono(c) ? (ca ? 'Cita per telèfon' : 'Cita por teléfono') : (ca ? 'Cita a Logos' : 'Cita en Logos'))}</div>
+    ${c.tecnico_nombre ? `<div class="sn-cita-tec">${String(c.tecnico_nombre).replace(/</g, '&lt;')}</div>` : ''}${citaEsTelefono(c)
+      ? `<div class="sn-cita-l" style="color:#5B3FA0;font-weight:600;">📞 ${ca ? 'Per telèfon · truca-li' : 'Por teléfono · llámale'}${citaTelDe(c) ? ' al ' + String(citaTelDe(c)).replace(/</g, '&lt;') : ''}</div>`
+      : `<div class="sn-cita-l">🏢 Associació Logos · C/ de la Pau del Protectorat, 14</div>`}</div></div>`;
 }
 async function snIntranetCitas(){
   const host = document.getElementById('sn-mis-citas'); if(!host) return;
@@ -15316,6 +15700,22 @@ async function snIntranetCitas(){
     if(ids.length){ const { data: ps } = await sb.from('perfiles').select('id, nombre_completo').in('id', ids); (ps || []).forEach(p => { nom[p.id] = p.nombre_completo; }); }
     host.innerHTML = mias.map(c => snCitaHtml(c, escAttr(nom[c.usuario_id] || c.nombre_contacto || ''), c.usuario_id ? `verPersonaStaff('${c.usuario_id}','panel')` : `showScreen('agenda');renderAgendaCitas('${c.fecha}')`)).join('');
   } catch(e){ host.innerHTML = ''; }
+}
+// «Mi área privada» dentro de la cabecera del Inicio: última nómina, comunicación, mis archivos y formación
+async function pgAreaPrivada(){
+  const host = document.getElementById('pg-area'); if(!host) return;
+  if(!GP_OK){ host.remove(); return; }
+  host.innerHTML = `<div class="pg-area-t">🔒 ${acL('Mi área privada', 'La meva àrea privada')}</div><div class="pg-area-g"><div class="pg-ap pg-ap-load"></div><div class="pg-ap pg-ap-load"></div><div class="pg-ap pg-ap-load"></div><div class="pg-ap pg-ap-load"></div></div>`;
+  let r = null; try { r = await gpResumen(); } catch(e){}
+  if(!document.getElementById('pg-area')) return;
+  const n = r && r.nomina;
+  const tile = (ic, tit, val, sub, tab, nuevo) => `<button class="pg-ap" onclick="showScreen('gestionpersonal');renderGestionPersonal('${tab}')"><span class="pg-ap-i">${ic}${nuevo ? '<i class="pg-ap-dot"></i>' : ''}</span><span class="pg-ap-x"><strong>${tit}</strong><span>${val}</span><small>${sub}</small></span></button>`;
+  host.innerHTML = `<div class="pg-area-t">🔒 ${acL('Mi área privada', 'La meva àrea privada')}<small>${acL('Solo la ves tú', 'Només la veus tu')}</small></div><div class="pg-area-g">
+    ${tile('🧾', acL('Última nómina', 'Última nòmina'), n ? `${escAttr(window.innerWidth < 520 ? String(gpMes(n.mes)).slice(0, 3) + '.' : gpMes(n.mes))} ${n.anio}` : '—', n ? (n.visto_en ? acL('Ya abierta', 'Ja oberta') : acL('Nueva, sin abrir', 'Nova, sense obrir')) : acL('Aún no hay', 'Encara no n\'hi ha'), 'nominas', n && !n.visto_en)}
+    ${tile('📣', acL('Comunicación', 'Comunicació'), r ? String(r.sinLeer) : '—', r && r.sinLeer ? (r.pendientesConfirmar ? acL('Confirma la lectura', 'Confirma la lectura') : acL('Sin leer', 'Sense llegir')) : acL('Todo al día', 'Tot al dia'), 'comunicaciones', r && r.sinLeer)}
+    ${tile('📁', acL('Mis archivos', 'Els meus arxius'), r ? String(r.docs) : '—', acL('Documentos', 'Documents'), 'archivos')}
+    ${tile('🎓', acL('Formación', 'Formació'), r ? String(r.forms) : '—', acL('Cursos y certificados', 'Cursos i certificats'), 'formacion')}
+  </div>`;
 }
 async function snIntranetInteres(){
   const host = document.getElementById('sn-interes'); if(!host) return;
@@ -15691,6 +16091,7 @@ async function renderPanelGeneral(){
           </div>
         </div>
         <div class="sn-fecha">${new Date().toLocaleDateString(TI[LANG_I].localeFecha, { weekday: 'long', day: 'numeric', month: 'long' })} · ${LANG_I==='ca' ? `avui ${citasHoyCount} cites` : `hoy ${citasHoyCount} citas`}</div>
+        <div class="pg-area" id="pg-area"></div>
         <div class="topbar-search pg-search">
           <span class="topbar-search-icon">🔎</span>
           <input type="text" id="topbar-search-input" placeholder="${LANG_I==='ca' ? 'Cercar persones, projectes, documents…' : 'Buscar personas, proyectos, documentos…'}" oninput="buscarGlobalInput(this.value)" onblur="setTimeout(cerrarBusquedaGlobal,150)">
@@ -15758,9 +16159,9 @@ async function renderPanelGeneral(){
   animateNumber(document.getElementById('num-total-personas'), totalPersonas);
   actualizarBadgePanel();
   activarBarras();
-  gpPintarTarjetas(cont);
+  if(!document.getElementById('pg-area')) gpPintarTarjetas(cont);   // ya están dentro de la cabecera («Mi área privada»)
   gestorPintarTarjeta(cont);
-  snIntranetCitas(); snIntranetInteres();
+  snIntranetCitas(); snIntranetInteres(); pgAreaPrivada();
   snCarrusel('#panel-content .sn-accesos', 5000); snCarrusel('#sn-stats', 4000);
 }
 
@@ -18093,7 +18494,7 @@ function giPausar(si, reanudarEn){
 }
 function guiaAuto(){
   __GI.auto = !__GI.auto; __GI.pausa = false;
-  const b = document.querySelector('#guia-ov .gi-pp'); if(b) b.textContent = __GI.auto ? '⏸ ' + __GI.L('Pausa', 'Pausa') : '▶ ' + __GI.L('Automático', 'Automàtic');
+  const b = document.querySelector('#guia-ov .gi-pp'); if(b){ b.textContent = __GI.auto ? '❚❚' : '▶'; b.setAttribute('aria-label', __GI.auto ? __GI.L('Pausa', 'Pausa') : __GI.L('Automático', 'Automàtic')); }
   giTemporizar();
 }
 function guiaIrA(n){
@@ -18101,23 +18502,50 @@ function guiaIrA(n){
   guiaCerrar();
   if(go && go.run) setTimeout(go.run, 60);
 }
+function giTxt(x){ return String(x || '').replace(/<[^>]+>/g, ''); }
+function giPortada(s){
+  if(!s) return '';
+  if(s.img && GI_IMGS[s.img]) return `<img class="gi-cov-img" src="${GI_IMGS[s.img]}" alt="">`;
+  if(s.hero && GI_IMGS.av) return `<img class="gi-cov-av" src="${GI_IMGS.av}" alt=""><span class="gi-cov-e gi-cov-e2">${s.e || '👋'}</span>`;
+  return `<span class="gi-cov-e">${s.e || '✨'}</span>`;
+}
 function guiaPintar(){
   const { i, slides, L } = __GI; const s = slides[i]; const ult = i === slides.length - 1;
   const ov = document.getElementById('guia-ov');
-  ov.innerHTML = `<div class="gi-card">
-    <div class="gi-top"><span>${i + 1} / ${slides.length}<button class="gi-pp" onclick="guiaAuto()">${__GI.auto ? '⏸ ' + L('Pausa', 'Pausa') : '▶ ' + L('Automático', 'Automàtic')}</button></span><button class="gi-x" onclick="guiaCerrar()" aria-label="${L('Cerrar', 'Tancar')}">✕</button></div>
-    <div class="gi-prog"><i></i></div>
-    <div class="gi-body" id="gi-body" style="${__GI.dir < 0 ? 'animation-name:giInL;' : ''}" onscroll="giPausar(false, 12000)">
-      ${s.hero ? `<div class="gi-hero"><img class="gi-av" src="${GI_IMGS.av}" alt=""><div class="gi-bub">${s.hero}</div></div>` : (s.img ? `<img class="gi-pic" src="${GI_IMGS[s.img]}" alt="">` : `<div class="gi-emoji">${s.e}</div>`)}
-      <h3 class="gi-t">${s.t}</h3>
-      ${s.p ? `<p class="gi-p">${s.p}</p>` : ''}
-      ${s.l ? `<ul class="gi-l">${s.l.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}
-      ${s.go ? `<button class="gi-go" onclick="guiaIrA()">${s.go.txt} →</button>` : ''}
+  const lado = (k, cls) => {
+    const x = slides[k];
+    if(!x) return `<div class="gi-side ${cls} gi-vacia" aria-hidden="true"></div>`;
+    return `<button class="gi-side ${cls}" onclick="guiaIr(${k})" aria-label="${escAttr(giTxt(x.t))}"><div class="gi-cov">${giPortada(x)}</div><span class="gi-cap">${giTxt(x.t)}</span></button>`;
+  };
+  ov.innerHTML = `<div class="gi-wrap">
+    <div class="gi-head">
+      <div><h2>${L('Guía rápida', 'Guia ràpida')}</h2><p>${L('Todo lo que puedes hacer, paso a paso.', 'Tot el que pots fer, pas a pas.')}</p></div>
+      <button class="gi-x" onclick="guiaCerrar()" aria-label="${L('Cerrar', 'Tancar')}">✕</button>
     </div>
-    <div class="gi-dots">${slides.map((_, k) => `<button class="gi-dot${k === i ? ' on' : ''}" onclick="guiaIr(${k})" aria-label="${k + 1}"></button>`).join('')}</div>
-    <div class="gi-nav">
-      <button class="gi-prev" ${i === 0 ? 'disabled' : ''} onclick="guiaIr(${i - 1})">← ${L('Anterior', 'Anterior')}</button>
-      <button class="gi-next" onclick="guiaIr(${i + 1})">${ult ? L('¡Listo!', 'Fet!') : L('Siguiente', 'Següent') + ' →'}</button>
+    <div class="gi-stage">
+      ${lado(i - 1, 'gi-izq')}
+      <div class="gi-card" style="${__GI.dir < 0 ? 'animation-name:giCovL;' : ''}">
+        <div class="gi-cov gi-cov-main">${giPortada(s)}<span class="gi-cap">${i + 1} / ${slides.length} · ${giTxt(s.t)}</span></div>
+        <div class="gi-prog"><i></i></div>
+        <div class="gi-body" id="gi-body" onscroll="giPausar(false, 12000)">
+          ${s.hero ? `<div class="gi-bub">${s.hero}</div>` : ''}
+          <h3 class="gi-t">${s.t}</h3>
+          ${s.p ? `<p class="gi-p">${s.p}</p>` : ''}
+          ${s.l ? `<ul class="gi-l">${s.l.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}
+          ${s.go ? `<button class="gi-go" onclick="guiaIrA()">${s.go.txt} →</button>` : ''}
+        </div>
+        <div class="gi-nav">
+          <button class="gi-prev" ${i === 0 ? 'disabled' : ''} onclick="guiaIr(${i - 1})">← ${L('Anterior', 'Anterior')}</button>
+          <button class="gi-next" onclick="guiaIr(${i + 1})">${ult ? L('¡Listo!', 'Fet!') : L('Siguiente', 'Següent') + ' →'}</button>
+        </div>
+      </div>
+      ${lado(i + 1, 'gi-der')}
+      <button class="gi-arr gi-arr-l" ${i === 0 ? 'disabled' : ''} onclick="guiaIr(${i - 1})" aria-label="${L('Anterior', 'Anterior')}">‹</button>
+      <button class="gi-arr gi-arr-r" onclick="guiaIr(${i + 1})" aria-label="${L('Siguiente', 'Següent')}">›</button>
+    </div>
+    <div class="gi-foot">
+      <div class="gi-dots">${slides.map((_, k) => `<button class="gi-dot${k === i ? ' on' : ''}" onclick="guiaIr(${k})" aria-label="${k + 1}"></button>`).join('')}</div>
+      <button class="gi-pp" onclick="guiaAuto()" aria-label="${__GI.auto ? L('Pausa', 'Pausa') : L('Automático', 'Automàtic')}">${__GI.auto ? '❚❚' : '▶'}</button>
     </div>
   </div>`;
   giTemporizar();
