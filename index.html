@@ -1273,6 +1273,11 @@ body{font-size:15.5px;}
 .inc-boton strong{display:block;font-size:15px;} .inc-boton small{font-size:12.5px;color:var(--ink-soft);}
 
 .inc-intro{max-width:560px;}
+.vc-barra{position:fixed;top:0;left:0;right:0;z-index:10050;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;padding:8px 14px;background:#7A3E00;color:#fff;font-size:13.5px;box-shadow:0 2px 10px rgba(0,0,0,.25);}
+.vc-barra button{background:#fff;color:#7A3E00;border:0;border-radius:999px;padding:6px 14px;font-weight:700;cursor:pointer;}
+.vc-barra.vc-pulso{animation:vcPulso .5s ease 3;}
+@keyframes vcPulso{50%{background:#C0392B;}}
+body.vc-on{padding-top:44px;}
 </style>
 </head>
 <body>
@@ -1675,6 +1680,49 @@ if(document.readyState === 'loading') document.addEventListener('DOMContentLoade
 const SUPABASE_URL = 'https://foxtlpyfedwsvttzorql.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Ght82ml0pvg0_nQvunlXVA_u0WjRscq';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// ===== «👁️ Ver como» (solo administración): ver la intranet tal como la ve otra persona, SIN poder guardar nada =====
+let VER_COMO = null;
+function vcBloqueado(){
+  const res = { data: null, error: { message: '👁️ Modo «Ver como»: solo para mirar. Sal del modo (barra de arriba) para guardar cambios.' } };
+  try { vcAviso(); } catch(e){}
+  const p = new Proxy(function(){}, { get(t, k){ if(k === 'then') return (ok, ko) => Promise.resolve(res).then(ok, ko); return () => p; } });
+  return p;
+}
+(function(){
+  const ESCRIBE = ['insert', 'update', 'upsert', 'delete'];
+  const from0 = sb.from.bind(sb);
+  sb.from = function(t){ const q = from0(t); if(!VER_COMO) return q; return new Proxy(q, { get(o, k){ if(ESCRIBE.includes(k)) return () => vcBloqueado(); const v = o[k]; return typeof v === 'function' ? v.bind(o) : v; } }); };
+  const rpc0 = sb.rpc ? sb.rpc.bind(sb) : null;
+  if(rpc0) sb.rpc = function(...a){ return VER_COMO ? vcBloqueado() : rpc0(...a); };
+  try {
+    const st0 = sb.storage.from.bind(sb.storage);
+    sb.storage.from = function(b){ const q = st0(b); if(!VER_COMO) return q; return new Proxy(q, { get(o, k){ if(['upload', 'update', 'remove', 'move', 'copy'].includes(k)) return () => vcBloqueado(); const v = o[k]; return typeof v === 'function' ? v.bind(o) : v; } }); };
+  } catch(e){}
+})();
+let __vcAvisoT = 0;
+function vcAviso(){ const b = document.getElementById('vc-barra'); if(!b) return; b.classList.add('vc-pulso'); clearTimeout(__vcAvisoT); __vcAvisoT = setTimeout(() => b.classList.remove('vc-pulso'), 1600); }
+async function verComo(email){
+  if(!IS_ADMIN || VER_COMO) return;
+  const { data: p } = await sb.from('staff').select('*').eq('email', email).maybeSingle();
+  if(!p){ alert(acL('No se encuentra a esta persona.', 'No es troba aquesta persona.')); return; }
+  VER_COMO = { orig: CURRENT_USER, email: p.email, nombre: p.nombre || p.email };
+  CURRENT_USER = Object.assign({}, CURRENT_USER, { email: p.email });
+  await checkStaff();
+  document.getElementById('vc-barra')?.remove();
+  document.body.insertAdjacentHTML('afterbegin', `<div id="vc-barra" class="vc-barra" role="status">
+    <span>👁️ ${acL('Estás viendo la intranet como', 'Estàs veient la intranet com')} <strong>${escAttr(VER_COMO.nombre)}</strong> · ${acL('solo para mirar, no se guarda nada', 'només per mirar, no es desa res')}</span>
+    <button onclick="verComoSalir()">${acL('Salir y volver a mi cuenta', 'Sortir i tornar al meu compte')}</button></div>`);
+  document.body.classList.add('vc-on');
+  toggleSidebarVisible(true); irAPantallaInicial();
+}
+async function verComoSalir(){
+  if(!VER_COMO) return;
+  CURRENT_USER = VER_COMO.orig; VER_COMO = null;
+  document.getElementById('vc-barra')?.remove(); document.body.classList.remove('vc-on');
+  await checkStaff();
+  toggleSidebarVisible(true);
+  if(IS_ADMIN){ showScreen('admin'); try { renderAdministrador(); } catch(e){ irAPantallaInicial(); } } else irAPantallaInicial();
+}
 
 let CURRENT_USER = null;
 let IS_STAFF = false;
@@ -2563,7 +2611,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v181'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v182'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -2844,7 +2892,7 @@ async function checkStaff(){
   IS_GESTOR = !!(IS_STAFF && !IS_JOVENES && !IS_RRHH_SOLO && !IS_DOCENTE && data && data.gestiona_alertas);
   CURRENT_USER_NOMBRE = (data && data.nombre) || null;
   window.__staffYo = data || null;
-  if(IS_STAFF) setTimeout(() => { try { staffPedirTelefono(false); } catch(e){} }, 2500);
+  if(IS_STAFF && !VER_COMO) setTimeout(() => { try { staffPedirTelefono(false); } catch(e){} }, 2500);
   aplicarMenuPorRol();
   if(IS_STAFF) fichajeRefrescar();
   // Datos nuevos (contraseña propia y reparto de alertas). Si el SQL aún no está en Supabase se ignoran y todo sigue como antes.
@@ -3116,7 +3164,10 @@ async function mfaEstado(){
   } catch(e){ return { disponible: false, error: e.message }; }
 }
 // true = puede entrar ya; false = se ha pintado la pantalla del código / de configuración
+// ⏸️ PAUSA TEMPORAL mientras se revisa todo (con el SQL-61). Para volver a activarla: poner false y ejecutar otra vez el SQL-58.
+const MFA_PAUSADA = true;
 async function mfaPuerta(){
+  if(MFA_PAUSADA) return true;
   const st = await mfaEstado();
   if(!st.disponible) return true;                                  // MFA no activado en Supabase: se entra como siempre
   if(st.factor && st.nivel === 'aal2') return true;                // ya ha puesto el código en esta sesión
@@ -16412,7 +16463,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-29 · v181 (docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-29 · v182 («Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -18902,6 +18953,7 @@ async function renderAdministrador(){
         <span class="chip ${s.activo === false ? 'off' : 'good'}">${s.activo === false ? t.inactivoLbl : t.activoLbl}</span>
         <button class="link-btn" style="font-size:12px;" onclick="toggleActivoTecnico('${s.email}', ${s.activo === false})">${s.activo === false ? t.reactivar : t.desactivar}</button>
         ${(DELEGACION_OK && s.activo !== false && !s.es_admin && s.ambito !== 'jovenes') ? `<button class="link-btn" style="font-size:12px;" onclick="toggleGestorAlertas('${s.email}', ${!s.gestiona_alertas})">${s.gestiona_alertas ? acL('Quitar reparto de alertas', 'Treure repartiment d\'alertes') : acL('Delegar reparto de alertas', 'Delegar repartiment d\'alertes')}</button>` : ''}
+        ${(IS_ADMIN && s.activo !== false && String(s.email).toLowerCase() !== String(CURRENT_USER.email).toLowerCase()) ? `<button class="link-btn" style="font-size:12px;" onclick="verComo('${s.email}')" title="${acL('Ver la intranet tal como la ve esta persona (solo mirar)', 'Veure la intranet tal com la veu aquesta persona (només mirar)')}">👁️ ${acL('Ver como', 'Veure com')}</button>` : ''}
         ${s.activo !== false ? `<button class="link-btn" style="font-size:12px;" onclick="mfaReiniciarPersona('${s.email}')" title="${acL('Si ha perdido o cambiado el móvil', 'Si ha perdut o canviat el mòbil')}">🔐 ${acL('Reiniciar 2 pasos', 'Reiniciar 2 passos')}</button>` : ''}
         ${(GP_OK && s.activo !== false) ? `<button class="link-btn" style="font-size:12px;" onclick="toggleRRHH('${s.email}', ${!s.es_rrhh})">${s.es_rrhh ? acL('Quitar RR. HH.', 'Treure RR. HH.') : acL('Dar RR. HH.', 'Donar RR. HH.')}</button>` : ''}
         ${('es_soporte' in s && s.activo !== false) ? `<button class="link-btn" style="font-size:12px;${s.es_soporte ? 'color:var(--good);' : 'color:#888;'}" title="${acL('Recibe las incidencias de soporte técnico', 'Rep les incidències de suport tècnic')}" onclick="toggleSoporte('${s.email}', ${!s.es_soporte})">🛠️ ${s.es_soporte ? acL('Soporte técnico ✓', 'Suport tècnic ✓') : acL('Soporte técnico', 'Suport tècnic')}</button>` : ''}
