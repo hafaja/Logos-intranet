@@ -1278,6 +1278,28 @@ body{font-size:15.5px;}
 .vc-barra.vc-pulso{animation:vcPulso .5s ease 3;}
 @keyframes vcPulso{50%{background:#C0392B;}}
 body.vc-on{padding-top:44px;}
+.veces-at{background:#fff;border:1px solid #D5E1F0;border-left:5px solid #1F66C1;border-radius:14px;margin:0 0 14px;}
+.veces-at > summary{display:flex;align-items:center;gap:14px;padding:12px 14px;cursor:pointer;list-style:none;}
+.veces-at > summary::-webkit-details-marker{display:none;}
+.veces-n{font-size:30px;font-weight:800;color:#1F66C1;min-width:44px;text-align:center;}
+.veces-at summary small{display:block;color:#5F6672;font-size:12.5px;margin-top:2px;}
+.veces-ver{margin-left:auto;color:#1F66C1;font-size:13px;font-weight:700;white-space:nowrap;}
+.veces-lista{margin:0;padding:4px 14px 12px 44px;max-height:340px;overflow:auto;}
+.veces-lista li{padding:5px 0;border-bottom:1px dashed #E3E8EF;font-size:13px;}
+.veces-lista li > span{display:inline-block;margin-right:10px;}
+.veces-f{font-weight:700;min-width:96px;}
+.veces-t.at{color:#1F66C1;} .veces-t.ac{color:#A4561A;}
+.veces-tec{color:#5F6672;font-size:12px;}
+.inf-reg-mem{background:#FFF8E8;border:1px solid #F0D9A6;border-radius:14px;padding:12px 14px;margin:0 0 14px;}
+.inf-reg-mem-c{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.inf-reg-mem p{margin:8px 0;font-size:14px;line-height:1.55;}
+.inf-reg-tramos{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px;}
+.inf-reg-tramos span{background:#F3F7FC;border:1px solid #D5E1F0;border-radius:999px;padding:4px 10px;font-size:12.5px;}
+.inf-reg-q{width:100%;padding:9px 12px;border:1px solid #D5E1F0;border-radius:10px;margin:0 0 8px;font:inherit;}
+.inf-reg-p{border-bottom:1px solid #E3E8EF;}
+.inf-reg-p > summary{display:flex;justify-content:space-between;gap:10px;padding:8px 4px;cursor:pointer;}
+.inf-reg-pn{font-weight:700;}
+.inf-reg-pt small{color:#5F6672;}
 </style>
 </head>
 <body>
@@ -2611,7 +2633,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v182'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v184'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -16463,7 +16485,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-29 · v182 («Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-30 · v184 (Inicio: «Veces que hemos atendido» junto a las personas atendidas; veces que ha sido atendida cada persona: en su ficha y en Informes › Registro, con texto para la memoria y Excel por persona; «Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -16661,7 +16683,7 @@ async function infRegistroPintar(recargar){
   if(!f.datos || recargar){ host.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`; await infRegistroCargar(); }
   const todos = f.datos || [], ev = f.tec ? todos.filter(e => e.tec === f.tec) : todos;
   const nAt = ev.filter(e => e.tipo === 'atencion').length, nAc = ev.length - nAt;
-  const personas = new Set(ev.map(e => e.uid || ('n:' + normTxt(e.nombre))).filter(k => k !== 'n:')).size;
+  const pp = infRegPorPersona(ev), personas = pp.length;
   const porMes = {}; ev.forEach(e => { const m = e.fecha.slice(0, 7); const x = porMes[m] = porMes[m] || { at: 0, ac: 0 }; x[e.tipo === 'atencion' ? 'at' : 'ac']++; });
   const porTec = {}; ev.forEach(e => { const x = porTec[e.tec] = porTec[e.tec] || { at: 0, ac: 0 }; x[e.tipo === 'atencion' ? 'at' : 'ac']++; });
   const porCat = {}; ev.filter(e => e.tipo === 'actuacion').forEach(e => { porCat[e.cat] = (porCat[e.cat] || 0) + 1; });
@@ -16674,15 +16696,26 @@ async function infRegistroPintar(recargar){
       <label>${acL('Desde', 'Des de')} <input type="date" value="${f.desde}" onchange="window.__infReg.desde=this.value;infRegistroPintar(true)"></label>
       <label>${acL('Hasta', 'Fins a')} <input type="date" value="${f.hasta || isoLocal()}" onchange="window.__infReg.hasta=this.value;infRegistroPintar(true)"></label>
       <label>${acL('Técnico/a', 'Tècnic/a')} <select onchange="window.__infReg.tec=this.value;infRegistroPintar()"><option value="">${acL('Todo el equipo', 'Tot l\'equip')}</option>${tecs.map(e => `<option value="${escAttr(e)}"${f.tec === e ? ' selected' : ''}>${escAttr(nombreTecnico(e) || e)}</option>`).join('')}</select></label>
-      <button class="primary-btn" style="width:auto;margin:0;" onclick="infRegistroExcel()">⬇️ Excel</button>
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="infRegistroExcel()">⬇️ ${acL('Excel (cada intervención)', 'Excel (cada intervenció)')}</button>
+      <button class="primary-btn" style="width:auto;margin:0;background:var(--gold);" onclick="infRegistroExcelPersonas()">⬇️ ${acL('Excel (por persona)', 'Excel (per persona)')}</button>
     </div>
     <div class="inf-reg-k">
       <div><strong class="stat-num">${nAt + nAc}</strong><span>${acL('intervenciones en total', 'intervencions en total')}</span></div>
       <div><strong class="stat-num">${nAt}</strong><span>${acL('atenciones', 'atencions')}</span></div>
       <div><strong class="stat-num">${nAc}</strong><span>${acL('actuaciones', 'actuacions')}</span></div>
       <div><strong class="stat-num">${personas}</strong><span>${acL('personas distintas', 'persones diferents')}</span></div>
+      <div><strong>${pp.length ? (ev.length / pp.length).toLocaleString('es-ES', { maximumFractionDigits: 1 }) : 0}</strong><span>${acL('veces por persona (media)', 'vegades per persona (mitjana)')}</span></div>
     </div>
-    <details class="plegable" open><summary><span>📅 ${acL('Por mes', 'Per mes')}</span><span class="plegable-n">${Object.keys(porMes).length}</span></summary><div class="plegable-c">
+    ${ev.length ? `<div class="inf-reg-mem"><div class="inf-reg-mem-c"><strong>📝 ${acL('Texto para la memoria', 'Text per a la memòria')}</strong><button class="link-btn" onclick="infRegCopiarMemoria(this)">📋 ${acL('Copiar texto', 'Copiar text')}</button></div>
+      <p id="inf-reg-memoria">${escAttr(infRegTextoMemoria(ev, pp))}</p>
+      <small class="subtle">${acL('Pégalo en la memoria y adjunta los dos Excel como anexo (registro de cada intervención y resumen por persona).', 'Enganxa\'l a la memòria i adjunta els dos Excel com a annex (registre de cada intervenció i resum per persona).')}</small></div>` : ''}
+    <details class="plegable" open><summary><span>🧑 ${acL('Por persona: todas las veces que ha sido atendida', 'Per persona: totes les vegades que ha estat atesa')}</span><span class="plegable-n">${pp.length}</span></summary><div class="plegable-c">
+      <div class="inf-reg-tramos">${infRegTramos(pp).map(x => `<span><b>${x.n}</b> ${x.txt}</span>`).join('')}</div>
+      <input type="search" class="inf-reg-q" placeholder="🔍 ${acL('Buscar persona…', 'Cercar persona…')}" oninput="infRegFiltrarPersonas(this.value)">
+      <div id="inf-reg-pp">${pp.map(p => `<details class="inf-reg-p" data-n="${escAttr(p.nombre)}"><summary><span class="inf-reg-pn">${escAttr(p.nombre || '—')}</span><span class="inf-reg-pt"><b>${p.total}</b> ${p.total === 1 ? acL('vez', 'vegada') : acL('veces', 'vegades')} <small>(${p.at} ${acL('aten.', 'aten.')} · ${p.ac} ${acL('actu.', 'actu.')})</small></span></summary>
+        <ol class="veces-lista" reversed>${p.fechas.slice().reverse().map(e => `<li><span class="veces-f">${new Date(e.fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, { day: 'numeric', month: 'short', year: 'numeric' })}</span><span class="veces-t ${e.tipo === 'atencion' ? 'at' : 'ac'}">${e.tipo === 'atencion' ? '📋 ' + acL('Atención', 'Atenció') : '📝 ' + escAttr(e.cat || acL('Actuación', 'Actuació'))}</span><span class="veces-tec">${escAttr(nombreTecnico(e.tec) || e.tec || '')}</span></li>`).join('')}</ol></details>`).join('') || `<div class="empty-note">${acL('Sin registros en estas fechas.', 'Sense registres en aquestes dates.')}</div>`}</div>
+    </div></details>
+    <details class="plegable"><summary><span>📅 ${acL('Por mes', 'Per mes')}</span><span class="plegable-n">${Object.keys(porMes).length}</span></summary><div class="plegable-c">
       ${Object.keys(porMes).sort().reverse().map(m => { const x = porMes[m]; return `<div class="inf-reg-mes"><span>${escAttr(contaMayus(mesTxt(m)))}</span><span class="inf-reg-bar"><i class="a" style="width:${x.at / maxMes * 100}%"></i><i class="b" style="width:${x.ac / maxMes * 100}%"></i></span><span><b>${x.at + x.ac}</b> <small>(${x.at} ${acL('aten.', 'aten.')} · ${x.ac} ${acL('actu.', 'actu.')})</small></span></div>`; }).join('') || `<div class="empty-note">${acL('Sin registros en estas fechas.', 'Sense registres en aquestes dates.')}</div>`}
     </div></details>
     <details class="plegable"><summary><span>👥 ${acL('Por técnico/a', 'Per tècnic/a')}</span><span class="plegable-n">${Object.keys(porTec).length}</span></summary><div class="plegable-c">
@@ -16691,6 +16724,72 @@ async function infRegistroPintar(recargar){
     <details class="plegable"><summary><span>🏷️ ${acL('Actuaciones por tipo / proyecto', 'Actuacions per tipus / projecte')}</span><span class="plegable-n">${Object.keys(porCat).length}</span></summary><div class="plegable-c">
       ${Object.entries(porCat).sort((a, b) => b[1] - a[1]).map(([c, n]) => `<div class="panel-stat-row"><span>${escAttr(c)}</span><span><b>${n}</b></span></div>`).join('')}
     </div></details>`;
+}
+// Total de veces que Logos ha atendido (cada atención y cada actuación cuenta)
+async function contarIntervenciones(){
+  try {
+    const r = await sb.rpc('cifras_publicas');
+    if(!r.error && r.data && typeof r.data.intervenciones === 'number') return r.data.intervenciones;
+  } catch(e){}
+  try {
+    const [a, b] = await Promise.all([sb.from('atenciones').select('id', { count: 'exact', head: true }), sb.from('actuaciones').select('id', { count: 'exact', head: true })]);
+    return (a.count || 0) + (b.count || 0);
+  } catch(e){ return 0; }
+}
+// Ficha: cuántas veces ha sido atendida esta persona (cada atención y cada actuación cuenta)
+function vecesAtendidaHtml(atenciones, actuaciones){
+  const ev = [];
+  (atenciones || []).forEach(a => ev.push({ f: String(a.creado_en || '').slice(0, 10), tipo: 'at', tec: a.creado_por_email || '', txt: acL('Ficha de atención', 'Fitxa d\'atenció') }));
+  (actuaciones || []).forEach(a => ev.push({ f: String(a.fecha || a.creado_en || '').slice(0, 10), tipo: 'ac', tec: a.tecnico_email || '', txt: a.categoria || acL('Actuación', 'Actuació') }));
+  const ok = ev.filter(e => e.f).sort((a, b) => b.f.localeCompare(a.f));
+  if(!ok.length) return '';
+  const nAt = ok.filter(e => e.tipo === 'at').length, nAc = ok.length - nAt, primera = ok[ok.length - 1].f;
+  const fd = d => new Date(d + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, { day: 'numeric', month: 'short', year: 'numeric' });
+  return `<details class="veces-at"><summary>
+      <span class="veces-n stat-num">${ok.length}</span>
+      <span><strong>${ok.length === 1 ? acL('vez atendida', 'vegada atesa') : acL('veces atendida', 'vegades atesa')}</strong><small>${nAt} ${acL('atenciones', 'atencions')} · ${nAc} ${acL('actuaciones', 'actuacions')} · ${acL('desde el', 'des del')} ${fd(primera)}</small></span>
+      <span class="veces-ver">${acL('Ver todas', 'Veure-les totes')} ⌄</span></summary>
+    <ol class="veces-lista" reversed>${ok.map(e => `<li><span class="veces-f">${fd(e.f)}</span><span class="veces-t ${e.tipo}">${e.tipo === 'at' ? '📋' : '📝'} ${escAttr(e.txt)}</span><span class="veces-tec">${escAttr(nombreTecnico(e.tec) || e.tec || '')}</span></li>`).join('')}</ol>
+  </details>`;
+}
+// Informes › Registro: cada persona con todas las veces que ha sido atendida
+function infRegPorPersona(ev){
+  const m = {};
+  ev.forEach(e => { const k = e.uid || ('n:' + normTxt(e.nombre)); if(k === 'n:') return;
+    const x = m[k] = m[k] || { k, nombre: e.nombre || '', at: 0, ac: 0, fechas: [], tecs: new Set() };
+    if(!x.nombre && e.nombre) x.nombre = e.nombre;
+    x[e.tipo === 'atencion' ? 'at' : 'ac']++; x.fechas.push(e); if(e.tec) x.tecs.add(e.tec); });
+  return Object.values(m).map(x => Object.assign(x, { total: x.at + x.ac, primera: x.fechas[0].fecha, ultima: x.fechas[x.fechas.length - 1].fecha })).sort((a, b) => b.total - a.total || a.nombre.localeCompare(b.nombre));
+}
+function infRegTramos(pp){
+  const t = [[1, 1, acL('1 vez', '1 vegada')], [2, 5, acL('de 2 a 5 veces', 'de 2 a 5 vegades')], [6, 10, acL('de 6 a 10 veces', 'de 6 a 10 vegades')], [11, 20, acL('de 11 a 20 veces', 'd\'11 a 20 vegades')], [21, 1e9, acL('más de 20 veces', 'més de 20 vegades')]];
+  return t.map(([a, b, txt]) => ({ txt, n: pp.filter(p => p.total >= a && p.total <= b).length }));
+}
+function infRegTextoMemoria(ev, pp){
+  const f = window.__infReg, nAt = ev.filter(e => e.tipo === 'atencion').length, nAc = ev.length - nAt;
+  const fd = d => new Date(d + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+  const media = pp.length ? (ev.length / pp.length) : 0, rep = pp.filter(p => p.total > 1).length, mas10 = pp.filter(p => p.total > 10).length;
+  const pct = n => pp.length ? Math.round(n / pp.length * 100) : 0;
+  const tr = infRegTramos(pp).filter(x => x.n).map(x => `${x.n} ${x.n === 1 ? 'persona atendida' : 'personas atendidas'} ${x.txt}`).join('; ');
+  return `Del ${fd(f.desde)} al ${fd(f.hasta || isoLocal())}, el servicio de Associació Logos realizó ${ev.length} intervenciones (${nAt} atenciones y ${nAc} actuaciones) a ${pp.length} personas distintas, con una media de ${media.toLocaleString('es-ES', { maximumFractionDigits: 1 })} intervenciones por persona. `
+    + `El ${pct(rep)} % de las personas (${rep}) fue atendida en más de una ocasión${mas10 ? `, y ${mas10} ${mas10 === 1 ? 'persona recibió' : 'personas recibieron'} un acompañamiento intensivo de más de 10 intervenciones` : ''}. `
+    + `Distribución por número de intervenciones: ${tr}. `
+    + `Cada intervención queda registrada con fecha, profesional y tipo, y puede consultarse en el registro detallado adjunto.`;
+}
+function infRegCopiarMemoria(btn){
+  const t = document.getElementById('inf-reg-memoria').innerText;
+  const ok = () => { btn.textContent = '✅ ' + acL('Copiado', 'Copiat'); setTimeout(() => { btn.textContent = '📋 ' + acL('Copiar texto', 'Copiar text'); }, 1800); };
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(ok, () => {}); else { const r = document.createRange(); r.selectNodeContents(document.getElementById('inf-reg-memoria')); getSelection().removeAllRanges(); getSelection().addRange(r); document.execCommand('copy'); ok(); }
+}
+function infRegFiltrarPersonas(q){
+  q = normTxt(q || ''); document.querySelectorAll('#inf-reg-pp .inf-reg-p').forEach(d => { d.style.display = !q || normTxt(d.dataset.n || '').includes(q) ? '' : 'none'; });
+}
+async function infRegistroExcelPersonas(){
+  const f = window.__infReg, ev = (f.datos || []).filter(e => !f.tec || e.tec === f.tec), pp = infRegPorPersona(ev);
+  const fd = d => new Date(d + 'T00:00:00').toLocaleDateString('es-ES');
+  const cab = [acL('Persona', 'Persona'), acL('Total veces atendida', 'Total vegades atesa'), acL('Atenciones', 'Atencions'), acL('Actuaciones', 'Actuacions'), acL('Primera', 'Primera'), acL('Última', 'Última'), acL('Profesionales', 'Professionals'), acL('Fechas', 'Dates')];
+  const filas = pp.map(p => [p.nombre || '—', p.total, p.at, p.ac, fd(p.primera), fd(p.ultima), [...p.tecs].map(e => nombreTecnico(e) || e).join(', '), p.fechas.map(e => fd(e.fecha) + (e.tipo === 'atencion' ? ' (at.)' : ' (act.)')).join('; ')]);
+  await descargarXLSX(cab, filas, `Personas-y-veces-atendidas_${f.desde}_${f.hasta || isoLocal()}.xlsx`, acL('Por persona', 'Per persona'));
 }
 async function infRegistroExcel(){
   const f = window.__infReg, ev = (f.datos || []).filter(e => !f.tec || e.tec === f.tec);
@@ -17427,6 +17526,7 @@ async function renderPanelGeneral(){
 
   const statsIconos = [
     { icon:'👥', bg:'var(--good-soft)', color:'var(--good)', num:'…', id:'sn-num-personas', label:t.personasAtendidasTotal, cta: LANG_I==='ca'?'Veure llistat →':'Ver listado →', onclick:"showScreen('personas');renderPersonasScreen()" },
+    { icon:'🔁', bg:'#E8F1FC', color:'#1F66C1', num:'…', id:'sn-num-interv', label: LANG_I==='ca'?'Vegades que hem atès (atencions + actuacions)':'Veces que hemos atendido (atenciones + actuaciones)', cta: LANG_I==='ca'?'Veure registre →':'Ver registro →', onclick:"showScreen('informes');renderInformesScreen().then(()=>{const r=document.getElementById('inf-registro'); if(r) r.scrollIntoView({behavior:'smooth'});})" },
     { icon:'📁', bg:'var(--gold-soft)', color:'#7A5A16', num:tramitesEnCursoCount, label: LANG_I==='ca'?'Tràmits en curs':'Trámites en curso', cta: LANG_I==='ca'?'Veure tràmits →':'Ver trámites →', onclick:"showScreen('seguimiento');renderSeguimientoScreen().then(()=>{document.getElementById('seguimiento-solo-tramites').checked=true;toggleSoloTramitesSeguimiento(true);})" },
     { icon:'📅', bg:'#E7ECFF', color:'#33449E', num:citasHoyCount, label: LANG_I==='ca'?'Cites avui':'Citas hoy', cta: LANG_I==='ca'?'Veure calendari →':'Ver calendario →', onclick:"showScreen('agenda');renderAgendaCitas()", cta2: LANG_I==='ca'?'Properes cites →':'Próximas citas →', onclick2:"showScreen('agenda');renderProximasCitas()" },
     { icon:'📋', bg:'var(--alert-soft)', color:'var(--alert)', num:tareasPendCount, label: LANG_I==='ca'?'Tasques pendents':'Tareas pendientes', cta: LANG_I==='ca'?'Veure tasques →':'Ver tareas →', onclick:"showScreen('seguimiento');renderSeguimientoScreen()" }
@@ -17517,6 +17617,7 @@ async function renderPanelGeneral(){
     <div class="section-label">${LANG_I==='ca' ? 'Estadístiques' : 'Estadísticas'}</div>
     <div class="stat-grid" style="grid-template-columns:1fr;margin-bottom:12px;">
       <div class="stat-card"><div class="stat-num" id="num-total-personas">0</div><div class="stat-label">${t.personasAtendidasTotal}</div></div>
+      <div class="stat-card"><div class="stat-num" id="num-total-interv">0</div><div class="stat-label">${LANG_I==='ca' ? 'Vegades que hem atès (cada atenció i actuació compta)' : 'Veces que hemos atendido (cada atención y actuación cuenta)'}</div></div>
     </div>
     <button class="link-btn" style="margin-bottom:24px;" onclick="showScreen('informes');renderInformesScreen()">${LANG_I==='ca' ? 'Veure totes les estadístiques →' : 'Ver todas las estadísticas →'}</button>
   `;
@@ -17526,6 +17627,7 @@ async function renderPanelGeneral(){
   // Personas atendidas en total: las mismas que en Impacto (con cuenta + histórico en papel + atendidas sin ficha)
   estCargarPersonas().then(d => { const n = (d && d.filas ? d.filas.length : 0) || totalPersonas; contarHasta(document.getElementById('sn-num-personas'), n); contarHasta(document.getElementById('num-total-personas'), n); })
     .catch(() => { contarHasta(document.getElementById('sn-num-personas'), totalPersonas); contarHasta(document.getElementById('num-total-personas'), totalPersonas); });
+  contarIntervenciones().then(n => { contarHasta(document.getElementById('sn-num-interv'), n); contarHasta(document.getElementById('num-total-interv'), n); });
   actualizarBadgePanel();
   activarBarras();
   if(!document.getElementById('pg-area')) gpPintarTarjetas(cont);   // ya están dentro de la cabecera («Mi área privada»)
@@ -18098,6 +18200,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
     <div class="nota-trabajo"><strong class="t">📌 ${LANG_I==='ca'?'Aquesta fitxa és el lloc de treball':'Esta ficha es el lugar de trabajo'}</strong>${LANG_I==='ca'
       ? 'Aquí es registren totes les actuacions: <strong>tràmits, projectes i seguiment fins al tancament</strong>. Tria a sota què vols fer.'
       : 'Aquí se registran todas las actuaciones: <strong>trámites, proyectos y seguimiento hasta el cierre</strong>. Elige abajo lo que quieres hacer.'}</div>
+    ${vecesAtendidaHtml(atencionesRes.data || [], actuacionesLista || [])}
     <div class="persona-tabs">
       <button class="ptab-btn principal active" data-tab="vista" onclick="mostrarTabPersona('vista')">🔎 ${LANG_I==='ca'?'Resum':'Resumen'}</button>
       <button class="ptab-btn principal" data-tab="atencion" onclick="abrirAtencionEnFicha()">📋 ${LANG_I==='ca'?'Fitxa d\'atenció':'Ficha de atención'}</button>
