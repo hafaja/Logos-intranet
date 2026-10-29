@@ -940,6 +940,29 @@
 .mfa-pie{font-size:12.5px !important;margin-top:10px !important;}
 @media (min-width:1600px){ .main-content{max-width:1320px;} body{font-size:16.5px;} }
 @media (min-width:2200px){ .main-content{max-width:1560px;} }
+.vac-cab{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 10px;}
+.vac-tot{font-size:12.5px;background:#E3F5E8;color:#17663A;border-radius:999px;padding:3px 10px;font-weight:700;}
+.vac-form{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:0 0 10px;}
+.vac-form label, .vac-acc label{display:flex;flex-direction:column;font-size:12px;color:var(--ink-soft);gap:3px;}
+.vac-form input, .vac-form select, .vac-acc input{border:1.5px solid #D5DCE6;border-radius:10px;padding:7px 9px;font:inherit;font-size:13.5px;background:#fff;}
+.vac-motivo{flex:1;min-width:180px;}
+.vac-f{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 0;border-bottom:1px solid var(--line);}
+.vac-i{font-size:22px;} .vac-x{flex:1;min-width:180px;font-size:13.5px;}
+.vac-x small{color:var(--ink-soft);} .vac-orig, .vac-resp{display:block;margin-top:2px;}
+.vac-chip{border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;white-space:nowrap;}
+.vac-acc{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;width:100%;padding:6px 0 2px 32px;}
+.vac-acc input[type=text]{flex:1;min-width:180px;}
+.inf-reg-f{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:0 0 12px;}
+.inf-reg-f label{display:flex;flex-direction:column;font-size:12px;color:var(--ink-soft);gap:3px;}
+.inf-reg-f input, .inf-reg-f select{border:1.5px solid #D5DCE6;border-radius:10px;padding:7px 9px;font:inherit;font-size:13.5px;background:#fff;}
+.inf-reg-k{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 12px;}
+.inf-reg-k > div{background:#F5F9FE;border:1px solid #D9E6F7;border-radius:14px;padding:10px 12px;}
+.inf-reg-k strong{display:block;font-size:26px;color:#163F7A;line-height:1.1;}
+.inf-reg-k span{font-size:12px;color:var(--ink-soft);}
+.inf-reg-mes{display:grid;grid-template-columns:150px 1fr auto;gap:10px;align-items:center;font-size:13px;padding:5px 0;border-bottom:1px solid var(--line);}
+.inf-reg-bar{display:flex;height:9px;background:#EEF2F7;border-radius:99px;overflow:hidden;}
+.inf-reg-bar i{display:block;height:100%;} .inf-reg-bar i.a{background:#2463B8;} .inf-reg-bar i.b{background:#F2BC2C;}
+@media (max-width:700px){ .inf-reg-k{grid-template-columns:repeat(2,minmax(0,1fr));} .inf-reg-mes{grid-template-columns:1fr;gap:3px;} }
 .nav-flot{position:fixed;right:22px;bottom:96px;z-index:60;display:none;flex-direction:column;gap:8px;}
 .nav-flot.on{display:flex;}
 .nav-flot-b{width:46px;height:46px;border-radius:50%;border:none;background:#1B4E95;color:#fff;font-size:17px;cursor:pointer;box-shadow:0 8px 20px -8px rgba(22,63,122,.8);transition:opacity .2s,transform .15s;}
@@ -1333,6 +1356,7 @@ body{font-size:15.5px;}
         <button data-target="gestionpersonal" data-rh="nominas" onclick="rrhhIr('nominas', this)">🧾 Nóminas</button>
         <button data-target="gestionpersonal" data-rh="personas" onclick="rrhhIr('personas', this)">👥 Por persona</button>
         <button data-target="gestionpersonal" data-rh="horarios" onclick="rrhhIr('horarios', this)">🕘 Horarios del personal</button>
+        <button data-target="gestionpersonal" data-rh="vacaciones" onclick="rrhhIr('vacaciones', this)">🌴 Vacaciones <span class="cmp-n" id="vac-nav-n" style="display:none;margin-left:6px;background:#D6336C;color:#fff;border-radius:999px;font-size:11px;padding:0 6px;"></span></button>
         <button data-target="gestionpersonal" data-rh="comunicados" onclick="rrhhIr('comunicados', this)">📣 Comunicados</button>
         <button data-target="gestionpersonal" data-rh="avisos" onclick="rrhhIr('avisos', this)">📰 Noticias y recordatorios</button>
         <button data-target="gestionpersonal" data-rh="docgen" onclick="rrhhIr('docgen', this)">📄 Documentos generales</button>
@@ -1656,6 +1680,7 @@ let CURRENT_USER = null;
 let IS_STAFF = false;
 let IS_ADMIN = false;
 let IS_RRHH_SOLO = false;    // persona de Recursos Humanos sin acceso a las fichas de personas atendidas
+let IS_DOCENTE = false;      // docente externo: solo entra al Aula Virtual (sus cursos)
 let IS_JOVENES = false;      // persona del equipo de Jóvenes en acción: solo ve su propio espacio
 let IS_GESTOR = false;       // persona a la que la administración ha delegado el reparto de alertas
 let HIST_V2 = false;          // true cuando existe cp/datos en personas_historicas (SQL 14)
@@ -2374,18 +2399,23 @@ function aplicarTraduccionesSidebar(){
 // Jóvenes en acción (y su pestaña de Familias) queda oculto del menú para el equipo general. Para volver a mostrarlo: MOSTRAR_JOVENES = true.
 const MOSTRAR_JOVENES = false;
 const PANTALLAS_JOVENES = ['login', 'panel', 'miespacio', 'gestionpersonal', 'jovenes', 'miformacion', 'config', 'incidencias'];
+const PANTALLAS_DOCENTE = ['login', 'aulavirtual', 'config', 'incidencias'];
 const PANTALLAS_RRHH_SOLO = ['login', 'panel', 'miespacio', 'gestionpersonal', 'subvenciones', 'miformacion', 'config', 'incidencias'];
 function aplicarMenuPorRol(){
   document.querySelectorAll('.sidebar nav button[data-target]').forEach(b => {
-    b.classList.toggle('rol-oculto', (IS_JOVENES && !PANTALLAS_JOVENES.includes(b.dataset.target)) || (IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(b.dataset.target)) || (!MOSTRAR_JOVENES && !IS_JOVENES && b.dataset.target === 'jovenes') || (b.dataset.target === 'subvenciones' && !(IS_ADMIN || IS_RRHH)));
+    b.classList.toggle('rol-oculto', (IS_DOCENTE && !PANTALLAS_DOCENTE.includes(b.dataset.target)) || (IS_JOVENES && !PANTALLAS_JOVENES.includes(b.dataset.target)) || (IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(b.dataset.target)) || (!MOSTRAR_JOVENES && !IS_JOVENES && b.dataset.target === 'jovenes') || (b.dataset.target === 'subvenciones' && !(IS_ADMIN || IS_RRHH)));
   });
   document.querySelectorAll('.sidebar nav .nav-grupo').forEach(g => {
-    g.classList.toggle('rol-oculto', (IS_JOVENES || IS_RRHH_SOLO) && !g.querySelector('button[data-target]:not(.rol-oculto)'));
+    g.classList.toggle('rol-oculto', (IS_JOVENES || IS_RRHH_SOLO || IS_DOCENTE) && !g.querySelector('button[data-target]:not(.rol-oculto)'));
   });
   // Grupos propios de cada rol: «Administración» solo para administración; «Recursos Humanos» para RR. HH. (y administración)
   const gA = document.getElementById('nav-g-admin'), gR = document.getElementById('nav-g-rrhh');
   if(gA) gA.classList.toggle('rol-oculto', !IS_ADMIN);
   if(gR) gR.classList.toggle('rol-oculto', !(IS_ADMIN || IS_RRHH || IS_RRHH_SOLO));
+}
+async function vacBadge(){
+  const el = document.getElementById('vac-nav-n'); if(!el || !(IS_ADMIN || IS_RRHH || IS_RRHH_SOLO)) return;
+  try { const { count, error } = await sb.from('vacaciones_solicitudes').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente'); const n = error ? 0 : (count || 0); el.textContent = n; el.style.display = n ? '' : 'none'; } catch(e){}
 }
 function navMarcar(btn){ if(!btn) return; document.querySelectorAll('.sidebar nav button').forEach(b => b.classList.remove('active')); btn.classList.add('active'); const g = btn.closest('details.nav-grupo'); if(g && !g.open) g.open = true; }
 async function rrhhIr(sub, btn){
@@ -2533,7 +2563,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v180'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v181'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -2586,6 +2616,7 @@ function irAPantallaInicial(){
       if(b && !b.classList.contains('rol-oculto')){ b.click(); return; }
     } catch(e){}
   }
+  if(IS_DOCENTE){ showScreen('aulavirtual'); renderAulaVirtualScreen(); return; }   // docente externo: directamente a su Aula Virtual
   if(IS_RRHH_SOLO){ showScreen('panel'); renderPanelRRHH(); return; }   // Recursos Humanos entra en su propio Inicio
   if(!IS_ADMIN && !IS_JOVENES){ showScreen('miespacio'); renderMiEspacio(); return; }   // el personal técnico entra directamente en su página de trabajo
   showScreen('panel');
@@ -2597,6 +2628,7 @@ window.__navIdx = 0; window.__navMax = 0; window.__navRestaurando = false;
 window.__navUltimoPaso = 0;
 function navPantallaActiva(){ const a = document.querySelector('.screen.active'); return a ? a.id.replace('screen-', '') : null; }
 function navPantallaInicio(){
+  if(typeof IS_DOCENTE !== 'undefined' && IS_DOCENTE) return 'aulavirtual';
   if(typeof IS_RRHH_SOLO !== 'undefined' && IS_RRHH_SOLO) return 'panel';
   if(typeof IS_ADMIN !== 'undefined' && !IS_ADMIN && !IS_JOVENES) return 'miespacio';
   return 'panel';
@@ -2726,6 +2758,7 @@ window.addEventListener('popstate', function(e){
 });
 
 function showScreen(name){
+  if(IS_DOCENTE && !PANTALLAS_DOCENTE.includes(name)) name = 'aulavirtual';
   if(IS_JOVENES && !PANTALLAS_JOVENES.includes(name)) name = 'panel';
   if(IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(name)) name = 'panel';
   const previa = document.querySelector('.screen.active');
@@ -2799,15 +2832,16 @@ function activarBarras(){
 let CURRENT_USER_NOMBRE = null;
 
 async function checkStaff(){
-  if(!CURRENT_USER){ IS_STAFF = false; IS_ADMIN = false; IS_JOVENES = false; IS_RRHH_SOLO = false; IS_RRHH = false; IS_GESTOR = false; GP_OK = false; CURRENT_USER_NOMBRE = null; aplicarMenuPorRol(); return; }
+  if(!CURRENT_USER){ IS_STAFF = false; IS_ADMIN = false; IS_DOCENTE = false; IS_JOVENES = false; IS_RRHH_SOLO = false; IS_RRHH = false; IS_GESTOR = false; GP_OK = false; CURRENT_USER_NOMBRE = null; aplicarMenuPorRol(); return; }
   let { data, error: errStaff } = await sb.from('staff').select('*').eq('email', CURRENT_USER.email).maybeSingle();
   if(errStaff){ const r2 = await sb.from('staff').select('email, es_admin, activo, nombre').eq('email', CURRENT_USER.email).maybeSingle(); data = r2.data; }
   IS_STAFF = !!(data && data.activo !== false);
   IS_ADMIN = !!(data && data.es_admin && data.activo !== false);
   IS_JOVENES = !!(IS_STAFF && !IS_ADMIN && data && data.ambito === 'jovenes');
+  IS_DOCENTE = !!(IS_STAFF && !IS_ADMIN && data && data.ambito === 'docente');
   IS_RRHH = !!(IS_STAFF && data && data.es_rrhh);
   IS_RRHH_SOLO = !!(IS_STAFF && !IS_ADMIN && data && data.ambito === 'rrhh');
-  IS_GESTOR = !!(IS_STAFF && !IS_JOVENES && !IS_RRHH_SOLO && data && data.gestiona_alertas);
+  IS_GESTOR = !!(IS_STAFF && !IS_JOVENES && !IS_RRHH_SOLO && !IS_DOCENTE && data && data.gestiona_alertas);
   CURRENT_USER_NOMBRE = (data && data.nombre) || null;
   window.__staffYo = data || null;
   if(IS_STAFF) setTimeout(() => { try { staffPedirTelefono(false); } catch(e){} }, 2500);
@@ -2937,7 +2971,7 @@ async function cerrarSesion(forzado){
   window.__claveAvisada = false;
   recuerdoBorrar(); window.__recuerdoInicial = null;
   await sb.auth.signOut();
-  IS_STAFF = false; IS_ADMIN = false; IS_JOVENES = false; IS_RRHH_SOLO = false; IS_RRHH = false; IS_GESTOR = false; GP_OK = false; aplicarMenuPorRol();
+  IS_STAFF = false; IS_ADMIN = false; IS_DOCENTE = false; IS_JOVENES = false; IS_RRHH_SOLO = false; IS_RRHH = false; IS_GESTOR = false; GP_OK = false; aplicarMenuPorRol();
   toggleSidebarVisible(false);
   detenerRefrescoBadge();
   showScreen('login');
@@ -3061,7 +3095,7 @@ async function entrarIntranet(){
     if(!ok) return;                         // se queda en la pantalla del código o de configurar la app
     window.__usuarioYaEntro = CURRENT_USER.id;
     toggleSidebarVisible(true);
-    iniciarRefrescoBadge();
+    iniciarRefrescoBadge(); try { vacBadge(); } catch(e){}
     irAPantallaInicial();
     avisarClave(); guiaPrimeraVezIntranet();
   } finally { window.__entrando = false; }
@@ -3410,7 +3444,7 @@ function fichajePintarBanner(){
 // ===== Regla: un técnico no puede trabajar en la intranet sin fichar la entrada y marcar su sala =====
 // No se aplica a administración (dirección). Si la base de datos no responde, no se bloquea a nadie.
 function bloqueoMotivo(){
-  if(!CURRENT_USER || !IS_STAFF || IS_ADMIN || !window.__fichajeCargado || window.__fichajeError) return null;
+  if(!CURRENT_USER || !IS_STAFF || IS_ADMIN || IS_DOCENTE || !window.__fichajeCargado || window.__fichajeError) return null;
   if(!window.__fichajeAbierto) return 'entrada';
   if(!window.__salaMarcadaTurno && !salaHoyFuera()) return 'sala';
   return null;
@@ -5622,7 +5656,7 @@ function renderAtencionForm(opts){
     <div class="at-form">
     <h2 class="screen-title">${enFicha ? 'Ficha de atención' + (opts.nombre ? ' · ' + escAttr(opts.nombre) : '') : 'Persona nueva · ficha de atención'}</h2>
     ${enFicha
-      ? `<div class="nota-trabajo" style="margin-bottom:12px;"><strong class="t">📋 Una sola ficha por persona</strong>${(window.__atencionesPersona || [])[0] ? 'Esta persona ya tiene su ficha: <strong>revísala y complétala</strong>; se actualiza, no se crea otra.' : 'Aquí van los datos de la persona (los que ella ya rellenó solos o en el alta presencial) y los indicadores que completas tú.'} Cada visita o gestión se apunta aparte en el <strong>Expediente</strong> (nueva actuación).</div>`
+      ? `<div class="nota-trabajo" style="margin-bottom:12px;"><strong class="t">📋 ${(window.__atencionesPersona || []).length ? `Atención nº ${(window.__atencionesPersona || []).length + (atencionHoyMia() ? 0 : 1)}` : 'Primera atención'}</strong>${(window.__atencionesPersona || [])[0] ? (atencionHoyMia() ? 'Ya registraste hoy una atención a esta persona: al guardar <strong>se corrige esa misma</strong>.' : 'Los datos vienen de su última atención: <strong>revísalos, complétalos y guarda</strong>. Se guarda como <strong>una atención nueva</strong> (cuenta para los informes); las anteriores quedan en su historial.') : 'Aquí van los datos de la persona (los que ella ya rellenó solos o en el alta presencial) y los indicadores que completas tú.'} Lo trabajado en concreto se apunta en el <strong>Expediente</strong> (actuación).</div>`
       : `<p class="subtle">Para una persona que todavía no tiene cuenta. Se guardará a tu nombre (${CURRENT_USER.email}).</p>`}
     <p style="margin:0 0 12px;"><button class="link-btn" onclick="exportarAtencionesExcel(${enFicha ? "'" + opts.usuarioId + "'" : ''})">⬇️ ${enFicha ? 'Excel de las atenciones de esta persona' : 'Excel con todas las atenciones (se completa solo con cada nueva)'}</button></p>
 
@@ -5805,6 +5839,11 @@ function desvincularUsuarioAtencion(){
   document.getElementById('at-ver-ficha-btn').style.display = 'none';
 }
 
+function atencionHoyMia(){
+  const a = (window.__atencionesPersona || [])[0]; if(!a || !CURRENT_USER) return false;
+  const f = a.actualizado_en && a.actualizado_por_email === CURRENT_USER.email ? a.actualizado_en : a.creado_en;
+  return (a.creado_por_email === CURRENT_USER.email || a.actualizado_por_email === CURRENT_USER.email) && isoLocal(new Date(f)) === isoLocal();
+}
 async function guardarAtencion(){
   const btn = document.getElementById('at-save-btn');
   const nombre = document.getElementById('at-nombre').value.trim();
@@ -5838,8 +5877,9 @@ async function guardarAtencion(){
     notas: document.getElementById('at-notas').value.trim() || null
   };
 
-  // Una sola ficha por persona: si ya tiene, se actualiza (no se crea otra). Si no se puede actualizar, se guarda como nueva.
-  const previa = (window.__atencionEnFicha && window.__atencionUsuarioVinculado) ? (window.__atencionesPersona || [])[0] : null;
+  // Cada atención cuenta: se guarda como atención NUEVA (para los informes a los organismos), con los datos de la anterior.
+  // Solo si la misma persona técnica ya la atendió HOY, se corrige esa atención de hoy en vez de duplicarla.
+  const previa = (window.__atencionEnFicha && window.__atencionUsuarioVinculado && atencionHoyMia()) ? (window.__atencionesPersona || [])[0] : null;
   let error = null, hecho = false;
   if(previa){
     const { creado_por_email, usuario_id, nombre_referencia, ...cambios0 } = payload;
@@ -5874,7 +5914,7 @@ async function guardarAtencion(){
     window.__atencionEnFicha = false;
     await verPersonaStaff(uid, window.__origenPersonaVista);
     mostrarTabPersona('atencion'); abrirAtencionEnFicha();
-    alert('✅ Ficha guardada.');
+    alert('✅ Atención guardada. Cuenta como una atención más en los informes.');
     fichaAviso(uid, 'guardado');
     return;
   }
@@ -8753,10 +8793,16 @@ async function renderAulaVirtualScreen(){
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
 
   const hoyIso = isoLocal();
-  const [{ data: clases }, { data: cursos }] = await Promise.all([
+  let [{ data: clases }, { data: cursos }] = await Promise.all([
     sb.from('aula_virtual_clases').select('*').gte('fecha', hoyIso).order('fecha', { ascending:true }).order('hora', { ascending:true }),
     sb.from('cursos').select('*').order('creado_en', { ascending:false })
   ]);
+  if(IS_DOCENTE){   // docente externo: solo ve los cursos que imparte
+    const yo = String(CURRENT_USER.email || '').toLowerCase();
+    cursos = (cursos || []).filter(c => String(c.docente_email || '').toLowerCase() === yo);
+    const ids = new Set(cursos.map(c => c.id));
+    clases = (clases || []).filter(cl => ids.has(cl.curso_id));
+  }
 
   let inscritosPorCurso = {};
   if(cursos && cursos.length){
@@ -8932,7 +8978,8 @@ async function renderAulaVirtualScreen(){
             </select>
             ${c.audiencia === 'equipo' && (IS_ADMIN || c.docente_email === CURRENT_USER.email || c.creado_por_email === CURRENT_USER.email) ? `<button class="link-btn" style="font-size:12px;" onclick="cursoEditarDestinatarios('${c.id}')">🎯 ${LANG_I==='ca'?'A qui va adreçat':'A quién va dirigido'}</button>` : ''}
             ${misStats ? `<button class="link-btn" style="font-size:12px;" onclick="showScreen('comunicacion');renderComunicacionScreen()">📩 ${LANG_I==='ca'?'Enviar avís':'Enviar aviso'}</button>` : ''}
-            <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="borrarCurso('${c.id}')">${LANG_I==='ca'?'Esborrar':'Borrar'}</button>
+            ${!IS_DOCENTE && (IS_ADMIN || c.docente_email === CURRENT_USER.email || c.creado_por_email === CURRENT_USER.email) ? `<button class="link-btn" style="font-size:12px;" onclick="cursoAsignarDocente('${c.id}')">🎓 ${LANG_I==='ca'?'Canviar docent':'Cambiar docente'}</button>` : ''}
+            ${IS_DOCENTE ? '' : `<button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="borrarCurso('${c.id}')">${LANG_I==='ca'?'Esborrar':'Borrar'}</button>`}
           </div>
           </div>
           <button class="cmp-star ${fav ? 'on' : ''}" onclick="avFav('${c.id}', this)" aria-label="${LANG_I==='ca'?'Preferit':'Favorito'}">${fav ? '★' : '☆'}</button>
@@ -9860,6 +9907,40 @@ async function cursoAudienciaCambio(v){
   w.style.display = ''; w.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
   await cargarEquipoTodo();
   w.innerHTML = destinatariosChecksHtml([]);
+}
+// Elegir quién imparte el curso (también un docente externo): esa persona lo verá en su Aula Virtual
+async function cursoAsignarDocente(id){
+  const [{ data: curso }, { data: equipo }] = await Promise.all([
+    sb.from('cursos').select('id, nombre, docente_email').eq('id', id).maybeSingle(),
+    sb.from('staff').select('email, nombre, ambito, activo').order('nombre', { ascending: true })
+  ]);
+  if(!curso) return;
+  const act = (equipo || []).filter(s => s.activo !== false);
+  const ext = act.filter(s => s.ambito === 'docente'), resto = act.filter(s => s.ambito !== 'docente');
+  const opt = s => `<option value="${escAttr(s.email)}"${String(s.email).toLowerCase() === String(curso.docente_email || '').toLowerCase() ? ' selected' : ''}>${escAttr(s.nombre || s.email)} · ${escAttr(s.email)}</option>`;
+  document.getElementById('docente-ov')?.remove();
+  document.body.insertAdjacentHTML('beforeend', `<div id="docente-ov" style="position:fixed;inset:0;z-index:9999;background:rgba(15,30,60,.45);display:flex;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)this.remove()">
+    <div class="panel-card" style="max-width:460px;width:100%;margin:0;">
+      <h3 style="margin:0 0 6px;">🎓 ${acL('¿Quién imparte este curso?', 'Qui imparteix aquest curs?')}</h3>
+      <p class="subtle" style="font-size:13px;margin:0 0 10px;">${escAttr(curso.nombre)}</p>
+      <div class="field"><select id="docente-sel">
+        ${ext.length ? `<optgroup label="${acL('Docentes externos', 'Docents externs')}">${ext.map(opt).join('')}</optgroup>` : ''}
+        <optgroup label="${acL('Equipo de Logos', 'Equip de Logos')}">${resto.map(opt).join('')}</optgroup>
+      </select></div>
+      ${ext.length ? '' : `<p class="subtle" style="font-size:12px;">${acL('Para añadir un docente externo: Administrador › Equipo › nueva persona con «🎓 Docente externo».', 'Per afegir un docent extern: Administrador › Equip › nova persona amb «🎓 Docent extern».')}</p>`}
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
+        <button class="link-btn" onclick="document.getElementById('docente-ov').remove()">${acL('Cancelar', 'Cancel·lar')}</button>
+        <button class="primary-btn" style="width:auto;margin:0;" onclick="cursoGuardarDocente('${curso.id}')">${acL('Guardar', 'Desar')}</button>
+      </div>
+    </div></div>`);
+}
+async function cursoGuardarDocente(id){
+  const sel = document.getElementById('docente-sel'); if(!sel || !sel.value) return;
+  const nombre = (sel.selectedOptions[0].textContent || '').split(' · ')[0];
+  const { error } = await sb.from('cursos').update({ docente_email: sel.value.toLowerCase(), docente_nombre: nombre }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  document.getElementById('docente-ov')?.remove();
+  renderAulaVirtualScreen();
 }
 async function cursoEditarDestinatarios(id){
   const c = (window.__cursosAula || {})[id]; if(!c) return;
@@ -13015,6 +13096,7 @@ async function gpConfirmarLectura(i){
 async function gpRenderRrhh(cuerpo){
   const subs = IS_RRHH ? [['resumen', '🔔 ' + acL('Pendientes', 'Pendents')], ['nominas', acL('Cargar nóminas', 'Carregar nòmines')], ['personas', acL('Por persona', 'Per persona')], ['comunicados', acL('Comunicados', 'Comunicats')], ['avisos', acL('Noticias y recordatorios', 'Notícies i recordatoris')], ['docgen', acL('Documentos generales', 'Documents generals')], ['registro', acL('Registro', 'Registre')]] : [['comunicados', acL('Comunicados', 'Comunicats')]];
   if(IS_RRHH || IS_RRHH_SOLO || IS_ADMIN) subs.splice(IS_RRHH ? 3 : 1, 0, ['horarios', '🕘 ' + acL('Horarios del personal', 'Horaris del personal')]);
+  if(IS_RRHH || IS_RRHH_SOLO || IS_ADMIN) subs.splice(IS_RRHH ? 4 : 2, 0, ['vacaciones', '🌴 ' + acL('Vacaciones', 'Vacances')]);
   if(!subs.some(s => s[0] === window.__gpSub)) window.__gpSub = subs[0][0];
   cuerpo.innerHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">${subs.map(([k, t]) => `<button class="link-btn" style="font-size:12.5px;border:1px solid ${window.__gpSub === k ? 'var(--gold)' : 'var(--line)'};background:${window.__gpSub === k ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:3px 12px;" onclick="window.__gpSub='${k}';renderGestionPersonal('rrhh')">${t}</button>`).join('')}</div><div id="gp-rrhh-cuerpo"></div>`;
   const c = document.getElementById('gp-rrhh-cuerpo');
@@ -13025,6 +13107,7 @@ async function gpRenderRrhh(cuerpo){
   else if(window.__gpSub === 'personas') await gpRrhhPersonas(c);
   else if(window.__gpSub === 'registro') await gpRrhhRegistro(c);
   else if(window.__gpSub === 'horarios') await gpRrhhHorarios(c);
+  else if(window.__gpSub === 'vacaciones') await gpRrhhVacaciones(c);
   else await gpRrhhComunicados(c);
 }
 async function gpPersonasActivas(){
@@ -13532,12 +13615,109 @@ async function renderMiHorario(){
       <div class="mh-paso"><span>2</span>${ca ? 'Prem «Desar horari».' : 'Pulsa «Guardar horario».'}</div>
       <div class="mh-paso"><span>3</span>${ca ? 'Les cites (Logos Acompanya i «Nova cita») només oferiran hores dins del teu horari.' : 'Las citas (Logos Acompanya y «Nueva cita») solo ofrecerán horas dentro de tu horario.'}</div>
     </div>
+    <div class="panel-card vac-card" id="vac-mias"><div class="placeholder">${TI[LANG_I].cargando}</div></div>
     <div class="panel-card" id="hr-admin-card">${hrAdminHtml()}</div>
     <div class="panel-card" id="mh-previa"><div class="placeholder">${TI[LANG_I].cargando}</div></div>
     ${(IS_ADMIN || IS_RRHH || IS_RRHH_SOLO) ? `<p class="subtle" style="font-size:12.5px;">👥 ${ca ? 'Per canviar l\'horari d\'una altra persona o l\'horari general:' : 'Para cambiar el horario de otra persona o el horario general:'} <button class="link-btn" style="font-size:12.5px;" onclick="showScreen('admin');renderAdministrador()">${ca ? 'Administrador → Horaris del personal' : 'Administrador → Horarios del personal'}</button></p>` : ''}`;
   hrActualizarTotal();
   mhPintarPrevia();
+  vacPintarMias();
 }
+// ================= VACACIONES Y DÍAS LIBRES (SQL-60) =================
+const VAC_TIPOS = { vacaciones: ['🌴', 'Vacaciones', 'Vacances'], asuntos_propios: ['🗓️', 'Asuntos propios', 'Assumptes propis'], formacion: ['🎓', 'Formación', 'Formació'], otro: ['📝', 'Otro', 'Altre'] };
+const VAC_EST = { pendiente: ['⏳', 'Pendiente', 'Pendent', '#8A6100', '#FFF4D6'], aprobada: ['✅', 'Aprobada', 'Aprovada', '#17663A', '#E3F5E8'], modificada: ['✏️', 'Aprobada con cambios', 'Aprovada amb canvis', '#1B4E95', '#E6EEF9'], rechazada: ['✖️', 'No aprobada', 'No aprovada', '#9B1C1C', '#FBE4E4'], cancelada: ['↩️', 'Cancelada', 'Cancel·lada', '#6B7280', '#F1F3F6'] };
+function vacDiasLab(d, h){ let n = 0; const x = new Date(d + 'T12:00:00'), y = new Date(h + 'T12:00:00'); while(x <= y){ const w = x.getDay(); if(w >= 1 && w <= 5) n++; x.setDate(x.getDate() + 1); } return n; }
+function vacFecha(d){ return d ? new Date(d + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, { day: 'numeric', month: 'short', year: 'numeric' }) : ''; }
+function vacRango(v){ const d = v.desde_aprobado || v.desde, h = v.hasta_aprobado || v.hasta; return d === h ? vacFecha(d) : `${vacFecha(d)} → ${vacFecha(h)}`; }
+function vacChip(v){ const e = VAC_EST[v.estado] || VAC_EST.pendiente; return `<span class="vac-chip" style="color:${e[3]};background:${e[4]};">${e[0]} ${acL(e[1], e[2])}</span>`; }
+async function vacPintarMias(){
+  const host = document.getElementById('vac-mias'); if(!host) return;
+  const { data, error } = await sb.from('vacaciones_solicitudes').select('*').eq('persona_email', String(CURRENT_USER.email).toLowerCase()).order('desde', { ascending: false }).limit(40);
+  if(error){ host.innerHTML = `<h3>🌴 ${acL('Mis vacaciones y días libres', 'Les meves vacances i dies lliures')}</h3><p class="subtle" style="margin:0;">${/vacaciones_solicitudes|schema cache|does not exist/i.test(error.message || '') ? acL('Se activa con el SQL-60 en Supabase.', 'S\'activa amb l\'SQL-60 a Supabase.') : escAttr(error.message)}</p>`; return; }
+  const hoy = isoLocal(), lista = data || [];
+  const aprobadasAnio = lista.filter(v => (v.estado === 'aprobada' || v.estado === 'modificada') && String(v.desde_aprobado || v.desde).slice(0, 4) === hoy.slice(0, 4) && v.tipo === 'vacaciones').reduce((a, v) => a + vacDiasLab(v.desde_aprobado || v.desde, v.hasta_aprobado || v.hasta), 0);
+  host.innerHTML = `<div class="vac-cab"><h3 style="margin:0;">🌴 ${acL('Mis vacaciones y días libres', 'Les meves vacances i dies lliures')}</h3><span class="vac-tot">${aprobadasAnio} ${acL('días laborables de vacaciones aprobados en', 'dies laborables de vacances aprovats el')} ${hoy.slice(0, 4)}</span></div>
+    <div class="vac-form">
+      <label>${acL('Tipo', 'Tipus')}<select id="vac-tipo">${Object.entries(VAC_TIPOS).map(([k, t]) => `<option value="${k}">${t[0]} ${acL(t[1], t[2])}</option>`).join('')}</select></label>
+      <label>${acL('Desde', 'Des de')}<input type="date" id="vac-desde" min="${hoy}" onchange="const h=document.getElementById('vac-hasta'); if(!h.value || h.value < this.value) h.value=this.value; vacContar()"></label>
+      <label>${acL('Hasta', 'Fins a')}<input type="date" id="vac-hasta" min="${hoy}" onchange="vacContar()"></label>
+      <label class="vac-motivo">${acL('Comentario (opcional)', 'Comentari (opcional)')}<input type="text" id="vac-motivo" maxlength="300" placeholder="${acL('Ej.: viaje familiar', 'Ex.: viatge familiar')}"></label>
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="vacPedir()">📨 ${acL('Pedir', 'Demanar')}</button>
+    </div>
+    <div id="vac-cuenta" class="subtle" style="font-size:12px;margin:-4px 0 10px;"></div>
+    ${lista.length ? `<div class="vac-lista">${lista.map(v => { const t = VAC_TIPOS[v.tipo] || VAC_TIPOS.otro; return `<div class="vac-f">
+      <span class="vac-i">${t[0]}</span>
+      <span class="vac-x"><strong>${vacRango(v)}</strong> <small>· ${vacDiasLab(v.desde_aprobado || v.desde, v.hasta_aprobado || v.hasta)} ${acL('días lab.', 'dies lab.')} · ${acL(t[1], t[2])}</small>
+        ${v.estado === 'modificada' ? `<small class="vac-orig">${acL('Pediste', 'Vas demanar')}: ${vacFecha(v.desde)} → ${vacFecha(v.hasta)}</small>` : ''}
+        ${v.respuesta ? `<small class="vac-resp">💬 ${escAttr(v.respuesta)}</small>` : ''}</span>
+      ${vacChip(v)}
+      ${v.estado === 'pendiente' ? `<button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="vacCancelar('${v.id}')">${acL('Cancelar', 'Cancel·lar')}</button>` : ''}
+    </div>`; }).join('')}</div>` : `<p class="subtle" style="margin:0;">${acL('Aún no has pedido ningún día.', 'Encara no has demanat cap dia.')}</p>`}
+    <p class="subtle" style="font-size:11.5px;margin:10px 0 0;">${acL('RR. HH. / administración la revisa y te llega la respuesta en Comunicación.', 'RR. HH. / administració la revisa i et arriba la resposta a Comunicació.')}</p>`;
+}
+function vacContar(){ const d = (document.getElementById('vac-desde') || {}).value, h = (document.getElementById('vac-hasta') || {}).value, el = document.getElementById('vac-cuenta'); if(el) el.textContent = d && h && h >= d ? `= ${vacDiasLab(d, h)} ${acL('días laborables', 'dies laborables')}` : ''; }
+async function vacPedir(){
+  const d = document.getElementById('vac-desde').value, h = document.getElementById('vac-hasta').value, tipo = document.getElementById('vac-tipo').value, motivo = document.getElementById('vac-motivo').value.trim();
+  if(!d || !h || h < d){ alert(acL('Elige las fechas (desde y hasta).', 'Tria les dates (des de i fins a).')); return; }
+  const fila = { persona_email: String(CURRENT_USER.email).toLowerCase(), persona_nombre: CURRENT_USER_NOMBRE || CURRENT_USER.email, tipo, desde: d, hasta: h, motivo: motivo || null, estado: 'pendiente' };
+  const { error } = await sb.from('vacaciones_solicitudes').insert(fila);
+  if(error){ alert(error.message); return; }
+  alert('✅ ' + acL(`Solicitud enviada (${vacDiasLab(d, h)} días laborables). Te avisaremos cuando esté revisada.`, `Sol·licitud enviada (${vacDiasLab(d, h)} dies laborables). T'avisarem quan estigui revisada.`));
+  vacPintarMias();
+}
+async function vacCancelar(id){
+  if(!confirm(acL('¿Cancelar esta solicitud?', 'Cancel·lar aquesta sol·licitud?'))) return;
+  const { error } = await sb.from('vacaciones_solicitudes').update({ estado: 'cancelada' }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  vacPintarMias();
+}
+// --- RR. HH. / administración: validar, rechazar o ajustar ---
+async function gpRrhhVacaciones(c){
+  const { data, error } = await sb.from('vacaciones_solicitudes').select('*').neq('estado', 'cancelada').order('desde', { ascending: true }).limit(500);
+  if(error){ c.innerHTML = `<div class="empty-note">${/vacaciones_solicitudes|schema cache|does not exist/i.test(error.message || '') ? acL('Se activa con el SQL-60 en Supabase.', 'S\'activa amb l\'SQL-60 a Supabase.') : escAttr(error.message)}</div>`; return; }
+  const hoy = isoLocal(), lista = data || [];
+  const pend = lista.filter(v => v.estado === 'pendiente');
+  const prox = lista.filter(v => (v.estado === 'aprobada' || v.estado === 'modificada') && (v.hasta_aprobado || v.hasta) >= hoy);
+  const fila = v => { const t = VAC_TIPOS[v.tipo] || VAC_TIPOS.otro; return `<div class="vac-f vac-rev" id="vacr-${v.id}">
+    <span class="vac-i">${t[0]}</span>
+    <span class="vac-x"><strong>${escAttr(v.persona_nombre || v.persona_email)}</strong> <small>· ${acL(t[1], t[2])}</small><br>${vacRango(v)} <small>· ${vacDiasLab(v.desde_aprobado || v.desde, v.hasta_aprobado || v.hasta)} ${acL('días lab.', 'dies lab.')}</small>${v.motivo ? `<small class="vac-resp">«${escAttr(v.motivo)}»</small>` : ''}${v.respuesta ? `<small class="vac-resp">💬 ${escAttr(v.respuesta)}</small>` : ''}</span>
+    ${vacChip(v)}
+    ${v.estado === 'pendiente' ? `<div class="vac-acc">
+      <label>${acL('Desde', 'Des de')}<input type="date" id="vacd-${v.id}" value="${v.desde}"></label>
+      <label>${acL('Hasta', 'Fins a')}<input type="date" id="vach-${v.id}" value="${v.hasta}"></label>
+      <input type="text" id="vacm-${v.id}" maxlength="300" placeholder="${acL('Mensaje para la persona (opcional)', 'Missatge per a la persona (opcional)')}">
+      <button class="primary-btn" style="width:auto;margin:0;background:var(--good);" onclick="vacResolver('${v.id}','aprobada')">✅ ${acL('Aprobar', 'Aprovar')}</button>
+      <button class="link-btn" style="color:var(--alert);" onclick="vacResolver('${v.id}','rechazada')">✖️ ${acL('No aprobar', 'No aprovar')}</button>
+    </div>` : `<button class="link-btn" style="font-size:12px;" onclick="vacReabrir('${v.id}')">✏️ ${acL('Cambiar', 'Canviar')}</button>`}
+  </div>`; };
+  c.innerHTML = `<h3 style="margin:0 0 8px;">⏳ ${acL('Por revisar', 'Per revisar')} ${pend.length ? `<span class="chip gold">${pend.length}</span>` : ''}</h3>
+    <p class="subtle" style="font-size:12.5px;margin:0 0 8px;">${acL('Si cambias las fechas antes de aprobar, se aprueba con tus fechas y la persona ve lo que pidió y lo aprobado.', 'Si canvies les dates abans d\'aprovar, s\'aprova amb les teves dates i la persona veu el que va demanar i l\'aprovat.')}</p>
+    ${pend.length ? pend.map(fila).join('') : `<div class="empty-note">${acL('No hay solicitudes pendientes.', 'No hi ha sol·licituds pendents.')}</div>`}
+    <h3 style="margin:18px 0 8px;">📅 ${acL('Próximas ausencias aprobadas', 'Properes absències aprovades')}</h3>
+    ${prox.length ? prox.map(fila).join('') : `<div class="empty-note">${acL('Nadie tiene vacaciones aprobadas próximamente.', 'Ningú té vacances aprovades properament.')}</div>`}`;
+}
+async function vacResolver(id, decision){
+  const v = { desde: document.getElementById('vacd-' + id).value, hasta: document.getElementById('vach-' + id).value, msg: document.getElementById('vacm-' + id).value.trim() };
+  const { data: orig } = await sb.from('vacaciones_solicitudes').select('*').eq('id', id).maybeSingle();
+  if(!orig) return;
+  if(decision === 'aprobada' && (!v.desde || !v.hasta || v.hasta < v.desde)){ alert(acL('Revisa las fechas.', 'Revisa les dates.')); return; }
+  const cambiada = decision === 'aprobada' && (v.desde !== orig.desde || v.hasta !== orig.hasta);
+  const cambios = { estado: decision === 'aprobada' ? (cambiada ? 'modificada' : 'aprobada') : 'rechazada', respuesta: v.msg || null, revisado_por: CURRENT_USER.email, revisado_en: new Date().toISOString(),
+    desde_aprobado: decision === 'aprobada' ? v.desde : null, hasta_aprobado: decision === 'aprobada' ? v.hasta : null };
+  const { error } = await sb.from('vacaciones_solicitudes').update(cambios).eq('id', id);
+  if(error){ alert(error.message); return; }
+  const tit = cambios.estado === 'rechazada' ? acL('Tu solicitud de días no se ha aprobado', 'La teva sol·licitud de dies no s\'ha aprovat') : acL('Tus días están aprobados', 'Els teus dies estan aprovats');
+  const rango = decision === 'aprobada' ? `${vacFecha(v.desde)} → ${vacFecha(v.hasta)}` : `${vacFecha(orig.desde)} → ${vacFecha(orig.hasta)}`;
+  try { await sb.from('mensajes_internos').insert({ destinatario_email: orig.persona_email, remitente_email: CURRENT_USER.email, asunto: '🌴 ' + tit, mensaje: `${rango}${cambiada ? ' (' + acL('fechas ajustadas; pediste', 'dates ajustades; vas demanar') + ' ' + vacFecha(orig.desde) + ' → ' + vacFecha(orig.hasta) + ')' : ''}${v.msg ? '\n' + v.msg : ''}`, leido: false }); } catch(e){}
+  renderGestionPersonal('rrhh');
+}
+async function vacReabrir(id){
+  if(!confirm(acL('¿Volver a dejarla pendiente para cambiarla?', 'Tornar-la a deixar pendent per canviar-la?'))) return;
+  const { error } = await sb.from('vacaciones_solicitudes').update({ estado: 'pendiente', revisado_por: null, revisado_en: null }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderGestionPersonal('rrhh');
+}
+
 // Vista previa: horas de cita de los próximos días laborables según el horario guardado (y citas ya asignadas)
 async function mhPintarPrevia(){
   const host = document.getElementById('mh-previa'); if(!host) return;
@@ -16232,7 +16412,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-29 · v180 (menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-29 · v181 (docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -16406,6 +16586,68 @@ function renderConfigScreen(){
   `;
 }
 
+// ---------- Informes: TODAS las atenciones y actuaciones (cada vez cuenta), como se presenta a los organismos ----------
+window.__infReg = window.__infReg || { desde: new Date().getFullYear() + '-01-01', hasta: null, tec: '', datos: null };
+async function infRegistroCargar(){
+  const f = window.__infReg, desde = f.desde, hasta = f.hasta || isoLocal();
+  const [at, ac] = await Promise.all([
+    traerTodoPaginado((a, b) => sb.from('atenciones').select('id, usuario_id, nombre_referencia, creado_en, creado_por_email, derivacion_programas, prestaciones, tramites_bretxa').gte('creado_en', desde + 'T00:00:00').lte('creado_en', hasta + 'T23:59:59').order('creado_en', { ascending: true }).range(a, b)).catch(() => ({ data: [] })),
+    traerTodoPaginado((a, b) => sb.from('actuaciones').select('id, usuario_id, fecha, tecnico_email, categoria, descripcion, proyecto_id').gte('fecha', desde).lte('fecha', hasta).order('fecha', { ascending: true }).range(a, b)).catch(() => ({ data: [] }))
+  ]);
+  const ev = [];
+  (at.data || []).forEach(a => ev.push({ tipo: 'atencion', fecha: String(a.creado_en).slice(0, 10), uid: a.usuario_id, nombre: a.nombre_referencia || '', tec: a.creado_por_email || '', cat: 'Atención', det: [...(a.prestaciones || []), ...(a.tramites_bretxa || []), ...(a.derivacion_programas || [])].join(', ') }));
+  (ac.data || []).forEach(a => ev.push({ tipo: 'actuacion', fecha: String(a.fecha).slice(0, 10), uid: a.usuario_id, nombre: '', tec: a.tecnico_email || '', cat: a.categoria || 'Actuación', det: a.descripcion || '' }));
+  const ids = [...new Set(ev.map(e => e.uid).filter(Boolean))], nom = {};
+  for(let i = 0; i < ids.length; i += 300){ try { const { data } = await sb.from('perfiles').select('id, nombre_completo').in('id', ids.slice(i, i + 300)); (data || []).forEach(p => { nom[p.id] = p.nombre_completo; }); } catch(e){} }
+  ev.forEach(e => { if(e.uid && nom[e.uid]) e.nombre = nom[e.uid]; });
+  ev.sort((a, b) => a.fecha.localeCompare(b.fecha));
+  f.datos = ev;
+  return ev;
+}
+async function infRegistroPintar(recargar){
+  const host = document.getElementById('inf-registro'); if(!host) return;
+  const f = window.__infReg;
+  if(!f.datos || recargar){ host.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`; await infRegistroCargar(); }
+  const todos = f.datos || [], ev = f.tec ? todos.filter(e => e.tec === f.tec) : todos;
+  const nAt = ev.filter(e => e.tipo === 'atencion').length, nAc = ev.length - nAt;
+  const personas = new Set(ev.map(e => e.uid || ('n:' + normTxt(e.nombre))).filter(k => k !== 'n:')).size;
+  const porMes = {}; ev.forEach(e => { const m = e.fecha.slice(0, 7); const x = porMes[m] = porMes[m] || { at: 0, ac: 0 }; x[e.tipo === 'atencion' ? 'at' : 'ac']++; });
+  const porTec = {}; ev.forEach(e => { const x = porTec[e.tec] = porTec[e.tec] || { at: 0, ac: 0 }; x[e.tipo === 'atencion' ? 'at' : 'ac']++; });
+  const porCat = {}; ev.filter(e => e.tipo === 'actuacion').forEach(e => { porCat[e.cat] = (porCat[e.cat] || 0) + 1; });
+  const tecs = [...new Set(todos.map(e => e.tec).filter(Boolean))].sort();
+  const mesTxt = m => { const [y, mm] = m.split('-'); return new Date(+y, +mm - 1, 1).toLocaleDateString(TI[LANG_I].localeFecha, { month: 'long', year: 'numeric' }); };
+  const maxMes = Math.max(1, ...Object.values(porMes).map(x => x.at + x.ac));
+  host.innerHTML = `
+    <p class="subtle" style="margin:0 0 10px;font-size:12.5px;">${acL('Cada atención y cada actuación cuenta, aunque sea la misma persona: así se presenta a los organismos. Las personas distintas se cuentan aparte.', 'Cada atenció i cada actuació compta, encara que sigui la mateixa persona: així es presenta als organismes. Les persones diferents es compten a part.')}</p>
+    <div class="inf-reg-f">
+      <label>${acL('Desde', 'Des de')} <input type="date" value="${f.desde}" onchange="window.__infReg.desde=this.value;infRegistroPintar(true)"></label>
+      <label>${acL('Hasta', 'Fins a')} <input type="date" value="${f.hasta || isoLocal()}" onchange="window.__infReg.hasta=this.value;infRegistroPintar(true)"></label>
+      <label>${acL('Técnico/a', 'Tècnic/a')} <select onchange="window.__infReg.tec=this.value;infRegistroPintar()"><option value="">${acL('Todo el equipo', 'Tot l\'equip')}</option>${tecs.map(e => `<option value="${escAttr(e)}"${f.tec === e ? ' selected' : ''}>${escAttr(nombreTecnico(e) || e)}</option>`).join('')}</select></label>
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="infRegistroExcel()">⬇️ Excel</button>
+    </div>
+    <div class="inf-reg-k">
+      <div><strong class="stat-num">${nAt + nAc}</strong><span>${acL('intervenciones en total', 'intervencions en total')}</span></div>
+      <div><strong class="stat-num">${nAt}</strong><span>${acL('atenciones', 'atencions')}</span></div>
+      <div><strong class="stat-num">${nAc}</strong><span>${acL('actuaciones', 'actuacions')}</span></div>
+      <div><strong class="stat-num">${personas}</strong><span>${acL('personas distintas', 'persones diferents')}</span></div>
+    </div>
+    <details class="plegable" open><summary><span>📅 ${acL('Por mes', 'Per mes')}</span><span class="plegable-n">${Object.keys(porMes).length}</span></summary><div class="plegable-c">
+      ${Object.keys(porMes).sort().reverse().map(m => { const x = porMes[m]; return `<div class="inf-reg-mes"><span>${escAttr(contaMayus(mesTxt(m)))}</span><span class="inf-reg-bar"><i class="a" style="width:${x.at / maxMes * 100}%"></i><i class="b" style="width:${x.ac / maxMes * 100}%"></i></span><span><b>${x.at + x.ac}</b> <small>(${x.at} ${acL('aten.', 'aten.')} · ${x.ac} ${acL('actu.', 'actu.')})</small></span></div>`; }).join('') || `<div class="empty-note">${acL('Sin registros en estas fechas.', 'Sense registres en aquestes dates.')}</div>`}
+    </div></details>
+    <details class="plegable"><summary><span>👥 ${acL('Por técnico/a', 'Per tècnic/a')}</span><span class="plegable-n">${Object.keys(porTec).length}</span></summary><div class="plegable-c">
+      ${Object.entries(porTec).sort((a, b) => (b[1].at + b[1].ac) - (a[1].at + a[1].ac)).map(([e, x]) => `<div class="panel-stat-row"><span>${escAttr(nombreTecnico(e) || e || '—')}</span><span><b>${x.at + x.ac}</b> <small class="subtle">(${x.at} · ${x.ac})</small></span></div>`).join('')}
+    </div></details>
+    <details class="plegable"><summary><span>🏷️ ${acL('Actuaciones por tipo / proyecto', 'Actuacions per tipus / projecte')}</span><span class="plegable-n">${Object.keys(porCat).length}</span></summary><div class="plegable-c">
+      ${Object.entries(porCat).sort((a, b) => b[1] - a[1]).map(([c, n]) => `<div class="panel-stat-row"><span>${escAttr(c)}</span><span><b>${n}</b></span></div>`).join('')}
+    </div></details>`;
+}
+async function infRegistroExcel(){
+  const f = window.__infReg, ev = (f.datos || []).filter(e => !f.tec || e.tec === f.tec);
+  const cab = [acL('Fecha', 'Data'), acL('Tipo', 'Tipus'), acL('Persona', 'Persona'), acL('Técnico/a', 'Tècnic/a'), acL('Categoría / proyecto', 'Categoria / projecte'), acL('Detalle', 'Detall')];
+  const filas = ev.map(e => [new Date(e.fecha + 'T00:00:00').toLocaleDateString('es-ES'), e.tipo === 'atencion' ? acL('Atención', 'Atenció') : acL('Actuación', 'Actuació'), e.nombre || '', nombreTecnico(e.tec) || e.tec || '', e.cat || '', e.det || '']);
+  await descargarXLSX(cab, filas, `Atenciones-y-actuaciones_${f.desde}_${f.hasta || isoLocal()}.xlsx`, acL('Atenciones y actuaciones', 'Atencions i actuacions'));
+}
+
 async function renderInformesScreen(){
   const cont = document.getElementById('informes-content');
   const t = TI[LANG_I];
@@ -16528,8 +16770,11 @@ async function renderInformesScreen(){
     .map(k => `<div class="panel-stat-row"><span>${textoEstadoCursoInf[k]}</span><span><strong>${cursosPorEstadoCount[k]}</strong></span></div>`).join('')
     || `<div class="empty-note">${t.sinDatos}</div>`;
 
+  setTimeout(() => infRegistroPintar(), 0);
   cont.innerHTML = `
     <div id="inf-alcance"></div>
+    <div class="section-label">📋 ${acL('Atenciones y actuaciones (todas las veces)', 'Atencions i actuacions (totes les vegades)')}</div>
+    <div class="panel-card inf-reg" id="inf-registro" style="margin-bottom:20px;"><div class="placeholder">${t.cargando}</div></div>
     <div class="section-label">📁 ${LANG_I==='ca'?'Projectes':'Proyectos'}</div>
     <div class="panel-card" style="margin-bottom:20px;">
       <div class="panel-stat-row"><span>${LANG_I==='ca'?'Projectes actius':'Proyectos activos'}</span><span><strong>${proyectosActivos}</strong> / ${proyectosLista.length}</span></div>
@@ -18652,7 +18897,7 @@ async function renderAdministrador(){
   window.__alertasTipos = REPARTO_OK ? ((await sb.from('alertas_tipos').select('*')).data || []) : [];
   const staffHtml = window.__staffLista.map(s => `
     <div class="panel-stat-row" style="align-items:flex-start;gap:8px;flex-wrap:wrap;">
-      <span style="min-width:0;">${s.nombre ? `<strong>${escAttr(s.nombre)}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(s.email)}</span>` : escAttr(s.email)}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}${s.es_rrhh ? ' <span class="chip gold">RR. HH.</span>' : ''}${s.gestiona_alertas ? ` <span class="chip good" style="font-size:10.5px;">🔔 ${acL('reparte alertas', 'reparteix alertes')}</span>` : ''}${s.ambito === 'rrhh' ? ` <span class="chip good" style="font-size:10.5px;">💼 ${acL('Solo RR. HH.', 'Només RR. HH.')}</span>` : ''}${s.ambito === 'jovenes' ? ` <span class="chip good" style="font-size:10.5px;">🌱 ${acL('Jóvenes en acción', 'Joves en acció')}</span>` : ''}${s.clave_cambiada === false ? ` <span class="chip" style="font-size:10.5px;">🔑 ${acL('contraseña inicial', 'contrasenya inicial')}</span>` : ''}</span>
+      <span style="min-width:0;">${s.nombre ? `<strong>${escAttr(s.nombre)}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(s.email)}</span>` : escAttr(s.email)}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}${s.es_rrhh ? ' <span class="chip gold">RR. HH.</span>' : ''}${s.gestiona_alertas ? ` <span class="chip good" style="font-size:10.5px;">🔔 ${acL('reparte alertas', 'reparteix alertes')}</span>` : ''}${s.ambito === 'rrhh' ? ` <span class="chip good" style="font-size:10.5px;">💼 ${acL('Solo RR. HH.', 'Només RR. HH.')}</span>` : ''}${s.ambito === 'jovenes' ? ` <span class="chip good" style="font-size:10.5px;">🌱 ${acL('Jóvenes en acción', 'Joves en acció')}</span>` : ''}${s.ambito === 'docente' ? ` <span class="chip" style="font-size:10.5px;background:#EFEAFE;color:#5B3FA0;">🎓 ${acL('Docente externo', 'Docent extern')}</span>` : ''}${s.clave_cambiada === false ? ` <span class="chip" style="font-size:10.5px;">🔑 ${acL('contraseña inicial', 'contrasenya inicial')}</span>` : ''}</span>
       <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
         <span class="chip ${s.activo === false ? 'off' : 'good'}">${s.activo === false ? t.inactivoLbl : t.activoLbl}</span>
         <button class="link-btn" style="font-size:12px;" onclick="toggleActivoTecnico('${s.email}', ${s.activo === false})">${s.activo === false ? t.reactivar : t.desactivar}</button>
@@ -18662,7 +18907,7 @@ async function renderAdministrador(){
         ${('es_soporte' in s && s.activo !== false) ? `<button class="link-btn" style="font-size:12px;${s.es_soporte ? 'color:var(--good);' : 'color:#888;'}" title="${acL('Recibe las incidencias de soporte técnico', 'Rep les incidències de suport tècnic')}" onclick="toggleSoporte('${s.email}', ${!s.es_soporte})">🛠️ ${s.es_soporte ? acL('Soporte técnico ✓', 'Suport tècnic ✓') : acL('Soporte técnico', 'Suport tècnic')}</button>` : ''}
         <button class="link-btn" style="font-size:12px;" onclick="editarNombreTecnico('${s.email}')">✏️ ${acL('Nombre', 'Nom')}</button>
         ${('acepta_citas' in s && s.activo !== false) ? `<button class="link-btn" style="font-size:12px;${atiendeCitas(s) ? 'color:var(--good);' : 'color:#888;'}" title="${acL('Si sale en la lista de técnicos al pedir cita en Logos Acompanya', 'Si surt a la llista de tècnics en demanar cita a Logos Acompanya')}" onclick="toggleAtiendeCitas('${s.email}')">📅 ${atiendeCitas(s) ? acL('Atiende citas ✓', 'Atén cites ✓') : acL('No atiende citas', 'No atén cites')}</button>` : ''}
-        ${(JOVENES_OK && !s.es_admin) ? `<select style="font-size:12px;max-width:150px;" title="${acL('Qué parte de la plataforma ve', 'Quina part de la plataforma veu')}" onchange="cambiarAmbitoTecnico('${s.email}', this.value)"><option value="general"${s.ambito !== 'jovenes' && s.ambito !== 'rrhh' && !s.es_rrhh ? ' selected' : ''}>${acL('Equipo general', 'Equip general')}</option><option value="tecnico_rrhh"${s.ambito !== 'jovenes' && s.ambito !== 'rrhh' && s.es_rrhh ? ' selected' : ''}>🧑‍💼 ${acL('Técnico/a + RR. HH.', 'Tècnic/a + RR. HH.')}</option><option value="jovenes"${s.ambito === 'jovenes' ? ' selected' : ''}>🌱 ${acL('Solo Jóvenes en acción', 'Només Joves en acció')}</option><option value="rrhh"${s.ambito === 'rrhh' ? ' selected' : ''}>💼 ${acL('Solo Recursos Humanos', 'Només Recursos Humans')}</option></select>` : ''}
+        ${(JOVENES_OK && !s.es_admin) ? `<select style="font-size:12px;max-width:150px;" title="${acL('Qué parte de la plataforma ve', 'Quina part de la plataforma veu')}" onchange="cambiarAmbitoTecnico('${s.email}', this.value)"><option value="general"${s.ambito !== 'jovenes' && s.ambito !== 'rrhh' && !s.es_rrhh ? ' selected' : ''}>${acL('Equipo general', 'Equip general')}</option><option value="tecnico_rrhh"${s.ambito !== 'jovenes' && s.ambito !== 'rrhh' && s.es_rrhh ? ' selected' : ''}>🧑‍💼 ${acL('Técnico/a + RR. HH.', 'Tècnic/a + RR. HH.')}</option><option value="jovenes"${s.ambito === 'jovenes' ? ' selected' : ''}>🌱 ${acL('Solo Jóvenes en acción', 'Només Joves en acció')}</option><option value="rrhh"${s.ambito === 'rrhh' ? ' selected' : ''}>💼 ${acL('Solo Recursos Humanos', 'Només Recursos Humans')}</option><option value="docente"${s.ambito === 'docente' ? ' selected' : ''}>🎓 ${acL('Docente externo (solo Aula Virtual)', 'Docent extern (només Aula Virtual)')}</option></select>` : ''}
         <button class="link-btn" style="font-size:12px;" title="${acL('Enviar enlace para elegir contraseña', 'Enviar enllaç per triar contrasenya')}" onclick="enviarEnlaceClave('${s.email}')">🔑 ${acL('Enlace', 'Enllaç')}</button>
         <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="quitarTecnico('${s.email}')">${acL('Quitar', 'Treure')}</button>
       </span>
@@ -18827,7 +19072,7 @@ async function renderAdministrador(){
         </div>
         ${JOVENES_OK ? `<div class="field">
           <label>${acL('¿Qué parte de la plataforma verá?', 'Quina part de la plataforma veurà?')}</label>
-          <select id="admin-nuevo-ambito"><option value="general">${acL('Equipo general (todo)', 'Equip general (tot)')}</option><option value="tecnico_rrhh">🧑‍💼 ${acL('Técnico/a + Recursos Humanos', 'Tècnic/a + Recursos Humans')}</option><option value="jovenes">🌱 ${acL('Solo Jóvenes en acción (panel propio)', 'Només Joves en acció (panell propi)')}</option><option value="rrhh">💼 ${acL('Solo Recursos Humanos (nóminas, avisos y archivos)', 'Només Recursos Humans (nòmines, avisos i arxius)')}</option></select>
+          <select id="admin-nuevo-ambito"><option value="general">${acL('Equipo general (todo)', 'Equip general (tot)')}</option><option value="tecnico_rrhh">🧑‍💼 ${acL('Técnico/a + Recursos Humanos', 'Tècnic/a + Recursos Humans')}</option><option value="jovenes">🌱 ${acL('Solo Jóvenes en acción (panel propio)', 'Només Joves en acció (panell propi)')}</option><option value="rrhh">💼 ${acL('Solo Recursos Humanos (nóminas, avisos y archivos)', 'Només Recursos Humans (nòmines, avisos i arxius)')}</option><option value="docente">🎓 ${acL('Docente externo (solo Aula Virtual: sus cursos)', 'Docent extern (només Aula Virtual: els seus cursos)')}</option></select>
         </div>` : ''}
         <button class="link-btn" onclick="agregarTecnico()">${t.anadirPlataforma}</button>
       </div>
@@ -19486,6 +19731,7 @@ async function agregarTecnico(){
   const ambito = (document.getElementById('admin-nuevo-ambito') || {}).value;
   if(JOVENES_OK && ambito === 'jovenes') fila.ambito = 'jovenes';
   if(JOVENES_OK && ambito === 'rrhh'){ fila.ambito = 'rrhh'; fila.es_rrhh = true; }
+  if(ambito === 'docente'){ fila.ambito = 'docente'; fila.acepta_citas = false; }
   if(ambito === 'tecnico_rrhh') fila.es_rrhh = true;
   const { error } = await sb.from('staff').insert(fila);
   if(error){ alert(error.message); return; }
@@ -19505,7 +19751,9 @@ async function cambiarAmbitoTecnico(email, ambito){
   if(ambito === 'jovenes' && !confirm(acL(`¿Dejar a ${nombre} solo con Jóvenes en acción?\n\nVerá únicamente su panel, la gestión de Jóvenes en acción y su fichaje. No verá personas usuarias, expedientes ni contabilidad, y las alertas de la convocatoria le llegarán a su panel.`, `Deixar ${nombre} només amb Joves en acció?\n\nVeurà únicament el seu panell, la gestió de Joves en acció i el seu fitxatge. No veurà persones usuàries, expedients ni comptabilitat, i les alertes de la convocatòria li arribaran al seu panell.`))){ renderAdministrador(); return; }
   if(ambito === 'rrhh' && !confirm(acL(`¿Dejar a ${nombre} solo con Recursos Humanos?\n\nPodrá subir nóminas y archivos, enviar comunicados y gestionar avisos y recordatorios. No verá personas usuarias, expedientes ni contabilidad.`, `Deixar ${nombre} només amb Recursos Humans?\n\nPodrà pujar nòmines i arxius, enviar comunicats i gestionar avisos i recordatoris. No veurà persones usuàries, expedients ni comptabilitat.`))){ renderAdministrador(); return; }
   if(ambito === 'tecnico_rrhh' && !confirm(acL(`¿${nombre} será técnico/a y también RR. HH.?\n\nAtenderá personas como el resto del equipo (fichas, citas, mesa, Aula Virtual…) y además tendrá nóminas, comunicados, personal e incidencias de RR. HH.`, `${nombre} serà tècnic/a i també RR. HH.?\n\nAtendrà persones com la resta de l'equip (fitxes, cites, taula, Aula Virtual…) i a més tindrà nòmines, comunicats, personal i incidències de RR. HH.`))){ renderAdministrador(); return; }
+  if(ambito === 'docente' && !confirm(acL(`¿${nombre} será docente externo?\n\nSolo verá el Aula Virtual con los cursos que imparte (y a su alumnado). No verá fichas, expedientes, citas, contabilidad ni nada más. Para que vea un curso, ponle como docente del curso.`, `${nombre} serà docent extern?\n\nNomés veurà l'Aula Virtual amb els cursos que imparteix (i el seu alumnat). No veurà fitxes, expedients, cites, comptabilitat ni res més. Perquè vegi un curs, posa'l com a docent del curs.`))){ renderAdministrador(); return; }
   const cambios = { ambito: ambito === 'tecnico_rrhh' ? 'general' : ambito };
+  if(ambito === 'docente'){ cambios.acepta_citas = false; cambios.orden_alertas = null; cambios.es_rrhh = false; }
   if(ambito === 'rrhh' || ambito === 'tecnico_rrhh') cambios.es_rrhh = true;
   if(ambito === 'jovenes' || ambito === 'rrhh') cambios.orden_alertas = null;     // sale del turno general
   const { error } = await staffCambiar(email, cambios);
