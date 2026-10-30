@@ -1425,6 +1425,31 @@ body.vc-on{padding-top:44px;}
 .gp-ir{display:flex;flex-direction:column;align-items:flex-start;gap:3px;background:#fff;border:1px solid #D5E1F0;border-radius:16px;padding:14px;font:inherit;text-align:left;cursor:pointer;color:#16233F;transition:transform .15s, box-shadow .15s;}
 .gp-ir:hover{transform:translateY(-2px);box-shadow:0 10px 22px -14px rgba(22,63,122,.6);}
 .gp-ir span{font-size:24px;} .gp-ir strong{font-size:15px;} .gp-ir small{font-size:12.5px;color:#5F6672;}
+
+/* ===== Panel técnico ===== */
+.tec-hero.tec-verde{background:linear-gradient(135deg,#14532D,#1F7A47 60%,#2E8B57);}
+.tec-hero.tec-ambar{background:linear-gradient(135deg,#7A4A00,#B7791F 60%,#D69E2E);}
+.tec-hero.tec-rojo{background:linear-gradient(135deg,#7F1D1D,#B91C1C 60%,#E5484D);}
+.tec-hero .pj-kpi{cursor:default;}
+.tec-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:18px;align-items:start;}
+@media (max-width:1000px){ .tec-cols{grid-template-columns:1fr;} }
+.tec-grp{background:#fff;border:1px solid #D5E1F0;border-radius:14px;margin:0 0 10px;overflow:hidden;}
+.tec-grp > summary{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;list-style:none;} .tec-grp > summary::-webkit-details-marker{display:none;}
+.tec-grp-n{font-weight:800;font-size:12.5px;border-radius:999px;padding:2px 10px;} .tec-grp-n.verde{background:#E3F3E8;color:#1D5E35;} .tec-grp-n.ambar{background:#FFF4D6;color:#7A5300;} .tec-grp-n.rojo{background:#FDE8E8;color:#9B1C1C;}
+.tec-ck{display:grid;grid-template-columns:24px minmax(0,1fr);gap:2px 8px;padding:8px 14px;border-top:1px solid #EEF2F7;font-size:13.5px;}
+.tec-ck-e{grid-row:span 2;} .tec-ck-n{font-weight:700;color:#16233F;} .tec-ck-d{color:#5F6672;font-size:12.5px;}
+.tec-ck.tec-fallo{background:#FFF5F5;} .tec-ck.tec-aviso{background:#FFFBEB;}
+.tec-err{background:#fff;border:1px solid #D5E1F0;border-left:5px solid #E5484D;border-radius:14px;padding:12px 14px;margin:0 0 10px;}
+.tec-err-revisando{border-left-color:#D69E2E;} .tec-err-resuelto{border-left-color:#2E8B57;opacity:.85;} .tec-err-ignorado{border-left-color:#9CA3AF;opacity:.75;}
+.tec-err-top{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.tec-chip{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 9px;background:#F3F4F6;color:#3B4352;} .tec-chip.app-acompanya{background:#FFF4D6;color:#7A5300;} .tec-chip.app-intranet{background:#E8F1FC;color:#1F4E8C;}
+.tec-veces{margin-left:auto;font-size:12.5px;color:#5F6672;} .tec-veces b{color:#B91C1C;font-size:15px;}
+.tec-err h4{margin:8px 0 4px;font-size:15px;word-break:break-word;}
+.tec-err-m{margin:0;font-size:12.5px;color:#5F6672;} .tec-err-nota{margin:6px 0 0;font-size:13px;background:#F3F7FC;border-radius:8px;padding:6px 10px;}
+.tec-det summary{cursor:pointer;font-size:12.5px;color:#1F66C1;margin-top:6px;} .tec-det pre{white-space:pre-wrap;word-break:break-all;font-size:11.5px;background:#0F172A;color:#E2E8F0;border-radius:8px;padding:10px;max-height:220px;overflow:auto;}
+.tec-acc{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;} .tec-acc .link-btn{margin:0;font-size:13px;}
+.tec-toast{position:fixed;right:18px;bottom:96px;z-index:10060;display:flex;gap:10px;align-items:center;background:#7F1D1D;color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 14px 34px rgba(0,0,0,.3);max-width:min(460px,calc(100vw - 36px));font-size:14px;}
+.tec-toast button{background:#fff;color:#7F1D1D;border:0;border-radius:999px;padding:6px 12px;font-weight:800;cursor:pointer;white-space:nowrap;} .tec-toast button:last-child{background:transparent;color:#fff;padding:4px 6px;}
 </style>
 </head>
 <body>
@@ -1522,6 +1547,7 @@ body.vc-on{padding-top:44px;}
         <button data-target="informes" onclick="showScreen('informes');renderInformesScreen()">📈 Informes y datos</button>
         <button data-target="subvenciones" onclick="showScreen('subvenciones');renderSubvencionesScreen()">💶 Subvenciones</button>
         <button data-target="noticias" onclick="showScreen('noticias');renderNoticiasScreen()">📰 Portales del día</button>
+        <button data-target="tecnico" id="nav-tec-btn" style="display:none;" onclick="showScreen('tecnico');renderPanelTecnico()">🩺 Panel técnico <span class="cmp-n" id="tec-nav-n" style="display:none;margin-left:6px;background:#E5484D;color:#fff;border-radius:999px;font-size:11px;padding:0 6px;"></span></button>
         <button data-target="qrapp" onclick="showScreen('qrapp');renderQrAppScreen()">📲 QR de Logos Acompanya</button>
         <button data-target="config" onclick="showScreen('config');renderConfigScreen()">⚙️ Configuración</button>
       </details>
@@ -1653,6 +1679,13 @@ body.vc-on{padding-top:44px;}
     <div class="main-content">
       <div class="topbar"><span class="brand">Incidencias</span></div>
       <div class="content" id="incidencias-content"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-tecnico">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Panel técnico</span></div>
+      <div class="content" id="tecnico-content"></div>
     </div>
   </div>
 
@@ -1834,6 +1867,34 @@ if(document.readyState === 'loading') document.addEventListener('DOMContentLoade
 <script>
 const SUPABASE_URL = 'https://foxtlpyfedwsvttzorql.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Ght82ml0pvg0_nQvunlXVA_u0WjRscq';
+// ===== Avisos técnicos automáticos: cada fallo se apunta solo en el Panel técnico (SQL-68) =====
+(function(){
+  const APP = 'intranet', enviados = {}; let n = 0;
+  const firma = t => { let h = 0; for(let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return 'f' + (h >>> 0).toString(36); };
+  const version = () => { try { return (String(APP_VERSION_INTRANET).match(/v\d+/) || [''])[0]; } catch(e){ return ''; } };
+  window.reportarFallo = function(tipo, mensaje, detalle){
+    try {
+      mensaje = String(mensaje || '').replace(/\s+/g, ' ').trim().slice(0, 600); if(!mensaje) return;
+      if(/ResizeObserver loop|^Script error\.?$|chrome-extension|moz-extension|safari-extension|Non-Error promise rejection/i.test(mensaje + ' ' + (detalle || ''))) return;
+      const f = firma(APP + tipo + mensaje.replace(/\d+/g, '#'));
+      if(enviados[f] || n >= 25 || typeof sb === 'undefined' || !sb.rpc) return; enviados[f] = 1; n++;
+      const act = document.querySelector('.screen.active');
+      sb.rpc('reportar_error', { p: { app: APP, tipo, mensaje, firma: f, detalle: String(detalle || '').slice(0, 4000), pantalla: act ? act.id.replace('screen-', '') : '', version: version(), navegador: navigator.userAgent.slice(0, 200) } }).then(() => {}, () => {});
+    } catch(e){}
+  };
+  window.addEventListener('error', e => { if(e && e.message) reportarFallo('js', e.message, (e.filename || '').split('/').pop() + ':' + (e.lineno || '') + ':' + (e.colno || '') + '\n' + ((e.error && e.error.stack) || '')); });
+  window.addEventListener('unhandledrejection', e => { const r = e && e.reason; reportarFallo('js', 'Promesa: ' + ((r && r.message) || String(r)), (r && r.stack) || ''); });
+  // Fallos de red o del servidor al hablar con la base de datos (no los «no tienes permiso» ni los datos que faltan, que son normales)
+  if(window.fetch && !window.__fetchVigilado){ window.__fetchVigilado = true;
+    const f0 = window.fetch.bind(window);
+    window.fetch = function(u, o){
+      const url = String((u && u.url) || u || '');
+      const nuestro = url.includes('.supabase.co') && !url.includes('reportar_error') && String((o && o.method) || 'GET').toUpperCase() !== 'OPTIONS';
+      return f0(u, o).then(r => { if(nuestro && r.status >= 500) reportarFallo('datos', 'El servidor ha respondido con error ' + r.status, url.replace(/^https:\/\/[^/]+/, '').split('?')[0]); return r; },
+        err => { if(nuestro && navigator.onLine && !/abort/i.test(String(err && err.name))) reportarFallo('red', 'No se puede conectar con la base de datos', url.replace(/^https:\/\/[^/]+/, '').split('?')[0] + ' · ' + (err && err.message)); throw err; });
+    };
+  }
+})();
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ===== «👁️ Ver como» (solo administración): ver la intranet tal como la ve otra persona, SIN poder guardar nada =====
 let VER_COMO = null;
@@ -2617,7 +2678,9 @@ function aplicarMenuPorRol(){
   const gA = document.getElementById('nav-g-admin'), gR = document.getElementById('nav-g-rrhh');
   if(gA) gA.classList.toggle('rol-oculto', !IS_ADMIN);
   if(gR) gR.classList.toggle('rol-oculto', !(IS_ADMIN || IS_RRHH || IS_RRHH_SOLO));
+  const nt = document.getElementById('nav-tec-btn'); if(nt) nt.style.display = tecPuede() ? '' : 'none';
 }
+function tecPuede(){ return !!(CURRENT_USER && IS_STAFF && (IS_ADMIN || (window.__staffYo || {}).es_soporte) && !(typeof VER_COMO !== 'undefined' && VER_COMO)); }
 async function vacBadge(){
   const el = document.getElementById('vac-nav-n'); if(!el || !(IS_ADMIN || IS_RRHH || IS_RRHH_SOLO)) return;
   try { const { count, error } = await sb.from('vacaciones_solicitudes').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente'); const n = error ? 0 : (count || 0); el.textContent = n; el.style.display = n ? '' : 'none'; } catch(e){}
@@ -2895,7 +2958,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v191'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v192'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -3090,6 +3153,7 @@ window.addEventListener('popstate', function(e){
 });
 
 function showScreen(name){
+  if(name === 'tecnico' && !tecPuede()) name = 'panel';
   if(IS_DOCENTE && !PANTALLAS_DOCENTE.includes(name)) name = 'aulavirtual';
   if(IS_JOVENES && !PANTALLAS_JOVENES.includes(name)) name = 'panel';
   if(IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(name)) name = 'panel';
@@ -3428,6 +3492,7 @@ async function entrarIntranet(){
     window.__usuarioYaEntro = CURRENT_USER.id;
     toggleSidebarVisible(true);
     iniciarRefrescoBadge(); try { vacBadge(); } catch(e){}
+    try { tecAlIniciar(); } catch(e){}
     irAPantallaInicial();
     avisarClave(); guiaPrimeraVezIntranet();
   } finally { window.__entrando = false; }
@@ -16819,7 +16884,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-30 · v191 («Ver como» ya no pide fichar: se entra directamente a mirar; Gestión de personal con cabecera y menú lateral; Administración con buscador, cabecera y menú lateral; Equipo en tarjetas con buscador, filtros y «Gestionar»; Canal: vídeos (YouTube, Vimeo o MP4) en noticias, eventos y publicidad; Canal: publicidad de entidades con contrato (imagen propia o diseño con colores), con vistas y clics; 📣 Canal: noticias, eventos con agenda y calendario, anuncios y convocatorias que salen en la web y en Logos Acompanya; el histórico cuenta: cada fila de los Excel antiguos es una vez atendida, en la ficha, en Informes › Registro («Desde el inicio») y en las cifras; Inicio: «Veces que hemos atendido» junto a las personas atendidas; veces que ha sido atendida cada persona: en su ficha y en Informes › Registro, con texto para la memoria y Excel por persona; «Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-30 · v192 (🩺 Panel técnico: comprobaciones de salud, fallos apuntados solos y aviso a Soporte técnico; «Ver como» ya no pide fichar: se entra directamente a mirar; Gestión de personal con cabecera y menú lateral; Administración con buscador, cabecera y menú lateral; Equipo en tarjetas con buscador, filtros y «Gestionar»; Canal: vídeos (YouTube, Vimeo o MP4) en noticias, eventos y publicidad; Canal: publicidad de entidades con contrato (imagen propia o diseño con colores), con vistas y clics; 📣 Canal: noticias, eventos con agenda y calendario, anuncios y convocatorias que salen en la web y en Logos Acompanya; el histórico cuenta: cada fila de los Excel antiguos es una vez atendida, en la ficha, en Informes › Registro («Desde el inicio») y en las cifras; Inicio: «Veces que hemos atendido» junto a las personas atendidas; veces que ha sido atendida cada persona: en su ficha y en Informes › Registro, con texto para la memoria y Excel por persona; «Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -17091,6 +17156,172 @@ async function infRegistroPintar(recargar){
     <details class="plegable"><summary><span>🏷️ ${acL('Actuaciones por tipo / proyecto', 'Actuacions per tipus / projecte')}</span><span class="plegable-n">${Object.keys(porCat).length}</span></summary><div class="plegable-c">
       ${Object.entries(porCat).sort((a, b) => b[1] - a[1]).map(([c, n]) => `<div class="panel-stat-row"><span>${escAttr(c)}</span><span><b>${n}</b></span></div>`).join('')}
     </div></details>`;
+}
+
+
+// ================= 🩺 PANEL TÉCNICO: salud del sistema y fallos apuntados solos (Soporte técnico y administración) =================
+window.__tec = window.__tec || { filtro: 'abierto', res: null, cuando: null };
+const TEC_SQL = [
+  ['53', 'Mesa compartida', () => sb.from('fichajes_sala').select('personas').limit(1)],
+  ['55', 'Encuesta y límites anti-abuso', () => sb.rpc('encuesta_puedo_responder')],
+  ['56', 'Quién actualiza las atenciones', () => sb.from('atenciones').select('actualizado_por_email').limit(1)],
+  ['57', 'Mensajes de proyectos', () => sb.rpc('participa_en_curso', { p_curso: 'proy:0' })],
+  ['58', 'Verificación en dos pasos (servidor)', () => sb.rpc('mfa_cumple')],
+  ['59', 'Docentes externos', () => sb.rpc('es_docente_externo')],
+  ['60', 'Vacaciones', () => sb.from('vacaciones_solicitudes').select('id').limit(1)],
+  ['64', 'Cifras públicas por año', async () => { const r = await sb.rpc('cifras_publicas'); if(!r.error && r.data && !('por_anio' in r.data)) return { error: { message: 'versión antigua de cifras_publicas' } }; return r; }],
+  ['65', 'Canal: noticias y agenda', () => sb.from('canal_publicaciones').select('id').limit(1)],
+  ['66', 'Canal: publicidad', () => sb.from('canal_publicaciones').select('entidad').limit(1)],
+  ['67', 'Canal: vídeo', () => sb.from('canal_publicaciones').select('video_url').limit(1)],
+  ['68', 'Panel técnico', () => sb.rpc('errores_abiertos')]
+];
+const TEC_FALTA = /does not exist|schema cache|Could not find|PGRST20[0-9]|42P01|42703|42883|versión antigua/i;
+async function tecComprobar(){
+  const ca = LANG_I === 'ca', L = (es, c) => ca ? c : es, out = [];
+  const add = (grupo, ic, nombre, estado, det) => out.push({ grupo, ic, nombre, estado, det });
+  const conTiempo = (p, ms) => Promise.race([p, new Promise((_, ko) => setTimeout(() => ko(new Error(L('No responde a tiempo', 'No respon a temps'))), ms))]);
+  // 1) Conexión y sesión
+  try { const t0 = performance.now(); const r = await conTiempo(sb.from('staff').select('email', { count: 'exact', head: true }), 8000); const ms = Math.round(performance.now() - t0);
+    if(r.error) add('base', '🗄️', L('Conexión con la base de datos', 'Connexió amb la base de dades'), 'fallo', r.error.message);
+    else add('base', '🗄️', L('Conexión con la base de datos', 'Connexió amb la base de dades'), ms > 2500 ? 'aviso' : 'ok', `${ms} ms${ms > 2500 ? ' · ' + L('va lenta', 'va lenta') : ''}`);
+  } catch(e){ add('base', '🗄️', L('Conexión con la base de datos', 'Connexió amb la base de dades'), 'fallo', e.message); }
+  try { const { data } = await sb.auth.getSession(); add('base', '🔐', L('Sesión iniciada', 'Sessió iniciada'), data && data.session ? 'ok' : 'fallo', data && data.session ? L('caduca', 'caduca') + ' ' + new Date(data.session.expires_at * 1000).toLocaleTimeString(TI[LANG_I].localeFecha, { hour: '2-digit', minute: '2-digit' }) : L('sin sesión', 'sense sessió')); } catch(e){ add('base', '🔐', L('Sesión iniciada', 'Sessió iniciada'), 'fallo', e.message); }
+  add('base', '📱', L('Verificación en dos pasos', 'Verificació en dos passos'), typeof MFA_PAUSADA !== 'undefined' && MFA_PAUSADA ? 'aviso' : 'ok', typeof MFA_PAUSADA !== 'undefined' && MFA_PAUSADA ? L('En pausa (SQL-61). Volver a activarla cuando acabéis de revisar.', 'En pausa (SQL-61). Tornar-la a activar quan acabeu de revisar.') : L('Activa', 'Activa'));
+  // 2) ¿Está subida la última versión?
+  try { const html = await conTiempo(fetch(location.href.split('#')[0].split('?')[0] + '?nc=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.text() : ''), 8000);
+    const subida = (html.match(/APP_VERSION_INTRANET = '[^']*?(v\d+)/) || [])[1], aqui = (String(APP_VERSION_INTRANET).match(/v\d+/) || [])[0];
+    if(!subida) add('base', '🆕', L('Versión de la intranet', 'Versió de la intranet'), 'ok', aqui);
+    else if(subida !== aqui) add('base', '🆕', L('Versión de la intranet', 'Versió de la intranet'), 'aviso', L(`Estás usando la ${aqui} y está subida la ${subida}: pulsa Ctrl+F5.`, `Fas servir la ${aqui} i està pujada la ${subida}: prem Ctrl+F5.`));
+    else add('base', '🆕', L('Versión de la intranet', 'Versió de la intranet'), 'ok', aqui + ' · ' + L('es la última subida', 'és la darrera pujada'));
+  } catch(e){ add('base', '🆕', L('Versión de la intranet', 'Versió de la intranet'), 'ok', (String(APP_VERSION_INTRANET).match(/v\d+/) || [''])[0]); }
+  // 3) SQL ejecutados en Supabase
+  await Promise.all(TEC_SQL.map(async ([n, nombre, fn]) => {
+    try { const r = await conTiempo(Promise.resolve(fn()), 8000);
+      if(r && r.error){ if(TEC_FALTA.test(r.error.message || '') || TEC_FALTA.test(r.error.code || '')) add('sql', '🧩', `SQL-${n} · ${nombre}`, 'fallo', L(`Falta ejecutar el SQL-${n} en Supabase.`, `Cal executar l'SQL-${n} a Supabase.`)); else add('sql', '🧩', `SQL-${n} · ${nombre}`, 'ok', L('instalado', 'instal·lat')); }
+      else add('sql', '🧩', `SQL-${n} · ${nombre}`, 'ok', L('instalado', 'instal·lat'));
+    } catch(e){ add('sql', '🧩', `SQL-${n} · ${nombre}`, 'aviso', e.message); }
+  }));
+  out.sort((a, b) => a.grupo !== 'sql' || b.grupo !== 'sql' ? 0 : Number(a.nombre.slice(4, 6)) - Number(b.nombre.slice(4, 6)));
+  // 4) Carpetas de archivos
+  await Promise.all([['documentos', L('Documentos de las personas', 'Documents de les persones')], ['personal', L('Nóminas y archivos del personal', 'Nòmines i arxius del personal')], ['canal', L('Fotos y vídeos del Canal', 'Fotos i vídeos del Canal')]].map(async ([b, t]) => {
+    try { const r = await conTiempo(sb.storage.from(b).list('', { limit: 1 }), 8000);
+      add('arch', '📦', `${L('Carpeta', 'Carpeta')} «${b}» · ${t}`, r.error && /not found|no existe/i.test(r.error.message || '') ? 'fallo' : 'ok', r.error && /not found|no existe/i.test(r.error.message || '') ? L('No existe: hay que crearla en Supabase › Storage.', 'No existeix: cal crear-la a Supabase › Storage.') : L('disponible', 'disponible'));
+    } catch(e){ add('arch', '📦', `${L('Carpeta', 'Carpeta')} «${b}»`, 'aviso', e.message); }
+  }));
+  // 5) Funciones del servidor (asistentes, traductor, altas)
+  await Promise.all([['asistente', L('Asistente de la intranet', 'Assistent de la intranet')], ['asistente-tecnico', L('Asistente de Logos Acompanya y autocorrección', 'Assistent de Logos Acompanya i autocorrecció')], ['traducir', L('Traductor en directo', 'Traductor en directe')], ['alta-presencial', L('Alta presencial de personas', 'Alta presencial de persones')], ['avisos-subvenciones', L('Avisos de subvenciones', 'Avisos de subvencions')]].map(async ([f, t]) => {
+    try { const r = await conTiempo(fetch(SUPABASE_URL + '/functions/v1/' + f, { method: 'OPTIONS' }), 9000);
+      add('fun', '⚙️', `${t} (${f})`, r.status === 404 ? 'fallo' : 'ok', r.status === 404 ? L('No está publicada en Supabase › Edge Functions.', 'No està publicada a Supabase › Edge Functions.') : L('responde', 'respon'));
+    } catch(e){ add('fun', '⚙️', `${t} (${f})`, 'fallo', L('No responde (¿no está publicada o falla al arrancar?).', 'No respon (no està publicada o falla en arrencar?).')); }
+  }));
+  // 6) Webs públicas
+  await Promise.all([['https://acompanya.logostgn.cat/', 'Logos Acompanya'], ['https://logostgn.cat/', L('Web de la asociación', 'Web de l\'associació')]].map(async ([u, t]) => {
+    try { await conTiempo(fetch(u + '?nc=' + Date.now(), { mode: 'no-cors', cache: 'no-store' }), 9000); add('web', '🌐', t, 'ok', u.replace('https://', '').replace(/\/$/, '')); }
+    catch(e){ add('web', '🌐', t, 'fallo', L('No se abre: ', 'No s\'obre: ') + u); }
+  }));
+  // 7) Datos que se quedan colgados
+  try { const lim = new Date(Date.now() - 14 * 3600e3).toISOString(); const r = await sb.from('fichajes').select('id', { count: 'exact', head: true }).is('salida', null).lt('entrada', lim);
+    const n = r.error ? 0 : (r.count || 0); add('datos', '🕒', L('Fichajes abiertos desde hace más de 14 h', 'Fitxatges oberts des de fa més de 14 h'), n ? 'aviso' : 'ok', n ? L(`${n}: alguien no fichó la salida (se cierran solos en Administración › Fichajes).`, `${n}: algú no va fitxar la sortida (es tanquen sols a Administració › Fitxatges).`) : L('ninguno', 'cap')); } catch(e){}
+  try { const r = await sb.from('citas').select('id', { count: 'exact', head: true }).eq('fecha', isoLocal()).is('tecnico_email', null).neq('estado', 'cancelada');
+    const n = r.error ? 0 : (r.count || 0); add('datos', '📅', L('Citas de hoy sin técnico asignado', 'Cites d\'avui sense tècnic assignat'), n ? 'aviso' : 'ok', n ? String(n) : L('ninguna', 'cap')); } catch(e){}
+  try { const r = await sb.from('incidencias').select('id', { count: 'exact', head: true }).eq('destino', 'tecnica').neq('estado', 'resuelta');
+    const n = r.error ? 0 : (r.count || 0); add('datos', '🆘', L('Incidencias técnicas sin resolver', 'Incidències tècniques sense resoldre'), n ? 'aviso' : 'ok', n ? String(n) : L('ninguna', 'cap')); } catch(e){}
+  // 8) Este dispositivo
+  let ls = true; try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); } catch(e){ ls = false; }
+  add('disp', '💻', L('Este navegador', 'Aquest navegador'), ls && navigator.onLine ? 'ok' : 'aviso', `${navigator.onLine ? L('con internet', 'amb internet') : L('SIN internet', 'SENSE internet')} · ${ls ? L('guarda preferencias', 'desa preferències') : L('no guarda preferencias (modo privado)', 'no desa preferències (mode privat)')} · ${window.innerWidth}×${window.innerHeight}`);
+  // Los fallos se apuntan solos (y abren una incidencia técnica)
+  out.filter(x => x.estado === 'fallo').forEach(x => { try { reportarFallo('salud', `${x.nombre}: ${x.det}`, ''); } catch(e){} });
+  window.__tec.res = out; window.__tec.cuando = new Date();
+  return out;
+}
+async function tecAlIniciar(){
+  if(!tecPuede()) return;
+  tecBadge(); clearInterval(window.__tecInt); window.__tecInt = setInterval(tecBadge, 5 * 60000);
+  let ult = null; try { ult = localStorage.getItem('tec-comprobado'); } catch(e){}
+  if(ult !== isoLocal()){ try { localStorage.setItem('tec-comprobado', isoLocal()); } catch(e){}
+    setTimeout(async () => { const r = await tecComprobar(); const f = r.filter(x => x.estado === 'fallo').length; if(f) tecToast(acL(`🩺 La comprobación diaria ha encontrado ${f} fallo${f > 1 ? 's' : ''} técnico${f > 1 ? 's' : ''}.`, `🩺 La comprovació diària ha trobat ${f} error${f > 1 ? 's' : ''} tècnic${f > 1 ? 's' : ''}.`)); tecBadge(); }, 4000);
+  }
+}
+async function tecBadge(){
+  const el = document.getElementById('tec-nav-n'); if(!el || !tecPuede()) return;
+  try { const { data, error } = await sb.rpc('errores_abiertos'); const n = error ? 0 : (data || 0);
+    const antes = Number(el.textContent || 0); el.textContent = n; el.style.display = n ? '' : 'none';
+    if(n > antes && antes >= 0 && el.dataset.visto === '1') tecToast(acL(`🩺 Nuevo fallo técnico apuntado (${n} abiertos).`, `🩺 Nou error tècnic apuntat (${n} oberts).`));
+    el.dataset.visto = '1';
+  } catch(e){}
+}
+function tecToast(txt){
+  document.getElementById('tec-toast')?.remove();
+  document.body.insertAdjacentHTML('beforeend', `<div class="tec-toast" id="tec-toast" role="status"><span>${escAttr(txt)}</span><button onclick="document.getElementById('tec-toast').remove();showScreen('tecnico');renderPanelTecnico()">${acL('Ver el panel', 'Veure el panell')}</button><button aria-label="${acL('Cerrar', 'Tancar')}" onclick="this.parentNode.remove()">✕</button></div>`);
+  setTimeout(() => document.getElementById('tec-toast')?.remove(), 15000);
+}
+async function renderPanelTecnico(recomprobar){
+  const c = document.getElementById('tecnico-content'); if(!c) return;
+  if(!tecPuede()){ c.innerHTML = `<div class="empty-note">${acL('Solo para Soporte técnico y administración.', 'Només per a Suport tècnic i administració.')}</div>`; return; }
+  const ca = LANG_I === 'ca', L = (es, cc) => ca ? cc : es;
+  c.innerHTML = `<div class="placeholder">🩺 ${L('Comprobando el sistema…', 'Comprovant el sistema…')}</div>`;
+  const res = (!window.__tec.res || recomprobar) ? await tecComprobar() : window.__tec.res;
+  const er = await sb.from('errores_tecnicos').select('*').order('ultima', { ascending: false }).limit(300);
+  const sinSQL = er.error && TEC_FALTA.test(er.error.message || '');
+  const errores = er.data || [];
+  const nF = res.filter(x => x.estado === 'fallo').length, nA = res.filter(x => x.estado === 'aviso').length, nOk = res.length - nF - nA;
+  const abiertos = errores.filter(e => e.estado === 'abierto').length, revis = errores.filter(e => e.estado === 'revisando').length;
+  const semaforo = nF ? ['rojo', '🔴', L('Hay fallos que arreglar', 'Hi ha errors per arreglar')] : (nA || abiertos ? ['ambar', '🟡', L('Funciona, con avisos', 'Funciona, amb avisos')] : ['verde', '🟢', L('Todo funciona bien', 'Tot funciona bé')]);
+  const kpi = (ic, v, t) => `<div class="pj-kpi"><span class="pj-kpi-i">${ic}</span><span><strong>${v}</strong><small>${t}</small></span></div>`;
+  const GR = { base: L('Básico', 'Bàsic'), sql: L('Instalación en Supabase (SQL)', 'Instal·lació a Supabase (SQL)'), arch: L('Carpetas de archivos', 'Carpetes d\'arxius'), fun: L('Funciones del servidor', 'Funcions del servidor'), web: L('Webs', 'Webs'), datos: L('Datos colgados', 'Dades penjades'), disp: L('Este dispositivo', 'Aquest dispositiu') };
+  const fila = x => `<div class="tec-ck tec-${x.estado}"><span class="tec-ck-e" aria-hidden="true">${x.estado === 'ok' ? '✅' : x.estado === 'aviso' ? '⚠️' : '❌'}</span><span class="tec-ck-n">${x.ic} ${escAttr(x.nombre)}</span><span class="tec-ck-d">${escAttr(x.det || '')}</span></div>`;
+  const grupos = Object.keys(GR).map(g => { const xs = res.filter(x => x.grupo === g); if(!xs.length) return ''; const mal = xs.filter(x => x.estado !== 'ok').length;
+    return `<details class="tec-grp" ${mal ? 'open' : ''}><summary><strong>${GR[g]}</strong><span class="tec-grp-n ${xs.some(x => x.estado === 'fallo') ? 'rojo' : mal ? 'ambar' : 'verde'}">${xs.length - mal}/${xs.length}</span></summary>${xs.map(fila).join('')}</details>`; }).join('');
+  const f = window.__tec.filtro;
+  const lista = errores.filter(e => f === 'todos' || e.estado === f);
+  const fd = d => new Date(d).toLocaleString(TI[LANG_I].localeFecha, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const est = { abierto: ['🔴', L('Abierto', 'Obert')], revisando: ['👀', L('Lo estoy mirando', 'L\'estic mirant')], resuelto: ['✅', L('Resuelto', 'Resolt')], ignorado: ['🙈', L('Ignorado', 'Ignorat')] };
+  const tipoTx = { js: L('Fallo de la app', 'Error de l\'app'), red: L('Conexión', 'Connexió'), datos: L('Servidor', 'Servidor'), salud: L('Comprobación', 'Comprovació') };
+  const tarjeta = e => `<article class="tec-err tec-err-${e.estado}">
+      <div class="tec-err-top"><span class="tec-chip app-${e.app}">${e.app === 'acompanya' ? '📱 Logos Acompanya' : '🖥️ Intranet'}</span><span class="tec-chip">${tipoTx[e.tipo] || e.tipo}</span><span class="tec-chip">${est[e.estado][0]} ${est[e.estado][1]}</span><span class="tec-veces"><b>${e.veces}</b> ${e.veces === 1 ? L('vez', 'vegada') : L('veces', 'vegades')} · ${e.personas} ${e.personas === 1 ? L('persona', 'persona') : L('personas', 'persones')}</span></div>
+      <h4>${escAttr(e.mensaje)}</h4>
+      <p class="tec-err-m">${L('Primera', 'Primera')}: ${fd(e.primera)} · ${L('última', 'darrera')}: ${fd(e.ultima)}${e.pantalla ? ' · ' + L('pantalla', 'pantalla') + ' «' + escAttr(e.pantalla) + '»' : ''}${e.version ? ' · ' + escAttr(e.version) : ''}${e.incidencia_id ? ' · 🆘 ' + L('incidencia abierta', 'incidència oberta') : ''}</p>
+      ${e.nota ? `<p class="tec-err-nota">📝 ${escAttr(e.nota)}${e.revisado_por ? ' — ' + escAttr(nombreTecnico(e.revisado_por) || e.revisado_por) : ''}</p>` : ''}
+      ${e.detalle || e.navegador ? `<details class="tec-det"><summary>${L('Detalle técnico', 'Detall tècnic')}</summary><pre>${escAttr((e.detalle || '') + (e.navegador ? '\n\n' + e.navegador : ''))}</pre></details>` : ''}
+      <div class="tec-acc">${e.estado !== 'revisando' && e.estado !== 'resuelto' ? `<button class="link-btn" onclick="tecEstado(${e.id},'revisando')">👀 ${L('Lo miro yo', 'M\'ho miro jo')}</button>` : ''}${e.estado !== 'resuelto' ? `<button class="link-btn" style="color:var(--good);" onclick="tecEstado(${e.id},'resuelto')">✅ ${L('Arreglado', 'Arreglat')}</button>` : `<button class="link-btn" onclick="tecEstado(${e.id},'abierto')">↩️ ${L('Volver a abrir', 'Tornar a obrir')}</button>`}${e.estado === 'abierto' ? `<button class="link-btn" style="color:#6B7280;" onclick="tecEstado(${e.id},'ignorado')">🙈 ${L('No es importante', 'No és important')}</button>` : ''}</div>
+    </article>`;
+  c.innerHTML = `
+    <div class="pj-hero tec-hero tec-${semaforo[0]}">
+      <div class="pj-hero-top"><span class="pj-ic">🩺</span><div class="pj-hero-t"><small>${L('Soporte técnico', 'Suport tècnic')} · ${L('comprobado', 'comprovat')} ${window.__tec.cuando ? window.__tec.cuando.toLocaleTimeString(TI[LANG_I].localeFecha, { hour: '2-digit', minute: '2-digit' }) : ''}</small><h2>${semaforo[1]} ${semaforo[2]}</h2>
+        <p>${L('La intranet y Logos Acompanya apuntan solos cada fallo. Si un fallo se repite 3 veces, o falla una comprobación, se abre sola una incidencia técnica y te avisa.', 'La intranet i Logos Acompanya apunten sols cada error. Si un error es repeteix 3 vegades, o falla una comprovació, s\'obre sola una incidència tècnica i t\'avisa.')}</p></div></div>
+      <div class="pj-kpis">${kpi('❌', nF, L('Comprobaciones que fallan', 'Comprovacions que fallen'))}${kpi('⚠️', nA, L('Avisos', 'Avisos'))}${kpi('✅', nOk, L('Todo bien', 'Tot bé'))}${kpi('🐞', abiertos + revis, L('Fallos apuntados sin cerrar', 'Errors apuntats sense tancar'))}</div>
+      <div class="pj-acc"><button class="pj-btn" onclick="renderPanelTecnico(true)">🔄 ${L('Comprobar ahora', 'Comprovar ara')}</button><button class="pj-borrar" style="margin-left:0;" onclick="tecPrueba()">🧪 ${L('Probar el aviso', 'Provar l\'avís')}</button><button class="pj-borrar" style="margin-left:auto;" onclick="tecInforme()">⬇️ ${L('Informe en Excel', 'Informe en Excel')}</button></div>
+    </div>
+    <div class="tec-cols">
+      <section><h3 class="pj-h">🧪 ${L('Comprobaciones', 'Comprovacions')}</h3>${grupos}</section>
+      <section><h3 class="pj-h">🐞 ${L('Fallos apuntados solos', 'Errors apuntats sols')}</h3>
+        ${sinSQL ? `<div class="info-box info-box-gold">${L('Para apuntar los fallos solos falta ejecutar el SQL-68 en Supabase.', 'Per apuntar els errors sols cal executar l\'SQL-68 a Supabase.')}</div>` : `
+        <div class="canal-filtros">${[['abierto', L('Abiertos', 'Oberts'), abiertos], ['revisando', L('Mirándolos', 'Mirant-los'), revis], ['resuelto', L('Arreglados', 'Arreglats'), errores.filter(e => e.estado === 'resuelto').length], ['todos', L('Todos', 'Tots'), errores.length]].map(([k, t, n]) => `<button class="${f === k ? 'on' : ''}" onclick="window.__tec.filtro='${k}';renderPanelTecnico()">${t} (${n})</button>`).join('')}</div>
+        ${lista.map(tarjeta).join('') || `<div class="empty-note">🎉 ${L('No hay fallos aquí.', 'No hi ha errors aquí.')}</div>`}`}
+      </section>
+    </div>`;
+  tecBadge();
+}
+async function tecEstado(id, estado){
+  let nota = null;
+  if(estado === 'resuelto'){ nota = prompt(acL('¿Qué se ha hecho para arreglarlo? (opcional, queda apuntado)', 'Què s\'ha fet per arreglar-ho? (opcional, queda apuntat)')); if(nota === null) return; }
+  const cambios = { estado, revisado_por: String(CURRENT_USER.email).toLowerCase(), revisado_en: new Date().toISOString() };
+  if(nota) cambios.nota = nota.slice(0, 2000);
+  const { error } = await sb.from('errores_tecnicos').update(cambios).eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderPanelTecnico();
+}
+function tecPrueba(){
+  window.__tecPruebaN = (window.__tecPruebaN || 0) + 1;
+  reportarFallo('js', acL('Prueba del panel técnico', 'Prova del panell tècnic') + ' ' + new Date().toLocaleTimeString() , acL('Fallo de prueba creado a mano desde el Panel técnico. Se puede marcar como arreglado.', 'Error de prova creat a mà des del Panell tècnic. Es pot marcar com a arreglat.'));
+  setTimeout(() => renderPanelTecnico(), 1200);
+}
+async function tecInforme(){
+  const res = window.__tec.res || [], { data } = await sb.from('errores_tecnicos').select('*').order('ultima', { ascending: false }).limit(1000);
+  const cab = [acL('Tipo', 'Tipus'), acL('Qué', 'Què'), acL('Estado', 'Estat'), acL('Detalle', 'Detall'), acL('Veces', 'Vegades'), acL('Primera', 'Primera'), acL('Última', 'Darrera'), 'App', acL('Pantalla', 'Pantalla'), acL('Versión', 'Versió'), acL('Nota', 'Nota')];
+  const filas = res.map(x => [acL('Comprobación', 'Comprovació'), x.nombre, x.estado, x.det || '', '', '', '', '', '', '', ''])
+    .concat((data || []).map(e => [acL('Fallo', 'Error') + ' ' + e.tipo, e.mensaje, e.estado, (e.detalle || '').slice(0, 500), e.veces, new Date(e.primera).toLocaleString('es-ES'), new Date(e.ultima).toLocaleString('es-ES'), e.app, e.pantalla || '', e.version || '', e.nota || '']));
+  await descargarXLSX(cab, filas, `Panel-tecnico_${isoLocal()}.xlsx`, acL('Panel técnico', 'Panell tècnic'));
 }
 
 // ================= 📣 CANAL: noticias, eventos (agenda) y anuncios para la web y Logos Acompanya (SQL-65) =================
