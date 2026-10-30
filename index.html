@@ -1302,6 +1302,129 @@ body.vc-on{padding-top:44px;}
 .inf-reg-pt small{color:#5F6672;}
 .veces-t.h{color:#5B4B8A;}
 .inf-reg-rap{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+
+/* ===== Canal ===== */
+.canal-hero{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:linear-gradient(135deg,#16325A,#1F66C1);color:#fff;border-radius:20px;padding:20px 22px;margin:0 0 14px;}
+.canal-hero h2{margin:0 0 4px;color:#fff;font-size:22px;} .canal-hero p{margin:0;max-width:640px;opacity:.95;font-size:14px;}
+.canal-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 14px;}
+.canal-kpis div{background:#fff;border:1px solid #D5E1F0;border-radius:14px;padding:12px 14px;} .canal-kpis strong{display:block;font-size:26px;color:#1F66C1;} .canal-kpis span{font-size:12.5px;color:#5F6672;}
+.canal-cols{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start;}
+@media (max-width:900px){ .canal-cols{grid-template-columns:1fr;} .canal-cal-box{order:-1;} }
+.canal-filtros{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px;}
+.canal-filtros button{border:1px solid #D5E1F0;background:#fff;border-radius:999px;padding:7px 14px;font:inherit;font-size:13px;cursor:pointer;color:#16233F;}
+.canal-filtros button.on{background:#1F66C1;border-color:#1F66C1;color:#fff;font-weight:700;}
+.canal-item{display:flex;gap:14px;background:#fff;border:1px solid #D5E1F0;border-radius:16px;padding:12px;margin:0 0 10px;}
+.canal-item img,.canal-ic{width:96px;height:96px;flex:0 0 96px;border-radius:12px;object-fit:cover;background:#EEF3FA;display:flex;align-items:center;justify-content:center;font-size:38px;}
+.canal-x{flex:1;min-width:0;} .canal-x h4{margin:4px 0 4px;font-size:16px;}
+.canal-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;}
+.canal-tipo{background:#EEF3FA;color:#1F4E8C;border-radius:999px;padding:2px 9px;font-weight:700;} .canal-tipo.t-evento{background:#FFF4D6;color:#7A5300;} .canal-tipo.t-convocatoria{background:#EAF7EE;color:#1E6B3A;} .canal-tipo.t-anuncio{background:#FCE8EF;color:#9B1C4B;}
+.canal-est{color:var(--c);font-weight:700;} .canal-dest{color:#8A6100;font-weight:700;}
+.canal-cuando{margin:0 0 4px;font-size:13px;font-weight:700;color:#16325A;} .canal-txt{margin:0 0 4px;font-size:13px;color:#3B4352;} .canal-donde{margin:0;font-size:12px;color:#5F6672;}
+.canal-acc{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;} .canal-acc .link-btn{font-size:12.5px;margin:0;}
+.canal-dia{background:#FFF4D6;border-radius:12px;padding:8px 12px;margin:0 0 10px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.canal-cal-box{background:#fff;border:1px solid #D5E1F0;border-radius:16px;padding:14px;position:sticky;top:12px;} .canal-cal-box h3{margin:0 0 8px;font-size:16px;}
+.canal-cal-h{display:flex;justify-content:space-between;align-items:center;margin:0 0 6px;} .canal-cal-h .link-btn{font-size:20px;margin:0;padding:0 8px;}
+.canal-cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:13px;}
+.canal-cal-g b{font-size:11px;color:#5F6672;font-weight:700;text-transform:uppercase;}
+.canal-cal-g span,.canal-cal-g button{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:9px;position:relative;}
+.canal-cal-g button{border:0;background:#FFF4D6;color:#5C3D00;font-weight:800;cursor:pointer;font:inherit;font-weight:800;}
+.canal-cal-g button i{position:absolute;bottom:4px;width:5px;height:5px;border-radius:50%;background:#E0A526;}
+.canal-cal-g .hoy{outline:2px solid #1F66C1;} .canal-cal-g button.sel{background:#1F66C1;color:#fff;}
+.canal-ov{position:fixed;inset:0;z-index:9999;background:rgba(15,30,60,.5);display:flex;align-items:flex-start;justify-content:center;padding:20px 12px;overflow:auto;}
+.canal-form{background:#fff;border-radius:20px;max-width:680px;width:100%;padding:18px 20px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.canal-form-h{display:flex;justify-content:space-between;align-items:center;} .canal-form-h h3{margin:0;}
+.canal-tipos{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;}
+.canal-tipos label{cursor:pointer;} .canal-tipos input{position:absolute;opacity:0;} .canal-tipos span{display:inline-block;border:2px solid #D5E1F0;border-radius:999px;padding:7px 14px;font-weight:700;font-size:14px;}
+.canal-tipos input:checked + span{border-color:#1F66C1;background:#E8F1FC;color:#1F4E8C;} .canal-tipos input:focus-visible + span{outline:3px solid #1B4E95;}
+.canal-fila{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 10px;} .canal-fila label,.canal-ev > label{display:flex;flex-direction:column;font-size:13px;font-weight:600;gap:4px;}
+.canal-fila input,.canal-ev input,.canal-img input{padding:9px 10px;border:1px solid #CBD5E1;border-radius:10px;font:inherit;}
+.canal-ev{border:1px dashed #E0A526;border-radius:14px;padding:10px 12px;margin:0 0 12px;} .canal-ev legend{font-weight:700;font-size:13px;padding:0 6px;}
+.canal-img{display:flex;flex-direction:column;gap:6px;}
+.canal-checks{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0 12px;font-size:14px;} .canal-checks label{display:flex;gap:6px;align-items:center;}
+.canal-previa-box{background:#F3F7FC;border-radius:14px;padding:10px 12px;margin:0 0 10px;}
+.canal-prev{display:flex;gap:12px;align-items:center;background:#fff;border-radius:12px;padding:10px;margin-top:6px;} .canal-prev img{width:80px;height:60px;object-fit:cover;border-radius:8px;}
+.canal-prev small{display:block;color:#7A5300;font-weight:700;} .canal-prev strong{display:block;} .canal-prev p{margin:2px 0 0;font-size:13px;color:#5F6672;}
+.canal-form-pie{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;}
+@media (max-width:600px){ .canal-fila{grid-template-columns:1fr;} .canal-item img,.canal-ic{width:64px;height:64px;flex-basis:64px;font-size:28px;} .canal-kpis strong{font-size:22px;} }
+
+/* Publicidad (anuncios de entidades) */
+.anu{position:relative;border-radius:16px;overflow:hidden;display:flex;align-items:center;gap:16px;min-height:120px;padding:22px 22px 18px;}
+.anu-et{position:absolute;top:8px;left:10px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;background:rgba(0,0,0,.35);color:#fff;border-radius:999px;padding:2px 8px;z-index:2;}
+.anu-img{padding:0;min-height:0;display:block;} .anu-img img{width:100%;aspect-ratio:16/5;object-fit:cover;display:block;}
+.anu-t{position:relative;z-index:1;flex:1;min-width:0;} .anu-t strong{display:block;font-size:22px;line-height:1.15;margin-top:8px;} .anu-t p{margin:6px 0 0;font-size:14px;opacity:.95;}
+.anu-cta{display:inline-block;margin-top:10px;border-radius:999px;padding:8px 16px;font-weight:800;font-size:14px;}
+.anu-deco{position:absolute;right:-50px;top:-60px;width:200px;height:200px;border-radius:50%;border:34px solid rgba(255,255,255,.14);}
+.anu-cua .anu-foto{width:110px;height:110px;border-radius:14px;object-fit:cover;flex:0 0 110px;margin-top:10px;}
+.canal-anu-mini{width:260px;flex:0 0 260px;} .canal-anu-mini .anu{min-height:96px;padding:18px 14px 12px;} .canal-anu-mini .anu-t strong{font-size:15px;} .canal-anu-mini .anu-t p{display:none;} .canal-anu-mini .anu-cua .anu-foto{width:60px;height:60px;flex-basis:60px;}
+.canal-estilos{display:flex;gap:8px;flex-wrap:wrap;} .canal-estilos input{position:absolute;opacity:0;} .canal-estilos span{display:block;width:34px;height:34px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #CBD5E1;cursor:pointer;}
+.canal-estilos input:checked + span{box-shadow:0 0 0 3px #1F66C1;} .canal-estilos input:focus-visible + span{outline:3px solid #1B4E95;}
+.canal-pub{border-color:#7C3AED;} .cf-lab{display:flex;flex-direction:column;font-size:13px;font-weight:600;gap:6px;} .sr-only{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;}
+@media (max-width:600px){ .canal-anu-mini{width:100%;flex-basis:auto;} .canal-item:has(.canal-anu-mini){flex-direction:column;} }
+
+.vid{position:relative;aspect-ratio:16/9;background:#0F172A;overflow:hidden;}
+.vid-play{position:absolute;inset:0;width:100%;border:0;padding:0;cursor:pointer;background:linear-gradient(135deg,#16325A,#2A5182) center/cover no-repeat;}
+.vid-play span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:54px;height:54px;border-radius:50%;background:rgba(242,188,44,.96);color:#16325A;font-size:22px;display:flex;align-items:center;justify-content:center;padding-left:4px;box-shadow:0 8px 22px rgba(0,0,0,.35);}
+.vid iframe,.vid video{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000;}
+.anu-vid{flex-wrap:wrap;} .anu-vid .vid{flex:0 0 46%;border-radius:12px;margin-top:8px;} .canal-anu-mini .anu-vid .vid{flex-basis:100%;}
+
+/* ===== Gestión de personal y Administración con cabecera y menú lateral ===== */
+.gp-av{font-size:20px;font-weight:800;background:#F2BC2C !important;color:#163F7A !important;}
+.gp-hero-rh{background:linear-gradient(135deg,#123F2A 0%,#1D6B47 55%,#2E8B57 100%);}
+.gp-menu-h{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.72);padding:6px 12px 4px;}
+.gp-sec,.adm-main{min-width:0;}
+.gp-cmp,.adm-cmp{margin-top:4px;}
+.adm-busca{position:relative;z-index:1;display:flex;align-items:center;gap:10px;background:#fff;border-radius:16px;padding:6px 8px 6px 14px;margin:14px 0 6px;box-shadow:0 10px 24px -14px rgba(0,0,0,.5);}
+.adm-busca span{font-size:18px;} .adm-busca input{flex:1;border:0;outline:none;font:inherit;font-size:16px;padding:10px 4px;color:#16233F;background:transparent;}
+.adm-busca:focus-within{box-shadow:0 0 0 3px #F2BC2C;}
+.adm-q-res{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:6px;min-height:0;}
+.adm-q-b{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;} .adm-q-b:hover{background:#fff;color:#163F7A;}
+.adm-q-b small{opacity:.8;} .adm-q-no{color:#fff;font-size:13px;opacity:.9;}
+.adm-main > details.carpeta{display:none;margin:0;}
+.adm-main > details.carpeta.adm-on{display:block;}
+.adm-main > details.carpeta > summary{display:none;}
+.adm-main > details.carpeta > .carpeta-cuerpo{padding:0;border:0;background:none;}
+.adm-mi-t{flex:1;min-width:0;line-height:1.25;}
+.adm-menu .cmp-mi{font-size:13.5px;padding:9px 10px;}
+.adm-menu .cmp-mi[hidden],.adm-menu [hidden]{display:none;}
+@media (max-width:900px){ .adm-menu .gp-menu-h, .gp-menu .gp-menu-h{display:none;} }
+/* Equipo */
+.eq-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 10px;}
+.eq-q{flex:1;min-width:200px;padding:11px 14px;border:1px solid #CBD5E1;border-radius:12px;font:inherit;}
+.eq-nuevo{width:auto !important;margin:0 !important;}
+.eq-fil{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px;}
+.eq-fil button{border:1px solid #D5E1F0;background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;color:#16233F;}
+.eq-fil button b{background:#EEF3FA;border-radius:999px;padding:0 7px;margin-left:4px;font-size:12px;}
+.eq-fil button.on{background:#1F66C1;border-color:#1F66C1;color:#fff;} .eq-fil button.on b{background:rgba(255,255,255,.25);}
+.eq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
+.eq-card{background:#fff;border:1px solid #D5E1F0;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;transition:box-shadow .2s;}
+.eq-card:hover{box-shadow:0 10px 24px -16px rgba(22,63,122,.6);}
+.eq-card.baja{background:#F7F7F8;opacity:.85;}
+.eq-card[hidden]{display:none;}
+.eq-top{display:flex;align-items:center;gap:12px;}
+.eq-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;flex:0 0 44px;}
+.eq-id{flex:1;min-width:0;} .eq-id strong{display:block;font-size:15.5px;} .eq-id span{display:block;font-size:12.5px;color:#5F6672;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.eq-est{font-size:11.5px;font-weight:800;border-radius:999px;padding:3px 9px;} .eq-est.on{background:#E3F3E8;color:#1D5E35;} .eq-est.off{background:#EEE;color:#666;}
+.eq-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.eq-rol,.eq-chip{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;} .eq-chip{background:#F3F4F6;color:#3B4352;} .eq-chip-av{background:#FFF4D6;color:#7A5300;}
+.eq-ges{border-top:1px dashed #E3E8EF;padding-top:8px;}
+.eq-ges > summary{cursor:pointer;font-weight:700;color:#1F66C1;font-size:14px;list-style:none;} .eq-ges > summary::-webkit-details-marker{display:none;}
+.eq-ges > summary::after{content:' ▾';} .eq-ges[open] > summary::after{content:' ▴';}
+.eq-ges-c{display:flex;flex-direction:column;gap:10px;margin-top:10px;}
+.eq-blq h5{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#5F6672;}
+.eq-amb{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;margin-bottom:8px;} .eq-amb select{padding:8px;border-radius:10px;border:1px solid #CBD5E1;font:inherit;}
+.eq-sws{display:flex;flex-wrap:wrap;gap:8px;}
+.eq-sw{display:inline-flex;align-items:center;gap:8px;border:1px solid #D5E1F0;background:#fff;border-radius:999px;padding:6px 12px 6px 8px;font:inherit;font-size:13px;cursor:pointer;color:#16233F;}
+.eq-sw i{width:30px;height:18px;border-radius:999px;background:#CBD5E1;position:relative;transition:background .2s;} .eq-sw i::after{content:'';position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .2s;}
+.eq-sw.on{border-color:#2E8B57;} .eq-sw.on i{background:#2E8B57;} .eq-sw.on i::after{left:14px;}
+.eq-acc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;} .eq-acc .link-btn{font-size:13px;margin:0;padding:4px 0;}
+.eq-peligro{background:#FFF7F7;border-radius:10px;padding:8px 10px;}
+.eq-vacio{padding:14px;color:#5F6672;}
+.eq-alta-h{margin:20px 0 4px;font-size:15px;}
+.eq-grid{align-items:start;}
+.gp-irs{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin:0 0 14px;}
+.gp-ir{display:flex;flex-direction:column;align-items:flex-start;gap:3px;background:#fff;border:1px solid #D5E1F0;border-radius:16px;padding:14px;font:inherit;text-align:left;cursor:pointer;color:#16233F;transition:transform .15s, box-shadow .15s;}
+.gp-ir:hover{transform:translateY(-2px);box-shadow:0 10px 22px -14px rgba(22,63,122,.6);}
+.gp-ir span{font-size:24px;} .gp-ir strong{font-size:15px;} .gp-ir small{font-size:12.5px;color:#5F6672;}
 </style>
 </head>
 <body>
@@ -1354,6 +1477,7 @@ body.vc-on{padding-top:44px;}
       <details class="nav-grupo" open>
         <summary>💬 Equipo y yo</summary>
         <button data-target="comunicacion" onclick="showScreen('comunicacion');renderComunicacionScreen()">✉️ Comunicación</button>
+        <button data-target="canal" onclick="showScreen('canal');renderCanal()">📣 Canal: noticias y agenda</button>
         <button data-target="equipo" onclick="showScreen('equipo');renderEquipoScreen()">🤝 Trabajo en equipo</button>
         <button data-target="gestionpersonal" id="nav-gp-btn" onclick="showScreen('gestionpersonal');renderGestionPersonal('inicio')">👤 Mi gestión personal</button>
         <button data-target="miformacion" onclick="showScreen('miformacion');renderMiFormacion()">🎓 Mi formación</button>
@@ -1529,6 +1653,13 @@ body.vc-on{padding-top:44px;}
     <div class="main-content">
       <div class="topbar"><span class="brand">Incidencias</span></div>
       <div class="content" id="incidencias-content"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-canal">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">Canal</span></div>
+      <div class="content" id="canal-content"></div>
     </div>
   </div>
 
@@ -2498,8 +2629,135 @@ async function rrhhIr(sub, btn){
 async function admIr(clave, btn){
   showScreen('admin'); await renderAdministrador();
   navMarcar(btn);
+  if(document.querySelector('.adm-menu')){ admSel(clave); return; }
   const d = document.querySelector('#admin-content details.carpeta[data-clave="adm-sec:' + clave + '"]');
   if(d){ d.open = true; carpetaAlternar(d.dataset.clave, true); const g = d.closest('details.adm-grupo'); if(g) g.open = true; setTimeout(() => d.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60); }
+}
+// Equipo (Administración): tarjetas por persona con buscador, filtros y las opciones agrupadas en «Gestionar»
+function admEquipoHtml(lista, t){
+  const yo = String(CURRENT_USER.email || '').toLowerCase();
+  const rolDe = s => s.es_admin ? 'admin' : s.ambito === 'docente' ? 'docente' : s.ambito === 'rrhh' ? 'rrhh' : s.ambito === 'jovenes' ? 'jovenes' : s.es_rrhh ? 'tecrh' : 'tec';
+  const ROL = { admin: ['🛡️', 'Administración', 'Administració', '#7A5A16', '#FFF4D6'], tec: ['🧑‍💻', 'Técnico/a', 'Tècnic/a', '#1F4E8C', '#E8F1FC'], tecrh: ['🧑‍💼', 'Técnico/a + RR. HH.', 'Tècnic/a + RR. HH.', '#1F4E8C', '#E8F1FC'],
+    rrhh: ['💼', 'Solo RR. HH.', 'Només RR. HH.', '#1D5E35', '#E3F3E8'], jovenes: ['🌱', 'Jóvenes en acción', 'Joves en acció', '#1D5E35', '#E3F3E8'], docente: ['🎓', 'Docente externo', 'Docent extern', '#5B3FA0', '#EFEAFE'] };
+  const cuenta = f => lista.filter(f).length;
+  const filtros = [['todos', acL('Todos', 'Tots'), cuenta(() => true)], ['activos', acL('Activos', 'Actius'), cuenta(s => s.activo !== false)], ['admin', acL('Administración', 'Administració'), cuenta(s => s.es_admin)],
+    ['rrhh', 'RR. HH.', cuenta(s => s.es_rrhh || s.ambito === 'rrhh')], ['docente', acL('Docentes externos', 'Docents externs'), cuenta(s => s.ambito === 'docente')], ['inactivos', acL('Dados de baja', 'Donats de baixa'), cuenta(s => s.activo === false)]].filter(f => f[0] === 'todos' || f[0] === 'activos' || f[2]);
+  const sw = (on, txt, onclick, tit) => `<button type="button" class="eq-sw${on ? ' on' : ''}" role="switch" aria-checked="${!!on}" onclick="${onclick}" title="${escAttr(tit || '')}"><i aria-hidden="true"></i>${txt}</button>`;
+  const ord = lista.slice().sort((a, b) => (a.activo === false) - (b.activo === false) || String(a.nombre || a.email).localeCompare(String(b.nombre || b.email)));
+  const card = s => {
+    const r = ROL[rolDe(s)], nom = s.nombre || s.email.split('@')[0], ini = String(nom).split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+    const baja = s.activo === false, esYo = String(s.email).toLowerCase() === yo;
+    const busca = normTxt([s.nombre, s.email, r[1], r[2], s.es_rrhh ? 'rrhh' : '', s.es_soporte ? 'soporte' : ''].join(' '));
+    const f = [s.activo !== false ? 'activos' : 'inactivos', s.es_admin ? 'admin' : '', (s.es_rrhh || s.ambito === 'rrhh') ? 'rrhh' : '', s.ambito === 'docente' ? 'docente' : ''].filter(Boolean).join(' ');
+    return `<article class="eq-card${baja ? ' baja' : ''}" data-q="${escAttr(busca)}" data-f="${f}">
+      <div class="eq-top"><span class="eq-av" style="background:${r[4]};color:${r[3]};">${escAttr(ini)}</span>
+        <div class="eq-id"><strong>${escAttr(nom)}${esYo ? ` <small>(${acL('tú', 'tu')})</small>` : ''}</strong><span>${escAttr(s.email)}</span></div>
+        <span class="eq-est ${baja ? 'off' : 'on'}">${baja ? t.inactivoLbl : t.activoLbl}</span></div>
+      <div class="eq-chips"><span class="eq-rol" style="background:${r[4]};color:${r[3]};">${r[0]} ${acL(r[1], r[2])}</span>
+        ${s.es_soporte ? `<span class="eq-chip">🛠️ ${acL('Soporte técnico', 'Suport tècnic')}</span>` : ''}${s.gestiona_alertas ? `<span class="eq-chip">🔔 ${acL('Reparte alertas', 'Reparteix alertes')}</span>` : ''}
+        ${('acepta_citas' in s) && !baja && atiendeCitas(s) ? `<span class="eq-chip">📅 ${acL('Atiende citas', 'Atén cites')}</span>` : ''}${s.clave_cambiada === false ? `<span class="eq-chip eq-chip-av">🔑 ${acL('Aún con contraseña inicial', 'Encara amb contrasenya inicial')}</span>` : ''}</div>
+      <details class="eq-ges"><summary>⚙️ ${acL('Gestionar', 'Gestionar')}</summary><div class="eq-ges-c">
+        ${!baja ? `<div class="eq-blq"><h5>${acL('Qué ve y qué hace', 'Què veu i què fa')}</h5>
+          ${(JOVENES_OK && !s.es_admin) ? `<label class="eq-amb">${acL('Parte de la plataforma', 'Part de la plataforma')}<select onchange="cambiarAmbitoTecnico('${s.email}', this.value)"><option value="general"${s.ambito !== 'jovenes' && s.ambito !== 'rrhh' && s.ambito !== 'docente' && !s.es_rrhh ? ' selected' : ''}>🧑‍💻 ${acL('Equipo general', 'Equip general')}</option><option value="tecnico_rrhh"${s.ambito !== 'jovenes' && s.ambito !== 'rrhh' && s.ambito !== 'docente' && s.es_rrhh ? ' selected' : ''}>🧑‍💼 ${acL('Técnico/a + RR. HH.', 'Tècnic/a + RR. HH.')}</option><option value="jovenes"${s.ambito === 'jovenes' ? ' selected' : ''}>🌱 ${acL('Solo Jóvenes en acción', 'Només Joves en acció')}</option><option value="rrhh"${s.ambito === 'rrhh' ? ' selected' : ''}>💼 ${acL('Solo Recursos Humanos', 'Només Recursos Humans')}</option><option value="docente"${s.ambito === 'docente' ? ' selected' : ''}>🎓 ${acL('Docente externo (solo Aula Virtual)', 'Docent extern (només Aula Virtual)')}</option></select></label>` : ''}
+          <div class="eq-sws">
+            ${GP_OK ? sw(s.es_rrhh, acL('Recursos Humanos', 'Recursos Humans'), `toggleRRHH('${s.email}', ${!s.es_rrhh})`) : ''}
+            ${('es_soporte' in s) ? sw(s.es_soporte, acL('Soporte técnico', 'Suport tècnic'), `toggleSoporte('${s.email}', ${!s.es_soporte})`, acL('Recibe las incidencias de soporte técnico', 'Rep les incidències de suport tècnic')) : ''}
+            ${('acepta_citas' in s) ? sw(atiendeCitas(s), acL('Atiende citas', 'Atén cites'), `toggleAtiendeCitas('${s.email}')`, acL('Sale en la lista de técnicos al pedir cita en Logos Acompanya', 'Surt a la llista de tècnics en demanar cita a Logos Acompanya')) : ''}
+            ${(DELEGACION_OK && !s.es_admin && s.ambito !== 'jovenes') ? sw(s.gestiona_alertas, acL('Reparte alertas', 'Reparteix alertes'), `toggleGestorAlertas('${s.email}', ${!s.gestiona_alertas})`) : ''}
+          </div></div>` : ''}
+        <div class="eq-blq"><h5>${acL('Cuenta', 'Compte')}</h5><div class="eq-acc">
+          <button type="button" class="link-btn" onclick="editarNombreTecnico('${s.email}')">✏️ ${acL('Cambiar nombre', 'Canviar nom')}</button>
+          <button type="button" class="link-btn" onclick="enviarEnlaceClave('${s.email}')">🔑 ${acL('Enviar enlace de contraseña', 'Enviar enllaç de contrasenya')}</button>
+          ${!baja ? `<button type="button" class="link-btn" onclick="mfaReiniciarPersona('${s.email}')">🔐 ${acL('Reiniciar los 2 pasos (móvil nuevo)', 'Reiniciar els 2 passos (mòbil nou)')}</button>` : ''}
+          ${(!baja && !esYo) ? `<button type="button" class="link-btn" onclick="verComo('${s.email}')">👁️ ${acL('Ver la intranet como esta persona', 'Veure la intranet com aquesta persona')}</button>` : ''}
+        </div></div>
+        ${!esYo ? `<div class="eq-blq eq-peligro"><h5>${acL('Alta y baja', 'Alta i baixa')}</h5><div class="eq-acc">
+          <button type="button" class="link-btn" onclick="toggleActivoTecnico('${s.email}', ${baja})">${baja ? '✅ ' + t.reactivar : '⏸️ ' + t.desactivar}</button>
+          <button type="button" class="link-btn" style="color:var(--alert);" onclick="quitarTecnico('${s.email}')">🗑️ ${acL('Quitar de la plataforma', 'Treure de la plataforma')}</button>
+        </div></div>` : ''}
+      </div></details>
+    </article>`;
+  };
+  return `<div class="eq-bar"><input type="search" class="eq-q" placeholder="🔍 ${acL('Buscar por nombre o correo…', 'Cercar per nom o correu…')}" aria-label="${acL('Buscar en el equipo', 'Cercar a l\'equip')}" oninput="admEquipoFiltrar()">
+      <button type="button" class="primary-btn eq-nuevo" onclick="document.getElementById('admin-nuevo-email').scrollIntoView({behavior:'smooth',block:'center'});document.getElementById('admin-nuevo-email').focus()">➕ ${acL('Añadir persona', 'Afegir persona')}</button></div>
+    <div class="eq-fil" role="group" aria-label="${acL('Filtrar', 'Filtrar')}">${filtros.map(([k, tx, n], i) => `<button type="button" data-f="${k}" class="${k === 'activos' ? 'on' : ''}" aria-pressed="${k === 'activos'}" onclick="this.parentNode.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',b===this);b.setAttribute('aria-pressed',b===this)});admEquipoFiltrar()">${tx} <b>${n}</b></button>`).join('')}</div>
+    <div class="eq-grid">${ord.map(card).join('')}</div><div class="eq-vacio" hidden>${acL('Nadie coincide con la búsqueda.', 'Ningú coincideix amb la cerca.')}</div>
+    <h4 class="eq-alta-h">➕ ${acL('Añadir una persona al equipo', 'Afegir una persona a l\'equip')}</h4>`;
+}
+function admEquipoFiltrar(){
+  const q = normTxt((document.querySelector('.eq-q') || {}).value || ''), f = (document.querySelector('.eq-fil button.on') || {}).dataset?.f || 'todos';
+  let n = 0;
+  document.querySelectorAll('.eq-card').forEach(c => { const ok = (!q || c.dataset.q.includes(q)) && (f === 'todos' || c.dataset.f.split(' ').includes(f)); c.hidden = !ok; if(ok) n++; });
+  const v = document.querySelector('.eq-vacio'); if(v) v.hidden = !!n;
+}
+// Pantalla Administrador con cabecera, buscador y menú lateral (como Proyectos): se ve un apartado cada vez
+const ADM_NOMBRES = { personal: ['Equipo: personas y permisos', 'Equip: persones i permisos'], carga: ['Carga de trabajo', 'Càrrega de treball'] };
+const ADM_CLAVES_BUSCA = { personal: 'equipo personal tecnicos tecnico permisos roles usuarios cuentas contraseña clave 2fa dos pasos ver como docente rrhh soporte admin alta baja',
+  reparto: 'alertas reparto avisos turno', carga: 'carga trabajo atenciones por tecnico', oficina: 'ubicacion direccion mapa oficina fichar lejos', proyectos: 'proyectos', historia: 'historia web cifras impacto años',
+  noticias: 'noticias recordatorios avisos intranet', horarios: 'horarios turnos jornada', fichajes: 'fichajes fichar entrada salida jornada horas', revisiones: 'revisiones fechas seguimiento',
+  incompletos: 'fichas incompletas datos faltan dni telefono', historial: 'historial personas cambios', fuera: 'necesidades fuera catalogo', atenciones: 'registro atenciones', actuaciones: 'expedientes actuaciones tramites registro',
+  salas: 'salas mesas reuniones ocupacion', traductor: 'traductor traducciones idiomas' };
+function admLayout(cont){
+  const carpetas = [...cont.children].filter(el => el.matches && el.matches('details.carpeta[data-clave^="adm-sec:"]'));
+  if(!carpetas.length) return;
+  const ca = LANG_I === 'ca';
+  const info = carpetas.map(c => {
+    const k = c.dataset.clave.slice(8), sum = c.querySelector(':scope > summary'), cu = sum.querySelector('.carpeta-cuenta');
+    const sp = [...sum.querySelectorAll(':scope > span')].filter(x => !x.classList.contains('carpeta-cuenta'));
+    let ic = sp.length > 1 && sp[0].textContent.trim().length <= 3 ? sp[0].textContent.trim() : '';
+    let tit = (ADM_NOMBRES[k] ? ADM_NOMBRES[k][ca ? 1 : 0] : (sp.length > 1 ? sp[1] : sp[0] || sum).textContent.trim());
+    const em = tit.match(/^(\p{Extended_Pictographic}\uFE0F?)\s*(.*)$/u);
+    if(em){ if(!ic) ic = em[1]; tit = em[2]; }
+    if(!ic) ic = '📁';
+    return { k, c, ic, tit, n: cu ? cu.textContent.trim() : '' };
+  });
+  const grupos = [...ADM_GRUPOS, { id: 'otros', ic: '📦', es: 'Otros', ca: 'Altres', claves: null }];
+  const usadas = new Set(), menuG = [];
+  grupos.forEach(g => { const mias = info.filter(x => g.claves ? g.claves.includes(x.k) : !usadas.has(x.k)); if(g.claves) mias.sort((a, b) => g.claves.indexOf(a.k) - g.claves.indexOf(b.k)); mias.forEach(x => usadas.add(x.k)); if(mias.length) menuG.push({ g, mias }); });
+  const staff = window.__staffLista || [], activos = staff.filter(s => s.activo !== false).length;
+  const nDe = k => { const x = info.find(i => i.k === k); return x && x.n !== '' ? x.n : '—'; };
+  const kpi = (ic, v, tx, k) => `<button class="pj-kpi" onclick="admSel('${k}')"><span class="pj-kpi-i">${ic}</span><span><strong>${v}</strong><small>${tx}</small></span></button>`;
+  const lay = document.createElement('div');
+  lay.innerHTML = `<div class="pj-hero adm-hero">
+      <div class="pj-hero-top"><span class="pj-ic">🛡️</span><div class="pj-hero-t"><small>${ca ? 'Només administració' : 'Solo administración'}</small><h2>${ca ? 'Administració' : 'Administración'}</h2><p>${ca ? 'Escriu el que busques o tria-ho al menú.' : 'Escribe lo que buscas o elígelo en el menú.'}</p></div></div>
+      <div class="adm-busca"><span aria-hidden="true">🔍</span><input type="search" id="adm-q" autocomplete="off" placeholder="${ca ? 'Ex.: horaris, fitxatges, un nom, contrasenya, sales…' : 'Ej.: horarios, fichajes, un nombre, contraseña, salas…'}" aria-label="${ca ? 'Cercar a l\'administració' : 'Buscar en la administración'}" oninput="admBuscar(this.value)" onkeydown="if(event.key==='Enter'){const b=document.querySelector('.adm-menu .cmp-mi:not([hidden])'); if(b) b.click();}"></div>
+      <div id="adm-q-res" class="adm-q-res" role="status"></div>
+      <div class="pj-kpis">${kpi('👥', activos, ca ? 'Persones actives a l\'equip' : 'Personas activas en el equipo', 'personal')}${kpi('🧩', nDe('incompletos'), ca ? 'Fitxes incompletes' : 'Fichas incompletas', 'incompletos')}${kpi('🗂️', nDe('atenciones'), ca ? 'Atencions registrades' : 'Atenciones registradas', 'atenciones')}${kpi('🕒', nDe('fichajes'), ca ? 'Fitxatges' : 'Fichajes', 'fichajes')}</div>
+    </div>
+    <div class="cmp pj-cmp adm-cmp"><nav class="cmp-menu adm-menu" aria-label="${ca ? 'Apartats de l\'administració' : 'Apartados de la administración'}">
+      ${menuG.map(({ g, mias }) => `<div class="gp-menu-h">${g.ic} ${ca ? g.ca : g.es}</div>${mias.map(x => `<button class="cmp-mi" data-k="${x.k}" onclick="admSel('${x.k}')"><span>${x.ic}</span><span class="adm-mi-t">${escAttr(x.tit)}</span>${x.n !== '' && x.n !== '0' ? `<span class="cmp-n">${escAttr(x.n)}</span>` : ''}</button>`).join('')}`).join('<div class="cmp-mi-sep"></div>')}
+    </nav><div class="cmp-main adm-main"><h3 class="pj-h" id="adm-h"></h3></div></div>`;
+  cont.insertBefore(lay, carpetas[0]);
+  const main = lay.querySelector('.adm-main');
+  info.forEach(x => { x.c.open = true; main.appendChild(x.c); });
+  window.__admInfo = info.map(x => ({ k: x.k, ic: x.ic, tit: x.tit }));
+  let sel = null; try { sel = localStorage.getItem('adm-sel'); } catch(e){}
+  admSel(info.some(x => x.k === sel) ? sel : (info.some(x => x.k === 'personal') ? 'personal' : info[0].k), true);
+}
+function admSel(k, sinScroll){
+  const info = (window.__admInfo || []).find(x => x.k === k); if(!info) return;
+  document.querySelectorAll('.adm-main > details.carpeta').forEach(d => { const on = d.dataset.clave === 'adm-sec:' + k; d.classList.toggle('adm-on', on); if(on){ d.open = true; try { carpetaAlternar(d.dataset.clave, true); } catch(e){} } });
+  document.querySelectorAll('.adm-menu .cmp-mi').forEach(b => { const on = b.dataset.k === k; b.classList.toggle('on', on); if(on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  const h = document.getElementById('adm-h'); if(h) h.textContent = info.ic + ' ' + info.tit;
+  try { localStorage.setItem('adm-sel', k); } catch(e){}
+  if(!sinScroll){ const m = document.querySelector('.adm-main'); if(m && m.getBoundingClientRect().top < 0) m.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+function admBuscar(q){
+  const n = normTxt(q || '').trim(), res = document.getElementById('adm-q-res'), ca = LANG_I === 'ca';
+  const items = window.__admInfo || [];
+  if(!n){ document.querySelectorAll('.adm-menu .cmp-mi').forEach(b => b.hidden = false); document.querySelectorAll('.adm-menu .gp-menu-h, .adm-menu .cmp-mi-sep').forEach(b => b.hidden = false); if(res) res.innerHTML = ''; return; }
+  const enTitulo = [], enDentro = [];
+  items.forEach(x => {
+    const det = document.querySelector(`.adm-main > details.carpeta[data-clave="adm-sec:${x.k}"]`);
+    const t = normTxt(x.tit + ' ' + (ADM_CLAVES_BUSCA[x.k] || ''));
+    if(n.split(/\s+/).every(w => t.includes(w))) enTitulo.push(x);
+    else if(det && normTxt(det.textContent).includes(n)) enDentro.push(x);
+  });
+  const ok = new Set(enTitulo.concat(enDentro).map(x => x.k));
+  document.querySelectorAll('.adm-menu .cmp-mi').forEach(b => b.hidden = !ok.has(b.dataset.k));
+  document.querySelectorAll('.adm-menu .gp-menu-h, .adm-menu .cmp-mi-sep').forEach(b => b.hidden = true);
+  if(res) res.innerHTML = ok.size ? enTitulo.concat(enDentro).slice(0, 8).map(x => `<button type="button" class="adm-q-b" onclick="admSel('${x.k}')">${x.ic} ${escAttr(x.tit)}${enDentro.includes(x) ? ` <small>· ${ca ? 'hi apareix' : 'aparece aquí'}</small>` : ''}</button>`).join('') : `<span class="adm-q-no">${ca ? 'No hi ha res amb aquest nom.' : 'No hay nada con ese nombre.'}</span>`;
+  if(enTitulo.length === 1 && !enDentro.length) admSel(enTitulo[0].k, true);
 }
 // Pantalla Administrador: las carpetas se agrupan por a quién le tocan
 const ADM_GRUPOS = [
@@ -2635,7 +2893,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v186'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v190'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -12954,15 +13212,75 @@ async function renderGestionPersonal(tab){
     cont.innerHTML = gpAviso(acL('Esta parte aún no está activada. La administración debe ejecutar el SQL «gestion-personal-supabase» en Supabase.', 'Aquesta part encara no està activada. L\'administració ha d\'executar l\'SQL «gestion-personal-supabase» a Supabase.'));
     return;
   }
-  cont.innerHTML = gpPestanasHtml() + `<div id="gp-cuerpo"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`;
+  const t = window.__gpTab || 'inicio';
+  const esRH = IS_RRHH || IS_ADMIN;
+  const subsRH = esRH ? gpRrhhSubs() : [];
+  if(t === 'rrhh' && !subsRH.some(x => x[0] === window.__gpSub)) window.__gpSub = (subsRH[0] || [''])[0];
+  const mios = [['inicio', '🏠', acL('Resumen', 'Resum')], ['nominas', '🧾', acL('Mis nóminas', 'Les meves nòmines')], ['archivos', '📁', acL('Mis archivos', 'Els meus arxius')],
+    ['formacion', '🎓', acL('Mi formación', 'La meva formació')], ['comunicaciones', '📣', acL('Comunicaciones', 'Comunicacions')], ['misvac', '🌴', acL('Mis vacaciones', 'Les meves vacances')]];
+  const sel = t === 'rrhh' ? 'rh:' + window.__gpSub : t;
+  const titulo = t === 'rrhh' ? ((subsRH.find(x => x[0] === window.__gpSub) || [])[1] || 'RR. HH.') : ((mios.find(x => x[0] === t) || mios[0])[1] + ' ' + (mios.find(x => x[0] === t) || mios[0])[2]);
+  const nom = CURRENT_USER_NOMBRE || String(CURRENT_USER.email || '').split('@')[0];
+  const ini = String(nom).split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+  cont.innerHTML = `
+    <div class="pj-hero gp-hero${t === 'rrhh' ? ' gp-hero-rh' : ''}">
+      <div class="pj-hero-top"><span class="pj-ic gp-av">${t === 'rrhh' ? '💼' : escAttr(ini)}</span>
+        <div class="pj-hero-t"><small>${t === 'rrhh' ? acL('Recursos Humanos · equipo de Logos', 'Recursos Humans · equip de Logos') : acL('Mi gestión personal', 'La meva gestió personal')}</small>
+          <h2>${t === 'rrhh' ? acL('Gestión del personal', 'Gestió del personal') : escAttr(nom)}</h2>
+          <p>${t === 'rrhh' ? acL('Nóminas, horarios, vacaciones, comunicados y documentos del equipo, todo en un sitio.', 'Nòmines, horaris, vacances, comunicats i documents de l\'equip, tot en un lloc.') : acL('Tus nóminas, archivos, formación, comunicaciones y vacaciones. Solo los ves tú (y RR. HH. para gestionarlos).', 'Les teves nòmines, arxius, formació, comunicacions i vacances. Només les veus tu (i RR. HH. per gestionar-les).')}</p></div></div>
+      <div class="pj-kpis" id="gp-kpis"><div class="pj-kpi gp-kpi-cargando"><span class="pj-kpi-i">⏳</span><span><strong>…</strong><small>${TI[LANG_I].cargando}</small></span></div></div>
+    </div>
+    <div class="cmp pj-cmp gp-cmp">
+      <nav class="cmp-menu gp-menu" aria-label="${acL('Gestión de personal', 'Gestió de personal')}">
+        <div class="gp-menu-h">${acL('Lo mío', 'El meu')}</div>
+        ${mios.map(([k, ic, tx]) => `<button class="cmp-mi${sel === k ? ' on' : ''}" ${sel === k ? 'aria-current="page"' : ''} onclick="renderGestionPersonal('${k}')"><span>${ic}</span>${tx}<span class="cmp-n" id="gp-n-${k}" style="display:none;"></span></button>`).join('')}
+        ${esRH ? `<div class="cmp-mi-sep"></div><div class="gp-menu-h">${IS_RRHH ? acL('Recursos Humanos', 'Recursos Humans') : acL('Administración', 'Administració')}</div>
+        ${subsRH.map(([k, tx]) => { const m = String(tx).match(/^(\p{Extended_Pictographic}\uFE0F?)\s*(.*)$/u); return `<button class="cmp-mi${sel === 'rh:' + k ? ' on' : ''}" ${sel === 'rh:' + k ? 'aria-current="page"' : ''} onclick="window.__gpSub='${k}';renderGestionPersonal('rrhh')"><span>${m ? m[1] : GP_RH_IC[k] || '•'}</span>${m ? m[2] : tx}${k === 'vacaciones' ? '<span class="cmp-n" id="gp-n-rhvac" style="display:none;background:#D6336C;color:#fff;"></span>' : ''}</button>`; }).join('')}` : ''}
+      </nav>
+      <div class="cmp-main"><section class="gp-sec"><h3 class="pj-h">${escAttr(titulo)}</h3><div id="gp-cuerpo"><div class="placeholder">${TI[LANG_I].cargando}</div></div></section></div>
+    </div>`;
+  gpPintarKpis(t);
   const cuerpo = document.getElementById('gp-cuerpo');
-  const t = window.__gpTab;
   if(t === 'nominas') await gpRenderNominas(cuerpo);
   else if(t === 'archivos') await gpRenderArchivos(cuerpo);
   else if(t === 'formacion') await gpRenderFormacion(cuerpo);
   else if(t === 'comunicaciones') await gpRenderComunicaciones(cuerpo);
-  else if(t === 'rrhh' && (IS_RRHH || IS_ADMIN)) await gpRenderRrhh(cuerpo);
+  else if(t === 'rrhh' && (IS_RRHH || IS_ADMIN)) await gpRenderRrhh(cuerpo, true);
+  else if(t === 'misvac'){ cuerpo.innerHTML = `<div class="panel-card vac-card" id="vac-mias" style="margin:0;"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`; await vacPintarMias(); }
   else await gpRenderInicio(cuerpo);
+}
+const GP_RH_IC = { resumen: '🔔', nominas: '🧾', personas: '👥', horarios: '🕘', vacaciones: '🌴', comunicados: '📣', avisos: '📰', docgen: '📄', registro: '📋' };
+// Cifras de la cabecera (se pulsan para ir a cada apartado)
+async function gpPintarKpis(t){
+  const host = document.getElementById('gp-kpis'); if(!host) return;
+  const k = (ic, v, tx, on, cls) => `<button class="pj-kpi${cls ? ' ' + cls : ''}" onclick="${on}"><span class="pj-kpi-i">${ic}</span><span><strong>${v}</strong><small>${tx}</small></span></button>`;
+  try {
+    if(t === 'rrhh'){
+      const hoy = new Date(), mes = hoy.getMonth() === 0 ? 12 : hoy.getMonth(), anio = hoy.getMonth() === 0 ? hoy.getFullYear() - 1 : hoy.getFullYear(), hoyIso = isoLocal(), en30 = isoLocal(new Date(Date.now() + 30 * 864e5));
+      const [st, nm, vp, va] = await Promise.all([
+        sb.from('staff').select('email').eq('activo', true),
+        sb.from('personal_nominas').select('persona_email').eq('anio', anio).eq('mes', mes),
+        sb.from('vacaciones_solicitudes').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente'),
+        sb.from('vacaciones_solicitudes').select('persona_email, desde, hasta, desde_aprobado, hasta_aprobado, estado').in('estado', ['aprobada', 'modificada'])
+      ]);
+      const act = (st.data || []).map(x => String(x.email).toLowerCase()), con = new Set((nm.data || []).map(x => String(x.persona_email).toLowerCase()));
+      const faltan = act.filter(e => !con.has(e)).length, pend = vp.error ? 0 : (vp.count || 0);
+      const ausentes = va.error ? 0 : new Set((va.data || []).filter(v => (v.desde_aprobado || v.desde) <= en30 && (v.hasta_aprobado || v.hasta) >= hoyIso).map(v => v.persona_email)).size;
+      host.innerHTML = k('👥', act.length, acL('Personas en el equipo', 'Persones a l\'equip'), "window.__gpSub='personas';renderGestionPersonal('rrhh')")
+        + k(faltan ? '🧾' : '✅', faltan || acL('Todas', 'Totes'), faltan ? acL(`Sin nómina de ${gpMes(mes)}`, `Sense nòmina de ${gpMes(mes)}`) : acL(`Nóminas de ${gpMes(mes)} subidas`, `Nòmines de ${gpMes(mes)} pujades`), "window.__gpSub='nominas';renderGestionPersonal('rrhh')", faltan ? 'ct-kpi-av' : '')
+        + k('🌴', pend, acL('Vacaciones por revisar', 'Vacances per revisar'), "window.__gpSub='vacaciones';renderGestionPersonal('rrhh')", pend ? 'ct-kpi-av' : '')
+        + k('🗓️', ausentes, acL('Ausencias en los próximos 30 días', 'Absències els propers 30 dies'), "window.__gpSub='vacaciones';renderGestionPersonal('rrhh')");
+      const b = document.getElementById('gp-n-rhvac'); if(b && pend){ b.textContent = pend; b.style.display = ''; }
+    } else {
+      const r = await gpResumen(), n = r.nomina;
+      host.innerHTML = k('🧾', n ? `${escAttr(gpMes(n.mes))} ${n.anio}` : '—', n ? (n.visto_en ? acL('Tu última nómina', 'La teva darrera nòmina') : '🔵 ' + acL('Nómina nueva sin abrir', 'Nòmina nova sense obrir')) : acL('Aún no hay nóminas', 'Encara no hi ha nòmines'), "renderGestionPersonal('nominas')", n && !n.visto_en ? 'ct-kpi-av' : '')
+        + k('📣', r.sinLeer, r.sinLeer ? (r.pendientesConfirmar ? acL('Comunicaciones por confirmar', 'Comunicacions per confirmar') : acL('Comunicaciones sin leer', 'Comunicacions sense llegir')) : acL('Comunicaciones al día', 'Comunicacions al dia'), "renderGestionPersonal('comunicaciones')", r.sinLeer ? 'ct-kpi-av' : '')
+        + k('📁', r.docs, acL('Mis archivos', 'Els meus arxius'), "renderGestionPersonal('archivos')")
+        + k('🎓', r.forms, acL('Cursos y certificados', 'Cursos i certificats'), "renderGestionPersonal('formacion')");
+      const sc = document.getElementById('gp-n-comunicaciones'); if(sc && r.sinLeer){ sc.textContent = r.sinLeer; sc.style.display = ''; }
+      const sn = document.getElementById('gp-n-nominas'); if(sn && n && !n.visto_en){ sn.textContent = '1'; sn.style.display = ''; }
+    }
+  } catch(e){ host.innerHTML = ''; }
 }
 
 // ---------- resumen y tarjetas ----------
@@ -12998,8 +13316,15 @@ async function gpPintarTarjetas(cont){
   } catch(e) {}
 }
 async function gpRenderInicio(cuerpo){
-  const r = await gpResumen();
-  cuerpo.innerHTML = gpTarjetasHtml(r) + `<div class="panel-card"><h3 style="margin-top:0;">🔒 ${acL('Tu información es privada', 'La teva informació és privada')}</h3>
+  const ca = LANG_I === 'ca';
+  const ir = (k, ic, t, d) => `<button class="gp-ir" onclick="renderGestionPersonal('${k}')"><span>${ic}</span><strong>${t}</strong><small>${d}</small></button>`;
+  cuerpo.innerHTML = `<div class="gp-irs">
+      ${ir('nominas', '🧾', acL('Mis nóminas', 'Les meves nòmines'), acL('Ábrelas y descárgalas en PDF', 'Obre-les i descarrega-les en PDF'))}
+      ${ir('archivos', '📁', acL('Mis archivos', 'Els meus arxius'), acL('Contrato, certificados y documentos', 'Contracte, certificats i documents'))}
+      ${ir('formacion', '🎓', acL('Mi formación', 'La meva formació'), acL('Cursos y certificados', 'Cursos i certificats'))}
+      ${ir('comunicaciones', '📣', acL('Comunicaciones', 'Comunicacions'), acL('Avisos de RR. HH. para leer', 'Avisos de RR. HH. per llegir'))}
+      ${ir('misvac', '🌴', acL('Mis vacaciones', 'Les meves vacances'), acL('Pedir días y ver si están aprobados', 'Demanar dies i veure si estan aprovats'))}
+    </div>` + `<div class="panel-card"><h3 style="margin-top:0;">🔒 ${acL('Tu información es privada', 'La teva informació és privada')}</h3>
     <p class="subtle" style="margin:0;font-size:13px;line-height:1.55;">${acL('Solo tú ves tus nóminas, tus archivos y tus formaciones; y quien lleva Recursos Humanos para poder gestionarlas. Cada apertura queda anotada.', 'Només tu veus les teves nòmines, els teus arxius i les teves formacions; i qui porta Recursos Humans per poder gestionar-les. Cada obertura queda anotada.')}</p></div>`;
 }
 
@@ -13168,12 +13493,17 @@ async function gpConfirmarLectura(i){
 }
 
 // ---------- RR. HH. y comunicados ----------
-async function gpRenderRrhh(cuerpo){
+function gpRrhhSubs(){
   const subs = IS_RRHH ? [['resumen', '🔔 ' + acL('Pendientes', 'Pendents')], ['nominas', acL('Cargar nóminas', 'Carregar nòmines')], ['personas', acL('Por persona', 'Per persona')], ['comunicados', acL('Comunicados', 'Comunicats')], ['avisos', acL('Noticias y recordatorios', 'Notícies i recordatoris')], ['docgen', acL('Documentos generales', 'Documents generals')], ['registro', acL('Registro', 'Registre')]] : [['comunicados', acL('Comunicados', 'Comunicats')]];
   if(IS_RRHH || IS_RRHH_SOLO || IS_ADMIN) subs.splice(IS_RRHH ? 3 : 1, 0, ['horarios', '🕘 ' + acL('Horarios del personal', 'Horaris del personal')]);
   if(IS_RRHH || IS_RRHH_SOLO || IS_ADMIN) subs.splice(IS_RRHH ? 4 : 2, 0, ['vacaciones', '🌴 ' + acL('Vacaciones', 'Vacances')]);
+  return subs.map(([k, t]) => [k, /^\p{Extended_Pictographic}/u.test(t) ? t : (GP_RH_IC[k] || '•') + ' ' + t]);
+}
+async function gpRenderRrhh(cuerpo, sinPestanas){
+  const subs = gpRrhhSubs();
   if(!subs.some(s => s[0] === window.__gpSub)) window.__gpSub = subs[0][0];
-  cuerpo.innerHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">${subs.map(([k, t]) => `<button class="link-btn" style="font-size:12.5px;border:1px solid ${window.__gpSub === k ? 'var(--gold)' : 'var(--line)'};background:${window.__gpSub === k ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:3px 12px;" onclick="window.__gpSub='${k}';renderGestionPersonal('rrhh')">${t}</button>`).join('')}</div><div id="gp-rrhh-cuerpo"></div>`;
+  if(sinPestanas) cuerpo.innerHTML = '<div id="gp-rrhh-cuerpo"></div>';
+  else cuerpo.innerHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">${subs.map(([k, t]) => `<button class="link-btn" style="font-size:12.5px;border:1px solid ${window.__gpSub === k ? 'var(--gold)' : 'var(--line)'};background:${window.__gpSub === k ? 'var(--gold-soft)' : 'transparent'};border-radius:999px;padding:3px 12px;" onclick="window.__gpSub='${k}';renderGestionPersonal('rrhh')">${t}</button>`).join('')}</div><div id="gp-rrhh-cuerpo"></div>`;
   const c = document.getElementById('gp-rrhh-cuerpo');
   if(window.__gpSub === 'resumen') await gpRrhhResumen(c);
   else if(window.__gpSub === 'avisos') await gpRrhhAvisos(c);
@@ -16487,7 +16817,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-30 · v186 (el histórico cuenta: cada fila de los Excel antiguos es una vez atendida, en la ficha, en Informes › Registro («Desde el inicio») y en las cifras; Inicio: «Veces que hemos atendido» junto a las personas atendidas; veces que ha sido atendida cada persona: en su ficha y en Informes › Registro, con texto para la memoria y Excel por persona; «Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-30 · v190 (Gestión de personal con cabecera y menú lateral; Administración con buscador, cabecera y menú lateral; Equipo en tarjetas con buscador, filtros y «Gestionar»; Canal: vídeos (YouTube, Vimeo o MP4) en noticias, eventos y publicidad; Canal: publicidad de entidades con contrato (imagen propia o diseño con colores), con vistas y clics; 📣 Canal: noticias, eventos con agenda y calendario, anuncios y convocatorias que salen en la web y en Logos Acompanya; el histórico cuenta: cada fila de los Excel antiguos es una vez atendida, en la ficha, en Informes › Registro («Desde el inicio») y en las cifras; Inicio: «Veces que hemos atendido» junto a las personas atendidas; veces que ha sido atendida cada persona: en su ficha y en Informes › Registro, con texto para la memoria y Excel por persona; «Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -16760,6 +17090,272 @@ async function infRegistroPintar(recargar){
       ${Object.entries(porCat).sort((a, b) => b[1] - a[1]).map(([c, n]) => `<div class="panel-stat-row"><span>${escAttr(c)}</span><span><b>${n}</b></span></div>`).join('')}
     </div></details>`;
 }
+
+// ================= 📣 CANAL: noticias, eventos (agenda) y anuncios para la web y Logos Acompanya (SQL-65) =================
+const CANAL_TIPOS = { noticia: ['📰', 'Noticia', 'Notícia'], evento: ['📅', 'Evento', 'Esdeveniment'], anuncio: ['📢', 'Anuncio', 'Anunci'], convocatoria: ['📝', 'Convocatoria', 'Convocatòria'], publicidad: ['💼', 'Publicidad', 'Publicitat'] };
+// Vídeos del canal (YouTube, Vimeo o MP4 subido): solo se cargan al pulsar ▶
+function canalVid(u){
+  u = String(u || '').trim(); let m;
+  if((m = u.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([\w-]{11})/i))) return { t: 'yt', src: 'https://www.youtube-nocookie.com/embed/' + m[1] + '?autoplay=1&rel=0', thumb: 'https://i.ytimg.com/vi/' + m[1] + '/hqdefault.jpg' };
+  if((m = u.match(/vimeo\.com\/(?:video\/)?(\d+)/i))) return { t: 'vimeo', src: 'https://player.vimeo.com/video/' + m[1] + '?autoplay=1&dnt=1' };
+  if(/^https:\/\/[^\s"'<>]+\.(mp4|webm|mov|m4v)(\?[^\s"'<>]*)?$/i.test(u)) return { t: 'mp4', src: u };
+  return null;
+}
+function canalVidHtml(url, poster, nombre, etiqueta, esc){
+  const v = canalVid(url); if(!v) return '';
+  const p = poster || v.thumb || '';
+  return '<div class="vid" data-src="' + esc(v.src) + '" data-t="' + v.t + '"><button type="button" class="vid-play" aria-label="' + esc(etiqueta + ': ' + nombre) + '"' + (p ? ' style="background-image:url(\'' + esc(p) + '\')"' : '') + '><span aria-hidden="true">▶</span></button></div>';
+}
+if(!window.__vidClick){ window.__vidClick = true;
+  document.addEventListener('click', function(e){
+    const b = e.target.closest && e.target.closest('.vid-play'); if(!b) return;
+    e.preventDefault(); e.stopPropagation();
+    const w = b.parentNode, src = w.getAttribute('data-src'), t = w.getAttribute('data-t'); let el;
+    if(t === 'mp4'){ el = document.createElement('video'); el.controls = true; el.autoplay = true; el.setAttribute('playsinline', ''); el.src = src; }
+    else { el = document.createElement('iframe'); el.src = src; el.title = 'Vídeo'; el.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen'); el.setAttribute('allowfullscreen', ''); }
+    w.innerHTML = ''; w.appendChild(w.ownerDocument.createTextNode('')); w.appendChild(el); w.classList.add('on');
+    try { window.dispatchEvent(new Event('logos-video')); } catch(_){}
+    setTimeout(function(){ try { el.focus(); } catch(_){} }, 50);
+  }, true);
+}
+
+// Diseños para la publicidad sin imagen: [fondo 1, fondo 2, texto, botón]
+const CANAL_ESTILOS = { azul: ['#16325A', '#1F66C1', '#FFFFFF', '#F2BC2C', 'Azul Logos'], oro: ['#F2BC2C', '#FFE08A', '#16325A', '#16325A', 'Dorado'], verde: ['#14532D', '#2E8B57', '#FFFFFF', '#FDE68A', 'Verde'], coral: ['#9A3412', '#EA580C', '#FFFFFF', '#FFF4D6', 'Coral'], violeta: ['#3B0764', '#7C3AED', '#FFFFFF', '#FDE68A', 'Violeta'], noche: ['#0F172A', '#334155', '#FFFFFF', '#F2BC2C', 'Noche'] };
+// Pinta un anuncio: con su imagen (diseño de la entidad) o con un diseño hecho aquí con los colores elegidos
+function canalAnuncioHtml(x, ca){
+  const e = CANAL_ESTILOS[x.estilo] || CANAL_ESTILOS.azul, tit = ca && x.titulo_ca ? x.titulo_ca : x.titulo, tx = ca && x.texto_ca ? x.texto_ca : (x.texto || '');
+  const et = `<span class="anu-et">${ca ? 'Publicitat' : 'Publicidad'} · ${escAttr(x.entidad || '')}</span>`;
+  const cta = x.enlace ? `<span class="anu-cta" style="background:${e[3]};color:${e[0]};">${escAttr(x.enlace_texto || (ca ? 'Més informació' : 'Más información'))} →</span>` : '';
+  if(x.video_url && canalVid(x.video_url)) return `<div class="anu anu-vid" style="background:linear-gradient(135deg,${e[0]},${e[1]});color:${e[2]};">${et}${canalVidHtml(x.video_url, x.imagen_url, tit, ca ? 'Veure el vídeo' : 'Ver el vídeo', escAttr)}<div class="anu-t"><strong>${escAttr(tit)}</strong>${tx ? `<p>${escAttr(tx.slice(0, 160))}</p>` : ''}${cta}</div></div>`;
+  if(x.imagen_url && x.formato !== 'cuadrado') return `<div class="anu anu-img">${et}<img src="${escAttr(x.imagen_url)}" alt="${escAttr(tit)}"></div>`;
+  return `<div class="anu anu-${x.formato === 'cuadrado' ? 'cua' : 'hor'}" style="background:linear-gradient(135deg,${e[0]},${e[1]});color:${e[2]};">${et}
+    ${x.imagen_url ? `<img class="anu-foto" src="${escAttr(x.imagen_url)}" alt="">` : '<i class="anu-deco" aria-hidden="true"></i>'}
+    <div class="anu-t"><strong>${escAttr(tit)}</strong>${tx ? `<p>${escAttr(tx.slice(0, 160))}</p>` : ''}${cta}</div></div>`;
+}
+window.__canal = window.__canal || { filtro: 'todas', mes: null, lista: [] };
+function canalEstado(x){
+  const hoy = isoLocal(), ahora = new Date().toISOString();
+  if(x.estado === 'borrador') return ['borrador', acL('Borrador', 'Esborrany'), '#6B7280'];
+  if(x.estado === 'retirado') return ['retirado', acL('Retirada', 'Retirada'), '#9CA3AF'];
+  if(x.publicar_desde && x.publicar_desde > ahora) return ['prog', acL('Programada', 'Programada'), '#7C5CD6'];
+  if((x.publicar_hasta && x.publicar_hasta <= ahora) || (x.fecha_evento && (x.fecha_fin || x.fecha_evento) < hoy)) return ['caducada', acL('Ya pasó', 'Ja ha passat'), '#9CA3AF'];
+  return ['vivo', acL('Publicada', 'Publicada'), '#2E8B47'];
+}
+function canalFechaTxt(x){
+  if(!x.fecha_evento) return '';
+  const f = d => new Date(d + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  return f(x.fecha_evento) + (x.fecha_fin && x.fecha_fin !== x.fecha_evento ? ' → ' + f(x.fecha_fin) : '') + (x.hora_inicio ? ' · ' + String(x.hora_inicio).slice(0, 5) + (x.hora_fin ? '–' + String(x.hora_fin).slice(0, 5) : '') : '');
+}
+async function renderCanal(){
+  const c = document.getElementById('canal-content'); if(!c) return;
+  c.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const { data, error } = await sb.from('canal_publicaciones').select('*').order('creado_en', { ascending: false }).limit(400);
+  if(error){ c.innerHTML = `<div class="empty-note">${/canal_publicaciones|schema cache|does not exist/i.test(error.message || '') ? acL('El canal se activa con el SQL-65 en Supabase.', 'El canal s\'activa amb l\'SQL-65 a Supabase.') : escAttr(error.message)}</div>`; return; }
+  const st = window.__canal; st.lista = data || [];
+  const hoy = isoLocal(), L = st.lista;
+  const vivas = L.filter(x => canalEstado(x)[0] === 'vivo'), prox = L.filter(x => x.tipo === 'evento' && x.estado === 'publicado' && (x.fecha_fin || x.fecha_evento) >= hoy);
+  const borr = L.filter(x => x.estado === 'borrador');
+  c.innerHTML = `
+    <div class="canal-hero">
+      <div><h2>📣 ${acL('Canal de Logos', 'Canal de Logos')}</h2>
+        <p>${acL('Lo que publiques aquí sale solo en la <strong>web logostgn.cat</strong> y en <strong>Logos Acompanya</strong>: noticias, eventos con su fecha en la agenda, anuncios y convocatorias.', 'El que publiquis aquí surt sol al <strong>web logostgn.cat</strong> i a <strong>Logos Acompanya</strong>: notícies, esdeveniments amb la data a l\'agenda, anuncis i convocatòries.')}</p></div>
+      <button class="primary-btn" style="width:auto;margin:0;background:var(--gold);color:#16325A;" onclick="canalEditar()">➕ ${acL('Nueva publicación', 'Nova publicació')}</button>
+    </div>
+    <div class="canal-kpis">
+      <div><strong class="stat-num">${vivas.length}</strong><span>${acL('publicadas ahora', 'publicades ara')}</span></div>
+      <div><strong class="stat-num">${prox.length}</strong><span>${acL('eventos próximos', 'esdeveniments propers')}</span></div>
+      <div><strong class="stat-num">${borr.length}</strong><span>${acL('borradores', 'esborranys')}</span></div>
+    </div>
+    <div class="canal-cols">
+      <div>
+        <div class="canal-filtros" role="tablist">${[['todas', acL('Todas', 'Totes')], ['vivo', acL('Publicadas', 'Publicades')], ['evento', acL('Agenda', 'Agenda')], ['publicidad', acL('Publicidad', 'Publicitat')], ['borrador', acL('Borradores', 'Esborranys')], ['retirado', acL('Retiradas y pasadas', 'Retirades i passades')]].map(([k, t]) => `<button role="tab" aria-selected="${st.filtro === k}" class="${st.filtro === k ? 'on' : ''}" onclick="window.__canal.filtro='${k}';canalPintarLista()">${t}</button>`).join('')}</div>
+        <div id="canal-lista"></div>
+      </div>
+      <aside class="canal-cal-box"><h3>🗓️ ${acL('Calendario', 'Calendari')}</h3><div id="canal-cal"></div><p class="subtle" style="font-size:12px;margin:8px 0 0;">${acL('Los días con evento salen marcados. Tócalos para verlos.', 'Els dies amb esdeveniment surten marcats. Toca\'ls per veure\'ls.')}</p></aside>
+    </div>`;
+  canalPintarLista(); canalPintarCal();
+}
+function canalPintarLista(){
+  const st = window.__canal, host = document.getElementById('canal-lista'); if(!host) return;
+  document.querySelectorAll('.canal-filtros button').forEach(b => { const on = b.getAttribute('onclick').includes(`'${st.filtro}'`); b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
+  const hoy = isoLocal();
+  let L = st.lista.slice();
+  if(st.filtro === 'vivo') L = L.filter(x => ['vivo', 'prog'].includes(canalEstado(x)[0]));
+  else if(st.filtro === 'evento') L = L.filter(x => x.tipo === 'evento' && x.estado !== 'retirado' && (x.fecha_fin || x.fecha_evento) >= hoy).sort((a, b) => a.fecha_evento.localeCompare(b.fecha_evento));
+  else if(st.filtro === 'borrador') L = L.filter(x => x.estado === 'borrador');
+  else if(st.filtro === 'publicidad') L = L.filter(x => x.tipo === 'publicidad');
+  else if(st.filtro === 'retirado') L = L.filter(x => ['retirado', 'caducada'].includes(canalEstado(x)[0]));
+  if(st.dia) L = L.filter(x => x.fecha_evento && x.fecha_evento <= st.dia && (x.fecha_fin || x.fecha_evento) >= st.dia);
+  const yo = String(CURRENT_USER.email || '').toLowerCase();
+  host.innerHTML = (st.dia ? `<div class="canal-dia">📅 ${new Date(st.dia + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, { weekday: 'long', day: 'numeric', month: 'long' })} <button class="link-btn" onclick="window.__canal.dia=null;canalPintarLista();canalPintarCal()">✕ ${acL('Quitar filtro', 'Treure filtre')}</button></div>` : '')
+    + (L.map(x => {
+      const t = CANAL_TIPOS[x.tipo] || CANAL_TIPOS.noticia, e = canalEstado(x), mio = String(x.autor_email || '').toLowerCase() === yo, puede = IS_ADMIN || mio;
+      return `<article class="canal-item">
+        ${x.tipo === 'publicidad' ? `<div class="canal-anu-mini">${canalAnuncioHtml(x, LANG_I === 'ca')}</div>` : (x.imagen_url ? `<img src="${escAttr(x.imagen_url)}" alt="" loading="lazy">` : `<div class="canal-ic" aria-hidden="true">${t[0]}</div>`)}
+        <div class="canal-x">
+          <div class="canal-meta"><span class="canal-tipo t-${x.tipo}">${t[0]} ${acL(t[1], t[2])}</span><span class="canal-est" style="--c:${e[2]}">● ${e[1]}</span>${x.destacado ? `<span class="canal-dest">⭐ ${acL('Destacada', 'Destacada')}</span>` : ''}${x.video_url ? `<span class="canal-dest" style="color:#7C3AED;">🎬 ${acL('Con vídeo', 'Amb vídeo')}</span>` : ''}</div>
+          <h4>${escAttr(LANG_I === 'ca' && x.titulo_ca ? x.titulo_ca : x.titulo)}</h4>
+          ${x.fecha_evento ? `<p class="canal-cuando">🗓️ ${escAttr(canalFechaTxt(x))}${x.lugar ? ' · 📍 ' + escAttr(x.lugar) : ''}</p>` : ''}
+          ${x.texto ? `<p class="canal-txt">${escAttr((LANG_I === 'ca' && x.texto_ca ? x.texto_ca : x.texto).slice(0, 220))}${(x.texto || '').length > 220 ? '…' : ''}</p>` : ''}
+          ${x.tipo === 'publicidad' ? `<p class="canal-cuando">💼 ${escAttr(x.entidad || '')}${x.publicar_hasta ? ' · ' + acL('contrato hasta el', 'contracte fins al') + ' ' + new Date(x.publicar_hasta).toLocaleDateString(TI[LANG_I].localeFecha) : ''} · 👁️ ${(x.vistas || 0).toLocaleString('es-ES')} ${acL('vistas', 'vistes')} · 👆 ${(x.clics || 0).toLocaleString('es-ES')} ${acL('clics', 'clics')}</p>` : ''}
+          <p class="canal-donde">${x.en_web ? '🌐 Web' : ''}${x.en_web && x.en_acompanya ? ' · ' : ''}${x.en_acompanya ? '📱 Logos Acompanya' : ''}${!x.en_web && !x.en_acompanya ? acL('No sale en ningún sitio', 'No surt enlloc') : ''} · ${acL('por', 'per')} ${escAttr(x.autor_nombre || x.autor_email || '—')}</p>
+          ${puede ? `<div class="canal-acc">
+            <button class="link-btn" onclick="canalEditar('${x.id}')">✏️ ${acL('Editar', 'Editar')}</button>
+            <button class="link-btn" onclick="canalEditar('${x.id}', true)">📄 ${acL('Duplicar', 'Duplicar')}</button>
+            ${x.estado === 'publicado' ? `<button class="link-btn" onclick="canalCambiarEstado('${x.id}','retirado')">🙈 ${acL('Retirar', 'Retirar')}</button>` : `<button class="link-btn" onclick="canalCambiarEstado('${x.id}','publicado')">🚀 ${acL('Publicar', 'Publicar')}</button>`}
+            <button class="link-btn" style="color:var(--alert);" onclick="canalBorrar('${x.id}')">🗑️ ${acL('Borrar', 'Esborrar')}</button>
+          </div>` : ''}
+        </div></article>`; }).join('') || `<div class="empty-note">${acL('No hay publicaciones aquí todavía.', 'Encara no hi ha publicacions aquí.')}</div>`);
+}
+function canalPintarCal(){
+  const st = window.__canal, host = document.getElementById('canal-cal'); if(!host) return;
+  const base = st.mes ? new Date(st.mes + '-01T00:00:00') : new Date(); base.setDate(1);
+  const y = base.getFullYear(), m = base.getMonth(), hoy = isoLocal();
+  const ev = st.lista.filter(x => x.fecha_evento && x.estado !== 'retirado');
+  const dias = new Date(y, m + 1, 0).getDate(), ini = (new Date(y, m, 1).getDay() + 6) % 7;
+  const iso = d => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  const nom = base.toLocaleDateString(TI[LANG_I].localeFecha, { month: 'long', year: 'numeric' });
+  const mov = k => { const d = new Date(y, m + k, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+  let celdas = ''; for(let i = 0; i < ini; i++) celdas += '<span></span>';
+  for(let d = 1; d <= dias; d++){
+    const f = iso(d), n = ev.filter(x => x.fecha_evento <= f && (x.fecha_fin || x.fecha_evento) >= f);
+    celdas += n.length ? `<button class="${f === hoy ? 'hoy ' : ''}con${st.dia === f ? ' sel' : ''}" title="${escAttr(n.map(x => x.titulo).join(' · '))}" aria-label="${d}: ${escAttr(n.map(x => x.titulo).join(', '))}" onclick="window.__canal.dia='${f}';window.__canal.filtro='todas';canalPintarLista();canalPintarCal()">${d}<i></i></button>` : `<span class="${f === hoy ? 'hoy' : ''}">${d}</span>`;
+  }
+  const sem = LANG_I === 'ca' ? ['dl', 'dt', 'dc', 'dj', 'dv', 'ds', 'dg'] : ['lu', 'ma', 'mi', 'ju', 'vi', 'sá', 'do'];
+  host.innerHTML = `<div class="canal-cal-h"><button class="link-btn" aria-label="${acL('Mes anterior', 'Mes anterior')}" onclick="window.__canal.mes='${mov(-1)}';canalPintarCal()">‹</button><strong>${escAttr(contaMayus(nom))}</strong><button class="link-btn" aria-label="${acL('Mes siguiente', 'Mes següent')}" onclick="window.__canal.mes='${mov(1)}';canalPintarCal()">›</button></div>
+    <div class="canal-cal-g">${sem.map(x => `<b>${x}</b>`).join('')}${celdas}</div>`;
+}
+function canalEditar(id, duplicar){
+  const x0 = id ? (window.__canal.lista.find(x => x.id === id) || {}) : {};
+  const x = duplicar ? Object.assign({}, x0, { id: null, estado: 'borrador', titulo: x0.titulo }) : x0;
+  const v = k => escAttr(x[k] == null ? '' : String(x[k]));
+  const dt = k => { if(!x[k]) return ''; const d = new Date(x[k]); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
+  document.getElementById('canal-ov')?.remove();
+  document.body.insertAdjacentHTML('beforeend', `<div class="canal-ov" id="canal-ov" onclick="if(event.target===this)this.remove()">
+    <form class="canal-form" onsubmit="event.preventDefault();canalGuardar('${x.id || ''}', 'publicado')">
+      <div class="canal-form-h"><h3>${x.id ? '✏️ ' + acL('Editar publicación', 'Editar publicació') : '➕ ' + acL('Nueva publicación', 'Nova publicació')}</h3><button type="button" class="link-btn" aria-label="${acL('Cerrar', 'Tancar')}" onclick="document.getElementById('canal-ov').remove()">✕</button></div>
+      <div class="canal-tipos">${Object.entries(CANAL_TIPOS).map(([k, t]) => `<label><input type="radio" name="cf-tipo" value="${k}" ${(x.tipo || 'noticia') === k ? 'checked' : ''} onchange="canalFormTipo()"><span>${t[0]} ${acL(t[1], t[2])}</span></label>`).join('')}</div>
+      <div class="field"><label>${acL('Título (castellano)', 'Títol (castellà)')} *</label><input id="cf-titulo" required minlength="3" maxlength="160" value="${v('titulo')}" oninput="canalPrevia()"></div>
+      <div class="field"><label>${acL('Título en catalán (opcional; si no, sale el castellano)', 'Títol en català (opcional; si no, surt el castellà)')}</label><input id="cf-titulo-ca" maxlength="160" value="${v('titulo_ca')}"></div>
+      <div class="field"><label>${acL('Texto (castellano)', 'Text (castellà)')}</label><textarea id="cf-texto" rows="4" maxlength="5000" oninput="canalPrevia()">${v('texto')}</textarea></div>
+      <div class="field"><label>${acL('Texto en catalán (opcional)', 'Text en català (opcional)')}</label><textarea id="cf-texto-ca" rows="3" maxlength="5000">${v('texto_ca')}</textarea></div>
+      <fieldset class="canal-ev" id="cf-ev"><legend>🗓️ ${acL('Fecha del evento (sale en la agenda y el calendario)', 'Data de l\'esdeveniment (surt a l\'agenda i al calendari)')}</legend>
+        <div class="canal-fila"><label>${acL('Día', 'Dia')}<input type="date" id="cf-fecha" value="${v('fecha_evento')}" oninput="canalPrevia()"></label><label>${acL('Hasta (si dura varios días)', 'Fins a (si dura uns quants dies)')}<input type="date" id="cf-fecha-fin" value="${v('fecha_fin')}"></label></div>
+        <div class="canal-fila"><label>${acL('Hora inicio', 'Hora inici')}<input type="time" id="cf-hi" value="${x.hora_inicio ? String(x.hora_inicio).slice(0, 5) : ''}"></label><label>${acL('Hora fin', 'Hora final')}<input type="time" id="cf-hf" value="${x.hora_fin ? String(x.hora_fin).slice(0, 5) : ''}"></label></div>
+        <label>${acL('Lugar', 'Lloc')}<input id="cf-lugar" maxlength="200" value="${v('lugar')}" placeholder="${acL('Ej.: Sede de Logos, C/ … Tarragona', 'Ex.: Seu de Logos, C/ … Tarragona')}"></label>
+      </fieldset>
+      <fieldset class="canal-ev canal-pub" id="cf-pub"><legend>💼 ${acL('Publicidad de una entidad con contrato', 'Publicitat d\'una entitat amb contracte')}</legend>
+        <label>${acL('Entidad anunciante', 'Entitat anunciant')} *<input id="cf-entidad" maxlength="120" value="${v('entidad')}" oninput="canalPrevia()" placeholder="${acL('Ej.: Fundació …', 'Ex.: Fundació …')}"></label>
+        <div class="canal-fila" style="margin-top:8px;"><label>${acL('Formato', 'Format')}<select id="cf-formato" onchange="canalPrevia()"><option value="horizontal"${x.formato !== 'cuadrado' ? ' selected' : ''}>${acL('Banner ancho', 'Bàner ample')}</option><option value="cuadrado"${x.formato === 'cuadrado' ? ' selected' : ''}>${acL('Tarjeta con foto al lado', 'Targeta amb foto al costat')}</option></select></label>
+          <div class="cf-lab" role="radiogroup" aria-label="${acL('Diseño', 'Disseny')}">${acL('Diseño (si no hay imagen, o de fondo)', 'Disseny (si no hi ha imatge, o de fons)')}<span class="canal-estilos">${Object.entries(CANAL_ESTILOS).map(([k, e]) => `<label title="${e[4]}"><input type="radio" name="cf-estilo" value="${k}" ${(x.estilo || 'azul') === k ? 'checked' : ''} onchange="canalPrevia()"><span style="background:linear-gradient(135deg,${e[0]},${e[1]});"></span><i class="sr-only">${e[4]}</i></label>`).join('')}</span></div></div>
+        <p class="subtle" style="font-size:12px;margin:6px 0 0;">${acL('Si la entidad os da su anuncio ya diseñado, súbelo como imagen (mejor ancho, 1600×500). Si no, escribe el título, el texto y el botón y la app lo diseña con estos colores. Siempre sale la etiqueta «Publicidad». En «Quitar el» pon el fin del contrato.', 'Si l\'entitat us dona l\'anunci ja dissenyat, puja\'l com a imatge (millor ample, 1600×500). Si no, escriu el títol, el text i el botó i l\'app el dissenya amb aquests colors. Sempre surt l\'etiqueta «Publicitat». A «Treure el» posa el final del contracte.')}</p>
+      </fieldset>
+      <div class="field"><label>${acL('Imagen (opcional)', 'Imatge (opcional)')}</label>
+        <div class="canal-img"><input type="file" id="cf-img-f" accept="image/*" onchange="canalSubirImagen(this)"><input id="cf-img" type="url" placeholder="https://…" value="${v('imagen_url')}" oninput="canalPrevia()"><span id="cf-img-est" class="subtle" style="font-size:12px;"></span></div></div>
+      <div class="field"><label>🎬 ${acL('Vídeo (opcional): enlace de YouTube o Vimeo, o sube un vídeo corto', 'Vídeo (opcional): enllaç de YouTube o Vimeo, o puja un vídeo curt')}</label>
+        <div class="canal-img"><input id="cf-video" type="url" placeholder="https://www.youtube.com/watch?v=…" value="${v('video_url')}" oninput="canalPrevia()"><input type="file" id="cf-video-f" accept="video/mp4,video/webm,video/quicktime" onchange="canalSubirVideo(this)"><span id="cf-video-est" class="subtle" style="font-size:12px;">${acL('Mejor YouTube o Vimeo (no ocupa espacio). Si lo subes: MP4, máximo 50 MB. La imagen de arriba se usa como portada del vídeo.', 'Millor YouTube o Vimeo (no ocupa espai). Si el puges: MP4, màxim 50 MB. La imatge de dalt es fa servir com a portada del vídeo.')}</span></div></div>
+      <div class="canal-fila"><label>${acL('Enlace (opcional)', 'Enllaç (opcional)')}<input id="cf-enlace" type="url" placeholder="https://…" value="${v('enlace')}"></label><label>${acL('Texto del botón', 'Text del botó')}<input id="cf-enlace-t" maxlength="60" placeholder="${acL('Inscríbete', 'Inscriu-t\'hi')}" value="${v('enlace_texto')}"></label></div>
+      <div class="canal-checks">
+        <label><input type="checkbox" id="cf-web" ${x.en_web === false ? '' : 'checked'}> 🌐 ${acL('Web logostgn.cat', 'Web logostgn.cat')}</label>
+        <label><input type="checkbox" id="cf-acomp" ${x.en_acompanya === false ? '' : 'checked'}> 📱 Logos Acompanya</label>
+        <label><input type="checkbox" id="cf-dest" ${x.destacado ? 'checked' : ''}> ⭐ ${acL('Destacada (sale la primera)', 'Destacada (surt la primera)')}</label>
+      </div>
+      <div class="canal-fila"><label>${acL('Publicar desde', 'Publicar des de')}<input type="datetime-local" id="cf-desde" value="${dt('publicar_desde')}"></label><label>${acL('Quitar el (opcional)', 'Treure el (opcional)')}<input type="datetime-local" id="cf-hasta" value="${dt('publicar_hasta')}"></label></div>
+      <div class="canal-previa-box"><span class="subtle" style="font-size:12px;">${acL('Así se verá', 'Així es veurà')}:</span><div id="cf-previa"></div></div>
+      <div id="cf-err"></div>
+      <div class="canal-form-pie">
+        <button type="button" class="link-btn" onclick="canalGuardar('${x.id || ''}', 'borrador')">💾 ${acL('Guardar como borrador', 'Desar com a esborrany')}</button>
+        <button type="submit" class="primary-btn" style="width:auto;margin:0;">🚀 ${acL('Publicar', 'Publicar')}</button>
+      </div>
+    </form></div>`);
+  canalFormTipo(); canalPrevia();
+  setTimeout(() => document.getElementById('cf-titulo')?.focus(), 30);
+}
+function canalFormTipo(){
+  const t = (document.querySelector('input[name=cf-tipo]:checked') || {}).value || 'noticia';
+  const ev = document.getElementById('cf-ev'); if(ev) ev.style.display = t === 'evento' ? '' : 'none';
+  const pb = document.getElementById('cf-pub'); if(pb) pb.style.display = t === 'publicidad' ? '' : 'none';
+  const en = document.getElementById('cf-entidad'); if(en) en.required = t === 'publicidad';
+  const f = document.getElementById('cf-fecha'); if(f) f.required = t === 'evento';
+  canalPrevia();
+}
+function canalPrevia(){
+  const host = document.getElementById('cf-previa'); if(!host) return;
+  const t = CANAL_TIPOS[(document.querySelector('input[name=cf-tipo]:checked') || {}).value || 'noticia'];
+  const tit = document.getElementById('cf-titulo').value.trim(), tx = document.getElementById('cf-texto').value.trim(), img = document.getElementById('cf-img').value.trim(), f = document.getElementById('cf-fecha').value;
+  const tipo = (document.querySelector('input[name=cf-tipo]:checked') || {}).value;
+  const vid = ((document.getElementById('cf-video') || {}).value || '').trim();
+  if(tipo === 'publicidad'){ host.innerHTML = canalAnuncioHtml({ video_url: vid, titulo: tit || acL('Título del anuncio', 'Títol de l\'anunci'), texto: tx, imagen_url: img, entidad: (document.getElementById('cf-entidad') || {}).value || acL('Entidad', 'Entitat'), formato: (document.getElementById('cf-formato') || {}).value, estilo: (document.querySelector('input[name=cf-estilo]:checked') || {}).value, enlace: (document.getElementById('cf-enlace') || {}).value, enlace_texto: (document.getElementById('cf-enlace-t') || {}).value }, LANG_I === 'ca'); return; }
+  if(vid && !canalVid(vid)){ host.innerHTML = `<div class="auth-error">${acL('El enlace del vídeo no es de YouTube, de Vimeo ni un archivo de vídeo (.mp4).', 'L\'enllaç del vídeo no és de YouTube, de Vimeo ni un fitxer de vídeo (.mp4).')}</div>`; return; }
+  host.innerHTML = `<div class="canal-prev">${vid ? `<div style="width:200px;flex:0 0 200px;border-radius:10px;overflow:hidden;">${canalVidHtml(vid, img, tit, acL('Ver el vídeo', 'Veure el vídeo'), escAttr)}</div>` : (img ? `<img src="${escAttr(img)}" alt="">` : '')}<div><small>${t[0]} ${acL(t[1], t[2])}${f ? ' · ' + new Date(f + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, { day: 'numeric', month: 'short' }) : ''}</small><strong>${escAttr(tit || acL('Título…', 'Títol…'))}</strong><p>${escAttr(tx.slice(0, 140))}${tx.length > 140 ? '…' : ''}</p></div></div>`;
+}
+async function canalSubirImagen(inp){
+  const file = inp.files && inp.files[0]; if(!file) return;
+  const est = document.getElementById('cf-img-est'); est.textContent = '⏳ ' + acL('Subiendo…', 'Pujant…');
+  try {
+    const blob = await new Promise((ok, ko) => { const img = new Image(); img.onload = () => { const k = Math.min(1, 1600 / Math.max(img.width, img.height)); const cv = document.createElement('canvas'); cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); cv.toBlob(b => b ? ok(b) : ko(new Error('imagen')), 'image/jpeg', .85); }; img.onerror = () => ko(new Error(acL('No es una imagen válida', 'No és una imatge vàlida'))); img.src = URL.createObjectURL(file); });
+    const ruta = `${new Date().getFullYear()}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+    const { error } = await sb.storage.from('canal').upload(ruta, blob, { contentType: 'image/jpeg', upsert: false });
+    if(error) throw error;
+    const { data } = sb.storage.from('canal').getPublicUrl(ruta);
+    document.getElementById('cf-img').value = data.publicUrl; est.textContent = '✅ ' + acL('Imagen subida', 'Imatge pujada'); canalPrevia();
+  } catch(e){ est.textContent = '⚠️ ' + (/bucket|not found/i.test(e.message || '') ? acL('Falta la carpeta «canal» (SQL-65).', 'Falta la carpeta «canal» (SQL-65).') : (e.message || e)); }
+}
+async function canalSubirVideo(inp){
+  const file = inp.files && inp.files[0]; if(!file) return;
+  const est = document.getElementById('cf-video-est');
+  if(file.size > 50 * 1024 * 1024){ est.textContent = '⚠️ ' + acL(`Pesa ${(file.size / 1048576).toFixed(0)} MB y el máximo son 50 MB. Mejor súbelo a YouTube (puede ser «oculto») y pega aquí el enlace.`, `Pesa ${(file.size / 1048576).toFixed(0)} MB i el màxim són 50 MB. Millor puja'l a YouTube (pot ser «ocult») i enganxa aquí l'enllaç.`); inp.value = ''; return; }
+  est.textContent = '⏳ ' + acL('Subiendo el vídeo… no cierres esta ventana.', 'Pujant el vídeo… no tanquis aquesta finestra.');
+  try {
+    const ext = (file.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g, '') || 'mp4';
+    const ruta = `video/${new Date().getFullYear()}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext === 'mov' ? 'mov' : (ext === 'webm' ? 'webm' : 'mp4')}`;
+    const { error } = await sb.storage.from('canal').upload(ruta, file, { contentType: file.type || 'video/mp4', upsert: false });
+    if(error) throw error;
+    const { data } = sb.storage.from('canal').getPublicUrl(ruta);
+    document.getElementById('cf-video').value = data.publicUrl; est.textContent = '✅ ' + acL('Vídeo subido', 'Vídeo pujat'); canalPrevia();
+  } catch(e){ est.textContent = '⚠️ ' + (/size|large|exceed/i.test(e.message || '') ? acL('Es demasiado grande para vuestro plan de Supabase. Súbelo a YouTube y pega el enlace.', 'És massa gran per al vostre pla de Supabase. Puja\'l a YouTube i enganxa l\'enllaç.') : (e.message || e)); }
+}
+async function canalGuardar(id, estado){
+  const g = k => (document.getElementById(k) || {}).value, err = document.getElementById('cf-err');
+  const tipo = (document.querySelector('input[name=cf-tipo]:checked') || {}).value || 'noticia';
+  const titulo = (g('cf-titulo') || '').trim();
+  const fallo = m => { err.innerHTML = `<div class="auth-error">${m}</div>`; };
+  if(titulo.length < 3) return fallo(acL('Pon un título.', 'Posa un títol.'));
+  if(tipo === 'evento' && !g('cf-fecha')) return fallo(acL('Un evento necesita su día.', 'Un esdeveniment necessita el dia.'));
+  const vurl = (g('cf-video') || '').trim(); if(vurl && !canalVid(vurl)) return fallo(acL('El enlace del vídeo no es válido: pega el enlace de YouTube o Vimeo, o sube un MP4.', 'L\'enllaç del vídeo no és vàlid: enganxa l\'enllaç de YouTube o Vimeo, o puja un MP4.'));
+  if(tipo === 'publicidad' && (g('cf-entidad') || '').trim().length < 2) return fallo(acL('Escribe la entidad anunciante.', 'Escriu l\'entitat anunciant.'));
+  const enl = (g('cf-enlace') || '').trim(); if(enl && !/^https?:\/\//i.test(enl)) return fallo(acL('El enlace tiene que empezar por https://', 'L\'enllaç ha de començar per https://'));
+  const nz = v => (v || '').trim() || null;
+  const fila = { tipo, titulo, titulo_ca: nz(g('cf-titulo-ca')), texto: nz(g('cf-texto')), texto_ca: nz(g('cf-texto-ca')), imagen_url: nz(g('cf-img')), enlace: enl || null, enlace_texto: nz(g('cf-enlace-t')),
+    fecha_evento: tipo === 'evento' ? g('cf-fecha') : (g('cf-fecha') || null), fecha_fin: tipo === 'evento' ? (g('cf-fecha-fin') || null) : null, hora_inicio: tipo === 'evento' ? (g('cf-hi') || null) : null, hora_fin: tipo === 'evento' ? (g('cf-hf') || null) : null, lugar: tipo === 'evento' ? nz(g('cf-lugar')) : null,
+    en_web: document.getElementById('cf-web').checked, en_acompanya: document.getElementById('cf-acomp').checked, destacado: document.getElementById('cf-dest').checked,
+    publicar_desde: g('cf-desde') ? new Date(g('cf-desde')).toISOString() : new Date().toISOString(), publicar_hasta: g('cf-hasta') ? new Date(g('cf-hasta')).toISOString() : null, estado };
+  if(vurl) fila.video_url = vurl; else if(id) fila.video_url = null;
+  if(tipo === 'publicidad') Object.assign(fila, { entidad: (g('cf-entidad') || '').trim(), formato: g('cf-formato') || 'horizontal', estilo: (document.querySelector('input[name=cf-estilo]:checked') || {}).value || 'azul' });
+  if(tipo !== 'evento'){ fila.fecha_evento = null; }
+  if(fila.fecha_fin && fila.fecha_fin < fila.fecha_evento) return fallo(acL('La fecha «hasta» es anterior al día del evento.', 'La data «fins a» és anterior al dia de l\'esdeveniment.'));
+  if(estado === 'publicado' && !fila.en_web && !fila.en_acompanya) return fallo(acL('Marca dónde sale: web, Logos Acompanya o las dos.', 'Marca on surt: web, Logos Acompanya o les dues.'));
+  let r;
+  if(id) r = await sb.from('canal_publicaciones').update(fila).eq('id', id);
+  else r = await sb.from('canal_publicaciones').insert(Object.assign(fila, { autor_email: String(CURRENT_USER.email).toLowerCase(), autor_nombre: CURRENT_USER_NOMBRE || null }));
+  if(r.error && /video_url/i.test(r.error.message || '')) return fallo(acL('Para poner vídeos falta ejecutar el SQL-67 en Supabase.', 'Per posar vídeos cal executar l\'SQL-67 a Supabase.'));
+  if(r.error) return fallo(/entidad|formato|estilo|canal_tipo|publicidad/i.test(r.error.message || '') && tipo === 'publicidad' ? acL('Para publicar publicidad falta ejecutar el SQL-66 en Supabase.', 'Per publicar publicitat cal executar l\'SQL-66 a Supabase.') : escAttr(r.error.message));
+  document.getElementById('canal-ov')?.remove();
+  renderCanal();
+}
+async function canalCambiarEstado(id, estado){
+  if(estado === 'retirado' && !confirm(acL('¿Retirar esta publicación? Deja de verse en la web y en Logos Acompanya (puedes volver a publicarla).', 'Retirar aquesta publicació? Deixa de veure\'s al web i a Logos Acompanya (la pots tornar a publicar).'))) return;
+  const { error } = await sb.from('canal_publicaciones').update({ estado }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderCanal();
+}
+async function canalBorrar(id){
+  if(!confirm(acL('¿Borrar del todo esta publicación? No se puede deshacer.', 'Esborrar del tot aquesta publicació? No es pot desfer.'))) return;
+  const { error } = await sb.from('canal_publicaciones').delete().eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderCanal();
+}
+
 // Total de veces que Logos ha atendido (cada atención y cada actuación cuenta)
 async function contarIntervenciones(){
   try {
@@ -19097,24 +19693,7 @@ async function renderAdministrador(){
   window.__hrSoloYo = false; { const o = document.getElementById('hr-mio-ov'); if(o) o.remove(); }
   { const m = document.getElementById('mihorario-content'); if(m) m.innerHTML = ''; }
   window.__alertasTipos = REPARTO_OK ? ((await sb.from('alertas_tipos').select('*')).data || []) : [];
-  const staffHtml = window.__staffLista.map(s => `
-    <div class="panel-stat-row" style="align-items:flex-start;gap:8px;flex-wrap:wrap;">
-      <span style="min-width:0;">${s.nombre ? `<strong>${escAttr(s.nombre)}</strong><br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(s.email)}</span>` : escAttr(s.email)}${s.es_admin ? ' <span class="chip gold">admin</span>' : ''}${s.es_rrhh ? ' <span class="chip gold">RR. HH.</span>' : ''}${s.gestiona_alertas ? ` <span class="chip good" style="font-size:10.5px;">🔔 ${acL('reparte alertas', 'reparteix alertes')}</span>` : ''}${s.ambito === 'rrhh' ? ` <span class="chip good" style="font-size:10.5px;">💼 ${acL('Solo RR. HH.', 'Només RR. HH.')}</span>` : ''}${s.ambito === 'jovenes' ? ` <span class="chip good" style="font-size:10.5px;">🌱 ${acL('Jóvenes en acción', 'Joves en acció')}</span>` : ''}${s.ambito === 'docente' ? ` <span class="chip" style="font-size:10.5px;background:#EFEAFE;color:#5B3FA0;">🎓 ${acL('Docente externo', 'Docent extern')}</span>` : ''}${s.clave_cambiada === false ? ` <span class="chip" style="font-size:10.5px;">🔑 ${acL('contraseña inicial', 'contrasenya inicial')}</span>` : ''}</span>
-      <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
-        <span class="chip ${s.activo === false ? 'off' : 'good'}">${s.activo === false ? t.inactivoLbl : t.activoLbl}</span>
-        <button class="link-btn" style="font-size:12px;" onclick="toggleActivoTecnico('${s.email}', ${s.activo === false})">${s.activo === false ? t.reactivar : t.desactivar}</button>
-        ${(DELEGACION_OK && s.activo !== false && !s.es_admin && s.ambito !== 'jovenes') ? `<button class="link-btn" style="font-size:12px;" onclick="toggleGestorAlertas('${s.email}', ${!s.gestiona_alertas})">${s.gestiona_alertas ? acL('Quitar reparto de alertas', 'Treure repartiment d\'alertes') : acL('Delegar reparto de alertas', 'Delegar repartiment d\'alertes')}</button>` : ''}
-        ${(IS_ADMIN && s.activo !== false && String(s.email).toLowerCase() !== String(CURRENT_USER.email).toLowerCase()) ? `<button class="link-btn" style="font-size:12px;" onclick="verComo('${s.email}')" title="${acL('Ver la intranet tal como la ve esta persona (solo mirar)', 'Veure la intranet tal com la veu aquesta persona (només mirar)')}">👁️ ${acL('Ver como', 'Veure com')}</button>` : ''}
-        ${s.activo !== false ? `<button class="link-btn" style="font-size:12px;" onclick="mfaReiniciarPersona('${s.email}')" title="${acL('Si ha perdido o cambiado el móvil', 'Si ha perdut o canviat el mòbil')}">🔐 ${acL('Reiniciar 2 pasos', 'Reiniciar 2 passos')}</button>` : ''}
-        ${(GP_OK && s.activo !== false) ? `<button class="link-btn" style="font-size:12px;" onclick="toggleRRHH('${s.email}', ${!s.es_rrhh})">${s.es_rrhh ? acL('Quitar RR. HH.', 'Treure RR. HH.') : acL('Dar RR. HH.', 'Donar RR. HH.')}</button>` : ''}
-        ${('es_soporte' in s && s.activo !== false) ? `<button class="link-btn" style="font-size:12px;${s.es_soporte ? 'color:var(--good);' : 'color:#888;'}" title="${acL('Recibe las incidencias de soporte técnico', 'Rep les incidències de suport tècnic')}" onclick="toggleSoporte('${s.email}', ${!s.es_soporte})">🛠️ ${s.es_soporte ? acL('Soporte técnico ✓', 'Suport tècnic ✓') : acL('Soporte técnico', 'Suport tècnic')}</button>` : ''}
-        <button class="link-btn" style="font-size:12px;" onclick="editarNombreTecnico('${s.email}')">✏️ ${acL('Nombre', 'Nom')}</button>
-        ${('acepta_citas' in s && s.activo !== false) ? `<button class="link-btn" style="font-size:12px;${atiendeCitas(s) ? 'color:var(--good);' : 'color:#888;'}" title="${acL('Si sale en la lista de técnicos al pedir cita en Logos Acompanya', 'Si surt a la llista de tècnics en demanar cita a Logos Acompanya')}" onclick="toggleAtiendeCitas('${s.email}')">📅 ${atiendeCitas(s) ? acL('Atiende citas ✓', 'Atén cites ✓') : acL('No atiende citas', 'No atén cites')}</button>` : ''}
-        ${(JOVENES_OK && !s.es_admin) ? `<select style="font-size:12px;max-width:150px;" title="${acL('Qué parte de la plataforma ve', 'Quina part de la plataforma veu')}" onchange="cambiarAmbitoTecnico('${s.email}', this.value)"><option value="general"${s.ambito !== 'jovenes' && s.ambito !== 'rrhh' && !s.es_rrhh ? ' selected' : ''}>${acL('Equipo general', 'Equip general')}</option><option value="tecnico_rrhh"${s.ambito !== 'jovenes' && s.ambito !== 'rrhh' && s.es_rrhh ? ' selected' : ''}>🧑‍💼 ${acL('Técnico/a + RR. HH.', 'Tècnic/a + RR. HH.')}</option><option value="jovenes"${s.ambito === 'jovenes' ? ' selected' : ''}>🌱 ${acL('Solo Jóvenes en acción', 'Només Joves en acció')}</option><option value="rrhh"${s.ambito === 'rrhh' ? ' selected' : ''}>💼 ${acL('Solo Recursos Humanos', 'Només Recursos Humans')}</option><option value="docente"${s.ambito === 'docente' ? ' selected' : ''}>🎓 ${acL('Docente externo (solo Aula Virtual)', 'Docent extern (només Aula Virtual)')}</option></select>` : ''}
-        <button class="link-btn" style="font-size:12px;" title="${acL('Enviar enlace para elegir contraseña', 'Enviar enllaç per triar contrasenya')}" onclick="enviarEnlaceClave('${s.email}')">🔑 ${acL('Enlace', 'Enllaç')}</button>
-        <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="quitarTecnico('${s.email}')">${acL('Quitar', 'Treure')}</button>
-      </span>
-    </div>`).join('');
+  const staffHtml = admEquipoHtml(window.__staffLista || [], t);
 
   const necesidadesHtml = (necesidadesRes.data && necesidadesRes.data.length)
     ? necesidadesRes.data.map(n => `
@@ -19262,8 +19841,7 @@ async function renderAdministrador(){
     ${carpetaCierra()}
 
     ${carpetaAbre({ clave: 'adm-sec:personal', icono: '👥', titulo: t.gestionPersonal, cuenta: '' })}
-      <div class="panel-card">
-        <h3>${t.gestionPersonal}</h3>
+      <div class="panel-card eq-panel">
         ${staffHtml}
         <div class="field" style="margin-top:12px;">
           <label>${t.anadirNuevoTecnico}</label>
@@ -19373,7 +19951,8 @@ async function renderAdministrador(){
     ${carpetaCierra()}
   `;
 
-  admAgrupar(cont);
+  admLayout(cont);
+  try { admEquipoFiltrar(); } catch(e){}
   activarBarras();
   historiaPintar();
   renderHorasEquipo();
