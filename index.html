@@ -1453,6 +1453,11 @@ body.vc-on{padding-top:44px;}
 .tec-mfa{display:flex;gap:14px;align-items:center;flex-wrap:wrap;border-radius:16px;padding:14px 16px;margin:0 0 16px;border:2px solid;}
 .tec-mfa.activa{background:#EAF7EE;border-color:#2E8B57;} .tec-mfa.pausa{background:#FFF8E6;border-color:#D69E2E;}
 .tec-mfa-ic{font-size:28px;} .tec-mfa strong{display:block;font-size:16px;color:#16233F;} .tec-mfa small{display:block;color:#3B4352;font-size:13px;}
+.rgpd-f{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;background:#fff;border:1px solid #D5E1F0;border-left:5px solid #D69E2E;border-radius:12px;padding:10px 12px;margin:0 0 8px;}
+.rgpd-f.hecha{border-left-color:#2E8B57;} .rgpd-f.rechazada{border-left-color:#9CA3AF;}
+.rgpd-t{flex:1;min-width:220px;} .rgpd-t small{display:block;color:#5F6672;font-size:12.5px;margin-top:2px;}
+.rgpd-acc{display:flex;gap:10px;align-items:center;flex-wrap:wrap;} .rgpd-acc .link-btn{margin:0;font-size:13px;}
+.rgpd-cif{background:#F3F7FC;border-radius:12px;padding:10px 12px;font-size:13.5px;} .rgpd-cif-l{margin:6px 0;display:flex;flex-wrap:wrap;gap:4px;} .rgpd-cif small{color:#5F6672;}
 </style>
 </head>
 <body>
@@ -1888,13 +1893,31 @@ const SUPABASE_KEY = 'sb_publishable_Ght82ml0pvg0_nQvunlXVA_u0WjRscq';
   window.addEventListener('error', e => { if(e && e.message) reportarFallo('js', e.message, (e.filename || '').split('/').pop() + ':' + (e.lineno || '') + ':' + (e.colno || '') + '\n' + ((e.error && e.error.stack) || '')); });
   window.addEventListener('unhandledrejection', e => { const r = e && e.reason; reportarFallo('js', 'Promesa: ' + ((r && r.message) || String(r)), (r && r.stack) || ''); });
   // Fallos de red o del servidor al hablar con la base de datos (no los «no tienes permiso» ni los datos que faltan, que son normales)
+  ['pagehide', 'beforeunload'].forEach(ev => window.addEventListener(ev, () => { window.__saliendo = true; setTimeout(() => { window.__saliendo = false; }, 5000); }));   // si al final no se sale (p. ej. un enlace de correo), se vuelve a vigilar   // al recargar o cerrar se cortan las peticiones: no es un fallo
   if(window.fetch && !window.__fetchVigilado){ window.__fetchVigilado = true;
     const f0 = window.fetch.bind(window);
+    // Datos cifrados campo a campo (SQL-70): se descifran solos al leer, con los permisos de quien lee
+    const descifrarRespuesta = async (r, url, o) => {
+      try {
+        if(!r.ok || !/\.supabase\.co\/rest\/v1\//.test(url) || url.includes('descifrar_lote') || !/json/.test(r.headers.get('content-type') || '')) return r;
+        const txt = await r.clone().text();
+        if(txt.indexOf('"enc:v1:') < 0) return r;
+        const lista = [...new Set((txt.match(/"enc:v1:[A-Za-z0-9+/=]+"/g) || []).map(x => x.slice(1, -1)))];
+        if(!lista.length) return r;
+        const hv = k => { const h = o && o.headers; if(!h) return null; return h.get ? h.get(k) : (h[k] || h[k.toLowerCase()] || null); };
+        const base = url.split('/rest/v1/')[0];
+        const d = await f0(base + '/rest/v1/rpc/descifrar_lote', { method: 'POST', headers: { apikey: hv('apikey') || '', Authorization: hv('Authorization') || hv('authorization') || '', 'Content-Type': 'application/json' }, body: JSON.stringify({ p: lista }) }).then(x => x.ok ? x.json() : null).catch(() => null);
+        if(!Array.isArray(d)) return r;
+        let nuevo = txt;
+        lista.forEach((c, i) => { nuevo = nuevo.split(JSON.stringify(c)).join(JSON.stringify(d[i] == null ? '🔒' : d[i])); });
+        return new Response(nuevo, { status: r.status, statusText: r.statusText, headers: r.headers });
+      } catch(e){ return r; }
+    };
     window.fetch = function(u, o){
       const url = String((u && u.url) || u || '');
       const nuestro = url.includes('.supabase.co') && !url.includes('reportar_error') && String((o && o.method) || 'GET').toUpperCase() !== 'OPTIONS';
-      return f0(u, o).then(r => { if(nuestro && r.status >= 500) reportarFallo('datos', 'El servidor ha respondido con error ' + r.status, url.replace(/^https:\/\/[^/]+/, '').split('?')[0]); return r; },
-        err => { if(nuestro && navigator.onLine && !/abort/i.test(String(err && err.name))) reportarFallo('red', 'No se puede conectar con la base de datos', url.replace(/^https:\/\/[^/]+/, '').split('?')[0] + ' · ' + (err && err.message)); throw err; });
+      return f0(u, o).then(async r => { if(nuestro && r.status >= 500) reportarFallo('datos', 'El servidor ha respondido con error ' + r.status, url.replace(/^https:\/\/[^/]+/, '').split('?')[0]); return descifrarRespuesta(r, url, o); },
+        err => { if(nuestro && navigator.onLine && !window.__saliendo && document.visibilityState === 'visible' && !/abort/i.test(String(err && err.name))) reportarFallo('red', 'No se puede conectar con la base de datos', url.replace(/^https:\/\/[^/]+/, '').split('?')[0] + ' · ' + (err && err.message)); throw err; });
     };
   }
 })();
@@ -2763,7 +2786,7 @@ const ADM_NOMBRES = { personal: ['Equipo: personas y permisos', 'Equip: persones
 const ADM_CLAVES_BUSCA = { personal: 'equipo personal tecnicos tecnico permisos roles usuarios cuentas contraseña clave 2fa dos pasos ver como docente rrhh soporte admin alta baja',
   reparto: 'alertas reparto avisos turno', carga: 'carga trabajo atenciones por tecnico', oficina: 'ubicacion direccion mapa oficina fichar lejos', proyectos: 'proyectos', historia: 'historia web cifras impacto años',
   noticias: 'noticias recordatorios avisos intranet', horarios: 'horarios turnos jornada', fichajes: 'fichajes fichar entrada salida jornada horas', revisiones: 'revisiones fechas seguimiento',
-  incompletos: 'fichas incompletas datos faltan dni telefono', historial: 'historial personas cambios', fuera: 'necesidades fuera catalogo', atenciones: 'registro atenciones', actuaciones: 'expedientes actuaciones tramites registro',
+  incompletos: 'fichas incompletas datos faltan dni telefono', proteccion: 'proteccion datos rgpd lopd consentimiento retirar borrar supresion anonimizar derechos cifrado imagen', historial: 'historial personas cambios', fuera: 'necesidades fuera catalogo', atenciones: 'registro atenciones', actuaciones: 'expedientes actuaciones tramites registro',
   salas: 'salas mesas reuniones ocupacion', traductor: 'traductor traducciones idiomas' };
 function admLayout(cont){
   const carpetas = [...cont.children].filter(el => el.matches && el.matches('details.carpeta[data-clave^="adm-sec:"]'));
@@ -2831,7 +2854,7 @@ function admBuscar(q){
 const ADM_GRUPOS = [
   { id: 'dir', ic: '🛡️', es: 'Dirección · solo administración', ca: 'Direcció · només administració', des: ['Equipo, permisos y lo que solo decides tú.', 'Equip, permisos i el que només decideixes tu.'], claves: ['personal', 'reparto', 'carga', 'oficina', 'proyectos', 'historia', 'noticias'] },
   { id: 'rrhh', ic: '💼', es: 'Recursos Humanos', ca: 'Recursos Humans', des: ['Horarios y fichajes del personal. Nóminas y comunicados están en Recursos Humanos.', 'Horaris i fitxatges del personal. Nòmines i comunicats són a Recursos Humans.'], claves: ['horarios', 'fichajes'], rrhh: true },
-  { id: 'per', ic: '🗂️', es: 'Personas atendidas y registros', ca: 'Persones ateses i registres', des: ['Fichas, revisiones y todo lo registrado.', 'Fitxes, revisions i tot el que s\'ha registrat.'], claves: ['revisiones', 'incompletos', 'historial', 'fuera', 'atenciones', 'actuaciones'] },
+  { id: 'per', ic: '🗂️', es: 'Personas atendidas y registros', ca: 'Persones ateses i registres', des: ['Fichas, revisiones y todo lo registrado.', 'Fitxes, revisions i tot el que s\'ha registrat.'], claves: ['proteccion', 'revisiones', 'incompletos', 'historial', 'fuera', 'atenciones', 'actuaciones'] },
   { id: 'esp', ic: '🏢', es: 'Espacios y herramientas', ca: 'Espais i eines', des: ['Salas, reuniones y traductor.', 'Sales, reunions i traductor.'], claves: ['salas', 'traductor'] }
 ];
 function admAgrupar(cont){
@@ -2961,7 +2984,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v194'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v199'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -3903,6 +3926,7 @@ async function ficharSalidaDesdeAviso(){
 }
 // El navegador pregunta "¿Salir de la página?" si intentas cerrar la pestaña o la ventana con la entrada fichada
 window.addEventListener('beforeunload', function(e){
+  if(window.__abriendoCorreo) return;   // abrir el programa de correo no es salir de la página
   if(window.__fichajeAbierto){ e.preventDefault(); e.returnValue = ''; return ''; }
 });
 // Por si se deja el ordenador abierto: se comprueba de vez en cuando que el aviso sigue siendo correcto
@@ -5873,10 +5897,14 @@ function renderAltaPresencial(){
     <div id="ap-bloque-firma" style="opacity:.4;pointer-events:none;">
       <div class="panel-card">
         <h3>${esCA ? 'Autoritzacions' : 'Autorizaciones'}</h3>
-        <label class="checkbox-row"><input type="checkbox" id="ap-cons-tratamiento">${esCA ? 'AUTORITZA el tractament de les seves dades personals (RGPD i LOPDGDD).' : 'AUTORIZA el tratamiento de sus datos personales (RGPD y LOPDGDD).'} <span style="color:var(--alert);">*</span></label>
-        <label class="checkbox-row"><input type="checkbox" id="ap-cons-cesion">${esCA ? 'AUTORITZA la cessió de les seves dades als organismes públics que ho requereixin.' : 'AUTORIZA la cesión de sus datos a los organismos públicos que lo requieran.'}</label>
-        <label class="checkbox-row"><input type="checkbox" id="ap-cons-contacto">${esCA ? 'AUTORITZA el contacte per vies electròniques o telefòniques.' : 'AUTORIZA el contacto por vías electrónicas o telefónicas.'}</label>
-        <label class="checkbox-row"><input type="checkbox" id="ap-cons-imagen">${esCA ? 'AUTORITZA l\'ús de la seva imatge i/o veu amb finalitats informatives.' : 'AUTORIZA el uso de su imagen y/o voz con finalidades informativas.'}</label>
+        <label class="checkbox-row"><input type="checkbox" id="ap-cons-tratamiento">${esCA ? 'Ha llegit el document i AUTORITZA el tractament de les seves dades personals per part de Logos (RGPD i LOPDGDD).' : 'Ha leído el documento y AUTORIZA el tratamiento de sus datos personales por parte de Logos (RGPD y LOPDGDD).'} <span style="color:var(--alert);">*</span></label>
+        <label class="checkbox-row"><input type="checkbox" id="ap-cons-cesion">${esCA ? 'AUTORITZA la comunicació de les seves dades als organismes públics que ho requereixin legalment.' : 'AUTORIZA la comunicación de sus datos a los organismos públicos que lo requieran legalmente.'} <span style="color:var(--alert);">*</span></label>
+        <fieldset style="border:2px solid #E0A526;border-radius:12px;padding:8px 12px;margin:10px 0 0;"><legend style="font-weight:700;font-size:13.5px;padding:0 6px;">${esCA ? 'Autoritzacions opcionals · que triï la persona' : 'Autorizaciones opcionales · que elija la persona'}</legend>
+          <label class="checkbox-row"><input type="checkbox" id="ap-cons-contacto"> ${esCA ? "ACCEPTA rebre informació d'activitats, cursos i novetats de Logos per WhatsApp, correu o telèfon." : "ACEPTA recibir información de actividades, cursos y novedades de Logos por WhatsApp, correo o teléfono."}</label>
+          <label class="checkbox-row"><input type="checkbox" id="ap-cons-imagen"> ${esCA ? "AUTORITZA la difusió pública de la seva imatge, veu o testimoni (apartat 10)." : "AUTORIZA la difusión pública de su imagen, voz o testimonio (apartado 10)."}</label>
+          <p class="subtle" style="margin:4px 0 0;font-size:12px;">${esCA ? "Voluntàries: si no les marca, no canvia res en l'atenció." : "Voluntarias: si no las marca, no cambia nada en la atención."}</p>
+        </fieldset>
+        <p class="subtle" style="margin-top:6px;">* ${esCA ? 'Obligatori.' : 'Obligatorio.'}</p>
       </div>
 
       <div class="panel-card">
@@ -5971,8 +5999,8 @@ async function guardarAltaPresencial(){
     alert(esCA ? 'La persona ha de llegir el document de consentiment fins al final i confirmar-ho.' : 'La persona debe leer el documento de consentimiento hasta el final y confirmarlo.');
     return;
   }
-  if(!document.getElementById('ap-cons-tratamiento').checked){
-    alert(esCA ? 'Cal marcar l\'autorització de tractament de dades.' : 'Debes marcar la autorización de tratamiento de datos.');
+  if(!document.getElementById('ap-cons-tratamiento').checked || !document.getElementById('ap-cons-cesion').checked){
+    alert(esCA ? 'Cal marcar les dues autoritzacions obligatòries (*).' : 'Hay que marcar las dos autorizaciones obligatorias (*).');
     return;
   }
   if(firmaCanvasEstaVaciaAP()){
@@ -5993,9 +6021,9 @@ async function guardarAltaPresencial(){
       body: JSON.stringify({
         nombre_completo: nombre, telefono, dni_nie: dni, email, municipio,
         firma_base64: firma,
-        cons_cesion: document.getElementById('ap-cons-cesion').checked,
-        cons_contacto: document.getElementById('ap-cons-contacto').checked,
-        cons_imagen: document.getElementById('ap-cons-imagen').checked,
+        cons_cesion: true,
+        cons_contacto: !!(document.getElementById('ap-cons-contacto') || {}).checked,
+        cons_imagen: !!(document.getElementById('ap-cons-imagen') || {}).checked,
       }),
     });
     const data = await res.json();
@@ -6016,6 +6044,7 @@ async function guardarAltaPresencial(){
         : `\n\nEnlace para que elija su contraseña cuando quiera:\n${data.enlace_para_elegir_contrasena}`;
     }
     try { await sb.from('avisos_espera').insert({ usuario_id: data.usuario_id, clave: 'breve', creado_por_email: CURRENT_USER.email }); } catch(e){}
+    try { if(data.usuario_id) await sb.from('perfiles').update({ consentimiento_version: CONSENT_VERSION }).eq('id', data.usuario_id); } catch(e){}
     if(window.__histActivarId){ const hid = window.__histActivarId; window.__histActivarId = null; try { await histVincularPerfil(hid, data.usuario_id); } catch(e){} }
     alert(mensajeFinal);
     showScreen('personas'); verPersonaStaff(data.usuario_id, 'personas');
@@ -16902,7 +16931,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-10-30 · v194 (el interruptor de la verificación en dos pasos solo lo ve y lo usa Soporte técnico; verificación en dos pasos: interruptor activar / pausa en el Panel técnico; 🩺 Panel técnico: comprobaciones de salud, fallos apuntados solos y aviso a Soporte técnico; «Ver como» ya no pide fichar: se entra directamente a mirar; Gestión de personal con cabecera y menú lateral; Administración con buscador, cabecera y menú lateral; Equipo en tarjetas con buscador, filtros y «Gestionar»; Canal: vídeos (YouTube, Vimeo o MP4) en noticias, eventos y publicidad; Canal: publicidad de entidades con contrato (imagen propia o diseño con colores), con vistas y clics; 📣 Canal: noticias, eventos con agenda y calendario, anuncios y convocatorias que salen en la web y en Logos Acompanya; el histórico cuenta: cada fila de los Excel antiguos es una vez atendida, en la ficha, en Informes › Registro («Desde el inicio») y en las cifras; Inicio: «Veces que hemos atendido» junto a las personas atendidas; veces que ha sido atendida cada persona: en su ficha y en Informes › Registro, con texto para la memoria y Excel por persona; «Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-10-30 · v199 (botón «Preparar correo» del consentimiento arreglado: descarga el PDF y abre Gmail, Outlook o el programa de correo; el Panel técnico ya no apunta los cortes de conexión al recargar o cerrar la página; consentimiento: 2 obligatorias + 2 opcionales; consentimiento v2 revisado por el jurista; protección de datos: peticiones, anonimizar y estado del cifrado; cifrado de campos sensibles; Canal: un enlace de YouTube pegado en «Imagen» pasa solo a «Vídeo»; el interruptor de la verificación en dos pasos solo lo ve y lo usa Soporte técnico; verificación en dos pasos: interruptor activar / pausa en el Panel técnico; 🩺 Panel técnico: comprobaciones de salud, fallos apuntados solos y aviso a Soporte técnico; «Ver como» ya no pide fichar: se entra directamente a mirar; Gestión de personal con cabecera y menú lateral; Administración con buscador, cabecera y menú lateral; Equipo en tarjetas con buscador, filtros y «Gestionar»; Canal: vídeos (YouTube, Vimeo o MP4) en noticias, eventos y publicidad; Canal: publicidad de entidades con contrato (imagen propia o diseño con colores), con vistas y clics; 📣 Canal: noticias, eventos con agenda y calendario, anuncios y convocatorias que salen en la web y en Logos Acompanya; el histórico cuenta: cada fila de los Excel antiguos es una vez atendida, en la ficha, en Informes › Registro («Desde el inicio») y en las cifras; Inicio: «Veces que hemos atendido» junto a las personas atendidas; veces que ha sido atendida cada persona: en su ficha y en Informes › Registro, con texto para la memoria y Excel por persona; «Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -17177,6 +17206,64 @@ async function infRegistroPintar(recargar){
 }
 
 
+
+// ================= 🔒 PROTECCIÓN DE DATOS (Administración): peticiones de las personas, anonimizar y estado del cifrado =================
+async function rgpdPintar(){
+  const host = document.getElementById('rgpd-admin'); if(!host) return;
+  const ca = LANG_I === 'ca', L = (es, c) => ca ? c : es;
+  const [sol, cif, ret] = await Promise.all([
+    sb.from('solicitudes_derechos').select('*').order('creado_en', { ascending: false }).limit(200),
+    sb.rpc('cifrado_estado'),
+    sb.from('perfiles').select('id, nombre_completo, consentimiento_retirado_en, anonimizado_en, consentimiento_version').not('consentimiento_retirado_en', 'is', null).order('consentimiento_retirado_en', { ascending: false }).limit(200)
+  ]);
+  if(sol.error && /solicitudes_derechos|schema cache|does not exist/i.test(sol.error.message || '')){ host.innerHTML = `<div class="info-box info-box-gold">${L('Se activa con el SQL-71 en Supabase.', 'S\'activa amb l\'SQL-71 a Supabase.')}</div>`; return; }
+  const lista = sol.data || [], nombres = {};
+  const ids = [...new Set(lista.map(x => x.usuario_id))];
+  if(ids.length){ try { const { data } = await sb.from('perfiles').select('id, nombre_completo, anonimizado_en, consentimiento_imagen_voz').in('id', ids); (data || []).forEach(p => nombres[p.id] = p); } catch(e){} }
+  const TT = { retirada: ['✋', L('Retira su consentimiento', 'Retira el seu consentiment')], supresion: ['🗑️', L('Pide que se borren sus datos', 'Demana que s\'esborrin les seves dades')], imagen_si: ['📸', L('Autoriza su imagen', 'Autoritza la seva imatge')], imagen_no: ['🚫', L('Retira la autorización de imagen', 'Retira l\'autorització d\'imatge')], contacto_si: ['📩', L('Acepta recibir información', 'Accepta rebre informació')], contacto_no: ['🔕', L('Ya no quiere recibir información', 'Ja no vol rebre informació')] };
+  const pend = lista.filter(x => x.estado === 'pendiente');
+  const fd = d => new Date(d).toLocaleDateString(TI[LANG_I].localeFecha, { day: 'numeric', month: 'short', year: 'numeric' });
+  const limite = d => { const x = new Date(d); x.setMonth(x.getMonth() + 1); return x; };
+  const fila = x => { const t = TT[x.tipo] || ['•', x.tipo], p = nombres[x.usuario_id] || {}, vence = limite(x.creado_en), dias = Math.ceil((vence - new Date()) / 864e5);
+    return `<div class="rgpd-f ${x.estado}">
+      <div class="rgpd-t"><strong>${t[0]} ${t[1]}</strong> · <a href="#" onclick="event.preventDefault();showScreen('personas');verPersonaStaff('${x.usuario_id}','personas')">${escAttr(p.nombre_completo || '—')}</a>${p.anonimizado_en ? ` <span class="chip">${L('anonimizada', 'anonimitzada')}</span>` : ''}
+        <small>${L('Pedido el', 'Demanat el')} ${fd(x.creado_en)}${x.estado === 'pendiente' ? ` · <b style="color:${dias <= 7 ? '#B91C1C' : '#7A5300'};">${dias >= 0 ? L(`quedan ${dias} días para responder`, `queden ${dias} dies per respondre`) : L('¡plazo vencido!', 'termini vençut!')}</b>` : ` · ${x.estado === 'hecha' ? '✅ ' + L('hecha', 'feta') : '✖️ ' + L('rechazada', 'rebutjada')}${x.resuelto_en ? ' ' + fd(x.resuelto_en) : ''}`}</small>
+        ${x.motivo ? `<small>«${escAttr(x.motivo)}»</small>` : ''}${x.respuesta ? `<small>💬 ${escAttr(x.respuesta)}</small>` : ''}</div>
+      ${x.estado === 'pendiente' ? `<div class="rgpd-acc">
+        ${x.tipo === 'supresion' && !p.anonimizado_en ? `<button class="primary-btn" style="width:auto;margin:0;background:#B91C1C;" onclick="rgpdAnonimizar('${x.usuario_id}')">🗑️ ${L('Anonimizar sus datos', 'Anonimitzar les seves dades')}</button>` : ''}
+        <button class="link-btn" onclick="rgpdResolver('${x.id}','hecha')">✅ ${L('Marcar como hecha', 'Marcar com a feta')}</button>
+        <button class="link-btn" style="color:#6B7280;" onclick="rgpdResolver('${x.id}','rechazada')">✖️ ${L('Rechazar (con motivo legal)', 'Rebutjar (amb motiu legal)')}</button></div>` : ''}
+    </div>`; };
+  const c = cif && !cif.error ? cif.data : null;
+  const cifHtml = c ? `<div class="rgpd-cif"><strong>🔐 ${L('Cifrado de campos sensibles', 'Xifratge de camps sensibles')}:</strong> ${c.clave ? '✅ ' + L('clave guardada en Vault', 'clau guardada a Vault') : '❌ ' + L('falta la clave', 'falta la clau')}
+      <div class="rgpd-cif-l">${(c.campos || []).map(f => `<span class="chip ${f.activo ? 'good' : ''}" title="${escAttr(f.nota || '')}">${f.activo ? '🔒' : '○'} ${escAttr(f.tabla)}.${escAttr(f.columna)}</span>`).join(' ')}</div>
+      <small>${L('Además, toda la base de datos está cifrada en disco (AES-256) y todas las conexiones van cifradas (HTTPS/TLS).', 'A més, tota la base de dades està xifrada en disc (AES-256) i totes les connexions van xifrades (HTTPS/TLS).')}</small></div>`
+    : `<div class="info-box info-box-gold">🔐 ${L('El cifrado de campos sensibles se activa con el SQL-70.', 'El xifratge de camps sensibles s\'activa amb l\'SQL-70.')}</div>`;
+  host.innerHTML = `
+    <p class="subtle" style="margin:0 0 10px;">${L('Lo que las personas piden desde Logos Acompanya (Mi consentimiento). Plazo legal para responder: 1 mes (art. 12.3 RGPD).', 'El que les persones demanen des de Logos Acompanya (El meu consentiment). Termini legal per respondre: 1 mes (art. 12.3 RGPD).')}</p>
+    ${cifHtml}
+    <h4 style="margin:14px 0 6px;">⏳ ${L('Pendientes', 'Pendents')} (${pend.length})</h4>
+    ${pend.map(fila).join('') || `<div class="empty-note">${L('No hay peticiones pendientes.', 'No hi ha peticions pendents.')}</div>`}
+    <details style="margin-top:12px;"><summary style="cursor:pointer;font-weight:700;">${L('Historial de peticiones', 'Historial de peticions')} (${lista.length - pend.length})</summary>${lista.filter(x => x.estado !== 'pendiente').map(fila).join('') || `<div class="empty-note">—</div>`}</details>
+    <details style="margin-top:8px;"><summary style="cursor:pointer;font-weight:700;">${L('Personas que han retirado el consentimiento', 'Persones que han retirat el consentiment')} (${(ret.data || []).length})</summary>
+      ${(ret.data || []).map(p => `<div class="rgpd-f"><div class="rgpd-t"><strong>${escAttr(p.nombre_completo || '—')}</strong><small>${L('Retirado el', 'Retirat el')} ${fd(p.consentimiento_retirado_en)}${p.anonimizado_en ? ' · ' + L('anonimizada el', 'anonimitzada el') + ' ' + fd(p.anonimizado_en) : ''}</small></div>${p.anonimizado_en ? '' : `<div class="rgpd-acc"><button class="link-btn" style="color:#B91C1C;" onclick="rgpdAnonimizar('${p.id}')">🗑️ ${L('Anonimizar', 'Anonimitzar')}</button></div>`}</div>`).join('') || `<div class="empty-note">—</div>`}</details>`;
+}
+async function rgpdResolver(id, estado){
+  const r = prompt(estado === 'hecha' ? acL('Respuesta para la persona (qué se ha hecho):', 'Resposta per a la persona (què s\'ha fet):') : acL('Motivo legal por el que no se puede (p. ej. obligación de conservar datos de una subvención, art. 17.3 RGPD):', 'Motiu legal pel qual no es pot (p. ex. obligació de conservar dades d\'una subvenció, art. 17.3 RGPD):'));
+  if(r === null) return;
+  const { error } = await sb.from('solicitudes_derechos').update({ estado, respuesta: r.slice(0, 2000) || null, resuelto_por: String(CURRENT_USER.email).toLowerCase(), resuelto_en: new Date().toISOString() }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  rgpdPintar();
+}
+async function rgpdAnonimizar(uid){
+  if(!confirm(acL('¿ANONIMIZAR a esta persona?\n\nSe borran su nombre, DNI/NIE, teléfono, correo, dirección, firma y los nombres de sus menores. Quedan solo datos sin nombre (sexo, año, nacionalidad, municipio) para las estadísticas y la justificación de subvenciones.\n\nNO se puede deshacer.', 'ANONIMITZAR aquesta persona?\n\nS\'esborren el seu nom, DNI/NIE, telèfon, correu, adreça, signatura i els noms dels seus menors. Queden només dades sense nom (sexe, any, nacionalitat, municipi) per a les estadístiques i la justificació de subvencions.\n\nNO es pot desfer.'))) return;
+  if(prompt(acL('Para confirmar, escribe BORRAR', 'Per confirmar, escriu ESBORRAR')) !== acL('BORRAR', 'ESBORRAR')) return;
+  const { data, error } = await sb.rpc('anonimizar_persona', { p_usuario: uid });
+  if(error){ alert(/anonimizar_persona|schema cache|Could not find/i.test(error.message || '') ? acL('Falta ejecutar el SQL-71 en Supabase.', 'Cal executar l\'SQL-71 a Supabase.') : error.message); return; }
+  alert('✅ ' + acL('Datos anonimizados.', 'Dades anonimitzades.') + (data && data.documentos_pendientes ? '\n\n' + acL(`Tiene ${data.documentos_pendientes} documentos subidos: revísalos en su ficha y bórralos si no hay obligación de conservarlos.`, `Té ${data.documentos_pendientes} documents pujats: revisa'ls a la seva fitxa i esborra'ls si no hi ha obligació de conservar-los.`) : ''));
+  rgpdPintar();
+}
+
 // ================= 🩺 PANEL TÉCNICO: salud del sistema y fallos apuntados solos (Soporte técnico y administración) =================
 window.__tec = window.__tec || { filtro: 'abierto', res: null, cuando: null };
 const TEC_SQL = [
@@ -17190,8 +17277,11 @@ const TEC_SQL = [
   ['64', 'Cifras públicas por año', async () => { const r = await sb.rpc('cifras_publicas'); if(!r.error && r.data && !('por_anio' in r.data)) return { error: { message: 'versión antigua de cifras_publicas' } }; return r; }],
   ['65', 'Canal: noticias y agenda', () => sb.from('canal_publicaciones').select('id').limit(1)],
   ['66', 'Canal: publicidad', () => sb.from('canal_publicaciones').select('entidad').limit(1)],
-  ['67', 'Canal: vídeo', () => sb.from('canal_publicaciones').select('video_url').limit(1)],
-  ['68', 'Panel técnico', () => sb.rpc('errores_abiertos')]
+  ['67', 'Canal: vídeo', async () => { const r = await sb.from('canal_publicaciones').select('video_url').limit(1); if(r.error) return r; const p = await sb.rpc('canal_publico', { p_donde: 'web' }); if(!p.error && Array.isArray(p.data) && p.data.length && !('video_url' in p.data[0])) return { error: { message: 'canal_publico does not exist (versión antigua: vuelve a ejecutar el SQL-67)' } }; return r; }],
+  ['68', 'Panel técnico', () => sb.rpc('errores_abiertos')],
+  ['69', 'Interruptor de los dos pasos', () => sb.rpc('mfa_en_pausa')],
+  ['70', 'Cifrado de campos sensibles', async () => { const r = await sb.rpc('cifrado_estado'); if(!r.error && r.data && !r.data.clave) return { error: { message: 'falta la clave de cifrado en Vault: does not exist' } }; return r; }],
+  ['71', 'Consentimiento v2 y derechos', () => sb.from('solicitudes_derechos').select('id').limit(1)]
 ];
 const TEC_FALTA = /does not exist|schema cache|Could not find|PGRST20[0-9]|42P01|42703|42883|versión antigua/i;
 async function tecComprobar(){
@@ -17381,6 +17471,7 @@ if(!window.__vidClick){ window.__vidClick = true;
 const CANAL_ESTILOS = { azul: ['#16325A', '#1F66C1', '#FFFFFF', '#F2BC2C', 'Azul Logos'], oro: ['#F2BC2C', '#FFE08A', '#16325A', '#16325A', 'Dorado'], verde: ['#14532D', '#2E8B57', '#FFFFFF', '#FDE68A', 'Verde'], coral: ['#9A3412', '#EA580C', '#FFFFFF', '#FFF4D6', 'Coral'], violeta: ['#3B0764', '#7C3AED', '#FFFFFF', '#FDE68A', 'Violeta'], noche: ['#0F172A', '#334155', '#FFFFFF', '#F2BC2C', 'Noche'] };
 // Pinta un anuncio: con su imagen (diseño de la entidad) o con un diseño hecho aquí con los colores elegidos
 function canalAnuncioHtml(x, ca){
+  if(x && !x.video_url && x.imagen_url && canalVid(x.imagen_url)) x = Object.assign({}, x, { video_url: x.imagen_url, imagen_url: null });
   const e = CANAL_ESTILOS[x.estilo] || CANAL_ESTILOS.azul, tit = ca && x.titulo_ca ? x.titulo_ca : x.titulo, tx = ca && x.texto_ca ? x.texto_ca : (x.texto || '');
   const et = `<span class="anu-et">${ca ? 'Publicitat' : 'Publicidad'} · ${escAttr(x.entidad || '')}</span>`;
   const cta = x.enlace ? `<span class="anu-cta" style="background:${e[3]};color:${e[0]};">${escAttr(x.enlace_texto || (ca ? 'Més informació' : 'Más información'))} →</span>` : '';
@@ -17409,7 +17500,7 @@ async function renderCanal(){
   c.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
   const { data, error } = await sb.from('canal_publicaciones').select('*').order('creado_en', { ascending: false }).limit(400);
   if(error){ c.innerHTML = `<div class="empty-note">${/canal_publicaciones|schema cache|does not exist/i.test(error.message || '') ? acL('El canal se activa con el SQL-65 en Supabase.', 'El canal s\'activa amb l\'SQL-65 a Supabase.') : escAttr(error.message)}</div>`; return; }
-  const st = window.__canal; st.lista = data || [];
+  const st = window.__canal; st.lista = (data || []).map(x => (!x.video_url && x.imagen_url && canalVid(x.imagen_url)) ? Object.assign(x, { video_url: x.imagen_url, imagen_url: null }) : x);
   const hoy = isoLocal(), L = st.lista;
   const vivas = L.filter(x => canalEstado(x)[0] === 'vivo'), prox = L.filter(x => x.tipo === 'evento' && x.estado === 'publicado' && (x.fecha_fin || x.fecha_evento) >= hoy);
   const borr = L.filter(x => x.estado === 'borrador');
@@ -17509,7 +17600,7 @@ function canalEditar(id, duplicar){
         <p class="subtle" style="font-size:12px;margin:6px 0 0;">${acL('Si la entidad os da su anuncio ya diseñado, súbelo como imagen (mejor ancho, 1600×500). Si no, escribe el título, el texto y el botón y la app lo diseña con estos colores. Siempre sale la etiqueta «Publicidad». En «Quitar el» pon el fin del contrato.', 'Si l\'entitat us dona l\'anunci ja dissenyat, puja\'l com a imatge (millor ample, 1600×500). Si no, escriu el títol, el text i el botó i l\'app el dissenya amb aquests colors. Sempre surt l\'etiqueta «Publicitat». A «Treure el» posa el final del contracte.')}</p>
       </fieldset>
       <div class="field"><label>${acL('Imagen (opcional)', 'Imatge (opcional)')}</label>
-        <div class="canal-img"><input type="file" id="cf-img-f" accept="image/*" onchange="canalSubirImagen(this)"><input id="cf-img" type="url" placeholder="https://…" value="${v('imagen_url')}" oninput="canalPrevia()"><span id="cf-img-est" class="subtle" style="font-size:12px;"></span></div></div>
+        <div class="canal-img"><input type="file" id="cf-img-f" accept="image/*" onchange="canalSubirImagen(this)"><input id="cf-img" type="url" placeholder="https://…" value="${v('imagen_url')}" oninput="canalImgOVideo(this)"><span id="cf-img-est" class="subtle" style="font-size:12px;"></span></div></div>
       <div class="field"><label>🎬 ${acL('Vídeo (opcional): enlace de YouTube o Vimeo, o sube un vídeo corto', 'Vídeo (opcional): enllaç de YouTube o Vimeo, o puja un vídeo curt')}</label>
         <div class="canal-img"><input id="cf-video" type="url" placeholder="https://www.youtube.com/watch?v=…" value="${v('video_url')}" oninput="canalPrevia()"><input type="file" id="cf-video-f" accept="video/mp4,video/webm,video/quicktime" onchange="canalSubirVideo(this)"><span id="cf-video-est" class="subtle" style="font-size:12px;">${acL('Mejor YouTube o Vimeo (no ocupa espacio). Si lo subes: MP4, máximo 50 MB. La imagen de arriba se usa como portada del vídeo.', 'Millor YouTube o Vimeo (no ocupa espai). Si el puges: MP4, màxim 50 MB. La imatge de dalt es fa servir com a portada del vídeo.')}</span></div></div>
       <div class="canal-fila"><label>${acL('Enlace (opcional)', 'Enllaç (opcional)')}<input id="cf-enlace" type="url" placeholder="https://…" value="${v('enlace')}"></label><label>${acL('Texto del botón', 'Text del botó')}<input id="cf-enlace-t" maxlength="60" placeholder="${acL('Inscríbete', 'Inscriu-t\'hi')}" value="${v('enlace_texto')}"></label></div>
@@ -17535,6 +17626,12 @@ function canalFormTipo(){
   const pb = document.getElementById('cf-pub'); if(pb) pb.style.display = t === 'publicidad' ? '' : 'none';
   const en = document.getElementById('cf-entidad'); if(en) en.required = t === 'publicidad';
   const f = document.getElementById('cf-fecha'); if(f) f.required = t === 'evento';
+  canalPrevia();
+}
+// Si en «Imagen» se pega un enlace de YouTube o Vimeo, se pasa solo al campo del vídeo
+function canalImgOVideo(inp){
+  const u = (inp.value || '').trim();
+  if(u && canalVid(u) && canalVid(u).t !== 'mp4'){ const v = document.getElementById('cf-video'); if(v && !v.value.trim()) v.value = u; inp.value = ''; const e = document.getElementById('cf-img-est'); if(e) e.textContent = '🎬 ' + acL('Era un vídeo: lo he puesto en el campo «Vídeo».', 'Era un vídeo: l\'he posat al camp «Vídeo».'); }
   canalPrevia();
 }
 function canalPrevia(){
@@ -19136,7 +19233,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
           ? `Consentiment de protecció de dades: ${p.consentimiento_fecha ? 'signat el ' + new Date(p.consentimiento_fecha).toLocaleDateString(t.localeFecha) : 'signat (sense data registrada)'}.`
           : `Consentimiento de protección de datos: ${p.consentimiento_fecha ? 'firmado el ' + new Date(p.consentimiento_fecha).toLocaleDateString(t.localeFecha) : 'firmado (sin fecha registrada)'}.`}</p>
         <button class="primary-btn" id="btn-descargar-consent" style="margin-bottom:8px;" onclick="descargarConsentimientoPDF('${p.id}', '${(p.nombre_completo||'').replace(/'/g,"\\'")}', '${p.dni_nie||''}', '${p.consentimiento_fecha||''}')">⬇️ ${LANG_I==='ca' ? 'Descarregar PDF' : 'Descargar PDF'}</button>
-        ${p.email ? `<a href="mailto:${p.email}?subject=${encodeURIComponent(LANG_I==='ca'?'El teu consentiment de protecció de dades — Logos':'Tu consentimiento de protección de datos — Logos')}&body=${encodeURIComponent((LANG_I==='ca' ? `Hola ${p.nombre_completo||''},\n\nAdjuntem el document del teu consentiment de protecció de dades signat amb Logos. Recorda descarregar-lo primer amb el botó \"Descarregar PDF\" i adjuntar-lo manualment en aquest correu abans d'enviar-lo.\n\nUna salutació,\nLogos` : `Hola ${p.nombre_completo||''},\n\nTe adjuntamos el documento de tu consentimiento de protección de datos firmado con Logos. Recuerda descargarlo primero con el botón \"Descargar PDF\" y adjuntarlo manualmente en este correo antes de enviarlo.\n\nUn saludo,\nLogos`))}" class="link-btn" style="display:block;margin-top:6px;">✉️ ${LANG_I==='ca' ? 'Preparar correu (adjuntar el PDF manualment)' : 'Preparar correo (adjuntar el PDF manualmente)'}</a>` : ''}
+        ${p.email ? `<button type="button" class="link-btn" style="display:block;margin-top:6px;" onclick='prepararCorreoConsent(${JSON.stringify({id:p.id, email:p.email, nombre:p.nombre_completo||"", dni:p.dni_nie||"", fecha:p.consentimiento_fecha||""}).replace(/'/g,"&#39;")})'>✉️ ${LANG_I==='ca' ? 'Preparar correu (amb el PDF)' : 'Preparar correo (con el PDF)'}</button>` : ''}
       ` : `<div class="empty-note">${LANG_I==='ca' ? 'Aquesta persona encara no ha signat el consentiment de protecció de dades.' : 'Esta persona todavía no ha firmado el consentimiento de protección de datos.'}</div>`}
     </div>
 
@@ -19418,55 +19515,73 @@ async function enviarMensajePlantilla(usuarioId, nombrePersona, telefono){
   verPersonaStaff(usuarioId, window.__origenPersonaVista);
 }
 
+// Texto legal del consentimiento · versión 2 (oct. 2026, revisada con el jurista). Se usa en la pantalla, en el alta presencial y en el PDF.
+const CONSENT_VERSION = 'v2.1-2026-10';
 function textoLegalConsentimientoHtml(esCA){
+  const L = (es, ca) => esCA ? ca : es;
+  const h = t => `<h3 style="font-size:13.5px;margin:16px 0 4px;">${t}</h3>`;
+  const p = t => `<p style="font-size:12px;line-height:1.6;margin:0 0 4px;">${t}</p>`;
+  const ul = items => `<ul style="font-size:12px;line-height:1.6;margin:0;padding-left:16px;">${items.map(x => `<li>${x}</li>`).join('')}</ul>`;
+  const enc = [
+    ['Supabase Inc.', L('Base de datos y archivos de Logos Acompanya y de la intranet', 'Base de dades i arxius de Logos Acompanya i de la intranet')],
+    ['Netlify Inc.', L('Alojamiento de la web de la entidad', 'Allotjament del web de l\'entitat')],
+    ['GitHub Inc. (Microsoft)', L('Alojamiento de las aplicaciones Logos Acompanya e intranet', 'Allotjament de les aplicacions Logos Acompanya i intranet')],
+    ['Nominalia Internet S.L.', L('Dominio logostgn.cat y correo electrónico', 'Domini logostgn.cat i correu electrònic')],
+    ['Google (Cloud Translation)', L('Traducción en directo, solo cuando se usa el traductor', 'Traducció en directe, només quan es fa servir el traductor')],
+    ['Anthropic PBC', L('Asistente de orientación con inteligencia artificial, solo cuando se le escribe', 'Assistent d\'orientació amb intel·ligència artificial, només quan s\'hi escriu')]
+  ];
   return `
-    <h3 style="font-size:13.5px;margin:16px 0 4px;">${esCA ? '1. Responsable del tractament' : '1. Responsable del tratamiento'}</h3>
-    <p style="font-size:12px;line-height:1.6;margin:0;">Associació Logos Projectes Socials · NIF: G55725436<br>
-    ${esCA ? 'Carrer de la Pau del Protectorat, 14, 43004 Tarragona' : 'Calle de la Pau del Protectorat, 14, 43004 Tarragona'}<br>
-    ${esCA ? 'Correu electrònic' : 'Correo electrónico'}: info@logostgn.cat</p>
+    ${h(L('1. Responsable del tratamiento', '1. Responsable del tractament'))}
+    ${p(`Associació Logos Projectes Socials · NIF: G55725436<br>${L('Calle de la Pau del Protectorat, 14, 43004 Tarragona', 'Carrer de la Pau del Protectorat, 14, 43004 Tarragona')}<br>${L('Correo electrónico', 'Correu electrònic')}: info@logostgn.cat`)}
 
-    <h3 style="font-size:13.5px;margin:16px 0 4px;">${esCA ? '2. Finalitat del tractament' : '2. Finalidad del tratamiento'}</h3>
-    <p style="font-size:12px;line-height:1.6;margin:0 0 4px;">${esCA ? 'Les dades personals facilitades seran tractades per:' : 'Los datos personales facilitados serán tratados para:'}</p>
-    <ul style="font-size:12px;line-height:1.6;margin:0;padding-left:16px;">
-      <li>${esCA ? 'La gestió administrativa, operativa i funcional de la participació en programes i serveis.' : 'La gestión administrativa, operativa y funcional de la participación en programas y servicios.'}</li>
-      <li>${esCA ? 'El compliment d\'obligacions legals derivades de subvencions i convenis.' : 'El cumplimiento de obligaciones legales derivadas de subvenciones y convenios.'}</li>
-      <li>${esCA ? 'Comunicacions informatives relacionades amb els serveis de l\'entitat.' : 'Comunicaciones informativas relacionadas con los servicios de la entidad.'}</li>
-      <li>${esCA ? 'Elaboració d\'estadístiques i memòries amb dades anonimitzades.' : 'Elaboración de estadísticas y memorias con datos anonimizados.'}</li>
-      <li>${esCA ? 'Justificació de les subvencions rebudes.' : 'Justificación de las subvenciones recibidas.'}</li>
-      <li>${esCA ? 'Conservació de les dades durant els terminis legals establerts.' : 'Conservación de los datos durante los plazos legales establecidos.'}</li>
-    </ul>
+    ${h(L('2. Lugar donde se te atiende', '2. Lloc on se t\'atén'))}
+    ${p(L('La atención presencial se presta en un lugar identificable y localizable: la sede de la entidad, en la Calle de la Pau del Protectorat, 14, 43004 Tarragona, en el horario publicado, o en el espacio de un programa que se te indique por escrito con su dirección. La atención a distancia se presta a través de Logos Acompanya, por teléfono o por correo electrónico.',
+      'L\'atenció presencial es presta en un lloc identificable i localitzable: la seu de l\'entitat, al Carrer de la Pau del Protectorat, 14, 43004 Tarragona, en l\'horari publicat, o a l\'espai d\'un programa que se t\'indiqui per escrit amb la seva adreça. L\'atenció a distància es presta a través de Logos Acompanya, per telèfon o per correu electrònic.'))}
 
-    <h3 style="font-size:13.5px;margin:16px 0 4px;">${esCA ? '3. Legitimació' : '3. Legitimación'}</h3>
-    <p style="font-size:12px;line-height:1.6;margin:0 0 4px;">${esCA ? 'El tractament es basa en la Llei orgànica 3/2018 (LOPDGDD) i el Reglament (UE) 2016/679 (RGPD):' : 'El tratamiento se basa en la Ley orgánica 3/2018 (LOPDGDD) y el Reglamento (UE) 2016/679 (RGPD):'}</p>
-    <ul style="font-size:12px;line-height:1.6;margin:0;padding-left:16px;">
-      <li>${esCA ? 'El consentiment exprés de la persona interessada (Art. 6.1.a RGPD).' : 'El consentimiento expreso de la persona interesada (Art. 6.1.a RGPD).'}</li>
-      <li>${esCA ? 'El compliment d\'obligacions legals (Art. 6.1.c RGPD).' : 'El cumplimiento de obligaciones legales (Art. 6.1.c RGPD).'}</li>
-      <li>${esCA ? 'El compliment d\'una missió d\'interès públic vinculada als programes socials (Art. 6.1.e RGPD).' : 'El cumplimiento de una misión de interés público vinculada a los programas sociales (Art. 6.1.e RGPD).'}</li>
-      <li>${esCA ? 'Per a dades especialment sensibles, el tractament es realitza conforme a l\'Art. 9.2 del RGPD.' : 'Para datos especialmente sensibles, el tratamiento se realiza conforme al Art. 9.2 del RGPD.'}</li>
-    </ul>
+    ${h(L('3. Finalidad del tratamiento', '3. Finalitat del tractament'))}
+    ${p(L('Los datos personales facilitados serán tratados para:', 'Les dades personals facilitades seran tractades per a:'))}
+    ${ul([L('La gestión administrativa, operativa y funcional de tu participación en programas y servicios.', 'La gestió administrativa, operativa i funcional de la teva participació en programes i serveis.'),
+      L('Contactarte por teléfono, WhatsApp o correo electrónico para tus citas, trámites y seguimiento.', 'Contactar-te per telèfon, WhatsApp o correu electrònic per a les teves cites, tràmits i seguiment.'),
+      L('El cumplimiento de obligaciones legales derivadas de subvenciones y convenios, y su justificación.', 'El compliment d\'obligacions legals derivades de subvencions i convenis, i la seva justificació.'),
+      L('La elaboración de estadísticas y memorias con datos anonimizados.', 'L\'elaboració d\'estadístiques i memòries amb dades anonimitzades.')])}
 
-    <h3 style="font-size:13.5px;margin:16px 0 4px;">${esCA ? '4. Destinataris' : '4. Destinatarios'}</h3>
-    <p style="font-size:12px;line-height:1.6;margin:0 0 4px;">${esCA ? 'Les dades no seran cedides a tercers excepte:' : 'Los datos no serán cedidos a terceros excepto:'}</p>
-    <ul style="font-size:12px;line-height:1.6;margin:0;padding-left:16px;">
-      <li>${esCA ? 'Administracions públiques que ho requereixin per obligació legal.' : 'Administraciones públicas que lo requieran por obligación legal.'}</li>
-      <li>${esCA ? 'Entitats col·laboradores o finançadores quan sigui necessari.' : 'Entidades colaboradoras o financiadoras cuando sea necesario.'}</li>
-      <li>${esCA ? 'Proveïdors amb contracte d\'encarregat del tractament (Art. 28 RGPD).' : 'Proveedores con contrato de encargado del tratamiento (Art. 28 RGPD).'}</li>
-    </ul>
+    ${h(L('4. Legitimación', '4. Legitimació'))}
+    ${p(L('El tratamiento se basa en el Reglamento (UE) 2016/679 (RGPD) y en la Ley Orgánica 3/2018 (LOPDGDD):', 'El tractament es basa en el Reglament (UE) 2016/679 (RGPD) i en la Llei orgànica 3/2018 (LOPDGDD):'))}
+    ${ul([L('La prestación del servicio de acompañamiento que solicitas (art. 6.1.b RGPD).', 'La prestació del servei d\'acompanyament que sol·licites (art. 6.1.b RGPD).'),
+      L('El cumplimiento de obligaciones legales (art. 6.1.c RGPD).', 'El compliment d\'obligacions legals (art. 6.1.c RGPD).'),
+      L('El cumplimiento de una misión de interés público vinculada a los programas sociales (art. 6.1.e RGPD).', 'El compliment d\'una missió d\'interès públic vinculada als programes socials (art. 6.1.e RGPD).'),
+      L('Para datos especialmente protegidos, el art. 9.2 del RGPD.', 'Per a dades especialment protegides, l\'art. 9.2 del RGPD.'),
+      L('Tu consentimiento expreso y voluntario (art. 6.1.a RGPD), solo para dos cosas opcionales: recibir información de actividades, cursos y novedades de Logos, y el uso de tu imagen y voz (apartado 10).', 'El teu consentiment exprés i voluntari (art. 6.1.a RGPD), només per a dues coses opcionals: rebre informació d\'activitats, cursos i novetats de Logos, i l\'ús de la teva imatge i veu (apartat 10).')])}
 
-    <h3 style="font-size:13.5px;margin:16px 0 4px;">${esCA ? '5. Drets de la persona interessada' : '5. Derechos de la persona interesada'}</h3>
-    <p style="font-size:12px;line-height:1.6;margin:0;">${esCA
-      ? 'Pots exercir els drets d\'accés, rectificació, supressió, oposició, limitació i portabilitat escrivint a info@logostgn.cat amb un document identificatiu adjunt. En cas de desacord, pots presentar una reclamació a l\'Agència Espanyola de Protecció de Dades (www.aepd.es).'
-      : 'Puedes ejercer los derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad escribiendo a info@logostgn.cat con un documento identificativo adjunto. En caso de desacuerdo, puedes presentar una reclamación ante la Agencia Española de Protección de Datos (www.aepd.es).'}</p>
+    ${h(L('5. Destinatarios', '5. Destinataris'))}
+    ${p(L('Los datos no se ceden a terceros, excepto:', 'Les dades no se cedeixen a tercers, excepte:'))}
+    ${ul([L('Administraciones públicas que lo requieran por obligación legal. En el proyecto «Mirada Endavant», los datos imprescindibles se comunican al Departamento de Derechos Sociales e Inclusión de la Generalitat de Catalunya para justificar la subvención (Orden DSO/283/2023).', 'Administracions públiques que ho requereixin per obligació legal. En el projecte «Mirada Endavant», les dades imprescindibles es comuniquen al Departament de Drets Socials i Inclusió de la Generalitat de Catalunya per justificar la subvenció (Ordre DSO/283/2023).'),
+      L('Entidades colaboradoras o financiadoras, cuando sea necesario para el programa.', 'Entitats col·laboradores o finançadores, quan sigui necessari per al programa.')])}
 
-    <h3 style="font-size:13.5px;margin:16px 0 4px;">${esCA ? '6. Conservació de les dades' : '6. Conservación de los datos'}</h3>
-    <p style="font-size:12px;line-height:1.6;margin:0;">${esCA
-      ? 'Les dades es conservaran mentre existeixi relació amb l\'entitat i durant els terminis legals exigits. Posteriorment, es suprimiran o anonimitzaran.'
-      : 'Los datos se conservarán mientras exista relación con la entidad y durante los plazos legales exigidos. Posteriormente, se suprimirán o anonimizarán.'}</p>
+    ${h(L('6. Proveedores tecnológicos (encargados del tratamiento)', '6. Proveïdors tecnològics (encarregats del tractament)'))}
+    ${p(L('Para prestar el servicio, Logos utiliza estos proveedores, que tratan los datos solo por cuenta de Logos y siguiendo sus instrucciones (art. 28 RGPD):', 'Per prestar el servei, Logos fa servir aquests proveïdors, que tracten les dades només per compte de Logos i seguint les seves instruccions (art. 28 RGPD):'))}
+    <table style="width:100%;border-collapse:collapse;font-size:11.5px;margin:4px 0 6px;">${enc.map(([n, d]) => `<tr><td style="border:1px solid #ddd;padding:4px 6px;font-weight:700;width:38%;">${n}</td><td style="border:1px solid #ddd;padding:4px 6px;">${d}</td></tr>`).join('')}</table>
+    ${p(L('Todos cumplen el Reglamento (UE) 2016/679 (RGPD) y la Ley Orgánica 3/2018 (LOPDGDD) y aplican medidas de seguridad adecuadas. Cuando alguno trata datos fuera del Espacio Económico Europeo, se aplican las garantías del capítulo V del RGPD: la decisión de adecuación de la Comisión Europea para el Marco de Privacidad de Datos UE-EE. UU. o las cláusulas contractuales tipo aprobadas por la Comisión.',
+      'Tots compleixen el Reglament (UE) 2016/679 (RGPD) i la Llei orgànica 3/2018 (LOPDGDD) i apliquen mesures de seguretat adequades. Quan algun tracta dades fora de l\'Espai Econòmic Europeu, s\'apliquen les garanties del capítol V del RGPD: la decisió d\'adequació de la Comissió Europea per al Marc de Privadesa de Dades UE-EUA o les clàusules contractuals tipus aprovades per la Comissió.'))}
 
-    <h3 style="font-size:13.5px;margin:16px 0 4px;color:#7A4A1F;">${esCA ? 'Clàusula sobre responsabilitat en tràmits' : 'Cláusula sobre responsabilidad en trámites'}</h3>
-    <p style="font-size:12px;line-height:1.6;margin:0;">${esCA
-      ? "L'Associació Logos Projectes Socials presta un servei d'acompanyament, suport i orientació en la realització de tràmits administratius i gestions digitals. L'entitat no és responsable del resultat final dels tràmits, ni de la seva resolució, terminis de resposta, incidències tècniques o eventual denegació, ja que aquests depenen exclusivament dels organismes i administracions competents."
-      : "La Associació Logos Projectes Socials presta un servicio de acompañamiento, apoyo y orientación en la realización de trámites administrativos y gestiones digitales. La entidad no es responsable del resultado final de los trámites, ni de su resolución, plazos de respuesta, incidencias técnicas o eventual denegación, ya que estos dependen exclusivamente de los organismos y administraciones competentes."}</p>
+    ${h(L('7. Seguridad de los datos', '7. Seguretat de les dades'))}
+    ${p(L('Los datos viajan cifrados (HTTPS) y se guardan cifrados en los servidores. Además, los datos más sensibles —notas de seguimiento, nombres de referencia, nombres de menores y de docentes— se guardan con un cifrado adicional (AES-256) cuya clave solo conoce el sistema. Solo accede el personal autorizado de Logos, con usuario personal y verificación en dos pasos.',
+      'Les dades viatgen xifrades (HTTPS) i es guarden xifrades als servidors. A més, les dades més sensibles —notes de seguiment, noms de referència, noms de menors i de docents— es guarden amb un xifratge addicional (AES-256) la clau del qual només coneix el sistema. Només hi accedeix el personal autoritzat de Logos, amb usuari personal i verificació en dos passos.'))}
+
+    ${h(L('8. Tus derechos y cómo retirar el consentimiento', '8. Els teus drets i com retirar el consentiment'))}
+    ${p(L('Puedes ejercer los derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad. Puedes <strong>retirar tu consentimiento en cualquier momento</strong>, sin que afecte a lo hecho antes de retirarlo (art. 7.3 RGPD): desde Logos Acompanya (Mi espacio › Mi consentimiento › «Retirar mi consentimiento» o «Pedir que borren mis datos»), escribiendo a info@logostgn.cat o en la sede. Se te responderá en un plazo máximo de un mes. Los datos que la ley obliga a conservar se guardarán bloqueados solo el tiempo exigido (art. 17.3 RGPD). Si no estás de acuerdo, puedes reclamar ante la Agencia Española de Protección de Datos (www.aepd.es).',
+      'Pots exercir els drets d\'accés, rectificació, supressió, oposició, limitació i portabilitat. Pots <strong>retirar el teu consentiment en qualsevol moment</strong>, sense que afecti el que s\'ha fet abans de retirar-lo (art. 7.3 RGPD): des de Logos Acompanya (El meu espai › El meu consentiment › «Retirar el meu consentiment» o «Demanar que esborrin les meves dades»), escrivint a info@logostgn.cat o a la seu. Se\'t respondrà en un termini màxim d\'un mes. Les dades que la llei obliga a conservar es guardaran bloquejades només el temps exigit (art. 17.3 RGPD). Si no hi estàs d\'acord, pots reclamar davant l\'Agència Espanyola de Protecció de Dades (www.aepd.es).'))}
+
+    ${h(L('9. Conservación de los datos', '9. Conservació de les dades'))}
+    ${p(L('Los datos se conservarán mientras exista relación con la entidad y durante los plazos legales exigidos. Después se suprimirán o anonimizarán.', 'Les dades es conservaran mentre existeixi relació amb l\'entitat i durant els terminis legals exigits. Després se suprimiran o anonimitzaran.'))}
+
+    ${h(L('10. Imagen, voz y difusión pública (opcional y voluntario)', '10. Imatge, veu i difusió pública (opcional i voluntari)'))}
+    ${p(L('Solo si marcas esta autorización (es opcional): Logos podrá usar fotos, vídeos o grabaciones de tu voz tomados en sus actividades, y tu testimonio, para darlos a conocer públicamente en Logos Acompanya, la web logostgn.cat, redes sociales y memorias, con finalidades informativas, educativas y de difusión. Si no la marcas, no cambia nada en la atención que recibes. Puedes cambiar tu decisión cuando quieras desde la app o en la sede.',
+      'Només si marques aquesta autorització (és opcional): Logos podrà fer servir fotos, vídeos o enregistraments de la teva veu presos a les seves activitats, i el teu testimoni, per donar-los a conèixer públicament a Logos Acompanya, al web logostgn.cat, a xarxes socials i a memòries, amb finalitats informatives, educatives i de difusió. Si no la marques, no canvia res en l\'atenció que reps. Pots canviar la teva decisió quan vulguis des de l\'app o a la seu.'))}
+
+    <h3 style="font-size:13.5px;margin:16px 0 4px;color:#7A4A1F;">${L('Cláusula sobre responsabilidad en trámites', 'Clàusula sobre responsabilitat en tràmits')}</h3>
+    ${p(L('La Associació Logos Projectes Socials presta un servicio de acompañamiento, apoyo y orientación en la realización de trámites administrativos y gestiones digitales. La entidad no es responsable del resultado final de los trámites, ni de su resolución, plazos de respuesta, incidencias técnicas o eventual denegación, ya que estos dependen exclusivamente de los organismos y administraciones competentes.',
+      'L\'Associació Logos Projectes Socials presta un servei d\'acompanyament, suport i orientació en la realització de tràmits administratius i gestions digitals. L\'entitat no és responsable del resultat final dels tràmits, ni de la seva resolució, terminis de resposta, incidències tècniques o eventual denegació, ja que aquests depenen exclusivament dels organismes i administracions competents.'))}
   `;
 }
 
@@ -19513,6 +19628,58 @@ async function generarPdfMultipagina(contenedor, nombreArchivo){
   pdf.save(nombreArchivo);
 }
 
+// ✉️ Correo del consentimiento: descarga el PDF y ofrece varias formas de abrir el correo
+// (antes era un enlace mailto: que, sin programa de correo instalado o con la entrada fichada, parecía un error)
+async function prepararCorreoConsent(d){
+  const ca = LANG_I === 'ca';
+  const asunto = ca ? 'El teu consentiment de protecció de dades — Logos' : 'Tu consentimiento de protección de datos — Logos';
+  const cuerpo = ca
+    ? `Hola ${d.nombre},\n\nT'adjuntem el document del teu consentiment de protecció de dades signat amb Logos.\n\nUna salutació,\nLogos`
+    : `Hola ${d.nombre},\n\nTe adjuntamos el documento de tu consentimiento de protección de datos firmado con Logos.\n\nUn saludo,\nLogos`;
+  const enc = encodeURIComponent;
+  let pdfOk = true;
+  try { await descargarConsentimientoPDF(d.id, d.nombre, d.dni, d.fecha); } catch(e){ pdfOk = false; console.warn('PDF consentimiento', e); }
+  const viejo = document.getElementById('correo-cons-ov'); if(viejo) viejo.remove();
+  const ov = document.createElement('div');
+  ov.id = 'correo-cons-ov';
+  ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-labelledby', 'correo-cons-tit');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  const gmail = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + enc(d.email) + '&su=' + enc(asunto) + '&body=' + enc(cuerpo);
+  const outlook = 'https://outlook.office.com/mail/deeplink/compose?to=' + enc(d.email) + '&subject=' + enc(asunto) + '&body=' + enc(cuerpo);
+  const b = 'display:block;width:100%;margin:6px 0;padding:10px;border-radius:8px;border:1px solid #c9d2dc;background:#fff;color:#1d2b3a;font-size:15px;text-align:left;cursor:pointer;text-decoration:none;box-sizing:border-box;';
+  ov.innerHTML = `<div style="background:#fff;color:#1d2b3a;border-radius:12px;max-width:440px;width:100%;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.25);">
+    <h3 id="correo-cons-tit" style="margin:0 0 6px;">✉️ ${ca ? 'Enviar el consentiment' : 'Enviar el consentimiento'}</h3>
+    <p style="margin:0 0 10px;font-size:14px;">${pdfOk
+      ? (ca ? '✅ El PDF ja s\'ha descarregat (carpeta <b>Baixades</b>). Obre el correu i <b>adjunta\'l</b> amb el clip 📎.' : '✅ El PDF ya se ha descargado (carpeta <b>Descargas</b>). Abre el correo y <b>adjúntalo</b> con el clip 📎.')
+      : (ca ? '⚠️ No s\'ha pogut descarregar el PDF. Torna-ho a provar amb «Descarregar PDF».' : '⚠️ No se ha podido descargar el PDF. Vuelve a probar con «Descargar PDF».')}</p>
+    <p style="margin:0 0 8px;font-size:13px;">${ca ? 'Per a' : 'Para'}: <b>${escAttr(d.email)}</b></p>
+    <a href="${gmail}" target="_blank" rel="noopener" style="${b}">📧 ${ca ? 'Obrir a Gmail' : 'Abrir en Gmail'}</a>
+    <a href="${outlook}" target="_blank" rel="noopener" style="${b}">📨 ${ca ? 'Obrir a Outlook (web)' : 'Abrir en Outlook (web)'}</a>
+    <button type="button" id="correo-cons-app" style="${b}">🖥️ ${ca ? 'Obrir el programa de correu de l\'ordinador' : 'Abrir el programa de correo del ordenador'}</button>
+    <button type="button" id="correo-cons-copiar" style="${b}">📋 ${ca ? 'Copiar adreça i text' : 'Copiar dirección y texto'}</button>
+    <button type="button" id="correo-cons-cerrar" class="primary-btn" style="margin-top:8px;width:100%;">${ca ? 'Tancar' : 'Cerrar'}</button>
+  </div>`;
+  document.body.appendChild(ov);
+  const cerrar = () => { ov.remove(); document.removeEventListener('keydown', esc); };
+  const esc = e => { if(e.key === 'Escape') cerrar(); };
+  document.addEventListener('keydown', esc);
+  ov.addEventListener('click', e => { if(e.target === ov) cerrar(); });
+  ov.querySelector('#correo-cons-cerrar').onclick = cerrar;
+  ov.querySelector('#correo-cons-app').onclick = () => {
+    window.__abriendoCorreo = true;
+    const f = document.createElement('iframe'); f.style.display = 'none';
+    f.src = 'mailto:' + d.email + '?subject=' + enc(asunto) + '&body=' + enc(cuerpo);
+    document.body.appendChild(f);
+    setTimeout(() => { f.remove(); window.__abriendoCorreo = false; window.__saliendo = false; }, 3000);
+  };
+  ov.querySelector('#correo-cons-copiar').onclick = async (ev) => {
+    const txt = (ca ? 'Per a: ' : 'Para: ') + d.email + '\n' + (ca ? 'Assumpte: ' : 'Asunto: ') + asunto + '\n\n' + cuerpo;
+    try { await navigator.clipboard.writeText(txt); ev.currentTarget.textContent = ca ? '✅ Copiat' : '✅ Copiado'; }
+    catch(e){ prompt(ca ? 'Copia aquest text:' : 'Copia este texto:', txt); }
+  };
+  ov.querySelector('#correo-cons-cerrar').focus();
+}
+
 async function descargarConsentimientoPDF(usuarioId, nombre, dni, fechaFirma){
   const esCA = LANG_I === 'ca';
   const boton = document.getElementById('btn-descargar-consent');
@@ -19522,7 +19689,9 @@ async function descargarConsentimientoPDF(usuarioId, nombre, dni, fechaFirma){
   // Firma de la persona y autorizaciones marcadas (se leen de su ficha)
   let firmaImg = '', pf = {};
   try {
-    const { data } = await sb.from('perfiles').select('consentimiento_firma_imagen, consentimiento_cesion_organismos, consentimiento_contacto, consentimiento_imagen_voz').eq('id', usuarioId).maybeSingle();
+    let r = await sb.from('perfiles').select('consentimiento_firma_imagen, consentimiento_cesion_organismos, consentimiento_contacto, consentimiento_imagen_voz, consentimiento_version, consentimiento_retirado_en').eq('id', usuarioId).maybeSingle();
+    if(r.error) r = await sb.from('perfiles').select('consentimiento_firma_imagen, consentimiento_cesion_organismos, consentimiento_contacto, consentimiento_imagen_voz').eq('id', usuarioId).maybeSingle();
+    const data = r.data;
     if(data){ pf = data; firmaImg = data.consentimiento_firma_imagen || ''; }
   } catch(e){}
   const marca = v => v ? '☑' : '☐';
@@ -19546,9 +19715,11 @@ async function descargarConsentimientoPDF(usuarioId, nombre, dni, fechaFirma){
         : 'La persona identificada anteriormente AUTORIZA el tratamiento de sus datos personales por parte de la Associació Logos - Projectes Socials, de acuerdo con la normativa detallada anteriormente.'}</p>
       <p style="font-size:12px;line-height:1.8;margin:10px 0 0;">
         ☑ ${esCA ? 'Tractament de les dades personals' : 'Tratamiento de los datos personales'}<br>
-        ${marca(pf.consentimiento_cesion_organismos)} ${esCA ? 'Cessió de dades als organismes públics que ho requereixin' : 'Cesión de datos a los organismos públicos que lo requieran'}<br>
-        ${marca(pf.consentimiento_contacto)} ${esCA ? 'Contacte per vies electròniques o telefòniques' : 'Contacto por vías electrónicas o telefónicas'}<br>
-        ${marca(pf.consentimiento_imagen_voz)} ${esCA ? 'Ús de la imatge i/o veu amb finalitats informatives' : 'Uso de la imagen y/o voz con finalidades informativas'}</p>
+        ${marca(pf.consentimiento_cesion_organismos !== false)} ${esCA ? 'Comunicació de dades als organismes públics que ho requereixin (obligatori)' : 'Comunicación de datos a los organismos públicos que lo requieran (obligatorio)'}<br>
+        ${marca(pf.consentimiento_contacto)} ${esCA ? 'Rebre informació d\'activitats, cursos i novetats (opcional)' : 'Recibir información de actividades, cursos y novedades (opcional)'}<br>
+        ${marca(pf.consentimiento_imagen_voz)} ${esCA ? 'Imatge, veu i difusió pública (opcional)' : 'Imagen, voz y difusión pública (opcional)'}
+        ${pf.consentimiento_version ? `<br><span style="font-size:11px;color:#666;">${esCA ? 'Versió del document' : 'Versión del documento'}: ${escAttr(pf.consentimiento_version)}</span>` : ''}
+        ${pf.consentimiento_retirado_en ? `<br><strong style="color:#B91C1C;">${esCA ? 'Consentiment RETIRAT el' : 'Consentimiento RETIRADO el'} ${new Date(pf.consentimiento_retirado_en).toLocaleDateString('es-ES')}</strong>` : ''}</p>
       <div style="margin-top:36px;">
         <div style="text-align:center;">
           ${firmaImg
@@ -20033,6 +20204,8 @@ async function renderAdministrador(){
         ${revisionesHtml}
       </div>
     ${carpetaCierra()}
+    ${carpetaDesplegable({ clave: 'adm-sec:proteccion', icono: '🔒', titulo: acL('Protección de datos (RGPD)', 'Protecció de dades (RGPD)'), cuenta: '', cuerpo: '<div id="rgpd-admin"><div class="placeholder">…</div></div>' })}
+
     ${carpetaAbre({ clave: 'adm-sec:incompletos', icono: '🧩', titulo: t.perfilesIncompletosTitulo, cuenta: perfilesIncompletos.length })}
       <div class="panel-card">
         <h3>${t.perfilesIncompletosTitulo}</h3>
@@ -20211,6 +20384,7 @@ async function renderAdministrador(){
 
   admLayout(cont);
   try { admEquipoFiltrar(); } catch(e){}
+  try { rgpdPintar(); } catch(e){}
   activarBarras();
   historiaPintar();
   renderHorasEquipo();
