@@ -1530,6 +1530,8 @@ body.vc-on{padding-top:44px;}
   @media (prefers-reduced-motion: reduce){ .lnav-aviso{transition:none;} }
 </style>
 <style>
+  /* Recursos Humanos: el navegador no mueve la pantalla sola al cargar (así el título del apartado se queda arriba) */
+  #screen-gestionpersonal, #screen-gestionpersonal *{overflow-anchor:none;}
   /* ===== Historial, papelera y «Deshacer» ===== */
   .hc-fila{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:#fff;margin:0 0 8px;}
   .hc-ic{font-size:20px;line-height:1.2;flex:none;}
@@ -3116,7 +3118,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v202'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v203'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -13480,6 +13482,17 @@ async function renderGestionPersonal(tab){
   const titulo = t === 'rrhh' ? ((subsRH.find(x => x[0] === window.__gpSub) || [])[1] || 'RR. HH.') : ((mios.find(x => x[0] === t) || mios[0])[1] + ' ' + (mios.find(x => x[0] === t) || mios[0])[2]);
   const nom = CURRENT_USER_NOMBRE || String(CURRENT_USER.email || '').split('@')[0];
   const ini = String(nom).split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+  const firmaShell = [LANG_I, esRH, t === 'rrhh', subsRH.map(x => x[0]).join()].join('|');
+  const yaEsta = cont.dataset.shell === firmaShell && cont.querySelector('.gp-cmp');
+  if(yaEsta){
+    // cambio rápido de sección: se marca en el menú, se pone el título y se carga solo el contenido
+    cont.querySelectorAll('.gp-menu .cmp-mi').forEach(b => { const on = b.dataset.sel === sel; b.classList.toggle('on', on); if(on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+    cont.querySelector('.gp-sec > .pj-h').textContent = titulo;
+    document.getElementById('gp-cuerpo').innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+    if(!window.__gpKpiT || Date.now() - window.__gpKpiT > 60000) { window.__gpKpiT = Date.now(); gpPintarKpis(t); }
+  } else {
+  cont.dataset.shell = firmaShell;
+  window.__gpKpiT = Date.now();
   cont.innerHTML = `
     <div class="pj-hero gp-hero${t === 'rrhh' ? ' gp-hero-rh' : ''}">
       <div class="pj-hero-top"><span class="pj-ic gp-av">${t === 'rrhh' ? '💼' : escAttr(ini)}</span>
@@ -13491,13 +13504,17 @@ async function renderGestionPersonal(tab){
     <div class="cmp pj-cmp gp-cmp">
       <nav class="cmp-menu gp-menu" aria-label="${acL('Gestión de personal', 'Gestió de personal')}">
         <div class="gp-menu-h">${acL('Lo mío', 'El meu')}</div>
-        ${mios.map(([k, ic, tx]) => `<button class="cmp-mi${sel === k ? ' on' : ''}" ${sel === k ? 'aria-current="page"' : ''} onclick="renderGestionPersonal('${k}')"><span>${ic}</span>${tx}<span class="cmp-n" id="gp-n-${k}" style="display:none;"></span></button>`).join('')}
+        ${mios.map(([k, ic, tx]) => `<button class="cmp-mi${sel === k ? ' on' : ''}" data-sel="${k}" ${sel === k ? 'aria-current="page"' : ''} onclick="renderGestionPersonal('${k}')"><span>${ic}</span>${tx}<span class="cmp-n" id="gp-n-${k}" style="display:none;"></span></button>`).join('')}
         ${esRH ? `<div class="cmp-mi-sep"></div><div class="gp-menu-h">${IS_RRHH ? acL('Recursos Humanos', 'Recursos Humans') : acL('Administración', 'Administració')}</div>
-        ${subsRH.map(([k, tx]) => { const m = String(tx).match(/^(\p{Extended_Pictographic}\uFE0F?)\s*(.*)$/u); return `<button class="cmp-mi${sel === 'rh:' + k ? ' on' : ''}" ${sel === 'rh:' + k ? 'aria-current="page"' : ''} onclick="window.__gpSub='${k}';renderGestionPersonal('rrhh')"><span>${m ? m[1] : GP_RH_IC[k] || '•'}</span>${m ? m[2] : tx}${k === 'vacaciones' ? '<span class="cmp-n" id="gp-n-rhvac" style="display:none;background:#D6336C;color:#fff;"></span>' : ''}</button>`; }).join('')}` : ''}
+        ${subsRH.map(([k, tx]) => { const m = String(tx).match(/^(\p{Extended_Pictographic}\uFE0F?)\s*(.*)$/u); return `<button class="cmp-mi${sel === 'rh:' + k ? ' on' : ''}" data-sel="rh:${k}" ${sel === 'rh:' + k ? 'aria-current="page"' : ''} onclick="window.__gpSub='${k}';renderGestionPersonal('rrhh')"><span>${m ? m[1] : GP_RH_IC[k] || '•'}</span>${m ? m[2] : tx}${k === 'vacaciones' ? '<span class="cmp-n" id="gp-n-rhvac" style="display:none;background:#D6336C;color:#fff;"></span>' : ''}</button>`; }).join('')}` : ''}
       </nav>
-      <div class="cmp-main"><section class="gp-sec"><h3 class="pj-h">${escAttr(titulo)}</h3><div id="gp-cuerpo"><div class="placeholder">${TI[LANG_I].cargando}</div></div></section></div>
+      <div class="cmp-main"><section class="gp-sec"><h3 class="pj-h" tabindex="-1">${escAttr(titulo)}</h3><div id="gp-cuerpo"><div class="placeholder">${TI[LANG_I].cargando}</div></div></section></div>
     </div>`;
   gpPintarKpis(t);
+  }
+  gpIrASeccion();
+  // el menú lateral y la ruta marcan el apartado abierto
+  try { const bn = t === 'rrhh' ? document.querySelector('.sidebar nav button[data-rh="' + window.__gpSub + '"]') : document.getElementById('nav-gp-btn'); if(bn && !bn.classList.contains('active')) navMarcar(bn); } catch(e){}
   const cuerpo = document.getElementById('gp-cuerpo');
   if(t === 'nominas') await gpRenderNominas(cuerpo);
   else if(t === 'archivos') await gpRenderArchivos(cuerpo);
@@ -13506,6 +13523,7 @@ async function renderGestionPersonal(tab){
   else if(t === 'rrhh' && (IS_RRHH || IS_ADMIN)) await gpRenderRrhh(cuerpo, true);
   else if(t === 'misvac'){ cuerpo.innerHTML = `<div class="panel-card vac-card" id="vac-mias" style="margin:0;"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`; await vacPintarMias(); }
   else await gpRenderInicio(cuerpo);
+  setTimeout(gpIrASeccion, 30); setTimeout(gpIrASeccion, 700);   // al terminar de cargar, el título del apartado se queda a la vista
 }
 const GP_RH_IC = { resumen: '🔔', nominas: '🧾', personas: '👥', horarios: '🕘', vacaciones: '🌴', comunicados: '📣', avisos: '📰', docgen: '📄', registro: '📋' };
 // Cifras de la cabecera (se pulsan para ir a cada apartado)
@@ -13757,6 +13775,14 @@ function gpRrhhSubs(){
   if(IS_RRHH || IS_RRHH_SOLO || IS_ADMIN) subs.splice(IS_RRHH ? 4 : 2, 0, ['vacaciones', '🌴 ' + acL('Vacaciones', 'Vacances')]);
   return subs.map(([k, t]) => [k, /^\p{Extended_Pictographic}/u.test(t) ? t : (GP_RH_IC[k] || '•') + ' ' + t]);
 }
+// Lleva la pantalla al principio de la sección elegida (si el título ha quedado fuera de la vista)
+function gpIrASeccion(){
+  const h = document.querySelector('#gestionpersonal-content .gp-sec'); if(!h) return;
+  const y = h.getBoundingClientRect().top, alto = window.innerHeight || 800;
+  if(y < 8 || y > alto * 0.55){
+    window.scrollTo({ top: Math.max(0, window.scrollY + y - 12), behavior: 'auto' });   // salto directo: el desplazamiento suave se cortaba al marcar el menú
+  }
+}
 async function gpRenderRrhh(cuerpo, sinPestanas){
   const subs = gpRrhhSubs();
   if(!subs.some(s => s[0] === window.__gpSub)) window.__gpSub = subs[0][0];
@@ -13794,10 +13820,10 @@ function gpAdivinar(nombreArchivo, personas){
 }
 // ---------- Pendientes automáticos: se calculan solos cada vez que se abre el panel ----------
 async function gpRrhhResumen(c){
-  const personas = await gpPersonasActivas();
   const hoy = new Date();
   const mes = hoy.getMonth() === 0 ? 12 : hoy.getMonth(), anio = hoy.getMonth() === 0 ? hoy.getFullYear() - 1 : hoy.getFullYear();
-  const [nom, com, lec, avi] = await Promise.all([
+  const [personas, nom, com, lec, avi] = await Promise.all([
+    gpPersonasActivas(),
     sb.from('personal_nominas').select('persona_email').eq('anio', anio).eq('mes', mes),
     sb.from('personal_comunicados').select('*').eq('requiere_lectura', true).order('creado_en', { ascending: false }).limit(20),
     sb.from('personal_comunicados_lecturas').select('comunicado_id, persona_email'),
@@ -14132,8 +14158,8 @@ async function gpRrhhSubirDoc(){
 }
 
 async function gpRrhhComunicados(c){
-  const personas = await gpPersonasActivas();
-  const [com, lec] = await Promise.all([
+  const [personas, com, lec] = await Promise.all([
+    gpPersonasActivas(),
     sb.from('personal_comunicados').select('*').order('creado_en', { ascending: false }).limit(40),
     sb.from('personal_comunicados_lecturas').select('comunicado_id, persona_email')
   ]);
@@ -14171,11 +14197,11 @@ async function gpBorrarComunicado(i){
 // Recursos Humanos también edita los horarios del personal (el mismo editor que la administración)
 async function gpRrhhHorarios(c){
   c.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
-  if(!window.__staffLista || !window.__staffLista.length){
-    const r = await sb.from('staff').select('email, nombre, activo').order('nombre', { ascending: true });
-    window.__staffLista = r.data || [];
-  }
-  await hrCargarAdmin();
+  // a la vez: lista del equipo (si falta) y horarios
+  await Promise.all([
+    (!window.__staffLista || !window.__staffLista.length) ? Promise.resolve(sb.from('staff').select('email, nombre, activo').order('nombre', { ascending: true })).then(r => { window.__staffLista = r.data || []; }) : null,
+    hrCargarAdmin()
+  ]);
   document.querySelectorAll('#hr-admin-card').forEach(e => { e.innerHTML = ''; e.removeAttribute('id'); });   // nunca dos editores a la vez
   window.__hrSoloYo = false; { const o = document.getElementById('hr-mio-ov'); if(o) o.remove(); }
   { const m = document.getElementById('mihorario-content'); if(m) m.innerHTML = ''; }
@@ -14337,7 +14363,7 @@ async function vacCancelar(id){
 }
 // --- RR. HH. / administración: validar, rechazar o ajustar ---
 async function gpRrhhVacaciones(c){
-  const { data, error } = await sb.from('vacaciones_solicitudes').select('*').neq('estado', 'cancelada').order('desde', { ascending: true }).limit(500);
+  const { data, error } = await sb.from('vacaciones_solicitudes').select('*').neq('estado', 'cancelada').or(`estado.eq.pendiente,hasta.gte.${isoLocal()},hasta_aprobado.gte.${isoLocal()}`).order('desde', { ascending: true }).limit(500);
   if(error){ c.innerHTML = `<div class="empty-note">${/vacaciones_solicitudes|schema cache|does not exist/i.test(error.message || '') ? acL('Se activa con el SQL-60 en Supabase.', 'S\'activa amb l\'SQL-60 a Supabase.') : escAttr(error.message)}</div>`; return; }
   const hoy = isoLocal(), lista = data || [];
   const pend = lista.filter(v => v.estado === 'pendiente');
@@ -17076,7 +17102,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-01 · v202 (Logos 360: historial de cambios, papelera, «Deshacer», duplicados, copia de seguridad y versiones; navegación fácil: ruta, favoritas, Mis páginas, buscador Ctrl+K y «Sigue con»; entrada más rápida; aviso de alertas sin error al salir de la sesión; botón «Preparar correo» del consentimiento arreglado: descarga el PDF y abre Gmail, Outlook o el programa de correo; el Panel técnico ya no apunta los cortes de conexión al recargar o cerrar la página; consentimiento: 2 obligatorias + 2 opcionales; consentimiento v2 revisado por el jurista; protección de datos: peticiones, anonimizar y estado del cifrado; cifrado de campos sensibles; Canal: un enlace de YouTube pegado en «Imagen» pasa solo a «Vídeo»; el interruptor de la verificación en dos pasos solo lo ve y lo usa Soporte técnico; verificación en dos pasos: interruptor activar / pausa en el Panel técnico; 🩺 Panel técnico: comprobaciones de salud, fallos apuntados solos y aviso a Soporte técnico; «Ver como» ya no pide fichar: se entra directamente a mirar; Gestión de personal con cabecera y menú lateral; Administración con buscador, cabecera y menú lateral; Equipo en tarjetas con buscador, filtros y «Gestionar»; Canal: vídeos (YouTube, Vimeo o MP4) en noticias, eventos y publicidad; Canal: publicidad de entidades con contrato (imagen propia o diseño con colores), con vistas y clics; 📣 Canal: noticias, eventos con agenda y calendario, anuncios y convocatorias que salen en la web y en Logos Acompanya; el histórico cuenta: cada fila de los Excel antiguos es una vez atendida, en la ficha, en Informes › Registro («Desde el inicio») y en las cifras; Inicio: «Veces que hemos atendido» junto a las personas atendidas; veces que ha sido atendida cada persona: en su ficha y en Informes › Registro, con texto para la memoria y Excel por persona; «Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-11-01 · v203 (Recursos Humanos más rápido: cambiar de apartado sin recargar la cabecera, vacaciones solo lo pendiente y próximo, y la pantalla va al principio del apartado; Logos 360: historial de cambios, papelera, «Deshacer», duplicados, copia de seguridad y versiones; navegación fácil: ruta, favoritas, Mis páginas, buscador Ctrl+K y «Sigue con»; entrada más rápida; aviso de alertas sin error al salir de la sesión; botón «Preparar correo» del consentimiento arreglado: descarga el PDF y abre Gmail, Outlook o el programa de correo; el Panel técnico ya no apunta los cortes de conexión al recargar o cerrar la página; consentimiento: 2 obligatorias + 2 opcionales; consentimiento v2 revisado por el jurista; protección de datos: peticiones, anonimizar y estado del cifrado; cifrado de campos sensibles; Canal: un enlace de YouTube pegado en «Imagen» pasa solo a «Vídeo»; el interruptor de la verificación en dos pasos solo lo ve y lo usa Soporte técnico; verificación en dos pasos: interruptor activar / pausa en el Panel técnico; 🩺 Panel técnico: comprobaciones de salud, fallos apuntados solos y aviso a Soporte técnico; «Ver como» ya no pide fichar: se entra directamente a mirar; Gestión de personal con cabecera y menú lateral; Administración con buscador, cabecera y menú lateral; Equipo en tarjetas con buscador, filtros y «Gestionar»; Canal: vídeos (YouTube, Vimeo o MP4) en noticias, eventos y publicidad; Canal: publicidad de entidades con contrato (imagen propia o diseño con colores), con vistas y clics; 📣 Canal: noticias, eventos con agenda y calendario, anuncios y convocatorias que salen en la web y en Logos Acompanya; el histórico cuenta: cada fila de los Excel antiguos es una vez atendida, en la ficha, en Informes › Registro («Desde el inicio») y en las cifras; Inicio: «Veces que hemos atendido» junto a las personas atendidas; veces que ha sido atendida cada persona: en su ficha y en Informes › Registro, con texto para la memoria y Excel por persona; «Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
