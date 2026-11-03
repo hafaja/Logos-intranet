@@ -526,6 +526,9 @@
   /* Adaptación a pantallas estrechas: el menú lateral pasa a barra inferior */
   .mobile-menu-toggle{display:none;}
   .mobile-menu-header{display:none;}
+  .guardar-arriba{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--gold-soft,#fbf3dc);border:1.5px solid var(--gold,#F2BC2C);border-radius:12px;padding:10px 12px;margin:0 0 14px;}
+  .guardar-arriba .primary-btn{width:auto;margin:0;flex:0 0 auto;}
+  .guardar-arriba span{font-size:12.5px;color:var(--ink-soft);flex:1 1 180px;}
   .pj-equipo-add{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);}
   .pj-equipo-tit{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin:0 0 6px;}
   .pj-equipo-ops{display:flex;flex-wrap:wrap;gap:6px;}
@@ -3142,7 +3145,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v208'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v211'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -5877,7 +5880,7 @@ const PROGRAMAS_OPTS = [
   ['red_arana','Red Araña – Ruraliza-T / YoEmprendo / Impulsa-T'], ['cuidem','Cuidem en igualtat']
 ];
 // Traduce un código guardado a su etiqueta visible (si no está en la lista, se muestra tal cual).
-function etiquetaOpt(opts, v){ const f = opts.find(o => o[0] === v); return f ? f[1] : v; }
+function etiquetaOpt(opts, v){ const f = opts.find(o => o[0] === v); return f ? f[1] : (typeof v === 'string' && v.indexOf('otro:') === 0 ? v.slice(5) : v); }
 function etiquetasOpt(opts, arr){ return (arr || []).map(v => etiquetaOpt(opts, v)).join(', '); }
 
 // Datos de los campos nuevos de «Registrar atención» para Estadísticas e Impacto.
@@ -5933,6 +5936,56 @@ const COMO_CONOCIO_OPTS = [
 
 function checkboxGroup(name, opts){
   return opts.map(([v,l]) => `<label class="checkbox-row"><input type="checkbox" name="${name}" value="${v}">${l}</label>`).join('');
+}
+// «¿Cómo nos conoció?»: lista fija + las vías nuevas que el equipo ya ha escrito antes + «Otros» para escribir una nueva
+window.__conocioExtra = window.__conocioExtra || [];
+function conocioCargarExtra(){
+  // de las estadísticas (todas las atenciones) y, por si no hay permiso, de las atenciones que puede ver esta persona
+  return Promise.all([
+    sb.from('stats_como_conocio').select('*').then(r => (r && r.data) || [], () => []),
+    sb.from('atenciones').select('como_conocio').like('como_conocio', 'otro:%').limit(1000).then(r => (r && r.data) || [], () => [])
+  ]).then(([a, b]) => {
+    const vistos = new Set();
+    window.__conocioExtra = a.concat(b).map(x => String(x.como_conocio || '')).filter(v => v.indexOf('otro:') === 0 && v.length > 5)
+      .filter(v => { const k = normTxt(v); if(vistos.has(k)) return false; vistos.add(k); return true; })
+      .sort((a, b) => a.localeCompare(b)).map(v => [v, v.slice(5)]);
+    return window.__conocioExtra;
+  }, () => window.__conocioExtra);
+}
+function conocioGroupHtml(){
+  const ca = LANG_I === 'ca';
+  return radioGroup('at-conocio', COMO_CONOCIO_OPTS.concat(window.__conocioExtra || []))
+    + `<label class="checkbox-row"><input type="radio" name="at-conocio" value="__otro" onchange="conocioOtro(true)">➕ ${ca ? 'Altres (escriu-lo)' : 'Otros (escríbelo)'}</label>
+    <div id="at-conocio-otro-w" style="display:none;margin:4px 0 6px 28px;">
+      <input type="text" id="at-conocio-otro" maxlength="60" placeholder="${ca ? 'P. ex.: Creu Roja, parròquia, cartell al barri…' : 'P. ej.: Cruz Roja, parroquia, cartel en el barrio…'}" style="width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-size:14px;">
+      <div class="subtle" style="font-size:11.5px;margin:4px 0 0;">${ca ? 'Es guarda i la propera vegada sortirà a la llista per triar-la.' : 'Se guarda y la próxima vez saldrá en la lista para elegirla.'}</div>
+    </div>`;
+}
+function conocioRepintar(){
+  const g = document.getElementById('at-conocio-grupo'); if(!g) return;
+  const v = conocioValor();
+  g.innerHTML = conocioGroupHtml();
+  if(!v) return;
+  const r = Array.from(g.querySelectorAll('input[name="at-conocio"]')).find(x => x.value === v);
+  if(r){ r.checked = true; return; }
+  const o = g.querySelector('input[value="__otro"]'), i = document.getElementById('at-conocio-otro');
+  if(o && i){ o.checked = true; i.value = String(v).replace(/^otro:/, ''); conocioOtro(true); }
+}
+function conocioOtro(abrir){
+  const w = document.getElementById('at-conocio-otro-w'); if(!w) return;
+  w.style.display = abrir ? '' : 'none';
+  if(abrir){ const i = document.getElementById('at-conocio-otro'); if(i) setTimeout(() => i.focus(), 30); }
+}
+document.addEventListener('change', e => { if(e.target && e.target.name === 'at-conocio' && e.target.value !== '__otro') conocioOtro(false); });
+// Valor que se guarda: una opción de la lista o «otro:<texto>» (si ya existe con otras mayúsculas, se usa la existente)
+function conocioValor(){
+  const el = document.querySelector('input[name="at-conocio"]:checked'); if(!el) return null;
+  if(el.value !== '__otro') return el.value;
+  const t = String((document.getElementById('at-conocio-otro') || {}).value || '').trim().replace(/\s+/g, ' ');
+  if(!t) return null;
+  const fija = COMO_CONOCIO_OPTS.find(o => normTxt(o[1]) === normTxt(t)); if(fija) return fija[0];
+  const ya = (window.__conocioExtra || []).find(o => normTxt(o[1]) === normTxt(t)); if(ya) return ya[0];
+  return 'otro:' + t.charAt(0).toUpperCase() + t.slice(1);
 }
 function radioGroup(name, opts){
   return opts.map(([v,l]) => `<label class="checkbox-row"><input type="radio" name="${name}" value="${v}">${l}</label>`).join('');
@@ -6255,10 +6308,15 @@ function atPrefill(prev){
   const marca = (name, vals) => { const set = [].concat(vals || []); document.querySelectorAll(`input[name="${name}"]`).forEach(el => { el.checked = set.includes(el.value); }); };
   marca('at-prestaciones', prev.prestaciones); marca('at-tramites', prev.tramites_bretxa); marca('at-programas', prev.derivacion_programas);
   marca('at-talleres', prev.talleres); marca('at-ethos', prev.ethos); marca('at-derivacion', prev.derivacion); marca('at-emprendeduria', prev.emprendeduria); marca('at-conocio', prev.como_conocio);
+  if(prev.como_conocio && !document.querySelector('input[name="at-conocio"]:checked')){
+    const o = document.querySelector('input[name="at-conocio"][value="__otro"]'), i = document.getElementById('at-conocio-otro');
+    if(o && i){ o.checked = true; i.value = String(prev.como_conocio).replace(/^otro:/, ''); conocioOtro(true); }
+  }
   const nn = document.getElementById('at-necesidades-nuevas'); if(nn && prev.necesidades_no_catalogadas) nn.value = prev.necesidades_no_catalogadas;
   const nt = document.getElementById('at-notas'); if(nt && prev.notas) nt.value = prev.notas;
 }
 function renderAtencionForm(opts){
+  setTimeout(() => conocioCargarExtra().then(conocioRepintar), 0);
   opts = opts || {};
   const enFicha = !!(opts.usuarioId && document.getElementById('atencion-en-ficha'));
   window.__atencionEnFicha = enFicha;
@@ -6303,6 +6361,11 @@ function renderAtencionForm(opts){
       <input type="text" id="at-nombre" placeholder="Ej: María G., o iniciales" value="${enFicha ? escAttr(opts.nombre || '') : ''}">
     </div>
 
+    <div class="guardar-arriba">
+      <button class="primary-btn" data-guardar="atencion" onclick="guardarUnaVez('atencion', guardarAtencion)">${enFicha ? ((window.__atencionesPersona || [])[0] ? '💾 Guardar cambios en la ficha' : '💾 Guardar ficha de atención') : '💾 Guardar atención'}</button>
+      <span>${acL('También puedes guardar abajo, al final.', 'També pots desar a baix, al final.')}</span>
+    </div>
+
     <div class="field">
       <label>Duración de esta atención (minutos, opcional)</label>
       <input type="number" id="at-duracion" min="1" placeholder="Ej: 20">
@@ -6315,7 +6378,7 @@ function renderAtencionForm(opts){
     ${secAt('🏠 Situación residencial (ETHOS)', radioGroup('at-ethos', ETHOS_OPTS), 'at-ethos')}
     ${secAt('↗️ Derivación', radioGroup('at-derivacion', DERIVACION_OPTS), 'at-derivacion')}
     ${secAt('🚀 Emprendeduría', checkboxGroup('at-emprendeduria', EMPRENDEDURIA_OPTS), 'at-emprendeduria')}
-    ${secAt('📣 ¿Cómo nos conoció / quién derivó?', radioGroup('at-conocio', COMO_CONOCIO_OPTS), 'at-conocio')}
+    ${secAt('📣 ¿Cómo nos conoció / quién derivó?', `<div id="at-conocio-grupo">${conocioGroupHtml()}</div>`, 'at-conocio')}
 
     <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);margin-bottom:16px;">
       <h3 style="color:#7A5A16;">Necesidades detectadas que no están en el catálogo</h3>
@@ -6327,7 +6390,7 @@ function renderAtencionForm(opts){
       <textarea id="at-notas" rows="3" placeholder="Cualquier detalle útil: cómo llega la persona, qué le preocupa, próximos pasos…"></textarea>
     </div>
 
-    <button class="primary-btn" id="at-save-btn" onclick="guardarAtencion()" style="margin-bottom:${enFicha ? '8' : '24'}px;">${enFicha ? ((window.__atencionesPersona || [])[0] ? '💾 Guardar cambios en la ficha' : '💾 Guardar ficha de atención') : 'Guardar atención'}</button>
+    <button class="primary-btn" id="at-save-btn" data-guardar="atencion" onclick="guardarUnaVez('atencion', guardarAtencion)" style="margin-bottom:${enFicha ? '8' : '24'}px;">${enFicha ? ((window.__atencionesPersona || [])[0] ? '💾 Guardar cambios en la ficha' : '💾 Guardar ficha de atención') : 'Guardar atención'}</button>
     ${enFicha ? `<button class="link-btn" style="display:block;margin:0 auto 24px;" onclick="cerrarAtencionEnFicha()">Cancelar</button>` : '</div>'}
     </div>
   `;
@@ -6457,6 +6520,16 @@ function atencionHoyMia(){
   const f = a.actualizado_en && a.actualizado_por_email === CURRENT_USER.email ? a.actualizado_en : a.creado_en;
   return (a.creado_por_email === CURRENT_USER.email || a.actualizado_por_email === CURRENT_USER.email) && isoLocal(new Date(f)) === isoLocal();
 }
+// Guardar desde arriba o desde abajo: mientras se guarda, los dos botones quedan bloqueados (no se guarda dos veces)
+function guardarUnaVez(grupo, fn){
+  window.__guardando = window.__guardando || {};
+  if(window.__guardando[grupo]) return;
+  window.__guardando[grupo] = true;
+  const botones = () => document.querySelectorAll(`[data-guardar="${grupo}"]`);
+  botones().forEach(b => { b.disabled = true; });
+  Promise.resolve().then(fn).catch(e => { try { alert(e.message || e); } catch(x){} })
+    .finally(() => { window.__guardando[grupo] = false; botones().forEach(b => { b.disabled = false; }); });
+}
 async function guardarAtencion(){
   const btn = document.getElementById('at-save-btn');
   const nombre = document.getElementById('at-nombre').value.trim();
@@ -6482,7 +6555,7 @@ async function guardarAtencion(){
     tramites_bretxa: getChecked('at-tramites'),
     derivacion: getRadio('at-derivacion'),
     emprendeduria: getChecked('at-emprendeduria'),
-    como_conocio: getRadio('at-conocio'),
+    como_conocio: conocioValor(),
     derivacion_programas: getChecked('at-programas'),
     talleres: getChecked('at-talleres'),
     ethos: getRadio('at-ethos'),
@@ -17226,7 +17299,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-03 · v208 (citas: la persona recibe un correo con su cita al darla, cambiarla o anularla, y un recordatorio el día antes; citas con hasta dos personas del equipo; proyectos: equipo de dos o más personas al crear y añadir varias de una vez; ficha de la persona: «Citas» junto a «Ficha de atención»; logo de Logos en el móvil: en la entrada, en el Inicio y en el menú; logo con su identidad original sobre blanco en el menú; informe por persona: primero las 10 más atendidas, «Ver más», buscador y filtro por tramos; Recursos Humanos más rápido: cambiar de apartado sin recargar la cabecera, vacaciones solo lo pendiente y próximo, y la pantalla va al principio del apartado; Logos 360: historial de cambios, papelera, «Deshacer», duplicados, copia de seguridad y versiones; navegación fácil: ruta, favoritas, Mis páginas, buscador Ctrl+K y «Sigue con»; entrada más rápida; aviso de alertas sin error al salir de la sesión; botón «Preparar correo» del consentimiento arreglado: descarga el PDF y abre Gmail, Outlook o el programa de correo; el Panel técnico ya no apunta los cortes de conexión al recargar o cerrar la página; consentimiento: 2 obligatorias + 2 opcionales; consentimiento v2 revisado por el jurista; protección de datos: peticiones, anonimizar y estado del cifrado; cifrado de campos sensibles; Canal: un enlace de YouTube pegado en «Imagen» pasa solo a «Vídeo»; el interruptor de la verificación en dos pasos solo lo ve y lo usa Soporte técnico; verificación en dos pasos: interruptor activar / pausa en el Panel técnico; 🩺 Panel técnico: comprobaciones de salud, fallos apuntados solos y aviso a Soporte técnico; «Ver como» ya no pide fichar: se entra directamente a mirar; Gestión de personal con cabecera y menú lateral; Administración con buscador, cabecera y menú lateral; Equipo en tarjetas con buscador, filtros y «Gestionar»; Canal: vídeos (YouTube, Vimeo o MP4) en noticias, eventos y publicidad; Canal: publicidad de entidades con contrato (imagen propia o diseño con colores), con vistas y clics; 📣 Canal: noticias, eventos con agenda y calendario, anuncios y convocatorias que salen en la web y en Logos Acompanya; el histórico cuenta: cada fila de los Excel antiguos es una vez atendida, en la ficha, en Informes › Registro («Desde el inicio») y en las cifras; Inicio: «Veces que hemos atendido» junto a las personas atendidas; veces que ha sido atendida cada persona: en su ficha y en Informes › Registro, con texto para la memoria y Excel por persona; «Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-11-03 · v211 (ficha: cualquier persona del equipo puede corregir los datos (SQL 76) y se avisa si no se ha podido guardar; botón «Corregir o completar los datos» en el Resumen; ficha de atención y actuación: botón de guardar también arriba, además del de abajo; ficha: el 0 (por ejemplo, 0 hijos) se guarda y cuenta como dato completo; «¿Cómo nos conoció?» con «Otros» para escribir una vía nueva, que luego sale en la lista; citas: la persona recibe un correo con su cita al darla, cambiarla o anularla, y un recordatorio el día antes; citas con hasta dos personas del equipo; proyectos: equipo de dos o más personas al crear y añadir varias de una vez; ficha de la persona: «Citas» junto a «Ficha de atención»; logo de Logos en el móvil: en la entrada, en el Inicio y en el menú; logo con su identidad original sobre blanco en el menú; informe por persona: primero las 10 más atendidas, «Ver más», buscador y filtro por tramos; Recursos Humanos más rápido: cambiar de apartado sin recargar la cabecera, vacaciones solo lo pendiente y próximo, y la pantalla va al principio del apartado; Logos 360: historial de cambios, papelera, «Deshacer», duplicados, copia de seguridad y versiones; navegación fácil: ruta, favoritas, Mis páginas, buscador Ctrl+K y «Sigue con»; entrada más rápida; aviso de alertas sin error al salir de la sesión; botón «Preparar correo» del consentimiento arreglado: descarga el PDF y abre Gmail, Outlook o el programa de correo; el Panel técnico ya no apunta los cortes de conexión al recargar o cerrar la página; consentimiento: 2 obligatorias + 2 opcionales; consentimiento v2 revisado por el jurista; protección de datos: peticiones, anonimizar y estado del cifrado; cifrado de campos sensibles; Canal: un enlace de YouTube pegado en «Imagen» pasa solo a «Vídeo»; el interruptor de la verificación en dos pasos solo lo ve y lo usa Soporte técnico; verificación en dos pasos: interruptor activar / pausa en el Panel técnico; 🩺 Panel técnico: comprobaciones de salud, fallos apuntados solos y aviso a Soporte técnico; «Ver como» ya no pide fichar: se entra directamente a mirar; Gestión de personal con cabecera y menú lateral; Administración con buscador, cabecera y menú lateral; Equipo en tarjetas con buscador, filtros y «Gestionar»; Canal: vídeos (YouTube, Vimeo o MP4) en noticias, eventos y publicidad; Canal: publicidad de entidades con contrato (imagen propia o diseño con colores), con vistas y clics; 📣 Canal: noticias, eventos con agenda y calendario, anuncios y convocatorias que salen en la web y en Logos Acompanya; el histórico cuenta: cada fila de los Excel antiguos es una vez atendida, en la ficha, en Informes › Registro («Desde el inicio») y en las cifras; Inicio: «Veces que hemos atendido» junto a las personas atendidas; veces que ha sido atendida cada persona: en su ficha y en Informes › Registro, con texto para la memoria y Excel por persona; «Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -19128,7 +19201,7 @@ function construirVistaUnica(p, d, cardAtencion, extra){
       <button class="primary-btn" style="width:auto;margin:0;" onclick="fichaIrACompletar(window.__usuarioIdVisto)">✏️ ${ca ? 'Completar ara' : 'Completar ahora'}</button>
     </div>` : ''}
     <div class="panel-card">
-      <h3 style="margin:0 0 8px;">${ca ? 'Resum' : 'Resumen'}</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 8px;"><h3 style="margin:0;">${ca ? 'Resum' : 'Resumen'}</h3><button class="link-btn" style="font-weight:700;" onclick="fichaIrACompletar(window.__usuarioIdVisto)">✏️ ${ca ? 'Corregir o completar les dades' : 'Corregir o completar los datos'}</button></div>
       ${p.telefono ? `<div class="panel-stat-row" style="align-items:center;"><span>${ca ? 'Telèfon' : 'Teléfono'}</span><span><strong>${h(p.telefono)}</strong> <a href="${escAttr(enlaceWhatsApp(p.telefono, p.nombre_completo))}" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;color:#1E9E52;margin:0 0 0 6px;">💬 WhatsApp</a></span></div>` : ''}
       ${fila('DNI/NIE', p.dni_nie)}
       <div class="panel-stat-row" style="align-items:center;"><span>${t.correoLbl}</span><span>${p.email ? `<a href="mailto:${escAttr(p.email)}" style="font-weight:700;color:inherit;">${h(p.email)}</a>` : `<span class="subtle" style="margin:0;">—</span>`} <button class="link-btn" style="font-size:12px;margin:0 0 0 6px;" onclick="fichaIrACampo('pds-email')">${p.email ? '✏️ ' + acL('Cambiar', 'Canviar') : '➕ ' + acL('Añadir', 'Afegir')}</button></span></div>
@@ -19572,18 +19645,18 @@ async function verPersonaStaffInterno(usuarioId, origen){
         <p class="subtle" style="margin:0 0 14px;">${LANG_I==='ca'
           ? 'Completa aquí les dades que falten quan ajudis la persona per telèfon, WhatsApp o presencialment.'
           : 'Completa aquí los datos que falten cuando ayudes a la persona por teléfono, WhatsApp o presencialmente.'}</p>
-        <div class="field"><label>${LANG_I==='ca'?'Nom i cognoms':'Nombre y apellidos'}</label><input type="text" id="pds-nombre" value="${p.nombre_completo||''}"></div>
-        <div class="field"><label>${LANG_I==='ca'?'Telèfon':'Teléfono'}</label><input type="tel" id="pds-telefono" value="${p.telefono||''}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Nom i cognoms':'Nombre y apellidos'}</label><input type="text" id="pds-nombre" value="${escAttr(p.nombre_completo||'')}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Telèfon':'Teléfono'}</label><input type="tel" id="pds-telefono" value="${escAttr(p.telefono||'')}"></div>
         <div class="field"><label>✉️ ${LANG_I==='ca'?'Correu electrònic':'Correo electrónico'}</label><input type="email" id="pds-email" autocomplete="off" value="${escAttr(p.email||'')}" placeholder="nombre@correo.com">
           <div class="subtle" style="font-size:11.5px;margin-top:4px;">${acL('Es el correo de contacto de la ficha. No cambia el correo con el que la persona entra en Logos Acompanya.', 'És el correu de contacte de la fitxa. No canvia el correu amb què la persona entra a Logos Acompanya.')}</div></div>
-        <div class="field"><label>DNI/NIE</label><input type="text" id="pds-dni" value="${p.dni_nie||''}"></div>
+        <div class="field"><label>DNI/NIE</label><input type="text" id="pds-dni" value="${escAttr(p.dni_nie||'')}"></div>
         <div class="field"><label>${LANG_I==='ca'?'Data de naixement':'Fecha de nacimiento'}</label><input type="text" class="fecha-txt" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" id="pds-nacimiento" value="${fechaISOaES(p.fecha_nacimiento)}"><div class="subtle" style="font-size:11px;margin:2px 0 0;">${LANG_I==='ca'?'Escriu-la: dd/mm/aaaa':'Escríbela así: dd/mm/aaaa'}</div></div>
-        <div class="field"><label>${LANG_I==='ca'?'Carrer':'Calle'}</label><input type="text" id="pds-calle" value="${p.calle||''}"></div>
-        <div class="field"><label>${LANG_I==='ca'?'Municipi':'Municipio'}</label><input type="text" id="pds-municipio" value="${p.municipio||''}"></div>
-        <div class="field"><label>${LANG_I==='ca'?'Codi postal':'Código postal'}</label><input type="text" id="pds-cp" value="${p.codigo_postal||''}"></div>
-        <div class="field"><label>Provincia</label><input type="text" id="pds-provincia" value="${p.provincia||''}"></div>
-        <div class="field"><label>${LANG_I==='ca'?'Persones a la llar':'Personas en el hogar'}</label><input type="number" min="1" id="pds-personas-hogar" value="${p.personas_hogar||''}"></div>
-        <div class="field"><label>${LANG_I==='ca'?'Nombre de fills':'Número de hijos'}</label><input type="number" min="0" id="pds-num-hijos" value="${p.numero_hijos||''}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Carrer':'Calle'}</label><input type="text" id="pds-calle" value="${escAttr(p.calle||'')}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Municipi':'Municipio'}</label><input type="text" id="pds-municipio" value="${escAttr(p.municipio||'')}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Codi postal':'Código postal'}</label><input type="text" id="pds-cp" value="${escAttr(p.codigo_postal||'')}"></div>
+        <div class="field"><label>Provincia</label><input type="text" id="pds-provincia" value="${escAttr(p.provincia||'')}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Persones a la llar':'Personas en el hogar'}</label><input type="number" min="1" id="pds-personas-hogar" value="${p.personas_hogar ?? ''}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Nombre de fills':'Número de hijos'}</label><input type="number" min="0" id="pds-num-hijos" value="${p.numero_hijos ?? ''}"></div>
         <div class="field">
           <label>${LANG_I==='ca'?'Sexe':'Sexo'}</label>
           <select id="pds-sexo">
@@ -19594,7 +19667,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
             <option value="prefiero_no_decir" ${p.sexo==='prefiero_no_decir'?'selected':''}>${LANG_I==='ca'?'Prefereixo no dir-ho':'Prefiero no decirlo'}</option>
           </select>
         </div>
-        <div class="field"><label>${LANG_I==='ca'?'Situació laboral':'Situación laboral'}</label><input type="text" id="pds-laboral" value="${p.situacion_laboral||''}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Situació laboral':'Situación laboral'}</label><input type="text" id="pds-laboral" value="${escAttr(p.situacion_laboral||'')}"></div>
         <div class="field">
           <label>${LANG_I==='ca'?'Discapacitat reconeguda':'Discapacidad reconocida'}</label>
           <select id="pds-discapacidad">
@@ -19603,7 +19676,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
             <option value="false" ${p.discapacidad_reconocida===false?'selected':''}>${LANG_I==='ca'?'No':'No'}</option>
           </select>
         </div>
-        <div class="field"><label>% ${LANG_I==='ca'?'de discapacitat':'de discapacidad'}</label><input type="number" min="0" max="100" id="pds-pct-discapacidad" value="${p.porcentaje_discapacidad||''}"></div>
+        <div class="field"><label>% ${LANG_I==='ca'?'de discapacitat':'de discapacidad'}</label><input type="number" min="0" max="100" id="pds-pct-discapacidad" value="${p.porcentaje_discapacidad ?? ''}"></div>
         <div class="field">
           <label>${LANG_I==='ca'?'Dependència reconeguda':'Dependencia reconocida'}</label>
           <select id="pds-dependencia">
@@ -19691,6 +19764,10 @@ async function verPersonaStaffInterno(usuarioId, origen){
       <div class="panel-card">
         ${actuacionesHtml}
         <div class="doc-upload-row" style="margin-top:10px;text-align:left;">
+          <div class="guardar-arriba">
+            <button class="primary-btn" data-guardar="actuacion" onclick="guardarUnaVez('actuacion', crearActuacion)">${t.registrarActuacionBtn}</button>
+            <span>${acL('Rellena los datos de abajo y guarda aquí o al final.', 'Omple les dades de sota i desa aquí o al final.')}</span>
+          </div>
           <div class="field"><label>${t.fechaLbl}</label><input type="date" id="act-fecha" value="${isoLocal()}"></div>
           <div class="field">
             <label>${t.proyectoTramiteFormacion}</label>
@@ -19737,7 +19814,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
           </div>
           <div class="field"><label>${t.proximoPasoLbl}</label><input type="text" id="act-proximo-paso" placeholder="${t.proximoPasoPlaceholder}"></div>
           <div class="field"><label>${t.proximaRevisionLbl}</label><input type="date" id="act-fecha-revision"></div>
-          <button class="primary-btn" onclick="crearActuacion()">${t.registrarActuacionBtn}</button>
+          <button class="primary-btn" data-guardar="actuacion" onclick="guardarUnaVez('actuacion', crearActuacion)">${t.registrarActuacionBtn}</button>
         </div>
       </div>
       <div class="panel-card" style="margin-top:10px;background:var(--ochre-soft);border-color:var(--ochre);">
@@ -20090,12 +20167,12 @@ async function guardarDatosPersonaStaff(usuarioId, silencioso){
     municipio: val('pds-municipio') || null,
     codigo_postal: val('pds-cp') || null,
     provincia: val('pds-provincia') || null,
-    personas_hogar: val('pds-personas-hogar') ? parseInt(val('pds-personas-hogar')) : null,
-    numero_hijos: val('pds-num-hijos') ? parseInt(val('pds-num-hijos')) : null,
+    personas_hogar: val('pds-personas-hogar') !== '' ? parseInt(val('pds-personas-hogar'), 10) : null,
+    numero_hijos: val('pds-num-hijos') !== '' ? parseInt(val('pds-num-hijos'), 10) : null,
     sexo: val('pds-sexo') || null,
     situacion_laboral: val('pds-laboral') || null,
     discapacidad_reconocida: boolOrNull(document.getElementById('pds-discapacidad').value),
-    porcentaje_discapacidad: val('pds-pct-discapacidad') ? parseInt(val('pds-pct-discapacidad')) : null,
+    porcentaje_discapacidad: val('pds-pct-discapacidad') !== '' ? parseInt(val('pds-pct-discapacidad'), 10) : null,
     dependencia_reconocida: boolOrNull(document.getElementById('pds-dependencia').value),
     nacionalidad: val('pds-nacionalidad') || null,
     situacion_regularizacion: val('pds-regularizacion') || null,
@@ -20108,8 +20185,19 @@ async function guardarDatosPersonaStaff(usuarioId, silencioso){
     situacion_desempleo: document.getElementById('pds-desempleo').checked,
   };
   if(PERFIL_ETHOS && document.getElementById('pds-ethos')) payload.ethos = val('pds-ethos') || null;
-  const { error } = await sb.from('perfiles').update(payload).eq('id', usuarioId);
-  if(error){ alert(error.message); return false; }
+  // Se comprueba que el cambio se ha guardado de verdad: si la base de datos no deja (ficha de otra persona del equipo),
+  // no da error, solo no cambia nada. Entonces se usa la función segura del SQL 76, que deja corregir a todo el equipo.
+  let { data: filasUpd, error } = await sb.from('perfiles').update(payload).eq('id', usuarioId).select('id');
+  if(error || !(filasUpd || []).length){
+    const r = await sb.rpc('staff_actualizar_perfil', { p_id: usuarioId, p_datos: payload });
+    if(r.error){
+      const falta = /does not exist|schema cache|could not find|staff_actualizar_perfil/i.test(r.error.message || '');
+      alert(falta
+        ? acL('No se ha podido guardar: la base de datos no te deja cambiar esta ficha. Pide a la administración que ejecute el SQL 76 en Supabase (una sola vez).', 'No s\'ha pogut desar: la base de dades no et deixa canviar aquesta fitxa. Demana a l\'administració que executi l\'SQL 76 a Supabase (una sola vegada).') + (error ? '\n\n' + error.message : '')
+        : (error ? error.message : r.error.message));
+      return false;
+    }
+  }
   if(silencioso) return true;
   alert(LANG_I==='ca' ? 'Dades desades correctament.' : 'Datos guardados correctamente.');
   await verPersonaStaff(usuarioId, window.__origenPersonaVista || 'panel');
@@ -22091,7 +22179,7 @@ async function memDatos(desde, hasta, programa){
   tramites.forEach(t => suma(t.nombre_servicio));
   actuaciones.forEach(x => suma(x.categoria));
   const servicios = Object.entries(cuenta).sort((a, b) => b[1] - a[1]).slice(0, 12);
-  const conocio = {}; atenciones.forEach(a => { if(a.como_conocio){ const o = COMO_CONOCIO_OPTS.find(x => x[0] === a.como_conocio); const k = o ? ((typeof TXT_ES_CA !== 'undefined' && LANG_I === 'ca' && TXT_ES_CA[o[1]]) ? TXT_ES_CA[o[1]] : o[1]) : a.como_conocio; conocio[k] = (conocio[k] || 0) + 1; } });
+  const conocio = {}; atenciones.forEach(a => { if(a.como_conocio){ const o = COMO_CONOCIO_OPTS.find(x => x[0] === a.como_conocio); const k = o ? ((typeof TXT_ES_CA !== 'undefined' && LANG_I === 'ca' && TXT_ES_CA[o[1]]) ? TXT_ES_CA[o[1]] : o[1]) : String(a.como_conocio).replace(/^otro:/, ''); conocio[k] = (conocio[k] || 0) + 1; } });
   const minutos = atenciones.reduce((s, a) => s + (Number(a.duracion_minutos) || 0), 0);
   const tramFin = tramites.filter(t => t.estado === 'hecho').length;
   const derivaciones = atenciones.filter(a => a.derivacion && a.derivacion !== 'no' && a.derivacion !== 'ninguna').length + actuaciones.filter(x => x.derivado_a && !/^no/i.test(x.derivado_a)).length;
