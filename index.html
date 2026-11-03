@@ -526,6 +526,12 @@
   /* Adaptación a pantallas estrechas: el menú lateral pasa a barra inferior */
   .mobile-menu-toggle{display:none;}
   .mobile-menu-header{display:none;}
+  .pj-equipo-add{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);}
+  .pj-equipo-tit{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin:0 0 6px;}
+  .pj-equipo-ops{display:flex;flex-wrap:wrap;gap:6px;}
+  .pj-equipo-op{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer;background:#fff;min-height:36px;}
+  .pj-equipo-op:has(input:checked){border-color:var(--navy,#1d3557);background:#EAF1FB;font-weight:700;}
+  .pj-equipo-op input{margin:0;width:16px;height:16px;}
   .logo-movil-wrap{display:none;}
   .nav-hist-grupo{display:none;}
   @media (max-width: 760px){
@@ -3136,7 +3142,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v206'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v207'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -6609,14 +6615,15 @@ window.__citasMapa = window.__citasMapa || {};
 function citaAccionesHtml(c, nombre){
   if(!c || c.estado === 'cancelada') return '';
   const conTec = 'tecnico_email' in c;   // existe la columna (SQL 39)
-  window.__citasMapa[c.id] = { id: c.id, uid: c.usuario_id, nombre: nombre || c.nombre_contacto || '', contacto: (!c.usuario_id && (c.historico_id || c.nombre_contacto)) ? { id: c.historico_id || '', nombre: c.nombre_contacto || nombre || '', telefono: c.telefono_contacto || '', email: c.email_contacto || '' } : null, fecha: c.fecha, hora: String(c.hora || '').slice(0, 5), motivo: c.motivo || '', tecnico: c.tecnico_email || '', conTec };
-  const mia = conTec && c.tecnico_email && c.tecnico_email.toLowerCase() === String(CURRENT_USER.email || '').toLowerCase();
+  window.__citasMapa[c.id] = { id: c.id, uid: c.usuario_id, nombre: nombre || c.nombre_contacto || '', contacto: (!c.usuario_id && (c.historico_id || c.nombre_contacto)) ? { id: c.historico_id || '', nombre: c.nombre_contacto || nombre || '', telefono: c.telefono_contacto || '', email: c.email_contacto || '' } : null, fecha: c.fecha, hora: String(c.hora || '').slice(0, 5), motivo: c.motivo || '', tecnico: c.tecnico_email || '', tecnico2: c.tecnico2_email || '', con2: 'tecnico2_email' in c, conTec };
+  const mia = conTec && ((c.tecnico_email && c.tecnico_email.toLowerCase() === String(CURRENT_USER.email || '').toLowerCase()) || (c.tecnico2_email && c.tecnico2_email.toLowerCase() === String(CURRENT_USER.email || '').toLowerCase()));
   const telLlamar = citaEsTelefono(c) ? String(citaTelDe(c) || c.telefono || '').replace(/[^\d+]/g, '') : '';
   return `${citaEsTelefono(c) ? `<div class="cita-tel-aviso">📞 <strong>${acL('Cita por teléfono', 'Cita per telèfon')}</strong>: ${acL('llámale a la hora de la cita desde el 630 46 15 60', 'truca-li a l\'hora de la cita des del 630 46 15 60')}${telLlamar ? ` · <a href="tel:${escAttr(telLlamar)}">${escAttr(citaTelDe(c))}</a>` : ` · ${acL('mira el teléfono en su ficha', 'mira el telèfon a la seva fitxa')}`}</div>` : ''}<div class="cita-acciones">
     ${telLlamar ? `<a class="cita-acc" style="text-decoration:none;background:#5B3FA0;color:#fff;border-color:#5B3FA0;" href="tel:${escAttr(telLlamar)}">📞 ${acL('Llamar ahora', 'Trucar ara')}</a>` : ''}
     ${'modalidad' in c ? (citaEsTelefono(c) ? `<button class="cita-acc" onclick="cambiarModoCitaStaff('${c.id}','presencial')">🏢 ${acL('Pasar a presencial', 'Passar a presencial')}</button>` : `<button class="cita-acc" onclick="cambiarModoCitaStaff('${c.id}','telefono')">📞 ${acL('Pasar a teléfono', 'Passar a telèfon')}</button>`) : ''}
     ${conTec && !mia ? `<button class="cita-acc" onclick="quedarmeCitaStaff('${c.id}')">✋ ${acL('Me la quedo', 'Me la quedo')}</button>` : ''}
     ${conTec ? `<button class="cita-acc" onclick="pasarCitaStaff('${c.id}')">👤 ${acL('Pasar a otra persona', 'Passar a una altra persona')}</button>` : ''}
+    ${conTec && c.tecnico_email ? `<button class="cita-acc" onclick="segundaCitaStaff('${c.id}')">👥 ${c.tecnico2_email ? acL('Cambiar 2.ª persona', 'Canviar 2a persona') : acL('Añadir 2.ª persona', 'Afegir 2a persona')}</button>` : ''}
     <button class="cita-acc" onclick="cambiarCitaStaff('${c.id}')">🔁 ${acL('Cambiar día/hora', 'Canviar dia/hora')}</button>
     <button class="cita-acc" onclick="otraCitaStaff('${c.id}')">➕ ${acL('Otra cita', 'Una altra cita')}</button>
     <button class="cita-acc cita-acc-x" onclick="cancelarCitaStaff('${c.id}')">✖ ${acL('Cancelar', 'Cancel·lar')}</button>
@@ -6639,7 +6646,9 @@ function citaTecnicoChip(c){
   if(!c || !('tecnico_email' in c)) return '';
   if(!c.tecnico_email) return `<span class="chip" style="background:#F1F1F1;color:#777;">👤 ${acL('Sin asignar', 'Sense assignar')}</span>`;
   const mia = c.tecnico_email.toLowerCase() === String(CURRENT_USER.email || '').toLowerCase();
-  return `<span class="chip" style="background:${mia ? '#DDF3E4' : '#E6F0FA'};color:${mia ? '#1E7A3E' : '#1F4E79'};">👤 ${mia ? acL('Tú', 'Tu') : escAttr(c.tecnico_nombre || equipoNombre(c.tecnico_email))}</span>`;
+  const mia2 = !!c.tecnico2_email && c.tecnico2_email.toLowerCase() === String(CURRENT_USER.email || '').toLowerCase();
+  const chip2 = c.tecnico2_email ? ` <span class="chip" title="${acL('2.ª persona de la cita', '2a persona de la cita')}" style="background:${mia2 ? '#DDF3E4' : '#E6F0FA'};color:${mia2 ? '#1E7A3E' : '#1F4E79'};">👥 ${mia2 ? acL('Tú', 'Tu') : escAttr(c.tecnico2_nombre || equipoNombre(c.tecnico2_email))}</span>` : '';
+  return `<span class="chip" style="background:${mia ? '#DDF3E4' : '#E6F0FA'};color:${mia ? '#1E7A3E' : '#1F4E79'};">👤 ${mia ? acL('Tú', 'Tu') : escAttr(c.tecnico_nombre || equipoNombre(c.tecnico_email))}</span>` + chip2;
 }
 // ¿Atiende citas? Sí = marcado a mano; No = quitado a mano; sin marcar = automático (todo el equipo menos «Solo RR. HH.» y «Solo Jóvenes»)
 function atiendeCitas(x){
@@ -6662,6 +6671,7 @@ async function toggleAtiendeCitas(email){
 async function cargarEquipoCitas(){
   if(window.__equipoCitas && Date.now() - (window.__equipoCitasT || 0) < 5 * 60 * 1000) return window.__equipoCitas;
   if(window.__citasTecOK === undefined){ try { const q = await sb.from('citas').select('tecnico_email').limit(1); window.__citasTecOK = !q.error; } catch(e){ window.__citasTecOK = false; } }
+  if(window.__citas2OK === undefined){ try { const q = await sb.from('citas').select('tecnico2_email').limit(1); window.__citas2OK = !q.error; } catch(e){ window.__citas2OK = false; } }
   let r = await sb.from('staff').select('email, nombre, activo, ambito, acepta_citas');
   if(r.error) r = await sb.from('staff').select('email, nombre, activo');
   const lista = (r.data || []).filter(x => x.email && atiendeCitas(x))
@@ -6716,7 +6726,7 @@ async function pasarCitaStaff(id){
   const fueraDe = e => { const t = horDia[e]; return !!(t && t.length) && !t.some(x => logosMin(c.hora) >= logosMin(x[0]) && logosMin(c.hora) < logosMin(x[1])); };
   // quién ya tiene una cita a esa misma hora
   const ocupados = new Set();
-  try { const { data } = await sb.from('citas').select('id, hora, tecnico_email, estado').eq('fecha', c.fecha); (data || []).forEach(x => { if(x.id !== id && x.estado !== 'cancelada' && x.tecnico_email && String(x.hora).slice(0, 5) === c.hora) ocupados.add(x.tecnico_email.toLowerCase()); }); } catch(e){}
+  try { const { data } = await sb.from('citas').select('*').eq('fecha', c.fecha); (data || []).forEach(x => { if(x.id !== id && x.estado !== 'cancelada' && String(x.hora).slice(0, 5) === c.hora){ if(x.tecnico_email) ocupados.add(x.tecnico_email.toLowerCase()); if(x.tecnico2_email) ocupados.add(x.tecnico2_email.toLowerCase()); } }); } catch(e){}
   const f = new Date(c.fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, { weekday:'short', day:'numeric', month:'short' }) + ' · ' + c.hora;
   const ov = document.createElement('div'); ov.id = 'pasar-cita-ov';
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;';
@@ -6732,6 +6742,49 @@ async function pasarCitaStaff(id){
     <p class="subtle" style="font-size:11.5px;margin:10px 0 0;">${ca ? 'La persona nova rep una alerta i la veurà a «Les meves cites». La persona usuària veu el nom de qui l\'atendrà.' : 'La persona nueva recibe una alerta y la verá en «Mis citas». La persona usuaria ve el nombre de quien la atenderá.'}</p>
   </div>`;
   document.body.appendChild(ov);
+}
+// Segunda persona de la cita (SQL 74): las dos la ven en «Mis citas» y ninguna puede tener otra cita a esa hora
+async function segundaCitaStaff(id){
+  const c = (window.__citasMapa || {})[id]; if(!c) return;
+  const ca = LANG_I === 'ca';
+  if(!c.con2){ alert(acL('Para poner una segunda persona en la cita hay que ejecutar el SQL 74 en Supabase (una sola vez).', 'Per posar una segona persona a la cita cal executar l\'SQL 74 a Supabase (una sola vegada).')); return; }
+  const equipo = await cargarEquipoCitas();
+  const horDia = await horariosDelDia(c.fecha);
+  const fueraDe = e => { const t = horDia[e]; return !!(t && t.length) && !t.some(x => logosMin(c.hora) >= logosMin(x[0]) && logosMin(c.hora) < logosMin(x[1])); };
+  const ocupados = new Set();
+  try { const { data } = await sb.from('citas').select('*').eq('fecha', c.fecha); (data || []).forEach(x => { if(x.id !== id && x.estado !== 'cancelada' && String(x.hora).slice(0, 5) === c.hora){ if(x.tecnico_email) ocupados.add(x.tecnico_email.toLowerCase()); if(x.tecnico2_email) ocupados.add(x.tecnico2_email.toLowerCase()); } }); } catch(e){}
+  const primera = String(c.tecnico || '').toLowerCase(), actual = String(c.tecnico2 || '').toLowerCase();
+  const f = new Date(c.fecha + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, { weekday:'short', day:'numeric', month:'short' }) + ' · ' + c.hora;
+  const ov = document.createElement('div'); ov.id = 'pasar-cita-ov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.addEventListener('click', e => { if(e.target === ov) ov.remove(); });
+  ov.innerHTML = `<div class="panel-card" role="dialog" aria-modal="true" aria-label="${ca ? 'Segona persona de la cita' : 'Segunda persona de la cita'}" style="width:100%;max-width:440px;max-height:88vh;overflow:auto;background:var(--card,#fff);margin:0;">
+    <div style="display:flex;justify-content:space-between;align-items:center;"><h3 style="margin:0;">👥 ${ca ? 'Segona persona de la cita' : 'Segunda persona de la cita'}</h3><button class="link-btn" aria-label="${ca ? 'Tancar' : 'Cerrar'}" onclick="document.getElementById('pasar-cita-ov').remove()">✕</button></div>
+    <p class="subtle" style="margin:4px 0 10px;font-size:12.5px;">${escAttr(c.nombre || '')} · ${f} · ${ca ? 'amb' : 'con'} <strong>${escAttr(equipoNombre(primera))}</strong></p>
+    <div class="pasar-lista">${equipo.filter(t => t.email !== primera).map(t => { const oc = ocupados.has(t.email), act = t.email === actual, fuera = fueraDe(t.email);
+      return `<button class="pasar-op ${act ? 'pasar-act' : ''}" ${oc || act ? 'disabled' : ''} data-e="${escAttr(t.email)}" onclick="confirmarSegundaCita('${id}', this.dataset.e)"><span class="cita-tec-av">${escAttr(t.nombre.split(/\s+/).slice(0, 2).map(x => x[0] || '').join('').toUpperCase())}</span><span style="flex:1;text-align:left;">${escAttr(t.nombre)}${act ? ` <small>(${ca ? 'ara' : 'ahora'})</small>` : ''}${oc ? ` <small style="color:var(--alert);">· ${ca ? 'ja té cita a aquesta hora' : 'ya tiene cita a esa hora'}</small>` : (fuera ? ` <small style="color:#8a6d00;">· ${ca ? 'fora del seu horari' : 'fuera de su horario'}</small>` : '')}</span></button>`; }).join('')}
+      ${actual ? `<button class="pasar-op" onclick="confirmarSegundaCita('${id}', '')"><span class="cita-tec-av" style="background:#eee;color:#777;">—</span><span style="flex:1;text-align:left;">${ca ? 'Treure la segona persona' : 'Quitar la segunda persona'}</span></button>` : ''}
+    </div>
+    <p class="subtle" style="font-size:11.5px;margin:10px 0 0;">${ca ? 'La segona persona rep una alerta i la veurà a «Les meves cites». La persona usuària veu els dos noms.' : 'La segunda persona recibe una alerta y la verá en «Mis citas». La persona usuaria ve los dos nombres.'}</p>
+  </div>`;
+  document.body.appendChild(ov);
+}
+async function confirmarSegundaCita(id, email){
+  const c = (window.__citasMapa || {})[id]; if(!c) return;
+  const ov = document.getElementById('pasar-cita-ov'); if(ov) ov.remove();
+  let { data, error } = await sb.from('citas').update({ tecnico2_email: email || null }).eq('id', id).select('id');
+  if(error && /complet/i.test(error.message || '')){ alert(acL('Esa persona ya tiene otra cita a la misma hora.', 'Aquesta persona ja té una altra cita a la mateixa hora.')); return; }
+  if(error || !(data || []).length){
+    const r = await sb.rpc('asignar_segundo_tecnico_cita', { p_id: String(id), p_email: email || '' });
+    if(r.error){ alert(/does not exist|schema cache|could not find|tecnico2/i.test(r.error.message || '') ? acL('Falta ejecutar el SQL 74 en Supabase (una sola vez).', 'Falta executar l\'SQL 74 a Supabase (una sola vegada).') : (/complet/i.test(r.error.message || '') ? acL('Esa persona ya tiene otra cita a la misma hora.', 'Aquesta persona ja té una altra cita a la mateixa hora.') : r.error.message)); return; }
+  }
+  if(email && email.toLowerCase() !== String(CURRENT_USER.email || '').toLowerCase()){
+    const f = new Date(c.fecha + 'T00:00:00').toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric' });
+    const fila = { usuario_id: c.uid, tipo: 'cita_asignada', mensaje: `${equipoNombre(CURRENT_USER.email)} te ha puesto como segunda persona en la cita de ${c.nombre || 'una persona'} del ${f} a las ${c.hora} (con ${equipoNombre(c.tecnico)}).`, asignada_a_email: email };
+    try { let r = await sb.from('notificaciones').insert(fila); if(r.error){ delete fila.asignada_a_email; await sb.from('notificaciones').insert(fila); } } catch(e){}
+  }
+  await refrescarTrasCambioCita(c.uid);
+  try { if(document.getElementById('screen-miespacio') && document.getElementById('screen-miespacio').classList.contains('active')) recargarSinSaltar('miespacio-content', renderMiEspacio); } catch(e){}
 }
 async function confirmarPasarCita(id, email){
   const c = (window.__citasMapa || {})[id]; if(!c) return;
@@ -6871,10 +6924,16 @@ function ncTecnicoSelectHtml(){
   const t = (__NC.tecnico || '').toLowerCase(), yo = String(CURRENT_USER.email || '').toLowerCase();
   const ops = eq.slice().sort((a, b) => (b.email === yo) - (a.email === yo));
   return `<label>${acL('¿Quién atiende?', 'Qui l\'atén?')}</label>
-    <select id="nc-tecnico" onchange="__NC.tecnico=this.value;if(__NC.fecha){__NC.hora='';elegirDiaNuevaCita(__NC.fecha);}">
+    <select id="nc-tecnico" onchange="__NC.tecnico=this.value;if(String(__NC.tecnico2||'').toLowerCase()===String(this.value||'').toLowerCase()||!this.value)__NC.tecnico2='';const w=document.getElementById('nc-tecnico-wrap');if(w)w.innerHTML=ncTecnicoSelectHtml();if(__NC.fecha){__NC.hora='';elegirDiaNuevaCita(__NC.fecha);}">
       ${ops.map(x => `<option value="${escAttr(x.email)}" ${x.email === t ? 'selected' : ''}>${escAttr(x.nombre)}${x.email === yo ? ' (' + acL('yo', 'jo') + ')' : ''}</option>`).join('')}
       <option value="" ${!t ? 'selected' : ''}>${acL('Sin asignar (quien esté libre)', 'Sense assignar (qui estigui lliure)')}</option>
-    </select>`;
+    </select>
+    ${window.__citas2OK && t ? `<label style="margin-top:10px;">👥 ${acL('Segunda persona (opcional)', 'Segona persona (opcional)')}</label>
+    <select id="nc-tecnico2" onchange="__NC.tecnico2=this.value;if(__NC.fecha){__NC.hora='';elegirDiaNuevaCita(__NC.fecha);}">
+      <option value="" ${!__NC.tecnico2 ? 'selected' : ''}>${acL('— Nadie más —', '— Ningú més —')}</option>
+      ${ops.filter(x => x.email !== t).map(x => `<option value="${escAttr(x.email)}" ${x.email === String(__NC.tecnico2 || '').toLowerCase() ? 'selected' : ''}>${escAttr(x.nombre)}${x.email === yo ? ' (' + acL('yo', 'jo') + ')' : ''}</option>`).join('')}
+    </select>
+    <p class="subtle" style="font-size:11.5px;margin:4px 0 0;">${acL('Solo se ofrecen las horas en que las dos personas están libres.', 'Només s\'ofereixen les hores en què les dues persones són lliures.')}</p>` : ''}`;
 }
 function cerrarNuevaCitaStaff(){ const ov = document.getElementById('nc-ov'); if(ov) ov.style.display = 'none'; }
 function pintarNuevaCitaStaff(){
@@ -6963,15 +7022,19 @@ async function elegirDiaNuevaCita(fechaIso, mantener){
   if(!hd){ cont.innerHTML = `<div class="empty-note">${acL('Ese día Logos está cerrado. Elige otro.', 'Aquest dia Logos és tancat. Tria\'n un altre.')}</div><p class="subtle" style="font-size:12px;">${logosHorarioTexto()}</p>`; return; }
 
   const tecSel = (__NC.tecnico || '').toLowerCase();
+  const tec2Sel = tecSel && window.__citas2OK ? String(__NC.tecnico2 || '').toLowerCase() : '';
+  const tecsNC = [tecSel, tec2Sel].filter(Boolean);
   const [{ data: ocup }, tecR, horDia] = await Promise.all([
     sb.rpc('citas_disponibilidad', { p_fecha: fechaIso }),
-    tecSel ? sb.from('citas').select('id, hora, estado, tecnico_email').eq('fecha', fechaIso).then(r => r, () => ({ data: [] })) : Promise.resolve({ data: [] }),
+    tecSel ? sb.from('citas').select('*').eq('fecha', fechaIso).then(r => r, () => ({ data: [] })) : Promise.resolve({ data: [] }),
     horariosDelDia(fechaIso)
   ]);
   const tramosTec = tecSel && horDia[tecSel] && horDia[tecSel].length ? horDia[tecSel] : null;
-  const fueraHorario = s => !!tramosTec && !tramosTec.some(t => logosMin(s) >= logosMin(t[0]) && logosMin(s) < logosMin(t[1]));
+  const tramosTec2 = tec2Sel && horDia[tec2Sel] && horDia[tec2Sel].length ? horDia[tec2Sel] : null;
+  const fueraDe = (tr, s) => !!tr && !tr.some(t => logosMin(s) >= logosMin(t[0]) && logosMin(s) < logosMin(t[1]));
+  const fueraHorario = s => fueraDe(tramosTec, s) || fueraDe(tramosTec2, s);
   const ocupadas = {}; (ocup || []).forEach(o => { ocupadas[String(o.hora).slice(0, 5)] = o.ocupadas; });
-  const ocupTec = new Set(((tecR && tecR.data) || []).filter(x => x.estado !== 'cancelada' && x.id !== __NC.reemplaza && x.tecnico_email && x.tecnico_email.toLowerCase() === tecSel).map(x => String(x.hora).slice(0, 5)));
+  const ocupTec = new Set(((tecR && tecR.data) || []).filter(x => x.estado !== 'cancelada' && x.id !== __NC.reemplaza && tecsNC.some(e => (x.tecnico_email && x.tecnico_email.toLowerCase() === e) || (x.tecnico2_email && x.tecnico2_email.toLowerCase() === e))).map(x => String(x.hora).slice(0, 5)));
   const slots = [];
   const bloque = (ini, fin) => {
     if(!ini || !fin) return;
@@ -6987,7 +7050,7 @@ async function elegirDiaNuevaCita(fechaIso, mantener){
     if(fueraHorario(s)) return '';   // fuera del horario de la persona que atiende
     const sel = s === __NC.hora;
     return `<button class="link-btn" style="border:1.5px solid ${sel ? 'var(--primary,#1E3A8A)' : 'var(--line)'};border-radius:10px;padding:6px 12px;${sel ? 'font-weight:800;background:var(--primary-soft,#E8EEFB);' : ''}${(lleno || pasada) ? 'opacity:.4;' : ''}" ${(lleno || pasada) ? 'disabled' : `onclick="__NC.hora='${s}';elegirDiaNuevaCita('${fechaIso}', true);document.getElementById('nc-guardar').disabled=false;"`}>${s}${lleno ? ' ✕' : ''}</button>`;
-  }).join('') + `</div>` + (tramosTec ? `<p class="subtle" style="font-size:12px;margin:6px 0 0;">🕘 ${acL('Horario de', 'Horari de')} ${escAttr(equipoNombre(tecSel))} ${acL('ese día', 'aquest dia')}: ${tramosTec.map(t => t[0] + '–' + t[1]).join(' · ')}</p>` : '') + (tramosTec && !slots.some(s => !fueraHorario(s)) ? `<div class="empty-note">${acL('Esa persona no trabaja ese día. Elige otro día u otra persona.', 'Aquesta persona no treballa aquest dia. Tria un altre dia o una altra persona.')}</div>` : '') + (slots.length ? '' : `<div class="empty-note">${acL('Sin horas ese día.', 'Sense hores aquest dia.')}</div>`) + (hd.sinCita ? `<p class="subtle" style="font-size:12px;margin-top:8px;">${acL('Los miércoles de 9 a 13 h se atiende sin cita previa; por eso solo se dan citas fuera de esa franja.', 'Els dimecres de 9 a 13 h s\'atén sense cita prèvia; per això només es donen cites fora d\'aquesta franja.')}</p>` : '');
+  }).join('') + `</div>` + (tramosTec ? `<p class="subtle" style="font-size:12px;margin:6px 0 0;">🕘 ${acL('Horario de', 'Horari de')} ${escAttr(equipoNombre(tecSel))} ${acL('ese día', 'aquest dia')}: ${tramosTec.map(t => t[0] + '–' + t[1]).join(' · ')}</p>` : '') + (tramosTec2 ? `<p class="subtle" style="font-size:12px;margin:2px 0 0;">🕘 ${acL('Horario de', 'Horari de')} ${escAttr(equipoNombre(tec2Sel))} ${acL('ese día', 'aquest dia')}: ${tramosTec2.map(t => t[0] + '–' + t[1]).join(' · ')}</p>` : '') + ((tramosTec || tramosTec2) && !slots.some(s => !fueraHorario(s)) ? `<div class="empty-note">${tec2Sel ? acL('Ese día no coinciden las dos personas. Elige otro día u otra persona.', 'Aquest dia no coincideixen les dues persones. Tria un altre dia o una altra persona.') : acL('Esa persona no trabaja ese día. Elige otro día u otra persona.', 'Aquesta persona no treballa aquest dia. Tria un altre dia o una altra persona.')}</div>` : '') + (slots.length ? '' : `<div class="empty-note">${acL('Sin horas ese día.', 'Sense hores aquest dia.')}</div>`) + (hd.sinCita ? `<p class="subtle" style="font-size:12px;margin-top:8px;">${acL('Los miércoles de 9 a 13 h se atiende sin cita previa; por eso solo se dan citas fuera de esa franja.', 'Els dimecres de 9 a 13 h s\'atén sense cita prèvia; per això només es donen cites fora d\'aquesta franja.')}</p>` : '');
 }
 async function guardarNuevaCitaStaff(){
   const btn = document.getElementById('nc-guardar'), msg = document.getElementById('nc-msg');
@@ -7001,11 +7064,13 @@ async function guardarNuevaCitaStaff(){
   const urgente = !!(document.getElementById('nc-urgente') && document.getElementById('nc-urgente').checked);
   if(urgente) fila.urgente = true;
   if(__NC.tecnico && document.getElementById('nc-tecnico')) fila.tecnico_email = __NC.tecnico;
+  if(fila.tecnico_email && __NC.tecnico2 && document.getElementById('nc-tecnico2') && __NC.tecnico2.toLowerCase() !== fila.tecnico_email.toLowerCase()) fila.tecnico2_email = __NC.tecnico2;
   const porTel = !!(document.getElementById('nc-telefono') && document.getElementById('nc-telefono').checked);
   if(porTel) fila.modalidad = 'telefono';
   let { error } = await sb.from('citas').insert(fila);
   if(error && porTel && /modalidad/.test(error.message || '')){ delete fila.modalidad; fila.motivo = '📞 Cita por teléfono' + (fila.motivo ? ' · ' + fila.motivo : ''); ({ error } = await sb.from('citas').insert(fila)); }
-  if(error && /tecnico_email|tecnico_nombre|tecnico_clave/.test(error.message || '')){ delete fila.tecnico_email; ({ error } = await sb.from('citas').insert(fila)); }
+  if(error && fila.tecnico2_email && /tecnico2/.test(error.message || '')){ delete fila.tecnico2_email; ({ error } = await sb.from('citas').insert(fila)); }
+  if(error && /tecnico_email|tecnico_nombre|tecnico_clave/.test(error.message || '')){ delete fila.tecnico_email; delete fila.tecnico2_email; ({ error } = await sb.from('citas').insert(fila)); }
   if(error && /urgente/.test(error.message || '')){ delete fila.urgente; ({ error } = await sb.from('citas').insert(fila)); if(!error && urgente) alert(acL('La cita se ha creado, pero falta ejecutar el SQL 18 para marcarla como urgente.', 'La cita s\'ha creat, però falta executar l\'SQL 18 per marcar-la com a urgent.')); }
   if(error && /creada_por_email/.test(error.message || '')){ delete fila.creada_por_email; ({ error } = await sb.from('citas').insert(fila)); }
   if(error && __NC.hist){
@@ -7029,8 +7094,10 @@ async function guardarNuevaCitaStaff(){
   const uid = __NC.uid, fecha = __NC.fecha, horaC = __NC.hora, nombreC = __NC.nombre || '', histC = __NC.hist;
   const reemplaza = __NC.reemplaza, antes = __NC.antes;
   if(reemplaza){ await cancelarCitaDB(reemplaza); }
-  if(fila.tecnico_email && fila.tecnico_email !== String(CURRENT_USER.email || '').toLowerCase()){
-    const fN = { usuario_id: uid, tipo: 'cita_asignada', mensaje: `${equipoNombre(CURRENT_USER.email)} te ha dado una cita con ${nombreC || 'una persona'} el ${new Date(fecha + 'T00:00:00').toLocaleDateString('es-ES')} a las ${horaC}.`, asignada_a_email: fila.tecnico_email };
+  for(const dest of [fila.tecnico_email, fila.tecnico2_email].filter(Boolean)){
+    if(String(dest).toLowerCase() === String(CURRENT_USER.email || '').toLowerCase()) continue;
+    const otra = [fila.tecnico_email, fila.tecnico2_email].filter(x => x && x !== dest);
+    const fN = { usuario_id: uid, tipo: 'cita_asignada', mensaje: `${equipoNombre(CURRENT_USER.email)} te ha dado una cita con ${nombreC || 'una persona'} el ${new Date(fecha + 'T00:00:00').toLocaleDateString('es-ES')} a las ${horaC}${otra.length ? ' (junto con ' + otra.map(equipoNombre).join(' y ') + ')' : ''}.`, asignada_a_email: dest };
     try { const r = await sb.from('notificaciones').insert(fN); if(r.error){ delete fN.asignada_a_email; await sb.from('notificaciones').insert(fN); } } catch(e){}
   }
   avisarCitaCreada(uid, nombreC, fecha, horaC, motivo, urgente, Object.assign(reemplaza ? { modo:'cambiada', antes } : {}, histC ? { contacto: histC } : {}));
@@ -7127,9 +7194,9 @@ async function construirMisCitasHtml(email){
     let q = sb.from('citas').select('*').gte('fecha', desde).lte('fecha', hasta).neq('estado', 'cancelada').order('fecha', { ascending: true }).order('hora', { ascending: true });
     const { data: todas } = await q;
     const yo = String(email || '').toLowerCase();
-    const mias = (todas || []).filter(c => ('tecnico_email' in c && c.tecnico_email)
+    const mias = (todas || []).filter(c => (c.tecnico2_email && c.tecnico2_email.toLowerCase() === yo) || (('tecnico_email' in c && c.tecnico_email)
       ? c.tecnico_email.toLowerCase() === yo
-      : (c.creada_por_email === email || ids.includes(c.usuario_id)));
+      : (c.creada_por_email === email || ids.includes(c.usuario_id))));
     const sinAsignar = (todas || []).filter(c => 'tecnico_email' in c && !c.tecnico_email && !mias.includes(c)).length;
     const nom = {}; const uids = [...new Set(mias.map(c => c.usuario_id).filter(Boolean))];
     if(uids.length){ const { data: ps } = await sb.from('perfiles').select('id, nombre_completo').in('id', uids); (ps || []).forEach(x => { nom[x.id] = x.nombre_completo; }); }
@@ -12038,7 +12105,11 @@ async function renderProyectosScreen(){
   cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
   const esCA = LANG_I === 'ca';
 
-  const { data: proyectos } = await sb.from('proyectos').select('*').order('creado_en', { ascending:false });
+  const [{ data: proyectos }, staffPj] = await Promise.all([
+    sb.from('proyectos').select('*').order('creado_en', { ascending:false }),
+    sb.from('staff').select('email, nombre').eq('activo', true).then(r => r, () => ({ data: [] }))
+  ]);
+  window.__pjStaff = ((staffPj && staffPj.data) || []).filter(x => x.email).sort((a, b) => String(a.nombre || a.email).localeCompare(String(b.nombre || b.email)));
   const proyectoIds = (proyectos || []).map(p => p.id);
   let conteos = {};
   if(proyectoIds.length){
@@ -12109,8 +12180,8 @@ async function renderProyectosScreen(){
           ? 'Obre el projecte (\"Abrir proyecto\") i, a l\'apartat \"Beneficiaris\", busca la persona pel nom, DNI o telèfon i prem \"➕ Afegir\". També es pot fer des de la fitxa de cada persona.'
           : 'Abre el proyecto (\"Abrir proyecto\") y, en el apartado \"Beneficiarios\", busca a la persona por nombre, DNI o teléfono y pulsa \"➕ Añadir\". También se puede hacer desde la ficha de cada persona.'}</p>
         <p><strong>3. ${esCA?'Afegeix professionals':'Añade profesionales'}</strong><br>${esCA
-          ? 'Obre el projecte (\"Abrir proyecto\") i, a l\'apartat \"Professionals\", tria un company de la llista desplegable i prem \"➕\".'
-          : 'Abre el proyecto (\"Abrir proyecto\") y, en el apartado \"Profesionales\", elige un compañero de la lista desplegable y pulsa \"➕\".'}</p>
+          ? 'En crear el projecte ja pots marcar tot l\'equip (dues persones o més). Després, dins del projecte, a \"Professionals\", marca qui vulguis afegir i prem \"➕ Afegir els marcats\".'
+          : 'Al crear el proyecto ya puedes marcar a todo el equipo (dos personas o más). Después, dentro del proyecto, en \"Profesionales\", marca a quien quieras añadir y pulsa \"➕ Añadir los marcados\".'}</p>
         <p><strong>4. ${esCA?'Vincula seguiments':'Vincula seguimientos'}</strong><br>${esCA
           ? 'Els seguiments són les actuacions que ja registres normalment. Quan en registris una nova des de la fitxa d\'una persona, tria el projecte al desplegable \"Vincular a un projecte\" — així quedarà comptabilitzada aquí.'
           : 'Los seguimientos son las actuaciones que ya registras normalmente. Cuando registres una nueva desde la ficha de una persona, elige el proyecto en el desplegable \"Vincular a un proyecto\" — así quedará contabilizada aquí.'}</p>
@@ -12131,6 +12202,8 @@ async function renderProyectosScreen(){
         <div class="field" style="flex:1;"><label>${esCA?'Data inici':'Fecha inicio'}</label><input type="date" id="proyecto-fecha-inicio"></div>
         <div class="field" style="flex:1;"><label>${esCA?'Data final':'Fecha final'}</label><input type="date" id="proyecto-fecha-final"></div>
       </div>
+      <div class="field"><label>👨‍💼 ${esCA ? 'Equip del projecte (pots marcar-ne diversos)' : 'Equipo del proyecto (puedes marcar varios)'}</label>
+        <div class="pj-equipo-ops" id="proyecto-equipo">${(window.__pjStaff || []).map(s => `<label class="pj-equipo-op"><input type="checkbox" value="${escAttr(s.email)}" ${String(s.email).toLowerCase() === String(CURRENT_USER.email || '').toLowerCase() ? 'checked' : ''}> ${escAttr(s.nombre || s.email)}</label>`).join('') || `<span class="subtle" style="margin:0;font-size:12px;">${esCA ? 'Es podrà afegir després, dins del projecte.' : 'Se podrá añadir después, dentro del proyecto.'}</span>`}</div></div>
       <button class="primary-btn" onclick="crearProyecto()">➕ ${esCA?'Crear projecte':'Crear proyecto'}</button>
     </div>
 
@@ -12181,14 +12254,20 @@ async function crearProyecto(){
   const esCA = LANG_I === 'ca';
   const nombre = document.getElementById('proyecto-nombre').value.trim();
   if(!nombre){ alert(esCA ? 'Escriu el nom del projecte.' : 'Escribe el nombre del proyecto.'); return; }
-  const { error } = await sb.from('proyectos').insert({
+  const equipo = Array.from(document.querySelectorAll('#proyecto-equipo input:checked')).map(i => i.value).filter(Boolean);
+  const { data: nuevo, error } = await sb.from('proyectos').insert({
     nombre,
     descripcion: document.getElementById('proyecto-descripcion').value.trim() || null,
     fecha_inicio: document.getElementById('proyecto-fecha-inicio').value || null,
     fecha_final: document.getElementById('proyecto-fecha-final').value || null,
     creado_por_email: CURRENT_USER.email
-  });
+  }).select('id').single();
   if(error){ alert(error.message); return; }
+  const nuevoId = Array.isArray(nuevo) ? (nuevo[0] || {}).id : (nuevo || {}).id;
+  if(nuevoId && equipo.length){
+    const r = await sb.from('proyecto_participantes').insert(equipo.map(email => ({ proyecto_id: nuevoId, rol: 'profesional', tecnico_email: email, anadido_por_email: CURRENT_USER.email })));
+    if(r.error) alert((esCA ? 'El projecte s\'ha creat, però no s\'ha pogut afegir l\'equip: ' : 'El proyecto se ha creado, pero no se ha podido añadir el equipo: ') + r.error.message);
+  }
   renderProyectosScreen();
 }
 
@@ -12801,13 +12880,14 @@ async function verProyecto(proyectoId, opts){
     <div class="panel-card" id="proyecto-card-profesionales">
       <h3>👨‍💼 ${esCA?'Professionals':'Profesionales'}</h3>
       ${profesionalesHtml}
-      <div style="display:flex;gap:8px;margin-top:8px;">
-        <select id="select-anadir-profesional" style="flex:1;">
-          <option value="">${esCA?'— Afegir professional —':'— Añadir profesional —'}</option>
-          ${(staffLista||[]).filter(s => !profesionales.some(pf=>pf.tecnico_email===s.email)).map(s => `<option value="${s.email}">${s.nombre||s.email}</option>`).join('')}
-        </select>
-        <button class="link-btn" onclick="anadirProfesionalAProyecto('${proyectoId}')">➕</button>
-      </div>
+      ${(staffLista||[]).some(s => !profesionales.some(pf=>pf.tecnico_email===s.email)) ? `
+      <div class="pj-equipo-add">
+        <div class="pj-equipo-tit">${esCA ? 'Afegir professionals: marca\'n un o més' : 'Añadir profesionales: marca uno o varios'}</div>
+        <div class="pj-equipo-ops" id="pj-equipo-ops">
+          ${(staffLista||[]).filter(s => !profesionales.some(pf=>pf.tecnico_email===s.email)).sort((a, b) => String(a.nombre || a.email).localeCompare(String(b.nombre || b.email))).map(s => `<label class="pj-equipo-op"><input type="checkbox" value="${escAttr(s.email)}" onchange="pjEquipoContar()"> ${escAttr(s.nombre||s.email)}</label>`).join('')}
+        </div>
+        <button class="primary-btn" id="pj-equipo-btn" style="width:auto;margin:8px 0 0;" disabled onclick="anadirProfesionalesAProyecto('${proyectoId}')">➕ ${esCA ? 'Afegir els marcats' : 'Añadir los marcados'}</button>
+      </div>` : ''}
     </div>
 
     <div class="panel-card" id="proyecto-card-actividades">
@@ -14432,7 +14512,7 @@ async function mhPintarPrevia(){
   const ca = LANG_I === 'ca', yo = String(CURRENT_USER.email || '').toLowerCase();
   const dias = []; const d = new Date(); while(dias.length < 5){ d.setDate(d.getDate() + 1); const w = d.getDay(); if(w >= 1 && w <= 5) dias.push(isoLocal(d)); }
   let citas = [];
-  try { const r = await sb.from('citas').select('fecha, hora, estado, tecnico_email').gte('fecha', dias[0]).lte('fecha', dias[dias.length - 1]); citas = (r.data || []).filter(c => c.estado !== 'cancelada' && String(c.tecnico_email || '').toLowerCase() === yo); } catch(e){}
+  try { const r = await sb.from('citas').select('*').gte('fecha', dias[0]).lte('fecha', dias[dias.length - 1]); citas = (r.data || []).filter(c => c.estado !== 'cancelada' && (String(c.tecnico_email || '').toLowerCase() === yo || String(c.tecnico2_email || '').toLowerCase() === yo)); } catch(e){}
   const { tramos, propio } = hrTramosAmbito(yo);
   const filas = dias.map(f => {
     const dt = new Date(f + 'T00:00:00'), dia = dt.getDay() === 0 ? 7 : dt.getDay();
@@ -16931,6 +17011,24 @@ const contaPagoDe = (q, ym) => __conta.pagos.find(p => p.cuotista_id === q.id &&
 // Registrar el cobro de una cuota: crea el movimiento de entrada en la cuenta elegida (con su medio de pago) y lo une a la cuota
 
 
+// Equipo del proyecto: se pueden marcar varias personas y añadirlas de una vez
+function pjEquipoContar(){
+  const n = document.querySelectorAll('#pj-equipo-ops input:checked').length, b = document.getElementById('pj-equipo-btn'); if(!b) return;
+  const esCA = LANG_I === 'ca';
+  b.disabled = !n; b.textContent = '➕ ' + (n > 1 ? (esCA ? `Afegir els ${n} marcats` : `Añadir los ${n} marcados`) : (esCA ? 'Afegir els marcats' : 'Añadir los marcados'));
+}
+async function anadirProfesionalesAProyecto(proyectoId){
+  const emails = Array.from(document.querySelectorAll('#pj-equipo-ops input:checked')).map(i => i.value).filter(Boolean);
+  if(!emails.length) return;
+  const b = document.getElementById('pj-equipo-btn'); if(b) b.disabled = true;
+  const nuevos = [];
+  for(const email of emails){ if(!(await yaEnProyecto(proyectoId, 'tecnico_email', email, 'profesional'))) nuevos.push(email); }
+  if(nuevos.length){
+    const { error } = await sb.from('proyecto_participantes').insert(nuevos.map(email => ({ proyecto_id: proyectoId, rol: 'profesional', tecnico_email: email, anadido_por_email: CURRENT_USER.email })));
+    if(error){ alert(error.message); if(b) b.disabled = false; return; }
+  }
+  verProyecto(proyectoId);
+}
 async function anadirProfesionalAProyecto(proyectoId){
   const email = document.getElementById('select-anadir-profesional').value;
   if(!email) return;
@@ -17120,7 +17218,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-02 · v206 (logo de Logos en el móvil: en la entrada, en el Inicio y en el menú; logo con su identidad original sobre blanco en el menú; informe por persona: primero las 10 más atendidas, «Ver más», buscador y filtro por tramos; Recursos Humanos más rápido: cambiar de apartado sin recargar la cabecera, vacaciones solo lo pendiente y próximo, y la pantalla va al principio del apartado; Logos 360: historial de cambios, papelera, «Deshacer», duplicados, copia de seguridad y versiones; navegación fácil: ruta, favoritas, Mis páginas, buscador Ctrl+K y «Sigue con»; entrada más rápida; aviso de alertas sin error al salir de la sesión; botón «Preparar correo» del consentimiento arreglado: descarga el PDF y abre Gmail, Outlook o el programa de correo; el Panel técnico ya no apunta los cortes de conexión al recargar o cerrar la página; consentimiento: 2 obligatorias + 2 opcionales; consentimiento v2 revisado por el jurista; protección de datos: peticiones, anonimizar y estado del cifrado; cifrado de campos sensibles; Canal: un enlace de YouTube pegado en «Imagen» pasa solo a «Vídeo»; el interruptor de la verificación en dos pasos solo lo ve y lo usa Soporte técnico; verificación en dos pasos: interruptor activar / pausa en el Panel técnico; 🩺 Panel técnico: comprobaciones de salud, fallos apuntados solos y aviso a Soporte técnico; «Ver como» ya no pide fichar: se entra directamente a mirar; Gestión de personal con cabecera y menú lateral; Administración con buscador, cabecera y menú lateral; Equipo en tarjetas con buscador, filtros y «Gestionar»; Canal: vídeos (YouTube, Vimeo o MP4) en noticias, eventos y publicidad; Canal: publicidad de entidades con contrato (imagen propia o diseño con colores), con vistas y clics; 📣 Canal: noticias, eventos con agenda y calendario, anuncios y convocatorias que salen en la web y en Logos Acompanya; el histórico cuenta: cada fila de los Excel antiguos es una vez atendida, en la ficha, en Informes › Registro («Desde el inicio») y en las cifras; Inicio: «Veces que hemos atendido» junto a las personas atendidas; veces que ha sido atendida cada persona: en su ficha y en Informes › Registro, con texto para la memoria y Excel por persona; «Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-11-03 · v207 (citas con hasta dos personas del equipo; proyectos: equipo de dos o más personas al crear y añadir varias de una vez; ficha de la persona: «Citas» junto a «Ficha de atención»; logo de Logos en el móvil: en la entrada, en el Inicio y en el menú; logo con su identidad original sobre blanco en el menú; informe por persona: primero las 10 más atendidas, «Ver más», buscador y filtro por tramos; Recursos Humanos más rápido: cambiar de apartado sin recargar la cabecera, vacaciones solo lo pendiente y próximo, y la pantalla va al principio del apartado; Logos 360: historial de cambios, papelera, «Deshacer», duplicados, copia de seguridad y versiones; navegación fácil: ruta, favoritas, Mis páginas, buscador Ctrl+K y «Sigue con»; entrada más rápida; aviso de alertas sin error al salir de la sesión; botón «Preparar correo» del consentimiento arreglado: descarga el PDF y abre Gmail, Outlook o el programa de correo; el Panel técnico ya no apunta los cortes de conexión al recargar o cerrar la página; consentimiento: 2 obligatorias + 2 opcionales; consentimiento v2 revisado por el jurista; protección de datos: peticiones, anonimizar y estado del cifrado; cifrado de campos sensibles; Canal: un enlace de YouTube pegado en «Imagen» pasa solo a «Vídeo»; el interruptor de la verificación en dos pasos solo lo ve y lo usa Soporte técnico; verificación en dos pasos: interruptor activar / pausa en el Panel técnico; 🩺 Panel técnico: comprobaciones de salud, fallos apuntados solos y aviso a Soporte técnico; «Ver como» ya no pide fichar: se entra directamente a mirar; Gestión de personal con cabecera y menú lateral; Administración con buscador, cabecera y menú lateral; Equipo en tarjetas con buscador, filtros y «Gestionar»; Canal: vídeos (YouTube, Vimeo o MP4) en noticias, eventos y publicidad; Canal: publicidad de entidades con contrato (imagen propia o diseño con colores), con vistas y clics; 📣 Canal: noticias, eventos con agenda y calendario, anuncios y convocatorias que salen en la web y en Logos Acompanya; el histórico cuenta: cada fila de los Excel antiguos es una vez atendida, en la ficha, en Informes › Registro («Desde el inicio») y en las cifras; Inicio: «Veces que hemos atendido» junto a las personas atendidas; veces que ha sido atendida cada persona: en su ficha y en Informes › Registro, con texto para la memoria y Excel por persona; «Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -18276,7 +18374,7 @@ function snCitaHtml(c, nombre, onclick){
   const mes = d.toLocaleDateString(ca ? 'ca-ES' : 'es-ES', { month: 'short' }).replace('.', '');
   return `<div class="sn-cita" onclick="${onclick || ''}"><div class="sn-cita-f"><div class="sn-cita-d">${d.getDate()}</div><div class="sn-cita-m">${mes}</div><div class="sn-cita-h">${String(c.hora || '').slice(0, 5)}h</div></div>
     <div class="sn-cita-i"><div class="sn-cita-p">${nombre || ''}</div><div class="sn-cita-t">${c.motivo && !/^📞 Cita por teléfono/.test(c.motivo) ? String(c.motivo).replace(/</g, '&lt;') : (citaEsTelefono(c) ? (ca ? 'Cita per telèfon' : 'Cita por teléfono') : (ca ? 'Cita a Logos' : 'Cita en Logos'))}</div>
-    ${c.tecnico_nombre ? `<div class="sn-cita-tec">${String(c.tecnico_nombre).replace(/</g, '&lt;')}</div>` : ''}${citaEsTelefono(c)
+    ${c.tecnico_nombre ? `<div class="sn-cita-tec">${String([c.tecnico_nombre, c.tecnico2_nombre].filter(Boolean).join(' y ')).replace(/</g, '&lt;')}</div>` : ''}${citaEsTelefono(c)
       ? `<div class="sn-cita-l" style="color:#5B3FA0;font-weight:600;">📞 ${ca ? 'Per telèfon · truca-li' : 'Por teléfono · llámale'}${citaTelDe(c) ? ' al ' + String(citaTelDe(c)).replace(/</g, '&lt;') : ''}</div>`
       : `<div class="sn-cita-l">🏢 Associació Logos · C/ de la Pau del Protectorat, 14</div>`}</div></div>`;
 }
@@ -19424,12 +19522,12 @@ async function verPersonaStaffInterno(usuarioId, origen){
     <div class="persona-tabs">
       <button class="ptab-btn principal active" data-tab="vista" onclick="mostrarTabPersona('vista')">🔎 ${LANG_I==='ca'?'Resum':'Resumen'}</button>
       <button class="ptab-btn principal" data-tab="atencion" onclick="abrirAtencionEnFicha()">📋 ${LANG_I==='ca'?'Fitxa d\'atenció':'Ficha de atención'}</button>
+      <button class="ptab-btn principal" data-tab="citas" onclick="mostrarTabPersona('citas')">📅 ${t.tabCitas}</button>
       <button class="ptab-btn principal" data-tab="actuaciones" onclick="mostrarTabPersona('actuaciones')">📂 ${LANG_I==='ca'?'Expedient':'Expediente'}</button>
       <button class="ptab-btn principal" data-tab="proyectos" onclick="mostrarTabPersona('proyectos')">🧩 ${t.tabProyectos}</button>
       <button class="ptab-btn principal" data-tab="formaciones" onclick="mostrarTabPersona('formaciones')">🎓 ${t.tabFormaciones}</button>
       <span class="ptab-sep"></span>
       <button class="ptab-btn secundaria" data-tab="documentos" onclick="mostrarTabPersona('documentos')">📄 ${t.tabDocumentos}</button>
-      <button class="ptab-btn secundaria" data-tab="citas" onclick="mostrarTabPersona('citas')">📅 ${t.tabCitas}</button>
       <button class="ptab-btn secundaria" data-tab="derivaciones" onclick="mostrarTabPersona('derivaciones')">↗️ ${t.tabDerivaciones}</button>
       <button class="ptab-btn secundaria" data-tab="historial" onclick="mostrarTabPersona('historial')">🕘 ${t.tabHistorial}</button>
       <button class="ptab-btn secundaria" data-tab="quienatendio" onclick="mostrarTabPersona('quienatendio')">👥 ${t.tabQuienAtendio}</button>
