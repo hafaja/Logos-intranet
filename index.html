@@ -1535,6 +1535,132 @@ body.vc-on{padding-top:44px;}
 .rgpd-acc{display:flex;gap:10px;align-items:center;flex-wrap:wrap;} .rgpd-acc .link-btn{margin:0;font-size:13px;}
 .rgpd-cif{background:#F3F7FC;border-radius:12px;padding:10px 12px;font-size:13.5px;} .rgpd-cif-l{margin:6px 0;display:flex;flex-wrap:wrap;gap:4px;} .rgpd-cif small{color:#5F6672;}
 
+
+
+
+/* Menú de Gestión del personal: cada grupo se pliega (v229) */
+.gp-menu-g > summary.gp-menu-h{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;user-select:none;}
+.gp-menu-g > summary.gp-menu-h::-webkit-details-marker{display:none;}
+.gp-menu-g > summary.gp-menu-h::after{content:'▾';margin-left:auto;font-size:13px;opacity:.85;transition:transform .15s;}
+.gp-menu-g[open] > summary.gp-menu-h::after{transform:rotate(180deg);}
+.gp-menu-g:not([open]) > summary.gp-menu-h{background:rgba(255,255,255,.12);border-radius:10px;padding:8px 10px;}
+.gp-menu-n{background:rgba(255,255,255,.22);border-radius:20px;padding:0 7px;font-size:10.5px;}
+.gp-sub-g{margin:2px 0;}
+.gp-sub-g > summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;color:#fff;font-weight:700;font-size:14px;}
+.gp-sub-g > summary::-webkit-details-marker{display:none;}
+.gp-sub-g > summary:hover{background:rgba(255,255,255,.12);}
+.gp-sub-g > summary small{margin-left:auto;background:rgba(255,255,255,.2);border-radius:20px;padding:0 7px;font-size:11px;}
+.gp-sub-g > summary::after{content:'▾';font-size:12px;opacity:.8;transition:transform .15s;}
+.gp-sub-g[open] > summary::after{transform:rotate(180deg);}
+.gp-sub-g > .cmp-mi{margin-left:14px;width:calc(100% - 14px);}
+@media (max-width:900px){ .gp-sub-g > summary{display:none;} .gp-sub-g > .cmp-mi{margin-left:0;width:auto;} }
+/* ===== RR. HH.: listas en desplegables (v228) ===== */
+.gp-mes{background:#fff;border:1px solid #DCE5F2;border-radius:14px;margin:0 0 10px;overflow:hidden;}
+.gp-mes > summary{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;list-style:none;font-size:14px;background:#F7F9FC;}
+.gp-mes > summary::-webkit-details-marker{display:none;}
+.gp-mes > summary::after{content:'▾';color:#5B6475;margin-left:8px;transition:transform .15s;}
+.gp-mes[open] > summary::after{transform:rotate(180deg);}
+.gp-mes > summary > span:first-child{flex:1;}
+.gp-mes-c{padding:8px 12px 10px;}
+.gp-com{border:1px solid #E3E7EE;border-radius:12px;margin:0 0 8px;background:#fff;}
+.gp-com.nuevo{border-left:4px solid #F2BC2C;}
+.gp-com > summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;list-style:none;}
+.gp-com > summary::-webkit-details-marker{display:none;}
+.gp-com-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px;}
+.gp-com[open] > summary{border-bottom:1px dashed #E3E7EE;}
+.gp-com[open] > summary .gp-com-t{white-space:normal;}
+.gp-com-c{padding:10px 12px 12px;}
+.gp-com-c > div:first-child > strong{display:none;}
+.gp-sec-t{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#2463B8;margin:14px 0 8px;display:flex;align-items:center;gap:8px;}
+.gp-al-dia{background:#E3F5EA;color:#1F7A45;border-radius:12px;padding:10px 14px;font-weight:700;margin:0 0 8px;}
+.gp-nuevo > summary{cursor:pointer;list-style:none;}
+.gp-nuevo > summary::-webkit-details-marker{display:none;}
+.gp-nuevo:not([open]) > summary{color:#1E4FA8;}
+/* ===== Ficha · estilo del panel de administración (v227) ===== */
+.m3-cab.m4-hero{border:0;padding:20px 20px 0;color:#fff;margin:0 0 16px;background:linear-gradient(135deg,#163F7A 0%,#2463B8 60%,#3B82D9 100%);border-radius:22px;box-shadow:0 18px 36px -22px rgba(22,63,122,.9);}
+.m4-hero .m3-nom{color:#fff;}
+.m4-hero .m3-datos{color:rgba(255,255,255,.86);}
+.m4-hero .m3-av{background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.35);}
+.m4-hero .m3-chip{background:rgba(255,255,255,.16);color:#fff;}
+.m4-hero .m3-chip.ok{background:rgba(46,204,113,.22);color:#E9FFF1;}
+.m4-hero .m3-chip.aviso{background:#F2BC2C;color:#3A2A00;}
+.m4-hero .m3-rapido a{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff;}
+.m4-hero .m3-rapido a:hover{background:rgba(255,255,255,.25);}
+.m4-hero .m4-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0 4px;}
+.m4-hero .pj-kpi.m4-kpi{cursor:pointer;}
+.m4-hero .pj-kpi.m4-kpi strong{font-size:19px;line-height:1.15;}
+@media (max-width:760px){ .m4-hero .pj-kpi.m4-kpi strong{font-size:15px;} .m4-hero .pj-kpi.m4-kpi small{font-size:11px;} }
+.m4-hero .pj-kpi.m4-kpi:hover{background:rgba(255,255,255,.2);}
+.m4-kpi-i{width:36px;height:36px;border-radius:11px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.m4-hero .m3-cmd{border-top:1px solid rgba(255,255,255,.22);margin-top:14px;}
+.m4-hero .m3-cmd > button, .m4-hero .m3-mas > button{color:#fff;}
+.m4-hero .m3-cmd > button:hover, .m4-hero .m3-mas > button:hover{background:rgba(255,255,255,.14);}
+.m4-hero .m3-cmd > .m3-pri{background:#F2BC2C;color:#1B2A44;}
+.m4-hero .m3-cmd > .m3-pri:hover{background:#FFD25A;}
+.m4-hero .persona-tabs.m3-piv{background:#fff;margin:6px -20px 0;padding:0 20px;border-top:0;border-radius:0 0 22px 22px;}
+.m4-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin:0 0 16px;align-items:start;}
+.m4-col{background:#fff;border:1px solid #DCE5F2;border-radius:18px;padding:16px 18px;box-shadow:0 10px 26px -20px rgba(22,63,122,.55);}
+.m4-ch{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;}
+.m4-ch > div{display:flex;gap:12px;align-items:center;}
+.m4-ch h3{margin:0;font-size:17px;color:#16325A;}
+.m4-ch small{color:#5B6475;font-size:12.5px;}
+.m4-ico{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#163F7A,#3B82D9);display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;}
+.m4-ico-ac{background:linear-gradient(135deg,#C98A00,#F2BC2C);}
+.m4-btn{border:1px solid #C9D6EA;background:#fff;color:#16325A;font:inherit;font-weight:700;font-size:13px;border-radius:10px;padding:8px 12px;cursor:pointer;}
+.m4-btn:hover{background:#EEF3FB;}
+.m4-btn-pri{background:#1E4FA8;border-color:#1E4FA8;color:#fff;}
+.m4-btn-pri:hover{background:#173F88;}
+.m4-barra{height:6px;background:#E6ECF5;border-radius:4px;overflow:hidden;margin:0 0 12px;}
+.m4-barra i{display:block;height:100%;border-radius:4px;}
+.m4-grupo{margin:0 0 12px;}
+.m4-gt{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#2463B8;margin:0 0 6px;padding:0 0 5px;border-bottom:1px solid #E6ECF5;}
+.m4-fila{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:13.5px;border-bottom:1px dashed #EEF1F6;}
+.m4-fila:last-child{border-bottom:0;}
+.m4-fila > span:first-child{color:#5B6475;flex-shrink:0;}
+.m4-fila > span:last-child{text-align:right;font-weight:600;color:#1B2333;overflow-wrap:anywhere;}
+.m4-fila i{color:#A0A7B5;font-style:normal;}
+.m4-falta-b{border:0;background:#FFF3DD;color:#A35F00;font:inherit;font-size:12px;font-weight:800;border-radius:20px;padding:2px 9px;cursor:pointer;}
+.m4-pills{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end;}
+.m4-grupo > .m4-pills{justify-content:flex-start;margin:2px 0 8px;}
+.m4-pill{background:#E8EEFB;color:#1E4FA8;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;}
+.m4-pill.b{background:#FFF3DD;color:#8A5A00;}
+.m4-nota{background:#F7F9FC;border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0 0;color:#2A3244;}
+.m4-vacio{color:#7A8294;font-size:13px;margin:4px 0;}
+.m4-vacio-c{background:#F7F9FC;border:1px dashed #C9D6EA;border-radius:14px;padding:16px;text-align:center;}
+.m4-vacio-c p{margin:0 0 10px;font-size:13.5px;color:#3B4456;}
+.m4-tram{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;background:#FFFAEE;border:1px solid #F5E2B0;border-radius:12px;padding:8px 10px;margin:0 0 6px;font-size:13.5px;}
+.m4-tram small{display:block;color:#7A6A40;font-size:12px;}
+.m4-tram-acc{display:flex;gap:6px;}
+.m4-mini{border:1px solid #E2CF95;background:#fff;border-radius:8px;padding:4px 8px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;color:#5A4500;}
+.m4-mini.ok{border-color:#9ED2B2;color:#1F7A45;}
+.m4-tl{list-style:none;margin:0;padding:0;position:relative;}
+.m4-tl::before{content:'';position:absolute;left:25px;top:6px;bottom:6px;width:2px;background:#E6ECF5;}
+.m4-act{display:flex;gap:12px;padding:0 0 12px;position:relative;}
+.m4-fecha{width:52px;flex-shrink:0;background:#fff;border:1px solid #DCE5F2;border-radius:12px;text-align:center;padding:5px 0;line-height:1.1;position:relative;z-index:1;}
+.m4-fecha b{display:block;font-size:18px;color:#16325A;}
+.m4-fecha span{display:block;font-size:11px;font-weight:800;text-transform:uppercase;color:#2463B8;}
+.m4-fecha small{display:block;font-size:10px;color:#8A93A5;}
+.m4-act-c{flex:1;min-width:0;background:#F9FBFE;border:1px solid #E6ECF5;border-radius:12px;padding:9px 12px;}
+.m4-act-t{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap;}
+.m4-act-t strong{font-size:14px;color:#16325A;}
+.m4-act-c p{margin:4px 0;font-size:13.5px;line-height:1.45;color:#2A3244;}
+.m4-act-o{font-size:12.5px;color:#3B4456;margin-top:2px;}
+.m4-act-c small{color:#6B7385;font-size:12px;}
+.m4-sig{font-size:12.5px;background:#EEF3FB;border-radius:8px;padding:5px 8px;margin:4px 0;color:#1E3F7A;}
+.m4-res{font-size:11.5px;font-weight:800;border-radius:20px;padding:2px 9px;white-space:nowrap;}
+.m4-res.ok{background:#E3F5EA;color:#1F7A45;}
+.m4-res.cur{background:#FFF3DD;color:#A35F00;}
+.m4-res.no{background:#FDECEA;color:#B03A2E;}
+.m4-mas{border:0;background:none;color:#2463B8;font:inherit;font-weight:700;cursor:pointer;padding:4px 0;}
+@media (max-width:980px){ .m4-split{grid-template-columns:1fr;} }
+@media (max-width:760px){
+  .m3-cab.m4-hero{padding:14px 14px 0;border-radius:18px;}
+  .m4-hero .m4-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .m4-hero .pj-kpi.m4-kpi{padding:8px 10px;}
+  .m4-kpi-i{width:30px;height:30px;font-size:15px;}
+  .m4-hero .persona-tabs.m3-piv{margin:6px -14px 0;padding:0 14px;border-radius:0 0 18px 18px;}
+  .m4-col{padding:14px;}
+}
 /* ===== Historial de horas por semana (v226) ===== */
 .hs-barra{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 10px;font-size:13px;}
 .hs-barra select{padding:4px 6px;}
@@ -3422,7 +3548,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v226'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v229'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -14299,10 +14425,19 @@ async function renderGestionPersonal(tab){
     </div>
     <div class="cmp pj-cmp gp-cmp">
       <nav class="cmp-menu gp-menu" aria-label="${acL('Gestión de personal', 'Gestió de personal')}">
-        <div class="gp-menu-h">${acL('Lo mío', 'El meu')}</div>
-        ${mios.map(([k, ic, tx]) => `<button class="cmp-mi${sel === k ? ' on' : ''}" data-sel="${k}" ${sel === k ? 'aria-current="page"' : ''} onclick="renderGestionPersonal('${k}')"><span>${ic}</span>${tx}<span class="cmp-n" id="gp-n-${k}" style="display:none;"></span></button>`).join('')}
-        ${esRH ? `<div class="cmp-mi-sep"></div><div class="gp-menu-h">${IS_RRHH ? acL('Recursos Humanos', 'Recursos Humans') : acL('Administración', 'Administració')}</div>
-        ${subsRH.map(([k, tx]) => { const m = String(tx).match(/^(\p{Extended_Pictographic}\uFE0F?)\s*(.*)$/u); return `<button class="cmp-mi${sel === 'rh:' + k ? ' on' : ''}" data-sel="rh:${k}" ${sel === 'rh:' + k ? 'aria-current="page"' : ''} onclick="window.__gpSub='${k}';renderGestionPersonal('rrhh')"><span>${m ? m[1] : GP_RH_IC[k] || '•'}</span>${m ? m[2] : tx}${k === 'vacaciones' ? '<span class="cmp-n" id="gp-n-rhvac" style="display:none;background:#D6336C;color:#fff;"></span>' : ''}</button>`; }).join('')}` : ''}
+        <details class="gp-menu-g"${t !== 'rrhh' || !esRH || window.innerWidth <= 900 ? ' open' : ''}><summary class="gp-menu-h">${acL('Lo mío', 'El meu')}</summary>
+        ${mios.map(([k, ic, tx]) => `<button class="cmp-mi${sel === k ? ' on' : ''}" data-sel="${k}" ${sel === k ? 'aria-current="page"' : ''} onclick="renderGestionPersonal('${k}')"><span>${ic}</span>${tx}<span class="cmp-n" id="gp-n-${k}" style="display:none;"></span></button>`).join('')}</details>
+        ${esRH ? `<div class="cmp-mi-sep"></div><details class="gp-menu-g"${t === 'rrhh' || window.innerWidth <= 900 ? ' open' : ''}><summary class="gp-menu-h">${IS_RRHH ? acL('Recursos Humanos', 'Recursos Humans') : acL('Administración', 'Administració')} <span class="gp-menu-n">${subsRH.length}</span></summary>
+        ${(() => {
+          const boton = ([k, tx]) => { const m = String(tx).match(/^(\p{Extended_Pictographic}\uFE0F?)\s*(.*)$/u); return `<button class="cmp-mi${sel === 'rh:' + k ? ' on' : ''}" data-sel="rh:${k}" ${sel === 'rh:' + k ? 'aria-current="page"' : ''} onclick="window.__gpSub='${k}';renderGestionPersonal('rrhh')"><span>${m ? m[1] : GP_RH_IC[k] || '•'}</span>${m ? m[2] : tx}${k === 'vacaciones' ? '<span class="cmp-n" id="gp-n-rhvac" style="display:none;background:#D6336C;color:#fff;"></span>' : ''}</button>`; };
+          const G = [['🧾', acL('Nóminas y personal', 'Nòmines i personal'), ['nominas', 'personas']], ['🕘', acL('Horarios y vacaciones', 'Horaris i vacances'), ['horarios', 'vacaciones']],
+                     ['📣', acL('Comunicación', 'Comunicació'), ['comunicados', 'avisos']], ['📄', acL('Documentos y registro', 'Documents i registre'), ['docgen', 'registro']]];
+          const usados = new Set(G.flatMap(g => g[2]));
+          const sueltos = subsRH.filter(x => !usados.has(x[0]));
+          return sueltos.map(boton).join('') + G.map(([ic, tit, ks]) => { const items = subsRH.filter(x => ks.includes(x[0])); if(!items.length) return '';
+            const abierto = items.some(x => sel === 'rh:' + x[0]) || window.innerWidth <= 900;
+            return `<details class="gp-sub-g"${abierto ? ' open' : ''}><summary><span>${ic}</span>${escAttr(tit)}<small>${items.length}</small></summary>${items.map(boton).join('')}</details>`; }).join('');
+        })()}</details>` : ''}
       </nav>
       <div class="cmp-main"><section class="gp-sec"><h3 class="pj-h" tabindex="-1">${escAttr(titulo)}</h3><div id="gp-cuerpo"><div class="placeholder">${TI[LANG_I].cargando}</div></div></section></div>
     </div>`;
@@ -14539,6 +14674,15 @@ async function gpBorrarFormacion(clave, i){
   if(clave === 'forms') renderGestionPersonal('formacion'); else gpRrhhAbrirPersona();
 }
 
+// ---------- Listas largas de RR. HH. en desplegables por mes (v228) ----------
+function gpMesClave(iso){ const d = new Date(iso || 0); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+function gpMesTexto(k){ const [a, m] = k.split('-').map(Number); const t = new Date(a, m - 1, 1).toLocaleDateString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES', { month: 'long', year: 'numeric' }); return t.charAt(0).toUpperCase() + t.slice(1); }
+// items: lista; fecha(x) → iso; html(x, i) → html; abiertos: cuántos meses abiertos (por defecto 1)
+function gpPorMesHtml(items, fecha, html, abiertos){
+  const g = {}; items.forEach((x, i) => { const k = gpMesClave(fecha(x)); (g[k] = g[k] || []).push(i); });
+  return Object.keys(g).sort().reverse().map((k, n) => `<details class="gp-mes"${n < (abiertos == null ? 1 : abiertos) ? ' open' : ''}><summary><span>🗓️ <strong>${escAttr(gpMesTexto(k))}</strong></span><span class="chip">${g[k].length}</span></summary><div class="gp-mes-c">${g[k].map(i => html(items[i], i)).join('')}</div></details>`).join('');
+}
+
 // ---------- comunicaciones ----------
 async function gpRenderComunicaciones(cuerpo){
   const yo = gpYo();
@@ -14549,13 +14693,17 @@ async function gpRenderComunicaciones(cuerpo){
   if(com.error){ cuerpo.innerHTML = gpAviso(escAttr(com.error.message)); return; }
   const leidos = new Set((lec.data || []).map(x => x.comunicado_id));
   window.__gpDatos.com = com.data || [];
-  cuerpo.innerHTML = (com.data || []).length ? com.data.map((c, i) => {
+  const comHtml = (c, i) => {
     const leido = leidos.has(c.id);
-    return `<div class="panel-card" style="margin-bottom:12px;${leido ? '' : 'border-left:3px solid var(--gold);'}">
+    return `<details class="gp-com${leido ? '' : ' nuevo'}"${leido ? '' : ' open'}><summary><span class="gp-com-t">${leido ? '✔️' : '🔵'} <strong>${escAttr(c.titulo)}</strong></span><span class="subtle" style="margin:0;font-size:11.5px;">${gpFecha(c.creado_en)}</span></summary><div class="gp-com-c">
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>${escAttr(c.titulo)}</strong><span class="subtle" style="margin:0;font-size:11.5px;">${gpFecha(c.creado_en)}${c.para_todos ? '' : ' · ' + acL('para ti', 'per a tu')}</span></div>
       <p style="margin:8px 0;font-size:13.5px;line-height:1.55;white-space:pre-wrap;">${escAttr(c.texto)}</p>
-      ${leido ? `<span class="chip good" style="font-size:11px;">✔ ${acL('Leído', 'Llegit')}</span>` : `<button class="primary-btn" style="width:auto;margin:0;" onclick="gpConfirmarLectura(${i})">${c.requiere_lectura ? '✔ ' + acL('Confirmo que lo he leído', 'Confirmo que ho he llegit') : acL('Marcar como leído', 'Marcar com a llegit')}</button>`}</div>`;
-  }).join('') : `<div class="empty-note">${acL('No hay comunicaciones.', 'No hi ha comunicacions.')}</div>`;
+      ${leido ? `<span class="chip good" style="font-size:11px;">✔ ${acL('Leído', 'Llegit')}</span>` : `<button class="primary-btn" style="width:auto;margin:0;" onclick="gpConfirmarLectura(${i})">${c.requiere_lectura ? '✔ ' + acL('Confirmo que lo he leído', 'Confirmo que ho he llegit') : acL('Marcar como leído', 'Marcar com a llegit')}</button>`}</div></details>`;
+  };
+  const todos = com.data || [], sinLeer = todos.map((c, i) => [c, i]).filter(([c]) => !leidos.has(c.id)), leidosL = todos.map((c, i) => [c, i]).filter(([c]) => leidos.has(c.id));
+  cuerpo.innerHTML = todos.length ? (sinLeer.length ? `<div class="gp-sec-t">📬 ${acL('Sin leer', 'Sense llegir')} <span class="chip gold">${sinLeer.length}</span></div>${sinLeer.map(([c, i]) => comHtml(c, i)).join('')}` : `<div class="gp-al-dia">✅ ${acL('Lo tienes todo leído.', 'Ho tens tot llegit.')}</div>`)
+    + (leidosL.length ? `<div class="gp-sec-t">📂 ${acL('Leídas, por mes', 'Llegides, per mes')}</div>${gpPorMesHtml(leidosL, x => x[0].creado_en, x => comHtml(x[0], x[1]), sinLeer.length ? 0 : 1)}` : '')
+    : `<div class="empty-note">${acL('No hay comunicaciones.', 'No hi ha comunicacions.')}</div>`;
 }
 async function gpConfirmarLectura(i){
   const c = (window.__gpDatos.com || [])[i]; if(!c) return;
@@ -14666,16 +14814,18 @@ async function gpRrhhAvisos(c){
   const ca = LANG_I === 'ca';
   c.innerHTML = `<div class="panel-card"><h3 style="margin-top:0;">${ca ? 'Notícies i recordatoris' : 'Noticias y recordatorios'}</h3>
     <p class="subtle" style="margin:0 0 10px;">${ca ? 'Els avisos actius es veuen al Panell general de tot el personal.' : 'Los avisos activos se ven en el Panel general de todo el personal.'}</p>
-    ${(data && data.length) ? data.map(a => `<div class="panel-stat-row"><span><strong>${escAttr(a.titulo)}</strong>${a.descripcion ? `<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(a.descripcion)}</span>` : ''}${a.fecha_limite ? `<br><span class="subtle" style="font-size:11px;margin:0;">${acL('Hasta', 'Fins')} ${gpFecha(a.fecha_limite)}</span>` : ''}</span>
+    ${(() => { const fila = a => `<div class="panel-stat-row"><span><strong>${escAttr(a.titulo)}</strong>${a.descripcion ? `<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(a.descripcion)}</span>` : ''}${a.fecha_limite ? `<br><span class="subtle" style="font-size:11px;margin:0;">${acL('Hasta', 'Fins')} ${gpFecha(a.fecha_limite)}</span>` : ''}</span>
       <span style="display:flex;align-items:center;gap:8px;"><span class="chip ${a.activo ? 'good' : 'off'}">${a.activo ? (ca ? 'Actiu' : 'Activo') : (ca ? 'Ocult' : 'Oculto')}</span>
       <button class="link-btn" style="font-size:11px;" onclick="toggleAvisoActivo('${a.id}', ${!a.activo})">${a.activo ? 'Ocultar' : 'Mostrar'}</button>
-      <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="borrarAviso('${a.id}')">${ca ? 'Esborrar' : 'Borrar'}</button></span></div>`).join('') : `<div class="empty-note">${ca ? 'Encara no hi ha avisos.' : 'Todavía no hay avisos.'}</div>`}
-    <div style="margin-top:12px;">
+      <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="borrarAviso('${a.id}')">${ca ? 'Esborrar' : 'Borrar'}</button></span></div>`;
+      const act = (data || []).filter(a => a.activo), ocu = (data || []).filter(a => !a.activo);
+      return (data && data.length) ? (act.length ? act.map(fila).join('') : '') + (ocu.length ? `<details class="gp-mes"><summary><span>🙈 <strong>${ca ? 'Ocults' : 'Ocultos'}</strong></span><span class="chip">${ocu.length}</span></summary><div class="gp-mes-c">${ocu.map(fila).join('')}</div></details>` : '') : `<div class="empty-note">${ca ? 'Encara no hi ha avisos.' : 'Todavía no hay avisos.'}</div>`; })()}
+    <details class="gp-nuevo" style="margin-top:12px;"><summary><strong>➕ ${ca ? 'Publicar un avís nou' : 'Publicar un aviso nuevo'}</strong></summary><div style="margin-top:10px;">
       <div class="field"><input type="text" id="aviso-titulo" placeholder="${ca ? "Títol de l'avís" : 'Título del aviso'}"></div>
       <div class="field"><textarea id="aviso-descripcion" rows="2" placeholder="${ca ? 'Descripció (opcional)' : 'Descripción (opcional)'}"></textarea></div>
       <div class="field"><label>${ca ? 'Tipus' : 'Tipo'}</label><select id="aviso-tipo"><option value="info">${ca ? 'Informació' : 'Información'}</option><option value="convocatoria">${ca ? 'Convocatòria' : 'Convocatoria'}</option><option value="curso">${ca ? 'Curs' : 'Curso'}</option><option value="recordatorio">${ca ? 'Recordatori' : 'Recordatorio'}</option></select></div>
       <div class="field"><label>${ca ? 'Data límit (opcional)' : 'Fecha límite (opcional)'}</label><input type="date" id="aviso-fecha-limite"></div>
-      <button class="primary-btn" style="width:auto;margin:0;" onclick="crearAviso()">${ca ? '➕ Publicar avís' : '➕ Publicar aviso'}</button></div></div>`;
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="crearAviso()">${ca ? '➕ Publicar avís' : '➕ Publicar aviso'}</button></div></details></div>`;
 }
 // ---------- Documentos generales de la entidad (plantillas, formularios, protocolos…) ----------
 async function gpRrhhDocGen(c){
@@ -14962,19 +15112,20 @@ async function gpRrhhComunicados(c){
   const lecturas = {};
   (lec.data || []).forEach(l => { (lecturas[l.comunicado_id] = lecturas[l.comunicado_id] || []).push(l.persona_email); });
   window.__gpDatos.rc = com.data || [];
-  c.innerHTML = `<div class="panel-card" style="margin-bottom:12px;"><h3 style="margin-top:0;">${acL('Nuevo comunicado', 'Nou comunicat')}</h3>
+  c.innerHTML = `<details class="panel-card gp-nuevo" style="margin-bottom:12px;"><summary><h3 style="margin:0;display:inline;">➕ ${acL('Nuevo comunicado', 'Nou comunicat')}</h3></summary><div style="margin-top:10px;">
       <div class="field"><label>${acL('Título', 'Títol')}</label><input type="text" id="gp-c-titulo"></div>
       <div class="field"><label>${acL('Mensaje', 'Missatge')}</label><textarea id="gp-c-texto" rows="4"></textarea></div>
       <div class="field"><label>${acL('Para', 'Per a')}</label><select id="gp-c-dest"><option value="">${acL('Todo el personal', 'Tot el personal')}</option>${personas.map(p => `<option value="${escAttr(p.email)}">${escAttr(p.nombre)}</option>`).join('')}</select></div>
       <label style="display:flex;gap:8px;align-items:center;font-size:13px;margin:6px 0 10px;"><input type="checkbox" id="gp-c-lect"> ${acL('Pedir confirmación de lectura', 'Demanar confirmació de lectura')}</label>
-      <button class="primary-btn" style="width:auto;margin:0;" onclick="gpCrearComunicado()">📣 ${acL('Publicar', 'Publicar')}</button></div>
-    ${(com.data || []).map((x, i) => {
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="gpCrearComunicado()">📣 ${acL('Publicar', 'Publicar')}</button></div></details>
+    <div class="gp-sec-t">📣 ${acL('Comunicados publicados', 'Comunicats publicats')} <span class="chip">${(com.data || []).length}</span></div>
+    ${gpPorMesHtml(com.data || [], x => x.creado_en, (x, i) => {
       const leyeron = (lecturas[x.id] || []).length, total = x.para_todos ? personas.length : 1;
-      return `<div class="panel-card" style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>${escAttr(x.titulo)}</strong><span class="subtle" style="margin:0;font-size:11.5px;">${gpFecha(x.creado_en)} · ${x.para_todos ? acL('todo el personal', 'tot el personal') : escAttr(nombreTecnico(x.persona_email))}</span></div>
+      return `<details class="gp-com"><summary><span class="gp-com-t"><strong>${escAttr(x.titulo)}</strong></span><span class="chip ${leyeron >= total ? 'good' : ''}" style="font-size:11px;">${leyeron}/${total}</span></summary><div class="gp-com-c"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>${escAttr(x.titulo)}</strong><span class="subtle" style="margin:0;font-size:11.5px;">${gpFecha(x.creado_en)} · ${x.para_todos ? acL('todo el personal', 'tot el personal') : escAttr(nombreTecnico(x.persona_email))}</span></div>
         <p style="margin:6px 0;font-size:13px;white-space:pre-wrap;">${escAttr(x.texto)}</p>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><span class="chip ${leyeron >= total ? 'good' : ''}" style="font-size:11px;">${x.requiere_lectura ? acL('Confirmaciones', 'Confirmacions') : acL('Leído por', 'Llegit per')}: ${leyeron}/${total}</span>
-        <button class="link-btn" style="color:var(--alert);font-size:12px;" onclick="gpBorrarComunicado(${i})">${acL('Borrar', 'Esborrar')}</button></div></div>`;
-    }).join('')}`;
+        <button class="link-btn" style="color:var(--alert);font-size:12px;" onclick="gpBorrarComunicado(${i})">${acL('Borrar', 'Esborrar')}</button></div></div></details>`;
+    })}`;
 }
 async function gpCrearComunicado(){
   const titulo = document.getElementById('gp-c-titulo').value.trim(), texto = document.getElementById('gp-c-texto').value.trim(), dest = document.getElementById('gp-c-dest').value;
@@ -15008,7 +15159,7 @@ async function gpRrhhHorarios(c){
 async function gpRrhhRegistro(c){
   const { data, error } = await sb.from('personal_registro').select('*').order('cuando', { ascending: false }).limit(100);
   if(error){ c.innerHTML = gpAviso(escAttr(error.message)); return; }
-  c.innerHTML = `<div class="panel-card"><h3 style="margin-top:0;">${acL('Registro de accesos (últimos 100)', 'Registre d\'accessos (últims 100)')}</h3>${(data || []).length ? data.map(r => `<div class="panel-stat-row" style="gap:8px;flex-wrap:wrap;font-size:12.5px;"><span><strong>${escAttr(r.accion)}</strong> · ${escAttr(r.objeto || '')}${r.persona_email ? ' · ' + escAttr(nombreTecnico(r.persona_email)) : ''}<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(nombreTecnico(r.quien_email))}</span></span><span class="subtle" style="margin:0;font-size:11px;">${new Date(r.cuando).toLocaleString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES')}</span></div>`).join('') : `<div class="empty-note">${acL('Sin movimientos.', 'Sense moviments.')}</div>`}</div>`;
+  c.innerHTML = `<div class="panel-card"><h3 style="margin-top:0;">${acL('Registro de accesos (últimos 100)', 'Registre d\'accessos (últims 100)')}</h3>${(data || []).length ? gpPorMesHtml(data, r => r.cuando, r => `<div class="panel-stat-row" style="gap:8px;flex-wrap:wrap;font-size:12.5px;"><span><strong>${escAttr(r.accion)}</strong> · ${escAttr(r.objeto || '')}${r.persona_email ? ' · ' + escAttr(nombreTecnico(r.persona_email)) : ''}<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(nombreTecnico(r.quien_email))}</span></span><span class="subtle" style="margin:0;font-size:11px;">${new Date(r.cuando).toLocaleString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES')}</span></div>`) : `<div class="empty-note">${acL('Sin movimientos.', 'Sense moviments.')}</div>`}</div>`;
 }
 
 // Permiso RR. HH.: lo da o quita la administración
@@ -17934,7 +18085,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-04 · v226 (horas del equipo: historial por semanas con fichadas, contrato, horario y citas, en Excel y PDF; blog en el canal; regla de oro del fichaje)';
+const APP_VERSION_INTRANET = '2026-11-04 · v229 (Gestión del personal: el menú «Lo mío» y «Recursos Humanos» en desplegables; listas de RR. HH. por mes; ficha con estilo del panel de administración)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -20466,6 +20617,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
     ${m3CabeceraHtml(p, { sinAtencion: sinAtencionFicha, citas: citasRes.data || [], tramites: tramitesRes.data || [], actuaciones: actuacionesLista, atenciones: atencionesRes.data || [] })}
 
     <div class="ptab-content active" id="ptab-vista">
+    <div class="m4-split">${m4FichaAtencionHtml(p, atencionesRes.data || [])}${m4ActuacionesHtml(p, actuacionesLista, tramitesRes.data || [])}</div>
     <div class="m3-res">${m3QueTocaHtml(p, { citas: citasRes.data || [], tramites: tramitesRes.data || [], actuaciones: actuacionesLista, atenciones: atencionesRes.data || [] })}${m3AccesoHtml(p)}</div>
     <div id="veces-at-host">${vecesAtendidaHtml(atencionesRes.data || [], actuacionesLista || [])}</div>
     ${vistaUnicaHtml}
@@ -21096,7 +21248,7 @@ function m3CabeceraHtml(p, d){
   const nAct = (d.actuaciones || []).length, nCit = (d.citas || []).length;
   const tab = (k, txt) => `<button class="ptab-btn" data-tab="${k}" onclick="mostrarTabPersona('${k}')">${txt}</button>`;
   return `
-  <div class="m3-cab">
+  <div class="m3-cab pj-hero m4-hero">
     <div class="m3-persona">
       <div class="m3-av">${escAttr(m3Ini(nombre))}</div>
       <div class="m3-pinfo">
@@ -21109,6 +21261,7 @@ function m3CabeceraHtml(p, d){
         ${p.email ? `<a href="mailto:${escAttr(p.email)}" title="${L('Correo', 'Correu')}">✉️</a>` : ''}
       </div>
     </div>
+    ${m4KpisHtml(d)}
     <div class="m3-cmd">
       <button class="m3-pri" onclick="m3NuevaActuacion()">📝 ${L('Trámite / actuación', 'Tràmit / actuació')}</button>
       <button onclick="abrirAtencionEnFicha()">📋 ${L('Ficha de atención', 'Fitxa d\'atenció')}</button>
@@ -21138,6 +21291,88 @@ function m3CabeceraHtml(p, d){
     </div>
   </div>`;
 }
+// =====================================================================================
+// FICHA · dos columnas con el estilo del panel de administración (v227)
+//   Izquierda: la ficha de atención ordenada por grupos. Derecha: las actuaciones en línea de tiempo.
+// =====================================================================================
+const M4_SEXO = { mujer: ['Mujer', 'Dona'], hombre: ['Hombre', 'Home'], otro: ['Otro', 'Altre'], prefiero_no_decir: ['Prefiere no decirlo', 'Prefereix no dir-ho'] };
+const M4_REG = { regularizada: ['Regularizada', 'Regularitzada'], en_tramite: ['En trámite', 'En tràmit'], irregular: ['Situación irregular', 'Situació irregular'], prefiero_no_decir: ['Prefiere no responder', 'Prefereix no respondre'] };
+const M4_EST = { sin_estudios: ['Sin estudios', 'Sense estudis'], primaria: ['Primaria', 'Primària'], eso: ['ESO', 'ESO'], bachillerato_fp: ['Bachillerato / FP', 'Batxillerat / FP'], universitarios: ['Universitarios', 'Universitaris'] };
+function m4Map(m, v){ const x = m[v]; return x ? acL(x[0], x[1]) : (v == null ? '' : String(v)); }
+function m4Edad(f){ if(!f) return ''; const d = new Date(String(f).slice(0, 10) + 'T00:00:00'); if(isNaN(d)) return ''; const h = new Date(); let a = h.getFullYear() - d.getFullYear(); if(h.getMonth() < d.getMonth() || (h.getMonth() === d.getMonth() && h.getDate() < d.getDate())) a--; return a >= 0 && a < 120 ? a + ' ' + acL('años', 'anys') : ''; }
+function m4Fila(label, valor, falta, campo){
+  const vacio = valor == null || String(valor).trim() === '';
+  return `<div class="m4-fila${vacio && falta ? ' m4-falta' : ''}"><span>${label}</span><span>${vacio ? (falta ? `<button type="button" class="m4-falta-b" onclick="fichaIrACampo('${campo || ''}')">${acL('falta', 'falta')} ✏️</button>` : '<i>—</i>') : escAttr(valor)}</span></div>`;
+}
+function m4Pills(opts, arr, clase){ const l = [].concat(arr || []).filter(Boolean); return l.length ? `<span class="m4-pills">${l.map(v => `<span class="m4-pill ${clase || ''}">${escAttr(etiquetaOpt(opts, v))}</span>`).join('')}</span>` : ''; }
+function m4FichaAtencionHtml(p, atenciones){
+  const L = acL, a = [...(atenciones || [])].sort((x, y) => String(y.creado_en).localeCompare(String(x.creado_en)))[0];
+  const bool = v => v === true ? L('Sí', 'Sí') : (v === false ? 'No' : '');
+  const dir = [p.calle, p.codigo_postal, p.municipio].filter(Boolean).join(', ');
+  const extras = [p.familia_monoparental && L('Familia monoparental', 'Família monoparental'), p.familia_numerosa && L('Familia numerosa', 'Família nombrosa'), p.hijos_a_cargo && L('Hijos a cargo', 'Fills a càrrec'), p.situacion_desempleo && L('En desempleo', 'En atur')].filter(Boolean);
+  let pct = null; try { pct = fichaPorcentaje(p); } catch(e){}
+  const grupo = (t, html) => html ? `<div class="m4-grupo"><div class="m4-gt">${t}</div>${html}</div>` : '';
+  const ult = a ? [
+    m4Pills(PRESTACIONES_OPTS, a.prestaciones), m4Pills(TRAMITES_BRETXA_OPTS, a.tramites_bretxa), m4Pills(PROGRAMAS_OPTS, a.derivacion_programas, 'b'),
+    m4Pills(TALLERES_OPTS, a.talleres, 'b'), m4Pills(EMPRENDEDURIA_OPTS, a.emprendeduria, 'b')
+  ].filter(Boolean).join('') : '';
+  return `<section class="m4-col m4-at">
+    <header class="m4-ch"><div><span class="m4-ico">📋</span><div><h3>${L('Ficha de atención', 'Fitxa d\'atenció')}</h3>
+      <small>${(atenciones || []).length ? (atenciones.length + ' ' + L(atenciones.length === 1 ? 'atención' : 'atenciones', atenciones.length === 1 ? 'atenció' : 'atencions')) : L('Aún sin ficha de atención', 'Encara sense fitxa d\'atenció')}${pct != null ? ' · ' + L('datos al', 'dades al') + ' ' + pct + ' %' : ''}</small></div></div>
+      <button class="m4-btn" onclick="abrirAtencionEnFicha()">${(atenciones || []).length ? '✏️ ' + L('Abrir / completar', 'Obrir / completar') : '➕ ' + L('Hacer la ficha', 'Fer la fitxa')}</button></header>
+    ${pct != null ? `<div class="m4-barra"><i style="width:${pct}%;background:${pct >= 100 ? '#1F8A4C' : (pct >= 70 ? '#D68A00' : '#C0392B')}"></i></div>` : ''}
+    ${grupo(L('Datos personales', 'Dades personals'),
+      m4Fila('DNI/NIE', p.dni_nie, true, 'pds-dni') + m4Fila(L('Nacimiento', 'Naixement'), p.fecha_nacimiento ? fechaISOaES(p.fecha_nacimiento) + (m4Edad(p.fecha_nacimiento) ? ' · ' + m4Edad(p.fecha_nacimiento) : '') : '', true, 'pds-nacimiento') +
+      m4Fila(L('Sexo', 'Sexe'), m4Map(M4_SEXO, p.sexo), true, 'pds-sexo') + m4Fila(L('Nacionalidad', 'Nacionalitat'), p.nacionalidad, true, 'pds-nacionalidad') +
+      m4Fila(L('Regularización', 'Regularització'), m4Map(M4_REG, p.situacion_regularizacion), true, 'pds-regularizacion') +
+      m4Fila(L('Dirección', 'Adreça'), dir, !p.calle || !p.codigo_postal || !p.municipio, !p.calle ? 'pds-calle' : (!p.codigo_postal ? 'pds-cp' : 'pds-municipio')) +
+      m4Fila(L('Idiomas', 'Idiomes'), Array.isArray(p.idiomas) ? p.idiomas.join(', ') : p.idiomas, false))}
+    ${grupo(L('Hogar y situación', 'Llar i situació'),
+      m4Fila(L('Personas en el hogar', 'Persones a la llar'), p.personas_hogar, true, 'pds-personas-hogar') + m4Fila(L('Hijos', 'Fills'), p.numero_hijos, true, 'pds-num-hijos') +
+      m4Fila(L('Situación laboral', 'Situació laboral'), p.situacion_laboral, true, 'pds-laboral') + m4Fila(L('Estudios', 'Estudis'), m4Map(M4_EST, p.nivel_estudios), true, 'pds-nivel-estudios') +
+      m4Fila(L('Discapacidad', 'Discapacitat'), bool(p.discapacidad_reconocida) + (p.porcentaje_discapacidad ? ' · ' + p.porcentaje_discapacidad + ' %' : ''), true, 'pds-discapacidad') +
+      m4Fila(L('Dependencia', 'Dependència'), bool(p.dependencia_reconocida), true, 'pds-dependencia') +
+      (extras.length ? `<div class="m4-fila"><span>${L('Además', 'A més')}</span><span class="m4-pills">${extras.map(x => `<span class="m4-pill b">${escAttr(x)}</span>`).join('')}</span></div>` : ''))}
+    ${a ? grupo(L('Última atención', 'Darrera atenció') + ' · ' + m3Fecha(a.creado_en) + ' · ' + escAttr(nombreTecnico(a.creado_por_email)),
+      (ult || `<p class="m4-vacio">${L('No se marcó ninguna necesidad.', 'No es va marcar cap necessitat.')}</p>`) +
+      (a.ethos ? m4Fila(L('Situación residencial', 'Situació residencial'), etiquetaOpt(ETHOS_OPTS, a.ethos), false) : '') +
+      (a.derivacion ? m4Fila(L('Derivación', 'Derivació'), etiquetaOpt(DERIVACION_OPTS, a.derivacion), false) : '') +
+      (a.como_conocio ? m4Fila(L('Cómo nos conoció', 'Com ens va conèixer'), etiquetaOpt(COMO_CONOCIO_OPTS, a.como_conocio), false) : '') +
+      (a.notas ? `<p class="m4-nota">📝 ${escAttr(a.notas)}</p>` : '')) : `<div class="m4-vacio-c"><p>${L('Esta persona aún no tiene ficha de atención. Es lo primero que hay que hacer: después ya se pueden apuntar actuaciones.', 'Aquesta persona encara no té fitxa d\'atenció. És el primer que cal fer: després ja es poden apuntar actuacions.')}</p><button class="m4-btn m4-btn-pri" onclick="abrirAtencionEnFicha()">➕ ${L('Hacer la ficha de atención', 'Fer la fitxa d\'atenció')}</button></div>`}
+  </section>`;
+}
+function m4ActuacionesHtml(p, actuaciones, tramites){
+  const L = acL, lista = [...(actuaciones || [])].sort((x, y) => String(y.fecha || '').localeCompare(String(x.fecha || '')));
+  const ab = (tramites || []).filter(tr => !trCerrado(tr.estado));
+  const RES = { conseguido: ['✓ ' + L('Conseguido', 'Aconseguit'), 'ok'], en_tramite: ['⏳ ' + L('En trámite', 'En tràmit'), 'cur'], no_conseguido: ['✕ ' + L('No conseguido', 'No aconseguit'), 'no'] };
+  const loc = LANG_I === 'ca' ? 'ca-ES' : 'es-ES';
+  const item = ac => { const d = ac.fecha ? new Date(String(ac.fecha).slice(0, 10) + 'T00:00:00') : null; const r = RES[ac.resultado];
+    return `<li class="m4-act">
+      <div class="m4-fecha">${d ? `<b>${d.getDate()}</b><span>${d.toLocaleDateString(loc, { month: 'short' }).replace('.', '')}</span><small>${d.getFullYear()}</small>` : '—'}</div>
+      <div class="m4-act-c">
+        <div class="m4-act-t"><strong>${escAttr(ac.categoria || L('Actuación', 'Actuació'))}</strong>${r ? `<span class="m4-res ${r[1]}">${r[0]}</span>` : ''}</div>
+        ${ac.objetivo ? `<div class="m4-act-o">🎯 ${escAttr(ac.objetivo)}</div>` : ''}
+        ${ac.descripcion ? `<p>${escAttr(ac.descripcion)}</p>` : ''}
+        ${ac.proximo_paso ? `<div class="m4-sig">➡️ <b>${L('Próximo paso', 'Proper pas')}:</b> ${escAttr(ac.proximo_paso)}${ac.fecha_proxima_revision ? ` · ${L('revisar el', 'revisar el')} ${m3Fecha(ac.fecha_proxima_revision)}` : ''}</div>` : ''}
+        <small>👤 ${escAttr(nombreTecnico(ac.tecnico_email))}${ac.derivado_a ? ' · ↗️ ' + escAttr(ac.derivado_a) : ''}</small>
+      </div></li>`; };
+  return `<section class="m4-col m4-ac">
+    <header class="m4-ch"><div><span class="m4-ico m4-ico-ac">📂</span><div><h3>${L('Actuaciones', 'Actuacions')}</h3>
+      <small>${lista.length} ${L(lista.length === 1 ? 'actuación' : 'actuaciones', lista.length === 1 ? 'actuació' : 'actuacions')}${ab.length ? ' · ' + ab.length + ' ' + L(ab.length === 1 ? 'trámite abierto' : 'trámites abiertos', ab.length === 1 ? 'tràmit obert' : 'tràmits oberts') : ''}</small></div></div>
+      <button class="m4-btn m4-btn-pri" onclick="m3NuevaActuacion()">📝 ${L('Trámite / actuación', 'Tràmit / actuació')}</button></header>
+    ${ab.length ? `<div class="m4-grupo"><div class="m4-gt">${L('Trámites abiertos', 'Tràmits oberts')}</div>${ab.map(tr => `<div class="m4-tram"><span>🗂️ <b>${escAttr(tr.nombre_servicio || '')}</b><small>${tr.fecha_inicio ? L('desde el ', 'des del ') + m3Fecha(tr.fecha_inicio) : ''}</small></span><span class="m4-tram-acc"><button class="m4-mini" onclick="m3NuevaActuacion()">➕ ${L('Actuación', 'Actuació')}</button><button class="m4-mini ok" onclick="marcarTramiteHecho('${tr.id}')">✓ ${L('Cerrar', 'Tancar')}</button></span></div>`).join('')}</div>` : ''}
+    <div class="m4-grupo"><div class="m4-gt">${L('Línea de tiempo', 'Línia de temps')}</div>
+      ${lista.length ? `<ol class="m4-tl">${lista.slice(0, 8).map(item).join('')}</ol>${lista.length > 8 ? `<button class="m4-mas" onclick="mostrarTabPersona('actuaciones')">${L('Ver las', 'Veure les')} ${lista.length} ${L('actuaciones', 'actuacions')} →</button>` : ''}`
+        : `<div class="m4-vacio-c"><p>${L('Todavía no hay actuaciones. Cada visita, gestión o trámite se apunta aquí.', 'Encara no hi ha actuacions. Cada visita, gestió o tràmit s\'apunta aquí.')}</p><button class="m4-btn m4-btn-pri" onclick="m3NuevaActuacion()">📝 ${L('Apuntar la primera', 'Apuntar la primera')}</button></div>`}
+    </div>
+  </section>`;
+}
+function m4KpisHtml(d){
+  const L = acL, prox = m3ProximaCita(d.citas), ab = (d.tramites || []).filter(tr => !trCerrado(tr.estado)).length;
+  const k = (i, n, t, fn) => `<button type="button" class="pj-kpi m4-kpi" onclick="${fn}"><span class="m4-kpi-i">${i}</span><span><strong>${n}</strong><small>${t}</small></span></button>`;
+  return `<div class="pj-kpis m4-kpis">${k('📋', (d.atenciones || []).length, L('Atenciones', 'Atencions'), "abrirAtencionEnFicha()")}${k('📂', (d.actuaciones || []).length, L('Actuaciones', 'Actuacions'), "mostrarTabPersona('actuaciones')")}${k('🗂️', ab, L('Trámites abiertos', 'Tràmits oberts'), "mostrarTabPersona('actuaciones')")}${k('📅', prox ? m3Fecha(prox.fecha, true) + (prox.hora ? ' ' + String(prox.hora).slice(0, 5) : '') : '—', L('Próxima cita', 'Propera cita'), "mostrarTabPersona('citas')")}</div>`;
+}
+
 function m3MenuMas(e){ e.stopPropagation(); const m = document.getElementById('m3-menu'); if(m) m.classList.toggle('on'); }
 function m3Menu(){ const m = document.getElementById('m3-menu'); if(m) m.classList.remove('on'); }
 document.addEventListener('click', e => { if(!e.target.closest || !e.target.closest('.m3-mas')) m3Menu(); });
