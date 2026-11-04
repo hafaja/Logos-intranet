@@ -799,6 +799,12 @@
 .hr-libre .hr-dia-h{color:#8A97AB;font-weight:600;}
 .hr-tramos{display:flex;gap:8px;flex-wrap:wrap;}
 .hr-tramo{display:flex;align-items:center;gap:5px;border-radius:12px;padding:6px 8px;flex-wrap:wrap;}
+.hr-vaciar{border:0;background:rgba(0,0,0,.06);color:#5B6475;border-radius:50%;width:24px;height:24px;font-size:12px;cursor:pointer;line-height:1;flex-shrink:0;}
+.hr-vaciar:hover{background:#FDECEA;color:#C0392B;}
+.hr-atajos{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px;}
+.hr-atajos button{border:1px solid #C9CFDA;background:#fff;border-radius:20px;padding:6px 12px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;}
+.hr-atajos button:hover{background:#F1F4F9;}
+.hr-total-mal{background:#FFF3DD !important;color:#A35F00 !important;}
 .hr-tramo em{font-style:normal;font-size:12px;font-weight:700;min-width:70px;}
 .hr-tramo b{color:#8A97AB;font-weight:600;}
 .hr-man{background:#FFF6DC;} .hr-man em{color:#9A6B00;}
@@ -1528,6 +1534,169 @@ body.vc-on{padding-top:44px;}
 .rgpd-t{flex:1;min-width:220px;} .rgpd-t small{display:block;color:#5F6672;font-size:12.5px;margin-top:2px;}
 .rgpd-acc{display:flex;gap:10px;align-items:center;flex-wrap:wrap;} .rgpd-acc .link-btn{margin:0;font-size:13px;}
 .rgpd-cif{background:#F3F7FC;border-radius:12px;padding:10px 12px;font-size:13.5px;} .rgpd-cif-l{margin:6px 0;display:flex;flex-wrap:wrap;gap:4px;} .rgpd-cif small{color:#5F6672;}
+
+/* ===== Fichaje: aviso de dónde se ha fichado (v224) ===== */
+.fich-aviso-ok{position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:9996;background:#1B2333;color:#fff;padding:12px 18px;border-radius:10px;font-weight:600;font-size:14px;line-height:1.45;box-shadow:0 8px 26px rgba(0,0,0,.28);max-width:min(560px,calc(100% - 24px));cursor:pointer;}
+.fich-aviso-ok small{font-weight:400;opacity:.85;}
+.fb-lugar{opacity:.9;font-size:12.5px;}
+/* ===== Ficha de la persona · estilo Microsoft 365 (v220) ===== */
+body #screen-persona .main-content{max-width:1120px;}
+@media (min-width:1600px){ body #screen-persona .main-content{max-width:1280px;} }
+.m3-grupo > summary::after{display:none !important;content:none !important;}
+#persona-content .nota-trabajo, #persona-content .vu-faltan{display:none !important;}
+.m3-cab{background:#fff;border:1px solid var(--line,#E3E7EE);border-radius:10px;padding:14px 18px 0;margin:0 0 14px;}
+.m3-persona{display:flex;gap:14px;align-items:flex-start;}
+.m3-av{width:54px;height:54px;border-radius:50%;background:#5B7FD1;color:#fff;font-weight:700;font-size:19px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.m3-pinfo{min-width:0;flex:1;}
+.m3-nom{font-size:21px;font-weight:700;margin:2px 0 2px;line-height:1.2;color:var(--ink,#1B2333);}
+.m3-datos{display:flex;flex-wrap:wrap;gap:4px 14px;color:var(--ink-soft,#5B6475);font-size:13px;}
+.m3-datos span{overflow-wrap:anywhere;}
+.m3-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center;}
+.m3-chip{font:inherit;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:20px;background:#E8EEFB;color:#1E4FA8;border:0;white-space:nowrap;line-height:1.4;}
+button.m3-chip{cursor:pointer;}
+.m3-chip.ok{background:#E3F5EA;color:#1F7A45;}
+.m3-chip.aviso{background:#FFF3DD;color:#A35F00;}
+.m3-rapido{display:flex;gap:6px;flex-shrink:0;}
+.m3-rapido a{width:36px;height:36px;border:1px solid var(--line,#E3E7EE);border-radius:50%;display:flex;align-items:center;justify-content:center;text-decoration:none;background:#fff;font-size:15px;}
+.m3-rapido a:hover{background:#F4F6FA;}
+.m3-cmd{display:flex;gap:4px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line,#E3E7EE);margin-top:12px;padding:6px 0;}
+.m3-cmd > button, .m3-mas > button{border:0;background:transparent;font:inherit;font-size:14px;padding:8px 12px;border-radius:6px;color:var(--ink,#1B2333);cursor:pointer;font-weight:600;}
+.m3-cmd > button:hover, .m3-mas > button:hover{background:#F1F4F9;}
+.m3-cmd > .m3-pri{background:#1E4FA8;color:#fff;}
+.m3-cmd > .m3-pri:hover{background:#173F88;}
+.m3-mas{margin-left:auto;position:relative;}
+.m3-mas > button{color:var(--ink-soft,#5B6475);}
+.m3-menu{display:none;position:absolute;right:0;top:100%;z-index:60;background:#fff;border:1px solid var(--line,#E3E7EE);border-radius:8px;box-shadow:0 8px 24px rgba(20,30,50,.16);padding:6px;min-width:230px;}
+.m3-menu.on{display:block;}
+.m3-menu button{display:block;width:100%;text-align:left;border:0;background:none;font:inherit;font-size:13.5px;padding:8px 10px;border-radius:5px;cursor:pointer;color:var(--ink,#1B2333);}
+.m3-menu button:hover{background:#F1F4F9;}
+.m3-menu hr{border:0;border-top:1px solid var(--line,#E3E7EE);margin:4px 0;}
+.persona-tabs.m3-piv{display:flex;flex-wrap:nowrap;gap:22px;overflow-x:auto;margin:0;padding:0 2px;border-top:1px solid var(--line,#E3E7EE);background:none;scrollbar-width:none;}
+.persona-tabs.m3-piv::-webkit-scrollbar{display:none;}
+.m3-piv .ptab-btn{all:unset;cursor:pointer;padding:11px 0 9px;color:var(--ink-soft,#5B6475);font-size:14px;font-weight:600;white-space:nowrap;border-bottom:3px solid transparent;}
+.m3-piv .ptab-btn:hover{color:var(--ink,#1B2333);}
+.m3-piv .ptab-btn.active{color:var(--ink,#1B2333);border-bottom-color:#1E4FA8;}
+.m3-res{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;margin-bottom:14px;align-items:start;}
+.m3-card{background:#fff;border:1px solid var(--line,#E3E7EE);border-radius:10px;padding:14px 16px;}
+.m3-card h3{margin:0 0 8px;font-size:15px;}
+.m3-paso{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line,#E3E7EE);font-size:13.5px;line-height:1.4;}
+.m3-card h3 + .m3-paso{border-top:0;}
+.m3-paso small{display:block;color:var(--ink-soft,#5B6475);font-size:12.5px;margin-top:2px;}
+.m3-paso a{color:#2463B8;font-size:12.5px;margin-left:4px;}
+.m3-pi{width:28px;height:28px;border-radius:7px;background:#E8EEFB;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.m3-acceso{background:#F1FAF4;border-color:#C7E6D2;}
+.m3-fila{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid #D9EEE0;font-size:13px;}
+.m3-acceso h3 + .m3-fila{border-top:0;}
+.m3-fila span:first-child{color:var(--ink-soft,#5B6475);}
+.m3-fila span:last-child{text-align:right;overflow-wrap:anywhere;}
+.m3-fila a{color:#2463B8;}
+.m3-btn-sec{display:inline-block;margin-top:10px;border:1px solid #C9CFDA;background:#fff;border-radius:6px;padding:7px 12px;font-size:13px;font-weight:600;color:var(--ink,#1B2333);text-decoration:none;}
+.m3-btn-txt{border:0;background:none;font:inherit;font-weight:600;color:var(--ink-soft,#5B6475);cursor:pointer;padding:8px 10px;}
+#m3-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1B2333;color:#fff;padding:10px 18px;border-radius:8px;font-weight:600;z-index:9800;box-shadow:0 6px 20px rgba(0,0,0,.25);}
+/* Datos personales en dos tarjetas y dos columnas */
+#sec-datos[data-m3] > summary{display:none;}
+#sec-datos[data-m3]{border:0;background:none;padding:0;box-shadow:none;}
+#sec-datos[data-m3] > .plegable-c{padding:0;}
+.m3-sec{background:#fff;border:1px solid var(--line,#E3E7EE);border-radius:10px;padding:16px 18px;margin-bottom:14px;scroll-margin-top:150px;}
+.m3-sec > h2{font-size:15.5px;margin:0 0 2px;font-weight:700;}
+.m3-d{color:var(--ink-soft,#5B6475);font-size:12.5px;margin:0 0 12px;}
+.m3-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;}
+.m3-grid > .field{margin-bottom:10px;min-width:0;}
+.m3-grid > .m3-ancho{grid-column:1/-1;}
+.m3-lab{font-size:12.5px;font-weight:700;margin:4px 0 7px;}
+.m3-pills{display:flex;flex-wrap:wrap;gap:7px;}
+.m3-pill, .m3-grupo .at-opts label.checkbox-row{position:relative;display:inline-flex !important;align-items:center;gap:0;border:1px solid #C9CFDA;border-radius:20px;padding:6px 13px !important;margin:0 !important;font-size:13px;background:#fff;cursor:pointer;line-height:1.3;font-weight:500;color:var(--ink,#1B2333);width:auto !important;}
+.m3-pill input, .m3-grupo .at-opts label.checkbox-row input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;}
+.m3-pill:has(input:checked), .m3-pill.on, .m3-grupo .at-opts label.checkbox-row:has(input:checked){background:#1E4FA8;border-color:#1E4FA8;color:#fff;}
+.m3-pill:has(input:focus-visible), .m3-grupo .at-opts label.checkbox-row:has(input:focus-visible){outline:2px solid #2463B8;outline-offset:2px;}
+button.m3-pill{font:inherit;font-size:13px;}
+.m3-pills-fila{margin-top:4px;}
+.m3-solo-datos{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:2px 0 14px;}
+.m3-con-at .m3-solo-datos{display:none;}
+.m3-sec .field:has(.campo-falta) > label::after{content:'falta';color:#B86E00;font-size:11px;font-weight:700;margin-left:6px;}
+.m3-sec .campo-falta{border-color:#C9CFDA !important;border-left:3px solid #D68A00 !important;background:#fff !important;box-shadow:none !important;}
+/* Ficha de atención */
+.ptab-content.active.m3-con-at{display:grid;grid-template-columns:210px minmax(0,1fr);gap:0 18px;align-items:start;}
+#m3-at-cab{grid-column:1/-1;position:sticky;top:0;z-index:20;background:#fff;border:1px solid var(--line,#E3E7EE);border-radius:10px;padding:12px 16px 10px;margin-bottom:14px;box-shadow:0 2px 8px rgba(20,30,50,.06);}
+.m3-at-t{display:flex;align-items:center;gap:10px 12px;flex-wrap:wrap;}
+.m3-at-t h2{margin:0;font-size:17px;}
+.m3-at-q{color:var(--ink-soft,#5B6475);font-size:12.5px;margin-top:2px;}
+.m3-est{font-size:11.5px;padding:2px 9px;border-radius:20px;background:#FFF3DD;color:#A35F00;font-weight:700;white-space:nowrap;}
+.m3-at-acc{margin-left:auto;display:flex;gap:6px;align-items:center;}
+.m3-at-acc .primary-btn{width:auto;margin:0;padding:9px 18px;}
+.m3-prog{display:flex;align-items:center;gap:10px;margin-top:9px;font-size:12.5px;color:var(--ink-soft,#5B6475);}
+.m3-b{flex:1;max-width:320px;height:6px;background:#E3E7EE;border-radius:3px;overflow:hidden;}
+.m3-b > div{height:6px;border-radius:3px;background:#2463B8;width:0;transition:width .25s;}
+.m3-indice{grid-column:1;grid-row:2 / span 3;position:sticky;top:118px;background:#fff;border:1px solid var(--line,#E3E7EE);border-radius:10px;padding:6px;}
+.m3-indice a{display:flex;align-items:center;gap:9px;padding:9px 9px;border-radius:7px;color:var(--ink,#1B2333);text-decoration:none;font-size:13.5px;font-weight:600;}
+.m3-indice a:hover{background:#F1F4F9;}
+.m3-indice a.on{background:#E8EEFB;color:#1E4FA8;}
+.m3-indice small{margin-left:auto;color:var(--ink-soft,#5B6475);font-size:11px;font-weight:600;white-space:nowrap;}
+.m3-n{width:22px;height:22px;border-radius:50%;border:1.5px solid #C9CFDA;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;}
+.m3-n.ok{background:#1F8A4C;border-color:#1F8A4C;color:#fff;}
+.m3-n.fal{border-color:#D68A00;color:#A35F00;}
+.m3-con-at > #sec-datos, .m3-con-at > #atencion-en-ficha{grid-column:2;min-width:0;}
+.m3-con-at .at-form > h2.screen-title, .m3-con-at .at-form > .nota-trabajo, .m3-con-at .at-form > .guardar-arriba, .m3-con-at .at-form > #at-save-btn, .m3-con-at .at-form > .link-btn{display:none !important;}
+.m3-grupo{border:0 !important;background:none !important;box-shadow:none !important;margin:0 0 12px !important;padding:0 !important;}
+.m3-grupo > summary{list-style:none;pointer-events:none;padding:0 !important;margin:0 0 7px;font-size:12.5px;font-weight:700;color:var(--ink-soft,#5B6475);text-transform:uppercase;letter-spacing:.03em;background:none !important;}
+.m3-grupo > summary::-webkit-details-marker{display:none;}
+.m3-grupo > summary .plegable-n{display:none;}
+.m3-grupo > .plegable-c{padding:0 !important;}
+.m3-grupo .at-opts{display:flex;flex-wrap:wrap;gap:7px;}
+.m3-nec{margin:0 0 6px !important;}
+/* Panel de actuación a la derecha */
+#ptab-actuaciones #act-form-nodo{display:none;}
+#ptab-actuaciones .panel-card:has(#nuevo-tramite-nombre){display:none;}
+.m3-tram{background:#F7F9FC;border:1px solid var(--line,#E3E7EE);border-radius:8px;padding:10px 12px 4px;margin:0 0 14px;}
+.m3-tram .field{margin-bottom:10px;}
+.m3-cerrar{display:flex;gap:8px;align-items:center;font-size:13px;margin:0 0 8px;cursor:pointer;}
+.m3-act-barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px;}
+.m3-act-barra .primary-btn{width:auto;margin:0;}
+#m3-act-ov{position:fixed;inset:0;z-index:9300;}
+.m3-osc{position:absolute;inset:0;background:rgba(20,30,50,.3);}
+.m3-panel{position:absolute;top:0;right:0;bottom:0;width:min(540px,100%);background:#fff;box-shadow:-8px 0 30px rgba(0,0,0,.2);display:flex;flex-direction:column;animation:m3entra .18s ease-out;}
+@keyframes m3entra{from{transform:translateX(30px);opacity:.4}to{transform:none;opacity:1}}
+.m3-ph{padding:14px 20px 12px;border-bottom:1px solid var(--line,#E3E7EE);position:relative;}
+.m3-ph b{font-size:17px;}
+.m3-ph small{display:block;color:var(--ink-soft,#5B6475);margin-top:3px;font-size:13px;}
+.m3-x{position:absolute;right:12px;top:10px;border:0;background:none;font-size:18px;cursor:pointer;color:var(--ink-soft,#5B6475);padding:6px 8px;border-radius:6px;}
+.m3-x:hover{background:#F1F4F9;}
+.m3-pb{padding:14px 20px;overflow:auto;flex:1;}
+.m3-pf{padding:12px 20px;border-top:1px solid var(--line,#E3E7EE);display:flex;gap:8px;align-items:center;}
+.m3-pf .primary-btn{width:auto;margin:0;}
+.m3-rec{background:#E8EEFB;border-radius:7px;padding:9px 11px;font-size:12.5px;margin-bottom:14px;line-height:1.45;}
+#m3-tipos{margin-bottom:14px;}
+.m3-panel #act-form-nodo{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;margin:0 !important;padding:0 !important;border:0 !important;background:none !important;text-align:left;}
+.m3-panel #act-form-nodo > *{grid-column:1/-1;}
+.m3-panel #act-form-nodo > .field:has(#act-fecha), .m3-panel #act-form-nodo > .field:has(#act-fecha-revision), .m3-panel #act-form-nodo > .field:has(#act-derivado-a){grid-column:auto;}
+.m3-panel #act-form-nodo > .guardar-arriba, .m3-panel #act-form-nodo > .primary-btn{display:none !important;}
+.m3-panel .resultado-btn{flex:1;border-radius:0 !important;margin:0 !important;border:1px solid #C9CFDA !important;border-left-width:0 !important;}
+.m3-panel .resultado-btn:first-child{border-left-width:1px !important;border-radius:6px 0 0 6px !important;}
+.m3-panel .resultado-btn:last-child{border-radius:0 6px 6px 0 !important;}
+.m3-panel .field > div:has(> .resultado-btn){gap:0 !important;}
+.m3-mas-op{margin:4px 0 8px;font-size:13px;color:var(--ink-soft,#5B6475);}
+.m3-mas-op > summary{cursor:pointer;padding:6px 0;}
+body.m3-sin-scroll{overflow:hidden;}
+@media (max-width:760px){
+  .m3-cab{padding:12px 12px 0;}
+  .m3-av{width:42px;height:42px;font-size:15px;}
+  .m3-nom{font-size:18px;}
+  .m3-rapido{display:none;}
+  .m3-cmd > .m3-sec2{display:none;}
+  .m3-cmd > button{padding:8px 10px;font-size:13.5px;}
+  .m3-res{grid-template-columns:1fr;}
+  .m3-grid{grid-template-columns:1fr;}
+  .ptab-content.active.m3-con-at{display:block;}
+  #m3-at-cab{padding:10px 12px;}
+  .m3-at-acc .m3-btn-txt{display:none;}
+  .m3-indice{position:static;display:flex;overflow-x:auto;gap:2px;margin-bottom:12px;scrollbar-width:none;}
+  .m3-indice small{display:none;}
+  .m3-indice a{white-space:nowrap;padding:7px 9px;}
+  .m3-sec{scroll-margin-top:170px;padding:14px;}
+  .m3-panel #act-form-nodo{grid-template-columns:1fr;}
+  .m3-panel #act-form-nodo > .field{grid-column:1/-1 !important;}
+  .m3-b{max-width:none;}
+}
 </style>
 <style>
   /* ===== LogosNav: ruta, favoritas, buscador (Ctrl+K), «Mis páginas» y «Sigue con…» ===== */
@@ -3186,7 +3355,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v218'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v224'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -4067,11 +4236,14 @@ async function fichajeFinPrevisto(email, entradaIso){
   } catch(e){ return null; }
 }
 async function fichajeRefrescar(){
+  try { fichIncEnviarPendientes(); } catch(e){}
   await cerrarFichajesCaducados();
   try {
     if(!CURRENT_USER) { window.__fichajeAbierto = null; }
     else {
-      const { data, error } = await sb.from('fichajes').select('id, entrada').eq('tecnico_email', CURRENT_USER.email).is('salida', null).order('entrada', { ascending: false }).limit(1);
+      let { data, error } = await sb.from('fichajes').select('id, entrada, entrada_lat, entrada_lng').eq('tecnico_email', CURRENT_USER.email).is('salida', null).order('entrada', { ascending: false }).limit(1);
+      if(error && /entrada_lat|column/i.test(error.message || '')) ({ data, error } = await sb.from('fichajes').select('id, entrada').eq('tecnico_email', CURRENT_USER.email).is('salida', null).order('entrada', { ascending: false }).limit(1));
+      try { await fichConfig(); } catch(e){}
       window.__fichajeError = !!error;   // si la base de datos falla no se bloquea a nadie
       window.__fichajeCargado = true;
       window.__fichajeAbierto = (data && data[0]) || null;
@@ -4185,8 +4357,9 @@ async function fichajeGuardarOlvido(id, entradaIso){
   if(sal <= ent){ msg.innerHTML = `<div class="auth-error">${acL('La salida tiene que ser después de la entrada.', 'La sortida ha de ser després de l\'entrada.')}</div>`; return; }
   const nota = `Salida olvidada: cerrado automáticamente; hora de salida indicada por la persona: ${v} (${new Date().toLocaleDateString('es-ES')}).`;
   const { data, error } = await sb.from('fichajes').update({ salida: sal.toISOString(), nota }).eq('id', id).select('id');
-  if(error || !data || !data.length){ msg.innerHTML = `<div class="auth-error">${escAttr((error && error.message) || acL('No se ha podido guardar (permisos). Avisa a Recursos Humanos.', 'No s\'ha pogut desar (permisos). Avisa Recursos Humans.'))}</div>`; return; }
+  if(error || !data || !data.length){ fichIncidencia(acL('No se ha podido corregir una salida olvidada', 'No s\'ha pogut corregir una sortida oblidada'), `Fichaje del ${ent.toLocaleDateString('es-ES')} (entrada ${ent.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}). Hora de salida indicada: ${v}. Error: ${(error && error.message) || 'sin permisos'}`); msg.innerHTML = `<div class="auth-error">${escAttr((error && error.message) || acL('No se ha podido guardar (permisos). Avisa a Recursos Humanos.', 'No s\'ha pogut desar (permisos). Avisa Recursos Humans.'))}</div>`; return; }
   document.getElementById('fo-ov').remove();
+  fichIncidencia(acL('Salida olvidada', 'Sortida oblidada'), `No fichó la salida el ${ent.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} (entrada a las ${ent.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}). El fichaje se cerró automáticamente y la persona ha indicado que salió a las ${v}.`);
   alert(acL('✅ Hora de salida guardada.', '✅ Hora de sortida desada.'));
   if(document.getElementById('screen-miespacio') && document.getElementById('screen-miespacio').classList.contains('active')) renderMiEspacio();
   fichajeRevisarOlvidos();
@@ -4207,13 +4380,15 @@ function fichajePintarBanner(){
   b.classList.toggle('tarde', !!pasado);
   b.innerHTML = `<span class="fb-largo">${pasado ? `⏰ ${acL('Tu horario terminó a las', 'El teu horari va acabar a les')} <strong>${hFin}</strong>. ${acL('¿Te has olvidado de fichar la salida?', 'T\'has oblidat de fitxar la sortida?')}` : `🔴 ${acL('Tienes la entrada fichada desde las', 'Tens l\'entrada fitxada des de les')} <strong>${hora}</strong>. ${acL('Ficha la salida antes de cerrar el ordenador.', 'Fitxa la sortida abans de tancar l\'ordinador.')}`}</span>
     <span class="fb-corto">${pasado ? `⏰ ${acL('Horario acabado', 'Horari acabat')} (${hFin})` : `🔴 ${acL('Entrada', 'Entrada')} ${hora}`}</span>
+    ${('entrada_lat' in f) ? (() => { const l = fichLugarTxt(f.entrada_lat, f.entrada_lng); return `<span class="fb-lugar fb-largo" title="${acL('Desde dónde has fichado la entrada', 'Des d\'on has fitxat l\'entrada')}">${l.i} ${escAttr(l.t)}</span>`; })() : ''}
     ${salaFaltaMarcar() && !pasado ? `<span class="fb-largo">📍 ${acL('Aún no has marcado en qué sala estás.', 'Encara no has marcat a quina sala ets.')}</span><button class="fb-sala" onclick="salaElegirRapido()">📍 ${acL('Elegir sala', 'Triar sala')}</button>` : ''}
     <button onclick="ficharSalidaDesdeAviso()">⏹ ${acL('Fichar salida', 'Fitxar sortida')}</button>`;
 }
 // ===== Regla: un técnico no puede trabajar en la intranet sin fichar la entrada y marcar su sala =====
-// No se aplica a administración (dirección). Si la base de datos no responde, no se bloquea a nadie.
+// (v224) Regla de oro para todo el personal, también administración: sin fichar la entrada no se trabaja en la intranet.
+// Solo no se aplica a Soporte técnico, a los docentes externos y en «Ver como». Si la base de datos no responde, no se bloquea a nadie.
 function bloqueoMotivo(){
-  if(!CURRENT_USER || !IS_STAFF || IS_ADMIN || IS_DOCENTE || (typeof VER_COMO !== 'undefined' && VER_COMO) || !window.__fichajeCargado || window.__fichajeError) return null;   // en «Ver como» la administración solo mira: no se le pide fichar
+  if(!CURRENT_USER || !IS_STAFF || (window.__staffYo || {}).es_soporte || IS_DOCENTE || (typeof VER_COMO !== 'undefined' && VER_COMO) || !window.__fichajeCargado || window.__fichajeError) return null;   // en «Ver como» la administración solo mira: no se le pide fichar
   if(!window.__fichajeAbierto) return 'entrada';
   if(!window.__salaMarcadaTurno && !salaHoyFuera()) return 'sala';
   return null;
@@ -4240,7 +4415,7 @@ function bloqueoPintar(){
       <button class="bq-btn" onclick="salaElegirRapido()">📍 ${acL('Elegir mi sala', 'Triar la meva sala')}</button>
       <button class="bq-btn bq-sec" onclick="salaElegirReunion()">👥 ${acL('Estoy en una reunión', 'Soc en una reunió')}</button>
       <button class="link-btn" style="margin-top:6px;" onclick="salaHoyNoEstoy()">🚶 ${acL('Hoy no estoy en ninguna sala (fuera, visita, teletrabajo)', 'Avui no soc a cap sala (fora, visita, teletreball)')}</button>`}
-    <p class="bq-nota">${acL('Es una norma de Logos para todo el equipo técnico. Al acabar, ficha la salida como siempre.', 'És una norma de Logos per a tot l\'equip tècnic. En acabar, fitxa la sortida com sempre.')}</p>
+    <p class="bq-nota">${acL('Es una norma de Logos para todo el equipo: la intranet se usa en el horario de trabajo y con la entrada fichada. Al acabar, ficha la salida como siempre.', 'És una norma de Logos per a tot l\'equip: la intranet es fa servir en l\'horari de feina i amb l\'entrada fitxada. En acabar, fitxa la sortida com sempre.')}</p>
     <button class="link-btn" style="font-size:12.5px;" onclick="cerrarSesion()">${acL('Cerrar sesión', 'Tancar la sessió')}</button>
   </div>`;
 }
@@ -4260,16 +4435,73 @@ window.addEventListener('beforeunload', function(e){
 // Por si se deja el ordenador abierto: se comprueba de vez en cuando que el aviso sigue siendo correcto
 setInterval(function(){ if(CURRENT_USER && window.__fichajeAbierto) fichajePintarBanner(); }, 60000);   // a los 30 min de acabar el horario el aviso cambia a «¿Te has olvidado de fichar la salida?»
 
+// ---------- Problemas de fichaje → incidencia para David (RR. HH. / dirección) ----------
+// Se crea sola una incidencia (destino RR. HH.) cuando falla un fichaje o cuando alguien indica una salida olvidada.
+// Si la sesión se había cerrado, el aviso se guarda en este dispositivo y se envía al volver a entrar.
+const FICH_INC_PEND = 'logos_fich_inc_pend';
+function fichIncDispositivo(){ return `${window.innerWidth}x${window.innerHeight} · ${/Android|iPhone|iPad/i.test(navigator.userAgent) ? 'móvil' : 'ordenador'}`; }
+async function fichIncidencia(asunto, texto, guardarSiFalla){
+  const yo = CURRENT_USER && CURRENT_USER.email ? CURRENT_USER : null;
+  const aviso = { asunto: '⏱️ Fichaje · ' + asunto, texto: texto + '\n\nCuándo: ' + new Date().toLocaleString('es-ES') + ' · ' + fichIncDispositivo(), email: yo ? yo.email : '' };
+  if(!yo){ if(guardarSiFalla !== false) fichIncGuardarPend(aviso); return false; }
+  const nombre = (typeof CURRENT_USER_NOMBRE !== 'undefined' && CURRENT_USER_NOMBRE) || yo.email;
+  const fila = { origen: 'intranet', destino: 'rrhh', asunto: aviso.asunto.slice(0, 120), texto: aviso.texto, pantalla: 'fichaje',
+    version: (String(typeof APP_VERSION_INTRANET !== 'undefined' ? APP_VERSION_INTRANET : '').match(/v\d+/) || [''])[0], dispositivo: fichIncDispositivo(),
+    autor_id: yo.id, autor_email: yo.email, autor_nombre: nombre };
+  try { const { error } = await sb.from('incidencias').insert(fila); if(error) throw error; try { incBadge(); } catch(e){} return true; }
+  catch(e){ if(guardarSiFalla !== false) fichIncGuardarPend(aviso); return false; }
+}
+function fichIncGuardarPend(aviso){ try { const l = JSON.parse(localStorage.getItem(FICH_INC_PEND) || '[]'); l.push(aviso); localStorage.setItem(FICH_INC_PEND, JSON.stringify(l.slice(-10))); } catch(e){} }
+async function fichIncEnviarPendientes(){
+  if(!CURRENT_USER || window.__fichIncEnviando) return;
+  let l = []; try { l = JSON.parse(localStorage.getItem(FICH_INC_PEND) || '[]'); } catch(e){}
+  if(!l.length) return;
+  window.__fichIncEnviando = true;
+  try {
+    const quedan = [];
+    for(const a of l){
+      const ok = await fichIncidencia(a.asunto.replace(/^⏱️ Fichaje · /, ''), a.texto + (a.email && a.email !== CURRENT_USER.email ? '\n(Cuenta: ' + a.email + ')' : ''), false);
+      if(!ok) quedan.push(a);
+    }
+    try { localStorage.setItem(FICH_INC_PEND, JSON.stringify(quedan)); } catch(e){}
+  } finally { window.__fichIncEnviando = false; }
+}
+function fichProblemaManual(){
+  try { incAbrir('rrhh'); setTimeout(() => { const a = document.getElementById('inc-asunto'); if(a && !a.value) a.value = acL('Problema con el fichaje', 'Problema amb el fitxatge'); const t = document.getElementById('inc-texto'); if(t) t.focus(); }, 80); } catch(e){}
+}
+
 // Antes de guardar un fichaje se comprueba que la sesión sigue abierta (mientras se buscaba la ubicación o se
 // elegía el motivo, la sesión pudo cerrarse por inactividad o caducar). Así sale un aviso claro en vez de un error.
 async function fichSesionViva(){
   try { actMarcar(); } catch(e){}
   if(CURRENT_USER && CURRENT_USER.email) return CURRENT_USER.email;
   try { const { data } = await sb.auth.getSession(); if(data && data.session && data.session.user){ CURRENT_USER = data.session.user; return CURRENT_USER.email; } } catch(e){}
-  alert(acL('La sesión se ha cerrado mientras fichabas (por inactividad o porque ha caducado) y el fichaje NO se ha guardado.\n\nVuelve a entrar con tu correo y ficha otra vez.',
+  fichIncGuardarPend({ asunto: '⏱️ Fichaje · ' + acL('No se ha guardado un fichaje (sesión cerrada)', 'No s\'ha desat un fitxatge (sessió tancada)'), texto: 'La sesión se cerró mientras la persona fichaba y el fichaje no se guardó. Tiene que volver a fichar.\n\nCuándo: ' + new Date().toLocaleString('es-ES') + ' · ' + fichIncDispositivo(), email: '' });
+  alert(acL('La sesión se ha cerrado mientras fichabas (por inactividad o porque ha caducado) y el fichaje NO se ha guardado.\n\nVuelve a entrar con tu correo y ficha otra vez. (Se avisará a dirección al volver a entrar.)',
             'La sessió s\'ha tancat mentre fitxaves (per inactivitat o perquè ha caducat) i el fitxatge NO s\'ha desat.\n\nTorna a entrar amb el teu correu i fitxa una altra vegada.'));
   try { showScreen('login'); renderLogin(); } catch(e){ location.reload(); }
   return null;
+}
+
+// ---------- Dónde se ha fichado (solo informa: nunca impide fichar) ----------
+function fichLugarTxt(lat, lng){
+  const cfg = window.__configOficina;
+  if(lat == null || lng == null) return { i: '❓', t: acL('sin ubicación', 'sense ubicació'), clase: 'sin' };
+  if(!cfg || cfg.lat == null) return { i: '📍', t: acL('ubicación guardada', 'ubicació desada'), clase: 'ok' };
+  const d = Math.round(calcularDistanciaMetros(lat, lng, cfg.lat, cfg.lng)), radio = cfg.radio_metros || 150;
+  const dt = d < 1000 ? d + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km';
+  return d <= radio ? { i: '📍', t: acL('en la oficina', 'a l\'oficina') + ' (' + acL('a ', 'a ') + dt + ')', clase: 'ok' } : { i: '🚶', t: acL('a ', 'a ') + dt + acL(' de la oficina', ' de l\'oficina'), clase: 'lejos' };
+}
+// ¿La entrada está dentro del horario de la persona? (margen: 60 min antes del inicio hasta el final del tramo)
+async function fichFueraDeHorario(email, ahora){
+  try {
+    const h = await hrHorarioDe(email); if(!h || !h.tramos || !h.tramos.length) return null;
+    const dia = hrDiaSemanaJS(ahora), min = ahora.getHours() * 60 + ahora.getMinutes();
+    const hoy = hrTramosDia(h.tramos, dia);
+    if(!hoy.length) return acL('hoy no hay horario de trabajo', 'avui no hi ha horari de feina');
+    const dentro = hoy.some(t => min >= hrMin(t.desde) - 60 && min <= hrMin(t.hasta));
+    return dentro ? null : acL('horario de hoy: ', 'horari d\'avui: ') + hrTxtTramos(hoy);
+  } catch(e){ return null; }
 }
 
 // Fichaje sencillo, como antes (v213): se pulsa y se guarda. Se intenta coger la ubicación (máx. 8 s);
@@ -4282,12 +4514,17 @@ async function ficharEntrada(){
   const payload = { tecnico_email: yo };
   if(ubicacion){ payload.entrada_lat = ubicacion.lat; payload.entrada_lng = ubicacion.lng; }
   const { error } = await sb.from('fichajes').insert(payload);
-  if(error){ alert(error.message); return; }
-  if(!ubicacion){
-    alert(LANG_I==='ca'
-      ? "S'ha fitxat, però no s'ha pogut registrar la ubicació (revisa els permisos de localització del navegador)."
-      : 'Se ha fichado, pero no se ha podido registrar la ubicación (revisa los permisos de localización del navegador).');
-  }
+  if(error){
+    fichIncidencia(acL('No se ha podido fichar la entrada', 'No s\'ha pogut fitxar l\'entrada'), 'Error al guardar la entrada: ' + error.message);
+    alert(acL('No se ha podido fichar la entrada: ', 'No s\'ha pogut fitxar l\'entrada: ') + error.message + acL('\n\nSe ha avisado a dirección (incidencia de fichaje).', '\n\nS\'ha avisat la direcció (incidència de fitxatge).')); return; }
+  // Se informa de la hora y de dónde se ha fichado (sin ventanas que haya que cerrar)
+  try { await fichConfig(); } catch(e){}
+  const ahora = new Date(), lugar = fichLugarTxt(ubicacion ? ubicacion.lat : null, ubicacion ? ubicacion.lng : null);
+  const fuera = await fichFueraDeHorario(yo, ahora);
+  fichAvisoFichado(`✅ ${acL('Entrada fichada a las', 'Entrada fitxada a les')} ${ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · ${lugar.i} ${lugar.t}`
+    + (fuera ? `<br>⏰ ${acL('Fuera de tu horario', 'Fora del teu horari')} (${escAttr(fuera)}): ${acL('se avisa a dirección.', 's\'avisa la direcció.')}` : '')
+    + (!ubicacion ? `<br><small>${acL('Para que se guarde la ubicación, deja que el navegador la use.', 'Perquè es desi la ubicació, deixa que el navegador la faci servir.')}</small>` : ''));
+  if(fuera) fichIncidencia(acL('Entrada fichada fuera de horario', 'Entrada fitxada fora d\'horari'), `Ha fichado la entrada a las ${ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} (${ahora.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}); ${fuera}. Lugar: ${lugar.t}.`);
   await fichajeRefrescar();
   await renderMiEspacio();
   if(!window.__tengoSala && !salaHoyFuera()) salaElegirRapido();
@@ -4306,14 +4543,27 @@ function fichToast(d, tipo){
 }
 async function ficharSalida(id){
   try { actMarcar(); } catch(e){}
+  // Pregunta corta para que un toque sin querer no cierre la jornada
+  { const hh = new Date().toLocaleTimeString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES', { hour: '2-digit', minute: '2-digit' });
+    if(!confirm(acL('¿Seguro que quieres fichar la SALIDA ahora (' + hh + ')?\n\nSi has tocado el botón sin querer, pulsa «Cancelar» y sigue trabajando.',
+                    'Segur que vols fitxar la SORTIDA ara (' + hh + ')?\n\nSi has tocat el botó sense voler, prem «Cancel·la» i continua treballant.'))) return; }
   const ubicacion = await obtenerUbicacionSimple();
   if(!(await fichSesionViva())) return;
   const payload = { salida: new Date().toISOString() };
   if(ubicacion){ payload.salida_lat = ubicacion.lat; payload.salida_lng = ubicacion.lng; }
   const { error } = await sb.from('fichajes').update(payload).eq('id', id);
-  if(error){ alert(error.message); return; }
+  if(!error){ try { await fichConfig(); } catch(e){} const l = fichLugarTxt(ubicacion ? ubicacion.lat : null, ubicacion ? ubicacion.lng : null); fichAvisoFichado(`⏹ ${acL('Salida fichada a las', 'Sortida fitxada a les')} ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · ${l.i} ${l.t}`); }
+  if(error){
+    fichIncidencia(acL('No se ha podido fichar la salida', 'No s\'ha pogut fitxar la sortida'), 'Error al guardar la salida: ' + error.message);
+    alert(acL('No se ha podido fichar la salida: ', 'No s\'ha pogut fitxar la sortida: ') + error.message + acL('\n\nSe ha avisado a dirección (incidencia de fichaje).', '\n\nS\'ha avisat la direcció (incidència de fitxatge).')); return; }
   await fichajeRefrescar();
   renderMiEspacio();
+}
+function fichAvisoFichado(html){
+  let t = document.getElementById('fich-aviso-ok'); if(t) t.remove();
+  t = document.createElement('div'); t.id = 'fich-aviso-ok'; t.className = 'fich-aviso-ok'; t.innerHTML = html;
+  t.onclick = () => t.remove(); document.body.appendChild(t);
+  setTimeout(() => { if(t && t.parentNode) t.remove(); }, 7000);
 }
 function obtenerUbicacionSimple(){
   return new Promise((resolve) => {
@@ -5822,6 +6072,7 @@ async function renderMiEspacio(){
            <button class="primary-btn" onclick="ficharEntrada()">${t.ficharEntrada}</button>`}
       ${fichadoAhora && !window.__tengoSala && !salaHoyFuera() ? `<div class="info-box info-box-gold sala-recordatorio" style="text-align:left;margin:12px 0 0;font-size:13px;">📍 ${acL('Aún no has marcado en qué sala estás.', 'Encara no has marcat a quina sala ets.')} <button class="link-btn" style="font-weight:800;" onclick="salaElegirRapido()">${acL('Elegir sala', 'Triar sala')}</button></div>` : ''}
       ${historialHoyHtml ? `<div style="text-align:left;margin-top:14px;">${historialHoyHtml}</div>` : ''}
+      <button class="link-btn" style="display:block;margin:10px auto 0;font-size:12.5px;" onclick="fichProblemaManual()">🆘 ${acL('¿Algún problema con el fichaje? Avisar a dirección', 'Algun problema amb el fitxatge? Avisar la direcció')}</button>
     </div>
   `;
 
@@ -6484,14 +6735,16 @@ function abrirAtencionEnFicha(){
   if(!uid) return;
   mostrarTabPersona('atencion');
   // Si ya hay un formulario abierto en la ficha, se conserva lo escrito
-  if(window.__atencionEnFicha && document.querySelector('#atencion-en-ficha .at-form')) return;
+  if(window.__atencionEnFicha && document.querySelector('#atencion-en-ficha .at-form')){ try { m3AtencionMontar(); } catch(e){} return; }
   renderAtencionForm({ usuarioId: uid, nombre: window.__nombrePersonaVista || '' });
+  try { m3AtencionMontar(); } catch(e){ console.warn('m3', e); }
   const c = document.getElementById('atencion-en-ficha');
   if(c && c.scrollIntoView) c.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 function cerrarAtencionEnFicha(){
   window.__atencionEnFicha = false;
   const c = document.getElementById('atencion-en-ficha'); if(c) c.innerHTML = '';
+  try { m3AtencionDesmontar(); } catch(e){}
   mostrarTabPersona('vista');
 }
 // ---------- Ficha de atención: bloques desplegables con contador de lo marcado ----------
@@ -6728,7 +6981,7 @@ function guardarUnaVez(grupo, fn){
   window.__guardando[grupo] = true;
   const botones = () => document.querySelectorAll(`[data-guardar="${grupo}"]`);
   botones().forEach(b => { b.disabled = true; });
-  Promise.resolve().then(fn).catch(e => { try { alert(e.message || e); } catch(x){} })
+  return Promise.resolve().then(fn).catch(e => { try { alert(e.message || e); } catch(x){} })
     .finally(() => { window.__guardando[grupo] = false; botones().forEach(b => { b.disabled = false; }); });
 }
 async function guardarAtencion(){
@@ -6981,8 +7234,8 @@ async function horariosDelDia(fechaIso){
   } catch(e){}
   try {
     const d = new Date(fechaIso + 'T00:00:00'); const dia = d.getDay() === 0 ? 7 : d.getDay();
-    const { data } = await sb.from('personal_horarios').select('persona_email, dia, desde, hasta').eq('dia', dia);
-    (data || []).forEach(f => { if(!f.persona_email) return; const e = String(f.persona_email).toLowerCase(); (out[e] = out[e] || []).push([String(f.desde).slice(0, 5), String(f.hasta).slice(0, 5)]); });
+    const { data } = await sb.from('personal_horarios').select('persona_email, dia, desde, hasta').not('persona_email', 'is', null);
+    (data || []).forEach(f => { const e = String(f.persona_email).toLowerCase(); out[e] = out[e] || []; if(Number(f.dia) === dia) out[e].push([String(f.desde).slice(0, 5), String(f.hasta).slice(0, 5)]); });
   } catch(e){}
   return out;
 }
@@ -7304,8 +7557,8 @@ async function elegirDiaNuevaCita(fechaIso, mantener){
     tecSel ? sb.from('citas').select('*').eq('fecha', fechaIso).then(r => r, () => ({ data: [] })) : Promise.resolve({ data: [] }),
     horariosDelDia(fechaIso)
   ]);
-  const tramosTec = tecSel && horDia[tecSel] && horDia[tecSel].length ? horDia[tecSel] : null;
-  const tramosTec2 = tec2Sel && horDia[tec2Sel] && horDia[tec2Sel].length ? horDia[tec2Sel] : null;
+  const tramosTec = tecSel && Array.isArray(horDia[tecSel]) ? horDia[tecSel] : null;     // [] = tiene horario propio y ese día no trabaja
+  const tramosTec2 = tec2Sel && Array.isArray(horDia[tec2Sel]) ? horDia[tec2Sel] : null;
   const fueraDe = (tr, s) => !!tr && !tr.some(t => logosMin(s) >= logosMin(t[0]) && logosMin(s) < logosMin(t[1]));
   const fueraHorario = s => fueraDe(tramosTec, s) || fueraDe(tramosTec2, s);
   const ocupadas = {}; (ocup || []).forEach(o => { ocupadas[String(o.hora).slice(0, 5)] = o.ocupadas; });
@@ -14869,7 +15122,8 @@ function hrCerrarMiHorario(){
 async function hrCargarAdmin(){
   window.__hrTodos = [];
   if(!HR_OK) return;
-  const r = await sb.from('personal_horarios').select('*').order('desde', { ascending: true });
+  const [r, hc] = await Promise.all([sb.from('personal_horarios').select('*').order('desde', { ascending: true }), sb.from('horas_contrato').select('email, horas_semana').then(x => x, () => ({ data: [] }))]);
+  window.__hrContrato = {}; ((hc && hc.data) || []).forEach(c => { if(c.email && c.horas_semana != null) window.__hrContrato[String(c.email).toLowerCase()] = Number(c.horas_semana); });
   window.__hrTodos = (r.data || []).map(f => Object.assign({}, f, { dia: Number(f.dia), desde: hrHM(f.desde), hasta: hrHM(f.hasta) }));
 }
 function hrTramosAmbito(sel){
@@ -14888,8 +15142,8 @@ function hrEditorHtml(){
     return `<div class="hr-dia hr-d${d}" data-dia="${d}">
       <div class="hr-dia-cab"><span class="hr-dia-n">${hrDia(d)}</span><span class="hr-dia-h" id="hr-dh-${d}"></span></div>
       <div class="hr-tramos">
-        <span class="hr-tramo hr-man"><em>☀️ ${acL('Mañana', 'Matí')}</em>${celda(0, 'desde')}<b>–</b>${celda(0, 'hasta')}</span>
-        <span class="hr-tramo hr-tar"><em>🌙 ${acL('Tarde', 'Tarda')}</em>${celda(1, 'desde')}<b>–</b>${celda(1, 'hasta')}</span>
+        <span class="hr-tramo hr-man"><em>☀️ ${acL('Mañana', 'Matí')}</em>${celda(0, 'desde')}<b>–</b>${celda(0, 'hasta')}<button type="button" class="hr-vaciar" title="${acL('Sin mañana este día', 'Sense matí aquest dia')}" onclick="hrVaciar(${d},0)">✕</button></span>
+        <span class="hr-tramo hr-tar"><em>🌙 ${acL('Tarde', 'Tarda')}</em>${celda(1, 'desde')}<b>–</b>${celda(1, 'hasta')}<button type="button" class="hr-vaciar" title="${acL('Sin tarde este día', 'Sense tarda aquest dia')}" onclick="hrVaciar(${d},1)">✕</button></span>
       </div>
       <div class="hr-barra" id="hr-barra-${d}"></div>
     </div>`;
@@ -14898,6 +15152,11 @@ function hrEditorHtml(){
     : sel ? (propio ? acL('Esta persona tiene un horario propio.', 'Aquesta persona té un horari propi.') : acL('Esta persona usa ahora el horario general. Si cambias algo y guardas, se creará uno propio para ella.', 'Aquesta persona fa servir ara l\'horari general. Si canvies alguna cosa i deses, se\'n crearà un de propi.'))
     : acL('Es el horario que usa todo el personal que no tenga uno propio.', 'És l\'horari que fa servir tot el personal que no en tingui un de propi.');
   return `<p class="subtle" style="margin:0 0 8px;font-size:12.5px;">${nota} ${acL('Cada día admite dos tramos (por ejemplo, mañana y tarde). Deja vacío lo que no se trabaja.', 'Cada dia admet dos trams (per exemple, matí i tarda). Deixa buit el que no es treballa.')}</p>
+    <div class="hr-atajos">
+      <button type="button" onclick="hrSoloMananas()">☀️ ${acL('Solo mañanas (sin tardes)', 'Només matins (sense tardes)')}</button>
+      <button type="button" onclick="hrCopiarLunes()">📋 ${acL('Copiar el lunes de lunes a viernes', 'Copiar el dilluns de dilluns a divendres')}</button>
+      <button type="button" onclick="hrVaciarTodo()">🧹 ${acL('Vaciar todo', 'Buidar-ho tot')}</button>
+    </div>
     ${filas}
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;">
       <button class="primary-btn" style="width:auto;margin:0;" onclick="hrGuardar()">💾 ${acL('Guardar horario', 'Desar horari')}</button>
@@ -14946,11 +15205,23 @@ function hrLeerEditor(){
   });
   return { tramos, errores };
 }
+// Atajos del editor de horarios: dejar la tarde (o la mañana) vacía de un día, solo mañanas, copiar el lunes, vaciar
+function hrVaciar(d, i){ document.querySelectorAll(`.hr-in[data-dia="${d}"][data-i="${i}"]`).forEach(x => { x.value = ''; }); hrActualizarTotal(); }
+function hrSoloMananas(){ for(let d = 1; d <= 7; d++) hrVaciar(d, 1); }
+function hrVaciarTodo(){ if(!confirm(acL('¿Vaciar todo el horario de la semana?', 'Buidar tot l\'horari de la setmana?'))) return; document.querySelectorAll('.hr-in').forEach(x => { x.value = ''; }); hrActualizarTotal(); }
+function hrCopiarLunes(){
+  const v = (i, k) => ((document.querySelector(`.hr-in[data-dia="1"][data-i="${i}"][data-k="${k}"]`) || {}).value || '');
+  for(let d = 2; d <= 5; d++) [0, 1].forEach(i => ['desde', 'hasta'].forEach(k => { const el = document.querySelector(`.hr-in[data-dia="${d}"][data-i="${i}"][data-k="${k}"]`); if(el) el.value = v(i, k); }));
+  hrActualizarTotal();
+}
 function hrActualizarTotal(){
   const el = document.getElementById('hr-total'); if(!el) return;
   const { tramos } = hrLeerEditor();
-  const total = hrTxtMin(tramos.reduce((s, t) => s + (hrMin(t.hasta) - hrMin(t.desde)), 0));
-  el.textContent = `⏱ ${acL('Total semanal', 'Total setmanal')}: ${total}`;
+  const totMin = tramos.reduce((s, t) => s + (hrMin(t.hasta) - hrMin(t.desde)), 0);
+  const total = hrTxtMin(totMin);
+  const sel = window.__hrSel || '', contrato = sel ? (window.__hrContrato || {})[sel] : null;
+  el.textContent = `⏱ ${acL('Total semanal', 'Total setmanal')}: ${total}` + (contrato != null ? ` · ${acL('contrato', 'contracte')}: ${contrato} h ${Math.abs(totMin - contrato * 60) <= 30 ? '✅' : '⚠️'}` : '');
+  el.classList.toggle('hr-total-mal', contrato != null && Math.abs(totMin - contrato * 60) > 30);
   const heroT = document.getElementById('mh-hero-total'); if(heroT) heroT.textContent = total;
   // Barra de colores de cada día (de 7:00 a 22:00) y horas del día
   const INI = 7 * 60, FIN = 22 * 60, pct = m => Math.max(0, Math.min(100, (m - INI) / (FIN - INI) * 100));
@@ -17531,7 +17802,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-04 · v218 (fichaje otra vez sencillo como antes: se pulsa y se guarda, sin ventanas; citas cada 45 minutos)';
+const APP_VERSION_INTRANET = '2026-11-04 · v224 (regla de oro: sin fichar la entrada no se usa la intranet, también administración; al fichar se dice desde dónde; entrada fuera de horario → aviso a dirección; horarios de media jornada)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -19479,7 +19750,7 @@ function construirVistaUnica(p, d, cardAtencion, extra){
   const chips = [['atencion', ca ? 'Atencions' : 'Atenciones', d.atenciones.length], ['actuacion', ca ? 'Actuacions' : 'Actuaciones', d.actuaciones.length], ['tramite', ca ? 'Tràmits' : 'Trámites', d.tramites.length], ['cita', 'Citas', d.citas.length], ['mensaje', ca ? 'Missatges' : 'Mensajes', d.mensajes.length], ['documento', ca ? 'Documents' : 'Documentos', d.documentos.length]];
   const faltanFicha = fichaDatosQueFaltan(p);
   return `
-    ${faltanFicha.length ? `<div class="panel-card" style="background:var(--alert-soft,#FDECEA);border-color:var(--alert);">
+    ${faltanFicha.length ? `<div class="panel-card vu-faltan" style="background:var(--alert-soft,#FDECEA);border-color:var(--alert);">
       <strong>⚠️ ${ca ? 'Falten dades a la fitxa' : 'Faltan datos en la ficha'} (${faltanFicha.length}) · ${ca ? 'fitxa al' : 'ficha al'} ${fichaPorcentaje(p)}%</strong>
       ${fichaBarraHtml(fichaPorcentaje(p))}
       <p style="margin:6px 0 10px;font-size:13px;">${h(faltanFicha.join(', '))}</p>
@@ -19649,8 +19920,9 @@ function cerrarBusquedaGlobal(){
 async function verPersonaStaff(usuarioId, origen){
   const yaAbierta = !!(document.getElementById('screen-persona') && document.getElementById('screen-persona').classList.contains('active') && window.__usuarioIdVisto === usuarioId);
   const r = !yaAbierta ? await verPersonaStaffInterno(usuarioId, origen) : await recargarSinSaltar('persona-content', () => verPersonaStaffInterno(usuarioId, origen));
+  try { m3DatosMontar(); } catch(e){ console.warn('m3', e); }
   try { fichaMarcarFaltan(); } catch(e){}
-  if(!yaAbierta) fichaAviso(usuarioId, 'abrir');
+  // (v220) ya no salta la ventana «Esta ficha está incompleta» al abrir: lo que falta sale en «Qué toca ahora»
   return r;
 }
 async function verPersonaStaffInterno(usuarioId, origen){
@@ -19874,32 +20146,12 @@ async function verPersonaStaffInterno(usuarioId, origen){
   const sinAtencionFicha = !(atencionesRes.data || []).length && !atencionesRes.error;
   if(window.__conAtencion){ if(sinAtencionFicha) window.__conAtencion.delete(p.id); else window.__conAtencion.add(p.id); }
   cont.innerHTML = `
-    <h2 class="screen-title">${p.nombre_completo || t.sinNombre}${sinAtencionFicha ? ' ' + avisoSinAtencionHtml(p.id) : ''}</h2>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 12px;">
-      <button class="link-btn" style="margin:0;" onclick="exportarFichaPersona('${p.id}','xlsx')">⬇️ ${LANG_I==='ca'?'Fitxa Excel':'Ficha Excel'}</button>
-      <button class="link-btn" style="margin:0;" onclick="exportarFichaPersona('${p.id}','pdf')">⬇️ ${LANG_I==='ca'?'Fitxa PDF':'Ficha PDF'}</button>
-      <button class="primary-btn" style="width:auto;margin:0;" onclick="abrirAtencionEnFicha()">📋 ${LANG_I==='ca'?'Fitxa d\'atenció':'Ficha de atención'}</button>
-      <button class="primary-btn" style="width:auto;margin:0;background:var(--gold);" onclick="mostrarTabPersona('actuaciones');document.getElementById('act-descripcion').scrollIntoView({behavior:'smooth',block:'center'})">📝 ${LANG_I==='ca'?'Afegir actuació a l\'expedient':'Añadir actuación al expediente'}</button>
-    </div>
-    <div class="nota-trabajo"><strong class="t">📌 ${LANG_I==='ca'?'Aquesta fitxa és el lloc de treball':'Esta ficha es el lugar de trabajo'}</strong>${LANG_I==='ca'
-      ? 'Aquí es registren totes les actuacions: <strong>tràmits, projectes i seguiment fins al tancament</strong>. Tria a sota què vols fer.'
-      : 'Aquí se registran todas las actuaciones: <strong>trámites, proyectos y seguimiento hasta el cierre</strong>. Elige abajo lo que quieres hacer.'}</div>
-    <div id="veces-at-host">${vecesAtendidaHtml(atencionesRes.data || [], actuacionesLista || [])}</div>
-    <div class="persona-tabs">
-      <button class="ptab-btn principal active" data-tab="vista" onclick="mostrarTabPersona('vista')">🔎 ${LANG_I==='ca'?'Resum':'Resumen'}</button>
-      <button class="ptab-btn principal" data-tab="atencion" onclick="abrirAtencionEnFicha()">📋 ${LANG_I==='ca'?'Fitxa d\'atenció':'Ficha de atención'}</button>
-      <button class="ptab-btn principal" data-tab="citas" onclick="mostrarTabPersona('citas')">📅 ${t.tabCitas}</button>
-      <button class="ptab-btn principal" data-tab="actuaciones" onclick="mostrarTabPersona('actuaciones')">📂 ${LANG_I==='ca'?'Expedient':'Expediente'}</button>
-      <button class="ptab-btn principal" data-tab="proyectos" onclick="mostrarTabPersona('proyectos')">🧩 ${t.tabProyectos}</button>
-      <button class="ptab-btn principal" data-tab="formaciones" onclick="mostrarTabPersona('formaciones')">🎓 ${t.tabFormaciones}</button>
-      <span class="ptab-sep"></span>
-      <button class="ptab-btn secundaria" data-tab="documentos" onclick="mostrarTabPersona('documentos')">📄 ${t.tabDocumentos}</button>
-      <button class="ptab-btn secundaria" data-tab="derivaciones" onclick="mostrarTabPersona('derivaciones')">↗️ ${t.tabDerivaciones}</button>
-      <button class="ptab-btn secundaria" data-tab="historial" onclick="mostrarTabPersona('historial')">🕘 ${t.tabHistorial}</button>
-      <button class="ptab-btn secundaria" data-tab="quienatendio" onclick="mostrarTabPersona('quienatendio')">👥 ${t.tabQuienAtendio}</button>
-    </div>
+    ${m3CabeceraHtml(p, { sinAtencion: sinAtencionFicha, citas: citasRes.data || [], tramites: tramitesRes.data || [], actuaciones: actuacionesLista, atenciones: atencionesRes.data || [] })}
 
-    <div class="ptab-content active" id="ptab-vista">${vistaUnicaHtml}
+    <div class="ptab-content active" id="ptab-vista">
+    <div class="m3-res">${m3QueTocaHtml(p, { citas: citasRes.data || [], tramites: tramitesRes.data || [], actuaciones: actuacionesLista, atenciones: atencionesRes.data || [] })}${m3AccesoHtml(p)}</div>
+    <div id="veces-at-host">${vecesAtendidaHtml(atencionesRes.data || [], actuacionesLista || [])}</div>
+    ${vistaUnicaHtml}
     ${necesidadesHtml}
     ${p.telefono ? `
     <div class="panel-card" id="bloque-plantillas" style="margin-top:12px;">
@@ -20046,9 +20298,10 @@ async function verPersonaStaffInterno(usuarioId, origen){
       <div class="nota-trabajo"><strong class="t">📂 ${LANG_I==='ca'?'Expedient = la carpeta de la persona, oberta fins al tancament':'Expediente = la carpeta de la persona, abierta hasta el cierre'}</strong>${LANG_I==='ca'
         ? 'Tot el que es treballa amb la persona és una <strong>actuació</strong> dins del seu expedient (atenció, tràmit, projecte, formació). Posa la data, què s\'ha fet i el <em>proper pas</em>; quan estigui resolt, marca-ho com a finalitzat.'
         : 'Todo lo que se trabaja con la persona es una <strong>actuación</strong> dentro de su expediente (atención, trámite, proyecto, formación). Pon la fecha, qué se ha hecho y el <em>próximo paso</em>; cuando esté resuelto, márcalo como finalizado.'}</div>
+      <div class="m3-act-barra"><button class="primary-btn" onclick="m3NuevaActuacion()">📝 ${acL('Trámite / actuación', 'Tràmit / actuació')}</button><span class="subtle" style="margin:0;font-size:12.5px;">${acL('Para abrir un trámite nuevo o apuntar lo que se ha hecho. Se abre a la derecha.', 'Per obrir un tràmit nou o apuntar el que s\'ha fet. S\'obre a la dreta.')}</span></div>
       <div class="panel-card">
         ${actuacionesHtml}
-        <div class="doc-upload-row" style="margin-top:10px;text-align:left;">
+        <div class="doc-upload-row" id="act-form-nodo" style="margin-top:10px;text-align:left;">
           <div class="guardar-arriba">
             <button class="primary-btn" data-guardar="actuacion" onclick="guardarUnaVez('actuacion', crearActuacion)">${t.registrarActuacionBtn}</button>
             <span>${acL('Rellena los datos de abajo y guarda aquí o al final.', 'Omple les dades de sota i desa aquí o al final.')}</span>
@@ -20487,6 +20740,353 @@ async function guardarDatosPersonaStaff(usuarioId, silencioso){
   alert(LANG_I==='ca' ? 'Dades desades correctament.' : 'Datos guardados correctamente.');
   await verPersonaStaff(usuarioId, window.__origenPersonaVista || 'panel');
   mostrarTabPersona('atencion'); abrirAtencionEnFicha();
+}
+
+// =====================================================================================
+// FICHA DE LA PERSONA · estilo Microsoft 365 (v220)
+//   Cabecera con lo esencial, barra de botones, 6 pestañas; «Qué toca ahora» y «Acceso a Logos Acompanya» en el Resumen;
+//   la actuación se escribe en un panel a la derecha; la ficha de atención con barra fija, índice y dos columnas.
+//   Solo cambia cómo se ve: los campos (ids) y las funciones de guardar son las de siempre.
+// =====================================================================================
+function m3Ini(n){ return String(n || '?').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(x => x[0]).join('').toUpperCase() || '?'; }
+function m3Fecha(f, conDia){ if(!f) return ''; const d = new Date(String(f).length <= 10 ? f + 'T00:00:00' : f); return d.toLocaleDateString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES', conDia ? { weekday: 'short', day: 'numeric', month: 'numeric' } : { day: 'numeric', month: 'numeric', year: 'numeric' }); }
+function m3ProximaCita(citas){
+  const hoy = isoLocal();
+  return (citas || []).filter(c => c.fecha && String(c.fecha).slice(0, 10) >= hoy && !/cancel/i.test(c.estado || ''))
+    .sort((a, b) => (String(a.fecha) + String(a.hora || '')).localeCompare(String(b.fecha) + String(b.hora || '')))[0] || null;
+}
+function m3CabeceraHtml(p, d){
+  const L = acL, uid = p.id, nombre = p.nombre_completo || TI[LANG_I].sinNombre;
+  const prox = m3ProximaCita(d.citas), pct = (() => { try { return fichaPorcentaje(p); } catch(e){ return null; } })();
+  const tramAb = (d.tramites || []).filter(tr => !trCerrado(tr.estado));
+  const ultAct = [...(d.actuaciones || [])].sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')))[0];
+  // para el recuadro «Lo último» del panel de actuación
+  window.__m3Recap = [
+    ultAct ? `${m3Fecha(ultAct.fecha)} ${escAttr(ultAct.categoria || L('actuación', 'actuació'))}${ultAct.resultado ? ' (' + escAttr(String(ultAct.resultado).replace('_', ' ')) + ')' : ''}` : '',
+    tramAb.length ? L('trámite abierto', 'tràmit obert') + ' «' + tramAb.slice(0, 2).map(t => escAttr(t.nombre_servicio || '')).join('», «') + '»' : '',
+    prox ? L('próxima cita', 'propera cita') + ' ' + m3Fecha(prox.fecha, true) + (prox.hora ? ' ' + String(prox.hora).slice(0, 5) : '') : ''
+  ].filter(Boolean).join(' · ');
+  window.__m3RenderN = (window.__m3RenderN || 0) + 1;
+  window.__m3TramAb = tramAb.map(t => ({ id: t.id, nombre: t.nombre_servicio || '' }));
+  const tel = p.telefono ? String(p.telefono).replace(/[^\d+]/g, '') : '';
+  const chips = [
+    d.sinAtencion ? `<button class="m3-chip aviso" onclick="abrirAtencionEnFicha()">⚠️ ${L('Falta la ficha de atención', 'Falta la fitxa d\'atenció')}</button>` : '',
+    p.consentimiento_firmado ? `<span class="m3-chip ok">✅ ${L('Consentimiento firmado', 'Consentiment signat')}</span>` : `<span class="m3-chip aviso">✍️ ${L('Sin consentimiento', 'Sense consentiment')}</span>`,
+    pct != null ? `<button class="m3-chip ${pct >= 100 ? 'ok' : 'aviso'}" onclick="fichaIrACompletar('${uid}')">${pct >= 100 ? '✅ ' + L('Ficha completa', 'Fitxa completa') : L('Ficha al', 'Fitxa al') + ' ' + pct + ' %'}</button>` : '',
+    prox ? `<button class="m3-chip" onclick="mostrarTabPersona('citas')">📅 ${L('Cita', 'Cita')} ${m3Fecha(prox.fecha, true)}${prox.hora ? ' · ' + String(prox.hora).slice(0, 5) : ''}</button>` : '',
+    `<span class="m3-chip ok">🔑 ${L('Cuenta en Logos Acompanya', 'Compte a Logos Acompanya')}</span>`
+  ].join('');
+  const nAct = (d.actuaciones || []).length, nCit = (d.citas || []).length;
+  const tab = (k, txt) => `<button class="ptab-btn" data-tab="${k}" onclick="mostrarTabPersona('${k}')">${txt}</button>`;
+  return `
+  <div class="m3-cab">
+    <div class="m3-persona">
+      <div class="m3-av">${escAttr(m3Ini(nombre))}</div>
+      <div class="m3-pinfo">
+        <h2 class="m3-nom">${escAttr(nombre)}</h2>
+        <div class="m3-datos">${p.telefono ? `<span>📞 ${escAttr(p.telefono)}</span>` : ''}${p.email ? `<span>✉️ ${escAttr(p.email)}</span>` : ''}<span>👤 ${p.tecnico_responsable_email ? escAttr(nombreTecnico(p.tecnico_responsable_email)) : L('Sin técnico asignado', 'Sense tècnic assignat')}</span></div>
+        <div class="m3-chips">${chips}</div>
+      </div>
+      <div class="m3-rapido">
+        ${tel ? `<a href="tel:${escAttr(tel)}" title="${L('Llamar', 'Trucar')}">📞</a><a href="${escAttr(enlaceWhatsApp(p.telefono, p.nombre_completo || ''))}" target="_blank" rel="noopener" title="WhatsApp">💬</a>` : ''}
+        ${p.email ? `<a href="mailto:${escAttr(p.email)}" title="${L('Correo', 'Correu')}">✉️</a>` : ''}
+      </div>
+    </div>
+    <div class="m3-cmd">
+      <button class="m3-pri" onclick="m3NuevaActuacion()">📝 ${L('Trámite / actuación', 'Tràmit / actuació')}</button>
+      <button onclick="abrirAtencionEnFicha()">📋 ${L('Ficha de atención', 'Fitxa d\'atenció')}</button>
+      <button onclick="abrirNuevaCitaStaff('${uid}', ${escAttr(JSON.stringify(nombre))})">📅 ${L('Nueva cita', 'Nova cita')}</button>
+      <button class="m3-sec2" onclick="mostrarTabPersona('documentos')">📄 ${L('Subir documento', 'Pujar document')}</button>
+      <div class="m3-mas">
+        <button onclick="m3MenuMas(event)">⋯ ${L('Más', 'Més')}</button>
+        <div class="m3-menu" id="m3-menu">
+          <button onclick="m3Menu();m3NuevaActuacion('nuevo')">🗂️ ${L('Abrir un trámite nuevo', 'Obrir un tràmit nou')}</button>
+          <button onclick="m3Menu();mostrarTabPersona('proyectos')">🧩 ${TI[LANG_I].tabProyectos}</button>
+          <button onclick="m3Menu();mostrarTabPersona('formaciones')">🎓 ${TI[LANG_I].tabFormaciones}</button>
+          <button onclick="m3Menu();mostrarTabPersona('derivaciones')">↗️ ${TI[LANG_I].tabDerivaciones}</button>
+          <button onclick="m3Menu();mostrarTabPersona('quienatendio')">👥 ${TI[LANG_I].tabQuienAtendio}</button>
+          <hr>
+          <button onclick="m3Menu();exportarFichaPersona('${uid}','xlsx')">⬇️ ${L('Ficha en Excel', 'Fitxa en Excel')}</button>
+          <button onclick="m3Menu();exportarFichaPersona('${uid}','pdf')">⬇️ ${L('Ficha en PDF', 'Fitxa en PDF')}</button>
+        </div>
+      </div>
+    </div>
+    <div class="persona-tabs m3-piv">
+      ${tab('vista', L('Resumen', 'Resum'))}
+      ${tab('actuaciones', L('Actuaciones', 'Actuacions') + (nAct ? ' (' + nAct + ')' : ''))}
+      ${tab('citas', TI[LANG_I].tabCitas + (nCit ? ' (' + nCit + ')' : ''))}
+      ${tab('documentos', TI[LANG_I].tabDocumentos)}
+      <button class="ptab-btn" data-tab="atencion" onclick="mostrarTabPersona('datos')">${L('Datos personales', 'Dades personals')}</button>
+      ${tab('historial', TI[LANG_I].tabHistorial)}
+    </div>
+  </div>`;
+}
+function m3MenuMas(e){ e.stopPropagation(); const m = document.getElementById('m3-menu'); if(m) m.classList.toggle('on'); }
+function m3Menu(){ const m = document.getElementById('m3-menu'); if(m) m.classList.remove('on'); }
+document.addEventListener('click', e => { if(!e.target.closest || !e.target.closest('.m3-mas')) m3Menu(); });
+function m3AbrirTramite(){
+  mostrarTabPersona('actuaciones');
+  setTimeout(() => { const el = document.getElementById('nuevo-tramite-nombre'); if(el){ el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus({ preventScroll: true }); } }, 60);
+}
+function m3QueTocaHtml(p, d){
+  const L = acL, uid = p.id, items = [];
+  const prox = m3ProximaCita(d.citas);
+  if(!(d.atenciones || []).length) items.push(['📋', `<b>${L('Falta la ficha de atención', 'Falta la fitxa d\'atenció')}</b> <a href="#" onclick="abrirAtencionEnFicha();return false;">${L('Hacerla ahora', 'Fer-la ara')}</a>`, L('Hay que hacerla antes de apuntar actuaciones.', 'Cal fer-la abans d\'apuntar actuacions.')]);
+  if(prox) items.push(['📅', `<b>${L('Cita', 'Cita')} ${m3Fecha(prox.fecha, true)}${prox.hora ? ' · ' + String(prox.hora).slice(0, 5) : ''}</b>${prox.tecnico_nombre ? ' ' + L('con', 'amb') + ' ' + escAttr([prox.tecnico_nombre, prox.tecnico2_nombre].filter(Boolean).join(L(' y ', ' i '))) : ''}`, escAttr([prox.motivo, prox.modalidad === 'telefono' ? L('por teléfono', 'per telèfon') : ''].filter(Boolean).join(' · '))]);
+  (d.tramites || []).filter(tr => !trCerrado(tr.estado)).slice(0, 3).forEach(tr => items.push(['⏳', `<b>${L('Trámite abierto', 'Tràmit obert')}: ${escAttr(tr.nombre_servicio || '')}</b>`, tr.fecha_inicio ? L('Desde el ', 'Des del ') + m3Fecha(tr.fecha_inicio) : '']));
+  const rev = (d.actuaciones || []).filter(a => a.fecha_proxima_revision && a.proximo_paso).sort((a, b) => String(a.fecha_proxima_revision).localeCompare(String(b.fecha_proxima_revision))).find(a => String(a.fecha_proxima_revision) >= isoLocal());
+  if(rev) items.push(['🔁', `<b>${L('Próximo paso', 'Proper pas')}: ${escAttr(rev.proximo_paso)}</b>`, L('Revisar el ', 'Revisar el ') + m3Fecha(rev.fecha_proxima_revision)]);
+  let falta = []; try { falta = fichaDatosQueFaltan(p); } catch(e){}
+  if(falta.length) items.push(['⚠️', `<b>${L('Faltan', 'Falten')} ${falta.length} ${L('datos en la ficha', 'dades a la fitxa')}</b> <a href="#" onclick="fichaIrACompletar('${uid}');return false;">${L('Completar', 'Completar')}</a>`, escAttr(falta.slice(0, 5).join(', ') + (falta.length > 5 ? '…' : ''))]);
+  return `<div class="m3-card"><h3>🧭 ${L('Qué toca ahora', 'Què toca ara')}</h3>
+    ${items.length ? items.map(([i, t, s]) => `<div class="m3-paso"><span class="m3-pi">${i}</span><div>${t}${s ? `<small>${s}</small>` : ''}</div></div>`).join('')
+      : `<p class="subtle" style="margin:4px 0 0;">✅ ${L('Todo al día: no hay citas, trámites ni datos pendientes.', 'Tot al dia: no hi ha cites, tràmits ni dades pendents.')}</p>`}
+  </div>`;
+}
+function m3AccesoHtml(p){
+  const L = acL;
+  const alta = p.fecha_alta ? m3Fecha(p.fecha_alta) : '';
+  const quien = p.creado_por_email ? L('alta presencial con ', 'alta presencial amb ') + nombreTecnico(p.creado_por_email) : '';
+  const fila = (k, v) => v ? `<div class="m3-fila"><span>${k}</span><span>${v}</span></div>` : '';
+  const app = 'https://acompanya.logostgn.cat';
+  const txt = L(`Hola ${p.nombre_completo || ''}. Desde Logos Acompanya puedes ver tus datos, tus citas y tus documentos: ${app}`, `Hola ${p.nombre_completo || ''}. Des de Logos Acompanya pots veure les teves dades, les teves cites i els teus documents: ${app}`)
+    + (p.email ? L(` · Entra con tu correo ${p.email}. Si no recuerdas la contraseña, pulsa «¿Has olvidado la contraseña?».`, ` · Entra amb el teu correu ${p.email}. Si no recordes la contrasenya, prem «Has oblidat la contrasenya?».`) : '');
+  let wa = ''; try { wa = p.telefono ? enlaceWhatsAppTexto(p.telefono, txt) : ''; } catch(e){}
+  return `<div class="m3-card m3-acceso"><h3>🔑 ${L('Acceso a Logos Acompanya', 'Accés a Logos Acompanya')}</h3>
+    ${fila(L('Alta', 'Alta'), escAttr([alta, quien].filter(Boolean).join(' · ')) || L('Cuenta creada', 'Compte creat'))}
+    ${fila(L('Correo de la ficha', 'Correu de la fitxa'), p.email ? escAttr(p.email) : '<span class="subtle" style="margin:0">' + L('sin correo', 'sense correu') + '</span>')}
+    ${fila(L('Consentimiento', 'Consentiment'), p.consentimiento_firmado ? '✅ ' + L('Firmado', 'Signat') + (p.consentimiento_fecha ? ' · ' + m3Fecha(p.consentimiento_fecha) : '') + ` · <a href="#" onclick="document.getElementById('btn-descargar-consent') ? document.getElementById('btn-descargar-consent').click() : 0;return false;">PDF</a>` : '✍️ ' + L('Sin firmar', 'Sense signar'))}
+    ${fila(L('En su app ve', 'A la seva app veu'), L('sus datos, citas y documentos', 'les seves dades, cites i documents'))}
+    ${wa ? `<a class="m3-btn-sec" href="${escAttr(wa)}" target="_blank" rel="noopener">💬 ${L('Enviarle el enlace por WhatsApp', 'Enviar-li l\'enllaç per WhatsApp')}</a>` : ''}
+  </div>`;
+}
+// Datos personales: dos tarjetas (datos personales / hogar y situación) en dos columnas
+function m3DatosMontar(){
+  const sd = document.getElementById('sec-datos'); if(!sd || sd.dataset.m3) return;
+  sd.dataset.m3 = '1'; sd.open = true;
+  const cont = sd.querySelector('.plegable-c > div'); if(!cont) return;
+  const L = acL;
+  const s1 = document.createElement('section'); s1.className = 'm3-sec'; s1.id = 'm3-s1';
+  s1.innerHTML = `<h2>1 · ${L('Datos personales', 'Dades personals')}</h2><p class="m3-d">${L('Se comparten con la ficha de la persona. Lo que falta sale marcado en naranja.', 'Es comparteixen amb la fitxa de la persona. El que falta surt marcat en taronja.')}</p><div class="m3-grid"></div>`;
+  const s2 = document.createElement('section'); s2.className = 'm3-sec'; s2.id = 'm3-s2';
+  s2.innerHTML = `<h2>2 · ${L('Hogar y situación', 'Llar i situació')}</h2><p class="m3-d">${L('Para las estadísticas y las memorias.', 'Per a les estadístiques i les memòries.')}</p><div class="m3-grid"></div><div class="m3-pills-fila"><div class="m3-lab">${L('Además…', 'A més…')}</div><div class="m3-pills"></div></div>`;
+  const g1 = s1.querySelector('.m3-grid'), g2 = s2.querySelector('.m3-grid'), pills = s2.querySelector('.m3-pills');
+  const campo = id => { const el = document.getElementById(id); return el ? el.closest('.field') : null; };
+  ['pds-nombre', 'pds-telefono', 'pds-email', 'pds-dni', 'pds-nacimiento', 'pds-sexo', 'pds-nacionalidad', 'pds-regularizacion', 'pds-calle', 'pds-cp', 'pds-municipio', 'pds-provincia']
+    .forEach(id => { const f = campo(id); if(f){ if(id === 'pds-email' || id === 'pds-calle') f.classList.add('m3-ancho'); g1.appendChild(f); } });
+  ['pds-personas-hogar', 'pds-num-hijos', 'pds-laboral', 'pds-nivel-estudios', 'pds-discapacidad', 'pds-pct-discapacidad', 'pds-dependencia', 'pds-titulaciones', 'pds-experiencia']
+    .forEach(id => { const f = campo(id); if(f) g2.appendChild(f); });
+  cont.querySelectorAll('label.checkbox-row').forEach(l => { l.classList.add('m3-pill'); pills.appendChild(l); });
+  // lo que quede (otros campos que se añadan en el futuro) va al final de la primera tarjeta
+  [...cont.children].forEach(ch => { if(ch.classList && ch.classList.contains('field')) g1.appendChild(ch); });
+  cont.querySelectorAll(':scope > p.subtle').forEach(x => x.remove());
+  cont.prepend(s1, s2);
+  const pie = document.createElement('div'); pie.className = 'm3-solo-datos';
+  pie.innerHTML = `<button class="primary-btn" style="width:auto;margin:0;" onclick="m3GuardarDatos(this)">💾 ${L('Guardar los datos', 'Desar les dades')}</button><span class="subtle" style="margin:0;font-size:12.5px;">${L('Para apuntar una visita, usa «Ficha de atención» o «Nueva actuación».', 'Per apuntar una visita, fes servir «Fitxa d\'atenció» o «Nova actuació».')}</span>`;
+  cont.appendChild(pie);
+}
+async function m3GuardarDatos(btn){
+  const uid = window.__usuarioIdVisto; if(!uid) return;
+  if(btn){ btn.disabled = true; }
+  try {
+    const ok = await guardarDatosPersonaStaff(uid, true);
+    if(ok){ await verPersonaStaff(uid, window.__origenPersonaVista || 'panel'); mostrarTabPersona('datos'); m3Toast('✅ ' + acL('Datos guardados', 'Dades desades')); }
+  } finally { if(btn && document.body.contains(btn)) btn.disabled = false; }
+}
+function m3Toast(txt){
+  let t = document.getElementById('m3-toast'); if(t) t.remove();
+  t = document.createElement('div'); t.id = 'm3-toast'; t.textContent = txt; document.body.appendChild(t);
+  setTimeout(() => { if(t) t.remove(); }, 2600);
+}
+
+// ---------- Nueva actuación en un panel a la derecha ----------
+function m3NuevaActuacion(modo){
+  if(!(window.__atencionesPersona || []).length){ try { atencionPrimeroAviso(); } catch(e){ abrirAtencionEnFicha(); } return; }
+  const nodo = document.getElementById('act-form-nodo'); if(!nodo) return;
+  m3CerrarActuacion(true);
+  const L = acL;
+  const ov = document.createElement('div'); ov.id = 'm3-act-ov';
+  ov.innerHTML = `<div class="m3-osc" onclick="m3CerrarActuacion()"></div>
+    <aside class="m3-panel" role="dialog" aria-label="${L('Trámite / actuación', 'Tràmit / actuació')}">
+      <div class="m3-ph"><b>📝 ${L('Trámite / actuación', 'Tràmit / actuació')}</b><button class="m3-x" onclick="m3CerrarActuacion()" title="${L('Cerrar', 'Tancar')}">✕</button>
+        <small>${escAttr(window.__nombrePersonaVista || '')}</small></div>
+      <div class="m3-pb">
+        ${window.__m3Recap ? `<div class="m3-rec">🧭 <b>${L('Lo último', 'El darrer')}:</b> ${window.__m3Recap}</div>` : ''}
+        <div class="m3-lab">${L('¿Qué tipo de actuación?', 'Quin tipus d\'actuació?')}</div>
+        <div class="m3-pills" id="m3-tipos">
+          <button type="button" class="m3-pill" data-t="tramite" onclick="m3Tipo('tramite')">🧾 ${L('Trámite', 'Tràmit')}</button>
+          <button type="button" class="m3-pill" data-t="proyecto" onclick="m3Tipo('proyecto')">🧩 ${L('Proyecto', 'Projecte')}</button>
+          <button type="button" class="m3-pill" data-t="formacion" onclick="m3Tipo('formacion')">🎓 ${L('Formación', 'Formació')}</button>
+          <button type="button" class="m3-pill" data-t="otro" onclick="m3Tipo('otro')">✏️ ${L('Otro', 'Altre')}</button>
+        </div>
+        <div id="m3-tram" class="m3-tram" hidden>
+          <div class="field"><label>${L('Trámite', 'Tràmit')}</label>
+            <select id="m3-tram-sel" onchange="m3TramCambia()">
+              ${(window.__m3TramAb || []).map(t => `<option value="${escAttr(String(t.id))}">${escAttr(t.nombre)} · ${L('abierto', 'obert')}</option>`).join('')}
+              <option value="__nuevo__">➕ ${L('Abrir un trámite nuevo…', 'Obrir un tràmit nou…')}</option>
+            </select></div>
+          <div class="field" id="m3-tram-nuevo"><label>${L('Nombre del trámite nuevo', 'Nom del tràmit nou')}</label>
+            <input type="text" id="m3-tram-nombre" placeholder="${L('Ej.: empadronamiento, renovación NIE, IMV…', 'Ex.: empadronament, renovació NIE, IMV…')}"></div>
+          <label class="m3-cerrar"><input type="checkbox" id="m3-tram-cerrar"> ${L('El trámite ya está resuelto: cerrarlo al guardar', 'El tràmit ja està resolt: tancar-lo en desar')}</label>
+        </div>
+        <div id="m3-act-host"></div>
+      </div>
+      <div class="m3-pf"><button class="primary-btn" data-guardar="actuacion" onclick="m3GuardarActuacion()">💾 ${L('Guardar actuación', 'Desar l\'actuació')}</button><button class="m3-btn-txt" onclick="m3CerrarActuacion()">${L('Cancelar', 'Cancel·lar')}</button></div>
+    </aside>`;
+  document.body.appendChild(ov);
+  window.__m3ActVuelta = { padre: nodo.parentNode, sig: nodo.nextSibling };
+  // «Más opciones» (objetivo y vincular a un proyecto) plegadas, solo la primera vez
+  if(!nodo.querySelector('.m3-mas-op')){
+    const det = document.createElement('details'); det.className = 'm3-mas-op';
+    det.innerHTML = `<summary>${L('Más opciones (objetivo, vincular a un proyecto)', 'Més opcions (objectiu, vincular a un projecte)')}</summary>`;
+    ['act-objetivo', 'act-proyecto'].forEach(id => { const el = document.getElementById(id); const f = el && el.closest('.field'); if(f) det.appendChild(f); });
+    nodo.appendChild(det);
+  }
+  document.getElementById('m3-act-host').appendChild(nodo);
+  // si ya había un tipo elegido, se marca
+  const v = (document.getElementById('act-categoria') || {}).value || '';
+  if(modo === 'nuevo'){ const s = document.getElementById('m3-tram-sel'); if(s) s.value = '__nuevo__'; m3Tipo('tramite'); m3TramCambia(); setTimeout(() => { const n = document.getElementById('m3-tram-nombre'); if(n) n.focus(); }, 90); }
+  else m3Tipo(v === 'Trámite administrativo' ? 'tramite' : (v === '__otro__' ? 'otro' : (PROYECTOS_LOGOS.includes(v) ? 'proyecto' : (FORMACIONES_LOGOS.includes(v) ? 'formacion' : ''))), true);
+  document.body.classList.add('m3-sin-scroll');
+  setTimeout(() => { const t = document.getElementById('act-descripcion'); if(t) t.focus({ preventScroll: true }); }, 80);
+}
+function m3Tipo(t, inicial){
+  document.querySelectorAll('#m3-tipos .m3-pill').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  const tr = document.getElementById('m3-tram'); if(tr){ tr.hidden = t !== 'tramite'; if(t === 'tramite') m3TramCambia(); }
+  const sel = document.getElementById('act-categoria'); if(!sel) return;
+  const campo = sel.closest('.field'), otro = document.getElementById('act-categoria-otro');
+  const grupos = sel.querySelectorAll('optgroup');
+  const ver = (g, on) => { g.hidden = !on; g.disabled = !on; };
+  if(t === 'tramite'){ sel.value = 'Trámite administrativo'; campo.style.display = 'none'; if(otro) otro.style.display = 'none'; }
+  else if(t === 'otro'){ sel.value = '__otro__'; campo.style.display = ''; sel.style.display = 'none'; if(otro){ otro.style.display = 'block'; if(!inicial) otro.focus(); } }
+  else if(t === 'proyecto' || t === 'formacion'){
+    campo.style.display = ''; sel.style.display = ''; if(otro) otro.style.display = 'none';
+    grupos.forEach((g, i) => ver(g, (t === 'proyecto' && i === 0) || (t === 'formacion' && i === 1)));
+    const lista = t === 'proyecto' ? PROYECTOS_LOGOS : FORMACIONES_LOGOS;
+    if(!lista.includes(sel.value)) sel.value = '';
+  } else { campo.style.display = 'none'; }
+  if(t !== 'proyecto' && t !== 'formacion') grupos.forEach(g => ver(g, true));
+  if(t !== 'otro') sel.style.display = '';
+  const lab = campo && campo.querySelector('label');
+  if(lab){ if(!lab.dataset.orig) lab.dataset.orig = lab.textContent; lab.textContent = t === 'proyecto' ? acL('Proyecto', 'Projecte') : t === 'formacion' ? acL('Formación', 'Formació') : t === 'otro' ? acL('¿Cuál?', 'Quin?') : lab.dataset.orig; }
+}
+function m3TramCambia(){
+  const s = document.getElementById('m3-tram-sel'), n = document.getElementById('m3-tram-nuevo');
+  if(s && n) n.style.display = s.value === '__nuevo__' ? '' : 'none';
+}
+function m3CerrarActuacion(sinDevolver){
+  const ov = document.getElementById('m3-act-ov'); if(!ov) return;
+  const nodo = document.getElementById('act-form-nodo'), v = window.__m3ActVuelta;
+  if(!sinDevolver && nodo && v && v.padre && document.body.contains(v.padre)){ v.padre.insertBefore(nodo, v.sig && v.sig.parentNode === v.padre ? v.sig : null); }
+  ov.remove(); document.body.classList.remove('m3-sin-scroll');
+}
+async function m3GuardarActuacion(){
+  const n = window.__m3RenderN;
+  const esTram = !!(document.querySelector('#m3-tipos .m3-pill.on[data-t="tramite"]'));
+  if(esTram){
+    // Trámite: se usa uno abierto o se abre uno nuevo; la actuación queda apuntada con su nombre
+    const sel = document.getElementById('m3-tram-sel'), nuevo = sel && sel.value === '__nuevo__';
+    const nombre = nuevo ? ((document.getElementById('m3-tram-nombre') || {}).value || '').trim() : ((window.__m3TramAb || []).find(t => String(t.id) === sel.value) || {}).nombre || '';
+    if(!nombre){ alert(acL('Escribe el nombre del trámite nuevo.', 'Escriu el nom del tràmit nou.')); const i = document.getElementById('m3-tram-nombre'); if(i) i.focus(); return; }
+    if(!(((document.getElementById('act-descripcion') || {}).value || '').trim())){ alert(acL('Escribe qué se ha hecho.', 'Escriu què s\'ha fet.')); document.getElementById('act-descripcion').focus(); return; }
+    if(!(window.__atencionesPersona || []).length){ try { atencionPrimeroAviso(); } catch(e){} return; }
+    const cerrar = !!(document.getElementById('m3-tram-cerrar') || {}).checked;
+    let tramId = nuevo ? null : sel.value;
+    if(nuevo){
+      const r = await sb.from('tramites').insert({ usuario_id: window.__usuarioIdVisto, nombre_servicio: nombre, estado: cerrar ? 'hecho' : 'en_curso', fecha_inicio: (document.getElementById('act-fecha') || {}).value || isoLocal(), ...(cerrar ? { fecha_fin: isoLocal() } : {}) }).select('id');
+      if(r.error){ alert(r.error.message); return; }
+    } else if(cerrar && tramId){
+      const r = await sb.from('tramites').update({ estado: 'hecho', fecha_fin: isoLocal() }).eq('id', tramId);
+      if(r.error){ alert(r.error.message); return; }
+    }
+    const obj = document.getElementById('act-objetivo');
+    if(obj && !obj.value.trim()) obj.value = acL('Trámite: ', 'Tràmit: ') + nombre;
+    const sc = document.getElementById('act-categoria'); if(sc) sc.value = 'Trámite administrativo';
+  }
+  await guardarUnaVez('actuacion', crearActuacion);
+  // si la ficha se ha vuelto a pintar, la actuación se ha guardado: se cierra el panel (el formulario viejo se descarta)
+  if(window.__m3RenderN !== n){ const ov = document.getElementById('m3-act-ov'); if(ov) ov.remove(); document.body.classList.remove('m3-sin-scroll'); mostrarTabPersona('actuaciones'); m3Toast('✅ ' + acL('Actuación guardada', 'Actuació desada')); }
+}
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && document.getElementById('m3-act-ov')) m3CerrarActuacion(); });
+
+// ---------- Ficha de atención: barra fija, índice y apartados ----------
+function m3AtencionMontar(){
+  const pt = document.getElementById('ptab-atencion'), form = document.querySelector('#atencion-en-ficha .at-form');
+  if(!pt || !form) return;
+  m3DatosMontar();
+  const L = acL;
+  pt.classList.add('m3-con-at');
+  // barra fija de arriba
+  let cab = document.getElementById('m3-at-cab'); if(cab) cab.remove();
+  const nAt = (window.__atencionesPersona || []).length, nueva = !nAt || !atencionHoyMia();
+  cab = document.createElement('div'); cab.id = 'm3-at-cab';
+  cab.innerHTML = `<div class="m3-at-t"><div><h2>📋 ${L('Ficha de atención', 'Fitxa d\'atenció')}</h2>
+      <div class="m3-at-q">${L('Atención nº', 'Atenció núm.')} ${nAt + (nueva ? 1 : 0)} · ${m3Fecha(isoLocal())} · ${escAttr(CURRENT_USER_NOMBRE || CURRENT_USER.email)}</div></div>
+      <span class="m3-est" id="m3-est" hidden>● ${L('Sin guardar', 'Sense desar')}</span>
+      <div class="m3-at-acc"><button class="m3-btn-txt" onclick="cerrarAtencionEnFicha()">${L('Cancelar', 'Cancel·lar')}</button>
+        <button class="primary-btn" data-guardar="atencion" onclick="guardarUnaVez('atencion', guardarAtencion)">💾 ${L('Guardar', 'Desar')}</button></div></div>
+    <div class="m3-prog"><span>${L('Datos de la persona', 'Dades de la persona')}</span><div class="m3-b"><div id="m3-prog-b"></div></div><span id="m3-prog-t"></span></div>`;
+  pt.prepend(cab);
+  // índice
+  let nav = document.getElementById('m3-at-nav'); if(nav) nav.remove();
+  nav = document.createElement('nav'); nav.id = 'm3-at-nav'; nav.className = 'm3-indice';
+  const sec = [['m3-s1', L('Datos personales', 'Dades personals')], ['m3-s2', L('Hogar y situación', 'Llar i situació')], ['m3-s3', L('Qué necesita hoy', 'Què necessita avui')], ['m3-s4', L('Cómo nos conoció', 'Com ens va conèixer')], ['m3-s5', L('Observaciones', 'Observacions')]];
+  nav.innerHTML = sec.map(([id, t], i) => `<a href="#${id}" data-s="${id}" onclick="m3IrA('${id}');return false;"><span class="m3-n">${i + 1}</span><span>${t}</span><small></small></a>`).join('');
+  cab.after(nav);
+  // apartados 3, 4 y 5 dentro del formulario de atención
+  if(!form.dataset.m3){
+    form.dataset.m3 = '1';
+    const mk = (id, titulo, desc) => { const s = document.createElement('section'); s.className = 'm3-sec'; s.id = id; s.innerHTML = `<h2>${titulo}</h2>${desc ? `<p class="m3-d">${desc}</p>` : ''}`; return s; };
+    const s3 = mk('m3-s3', '3 · ' + L('Qué necesita hoy', 'Què necessita avui'), L('Toca para marcar.', 'Toca per marcar.'));
+    const s4 = mk('m3-s4', '4 · ' + L('Cómo nos conoció', 'Com ens va conèixer'), '');
+    const s5 = mk('m3-s5', '5 · ' + L('Observaciones', 'Observacions'), '');
+    form.querySelectorAll('.at-sec2[data-clave]').forEach(d => {
+      d.open = true; d.classList.add('m3-grupo');
+      (d.dataset.clave === 'at-conocio' ? s4 : s3).appendChild(d);
+    });
+    const g5 = document.createElement('div'); g5.className = 'm3-grid'; s5.appendChild(g5);
+    const fDur = (document.getElementById('at-duracion') || {}).closest ? document.getElementById('at-duracion').closest('.field') : null;
+    const fNot = (document.getElementById('at-notas') || {}).closest ? document.getElementById('at-notas').closest('.field') : null;
+    const fNec = (document.getElementById('at-necesidades-nuevas') || {}).closest ? document.getElementById('at-necesidades-nuevas').closest('.panel-card') : null;
+    if(fDur) g5.appendChild(fDur);
+    if(fNot){ fNot.classList.add('m3-ancho'); g5.appendChild(fNot); }
+    if(fNec){ fNec.classList.add('m3-ancho', 'm3-nec'); g5.appendChild(fNec); }
+    const exl = form.querySelector('p > .link-btn[onclick^="exportarAtencionesExcel"]'); if(exl) s5.appendChild(exl.parentNode);
+    const ancla = form.querySelector('#at-save-btn') || null;
+    [s3, s4, s5].forEach(s => form.insertBefore(s, ancla));
+  }
+  const raiz = pt;
+  if(!raiz.dataset.m3ev){
+    raiz.dataset.m3ev = '1';
+    const sucio = () => { const e = document.getElementById('m3-est'); if(e) e.hidden = false; m3AtencionContar(); };
+    raiz.addEventListener('input', sucio); raiz.addEventListener('change', sucio);
+  }
+  m3AtencionContar();
+}
+function m3AtencionContar(){
+  const ids = { 'm3-s1': ['pds-dni', 'pds-nacimiento', 'pds-sexo', 'pds-nacionalidad', 'pds-regularizacion', 'pds-telefono', 'pds-calle', 'pds-cp', 'pds-municipio'],
+                'm3-s2': ['pds-personas-hogar', 'pds-num-hijos', 'pds-laboral', 'pds-discapacidad', 'pds-dependencia', 'pds-nivel-estudios'] };
+  const vacio = id => { const el = document.getElementById(id); return el && fichaVacio(el.value); };
+  let total = 0, faltan = 0;
+  const pon = (s, txt, ok) => { const a = document.querySelector(`#m3-at-nav a[data-s="${s}"]`); if(!a) return; a.querySelector('small').textContent = txt; const n = a.querySelector('.m3-n'); n.classList.toggle('ok', !!ok); n.classList.toggle('fal', !ok && !!txt); n.textContent = ok ? '✓' : String([...a.parentNode.children].indexOf(a) + 1); };
+  Object.keys(ids).forEach(s => { const f = ids[s].filter(vacio).length; total += ids[s].length; faltan += f; pon(s, f ? f + ' ' + acL(f === 1 ? 'falta' : 'faltan', f === 1 ? 'falta' : 'falten') : '', !f); });
+  const n3 = document.querySelectorAll('#m3-s3 input:checked').length; pon('m3-s3', n3 ? String(n3) : '', n3 > 0);
+  const n4 = document.querySelectorAll('#m3-s4 input:checked').length; pon('m3-s4', '', n4 > 0);
+  const n5 = ((document.getElementById('at-notas') || {}).value || '').trim(); pon('m3-s5', '', !!n5);
+  const pct = total ? Math.round((total - faltan) / total * 100) : 100;
+  const b = document.getElementById('m3-prog-b'), t = document.getElementById('m3-prog-t');
+  if(b){ b.style.width = pct + '%'; b.style.background = pct >= 100 ? 'var(--good,#1F8A4C)' : '#2463B8'; }
+  if(t) t.innerHTML = `<b>${pct} %</b>${faltan ? ' · ' + acL('faltan', 'falten') + ' ' + faltan : ''}`;
+}
+function m3IrA(id){
+  const el = document.getElementById(id); if(!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelectorAll('#m3-at-nav a').forEach(a => a.classList.toggle('on', a.dataset.s === id));
+}
+function m3AtencionDesmontar(){
+  const pt = document.getElementById('ptab-atencion'); if(!pt) return;
+  pt.classList.remove('m3-con-at');
+  ['m3-at-cab', 'm3-at-nav'].forEach(id => { const el = document.getElementById(id); if(el) el.remove(); });
 }
 
 function mostrarTabPersona(nombre){
