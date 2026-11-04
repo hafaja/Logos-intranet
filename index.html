@@ -3186,7 +3186,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v216'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v218'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -4272,17 +4272,22 @@ async function fichSesionViva(){
   return null;
 }
 
+// Fichaje sencillo, como antes (v213): se pulsa y se guarda. Se intenta coger la ubicación (máx. 8 s);
+// si no se puede, se ficha igual. Sin ventanas ni motivos.
 async function ficharEntrada(){
   const t = TI[LANG_I];
   try { actMarcar(); } catch(e){}
-  const d = await fichDecidir('entrada');
-  if(!d) return;   // ha cancelado
+  const ubicacion = await obtenerUbicacionSimple();
   const yo = await fichSesionViva(); if(!yo) return;
-  const campos = fichCampos('entrada', d);
-  const { error } = await fichGuardar(todo => sb.from('fichajes').insert(Object.assign({ tecnico_email: yo },
-    todo ? campos : (d.ub ? { entrada_lat: d.ub.lat, entrada_lng: d.ub.lng } : {}))));
+  const payload = { tecnico_email: yo };
+  if(ubicacion){ payload.entrada_lat = ubicacion.lat; payload.entrada_lng = ubicacion.lng; }
+  const { error } = await sb.from('fichajes').insert(payload);
   if(error){ alert(error.message); return; }
-  fichToast(d, 'entrada');
+  if(!ubicacion){
+    alert(LANG_I==='ca'
+      ? "S'ha fitxat, però no s'ha pogut registrar la ubicació (revisa els permisos de localització del navegador)."
+      : 'Se ha fichado, pero no se ha podido registrar la ubicación (revisa los permisos de localización del navegador).');
+  }
   await fichajeRefrescar();
   await renderMiEspacio();
   if(!window.__tengoSala && !salaHoyFuera()) salaElegirRapido();
@@ -4301,16 +4306,24 @@ function fichToast(d, tipo){
 }
 async function ficharSalida(id){
   try { actMarcar(); } catch(e){}
-  const d = await fichDecidir('salida');
-  if(!d) return;   // ha cancelado
+  const ubicacion = await obtenerUbicacionSimple();
   if(!(await fichSesionViva())) return;
-  const ahora = new Date().toISOString(), campos = fichCampos('salida', d);
-  const { error } = await fichGuardar(todo => sb.from('fichajes').update(Object.assign({ salida: ahora },
-    todo ? campos : (d.ub ? { salida_lat: d.ub.lat, salida_lng: d.ub.lng } : {}))).eq('id', id));
+  const payload = { salida: new Date().toISOString() };
+  if(ubicacion){ payload.salida_lat = ubicacion.lat; payload.salida_lng = ubicacion.lng; }
+  const { error } = await sb.from('fichajes').update(payload).eq('id', id);
   if(error){ alert(error.message); return; }
-  fichToast(d, 'salida');
   await fichajeRefrescar();
   renderMiEspacio();
+}
+function obtenerUbicacionSimple(){
+  return new Promise((resolve) => {
+    if(!navigator.geolocation){ resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { timeout: 8000, enableHighAccuracy: true }
+    );
+  });
 }
 
 // Salas de Logos. "plazas" son los puestos que se pueden ocupar por separado; las salas con una sola plaza
@@ -7303,11 +7316,14 @@ async function elegirDiaNuevaCita(fechaIso, mantener){
     let c = Number(ini.slice(0, 2)) * 60 + Number(ini.slice(3, 5)); const f = Number(fin.slice(0, 2)) * 60 + Number(fin.slice(3, 5));
     while(c < f){ slots.push(String(Math.floor(c / 60)).padStart(2, '0') + ':' + String(c % 60).padStart(2, '0')); c += h.duracion_cita_minutos; }
   };
-  { const dur = h.duracion_cita_minutos || 30; const bl = (ini, fin) => { let c = logosMin(ini); const f = logosMin(fin); while(c < f){ slots.push(String(Math.floor(c / 60)).padStart(2, '0') + ':' + String(c % 60).padStart(2, '0')); c += dur; } }; [hd.m, hd.t].filter(Boolean).forEach(t => bl(t[0], t[1])); if(hd.sinCita){ const a = logosMin(hd.sinCita[0]), z = logosMin(hd.sinCita[1]); for(let i = slots.length - 1; i >= 0; i--){ const m = logosMin(slots[i]); if(m >= a && m < z) slots.splice(i, 1); } } }
+  { const dur = Number(h.duracion_cita_minutos) || 45; const bl = (ini, fin) => { let c = logosMin(ini); const f = logosMin(fin); while(c + dur <= f){ slots.push(String(Math.floor(c / 60)).padStart(2, '0') + ':' + String(c % 60).padStart(2, '0')); c += dur; } }; [hd.m, hd.t].filter(Boolean).forEach(t => bl(t[0], t[1])); if(hd.sinCita){ const a = logosMin(hd.sinCita[0]), z = logosMin(hd.sinCita[1]); for(let i = slots.length - 1; i >= 0; i--){ const m = logosMin(slots[i]); if(m >= a && m < z) slots.splice(i, 1); } } }
   const ahora = new Date(); const esHoy = fechaIso === isoLocal(ahora);
   const minAhora = ahora.getHours() * 60 + ahora.getMinutes();
   cont.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">` + slots.map(s => {
-    const lleno = (ocupadas[s] || 0) >= h.tecnicos_simultaneos || ocupTec.has(s);
+    // cada cita dura 45 min: una hora está ocupada si se solapa con otra (también con las pedidas antes cada 30 min)
+    const durC = Number(h.duracion_cita_minutos) || 45, choca = x => Math.abs(logosMin(x) - logosMin(s)) < durC;
+    const ocupS = Object.keys(ocupadas).reduce((n, x) => n + (choca(x) ? (ocupadas[x] || 0) : 0), 0);
+    const lleno = ocupS >= h.tecnicos_simultaneos || [...ocupTec].some(choca);
     const pasada = esHoy && (Number(s.slice(0, 2)) * 60 + Number(s.slice(3, 5)) <= minAhora);
     if(fueraHorario(s)) return '';   // fuera del horario de la persona que atiende
     const sel = s === __NC.hora;
@@ -17515,7 +17531,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-04 · v216 (fichaje: si la sesión se cierra mientras se busca la ubicación, sale un aviso claro en vez del error «reading email»)';
+const APP_VERSION_INTRANET = '2026-11-04 · v218 (fichaje otra vez sencillo como antes: se pulsa y se guarda, sin ventanas; citas cada 45 minutos)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -21600,6 +21616,7 @@ function fichRepintar(){ const el = document.getElementById('admin-fichajes-list
 // Ajustes de la oficina: radio, fichar fuera y ordenadores de la oficina
 async function fichAjustesPintar(){
   const host = document.getElementById('fich-ajustes'); if(!host) return;
+  host.innerHTML = ''; return;   // el fichaje vuelve a ser sencillo (v218): estas normas ya no se usan
   const ca = LANG_I === 'ca', L = (es, cc) => ca ? cc : es;
   const cfg = window.__configOficina || {};
   const sqlOk = 'radio_metros' in cfg;
