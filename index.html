@@ -1538,6 +1538,17 @@ body.vc-on{padding-top:44px;}
 
 
 
+
+/* Firma en el móvil (v230) */
+.ap-movil-box{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#EEF3FB;border:1px solid #C9D6EA;border-radius:12px;padding:10px 12px;margin:0 0 10px;}
+.ap-qr-ov{position:fixed;inset:0;z-index:9990;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px;}
+.ap-qr-card{background:#fff;border-radius:18px;max-width:420px;width:100%;padding:20px 22px;text-align:center;position:relative;box-shadow:0 20px 50px rgba(0,0,0,.3);}
+.ap-qr-card h3{margin:0 0 6px;padding:0 26px;}
+.ap-qr-x{position:absolute;right:12px;top:8px;font-size:18px;}
+.ap-qr-img{width:260px;max-width:100%;margin:6px auto;}
+.ap-qr-img svg{width:100%;height:auto;display:block;}
+.ap-qr-url{font-size:11px;color:#6B7385;word-break:break-all;margin:4px 0 10px;}
+.ap-qr-est{background:#FFF8E6;border-radius:10px;padding:10px;font-weight:700;}
 /* Menú de Gestión del personal: cada grupo se pliega (v229) */
 .gp-menu-g > summary.gp-menu-h{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;user-select:none;}
 .gp-menu-g > summary.gp-menu-h::-webkit-details-marker{display:none;}
@@ -3548,7 +3559,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v229'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v230'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -6747,6 +6758,8 @@ function renderAltaPresencial(){
       <p class="subtle" style="margin:0 0 8px;">${esCA
         ? 'Que la persona llegeixi el document sencer (o llegeix-l\'hi tu) fins al final. Quan hi arribi, podrà marcar les caselles i signar.'
         : 'Que la persona lea el documento entero (o léeselo tú) hasta el final. Cuando llegue al final, podrá marcar las casillas y firmar.'}</p>
+      <div class="ap-movil-box"><button type="button" class="primary-btn" style="width:auto;margin:0;background:#16325A;" onclick="apFirmaMovilAbrir()">📱 ${esCA ? 'Que el llegeixi i el signi al seu mòbil (QR)' : 'Que lo lea y lo firme en su móvil (QR)'}</button>
+        <span class="subtle" style="margin:0;font-size:12.5px;">${esCA ? 'Escaneja el QR amb el seu mòbil: hi llegeix el document, marca les caselles i signa amb el dit. La signatura arriba sola aquí.' : 'Escanea el QR con su móvil: ahí lee el documento, marca las casillas y firma con el dedo. La firma llega sola aquí.'}</span></div>
       <div id="ap-texto-legal" onscroll="apComprobarLectura()" style="max-height:340px;overflow-y:auto;border:1.5px solid var(--line);border-radius:10px;padding:4px 14px 14px;background:#fff;-webkit-overflow-scrolling:touch;">
         <h2 style="font-size:14.5px;text-align:center;margin:12px 0 2px;">Associació Logos — Projectes Socials</h2>
         <p style="font-size:11.5px;color:#666;text-align:center;margin:0 0 6px;">G55725436 · Tarragona</p>
@@ -6787,6 +6800,57 @@ function renderAltaPresencial(){
     <button class="primary-btn" id="ap-btn-guardar" style="background:var(--good);" onclick="guardarAltaPresencial()">✅ ${esCA ? 'Crear compte i fitxa' : 'Crear cuenta y ficha'}</button>
   `;
   iniciarFirmaCanvasAP();
+}
+
+
+// ---------- Firma del consentimiento en el móvil de la persona (QR) · SQL 81 ----------
+async function apFirmaMovilAbrir(){
+  const esCA = LANG_I === 'ca';
+  const nombre = ((document.getElementById('ap-nombre') || {}).value || '').trim();
+  if(!nombre){ alert(esCA ? 'Escriu primer el nom de la persona.' : 'Escribe primero el nombre de la persona.'); document.getElementById('ap-nombre').focus(); return; }
+  if(typeof qrcode === 'undefined'){ alert(esCA ? 'No s\'ha pogut carregar el generador de QR. Recarrega la pàgina.' : 'No se ha podido cargar el generador de QR. Recarga la página.'); return; }
+  const b = new Uint8Array(24); crypto.getRandomValues(b); const token = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+  try { sb.rpc('firmas_remotas_limpiar'); } catch(e){}
+  const r = await sb.from('firmas_remotas').insert({ token, nombre, idioma: esCA ? 'ca' : 'es', creado_por_email: String(CURRENT_USER.email).toLowerCase() }).select('id');
+  if(r.error){ alert(/firmas_remotas|schema cache|does not exist/i.test(r.error.message || '') ? (esCA ? 'Per signar al mòbil cal executar l\'SQL 81 a Supabase.' : 'Para firmar en el móvil falta ejecutar el SQL 81 en Supabase.') : r.error.message); return; }
+  const id = (Array.isArray(r.data) ? r.data[0] : r.data || {}).id;
+  const url = (typeof acompUrl === 'function' ? acompUrl() : 'https://acompanya.logostgn.cat').replace(/[?#].*$/, '').replace(/\/?$/, '/') + '?firma=' + token;
+  apFirmaMovilCerrar(true);
+  const ov = document.createElement('div'); ov.id = 'ap-qr-ov'; ov.className = 'ap-qr-ov';
+  ov.innerHTML = `<div class="ap-qr-card"><button type="button" class="link-btn ap-qr-x" onclick="apFirmaMovilCerrar()">✕</button>
+    <h3>📱 ${esCA ? 'Signar al mòbil' : 'Firmar en el móvil'} · ${escAttr(nombre)}</h3>
+    <p class="subtle" style="margin:0 0 10px;">${esCA ? 'Que obri la càmera del mòbil i apunti al QR. S\'obrirà el document per llegir i signar.' : 'Que abra la cámara del móvil y apunte al QR. Se abrirá el documento para leer y firmar.'}</p>
+    <div class="ap-qr-img">${qrSvgDe(url, 7)}</div>
+    <p class="ap-qr-url">${escAttr(url.replace(/^https:\/\//, ''))}</p>
+    <div class="ap-qr-est" id="ap-qr-est">⏳ ${esCA ? 'Esperant la signatura…' : 'Esperando la firma…'} <small id="ap-qr-t"></small></div>
+    <p class="subtle" style="font-size:12px;margin:8px 0 0;">${esCA ? 'El QR serveix una sola vegada i caduca en 30 minuts.' : 'El QR sirve una sola vez y caduca en 30 minutos.'}</p></div>`;
+  document.body.appendChild(ov);
+  const fin = Date.now() + 30 * 60000;
+  window.__apQr = { id, token, timer: setInterval(async () => {
+    const q = window.__apQr; if(!q) return;
+    const queda = Math.max(0, Math.round((fin - Date.now()) / 60000)); const t = document.getElementById('ap-qr-t'); if(t) t.textContent = '· ' + queda + ' min';
+    if(Date.now() > fin){ const e = document.getElementById('ap-qr-est'); if(e) e.innerHTML = '⌛ ' + (esCA ? 'El QR ha caducat. Tanca i torna a generar-lo.' : 'El QR ha caducado. Cierra y vuelve a generarlo.'); clearInterval(q.timer); return; }
+    const { data } = await sb.from('firmas_remotas').select('estado, firma, cons_tratamiento, cons_cesion, cons_contacto, cons_imagen').eq('id', q.id).maybeSingle();
+    if(data && data.estado === 'firmada' && data.firma){ clearInterval(q.timer); await apFirmaMovilRecibir(data); }
+  }, 2500) };
+}
+async function apFirmaMovilRecibir(d){
+  const esCA = LANG_I === 'ca';
+  const cb = document.getElementById('ap-leido');
+  if(cb){ cb.disabled = false; cb.checked = true; const f = document.getElementById('ap-fila-leido'); if(f) f.style.opacity = '1'; const av = document.getElementById('ap-aviso-lectura'); if(av) av.innerHTML = '✅ ' + (esCA ? 'Llegit i signat al seu mòbil.' : 'Leído y firmado en su móvil.'); apActualizarBloqueo(); }
+  [['ap-cons-tratamiento', d.cons_tratamiento], ['ap-cons-cesion', d.cons_cesion], ['ap-cons-contacto', d.cons_contacto], ['ap-cons-imagen', d.cons_imagen]].forEach(([k, v]) => { const el = document.getElementById(k); if(el) el.checked = !!v; });
+  const canvas = document.getElementById('ap-firma-canvas');
+  if(canvas){ await new Promise(ok => { const img = new Image(); img.onload = () => { const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); const k = Math.min(canvas.width / img.width, canvas.height / img.height); const w = img.width * k, h = img.height * k; ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h); ok(); }; img.onerror = ok; img.src = d.firma; }); }
+  try { if(window.__apQr && window.__apQr.id) await sb.from('firmas_remotas').delete().eq('id', window.__apQr.id); } catch(e){}
+  window.__apQr = null;
+  const e = document.getElementById('ap-qr-est');
+  if(e) e.innerHTML = '✅ ' + (esCA ? 'Signat! Ja pots crear el compte.' : '¡Firmado! Ya puedes crear la cuenta.');
+  setTimeout(() => { apFirmaMovilCerrar(true); const bt = document.getElementById('ap-btn-guardar'); if(bt) bt.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 1400);
+}
+function apFirmaMovilCerrar(silencio){
+  const q = window.__apQr;
+  if(q){ clearInterval(q.timer); if(!silencio){ try { sb.from('firmas_remotas').update({ estado: 'cancelada' }).eq('id', q.id).then(() => {}, () => {}); } catch(e){} } window.__apQr = null; }
+  const ov = document.getElementById('ap-qr-ov'); if(ov) ov.remove();
 }
 
 function apComprobarLectura(){
@@ -18085,7 +18149,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-04 · v229 (Gestión del personal: el menú «Lo mío» y «Recursos Humanos» en desplegables; listas de RR. HH. por mes; ficha con estilo del panel de administración)';
+const APP_VERSION_INTRANET = '2026-11-04 · v230 (alta presencial: la persona puede leer y firmar el consentimiento en su móvil con un QR; menú de RR. HH. en desplegables)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
