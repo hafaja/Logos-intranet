@@ -1535,6 +1535,19 @@ body.vc-on{padding-top:44px;}
 .rgpd-acc{display:flex;gap:10px;align-items:center;flex-wrap:wrap;} .rgpd-acc .link-btn{margin:0;font-size:13px;}
 .rgpd-cif{background:#F3F7FC;border-radius:12px;padding:10px 12px;font-size:13.5px;} .rgpd-cif-l{margin:6px 0;display:flex;flex-wrap:wrap;gap:4px;} .rgpd-cif small{color:#5F6672;}
 
+/* ===== Historial de horas por semana (v226) ===== */
+.hs-barra{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 10px;font-size:13px;}
+.hs-barra select{padding:4px 6px;}
+.hs-det{margin-top:8px;border-top:1px dashed var(--line,#E3E7EE);padding-top:6px;}
+.hs-det > summary{cursor:pointer;font-weight:700;font-size:13px;padding:4px 0;}
+.hs-tabla-w{overflow-x:auto;margin-top:6px;}
+.hs-tabla{width:100%;border-collapse:collapse;font-size:12.5px;min-width:520px;}
+.hs-tabla th{text-align:left;background:#EEF3F9;padding:6px 8px;font-weight:700;white-space:nowrap;}
+.hs-tabla td{padding:5px 8px;border-top:1px solid #E3E7EE;white-space:nowrap;}
+.hs-tabla tr.hs-fut td{color:#7A8294;background:#FAFBFD;}
+.hs-tabla tr.hs-act td{background:#FFF8E6;}
+.hs-neg{color:#B03A2E;font-weight:700;}
+.hs-pos{color:#1F7A45;font-weight:700;}
 /* ===== Fichaje: aviso de dónde se ha fichado (v224) ===== */
 .fich-aviso-ok{position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:9996;background:#1B2333;color:#fff;padding:12px 18px;border-radius:10px;font-weight:600;font-size:14px;line-height:1.45;box-shadow:0 8px 26px rgba(0,0,0,.28);max-width:min(560px,calc(100% - 24px));cursor:pointer;}
 .fich-aviso-ok small{font-weight:400;opacity:.85;}
@@ -3409,7 +3422,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v225'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v226'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -9485,11 +9498,19 @@ async function renderHorasEquipo(){
   const ahora = new Date(), dia = hrDiaSemanaJS(ahora);
   const lunes = new Date(ahora); lunes.setHours(0, 0, 0, 0); lunes.setDate(lunes.getDate() - (dia - 1));
   const mes1 = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
-  const [fr, hc, st] = await Promise.all([
-    sb.from('fichajes').select('tecnico_email, entrada, salida').gte('entrada', (lunes < mes1 ? lunes : mes1).toISOString()),
+  const nSem = window.__hsSemanas || 12;
+  const desdeHist = new Date(lunes); desdeHist.setDate(desdeHist.getDate() - 7 * (nSem - 1));
+  const hastaCitas = new Date(lunes); hastaCitas.setDate(hastaCitas.getDate() + 14);   // + las 2 semanas siguientes (citas ya pedidas)
+  const desde = new Date(Math.min(desdeHist, lunes, mes1));
+  const [fr, hc, st, ph, ci, ha] = await Promise.all([
+    sb.from('fichajes').select('tecnico_email, entrada, salida').gte('entrada', desde.toISOString()),
     sb.from('horas_contrato').select('*'),
-    sb.from('staff').select('email, nombre, activo')
+    sb.from('staff').select('email, nombre, activo'),
+    HR_OK ? sb.from('personal_horarios').select('persona_email, dia, desde, hasta').then(r => r, () => ({ data: [] })) : Promise.resolve({ data: [] }),
+    sb.from('citas').select('fecha, hora, estado, tecnico_email, tecnico2_email').gte('fecha', isoLocal(desdeHist)).lt('fecha', isoLocal(hastaCitas)).then(r => r.error ? sb.from('citas').select('fecha, hora, estado, tecnico_email').gte('fecha', isoLocal(desdeHist)).lt('fecha', isoLocal(hastaCitas)) : r, () => ({ data: [] })),
+    sb.from('horario_atencion').select('duracion_cita_minutos').eq('id', 1).maybeSingle().then(r => r, () => ({ data: null }))
   ]);
+  window.__hsDatos = { fr: fr.data || [], ph: ph.data || [], ci: (ci && ci.data) || [], dur: Number((ha && ha.data || {}).duracion_cita_minutos) || 45, lunes, nSem, ahora };
   if(hc.error){
     host.innerHTML = `<div class="auth-error">${/horas_contrato|schema cache|does not exist/i.test(hc.error.message || '') ? acL('Falta ejecutar el SQL 28 en Supabase para ver las horas del equipo.', 'Cal executar l\'SQL 28 a Supabase per veure les hores de l\'equip.') : escAttr(hc.error.message)}</div>`;
     return;
@@ -9507,6 +9528,7 @@ async function renderHorasEquipo(){
   Object.keys(contrato).forEach(e => { if(!personas[e]) personas[e] = contrato[e].nombre || e; });
   const emails = Object.keys(personas).sort((a, b) => personas[a].localeCompare(personas[b]));
   const total = emails.reduce((s, e) => s + (Number((contrato[e] || {}).horas_semana) || 0), 0);
+  window.__hsPersonas = personas; window.__hsContrato = contrato;
   const fila = e => {
     const c = contrato[e], h = c ? Number(c.horas_semana) : null, sem = semana[e] || 0;
     const pct = h ? Math.min(100, Math.round(sem / (h * 60) * 100)) : 0;
@@ -9516,11 +9538,67 @@ async function renderHorasEquipo(){
         <span style="display:flex;gap:6px;align-items:center;font-size:13px;">${acL('Contrato', 'Contracte')}: <input type="number" min="0" max="60" step="0.5" id="hc-${escAttr(e)}" value="${h ?? ''}" placeholder="—" style="width:70px;padding:4px 6px;"> ${acL('h/semana', 'h/setmana')}
           <button class="link-btn" style="font-size:12px;" onclick="guardarHorasContrato('${escAttr(e)}')">💾</button></span></div>
       <div style="margin:8px 0 4px;height:8px;background:#e8e4d8;border-radius:4px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${pct >= 100 ? 'var(--ochre)' : 'var(--gold,#C99A2E)'};"></div></div>
-      <div class="subtle" style="font-size:12.5px;margin:0;">${acL('Esta semana', 'Aquesta setmana')}: <strong>${hrFmtMin(sem)}</strong>${h ? ` ${acL('de', 'de')} ${h} h` : ''} · ${acL('Este mes', 'Aquest mes')}: <strong>${hrFmtMin(mes[e] || 0)}</strong></div></div>`;
+      <div class="subtle" style="font-size:12.5px;margin:0;">${acL('Esta semana', 'Aquesta setmana')}: <strong>${hrFmtMin(sem)}</strong>${h ? ` ${acL('de', 'de')} ${h} h` : ''} · ${acL('Este mes', 'Aquest mes')}: <strong>${hrFmtMin(mes[e] || 0)}</strong></div>
+      ${hsDetalleHtml(e)}</div>`;
   };
   host.innerHTML = `<h3 style="margin:14px 0 6px;">⏱️ ${acL('Horas por persona', 'Hores per persona')}</h3>
+    <div class="hs-barra">
+      <label>${acL('Historial de', 'Historial de')} <select onchange="window.__hsSemanas=Number(this.value);recargarSinSaltar('adm-horas-equipo', renderHorasEquipo)">${[4, 8, 12, 26, 52].map(n => `<option value="${n}"${n === nSem ? ' selected' : ''}>${n} ${acL('semanas', 'setmanes')}</option>`).join('')}</select></label>
+      <button class="link-btn" onclick="hsExportar('', 'xlsx')">⬇️ ${acL('Excel de todo el equipo', 'Excel de tot l\'equip')}</button>
+      <button class="link-btn" onclick="hsExportar('', 'pdf')">⬇️ ${acL('PDF de todo el equipo', 'PDF de tot l\'equip')}</button>
+    </div>
     <p class="subtle" style="margin:0 0 10px;font-size:12.5px;">${acL('Las horas hechas salen de los fichajes (la semana empieza el lunes). El contrato lo puedes cambiar aquí.', 'Les hores fetes surten dels fitxatges (la setmana comença el dilluns). El contracte el pots canviar aquí.')} ${acL('Total contratado', 'Total contractat')}: <strong>${total} h/${acL('semana', 'setmana')}</strong>.</p>
     ${emails.map(fila).join('') || `<div class="empty-note">${acL('Sin personas.', 'Sense persones.')}</div>`}`;
+}
+// ---------- Historial de horas por semana (fichajes + horario + contrato + citas) ----------
+function hsHorarioSemanalMin(e){
+  const ph = (window.__hsDatos || {}).ph || [];
+  const propio = ph.filter(f => f.persona_email && String(f.persona_email).toLowerCase() === e);
+  const general = ph.filter(f => !f.persona_email);
+  const tr = propio.length ? propio : (general.length ? general : (typeof HR_GENERAL_BASE !== 'undefined' ? HR_GENERAL_BASE : []));
+  return { min: tr.reduce((s, t) => s + Math.max(0, hrMin(String(t.hasta).slice(0, 5)) - hrMin(String(t.desde).slice(0, 5))), 0), propio: !!propio.length };
+}
+function hsSemanas(e){
+  const D = window.__hsDatos; if(!D) return [];
+  const fmt = d => d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+  const h = (window.__hsContrato || {})[e], contrato = h ? Number(h.horas_semana) : null;
+  const hor = hsHorarioSemanalMin(e);
+  const out = [];
+  for(let k = -2; k < D.nSem; k++){   // -2 y -1 = las 2 semanas siguientes (solo citas ya pedidas)
+    const ini = new Date(D.lunes); ini.setDate(ini.getDate() - 7 * k); const fin = new Date(ini); fin.setDate(fin.getDate() + 7);
+    const fich = D.fr.filter(f => String(f.tecnico_email || '').toLowerCase() === e && new Date(f.entrada) >= ini && new Date(f.entrada) < fin);
+    const min = fich.reduce((s, f) => s + Math.max(0, (fichajeFin(f, D.ahora) - new Date(f.entrada)) / 60000), 0);
+    const dias = new Set(fich.map(f => isoLocal(new Date(f.entrada)))).size;
+    const citas = D.ci.filter(c => c.estado !== 'cancelada' && [c.tecnico_email, c.tecnico2_email].some(x => x && String(x).toLowerCase() === e) && c.fecha >= isoLocal(ini) && c.fecha < isoLocal(fin));
+    const minCitas = citas.length * D.dur;
+    const ref = contrato != null ? contrato * 60 : hor.min;
+    out.push({ futura: k < 0, actual: k === 0, ini, txt: `${fmt(ini)}–${fmt(new Date(fin.getTime() - 86400000))}`, previstoMin: hor.min, contrato, min, dias, citas: citas.length, minCitas,
+      dif: k < 0 ? null : Math.round(min - ref), pctCitas: hor.min ? Math.round(minCitas / hor.min * 100) : null });
+  }
+  return out;
+}
+function hsDif(m){ if(m == null) return ''; const a = Math.abs(m); return (m >= 0 ? '+' : '−') + Math.floor(a / 60) + ' h ' + String(a % 60).padStart(2, '0'); }
+function hsDetalleHtml(e){
+  const L = hsSemanas(e); if(!L.length) return '';
+  const hor = hsHorarioSemanalMin(e);
+  const pasadas = L.filter(w => !w.futura), tot = pasadas.reduce((s, w) => s + w.min, 0), media = pasadas.length ? tot / pasadas.length : 0;
+  return `<details class="hs-det"><summary>📊 ${acL('Historial por semanas', 'Historial per setmanes')} <span class="subtle" style="margin:0;font-size:12px;">· ${acL('media', 'mitjana')} ${hrFmtMin(media)}/${acL('semana', 'setmana')} · ${acL('horario', 'horari')} ${hrFmtMin(hor.min)}${hor.propio ? '' : ' (' + acL('general', 'general') + ')'}</span></summary>
+    <div class="hs-tabla-w"><table class="hs-tabla"><thead><tr><th>${acL('Semana', 'Setmana')}</th><th>${acL('Fichadas', 'Fitxades')}</th><th>${acL('Días', 'Dies')}</th><th>${acL('Diferencia', 'Diferència')}</th><th>${acL('Citas', 'Cites')}</th><th>${acL('Horas de citas', 'Hores de cites')}</th></tr></thead><tbody>
+    ${L.map(w => `<tr class="${w.futura ? 'hs-fut' : ''}${w.actual ? ' hs-act' : ''}"><td>${w.txt}${w.actual ? ' · ' + acL('esta', 'aquesta') : ''}${w.futura ? ' · ' + acL('próxima', 'propera') : ''}</td><td>${w.futura ? '—' : hrFmtMin(w.min)}</td><td>${w.futura ? '—' : w.dias}</td><td class="${w.dif == null ? '' : (w.dif < -30 ? 'hs-neg' : (w.dif > 30 ? 'hs-pos' : ''))}">${w.futura || w.actual ? (w.actual ? '<span class="subtle" style="margin:0">' + acL('en curso', 'en curs') + '</span>' : '—') : hsDif(w.dif)}</td><td>${w.citas || '—'}</td><td>${w.citas ? hrFmtMin(w.minCitas) + (w.pctCitas != null ? ` <span class="subtle" style="margin:0">(${w.pctCitas} %)</span>` : '') : '—'}</td></tr>`).join('')}
+    </tbody></table></div>
+    <p class="subtle" style="font-size:11.5px;margin:6px 0 8px;">${acL('«Diferencia»: horas fichadas menos las del contrato (o las del horario si no hay contrato). «Horas de citas»: citas de esa semana × la duración de cada cita; el % es sobre su horario. Las próximas semanas solo enseñan las citas ya pedidas.', '«Diferència»: hores fitxades menys les del contracte (o les de l\'horari si no hi ha contracte). «Hores de cites»: cites d\'aquella setmana × la durada de cada cita; el % és sobre el seu horari. Les properes setmanes només ensenyen les cites ja demanades.')}</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;"><button class="link-btn" onclick="hsExportar('${escAttr(e)}', 'xlsx')">⬇️ Excel</button><button class="link-btn" onclick="hsExportar('${escAttr(e)}', 'pdf')">⬇️ PDF</button></div>
+  </details>`;
+}
+async function hsExportar(e, tipo){
+  const personas = window.__hsPersonas || {}, emails = e ? [e] : Object.keys(personas).sort((a, b) => String(personas[a]).localeCompare(String(personas[b])));
+  const cab = ['Persona', 'Semana', 'Contrato (h)', 'Horario (h)', 'Fichadas (h)', 'Días fichados', 'Diferencia (h)', 'Citas', 'Horas de citas', '% del horario en citas'];
+  const h2 = m => m == null ? '' : Math.round(m / 60 * 100) / 100;
+  const filas = [];
+  emails.forEach(x => hsSemanas(x).forEach(w => filas.push([personas[x] || x, w.txt + (w.actual ? ' (en curso)' : '') + (w.futura ? ' (próxima)' : ''), w.contrato ?? '', h2(w.previstoMin), w.futura ? '' : h2(w.min), w.futura ? '' : w.dias, w.futura || w.actual ? '' : h2(w.dif), w.citas, h2(w.minCitas), w.pctCitas ?? ''])));
+  const nom = (e ? String(personas[e] || e).replace(/[^\w\-]+/g, '_') : 'equipo') + '_horas_por_semana_' + isoLocal();
+  if(tipo === 'pdf') await descargarPDFTabla('Horas por semana · ' + (e ? (personas[e] || e) : 'todo el equipo'), cab, filas, nom + '.pdf');
+  else await descargarXLSX(cab, filas, nom + '.xlsx', 'Horas por semana');
 }
 async function guardarHorasContrato(email){
   const el = document.getElementById('hc-' + email); if(!el) return;
@@ -17856,7 +17934,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-04 · v225 (canal: artículos de blog con portada, subtítulos, imágenes, vídeos, citas, cajas de color y botones; regla de oro del fichaje; horarios de media jornada)';
+const APP_VERSION_INTRANET = '2026-11-04 · v226 (horas del equipo: historial por semanas con fichadas, contrato, horario y citas, en Excel y PDF; blog en el canal; regla de oro del fichaje)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
