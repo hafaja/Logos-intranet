@@ -526,6 +526,40 @@
   /* Adaptación a pantallas estrechas: el menú lateral pasa a barra inferior */
   .mobile-menu-toggle{display:none;}
   .mobile-menu-header{display:none;}
+  /* Fichaje preciso */
+  .fich-ubic-av{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#16233F;color:#fff;border-radius:999px;padding:10px 18px;font-size:14px;font-weight:700;z-index:9800;box-shadow:0 8px 24px -8px rgba(0,0,0,.5);max-width:calc(100vw - 32px);text-align:center;}
+  .fich-ok{background:#1E7A3E;}
+  .fich-ov{position:fixed;inset:0;background:rgba(10,20,40,.55);z-index:9700;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .fich-ov-in{background:#fff;border-radius:16px;padding:18px;width:100%;max-width:460px;max-height:90vh;overflow:auto;box-shadow:0 20px 50px -20px rgba(0,0,0,.5);}
+  .fich-ov-in h3{margin:0 0 6px;font-size:17px;}
+  .fich-ov-in p{margin:0 0 10px;font-size:14px;line-height:1.5;color:var(--ink);}
+  .fich-ov-in select,.fich-ov-in input{width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;margin:4px 0 8px;font-family:inherit;}
+  .fich-lbl{font-weight:700;font-size:13.5px;display:block;}
+  .fich-nota{font-size:12px !important;color:var(--ink-soft) !important;}
+  .fich-acc{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;}
+  .fich-acc .primary-btn{width:auto;margin:0;}
+  .fich-b2{background:#fff !important;color:var(--navy,#1E3F66) !important;border:1.5px solid var(--navy,#1E3F66) !important;}
+  .fich-filtros{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 10px;font-size:13px;}
+  .fich-filtros select{border:1.5px solid var(--line);border-radius:10px;padding:7px 10px;font-size:13px;}
+  .fich-leyenda{flex-basis:100%;font-size:11.5px;color:var(--ink-soft);}
+  .fich-dia{font-weight:800;font-size:13px;color:var(--navy,#1E3F66);text-transform:capitalize;margin:14px 0 4px;padding-bottom:4px;border-bottom:1.5px solid var(--line);}
+  .fich-fila{display:grid;grid-template-columns:minmax(150px,1.3fr) 1.4fr 1.4fr minmax(90px,.8fr) auto;gap:8px;align-items:center;padding:8px 6px;border-bottom:1px dashed #E3E8EF;font-size:13px;}
+  .fich-fila.inc{background:#FFF8EC;}
+  .fich-quien small{display:block;color:var(--ink-soft);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .fich-tramo{display:flex;flex-direction:column;gap:3px;align-items:flex-start;}
+  .fich-h{font-size:12px;color:var(--ink-soft);} .fich-h b{color:var(--ink);font-size:13.5px;}
+  .fich-chip{display:inline-block;border-radius:12px;padding:2px 9px;font-size:11.5px;font-weight:700;text-decoration:none;background:#EEF2F7;color:#1F4E79;max-width:100%;white-space:normal;line-height:1.35;}
+  .fich-fila > div{min-width:0;}
+  .fich-chip small{font-weight:400;opacity:.8;}
+  .fich-chip.ok{background:#DDF3E4;color:#1E6B3A;} .fich-chip.fuera{background:#EAF1FB;color:#1B4E95;} .fich-chip.sin{background:#FFF1D6;color:#7A5200;} .fich-chip.lejos{background:#FDE7E5;color:#A3281E;}
+  .fich-dur{font-weight:700;display:flex;flex-direction:column;gap:3px;align-items:flex-start;}
+  .fich-acc2{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+  .fich-aj{border-top:1px solid rgba(0,0,0,.08);margin-top:14px;padding-top:12px;}
+  .fich-aj h4{margin:0 0 8px;font-size:14.5px;}
+  .fich-aj label{display:block;font-size:13.5px;margin:6px 0;}
+  .fich-aj input[type=number]{border:1.5px solid var(--line);border-radius:8px;padding:5px 8px;font-size:14px;}
+  .fich-chk input{margin-right:6px;}
+  @media (max-width:760px){ .fich-fila{grid-template-columns:1fr 1fr;} .fich-quien{grid-column:1/-1;} .fich-acc2{grid-column:1/-1;flex-direction:row;justify-content:flex-end;gap:12px;} }
   .tec-correo{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 14px;}
   .tec-correo > div:first-child{flex:1 1 240px;}
   .tec-correo small{display:block;color:var(--ink-soft);font-size:12.5px;margin-top:2px;}
@@ -3152,7 +3186,7 @@ window.__recuerdoInicial = recuerdoLeer();
 // Si se llega desde la cámara del móvil con un QR (…/?qr=código), se guarda para abrir la ficha tras iniciar sesión
 (function(){ try { const m = location.search.match(/[?&]qr=([0-9a-f]{32})/i); if(m){ sessionStorage.setItem('logos_qr_pend', m[1]); history.replaceState(null, '', location.pathname + location.hash); } } catch(e){} })();
 // Marca de versión (esquina inferior izquierda) para comprobar que cada persona tiene la última
-document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v213'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
+document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('div'); v.textContent = 'v214'; v.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:10px;opacity:.45;z-index:5;pointer-events:none'; document.body.appendChild(v); });   // lo que había antes de cargar esta página
 document.addEventListener('input', e => {
   const el = e.target;
   if(!el || !el.id || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
@@ -3845,29 +3879,150 @@ async function guardarMiNombreConfig(){
   renderConfigScreen();
 }
 
-function obtenerUbicacionActual(){
-  return new Promise((resolve) => {
-    if(!navigator.geolocation){ resolve(null); return; }
-    navigator.geolocation.getCurrentPosition(
-      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => resolve(null),
-      { timeout: 8000, enableHighAccuracy: true }
-    );
+// ================= FICHAJE PRECISO (SQL 77) =================
+// Al fichar: 1) si este ordenador es de la oficina → «💻 ordenador de la oficina» (sin ubicación);
+// 2) si no, se busca la ubicación hasta 15 s y se queda la más precisa; dentro del radio y con buena precisión → «📍 en la oficina»;
+// 3) lejos, poco precisa o sin ubicación → se explica y se puede volver a intentar o fichar fuera con motivo (si la administración lo permite).
+const FICH_MOTIVOS = [
+  ['visita', 'Visita a domicilio o a otra entidad', 'Visita a domicili o a una altra entitat'],
+  ['acompanamiento', 'Acompañamiento a una persona usuaria', 'Acompanyament a una persona usuària'],
+  ['gestion', 'Gestión fuera (organismos, juzgado, banco…)', 'Gestió fora (organismes, jutjat, banc…)'],
+  ['formacion', 'Formación o reunión fuera', 'Formació o reunió fora'],
+  ['teletrabajo', 'Teletrabajo autorizado', 'Teletreball autoritzat'],
+  ['otro', 'Otro motivo', 'Un altre motiu']
+];
+const FICH_PREC_BUENA = 150;   // ± metros: por encima, la ubicación no es fiable (suele ser un ordenador o estar dentro de un edificio)
+function obtenerUbicacionActual(){ return obtenerUbicacionPrecisa({ maxMs: 8000 }).then(u => u && u.ok ? { lat: u.lat, lng: u.lng, acc: u.acc } : null); }
+function obtenerUbicacionPrecisa(op){
+  op = op || {};
+  const maxMs = op.maxMs || 15000, objetivo = op.objetivo || 30;
+  return new Promise(resolve => {
+    if(!navigator.geolocation){ resolve({ ok: false, motivo: 'no_disponible' }); return; }
+    let mejor = null, fin = false, id = null;
+    const acabar = r => { if(fin) return; fin = true; try { if(id != null) navigator.geolocation.clearWatch(id); } catch(e){} clearTimeout(tm); fichAvisoUbic(null); resolve(r); };
+    const tm = setTimeout(() => acabar(mejor ? Object.assign({ ok: true }, mejor) : { ok: false, motivo: 'tiempo' }), maxMs);
+    fichAvisoUbic('…');
+    try {
+      id = navigator.geolocation.watchPosition(p => {
+        const a = { lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy || 9999) };
+        if(!mejor || a.acc < mejor.acc) mejor = a;
+        fichAvisoUbic(mejor.acc);
+        if(mejor.acc <= objetivo) acabar(Object.assign({ ok: true }, mejor));
+      }, err => {
+        if(mejor){ acabar(Object.assign({ ok: true }, mejor)); return; }
+        acabar({ ok: false, motivo: err && err.code === 1 ? 'denegado' : (err && err.code === 3 ? 'tiempo' : 'no_disponible') });
+      }, { enableHighAccuracy: true, maximumAge: 0, timeout: maxMs });
+    } catch(e){ acabar({ ok: false, motivo: 'no_disponible' }); }
   });
+}
+// Aviso pequeño mientras se busca la ubicación
+function fichAvisoUbic(acc){
+  let el = document.getElementById('fich-ubic-av');
+  if(acc == null){ if(el) el.remove(); return; }
+  if(!el){ el = document.createElement('div'); el.id = 'fich-ubic-av'; el.className = 'fich-ubic-av'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+  el.textContent = '📍 ' + acL('Buscando tu ubicación', 'Cercant la teva ubicació') + (acc === '…' ? '…' : ' · ± ' + acc + ' m');
+}
+// Ordenador de la oficina: guarda un código en este navegador; la administración lo da de alta
+function puestoToken(){ try { return localStorage.getItem('logos_puesto_oficina') || ''; } catch(e){ return ''; } }
+async function puestoActual(){
+  const tk = puestoToken(); if(!tk) return null;
+  try { const { data, error } = await sb.from('puestos_oficina').select('nombre, activo').eq('token', tk).maybeSingle(); if(!error && data && data.activo !== false) return data.nombre || acL('Ordenador de la oficina', 'Ordinador de l\'oficina'); } catch(e){}
+  return null;
+}
+async function fichConfig(){
+  if(window.__configOficina && window.__configOficina.__t && Date.now() - window.__configOficina.__t < 10 * 60000) return window.__configOficina;
+  try { const { data } = await sb.from('configuracion_oficina').select('*').eq('id', 1).maybeSingle(); if(data){ window.__configOficina = Object.assign(data, { __t: Date.now() }); } } catch(e){}
+  return window.__configOficina || null;
+}
+// Decide cómo queda el fichaje. Devuelve null si la persona cancela.
+async function fichDecidir(tipo){
+  const cfg = await fichConfig();
+  const radio = (cfg && cfg.radio_metros) || 100, permitirFuera = !cfg || cfg.permitir_fuera !== false;
+  const puesto = await puestoActual();
+  if(puesto) return { modo: 'puesto', puesto };
+  for(let intento = 0; intento < 4; intento++){
+    const u = await obtenerUbicacionPrecisa({ maxMs: 15000, objetivo: 30 });
+    if(u.ok && (!cfg || cfg.lat == null)) return { modo: null, ub: u };   // sin punto de la oficina guardado: se apunta tal cual
+    let dist = null;
+    if(u.ok){ dist = calcularDistanciaMetros(u.lat, u.lng, cfg.lat, cfg.lng); if(dist <= radio && u.acc <= FICH_PREC_BUENA) return { modo: 'oficina', ub: u, dist }; }
+    const r = await fichDialogo(tipo, u, dist, radio, permitirFuera);
+    if(!r) return null;
+    if(r.reintentar) continue;
+    return { modo: 'fuera', ub: u.ok ? u : null, motivo: r.motivo };
+  }
+  return null;
+}
+function fichDialogo(tipo, u, dist, radio, permitirFuera){
+  return new Promise(resolve => {
+    const ca = LANG_I === 'ca', L = (es, cc) => ca ? cc : es;
+    let titulo, texto;
+    if(!u.ok && u.motivo === 'denegado'){ titulo = L('El navegador no deja ver tu ubicación', 'El navegador no deixa veure la teva ubicació'); texto = L('Toca el candado 🔒 al lado de la dirección de la página › Ubicación › Permitir, y vuelve a intentarlo. Si fichas desde un ordenador de la oficina, pide a la administración que lo marque como «ordenador de la oficina».', 'Toca el cadenat 🔒 al costat de l\'adreça de la pàgina › Ubicació › Permetre, i torna-ho a provar. Si fitxes des d\'un ordinador de l\'oficina, demana a l\'administració que el marqui com a «ordinador de l\'oficina».'); }
+    else if(!u.ok){ titulo = L('No se ha podido saber dónde estás', 'No s\'ha pogut saber on ets'); texto = L('Los ordenadores no tienen GPS. Ficha desde el móvil (con la ubicación activada) o pide a la administración que marque este ordenador como «ordenador de la oficina».', 'Els ordinadors no tenen GPS. Fitxa des del mòbil (amb la ubicació activada) o demana a l\'administració que marqui aquest ordinador com a «ordinador de l\'oficina».'); }
+    else if(u.acc > FICH_PREC_BUENA){ titulo = L(`Tu ubicación no es precisa (± ${u.acc} m)`, `La teva ubicació no és precisa (± ${u.acc} m)`); texto = L('Suele pasar en ordenadores o dentro del edificio. En el móvil, activa la «ubicación precisa» y acércate a una ventana, o pide que este ordenador se marque como de la oficina.', 'Sol passar en ordinadors o dins de l\'edifici. Al mòbil, activa la «ubicació precisa» i apropa\'t a una finestra, o demana que aquest ordinador es marqui com a de l\'oficina.'); }
+    else { titulo = L(`Estás a ${dist} m de la oficina`, `Ets a ${dist} m de l'oficina`); texto = L(`Para fichar en la oficina tienes que estar a menos de ${radio} m. Si estás trabajando fuera, indica el motivo.`, `Per fitxar a l'oficina has d'estar a menys de ${radio} m. Si treballes fora, indica el motiu.`); }
+    const ov = document.createElement('div'); ov.className = 'fich-ov'; ov.id = 'fich-ov';
+    ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', titulo);
+    ov.innerHTML = `<div class="fich-ov-in">
+      <h3>📍 ${escAttr(titulo)}</h3>
+      <p>${texto}</p>
+      ${permitirFuera ? `<label class="fich-lbl" for="fich-motivo">${tipo === 'salida' ? L('Ficho la salida fuera de la oficina por:', 'Fitxo la sortida fora de l\'oficina per:') : L('Estoy trabajando fuera de la oficina por:', 'Treballo fora de l\'oficina per:')}</label>
+      <select id="fich-motivo"><option value="">${L('— Elige el motivo —', '— Tria el motiu —')}</option>${FICH_MOTIVOS.map(m => `<option value="${m[0]}">${ca ? m[2] : m[1]}</option>`).join('')}</select>
+      <input type="text" id="fich-motivo-txt" maxlength="120" placeholder="${L('Detalle (obligatorio si es «Otro motivo»)', 'Detall (obligatori si és «Un altre motiu»)')}">
+      <p class="fich-nota">${L('Se apunta como «fuera de la oficina» con el motivo, y la administración lo ve.', 'S\'apunta com a «fora de l\'oficina» amb el motiu, i l\'administració ho veu.')}</p>` : `<p class="fich-nota">${L('La administración no permite fichar fuera de la oficina.', 'L\'administració no permet fitxar fora de l\'oficina.')}</p>`}
+      <div class="fich-acc">
+        <button class="primary-btn fich-b2" data-a="reintentar">🔄 ${L('Volver a intentar', 'Tornar-ho a provar')}</button>
+        ${permitirFuera ? `<button class="primary-btn" data-a="fuera">🚶 ${L('Fichar fuera de la oficina', 'Fitxar fora de l\'oficina')}</button>` : ''}
+        <button class="link-btn" data-a="cancelar">${L('Cancelar', 'Cancel·lar')}</button>
+      </div></div>`;
+    const cerrar = r => { ov.remove(); resolve(r); };
+    ov.addEventListener('click', e => {
+      const a = e.target && e.target.dataset ? e.target.dataset.a : null; if(!a) return;
+      if(a === 'cancelar') return cerrar(null);
+      if(a === 'reintentar') return cerrar({ reintentar: true });
+      const m = document.getElementById('fich-motivo').value, txt = document.getElementById('fich-motivo-txt').value.trim();
+      if(!m){ alert(L('Elige el motivo.', 'Tria el motiu.')); return; }
+      if(m === 'otro' && !txt){ alert(L('Escribe el motivo.', 'Escriu el motiu.')); return; }
+      const base = FICH_MOTIVOS.find(x => x[0] === m);
+      cerrar({ motivo: (base ? base[1] : m) + (txt ? ' · ' + txt : '') });
+    });
+    ov.addEventListener('keydown', e => { if(e.key === 'Escape') cerrar(null); });
+    document.body.appendChild(ov);
+    setTimeout(() => { const s = ov.querySelector('select, button'); if(s) s.focus(); }, 30);
+  });
+}
+// Datos del fichaje que se guardan (entrada_* o salida_*)
+function fichCampos(pref, d){
+  const o = {};
+  if(d.ub){ o[pref + '_lat'] = d.ub.lat; o[pref + '_lng'] = d.ub.lng; if(d.ub.acc != null) o[pref + '_precision'] = d.ub.acc; }
+  o[pref + '_modo'] = d.modo || (d.ub ? null : 'sin_ubicacion');
+  if(d.motivo) o[pref + '_motivo'] = d.motivo;
+  if(d.puesto) o[pref + '_puesto'] = d.puesto;
+  if(o[pref + '_modo'] == null) delete o[pref + '_modo'];
+  return o;
+}
+// Guarda; si a Supabase le faltan las columnas del SQL 77, guarda sin ellas (como antes)
+async function fichGuardar(fn){
+  let r = await fn(true);
+  if(r.error && /_precision|_modo|_motivo|_puesto|schema cache|column/i.test(r.error.message || '')) r = await fn(false);
+  return r;
 }
 
 async function guardarUbicacionOficina(){
   const esCA = LANG_I === 'ca';
-  const ubicacion = await obtenerUbicacionActual();
-  if(!ubicacion){
-    alert(esCA ? "No s'ha pogut obtenir la ubicació. Revisa els permisos de localització del navegador." : 'No se ha podido obtener la ubicación. Revisa los permisos de localización del navegador.');
+  const u = await obtenerUbicacionPrecisa({ maxMs: 25000, objetivo: 15 });
+  if(!u.ok){
+    alert(esCA ? "No s'ha pogut obtenir la ubicació. Fes-ho des del mòbil, amb la ubicació activada, dins de l'oficina." : 'No se ha podido obtener la ubicación. Hazlo desde el móvil, con la ubicación activada, dentro de la oficina.');
     return;
   }
-  if(!confirm(esCA ? "Vols guardar la teva ubicació actual com la de l'oficina?" : '¿Quieres guardar tu ubicación actual como la de la oficina?')) return;
+  const ubicacion = u;
+  if(u.acc > 50 && !confirm(esCA ? `La ubicació és poc precisa (± ${u.acc} m). Si estàs en un ordinador, fes-ho des del mòbil. Vols guardar-la igualment?` : `La ubicación es poco precisa (± ${u.acc} m). Si estás en un ordenador, hazlo desde el móvil. ¿Quieres guardarla igualmente?`)) return;
+  if(u.acc <= 50 && !confirm(esCA ? `Vols guardar la teva ubicació actual (± ${u.acc} m) com la de l'oficina?` : `¿Quieres guardar tu ubicación actual (± ${u.acc} m) como la de la oficina?`)) return;
 
-  const { error } = await sb.from('configuracion_oficina').upsert({
-    id: 1, lat: ubicacion.lat, lng: ubicacion.lng, actualizado_por_email: CURRENT_USER.email, actualizado_en: new Date().toISOString()
+  let { error } = await sb.from('configuracion_oficina').upsert({
+    id: 1, lat: ubicacion.lat, lng: ubicacion.lng, precision_m: ubicacion.acc, actualizado_por_email: CURRENT_USER.email, actualizado_en: new Date().toISOString()
   });
+  if(error && /precision_m/.test(error.message || '')) ({ error } = await sb.from('configuracion_oficina').upsert({ id: 1, lat: ubicacion.lat, lng: ubicacion.lng, actualizado_por_email: CURRENT_USER.email, actualizado_en: new Date().toISOString() }));
+  window.__configOficina = null;
   if(error){ alert(error.message); return; }
   alert(esCA ? 'Ubicació guardada correctament.' : 'Ubicación guardada correctamente.');
   renderAdministrador();
@@ -4107,27 +4262,37 @@ setInterval(function(){ if(CURRENT_USER && window.__fichajeAbierto) fichajePinta
 
 async function ficharEntrada(){
   const t = TI[LANG_I];
-  const ubicacion = await obtenerUbicacionActual();
-  const payload = { tecnico_email: CURRENT_USER.email };
-  if(ubicacion){ payload.entrada_lat = ubicacion.lat; payload.entrada_lng = ubicacion.lng; }
-  const { error } = await sb.from('fichajes').insert(payload);
+  const d = await fichDecidir('entrada');
+  if(!d) return;   // ha cancelado
+  const campos = fichCampos('entrada', d);
+  const { error } = await fichGuardar(todo => sb.from('fichajes').insert(Object.assign({ tecnico_email: CURRENT_USER.email },
+    todo ? campos : (d.ub ? { entrada_lat: d.ub.lat, entrada_lng: d.ub.lng } : {}))));
   if(error){ alert(error.message); return; }
-  if(!ubicacion){
-    alert(LANG_I==='ca'
-      ? "S'ha fitxat, però no s'ha pogut registrar la ubicació (revisa els permisos de localització del navegador)."
-      : 'Se ha fichado, pero no se ha podido registrar la ubicación (revisa los permisos de localización del navegador).');
-  }
+  fichToast(d, 'entrada');
   await fichajeRefrescar();
   await renderMiEspacio();
   if(!window.__tengoSala && !salaHoyFuera()) salaElegirRapido();
 }
 
+function fichToast(d, tipo){
+  const L = (es, cc) => LANG_I === 'ca' ? cc : es;
+  const txt = d.modo === 'puesto' ? L(`💻 Fichado desde «${d.puesto}»`, `💻 Fitxat des de «${d.puesto}»`)
+    : d.modo === 'oficina' ? L(`📍 Fichado en la oficina (a ${d.dist} m)`, `📍 Fitxat a l'oficina (a ${d.dist} m)`)
+    : d.modo === 'fuera' ? L('🚶 Fichado fuera de la oficina · ', '🚶 Fitxat fora de l\'oficina · ') + d.motivo
+    : L('✅ Fichado', '✅ Fitxat');
+  let el = document.getElementById('fich-ok'); if(el) el.remove();
+  el = document.createElement('div'); el.id = 'fich-ok'; el.className = 'fich-ubic-av fich-ok'; el.setAttribute('role', 'status');
+  el.textContent = (tipo === 'salida' ? L('Salida · ', 'Sortida · ') : L('Entrada · ', 'Entrada · ')) + txt;
+  document.body.appendChild(el); setTimeout(() => el.remove(), 5000);
+}
 async function ficharSalida(id){
-  const ubicacion = await obtenerUbicacionActual();
-  const payload = { salida: new Date().toISOString() };
-  if(ubicacion){ payload.salida_lat = ubicacion.lat; payload.salida_lng = ubicacion.lng; }
-  const { error } = await sb.from('fichajes').update(payload).eq('id', id);
+  const d = await fichDecidir('salida');
+  if(!d) return;   // ha cancelado
+  const ahora = new Date().toISOString(), campos = fichCampos('salida', d);
+  const { error } = await fichGuardar(todo => sb.from('fichajes').update(Object.assign({ salida: ahora },
+    todo ? campos : (d.ub ? { salida_lat: d.ub.lat, salida_lng: d.ub.lng } : {}))).eq('id', id));
   if(error){ alert(error.message); return; }
+  fichToast(d, 'salida');
   await fichajeRefrescar();
   renderMiEspacio();
 }
@@ -17334,7 +17499,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-03 · v213 (Panel técnico: «Enviarme un correo de prueba» de las citas, con el motivo exacto si falla y qué hacer; «veces atendida»: tocar una ficha de atención o una actuación la abre; ficha: cualquier persona del equipo puede corregir los datos (SQL 76) y se avisa si no se ha podido guardar; botón «Corregir o completar los datos» en el Resumen; ficha de atención y actuación: botón de guardar también arriba, además del de abajo; ficha: el 0 (por ejemplo, 0 hijos) se guarda y cuenta como dato completo; «¿Cómo nos conoció?» con «Otros» para escribir una vía nueva, que luego sale en la lista; citas: la persona recibe un correo con su cita al darla, cambiarla o anularla, y un recordatorio el día antes; citas con hasta dos personas del equipo; proyectos: equipo de dos o más personas al crear y añadir varias de una vez; ficha de la persona: «Citas» junto a «Ficha de atención»; logo de Logos en el móvil: en la entrada, en el Inicio y en el menú; logo con su identidad original sobre blanco en el menú; informe por persona: primero las 10 más atendidas, «Ver más», buscador y filtro por tramos; Recursos Humanos más rápido: cambiar de apartado sin recargar la cabecera, vacaciones solo lo pendiente y próximo, y la pantalla va al principio del apartado; Logos 360: historial de cambios, papelera, «Deshacer», duplicados, copia de seguridad y versiones; navegación fácil: ruta, favoritas, Mis páginas, buscador Ctrl+K y «Sigue con»; entrada más rápida; aviso de alertas sin error al salir de la sesión; botón «Preparar correo» del consentimiento arreglado: descarga el PDF y abre Gmail, Outlook o el programa de correo; el Panel técnico ya no apunta los cortes de conexión al recargar o cerrar la página; consentimiento: 2 obligatorias + 2 opcionales; consentimiento v2 revisado por el jurista; protección de datos: peticiones, anonimizar y estado del cifrado; cifrado de campos sensibles; Canal: un enlace de YouTube pegado en «Imagen» pasa solo a «Vídeo»; el interruptor de la verificación en dos pasos solo lo ve y lo usa Soporte técnico; verificación en dos pasos: interruptor activar / pausa en el Panel técnico; 🩺 Panel técnico: comprobaciones de salud, fallos apuntados solos y aviso a Soporte técnico; «Ver como» ya no pide fichar: se entra directamente a mirar; Gestión de personal con cabecera y menú lateral; Administración con buscador, cabecera y menú lateral; Equipo en tarjetas con buscador, filtros y «Gestionar»; Canal: vídeos (YouTube, Vimeo o MP4) en noticias, eventos y publicidad; Canal: publicidad de entidades con contrato (imagen propia o diseño con colores), con vistas y clics; 📣 Canal: noticias, eventos con agenda y calendario, anuncios y convocatorias que salen en la web y en Logos Acompanya; el histórico cuenta: cada fila de los Excel antiguos es una vez atendida, en la ficha, en Informes › Registro («Desde el inicio») y en las cifras; Inicio: «Veces que hemos atendido» junto a las personas atendidas; veces que ha sido atendida cada persona: en su ficha y en Informes › Registro, con texto para la memoria y Excel por persona; «Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
+const APP_VERSION_INTRANET = '2026-11-04 · v214 (fichaje preciso: en la oficina, desde un ordenador de la oficina o fuera con motivo; precisión de la ubicación; lista de fichajes más clara, por día y con filtros; Panel técnico: «Enviarme un correo de prueba» de las citas, con el motivo exacto si falla y qué hacer; «veces atendida»: tocar una ficha de atención o una actuación la abre; ficha: cualquier persona del equipo puede corregir los datos (SQL 76) y se avisa si no se ha podido guardar; botón «Corregir o completar los datos» en el Resumen; ficha de atención y actuación: botón de guardar también arriba, además del de abajo; ficha: el 0 (por ejemplo, 0 hijos) se guarda y cuenta como dato completo; «¿Cómo nos conoció?» con «Otros» para escribir una vía nueva, que luego sale en la lista; citas: la persona recibe un correo con su cita al darla, cambiarla o anularla, y un recordatorio el día antes; citas con hasta dos personas del equipo; proyectos: equipo de dos o más personas al crear y añadir varias de una vez; ficha de la persona: «Citas» junto a «Ficha de atención»; logo de Logos en el móvil: en la entrada, en el Inicio y en el menú; logo con su identidad original sobre blanco en el menú; informe por persona: primero las 10 más atendidas, «Ver más», buscador y filtro por tramos; Recursos Humanos más rápido: cambiar de apartado sin recargar la cabecera, vacaciones solo lo pendiente y próximo, y la pantalla va al principio del apartado; Logos 360: historial de cambios, papelera, «Deshacer», duplicados, copia de seguridad y versiones; navegación fácil: ruta, favoritas, Mis páginas, buscador Ctrl+K y «Sigue con»; entrada más rápida; aviso de alertas sin error al salir de la sesión; botón «Preparar correo» del consentimiento arreglado: descarga el PDF y abre Gmail, Outlook o el programa de correo; el Panel técnico ya no apunta los cortes de conexión al recargar o cerrar la página; consentimiento: 2 obligatorias + 2 opcionales; consentimiento v2 revisado por el jurista; protección de datos: peticiones, anonimizar y estado del cifrado; cifrado de campos sensibles; Canal: un enlace de YouTube pegado en «Imagen» pasa solo a «Vídeo»; el interruptor de la verificación en dos pasos solo lo ve y lo usa Soporte técnico; verificación en dos pasos: interruptor activar / pausa en el Panel técnico; 🩺 Panel técnico: comprobaciones de salud, fallos apuntados solos y aviso a Soporte técnico; «Ver como» ya no pide fichar: se entra directamente a mirar; Gestión de personal con cabecera y menú lateral; Administración con buscador, cabecera y menú lateral; Equipo en tarjetas con buscador, filtros y «Gestionar»; Canal: vídeos (YouTube, Vimeo o MP4) en noticias, eventos y publicidad; Canal: publicidad de entidades con contrato (imagen propia o diseño con colores), con vistas y clics; 📣 Canal: noticias, eventos con agenda y calendario, anuncios y convocatorias que salen en la web y en Logos Acompanya; el histórico cuenta: cada fila de los Excel antiguos es una vez atendida, en la ficha, en Informes › Registro («Desde el inicio») y en las cifras; Inicio: «Veces que hemos atendido» junto a las personas atendidas; veces que ha sido atendida cada persona: en su ficha y en Informes › Registro, con texto para la memoria y Excel por persona; «Ver como» para administración (solo mirar); verificación en dos pasos en pausa temporal; docentes externos (solo Aula Virtual); cada atención cuenta (atención nueva cada vez) y registro de atenciones y actuaciones en Informes; vacaciones: pedir y validar; menú: títulos de cada área en dorado y destacados; moverse mejor en páginas largas: botones ▲ Arriba / ▼ Abajo, buscador fijo arriba en Personas usuarias y saltos por año; en pantallas grandes la página usa más ancho; el código QR de la verificación en dos pasos se ve bien; verificación en dos pasos al entrar (Microsoft/Google Authenticator), cambio de móvil en Configuración y reinicio por la administración; Proyectos: lista con cabecera, buscador, filtro por estado y tarjetas; al abrir uno se ve solo ese proyecto con «← Todos los proyectos»; Contabilidad con cabecera de cifras y menú lateral; Proyectos: mensajes del grupo (beneficiarios + equipo) como en el Aula Virtual; Proyectos: ficha del proyecto con cabecera azul, cifras y menú lateral como el Aula Virtual (Resumen, Beneficiarios, Asistencia, Seguimiento, Actividades, Avisos, Documentos, Profesionales, Exportaciones); Inicio: «Personas atendidas en total» con la misma cifra que Impacto; las cifras suben de 0 a su valor como en la web; primero la ficha de atención: aviso que parpadea junto al nombre, filtro «Sin ficha de atención» y no se registran actuaciones sin ella; Mi espacio: «Atenciones» cuenta las personas atendidas (ficha, mesa y actuaciones); proyectos vinculados desde las fichas en la ficha y en las estadísticas; miércoles: mañana sin cita (atención al público) y tarde de 16 a 20 h con cita; horario: el miércoles abre también por la tarde, de 16 a 20 h, sin cita previa; menú con grupos propios «🛡️ Administración» y «💼 Recursos Humanos»; pantalla Administrador agrupada por a quién le toca cada cosa; Inicio: alertas y mensajes de la ciudadanía se abren arriba en la cabecera azul, sin repetirlos abajo; alta sin la persona delante cuando ya firmó el consentimiento en papel (ficha sin cuenta, con foto del papel); técnico/a + RR. HH.: atiende personas como un técnico más y conserva nóminas, comunicados, personal e incidencias; mesa compartida: varias personas atendidas a la vez en la misma mesa, «A mi mesa» desde En espera y nota en la ficha de cada una; RR. HH. tiene su página de Inicio; incidencias: avisar a RR. HH., Administración o Soporte técnico, y atenderlas; RR. HH.: histórico de nóminas subidas, corregir persona o mes, borrar y deshacer una subida; citas por teléfono; Mi área privada en el Inicio; Aula Virtual con menú, lista de cursos y tareas pendientes; guía rápida en carrusel; la sesión se cierra sola tras 25 minutos sin actividad, con aviso antes; cabecera azul del Inicio con saludo, estado, buscador y usuario; página «Mi horario» con colores: cada día su color, mañana y tarde, barra de horas; sin fichar la entrada y marcar la sala, el técnico no puede trabajar; fichas pequeñas que pasan solas en el Inicio, con ‹ pausa ›; ficha de la persona sin datos repetidos y consentimiento claro; trámites repetidos agrupados; mensajes, citas y alertas arriba en el Inicio; botón Menú con los colores de Logos; inicio estilo Sanitas, azul y letra Figtree; mensajes en cada curso y WhatsApp del equipo; pantalla «Mi horario de citas»; ámbitos con el histórico: empleo, formación, trámites, acompañamiento; informes con todas las personas; cambio automático sin fichas; estadísticas e impacto con todas las personas y resultados automáticos; todas las personas atendidas en estadísticas, impacto y memoria; correo semanal de fichas incompletas; Aula Virtual nueva con guía; cada técnico su horario; otra cita; fichas incompletas más visibles; crea un proyecto sin formularios repetidos; proyectos sin personas repetidas; citas para personas sin cuenta con aviso por WhatsApp, correo o llamada; quién atiende citas; RR. HH. edita horarios)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -20810,6 +20975,7 @@ async function renderAdministrador(){
         : `<p style="margin:0 0 10px;font-size:12.5px;color:var(--alert);">⚠️ ${LANG_I==='ca' ? 'Encara no s\'ha guardat cap ubicació. Sense això, els fitxatges no es podran comparar amb la oficina.' : 'Todavía no se ha guardado ninguna ubicación. Sin esto, los fichajes no se podrán comparar con la oficina.'}</p>`}
       <button class="primary-btn" style="background:var(--ochre);" onclick="guardarUbicacionOficina()">${LANG_I==='ca' ? '📍 Guardar la meva ubicació actual com a oficina' : '📍 Guardar mi ubicación actual como oficina'}</button>
       <p class="subtle" style="margin:8px 0 0;font-size:11px;">${LANG_I==='ca' ? "Toca aquest botó estant físicament dins l'oficina, des del mòbil, per capturar la ubicació exacta." : 'Toca este botón estando físicamente dentro de la oficina, desde el móvil, para capturar la ubicación exacta.'}</p>
+      <div id="fich-ajustes"></div>
     </div>
     ${carpetaCierra()}
 
@@ -20891,6 +21057,7 @@ async function renderAdministrador(){
   activarBarras();
   historiaPintar();
   renderHorasEquipo();
+  try { fichAjustesPintar(); } catch(e){}
 }
 
 // ================= NUESTRA HISTORIA: cifras de personas atendidas para la web =================
@@ -21273,10 +21440,13 @@ async function descargarPDFTabla(titulo, cabecera, filas, nombreArchivo){
 
 async function exportarFichajesExcel(){
   const { data } = await sb.from('fichajes').select('*').order('entrada', { ascending:false });
-  const cabecera = ['Técnico','Entrada','Salida','Duración (min)','Cerrado automático','Nota'];
+  const cabecera = ['Técnico','Entrada','Cómo (entrada)','Salida','Cómo (salida)','Duración (min)','Cerrado automático','Nota'];
+  const of = window.__configOficina || await fichConfig();
+  const como = (f, p) => { const m = f[p + '_modo']; if(m === 'puesto') return 'Ordenador de la oficina: ' + (f[p + '_puesto'] || ''); if(m === 'oficina') return 'En la oficina'; if(m === 'fuera') return 'Fuera: ' + (f[p + '_motivo'] || ''); if(m === 'sin_ubicacion' || f[p + '_lat'] == null) return 'Sin ubicación';
+    return of && of.lat != null ? calcularDistanciaMetros(f[p + '_lat'], f[p + '_lng'], of.lat, of.lng) + ' m de la oficina' : 'Con ubicación'; };
   const filas = (data||[]).map(f => [
-    nombreTecnico(f.tecnico_email), new Date(f.entrada).toLocaleString('es-ES'),
-    f.salida ? new Date(f.salida).toLocaleString('es-ES') : 'En curso',
+    nombreTecnico(f.tecnico_email), new Date(f.entrada).toLocaleString('es-ES'), como(f, 'entrada'),
+    f.salida ? new Date(f.salida).toLocaleString('es-ES') : 'En curso', f.salida ? como(f, 'salida') : '',
     f.salida ? Math.round((new Date(f.salida)-new Date(f.entrada))/60000) : '',
     f.cerrado_automaticamente ? 'Sí' : 'No', f.nota || ''
   ]);
@@ -21332,37 +21502,104 @@ async function exportarTraductorPDF(){
 }
 
 function renderFilasFichajes(fichajes){
-  const t = TI[LANG_I];
+  const t = TI[LANG_I], ca = LANG_I === 'ca', L = (es, cc) => ca ? cc : es;
   const horaFmt = iso => new Date(iso).toLocaleTimeString(t.localeFecha, { hour:'2-digit', minute:'2-digit' });
-  const fechaFmt = iso => new Date(iso).toLocaleDateString(t.localeFecha, { weekday:'short', day:'numeric', month:'short' });
-  const duracionFmt = (ini, fin) => {
-    const min = Math.round((new Date(fin) - new Date(ini)) / 60000);
-    return `${Math.floor(min/60)}h ${min%60}min`;
+  const diaFmt = iso => new Date(iso).toLocaleDateString(t.localeFecha, { weekday:'long', day:'numeric', month:'long' });
+  const duracionFmt = (ini, fin) => { const min = Math.round((new Date(fin) - new Date(ini)) / 60000); return `${Math.floor(min/60)}h ${min%60}min`; };
+  const oficina = window.__configOficina, radio = (oficina && oficina.radio_metros) || 100;
+  // Cómo se fichó: en la oficina, ordenador de la oficina, fuera con motivo o sin ubicación
+  const estado = (f, pref) => {
+    const lat = f[pref + '_lat'], lng = f[pref + '_lng'], acc = f[pref + '_precision'], modo = f[pref + '_modo'];
+    const mapa = lat != null ? `https://www.google.com/maps?q=${lat},${lng}` : null;
+    const dist = (lat != null && oficina && oficina.lat != null) ? calcularDistanciaMetros(lat, lng, oficina.lat, oficina.lng) : null;
+    const chip = (cls, txt, tit) => mapa ? `<a href="${mapa}" target="_blank" rel="noopener" class="fich-chip ${cls}" title="${escAttr(tit || '')}">${txt}</a>` : `<span class="fich-chip ${cls}" title="${escAttr(tit || '')}">${txt}</span>`;
+    const pm = acc != null ? ` <small>± ${acc} m</small>` : '';
+    if(modo === 'puesto') return chip('ok', `💻 ${escAttr(f[pref + '_puesto'] || L('Ordenador de la oficina', 'Ordinador de l\'oficina'))}`, L('Fichado desde un ordenador de la oficina', 'Fitxat des d\'un ordinador de l\'oficina'));
+    if(modo === 'oficina') return chip('ok', `📍 ${L('Oficina', 'Oficina')}${dist != null ? ' · ' + dist + ' m' : ''}${pm}`);
+    if(modo === 'fuera') return chip('fuera', `🚶 ${L('Fuera', 'Fora')}: ${escAttr(f[pref + '_motivo'] || '')}${dist != null ? ' · ' + dist + ' m' : ''}`, f[pref + '_motivo'] || '');
+    if(modo === 'sin_ubicacion' || lat == null) return chip('sin', `❓ ${L('Sin ubicación', 'Sense ubicació')}`, L('El navegador no dio la ubicación (permiso denegado o un ordenador sin GPS).', 'El navegador no va donar la ubicació (permís denegat o un ordinador sense GPS).'));
+    if(dist == null) return chip('', `📍 ${L('Ver mapa', 'Veure mapa')}`);
+    const dudosa = acc != null && acc > FICH_PREC_BUENA;
+    return dist <= radio ? chip('ok', `📍 ${dist} m${pm}`) : chip(dudosa ? 'sin' : 'lejos', `⚠️ ${dist} m${pm}`, dudosa ? L('Ubicación poco precisa', 'Ubicació poc precisa') : L('Lejos de la oficina', 'Lluny de l\'oficina'));
   };
-  const oficina = window.__configOficina;
-  const ubicacionHtml = (lat, lng) => {
-    if(lat == null || lng == null) return '';
-    const mapaUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-    if(oficina && oficina.lat != null){
-      const dist = calcularDistanciaMetros(lat, lng, oficina.lat, oficina.lng);
-      const lejos = dist > 150;
-      return `<a href="${mapaUrl}" target="_blank" rel="noopener" class="chip ${lejos?'alert':'good'}" style="font-size:10px;text-decoration:none;">${lejos?'⚠️ ':'📍 '}${dist} m</a>`;
-    }
-    return `<a href="${mapaUrl}" target="_blank" rel="noopener" class="chip" style="font-size:10px;text-decoration:none;">📍 ${LANG_I==='ca'?'Veure mapa':'Ver mapa'}</a>`;
-  };
-  return fichajes.length
-    ? fichajes.map(f => `
-        <div class="panel-stat-row">
-          <span>${f.tecnico_email} · ${fechaFmt(f.entrada)}</span>
-          <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
-            ${horaFmt(f.entrada)} ${ubicacionHtml(f.entrada_lat, f.entrada_lng)}
-            ${f.salida ? `– ${horaFmt(f.salida)} ${ubicacionHtml(f.salida_lat, f.salida_lng)} (${duracionFmt(f.entrada, f.salida)})` : `<span class="chip gold">${t.enCurso}</span>`}
-            ${f.cerrado_automaticamente ? (FICHAJE_MARCA_REVISADO.test(f.nota || '') ? `<span class="chip gold" title="${escAttr(f.nota||'')}">✍️ ${LANG_I==='ca'?'Sortida indicada per la persona':'Salida indicada por la persona'}</span>` : `<span class="chip alert" title="${escAttr(f.nota||'')}">⚠️ ${LANG_I==='ca'?'Sortida oblidada · pendent':'Salida olvidada · pendiente'}</span>`) : ''}
-            ${f.cerrado_automaticamente && f.salida ? `<button class="link-btn" style="font-size:11px;" onclick="fichajeCorregirAdmin('${f.id}', '${f.entrada}')">✏️ ${LANG_I==='ca'?'Corregir sortida':'Corregir salida'}</button>` : ''}
-            <button class="link-btn" style="font-size:11px;color:var(--alert);" onclick="borrarFichaje('${f.id}')">${LANG_I==='ca'?'Esborrar':'Borrar'}</button>
-          </span>
-        </div>`).join('')
-    : `<div class="empty-note">${t.sinFichajes}</div>`;
+  const esIncidencia = f => ['entrada', 'salida'].some(p => { if(p === 'salida' && !f.salida) return false; const m = f[p + '_modo']; if(m === 'oficina' || m === 'puesto') return false; if(m === 'fuera' || m === 'sin_ubicacion') return true; const lat = f[p + '_lat']; if(lat == null) return true; if(!oficina || oficina.lat == null) return false; return calcularDistanciaMetros(lat, f[p + '_lng'], oficina.lat, oficina.lng) > radio; }) || f.cerrado_automaticamente;
+  // Filtros (persona y «solo lo que hay que mirar»)
+  const fl = window.__fichFiltro || (window.__fichFiltro = { persona: '', inc: false });
+  const personas = [...new Set(fichajes.map(f => f.tecnico_email))].sort((a, b) => nombreTecnico(a).localeCompare(nombreTecnico(b)));
+  const lista = fichajes.filter(f => (!fl.persona || f.tecnico_email === fl.persona) && (!fl.inc || esIncidencia(f)));
+  const filtros = `<div class="fich-filtros">
+      <select aria-label="${L('Persona', 'Persona')}" onchange="window.__fichFiltro.persona=this.value;fichRepintar()"><option value="">${L('Todo el equipo', 'Tot l\'equip')}</option>${personas.map(e => `<option value="${escAttr(e)}" ${fl.persona === e ? 'selected' : ''}>${escAttr(nombreTecnico(e))}</option>`).join('')}</select>
+      <label><input type="checkbox" ${fl.inc ? 'checked' : ''} onchange="window.__fichFiltro.inc=this.checked;fichRepintar()"> ${L('Solo lo que hay que mirar (fuera, sin ubicación, lejos, salida olvidada)', 'Només el que cal mirar (fora, sense ubicació, lluny, sortida oblidada)')}</label>
+      <span class="fich-leyenda">💻 ${L('ordenador de la oficina', 'ordinador de l\'oficina')} · 📍 ${L('oficina', 'oficina')} · 🚶 ${L('fuera con motivo', 'fora amb motiu')} · ❓ ${L('sin ubicación', 'sense ubicació')} · ⚠️ ${L('lejos', 'lluny')}</span>
+    </div>`;
+  if(!lista.length) return filtros + `<div class="empty-note">${fichajes.length ? L('Ningún fichaje con este filtro.', 'Cap fitxatge amb aquest filtre.') : t.sinFichajes}</div>`;
+  let diaAnt = '';
+  return filtros + lista.map(f => {
+    const dia = isoLocal(new Date(f.entrada)), cab = dia !== diaAnt ? `<div class="fich-dia">${diaFmt(f.entrada)}</div>` : ''; diaAnt = dia;
+    return `${cab}<div class="fich-fila${esIncidencia(f) ? ' inc' : ''}">
+      <div class="fich-quien"><strong>${escAttr(nombreTecnico(f.tecnico_email))}</strong><small>${escAttr(f.tecnico_email)}</small></div>
+      <div class="fich-tramo"><span class="fich-h">${L('Entrada', 'Entrada')} <b>${horaFmt(f.entrada)}</b></span>${estado(f, 'entrada')}</div>
+      <div class="fich-tramo">${f.salida ? `<span class="fich-h">${L('Salida', 'Sortida')} <b>${horaFmt(f.salida)}</b></span>${f.cerrado_automaticamente ? '' : estado(f, 'salida')}` : `<span class="chip gold">${t.enCurso}</span>`}</div>
+      <div class="fich-dur">${f.salida ? duracionFmt(f.entrada, f.salida) : ''}
+        ${f.cerrado_automaticamente ? (FICHAJE_MARCA_REVISADO.test(f.nota || '') ? `<span class="chip gold" title="${escAttr(f.nota||'')}">✍️ ${L('Salida indicada por la persona', 'Sortida indicada per la persona')}</span>` : `<span class="chip alert" title="${escAttr(f.nota||'')}">⚠️ ${L('Salida olvidada', 'Sortida oblidada')}</span>`) : ''}</div>
+      <div class="fich-acc2">
+        ${f.cerrado_automaticamente && f.salida ? `<button class="link-btn" style="font-size:11.5px;" onclick="fichajeCorregirAdmin('${f.id}', '${f.entrada}')">✏️ ${L('Corregir salida', 'Corregir sortida')}</button>` : ''}
+        <button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="borrarFichaje('${f.id}')">${L('Borrar', 'Esborrar')}</button>
+      </div>
+    </div>`; }).join('');
+}
+function fichRepintar(){ const el = document.getElementById('admin-fichajes-lista'); if(el) el.innerHTML = renderFilasFichajes(__adminFichajesTodos); }
+// Ajustes de la oficina: radio, fichar fuera y ordenadores de la oficina
+async function fichAjustesPintar(){
+  const host = document.getElementById('fich-ajustes'); if(!host) return;
+  const ca = LANG_I === 'ca', L = (es, cc) => ca ? cc : es;
+  const cfg = window.__configOficina || {};
+  const sqlOk = 'radio_metros' in cfg;
+  let puestos = [], puestosOk = true;
+  try { const r = await sb.from('puestos_oficina').select('*').order('creado_en', { ascending: true }); if(r.error) puestosOk = false; else puestos = r.data || []; } catch(e){ puestosOk = false; }
+  const tk = puestoToken(), este = puestos.find(p => p.token === tk && p.activo !== false);
+  if(!sqlOk || !puestosOk){ host.innerHTML = `<div class="info-box info-box-gold" style="margin-top:12px;">${L('Para el fichaje preciso (radio, fichar fuera con motivo y ordenadores de la oficina) falta ejecutar el SQL 77 en Supabase.', 'Per al fitxatge precís (radi, fitxar fora amb motiu i ordinadors de l\'oficina) cal executar l\'SQL 77 a Supabase.')}</div>`; return; }
+  host.innerHTML = `
+    <div class="fich-aj">
+      <h4>⚙️ ${L('Normas del fichaje', 'Normes del fitxatge')}</h4>
+      <label>${L('Se ficha «en la oficina» a menos de', 'Es fitxa «a l\'oficina» a menys de')} <input type="number" id="fich-radio" min="30" max="1000" step="10" value="${cfg.radio_metros || 100}" style="width:90px;"> m</label>
+      <label class="fich-chk"><input type="checkbox" id="fich-fuera" ${cfg.permitir_fuera !== false ? 'checked' : ''}> ${L('Se puede fichar fuera de la oficina indicando el motivo (visita, acompañamiento, gestión…)', 'Es pot fitxar fora de l\'oficina indicant el motiu (visita, acompanyament, gestió…)')}</label>
+      <button class="primary-btn" style="width:auto;margin:6px 0 0;" onclick="fichAjustesGuardar()">💾 ${L('Guardar normas', 'Desar normes')}</button>
+      <p class="subtle" style="font-size:12px;margin:8px 0 0;">${cfg.precision_m != null ? L(`El punto de la oficina se guardó con una precisión de ± ${cfg.precision_m} m.`, `El punt de l'oficina es va desar amb una precisió de ± ${cfg.precision_m} m.`) + ' ' : ''}${L('Para que salga bien, guárdalo desde el MÓVIL dentro de la oficina (no desde un ordenador).', 'Perquè surti bé, desa\'l des del MÒBIL dins de l\'oficina (no des d\'un ordinador).')}</p>
+    </div>
+    <div class="fich-aj">
+      <h4>💻 ${L('Ordenadores de la oficina', 'Ordinadors de l\'oficina')}</h4>
+      <p class="subtle" style="font-size:12.5px;margin:0 0 8px;">${L('Los ordenadores fijos no tienen GPS y su ubicación sale a cientos de metros (por eso salen fichajes a 592 m o sin ubicación). Desde un ordenador marcado aquí se ficha «en la oficina» sin pedir la ubicación. Márcalo desde ESE ordenador.', 'Els ordinadors fixos no tenen GPS i la seva ubicació surt a centenars de metres (per això surten fitxatges a 592 m o sense ubicació). Des d\'un ordinador marcat aquí es fitxa «a l\'oficina» sense demanar la ubicació. Marca\'l des d\'AQUELL ordinador.')}</p>
+      ${puestos.length ? puestos.map(p => `<div class="panel-stat-row"><span>${p.activo === false ? '⏸️' : '💻'} <strong>${escAttr(p.nombre)}</strong>${p.token === tk ? ` <span class="chip good">${L('este ordenador', 'aquest ordinador')}</span>` : ''}<br><small class="subtle" style="margin:0;">${L('alta', 'alta')}: ${new Date(p.creado_en).toLocaleDateString(TI[LANG_I].localeFecha)}${p.creado_por_email ? ' · ' + escAttr(nombreTecnico(p.creado_por_email)) : ''}</small></span>
+        <span><button class="link-btn" style="font-size:12px;" onclick="puestoActivar(${p.id}, ${p.activo === false})">${p.activo === false ? L('Activar', 'Activar') : L('Pausar', 'Pausar')}</button> <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="puestoBorrar(${p.id})">${L('Quitar', 'Treure')}</button></span></div>`).join('') : `<div class="empty-note">${L('Todavía no hay ningún ordenador marcado.', 'Encara no hi ha cap ordinador marcat.')}</div>`}
+      ${este ? `<p style="margin:10px 0 0;font-size:13px;">✅ ${L('Este ordenador ya es de la oficina', 'Aquest ordinador ja és de l\'oficina')}: <strong>${escAttr(este.nombre)}</strong></p>`
+        : `<button class="primary-btn" style="width:auto;margin:10px 0 0;" onclick="puestoMarcarEste()">💻 ${L('Marcar ESTE ordenador como de la oficina', 'Marcar AQUEST ordinador com a de l\'oficina')}</button>`}
+    </div>`;
+}
+async function fichAjustesGuardar(){
+  const L = (es, cc) => LANG_I === 'ca' ? cc : es;
+  const radio = Math.max(30, Math.min(1000, parseInt(document.getElementById('fich-radio').value, 10) || 100));
+  const fuera = document.getElementById('fich-fuera').checked;
+  const { error } = await sb.from('configuracion_oficina').update({ radio_metros: radio, permitir_fuera: fuera }).eq('id', 1);
+  if(error){ alert(error.message); return; }
+  window.__configOficina = Object.assign(window.__configOficina || {}, { radio_metros: radio, permitir_fuera: fuera });
+  alert(L('Normas guardadas.', 'Normes desades.')); fichRepintar();
+}
+async function puestoMarcarEste(){
+  const L = (es, cc) => LANG_I === 'ca' ? cc : es;
+  const nombre = prompt(L('Nombre de este ordenador (por ejemplo: Recepción, Sala 2 · PC 1):', 'Nom d\'aquest ordinador (per exemple: Recepció, Sala 2 · PC 1):'), '');
+  if(nombre === null || !nombre.trim()) return;
+  const tk = (crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2))) + '-' + Math.random().toString(36).slice(2, 8);
+  const { error } = await sb.from('puestos_oficina').insert({ token: tk, nombre: nombre.trim().slice(0, 60), creado_por_email: CURRENT_USER.email });
+  if(error){ alert(error.message); return; }
+  try { localStorage.setItem('logos_puesto_oficina', tk); } catch(e){ alert(L('Este navegador no deja guardar datos: no se puede marcar.', 'Aquest navegador no deixa desar dades: no es pot marcar.')); return; }
+  alert(L('✅ Listo. Desde este ordenador (y este navegador) se fichará «en la oficina». Si se borran los datos del navegador, habrá que marcarlo otra vez.', '✅ Fet. Des d\'aquest ordinador (i aquest navegador) es fitxarà «a l\'oficina». Si s\'esborren les dades del navegador, caldrà marcar-lo una altra vegada.'));
+  fichAjustesPintar();
+}
+async function puestoActivar(id, activar){ const { error } = await sb.from('puestos_oficina').update({ activo: !!activar }).eq('id', id); if(error){ alert(error.message); return; } fichAjustesPintar(); }
+async function puestoBorrar(id){
+  if(!confirm(acL('¿Quitar este ordenador de la lista? Desde él ya no se fichará «en la oficina».', 'Treure aquest ordinador de la llista? Des d\'aquest ja no es fitxarà «a l\'oficina».'))) return;
+  const { error } = await sb.from('puestos_oficina').delete().eq('id', id); if(error){ alert(error.message); return; } fichAjustesPintar();
 }
 
 async function fichajeCorregirAdmin(id, entradaIso){
