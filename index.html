@@ -4093,6 +4093,7 @@ async function entrarIntranet(){
   if(window.__usuarioYaEntro === CURRENT_USER.id) return;
   if(window.__entrando) return; window.__entrando = true;
   try {
+    if(soloOrdenadorBloquea()){ soloOrdenadorPintar(); return; }   // móvil/tableta: solo administración
     const ok = await mfaPuerta();
     if(!ok) return;                         // se queda en la pantalla del código o de configurar la app
     window.__usuarioYaEntro = CURRENT_USER.id;
@@ -4584,7 +4585,7 @@ function fichajePintarBanner(){
   b.classList.toggle('tarde', !!pasado);
   b.innerHTML = `<span class="fb-largo">${pasado ? `⏰ ${acL('Tu horario terminó a las', 'El teu horari va acabar a les')} <strong>${hFin}</strong>. ${acL('¿Te has olvidado de fichar la salida?', 'T\'has oblidat de fitxar la sortida?')}` : `🔴 ${acL('Tienes la entrada fichada desde las', 'Tens l\'entrada fitxada des de les')} <strong>${hora}</strong>. ${acL('Ficha la salida antes de cerrar el ordenador.', 'Fitxa la sortida abans de tancar l\'ordinador.')}`}</span>
     <span class="fb-corto">${pasado ? `⏰ ${acL('Horario acabado', 'Horari acabat')} (${hFin})` : `🔴 ${acL('Entrada', 'Entrada')} ${hora}`}</span>
-    ${('entrada_lat' in f) ? (() => { const l = fichLugarTxt(f.entrada_lat, f.entrada_lng); return `<span class="fb-lugar fb-largo" title="${acL('Desde dónde has fichado la entrada', 'Des d\'on has fitxat l\'entrada')}">${l.i} ${escAttr(l.t)}</span>`; })() : ''}
+    ${('entrada_lat' in f) ? (() => { const l = fichLugarTxt(f.entrada_lat, f.entrada_lng, f.entrada_precision, (f.entrada_modo === 'puesto' || f.entrada_modo === 'validado') ? (f.entrada_puesto || acL('ordenador de la oficina', 'ordinador de l\'oficina')) : null); return `<span class="fb-lugar fb-largo" title="${acL('Desde dónde has fichado la entrada', 'Des d\'on has fitxat l\'entrada')}">${l.i} ${escAttr(l.t)}</span>`; })() : ''}
     ${salaFaltaMarcar() && !pasado ? `<span class="fb-largo">📍 ${acL('Aún no has marcado en qué sala estás.', 'Encara no has marcat a quina sala ets.')}</span><button class="fb-sala" onclick="salaElegirRapido()">📍 ${acL('Elegir sala', 'Triar sala')}</button>` : ''}
     <button onclick="ficharSalidaDesdeAviso()">⏹ ${acL('Fichar salida', 'Fitxar sortida')}</button>`;
 }
@@ -4592,7 +4593,7 @@ function fichajePintarBanner(){
 // (v224) Regla de oro para todo el personal, también administración: sin fichar la entrada no se trabaja en la intranet.
 // Solo no se aplica a Soporte técnico, a los docentes externos y en «Ver como». Si la base de datos no responde, no se bloquea a nadie.
 function bloqueoMotivo(){
-  if(!CURRENT_USER || !IS_STAFF || (window.__staffYo || {}).es_soporte || IS_DOCENTE || (typeof VER_COMO !== 'undefined' && VER_COMO) || !window.__fichajeCargado || window.__fichajeError) return null;   // en «Ver como» la administración solo mira: no se le pide fichar
+  if(!CURRENT_USER || !IS_STAFF || IS_ADMIN || (window.__staffYo || {}).es_soporte || IS_DOCENTE || (typeof VER_COMO !== 'undefined' && VER_COMO) || !window.__fichajeCargado || window.__fichajeError) return null;   // en «Ver como» la administración solo mira: no se le pide fichar
   if(!window.__fichajeAbierto) return 'entrada';
   if(!window.__salaMarcadaTurno && !salaHoyFuera()) return 'sala';
   return null;
@@ -18200,7 +18201,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-05 · v231 (cambiar la contraseña con la app de verificación: pide el código; fichaje: ubicación más precisa, cuenta el margen de error y reconoce los ordenadores de la oficina)';
+const APP_VERSION_INTRANET = '2026-11-05 · v233 (aviso «¿Has olvidado guardar?» al salir de la ficha de atención o de la actuación; administración sin fichar; solo ordenador; guía «Mi jornada»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -24630,5 +24631,268 @@ window.LOGOSNAV_APP = {
 })();
 
 </script>
+
+<script>
+// ================= SOLO DESDE EL ORDENADOR (v232) =================
+// La intranet se usa desde el ordenador. En el móvil o la tableta solo pueden entrar la administración y Soporte.
+function esMovilOTableta(){
+  try {
+    const ua = navigator.userAgent || '';
+    if(/Android|iPhone|iPod|iPad|Mobile|Silk|Kindle|BlackBerry|Opera Mini|IEMobile/i.test(ua)) return true;
+    if(/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return true;          // iPad que se presenta como Mac
+    const fino = window.matchMedia && matchMedia('(any-pointer: fine)').matches;   // ratón o panel táctil del portátil
+    return !fino && Math.min(screen.width, screen.height) < 820;
+  } catch(e){ return false; }
+}
+function soloOrdenadorBloquea(){
+  if(!CURRENT_USER || !IS_STAFF) return false;
+  if(IS_ADMIN || (window.__staffYo || {}).es_soporte) return false;
+  return esMovilOTableta();
+}
+function soloOrdenadorPintar(){
+  try { showScreen('login'); toggleSidebarVisible(false); } catch(e){}
+  const c = document.getElementById('login-content'); if(!c) return;
+  const nombre = String(CURRENT_USER_NOMBRE || (CURRENT_USER && CURRENT_USER.email) || '').split(/[ @]/)[0];
+  c.innerHTML = `<div class="mfa"><div class="mfa-ic">💻</div>
+    <h3>${acL('La intranet se usa desde el ordenador', 'La intranet es fa servir des de l\'ordinador')}</h3>
+    <p>${acL(`Hola, ${escAttr(nombre)}. Logos Intranet solo funciona en los <strong>ordenadores de la oficina</strong>. En el móvil o la tableta solo puede entrar la administración.`, `Hola, ${escAttr(nombre)}. Logos Intranet només funciona als <strong>ordinadors de l'oficina</strong>. Al mòbil o a la tauleta només hi pot entrar l'administració.`)}</p>
+    <p class="mfa-pie">${acL('Si necesitas algo urgente, llama a la oficina o habla con la administración.', 'Si necessites alguna cosa urgent, truca a l\'oficina o parla amb l\'administració.')}</p>
+    <button class="primary-btn" onclick="soloOrdenadorSalir()">${acL('Salir', 'Sortir')}</button></div>`;
+  document.body.classList.add('solo-ordenador');
+  setTimeout(() => { try { c.scrollIntoView({ block: 'start' }); } catch(e){} }, 50);
+}
+async function soloOrdenadorSalir(){ try { await sb.auth.signOut(); } catch(e){} location.reload(); }
+
+// ================= MI JORNADA: guía de trabajo paso a paso (v232) =================
+// Botón fijo «🧭 Mi jornada» con los pasos del día. Cada paso se marca solo cuando se hace, y «Llévame» lleva
+// a la pantalla y señala el botón. Se guarda por persona y por día en este navegador.
+const JOR_PASOS = [
+  { id: 'entrar',  i: '🔑', es: 'Entrar en la intranet', ca: 'Entrar a la intranet', d_es: 'Ya está: has entrado con tu correo.', d_ca: 'Fet: has entrat amb el teu correu.' },
+  { id: 'fichar',  i: '⏱️', es: 'Fichar la entrada', ca: 'Fitxar l\'entrada', d_es: 'Sin fichar no se puede trabajar en la intranet.', d_ca: 'Sense fitxar no es pot treballar a la intranet.' },
+  { id: 'alertas', i: '🔔', es: 'Mirar las alertas', ca: 'Mirar les alertes', d_es: 'En «Inicio», la campana 🔔: personas que piden ayuda o cita.', d_ca: 'A «Inici», la campana 🔔: persones que demanen ajuda o cita.' },
+  { id: 'ficha',   i: '👤', es: 'Abrir la ficha de la persona', ca: 'Obrir la fitxa de la persona', d_es: '«👥 Personas usuarias» → busca por nombre o teléfono → ábrela.', d_ca: '«👥 Persones usuàries» → cerca pel nom o el telèfon → obre-la.' },
+  { id: 'atencion',i: '📝', es: 'Rellenar la ficha de atención y GUARDAR', ca: 'Omplir la fitxa d\'atenció i DESAR', d_es: 'En la ficha, lado izquierdo. Al acabar, pulsa «💾 Guardar».', d_ca: 'A la fitxa, a l\'esquerra. En acabar, prem «💾 Desar».' },
+  { id: 'actuacion',i: '🗂️', es: 'Registrar la actuación y GUARDAR', ca: 'Registrar l\'actuació i DESAR', d_es: 'En la ficha, lado derecho «Actuaciones» → «+ Nueva actuación» → «💾 Guardar».', d_ca: 'A la fitxa, a la dreta «Actuacions» → «+ Nova actuació» → «💾 Desar».' },
+  { id: 'salida',  i: '🚪', es: 'Antes de irte: fichar la salida', ca: 'Abans de marxar: fitxar la sortida', d_es: 'Con todo guardado, ficha la salida antes de apagar el ordenador.', d_ca: 'Amb tot desat, fitxa la sortida abans d\'apagar l\'ordinador.' }
+];
+function jorClave(){ return 'logos_jornada_' + (CURRENT_USER ? CURRENT_USER.id : '') + '_' + isoLocal(); }
+function jorLeer(){ try { return JSON.parse(localStorage.getItem(jorClave()) || '{}') || {}; } catch(e){ return {}; } }
+function jorMarcar(id){
+  if(!CURRENT_USER) return;
+  const h = jorLeer(); if(h[id]) return;
+  h[id] = Date.now(); try { localStorage.setItem(jorClave(), JSON.stringify(h)); } catch(e){}
+  jorPintarBoton(); if(document.getElementById('jor-panel')) jorAbrir(true);
+}
+function jorHecho(id, h){
+  if(id === 'entrar') return true;
+  if(id === 'fichar') return !!(window.__fichajeAbierto || h.fichar || h.salida);
+  return !!h[id];
+}
+function jorVisible(){ return !!(CURRENT_USER && IS_STAFF && !IS_DOCENTE && document.body && !document.getElementById('screen-login').classList.contains('active')); }
+function jorPintarBoton(){
+  let b = document.getElementById('jor-btn');
+  if(!jorVisible()){ if(b) b.remove(); const pn = document.getElementById('jor-panel'); if(pn) pn.remove(); return; }
+  const h = jorLeer(), n = JOR_PASOS.filter(x => jorHecho(x.id, h)).length;
+  if(!b){ b = document.createElement('button'); b.id = 'jor-btn'; b.className = 'jor-btn'; b.onclick = () => document.getElementById('jor-panel') ? jorCerrar() : jorAbrir(); document.body.appendChild(b); }
+  const sig = JOR_PASOS.find(x => !jorHecho(x.id, h));
+  b.innerHTML = `🧭 <span>${acL('Mi jornada', 'La meva jornada')}</span> <b>${n}/${JOR_PASOS.length}</b>`;
+  b.title = sig ? acL('Siguiente: ', 'Següent: ') + (LANG_I === 'ca' ? sig.ca : sig.es) : acL('¡Todo hecho!', 'Tot fet!');
+  b.classList.toggle('completo', !sig);
+}
+function jorAbrir(repintar){
+  const h = jorLeer(), ca = LANG_I === 'ca';
+  const sig = JOR_PASOS.find(x => !jorHecho(x.id, h));
+  let pn = document.getElementById('jor-panel');
+  if(!pn){ if(repintar) return; pn = document.createElement('div'); pn.id = 'jor-panel'; pn.className = 'jor-panel'; document.body.appendChild(pn); }
+  pn.innerHTML = `<div class="jor-cab"><strong>🧭 ${acL('Mi jornada en la intranet', 'La meva jornada a la intranet')}</strong><button class="jor-x" onclick="jorCerrar()" aria-label="${acL('Cerrar', 'Tancar')}">✕</button></div>
+    <p class="jor-sub">${acL('Sigue los pasos en orden. Se marcan solos cuando los haces. Si te pierdes, pulsa «Llévame».', 'Segueix els passos en ordre. Es marquen sols quan els fas. Si et perds, prem «Porta-m\'hi».')}</p>
+    <ol class="jor-lista">${JOR_PASOS.map((x, k) => { const ok = jorHecho(x.id, h), act = sig && sig.id === x.id;
+      return `<li class="${ok ? 'ok' : ''}${act ? ' act' : ''}"><span class="jor-n">${ok ? '✓' : k + 1}</span><div><b>${x.i} ${ca ? x.ca : x.es}</b><small>${ca ? x.d_ca : x.d_es}</small>
+        ${!ok && x.id !== 'entrar' ? `<button class="jor-ir" onclick="jorIr('${x.id}')">${acL('Llévame', 'Porta-m\'hi')} →</button>` : ''}</div></li>`; }).join('')}</ol>
+    <div class="jor-pie">💡 ${acL('Regla de oro: <strong>nada se guarda solo</strong>. Antes de cambiar de pantalla o de persona, pulsa siempre «💾 Guardar».', 'Regla d\'or: <strong>res no es desa sol</strong>. Abans de canviar de pantalla o de persona, prem sempre «💾 Desar».')}</div>`;
+}
+function jorCerrar(){ const pn = document.getElementById('jor-panel'); if(pn) pn.remove(); }
+function jorSenalar(sel, intentos){
+  const el = document.querySelector(sel);
+  if(!el || !el.offsetParent){ if((intentos || 0) < 12) setTimeout(() => jorSenalar(sel, (intentos || 0) + 1), 250); return; }
+  try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e){}
+  el.classList.add('jor-senal'); setTimeout(() => el.classList.remove('jor-senal'), 4500);
+}
+function jorMenu(target){ const b = document.querySelector('.sidebar nav button[data-target="' + target + '"]'); if(b) b.click(); }
+function jorIr(id){
+  jorCerrar();
+  if(id === 'fichar'){ try { bloqueoPintar(); } catch(e){} jorSenalar('#bloqueo-ov button, [onclick^="ficharEntrada"]'); return; }
+  if(id === 'alertas'){ jorMenu('panel'); setTimeout(() => { try { pgBandeja('alertas'); } catch(e){} jorSenalar('.sn-ic[data-b="alertas"]'); }, 600); return; }
+  if(id === 'ficha'){ jorMenu('personas'); jorSenalar('#screen-personas input[type="search"], #screen-personas input'); return; }
+  if(id === 'atencion' || id === 'actuacion'){
+    const enFicha = document.getElementById('screen-persona') && document.getElementById('screen-persona').classList.contains('active');
+    if(!enFicha){ alert(acL('Primero abre la ficha de la persona (paso 4).', 'Primer obre la fitxa de la persona (pas 4).')); jorIr('ficha'); return; }
+    jorSenalar(id === 'atencion' ? '#screen-persona [data-guardar="atencion"], #screen-persona .m4-split > :first-child' : '#screen-persona [onclick^="m3NuevaActuacion"]');
+    return;
+  }
+  if(id === 'salida'){ jorSenalar('[onclick^="ficharSalida"]'); }
+}
+// Se marcan solos: se «envuelven» las funciones de cada paso (si dentro sale un aviso de error, no cuenta)
+function jorEnvolver(nombre, paso, conAviso){
+  const orig = window[nombre]; if(typeof orig !== 'function' || orig.__jor) return;
+  const w = async function(){
+    let avisos = 0; const al = window.alert;
+    if(conAviso) window.alert = function(){ avisos++; return al.apply(this, arguments); };
+    try { const r = await orig.apply(this, arguments); if(!conAviso || !avisos) jorMarcar(paso); return r; }
+    finally { if(conAviso) window.alert = al; }
+  };
+  w.__jor = true; window[nombre] = w;
+}
+jorEnvolver('pgBandeja', 'alertas', false);
+jorEnvolver('verPersonaStaff', 'ficha', false);
+jorEnvolver('guardarAtencion', 'atencion', true);
+jorEnvolver('m3GuardarActuacion', 'actuacion', true);
+// fichar entrada / salida: se mira el estado tras refrescar el fichaje
+(function(){
+  const o = window.fichajeRefrescar; if(typeof o !== 'function') return;
+  window.fichajeRefrescar = async function(){ const r = await o.apply(this, arguments); try { if(window.__fichajeAbierto) jorMarcar('fichar'); jorPintarBoton(); } catch(e){} return r; };
+  const s = window.ficharSalida;
+  if(typeof s === 'function') window.ficharSalida = async function(){ const r = await s.apply(this, arguments); try { if(!window.__fichajeAbierto) jorMarcar('salida'); } catch(e){} return r; };
+})();
+setInterval(() => { try { jorPintarBoton(); } catch(e){} }, 3000);
+</script>
+<style>
+.solo-ordenador .mobile-menu-toggle,.solo-ordenador .sidebar,.solo-ordenador .jor-btn{display:none !important;}
+.jor-btn{position:fixed;left:252px;bottom:18px;z-index:9990;display:flex;align-items:center;gap:7px;background:linear-gradient(90deg,#2463B8,#1B4E95);color:#fff;border:2px solid #F2BC2C;border-radius:999px;padding:10px 16px;font-weight:800;font-size:14.5px;cursor:pointer;box-shadow:0 8px 22px -8px rgba(20,40,90,.6);}
+.jor-btn b{background:#F2BC2C;color:#1B4E95;border-radius:999px;padding:1px 8px;font-size:12.5px;}
+.jor-btn.completo{background:linear-gradient(90deg,#1F8A4C,#176B3B);}
+.jor-panel{position:fixed;left:252px;bottom:72px;z-index:9991;width:min(380px,calc(100vw - 36px));max-height:calc(100vh - 110px);overflow-y:auto;background:#fff;border:1px solid #D9DFE8;border-radius:16px;box-shadow:0 18px 44px -12px rgba(20,30,60,.45);padding:14px 16px;color:#1B2333;}
+.jor-cab{display:flex;justify-content:space-between;align-items:center;font-size:16px;}
+.jor-x{border:none;background:#EEF1F6;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px;}
+.jor-sub{font-size:12.8px;color:#5B6478;margin:6px 0 10px;}
+.jor-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+.jor-lista li{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:12px;border:1px solid #E6EAF1;}
+.jor-lista li b{display:block;font-size:14px;}
+.jor-lista li small{display:block;font-size:12.3px;color:#5B6478;margin-top:2px;line-height:1.4;}
+.jor-lista li.ok{background:#F1FAF4;border-color:#C9E9D4;}
+.jor-lista li.ok b{color:#1F6B3E;}
+.jor-lista li.act{border:2px solid #2463B8;background:#F3F7FE;}
+.jor-n{flex:0 0 26px;height:26px;border-radius:50%;background:#E3E8F1;color:#1B4E95;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.jor-lista li.ok .jor-n{background:#1F8A4C;color:#fff;}
+.jor-lista li.act .jor-n{background:#2463B8;color:#fff;}
+.jor-ir{margin-top:6px;border:none;background:#2463B8;color:#fff;border-radius:8px;padding:5px 11px;font-weight:700;font-size:12.5px;cursor:pointer;}
+.jor-pie{margin-top:10px;font-size:12.5px;background:#FFF8E6;border:1px solid #F2D58A;border-radius:10px;padding:8px 10px;color:#4B3A10;}
+.jor-senal{outline:3px solid #F2BC2C !important;outline-offset:3px;box-shadow:0 0 0 8px rgba(242,188,44,.28) !important;animation:jorLatido 1s ease-in-out 4;border-radius:10px;}
+@keyframes jorLatido{50%{box-shadow:0 0 0 14px rgba(242,188,44,.08) !important;}}
+@media (max-width:900px){ .jor-btn{left:12px;bottom:84px;padding:8px 12px;font-size:13px;} .jor-panel{left:12px;bottom:134px;} }
+@media print{ .jor-btn,.jor-panel{display:none !important;} }
+</style>
+
+<script>
+// ================= AVISO «NO HAS GUARDADO» en la ficha de atención y en la actuación (v233) =================
+// Si se escribe algo en la ficha (atención) o en el panel de la actuación y se intenta salir sin pulsar «Guardar»,
+// sale un aviso con dos opciones: volver a guardar o salir sin guardar.
+window.__sinGuardar = { atencion: false, actuacion: false };
+let __avisosN = 0;
+(function(){ const al = window.alert; window.alert = function(){ __avisosN++; return al.apply(this, arguments); }; })();
+function sgZona(el){
+  if(!el || !el.closest) return null;
+  if(el.closest('.m3-panel')) return 'actuacion';
+  if(el.closest('#screen-persona, #screen-atencion')) return 'atencion';
+  return null;
+}
+function sgIgnorar(el){
+  const id = (el.id || '') + ' ' + (el.name || '');
+  return el.type === 'search' || /buscar|busca|filtro|filtre|search/i.test(id) || el.hasAttribute('data-no-sucio');
+}
+['input', 'change'].forEach(ev => document.addEventListener(ev, e => {
+  const el = e.target; if(!el || !/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || sgIgnorar(el)) return;
+  const z = sgZona(el); if(z) window.__sinGuardar[z] = true;
+}, true));
+// botones de opción del formulario (resultado, tipo…) cuentan como cambio
+document.addEventListener('click', e => {
+  const b = e.target && e.target.closest && e.target.closest('button'); if(!b) return;
+  const z = sgZona(b); if(!z) return;
+  const txt = b.textContent || '';
+  if(/Guardar|Desar|💾/.test(txt) || b.hasAttribute('data-guardar')){
+    // al guardar: si en 2 s no ha salido ningún aviso de error, se da por guardado
+    const n0 = __avisosN; window.__sgGuardando = true;
+    setTimeout(() => { window.__sgGuardando = false; if(__avisosN === n0) window.__sinGuardar[z] = false; }, 2000);
+    return;
+  }
+  if(b.classList.contains('resultado-btn') || b.closest('#m3-tipos')) window.__sinGuardar[z] = true;
+}, true);
+function sgHay(zona){ return zona ? window.__sinGuardar[zona] : (window.__sinGuardar.atencion || window.__sinGuardar.actuacion); }
+function sgLimpiar(zona){ if(zona) window.__sinGuardar[zona] = false; else window.__sinGuardar = { atencion: false, actuacion: false }; }
+// Ventana del aviso. continuar() = lo que se iba a hacer (salir)
+function sgAviso(zona, continuar){
+  const ca = LANG_I === 'ca', z = zona || (window.__sinGuardar.actuacion ? 'actuacion' : 'atencion');
+  const que = z === 'actuacion' ? acL('la actuación', 'l\'actuació') : acL('la ficha de atención', 'la fitxa d\'atenció');
+  let ov = document.getElementById('sg-ov'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'sg-ov'; ov.className = 'sg-ov';
+  ov.innerHTML = `<div class="sg-caja" role="alertdialog" aria-modal="true">
+    <div class="sg-ic">⚠️</div>
+    <h3>${acL('¿Has olvidado guardar?', 'Has oblidat desar?')}</h3>
+    <p>${acL(`Has escrito en <strong>${que}</strong> y todavía <strong>no lo has guardado</strong>. Si sales ahora, se perderá.`, `Has escrit a <strong>${que}</strong> i encara <strong>no ho has desat</strong>. Si surts ara, es perdrà.`)}</p>
+    <button class="primary-btn" id="sg-volver">💾 ${acL('Volver y guardar', 'Tornar i desar')}</button>
+    <button class="link-btn sg-salir" id="sg-salir">${acL('Salir sin guardar', 'Sortir sense desar')}</button></div>`;
+  document.body.appendChild(ov);
+  document.getElementById('sg-volver').onclick = () => {
+    ov.remove();
+    const sel = z === 'actuacion' ? '.m3-panel [onclick*="m3GuardarActuacion"], .m3-panel .primary-btn' : '#screen-persona [data-guardar="atencion"], #screen-atencion [data-guardar="atencion"], #at-save-btn';
+    try { jorSenalar(sel); } catch(e){ const b = document.querySelector(sel); if(b) b.scrollIntoView({ block: 'center' }); }
+  };
+  document.getElementById('sg-salir').onclick = () => { ov.remove(); sgLimpiar(z === 'actuacion' ? 'actuacion' : null); continuar(); };
+  setTimeout(() => { const b = document.getElementById('sg-volver'); if(b) b.focus(); }, 30);
+}
+// Salir de la pantalla de la ficha
+(function(){
+  const o = window.showScreen; if(typeof o !== 'function') return;
+  window.showScreen = function(name){
+    const act = document.querySelector('.screen.active'), desde = act ? act.id : '';
+    const saliendo = (desde === 'screen-persona' || desde === 'screen-atencion') && ('screen-' + name) !== desde;
+    if(saliendo && sgHay() && !window.__sgGuardando && name !== 'login'){
+      const args = arguments, self = this;
+      sgAviso(null, () => o.apply(self, args));
+      return;
+    }
+    if(saliendo) sgLimpiar();
+    return o.apply(this, arguments);
+  };
+})();
+// Cerrar el panel de la actuación
+(function(){
+  const o = window.m3CerrarActuacion; if(typeof o !== 'function') return;
+  window.m3CerrarActuacion = function(){
+    if(sgHay('actuacion') && !window.__sgGuardando){ const args = arguments, self = this; sgAviso('actuacion', () => o.apply(self, args)); return; }
+    sgLimpiar('actuacion'); return o.apply(this, arguments);
+  };
+})();
+// Abrir otra persona con cambios sin guardar
+(function(){
+  const o = window.verPersonaStaff; if(typeof o !== 'function') return;
+  window.verPersonaStaff = function(id){
+    const otra = String(id) !== String(window.__sgPersona || '');
+    if(otra && sgHay() && !window.__sgGuardando){ const args = arguments, self = this; return new Promise(res => sgAviso(null, () => res(o.apply(self, args)))); }
+    if(otra) sgLimpiar();
+    window.__sgPersona = id;
+    return o.apply(this, arguments);
+  };
+})();
+// Guardado correcto: se limpia
+['guardarAtencion', 'm3GuardarActuacion'].forEach(nombre => {
+  const o = window[nombre]; if(typeof o !== 'function') return;
+  const zona = nombre === 'guardarAtencion' ? 'atencion' : 'actuacion';
+  const w = async function(){ const n0 = __avisosN; window.__sgGuardando = true;
+    try { const r = await o.apply(this, arguments); if(__avisosN === n0) sgLimpiar(zona); return r; } finally { window.__sgGuardando = false; } };
+  Object.assign(w, o); window[nombre] = w;
+});
+// Cerrar la pestaña o recargar
+window.addEventListener('beforeunload', e => { if(sgHay()){ e.preventDefault(); e.returnValue = ''; return ''; } });
+</script>
+<style>
+.sg-ov{position:fixed;inset:0;z-index:10050;background:rgba(15,20,35,.55);display:flex;align-items:center;justify-content:center;padding:16px;}
+.sg-caja{background:#fff;border-radius:18px;max-width:420px;width:100%;padding:22px 22px 14px;text-align:center;box-shadow:0 24px 60px -16px rgba(0,0,0,.5);border-top:6px solid #F2BC2C;}
+.sg-ic{font-size:40px;line-height:1;}
+.sg-caja h3{margin:8px 0 6px;font-size:20px;color:#1B2333;}
+.sg-caja p{margin:0 0 14px;font-size:14.5px;color:#3B4456;line-height:1.5;}
+.sg-caja .primary-btn{width:100%;margin:0;}
+.sg-salir{display:block;margin:10px auto 0;color:#B42318 !important;font-weight:700;}
+</style>
 </body>
 </html>
