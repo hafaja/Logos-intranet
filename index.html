@@ -1901,6 +1901,13 @@ body.m3-sin-scroll{overflow:hidden;}
 .blog-prev-ov{position:fixed;inset:0;z-index:2147483000;background:rgba(15,23,42,.55);display:flex;justify-content:center;overflow:auto;padding:18px;}
 .blog-prev-box{background:#fff;border-radius:16px;max-width:860px;width:100%;margin:auto 0;padding:22px 26px 34px;position:relative;}
 .blog-prev-box > .link-btn{position:absolute;right:14px;top:10px;}
+
+.otros-tec{border:1px dashed #B9CCF5;border-radius:12px;padding:8px 12px;background:#F6F9FF;}
+.otros-tec summary{cursor:pointer;font-weight:700;color:#1B4E95;font-size:14px;}
+.otros-tec-n{color:#1F8A4C;}
+.otros-tec-l{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:4px 12px;margin:8px 0 4px;}
+.otros-tec-l label{display:flex;gap:6px;align-items:center;font-size:13.5px;font-weight:500;}
+.otros-tec-ayuda{color:#5B6478;font-size:12px;}
 </style>
 <style>
   /* ===== LogosNav: ruta, favoritas, buscador (Ctrl+K), «Mis páginas» y «Sigue con…» ===== */
@@ -7102,6 +7109,7 @@ function renderAtencionForm(opts){
       <label>Duración de esta atención (minutos, opcional)</label>
       <input type="number" id="at-duracion" min="1" placeholder="Ej: 20">
     </div>
+    ${otrosTecHtml('at')}
 
     ${secAt('💶 Prestaciones económicas básicas', checkboxGroup('at-prestaciones', PRESTACIONES_OPTS), 'at-prestaciones')}
     ${secAt('🧾 Trámites / proyectos dentro de Bretxa Logos', checkboxGroup('at-tramites', TRAMITES_BRETXA_OPTS), 'at-tramites')}
@@ -7294,6 +7302,7 @@ async function guardarAtencion(){
     necesidades_no_catalogadas: document.getElementById('at-necesidades-nuevas').value.trim() || null,
     notas: document.getElementById('at-notas').value.trim() || null
   };
+  const otrosAt = otrosTecValor('at'); if(otrosAt.length && !window.__sinOtrosTec) payload.otros_tecnicos = otrosAt;
 
   // Cada atención cuenta: se guarda como atención NUEVA (para los informes a los organismos), con los datos de la anterior.
   // Solo si la misma persona técnica ya la atendió HOY, se corrige esa atención de hoy en vez de duplicarla.
@@ -7303,6 +7312,7 @@ async function guardarAtencion(){
     const { creado_por_email, usuario_id, nombre_referencia, ...cambios0 } = payload;
     let cambios = Object.assign({}, cambios0, { actualizado_por_email: CURRENT_USER.email, actualizado_en: new Date().toISOString() });
     let r = await sb.from('atenciones').update(cambios).eq('id', previa.id).select('id');
+    if(r.error && /otros_tecnicos/.test(r.error.message || '')){ window.__sinOtrosTec = true; delete cambios.otros_tecnicos; delete cambios0.otros_tecnicos; r = await sb.from('atenciones').update(cambios).eq('id', previa.id).select('id'); }
     if(r.error && /actualizado_/.test(r.error.message || '')){ cambios = cambios0; r = await sb.from('atenciones').update(cambios).eq('id', previa.id).select('id'); }   // sin el SQL-56
     if(r.error && /derivacion_programas|talleres|ethos/.test(r.error.message || '')){
       const { derivacion_programas, talleres, ethos, ...resto } = cambios;
@@ -7312,6 +7322,7 @@ async function guardarAtencion(){
   }
   if(!hecho){
     ({ error } = await sb.from('atenciones').insert(payload));
+    if(error && /otros_tecnicos/.test(error.message || '')){ window.__sinOtrosTec = true; delete payload.otros_tecnicos; ({ error } = await sb.from('atenciones').insert(payload)); }
     // Si la base de datos aún no tiene las columnas nuevas, se guarda igualmente sin ellas.
     if(error && /derivacion_programas|talleres|ethos/.test(error.message || '')){
       const { derivacion_programas, talleres, ethos, ...resto } = payload;
@@ -7323,6 +7334,7 @@ async function guardarAtencion(){
     btn.disabled = false; btn.textContent = 'Guardar atención';
     return;
   }
+  if(window.__atencionUsuarioVinculado) await autoAsignarResponsable(window.__atencionUsuarioVinculado);
   if(window.__atencionUsuarioVinculado && window.__conAtencion) window.__conAtencion.add(window.__atencionUsuarioVinculado);
   if(window.__atencionUsuarioVinculado){ try { await sb.from('avisos_espera').update({ atendido_en: new Date().toISOString(), atendido_por_email: CURRENT_USER.email }).eq('usuario_id', window.__atencionUsuarioVinculado).is('atendido_en', null); } catch(e){} }
   if(PERFIL_ETHOS && window.__atencionUsuarioVinculado && /^ethos[1-4]$/.test(payload.ethos || '')){ try { await sb.from('perfiles').update({ ethos: payload.ethos }).eq('id', window.__atencionUsuarioVinculado); } catch(e){} }
@@ -18201,7 +18213,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-05 · v233 (aviso «¿Has olvidado guardar?» al salir de la ficha de atención o de la actuación; administración sin fichar; solo ordenador; guía «Mi jornada»)';
+const APP_VERSION_INTRANET = '2026-11-05 · v234 (varios técnicos en atención/actuación; técnico responsable automático; «Mi jornada» con alta presencial y citas; aviso de guardar)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -20936,6 +20948,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
             </select>
           </div>
           <div class="field"><label>${t.proximoPasoLbl}</label><input type="text" id="act-proximo-paso" placeholder="${t.proximoPasoPlaceholder}"></div>
+          ${otrosTecHtml('act')}
           <div class="field"><label>${t.proximaRevisionLbl}</label><input type="date" id="act-fecha-revision"></div>
           <button class="primary-btn" data-guardar="actuacion" onclick="guardarUnaVez('actuacion', crearActuacion)">${t.registrarActuacionBtn}</button>
         </div>
@@ -21449,7 +21462,7 @@ function m4FichaAtencionHtml(p, atenciones){
       m4Fila(L('Discapacidad', 'Discapacitat'), bool(p.discapacidad_reconocida) + (p.porcentaje_discapacidad ? ' · ' + p.porcentaje_discapacidad + ' %' : ''), true, 'pds-discapacidad') +
       m4Fila(L('Dependencia', 'Dependència'), bool(p.dependencia_reconocida), true, 'pds-dependencia') +
       (extras.length ? `<div class="m4-fila"><span>${L('Además', 'A més')}</span><span class="m4-pills">${extras.map(x => `<span class="m4-pill b">${escAttr(x)}</span>`).join('')}</span></div>` : ''))}
-    ${a ? grupo(L('Última atención', 'Darrera atenció') + ' · ' + m3Fecha(a.creado_en) + ' · ' + escAttr(nombreTecnico(a.creado_por_email)),
+    ${a ? grupo(L('Última atención', 'Darrera atenció') + ' · ' + m3Fecha(a.creado_en) + ' · ' + escAttr(nombreTecnico(a.creado_por_email)) + otrosTecTxt(a.otros_tecnicos),
       (ult || `<p class="m4-vacio">${L('No se marcó ninguna necesidad.', 'No es va marcar cap necessitat.')}</p>`) +
       (a.ethos ? m4Fila(L('Situación residencial', 'Situació residencial'), etiquetaOpt(ETHOS_OPTS, a.ethos), false) : '') +
       (a.derivacion ? m4Fila(L('Derivación', 'Derivació'), etiquetaOpt(DERIVACION_OPTS, a.derivacion), false) : '') +
@@ -21470,7 +21483,7 @@ function m4ActuacionesHtml(p, actuaciones, tramites){
         ${ac.objetivo ? `<div class="m4-act-o">🎯 ${escAttr(ac.objetivo)}</div>` : ''}
         ${ac.descripcion ? `<p>${escAttr(ac.descripcion)}</p>` : ''}
         ${ac.proximo_paso ? `<div class="m4-sig">➡️ <b>${L('Próximo paso', 'Proper pas')}:</b> ${escAttr(ac.proximo_paso)}${ac.fecha_proxima_revision ? ` · ${L('revisar el', 'revisar el')} ${m3Fecha(ac.fecha_proxima_revision)}` : ''}</div>` : ''}
-        <small>👤 ${escAttr(nombreTecnico(ac.tecnico_email))}${ac.derivado_a ? ' · ↗️ ' + escAttr(ac.derivado_a) : ''}</small>
+        <small>👤 ${escAttr(nombreTecnico(ac.tecnico_email))}${otrosTecTxt(ac.otros_tecnicos)}${ac.derivado_a ? ' · ↗️ ' + escAttr(ac.derivado_a) : ''}</small>
       </div></li>`; };
   return `<section class="m4-col m4-ac">
     <header class="m4-ch"><div><span class="m4-ico m4-ico-ac">📂</span><div><h3>${L('Actuaciones', 'Actuacions')}</h3>
@@ -21763,6 +21776,33 @@ function mostrarTabPersona(nombre){
   document.querySelectorAll('.ptab-content').forEach(c => c.classList.toggle('active', c.id === 'ptab-'+nombre));
 }
 
+
+// ===== Varios técnicos en una atención / actuación (v234 · SQL-82) =====
+function otrosTecLista(){
+  const lista = (window.__staffLista || []).filter(x => x.activo !== false && x.email);
+  const base = lista.length ? lista : Object.keys(window.__mapaNombresTecnicos || {}).map(e => ({ email: e, nombre: __mapaNombresTecnicos[e] }));
+  return base.filter(x => !CURRENT_USER || x.email !== CURRENT_USER.email).sort((a, b) => String(a.nombre || a.email).localeCompare(String(b.nombre || b.email)));
+}
+function otrosTecHtml(pref){
+  const l = otrosTecLista();
+  if(!l.length){ try { if(!window.__staffLista) sb.from('staff').select('email, nombre, activo').order('nombre').then(r => { window.__staffLista = r.data || []; }); } catch(e){} }
+  return `<details class="otros-tec field" id="${pref}-otros-tec"><summary>👥 ${acL('¿Te ha ayudado otro técnico? Añádelo', 'T\'ha ajudat un altre tècnic? Afegeix-lo')} <span class="otros-tec-n" id="${pref}-otros-n"></span></summary>
+    <div class="otros-tec-l">${l.length ? l.map(x => `<label><input type="checkbox" name="${pref}-otros" value="${escAttr(x.email)}" onchange="otrosTecContar('${pref}')"> ${escAttr(x.nombre || x.email)}</label>`).join('') : `<small>${acL('Cargando el equipo… vuelve a abrir el formulario.', 'Carregant l\'equip… torna a obrir el formulari.')}</small>`}</div>
+    <small class="otros-tec-ayuda">${acL('Quedará apuntado que la habéis atendido juntos.', 'Quedarà apuntat que l\'heu atès junts.')}</small></details>`;
+}
+function otrosTecContar(pref){ const n = otrosTecValor(pref).length, el = document.getElementById(pref + '-otros-n'); if(el) el.textContent = n ? '· ' + n : ''; }
+function otrosTecValor(pref){ return Array.from(document.querySelectorAll(`input[name="${pref}-otros"]:checked`)).map(x => x.value); }
+function otrosTecTxt(arr){ return Array.isArray(arr) && arr.length ? ' + ' + arr.map(e => escAttr(nombreTecnico(e))).join(', ') : ''; }
+// ===== Técnico responsable automático: si la persona no tiene, queda asignada a quien la atiende =====
+async function autoAsignarResponsable(uid){
+  if(!uid || !CURRENT_USER || IS_DOCENTE) return;
+  try {
+    const { data } = await sb.from('perfiles').select('tecnico_responsable_email').eq('id', uid).maybeSingle();
+    if(!data || data.tecnico_responsable_email) return;
+    const r = await sb.from('perfiles').update({ tecnico_responsable_email: CURRENT_USER.email }).eq('id', uid).select('id');
+    if(r.error || !(r.data || []).length) await sb.rpc('asignar_tecnico_responsable', { p_usuario: uid, p_email: CURRENT_USER.email });
+  } catch(e){}
+}
 async function asignarTecnicoResponsable(){
   const sel = document.getElementById('tecnico-responsable-select');
   const email = sel.value || null;
@@ -21812,7 +21852,7 @@ async function crearActuacion(){
     proyectoIdFinal = nuevoProyecto.id;
   }
 
-  const { error } = await sb.from('actuaciones').insert({
+  const filaAct = {
     usuario_id: window.__usuarioIdVisto,
     tecnico_email: CURRENT_USER.email,
     fecha: val('act-fecha') || isoLocal(),
@@ -21824,8 +21864,12 @@ async function crearActuacion(){
     proximo_paso: val('act-proximo-paso') || null,
     fecha_proxima_revision: val('act-fecha-revision') || null,
     proyecto_id: proyectoIdFinal
-  });
+  };
+  const otrosAct = otrosTecValor('act'); if(otrosAct.length) filaAct.otros_tecnicos = otrosAct;
+  let { error } = await sb.from('actuaciones').insert(filaAct);
+  if(error && /otros_tecnicos/.test(error.message || '')){ delete filaAct.otros_tecnicos; ({ error } = await sb.from('actuaciones').insert(filaAct)); }   // sin el SQL-82
   if(error){ alert(error.message); return; }
+  await autoAsignarResponsable(window.__usuarioIdVisto);
 
   // Como se está registrando la actuación desde la ficha de esta persona,
   // si se creó (o vinculó) un proyecto, la añadimos también como beneficiaria automáticamente.
@@ -24670,7 +24714,7 @@ const JOR_PASOS = [
   { id: 'entrar',  i: '🔑', es: 'Entrar en la intranet', ca: 'Entrar a la intranet', d_es: 'Ya está: has entrado con tu correo.', d_ca: 'Fet: has entrat amb el teu correu.' },
   { id: 'fichar',  i: '⏱️', es: 'Fichar la entrada', ca: 'Fitxar l\'entrada', d_es: 'Sin fichar no se puede trabajar en la intranet.', d_ca: 'Sense fitxar no es pot treballar a la intranet.' },
   { id: 'alertas', i: '🔔', es: 'Mirar las alertas', ca: 'Mirar les alertes', d_es: 'En «Inicio», la campana 🔔: personas que piden ayuda o cita.', d_ca: 'A «Inici», la campana 🔔: persones que demanen ajuda o cita.' },
-  { id: 'ficha',   i: '👤', es: 'Abrir la ficha de la persona', ca: 'Obrir la fitxa de la persona', d_es: '«👥 Personas usuarias» → busca por nombre o teléfono → ábrela.', d_ca: '«👥 Persones usuàries» → cerca pel nom o el telèfon → obre-la.' },
+  { id: 'ficha',   i: '👤', es: 'Abrir la ficha de la persona', ca: 'Obrir la fitxa de la persona', d_es: '«👥 Personas usuarias» → busca por nombre o teléfono → ábrela. ¿No aparece? Hazle el alta presencial.', d_ca: '«👥 Persones usuàries» → cerca pel nom o el telèfon → obre-la. No hi surt? Fes-li l\'alta presencial.' },
   { id: 'atencion',i: '📝', es: 'Rellenar la ficha de atención y GUARDAR', ca: 'Omplir la fitxa d\'atenció i DESAR', d_es: 'En la ficha, lado izquierdo. Al acabar, pulsa «💾 Guardar».', d_ca: 'A la fitxa, a l\'esquerra. En acabar, prem «💾 Desar».' },
   { id: 'actuacion',i: '🗂️', es: 'Registrar la actuación y GUARDAR', ca: 'Registrar l\'actuació i DESAR', d_es: 'En la ficha, lado derecho «Actuaciones» → «+ Nueva actuación» → «💾 Guardar».', d_ca: 'A la fitxa, a la dreta «Actuacions» → «+ Nova actuació» → «💾 Desar».' },
   { id: 'salida',  i: '🚪', es: 'Antes de irte: fichar la salida', ca: 'Abans de marxar: fitxar la sortida', d_es: 'Con todo guardado, ficha la salida antes de apagar el ordenador.', d_ca: 'Amb tot desat, fitxa la sortida abans d\'apagar l\'ordinador.' }
@@ -24709,6 +24753,12 @@ function jorAbrir(repintar){
     <ol class="jor-lista">${JOR_PASOS.map((x, k) => { const ok = jorHecho(x.id, h), act = sig && sig.id === x.id;
       return `<li class="${ok ? 'ok' : ''}${act ? ' act' : ''}"><span class="jor-n">${ok ? '✓' : k + 1}</span><div><b>${x.i} ${ca ? x.ca : x.es}</b><small>${ca ? x.d_ca : x.d_es}</small>
         ${!ok && x.id !== 'entrar' ? `<button class="jor-ir" onclick="jorIr('${x.id}')">${acL('Llévame', 'Porta-m\'hi')} →</button>` : ''}</div></li>`; }).join('')}</ol>
+    <div class="jor-rec"><strong>📌 ${acL('Recuerda', 'Recorda')}</strong>
+      <div class="jor-rec-i"><span>🖊️</span><div><b>${acL('La persona no tiene teléfono (o no sabe usarlo)', 'La persona no té telèfon (o no el sap fer servir)')}</b><small>${acL('Hazle el <strong>alta presencial</strong> aquí, con ella delante, y que firme el consentimiento.', 'Fes-li l\'<strong>alta presencial</strong> aquí, amb ella al davant, i que signi el consentiment.')}</small><button class="jor-ir" onclick="jorIr('alta')">🖊️ ${acL('Alta presencial', 'Alta presencial')} →</button></div></div>
+      <div class="jor-rec-i"><span>📅</span><div><b>${acL('Tiene teléfono', 'Té telèfon')}</b><small>${acL('Dale la <strong>próxima cita</strong> antes de que se vaya: le llega al móvil (Logos Acompanya).', 'Dona-li la <strong>propera cita</strong> abans que marxi: li arriba al mòbil (Logos Acompanya).')}</small><button class="jor-ir" onclick="jorIr('cita')">📅 ${acL('Nueva cita', 'Nova cita')} →</button></div></div>
+      <div class="jor-rec-i"><span>👥</span><div><b>${acL('La habéis atendido entre varios', 'L\'heu atès entre diversos')}</b><small>${acL('En la atención o la actuación, «👥 ¿Te ha ayudado otro técnico? Añádelo».', 'A l\'atenció o l\'actuació, «👥 T\'ha ajudat un altre tècnic? Afegeix-lo».')}</small></div></div>
+      <div class="jor-rec-i"><span>👤</span><div><b>${acL('Técnico responsable', 'Tècnic responsable')}</b><small>${acL('Si la persona no tiene, se te asigna sola al guardar su atención o actuación.', 'Si la persona no en té, se t\'assigna sola en desar la seva atenció o actuació.')}</small></div></div>
+    </div>
     <div class="jor-pie">💡 ${acL('Regla de oro: <strong>nada se guarda solo</strong>. Antes de cambiar de pantalla o de persona, pulsa siempre «💾 Guardar».', 'Regla d\'or: <strong>res no es desa sol</strong>. Abans de canviar de pantalla o de persona, prem sempre «💾 Desar».')}</div>`;
 }
 function jorCerrar(){ const pn = document.getElementById('jor-panel'); if(pn) pn.remove(); }
@@ -24731,6 +24781,8 @@ function jorIr(id){
     return;
   }
   if(id === 'salida'){ jorSenalar('[onclick^="ficharSalida"]'); }
+  if(id === 'alta'){ try { showScreen('altapresencial'); renderAltaPresencial(); } catch(e){} return; }
+  if(id === 'cita'){ try { abrirNuevaCitaStaff(); } catch(e){ jorMenu('agenda'); } return; }
 }
 // Se marcan solos: se «envuelven» las funciones de cada paso (si dentro sale un aviso de error, no cuenta)
 function jorEnvolver(nombre, paso, conAviso){
@@ -24776,6 +24828,12 @@ setInterval(() => { try { jorPintarBoton(); } catch(e){} }, 3000);
 .jor-lista li.ok .jor-n{background:#1F8A4C;color:#fff;}
 .jor-lista li.act .jor-n{background:#2463B8;color:#fff;}
 .jor-ir{margin-top:6px;border:none;background:#2463B8;color:#fff;border-radius:8px;padding:5px 11px;font-weight:700;font-size:12.5px;cursor:pointer;}
+.jor-rec{margin-top:10px;border:1px solid #E6EAF1;border-radius:12px;padding:9px 10px;background:#FAFBFD;}
+.jor-rec > strong{font-size:13.5px;color:#1B4E95;}
+.jor-rec-i{display:flex;gap:8px;margin-top:7px;}
+.jor-rec-i > span{font-size:18px;line-height:1.2;}
+.jor-rec-i b{display:block;font-size:13px;}
+.jor-rec-i small{display:block;font-size:12.2px;color:#5B6478;line-height:1.4;}
 .jor-pie{margin-top:10px;font-size:12.5px;background:#FFF8E6;border:1px solid #F2D58A;border-radius:10px;padding:8px 10px;color:#4B3A10;}
 .jor-senal{outline:3px solid #F2BC2C !important;outline-offset:3px;box-shadow:0 0 0 8px rgba(242,188,44,.28) !important;animation:jorLatido 1s ease-in-out 4;border-radius:10px;}
 @keyframes jorLatido{50%{box-shadow:0 0 0 14px rgba(242,188,44,.08) !important;}}
@@ -24878,8 +24936,8 @@ function sgAviso(zona, continuar){
 ['guardarAtencion', 'm3GuardarActuacion'].forEach(nombre => {
   const o = window[nombre]; if(typeof o !== 'function') return;
   const zona = nombre === 'guardarAtencion' ? 'atencion' : 'actuacion';
-  const w = async function(){ const n0 = __avisosN; window.__sgGuardando = true;
-    try { const r = await o.apply(this, arguments); if(__avisosN === n0) sgLimpiar(zona); return r; } finally { window.__sgGuardando = false; } };
+  const w = async function(){ const n0 = __avisosN, e0 = document.querySelectorAll('.auth-error').length; window.__sgGuardando = true;
+    try { const r = await o.apply(this, arguments); if(__avisosN === n0 && document.querySelectorAll('.auth-error').length <= e0) sgLimpiar(zona); return r; } finally { window.__sgGuardando = false; } };
   Object.assign(w, o); window[nombre] = w;
 });
 // Cerrar la pestaña o recargar
