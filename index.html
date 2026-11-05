@@ -2077,6 +2077,7 @@ body.m3-sin-scroll{overflow:hidden;}
         <button data-target="mipropioproyecto" onclick="showScreen('mipropioproyecto');renderMiPropioProyectoEntrada()">🏛️ Crea un proyecto de Logos</button>
         <button data-target="ideasproyecto" onclick="showScreen('ideasproyecto');renderEmprendimientoListaStaff()">🚀 Emprendimiento</button>
         <button data-target="jovenes" onclick="showScreen('jovenes');renderJovenesScreen()">🌱 Jóvenes en acción</button>
+        <button data-target="raices" class="rol-oculto" onclick="showScreen('raices');renderRaices('familias')">🌳 Proyecto Raíces</button>
         <button data-target="aulavirtual" onclick="showScreen('aulavirtual');renderAulaVirtualScreen()">🎥 Aula Virtual · Hub Logos</button>
         <button data-target="formaciones" onclick="showScreen('formaciones');renderFormacionesScreen()">🎓 Formaciones</button>
       </details>
@@ -2275,6 +2276,12 @@ body.m3-sin-scroll{overflow:hidden;}
     </div>
   </div>
 
+  <div class="screen" id="screen-raices">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">🌳 Proyecto Raíces</span></div>
+      <div class="content" id="raices-content"></div>
+    </div>
+  </div>
   <div class="screen" id="screen-jovenes">
     <div class="main-content">
       <div class="topbar"><span class="brand">🌱 Jóvenes en acción</span></div>
@@ -3272,12 +3279,12 @@ function aplicarTraduccionesSidebar(){
 // Quien es de Jóvenes en acción solo entra a su espacio; el resto de la plataforma queda oculta (y cerrada también en la base de datos)
 // Jóvenes en acción (y su pestaña de Familias) queda oculto del menú para el equipo general. Para volver a mostrarlo: MOSTRAR_JOVENES = true.
 const MOSTRAR_JOVENES = false;
-const PANTALLAS_JOVENES = ['login', 'panel', 'miespacio', 'gestionpersonal', 'jovenes', 'miformacion', 'config', 'incidencias', 'papelera'];
+const PANTALLAS_JOVENES = ['login', 'panel', 'miespacio', 'gestionpersonal', 'jovenes', 'raices', 'miformacion', 'config', 'incidencias', 'papelera'];
 const PANTALLAS_DOCENTE = ['login', 'aulavirtual', 'config', 'incidencias', 'papelera'];
 const PANTALLAS_RRHH_SOLO = ['login', 'panel', 'miespacio', 'gestionpersonal', 'subvenciones', 'miformacion', 'config', 'incidencias', 'papelera'];
 function aplicarMenuPorRol(){
   document.querySelectorAll('.sidebar nav button[data-target]').forEach(b => {
-    b.classList.toggle('rol-oculto', (IS_DOCENTE && !PANTALLAS_DOCENTE.includes(b.dataset.target)) || (IS_JOVENES && !PANTALLAS_JOVENES.includes(b.dataset.target)) || (IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(b.dataset.target)) || (!MOSTRAR_JOVENES && !IS_JOVENES && b.dataset.target === 'jovenes') || (b.dataset.target === 'subvenciones' && !(IS_ADMIN || IS_RRHH)));
+    b.classList.toggle('rol-oculto', (IS_DOCENTE && !PANTALLAS_DOCENTE.includes(b.dataset.target)) || (IS_JOVENES && !PANTALLAS_JOVENES.includes(b.dataset.target)) || (IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(b.dataset.target)) || (!MOSTRAR_JOVENES && !IS_JOVENES && b.dataset.target === 'jovenes') || (b.dataset.target === 'subvenciones' && !(IS_ADMIN || IS_RRHH)) || (b.dataset.target === 'raices' && !(window.__raicesMiembro || IS_ADMIN)));
   });
   document.querySelectorAll('.sidebar nav .nav-grupo').forEach(g => {
     g.classList.toggle('rol-oculto', (IS_JOVENES || IS_RRHH_SOLO || IS_DOCENTE) && !g.querySelector('button[data-target]:not(.rol-oculto)'));
@@ -18254,7 +18261,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-06 · v237 (contraseña provisional desde Equipo; la visita guiada se cierra con ✕, Esc o pulsando fuera)';
+const APP_VERSION_INTRANET = '2026-11-06 · v238 (Proyecto Raíces en Jóvenes en acción: familias, consentimiento con Logos, presencia y actuaciones que suman atenciones, evaluación con puntuación; solo el equipo del proyecto)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -24892,7 +24899,8 @@ let __avisosN = 0;
 (function(){ const al = window.alert; window.alert = function(){ __avisosN++; return al.apply(this, arguments); }; })();
 function sgZona(el){
   if(!el || !el.closest) return null;
-  if(el.closest('.m3-panel')) return 'actuacion';
+  if(el.closest('.m3-panel, .ra-modal')) return 'actuacion';
+  if(el.closest('#screen-raices')) return 'atencion';
   if(el.closest('#screen-persona, #screen-atencion')) return 'atencion';
   return null;
 }
@@ -24945,7 +24953,7 @@ function sgAviso(zona, continuar){
   const o = window.showScreen; if(typeof o !== 'function') return;
   window.showScreen = function(name){
     const act = document.querySelector('.screen.active'), desde = act ? act.id : '';
-    const saliendo = (desde === 'screen-persona' || desde === 'screen-atencion') && ('screen-' + name) !== desde;
+    const saliendo = (desde === 'screen-persona' || desde === 'screen-atencion' || desde === 'screen-raices') && ('screen-' + name) !== desde;
     if(saliendo && sgHay() && !window.__sgGuardando && name !== 'login'){
       const args = arguments, self = this;
       sgAviso(null, () => o.apply(self, args));
@@ -25196,6 +25204,591 @@ function tourBoton(nombre, host, antes){
 .tour-lanzar{border:1.5px solid #E9C766;background:#FFF8E1;color:#1B4E95;font-weight:800;border-radius:999px;padding:7px 14px;cursor:pointer;font-size:13.5px;margin:6px 6px 8px 0;}
 .tour-lanzar:hover{background:#FFEFC2;}
 @media print{ .tour-ov,.tour-lanzar{display:none !important;} }
+</style>
+
+<script>
+// =====================================================================================================
+// PROYECTO RAÍCES: RECONEXIÓN FAMILIAR (Jóvenes en acción) · v238 · SQL-84
+// Familias (2 personas adultas + 3 menores), consentimiento (con Logos como responsable), fichas de presencia
+// y actuación, evaluación inicial/final con puntuación automática. Solo lo ve el equipo del proyecto.
+// =====================================================================================================
+const RA_TIPOS = [
+  ['caracterizacion', '🗂️', 'Ficha de caracterización'], ['diagnostico', '🩺', 'Entrevista diagnóstico'], ['beca', '🎓', 'Beca'],
+  ['mediacion', '🤝', 'Mediación familiar'], ['psicologica', '🧠', 'Atención psicológica'], ['ludoteca', '🧸', 'Ludoteca'],
+  ['campamento', '⛺', 'Campamento'], ['excursion', '🚌', 'Excursión'], ['grupal', '👥', 'Intervención grupal'], ['otra', '📝', 'Otra actuación']
+];
+const RA_MOTIVOS = ['Renuncia voluntaria', 'Propuesta del profesional', 'Abandono no comunicado', 'Fin de la intervención'];
+const RA_PLAN = ['Situación familiar', 'Formación y empleo', 'Salud y bienestar', 'Participación social y actividades', 'Habilidades y fortalezas', 'Necesidades o dificultades principales', 'Objetivos a alcanzar con el proyecto'];
+const RA_DECL = [
+  'Cuento con el consentimiento expreso del otro progenitor/ representante legal para otorgar la presente autorización.',
+  'Ostento la patria potestad en exclusiva sobre los/las menores indicados en virtud de resolución judicial firme.',
+  'Existe resolución judicial que suspende o limita la patria potestad del otro progenitor/ representante legal, permitiéndome adoptar decisiones en materia de participación en proyectos de intervención social.',
+  'Actúo al amparo de una autorización judicial expresa que me faculta para decidir unilateralmente sobre la participación de los/as menores en intervenciones sociales.',
+  'Actúo al amparo de lo dispuesto en el art. 156 del Código Civil, en relación a situaciones de violencia de género y violencia contra los hijos/as menores de edad y declaro haber comunicado previamente al segundo progenitor la participación de los/as menores en el proyecto.'
+];
+const RA_BLOQUES = [
+  { id: 'ad', t: '1. Bienestar emocional de la persona o personas adultas', quien: 'adultos', ayuda: 'Individual y en privado. «Dígame cuánto describe cómo se siente ahora y cuánto describía cómo se sentía justo antes de comenzar en Raíces.»',
+    items: ['Me siento con ánimo para afrontar el día a día.', 'Puedo mantener la calma cuando aparece una dificultad.', 'Tengo energía para realizar mis actividades habituales.', 'Soy capaz de reconocer y expresar lo que siento.', 'Tengo alguna persona con la que puedo hablar cuando lo necesito.', 'Veo posibilidades de que mi situación y la de mi familia mejore.'] },
+  { id: 'me', t: '2. Bienestar de la persona menor de edad', quien: 'menores', ayuda: 'Menores de 13 años: responde una persona adulta (marcar «proxy»). De 13 a 17: responde el/la adolescente, en privado.',
+    items: ['Se muestra contento/a o de buen humor en distintos momentos del día.', 'Ante una situación difícil fuera de casa consigue recuperar la calma y continuar con sus actividades habituales en un tiempo razonable.', 'Muestra interés y ganas de participar en actividades propias de su edad.', 'Expresa lo que siente o busca ayuda cuando algo le preocupa.', 'Se siente escuchado/a y tomado/a en serio dentro de la familia.', 'Después de una discusión o conflicto en casa consigue recuperar la calma y volver a relacionarse con normalidad con las personas de la familia en un tiempo razonable.', 'Tiene al menos una persona adulta de confianza a la que puede acudir.'] },
+  { id: 'inc', t: '3. Inclusión social y capacidad de afrontamiento familiar', quien: 'familia', ayuda: 'Respuesta consensuada de las personas adultas de referencia. «Piense en su familia en conjunto.»',
+    items: ['Sabemos a qué servicio o profesional acudir cuando necesitamos ayuda.', 'Podemos realizar trámites de servicios sociales, educación, salud, vivienda o prestaciones.', 'Contamos con alguna persona, entidad o recurso comunitario al que pedir apoyo.', 'Participamos en actividades educativas, sociales, culturales o comunitarias.', 'Nos sentimos capaces de tomar decisiones y defender nuestros derechos ante los servicios.', 'Tenemos un plan para afrontar los principales problemas de la familia.', 'Nuestra familia puede hacer frente a los gastos básicos necesarios, como vivienda, suministros, alimentación, medicación, gastos escolares o transporte.', 'Nuestra familia dispone de una vivienda estable y puede prever que continuará en ella durante los próximos meses.', 'Las personas adultas de la familia que desean trabajar cuentan con un empleo o con oportunidades y apoyos para buscarlo.', 'Las personas de nuestra familia pueden acudir a las citas sanitarias, educativas o sociales que necesitan.', 'Nuestra familia cuenta con alguna persona de confianza fuera del hogar a la que puede pedir ayuda ante un problema importante.'] },
+  { id: 'coh', t: '4. Cohesión y funcionamiento familiar', quien: 'familia', ayuda: 'Respuesta consensuada de las personas adultas de referencia.',
+    items: ['En nuestra familia podemos hablar de las cosas que nos preocupan.', 'Cuando alguien tiene un problema, encuentra apoyo en las demás personas de la familia.', 'Podemos expresar lo que sentimos sin miedo a empeorar la situación.', 'Los intereses y opiniones de los miembros de la familia son tenidos en cuenta y respetados.', 'Las necesidades de los miembros de la familia son tenidas en cuenta y respetadas en la toma de decisiones.', 'Somos capaces de resolver los desacuerdos sin insultos, amenazas o violencia.', 'Las personas adultas se ponen de acuerdo sobre las normas y responsabilidades principales.', 'Cuando surge un cambio o una dificultad, somos capaces de reorganizarnos.', 'En general, sentimos que formamos un equipo para afrontar las dificultades.'] }
+];
+const RA_CUALI = ['Además de Raíces, ¿qué otras circunstancias han influido en estos cambios?', '¿Qué apoyo recibido en Raíces le ha resultado más útil?', '¿Cuál es la principal dificultad que continúa sin resolverse?', '¿Qué añadiría al Proyecto Raíces para que resultara más útil para otras familias?'];
+const RA_VALOR = ['Sin necesidad de seguimiento adicional al cierre.', 'Requiere información, orientación o derivación adicional.', 'Requiere valoración inmediata conforme al protocolo aplicable.'];
+
+window.__raicesMiembro = false;
+let __ra = { vista: 'familias', familias: [], sesiones: [], evals: {}, equipo: [], fam: null, ok: true };
+
+async function raicesComprobar(){
+  try { const r = await sb.rpc('raices_soy_miembro'); window.__raicesMiembro = !r.error && r.data === true; window.__raicesSql = !r.error || !/does not exist|schema cache|could not find/i.test(r.error.message || ''); }
+  catch(e){ window.__raicesMiembro = false; }
+  try { aplicarMenuPorRol(); } catch(e){}
+}
+function raNombre(p){ return p ? [p.nombre, p.apellidos].filter(Boolean).join(' ').trim() : ''; }
+function raPersonas(f){
+  const out = [];
+  (f.adultos || []).forEach((p, i) => { if(raNombre(p)) out.push({ k: 'a' + (i + 1), n: raNombre(p), tipo: 'adulto' }); });
+  (f.menores || []).forEach((p, i) => { if(raNombre(p)) out.push({ k: 'm' + (i + 1), n: raNombre(p), tipo: 'menor' }); });
+  return out;
+}
+function raFamNombre(f){ const a = (f.adultos || [])[0]; return a ? (a.apellidos || a.nombre || f.codigo) : f.codigo; }
+function raFecha(d){ return d ? new Date(String(d).slice(0, 10) + 'T00:00:00').toLocaleDateString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'; }
+function raTipo(id){ return RA_TIPOS.find(t => t[0] === id) || ['otra', '📝', id || 'Actuación']; }
+function raEdad(f){ if(!f) return ''; const d = new Date(f); if(isNaN(d)) return ''; const h = new Date(); let e = h.getFullYear() - d.getFullYear(); if(h < new Date(h.getFullYear(), d.getMonth(), d.getDate())) e--; return e >= 0 ? e : ''; }
+
+async function raCargar(){
+  const [f, s, e, q] = await Promise.all([
+    sb.from('raices_familias').select('*').neq('estado', 'anulada').order('creado_en', { ascending: false }),
+    sb.from('raices_sesiones').select('*').eq('anulada', false).order('fecha', { ascending: false }),
+    sb.from('raices_evaluaciones').select('*'),
+    sb.from('raices_equipo').select('*').order('creado_en')
+  ]);
+  __ra.ok = !f.error;
+  __ra.error = f.error ? f.error.message : '';
+  __ra.familias = f.data || []; __ra.sesiones = s.data || []; __ra.equipo = q.data || [];
+  __ra.evals = {}; (e.data || []).forEach(x => { __ra.evals[x.familia_id] = x; });
+  if(!window.__staffLista || !window.__staffLista.length){ try { const r = await sb.from('staff').select('email, nombre, activo, es_admin').order('nombre'); window.__staffLista = r.data || []; } catch(e){} }
+}
+
+async function renderRaices(vista, famId){
+  if(vista) __ra.vista = vista;
+  const cont = document.getElementById('raices-content'); if(!cont) return;
+  cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  await raicesComprobar();
+  if(!window.__raicesMiembro){
+    if(IS_ADMIN){ await raCargar(); cont.innerHTML = raCabeceraHtml(false) + raNoMiembroHtml() + raEquipoHtml(); return; }
+    cont.innerHTML = `<div class="panel-card"><h3>🔒 ${acL('Proyecto Raíces', 'Projecte Raíces')}</h3><p>${acL('Solo lo ve el equipo del proyecto. Si tienes que trabajar en él, pide a la administración que te añada.', 'Només ho veu l\'equip del projecte. Si hi has de treballar, demana a l\'administració que t\'hi afegeixi.')}</p></div>`;
+    return;
+  }
+  await raCargar();
+  if(!__ra.ok){ cont.innerHTML = `<div class="panel-card"><h3>⚠️</h3><p>${escAttr(__ra.error)}</p></div>`; return; }
+  if(famId) __ra.fam = famId;
+  let cuerpo = '';
+  if(__ra.vista === 'familia' && __ra.fam) cuerpo = raFamiliaHtml(__ra.familias.find(x => x.id === __ra.fam));
+  else if(__ra.vista === 'evaluacion' && __ra.fam) cuerpo = raEvaluacionHtml(__ra.familias.find(x => x.id === __ra.fam));
+  else if(__ra.vista === 'sesiones') cuerpo = raSesionesHtml();
+  else if(__ra.vista === 'equipo') cuerpo = raEquipoHtml();
+  else cuerpo = raFamiliasHtml();
+  cont.innerHTML = raCabeceraHtml(true) + cuerpo;
+  if(__ra.vista === 'evaluacion') raPuntuar();
+}
+function raKpis(){
+  const act = __ra.familias.filter(f => f.estado === 'activa');
+  const mes = isoLocal().slice(0, 7);
+  const sesMes = __ra.sesiones.filter(s => String(s.fecha).slice(0, 7) === mes);
+  const pres = __ra.sesiones.reduce((n, s) => n + (s.asistentes || []).length, 0);
+  const sinCons = act.filter(f => !f.consentimiento_firmado).length;
+  const finales = Object.values(__ra.evals).filter(e => e.fecha_final).length;
+  return { act: act.length, menores: act.reduce((n, f) => n + raPersonas(f).filter(p => p.tipo === 'menor').length, 0), sesMes: sesMes.length, pres, sinCons, finales };
+}
+function raCabeceraHtml(miembro){
+  const k = miembro ? raKpis() : null;
+  const tab = (id, t) => `<button class="imp-tab${__ra.vista === id || (id === 'familias' && ['familia', 'evaluacion'].includes(__ra.vista)) ? ' on' : ''}" onclick="renderRaices('${id}')">${t}</button>`;
+  return `<div class="ra-hero"><div><div class="ra-sup">🌱 Jóvenes en acción · FSE+</div><h2>🌳 Proyecto Raíces: Reconexión Familiar</h2>
+      <p>${acL('Familias con niñas, niños y jóvenes: fichas, presencia, actuaciones y evaluación. 🔒 Solo lo ve el equipo del proyecto.', 'Famílies amb nenes, nens i joves: fitxes, presència, actuacions i avaluació. 🔒 Només ho veu l\'equip del projecte.')}</p></div>
+      ${k ? `<div class="ra-kpis">${[['👨‍👩‍👧', k.act, acL('familias activas', 'famílies actives')], ['🧒', k.menores, acL('menores', 'menors')], ['🗓️', k.sesMes, acL('sesiones este mes', 'sessions aquest mes')], ['✅', k.pres, acL('atenciones sumadas', 'atencions sumades')], ['✍️', k.sinCons, acL('sin consentimiento', 'sense consentiment')], ['📈', k.finales, acL('evaluaciones finales', 'avaluacions finals')]].map(x => `<div class="ra-kpi"><span>${x[0]}</span><b>${x[1]}</b><small>${x[2]}</small></div>`).join('')}</div>` : ''}</div>
+    ${miembro ? `<div class="imp-tabs">${tab('familias', '👨‍👩‍👧 ' + acL('Familias', 'Famílies'))}${tab('sesiones', '🗓️ ' + acL('Presencia y actuaciones', 'Presència i actuacions'))}${tab('equipo', '👥 ' + acL('Equipo del proyecto', 'Equip del projecte'))}</div>` : ''}`;
+}
+function raNoMiembroHtml(){
+  return `<div class="panel-card ra-aviso">🔒 <strong>${acL('No estás en el equipo de Raíces', 'No ets a l\'equip de Raíces')}</strong><p>${acL('Como administración puedes decidir quién trabaja en el proyecto, pero los datos de las familias solo los ve el equipo. Si tú también trabajas en él, añádete abajo.', 'Com a administració pots decidir qui treballa al projecte, però les dades de les famílies només les veu l\'equip. Si tu també hi treballes, afegeix-t\'hi a sota.')}</p></div>`;
+}
+
+// ---------- equipo ----------
+function raEquipoHtml(){
+  const puede = IS_ADMIN;
+  const nombre = e => escAttr(((window.__staffLista || []).find(s => s.email === e) || {}).nombre || e);
+  const libres = (window.__staffLista || []).filter(s => s.activo !== false && !__ra.equipo.some(m => m.email.toLowerCase() === s.email.toLowerCase()));
+  return `<div class="panel-card"><h3>👥 ${acL('Equipo del proyecto Raíces', 'Equip del projecte Raíces')}</h3>
+    <p class="subtle">${acL('Solo estas personas ven las familias, las fichas y las evaluaciones de Raíces.', 'Només aquestes persones veuen les famílies, les fitxes i les avaluacions de Raíces.')}</p>
+    ${__ra.equipo.length ? `<div class="ra-eq">${__ra.equipo.map(m => `<div class="ra-eq-i"><span class="ra-av">${nombre(m.email).slice(0, 1).toUpperCase()}</span><div><b>${nombre(m.email)}</b><small>${escAttr(m.email)} · ${m.rol === 'direccion' ? acL('Dirección', 'Direcció') : acL('Equipo', 'Equip')}</small></div>${puede ? `<button class="link-btn" style="color:#B42318" onclick="raEquipoQuitar('${escAttr(m.email)}')">${acL('Quitar', 'Treure')}</button>` : ''}</div>`).join('')}</div>` : `<div class="empty-note">${acL('Todavía no hay nadie. Empieza por David y las profesionales del proyecto.', 'Encara no hi ha ningú. Comença per en David i les professionals del projecte.')}</div>`}
+    ${puede ? `<div class="ra-fila" style="margin-top:12px;"><select id="ra-eq-email"><option value="">${acL('— Elige a una persona del equipo de Logos —', '— Tria una persona de l\'equip de Logos —')}</option>${libres.map(s => `<option value="${escAttr(s.email)}">${escAttr(s.nombre || s.email)}</option>`).join('')}</select>
+      <select id="ra-eq-rol"><option value="equipo">${acL('Equipo', 'Equip')}</option><option value="direccion">${acL('Dirección', 'Direcció')}</option></select>
+      <button class="primary-btn" style="margin:0;" onclick="raEquipoAnadir()">➕ ${acL('Añadir', 'Afegir')}</button></div>` : ''}</div>`;
+}
+async function raEquipoAnadir(){
+  const email = (document.getElementById('ra-eq-email') || {}).value, rol = (document.getElementById('ra-eq-rol') || {}).value || 'equipo';
+  if(!email) return;
+  const { error } = await sb.from('raices_equipo').insert({ email, rol, anadido_por: CURRENT_USER.email });
+  if(error){ alert(/does not exist|schema cache/i.test(error.message) ? acL('Falta ejecutar el SQL-84 en Supabase.', 'Cal executar l\'SQL-84 a Supabase.') : error.message); return; }
+  renderRaices('equipo');
+}
+async function raEquipoQuitar(email){
+  if(!confirm(acL(`¿Quitar a ${email} del equipo de Raíces? Dejará de ver las familias.`, `Treure ${email} de l'equip de Raíces? Deixarà de veure les famílies.`))) return;
+  const { error } = await sb.from('raices_equipo').delete().eq('email', email);
+  if(error){ alert(error.message); return; }
+  renderRaices('equipo');
+}
+
+// ---------- familias ----------
+function raFamiliasHtml(){
+  const ses = id => __ra.sesiones.filter(s => s.familia_id === id);
+  const tarjeta = f => {
+    const ps = raPersonas(f), n = ses(f.id), ult = n[0], ev = __ra.evals[f.id];
+    return `<button class="ra-fam" onclick="renderRaices('familia','${f.id}')">
+      <div class="ra-fam-t"><span class="ra-cod">${escAttr(f.codigo || '')}</span>${f.estado === 'baja' ? `<span class="chip off">${acL('Baja', 'Baixa')} ${raFecha(f.fecha_salida)}</span>` : ''}${f.consentimiento_firmado ? `<span class="chip good">✍️ ${acL('Consentimiento', 'Consentiment')}</span>` : `<span class="chip bad">✍️ ${acL('Falta consentimiento', 'Falta consentiment')}</span>`}</div>
+      <strong>${acL('Familia', 'Família')} ${escAttr(raFamNombre(f))}</strong>
+      <small>${ps.map(p => (p.tipo === 'menor' ? '🧒 ' : '🧑 ') + escAttr(p.n)).join(' · ') || '—'}</small>
+      <small>🗓️ ${n.length} ${acL('sesiones', 'sessions')}${ult ? ' · ' + acL('última', 'darrera') + ' ' + raFecha(ult.fecha) : ''} · 📈 ${ev && ev.fecha_final ? acL('evaluación final hecha', 'avaluació final feta') : ev && ev.fecha_inicial ? acL('evaluación inicial', 'avaluació inicial') : acL('sin evaluación', 'sense avaluació')}</small>
+      <small>👤 ${escAttr(nombreTecnico(f.tecnico_email || ''))}${otrosTecTxt(f.otros_tecnicos)}</small></button>`;
+  };
+  const act = __ra.familias.filter(f => f.estado !== 'baja'), bajas = __ra.familias.filter(f => f.estado === 'baja');
+  return `<div class="ra-barra"><input type="search" id="ra-q" placeholder="🔎 ${acL('Buscar familia, nombre o código…', 'Cercar família, nom o codi…')}" oninput="raFiltrar(this.value)"><button class="primary-btn" style="margin:0;" onclick="raFamiliaForm()">➕ ${acL('Nueva familia', 'Nova família')}</button></div>
+    <div class="ra-grid" id="ra-grid">${act.map(tarjeta).join('') || `<div class="empty-note">${acL('Todavía no hay familias. Pulsa «➕ Nueva familia».', 'Encara no hi ha famílies. Prem «➕ Nova família».')}</div>`}</div>
+    ${bajas.length ? `<details class="plegable" style="margin-top:14px;"><summary>${acL('Familias de baja', 'Famílies de baixa')} <span class="chip off">${bajas.length}</span></summary><div class="ra-grid">${bajas.map(tarjeta).join('')}</div></details>` : ''}`;
+}
+function raFiltrar(q){
+  q = String(q || '').toLowerCase();
+  document.querySelectorAll('#ra-grid .ra-fam').forEach(b => { b.style.display = !q || b.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+}
+function raPersonaCampos(pref, i, p, adulto){
+  p = p || {};
+  const c = (k, lab, tipo, ph) => `<div class="field"><label>${lab}</label><input ${tipo ? `type="${tipo}"` : ''} id="${pref}${i}-${k}" value="${escAttr(p[k] || '')}" ${ph ? `placeholder="${ph}"` : ''}></div>`;
+  return `<fieldset class="ra-pers"><legend>${adulto ? '🧑 ' + acL('Persona adulta / representante legal', 'Persona adulta / representant legal') : '🧒 ' + acL('Persona menor de edad', 'Persona menor d\'edat')} ${i}</legend>
+    <div class="ra-g3">${c('nombre', acL('Nombre', 'Nom'))}${c('apellidos', acL('Apellidos', 'Cognoms'))}${c('nif', 'NIF / NIE')}${c('fecha_nac', acL('Fecha de nacimiento', 'Data de naixement'), 'date')}
+    ${adulto ? c('telefono', acL('Teléfono', 'Telèfon'), 'tel') + c('domicilio', acL('Domicilio', 'Domicili')) + c('municipio', acL('Municipio', 'Municipi')) + c('cp', 'CP') : ''}</div></fieldset>`;
+}
+function raFamiliaForm(id){
+  const f = id ? __ra.familias.find(x => x.id === id) : null;
+  const cont = document.getElementById('raices-content');
+  cont.innerHTML = raCabeceraHtml(true) + `<div class="panel-card"><h3>${f ? '✏️ ' + acL('Datos de la familia', 'Dades de la família') + ' ' + escAttr(f.codigo) : '➕ ' + acL('Nueva familia', 'Nova família')}</h3>
+    <p class="subtle">${acL('Hasta 2 personas adultas y 3 menores. Solo hace falta el nombre; el resto se puede completar después.', 'Fins a 2 persones adultes i 3 menors. Només cal el nom; la resta es pot completar després.')}</p>
+    ${[1, 2].map(i => raPersonaCampos('ra-a', i, f && (f.adultos || [])[i - 1], true)).join('')}
+    ${[1, 2, 3].map(i => raPersonaCampos('ra-m', i, f && (f.menores || [])[i - 1], false)).join('')}
+    <div class="ra-g3"><div class="field"><label>${acL('Fecha de entrada en la operación', 'Data d\'entrada a l\'operació')}</label><input type="date" id="ra-entrada" value="${escAttr((f && f.fecha_entrada) || isoLocal())}"></div>
+    <div class="field" style="grid-column:span 2"><label>${acL('Notas', 'Notes')}</label><input id="ra-notas" value="${escAttr((f && f.notas) || '')}"></div></div>
+    ${otrosTecHtml('rf')}
+    <div class="ra-fila"><button class="primary-btn" style="margin:0;" onclick="raFamiliaGuardar(${f ? `'${f.id}'` : ''})">💾 ${acL('Guardar', 'Desar')}</button><button class="link-btn" onclick="${f ? `renderRaices('familia','${f.id}')` : `renderRaices('familias')`}">${acL('Cancelar', 'Cancel·lar')}</button></div></div>`;
+  if(f && Array.isArray(f.otros_tecnicos)) f.otros_tecnicos.forEach(e => { const x = document.querySelector(`input[name="rf-otros"][value="${CSS.escape(e)}"]`); if(x) x.checked = true; });
+  try { otrosTecContar('rf'); } catch(e){}
+}
+function raLeerPersona(pref, i, adulto){
+  const v = k => ((document.getElementById(`${pref}${i}-${k}`) || {}).value || '').trim();
+  const p = { nombre: v('nombre'), apellidos: v('apellidos'), nif: v('nif').toUpperCase(), fecha_nac: v('fecha_nac') };
+  if(adulto) Object.assign(p, { telefono: v('telefono'), domicilio: v('domicilio'), municipio: v('municipio'), cp: v('cp') });
+  return p.nombre || p.apellidos ? p : null;
+}
+async function raFamiliaGuardar(id){
+  const adultos = [1, 2].map(i => raLeerPersona('ra-a', i, true)).filter(Boolean);
+  const menores = [1, 2, 3].map(i => raLeerPersona('ra-m', i, false)).filter(Boolean);
+  if(!adultos.length){ alert(acL('Escribe al menos el nombre de una persona adulta.', 'Escriu almenys el nom d\'una persona adulta.')); return; }
+  const fila = { adultos, menores, fecha_entrada: (document.getElementById('ra-entrada') || {}).value || isoLocal(), notas: ((document.getElementById('ra-notas') || {}).value || '').trim() || null, otros_tecnicos: otrosTecValor('rf') };
+  let r;
+  if(id) r = await sb.from('raices_familias').update(Object.assign(fila, { actualizado_en: new Date().toISOString() })).eq('id', id).select('id');
+  else r = await sb.from('raices_familias').insert(fila).select('id');
+  if(r.error){ alert(r.error.message); return; }
+  try { sgLimpiar(); } catch(e){}
+  renderRaices('familia', id || (r.data && r.data[0] && r.data[0].id));
+}
+
+function raFamiliaHtml(f){
+  if(!f) return `<div class="empty-note">—</div>`;
+  const ps = raPersonas(f), ses = __ra.sesiones.filter(s => s.familia_id === f.id), ev = __ra.evals[f.id];
+  const fila = p => { const d = (p.tipo === 'adulto' ? f.adultos : f.menores)[Number(p.k.slice(1)) - 1] || {}; const e = raEdad(d.fecha_nac);
+    return `<div class="ra-p"><span class="ra-av ${p.tipo}">${p.tipo === 'menor' ? '🧒' : '🧑'}</span><div><b>${escAttr(p.n)}</b><small>${[d.nif, e !== '' ? e + ' ' + acL('años', 'anys') : '', d.telefono ? '📞 ' + d.telefono : ''].filter(Boolean).map(escAttr).join(' · ') || '—'}</small></div><span class="ra-n">${ses.filter(s => (s.asistentes || []).includes(p.k)).length}</span></div>`; };
+  return `<div class="ra-fila" style="margin-bottom:10px;"><button class="link-btn" onclick="renderRaices('familias')">← ${acL('Todas las familias', 'Totes les famílies')}</button></div>
+  <div class="ra-ficha">
+    <section class="panel-card"><div class="ra-ft"><div><span class="ra-cod">${escAttr(f.codigo)}</span><h3 style="margin:6px 0 2px;">${acL('Familia', 'Família')} ${escAttr(raFamNombre(f))}</h3>
+      <small class="subtle">${acL('Entrada', 'Entrada')}: ${raFecha(f.fecha_entrada)}${f.fecha_salida ? ' · ' + acL('Salida', 'Sortida') + ': ' + raFecha(f.fecha_salida) : ''} · 👤 ${escAttr(nombreTecnico(f.tecnico_email || ''))}${otrosTecTxt(f.otros_tecnicos)}</small></div>
+      <button class="link-btn" onclick="raFamiliaForm('${f.id}')">✏️ ${acL('Editar datos', 'Editar dades')}</button></div>
+      <h4 class="ra-h4">${acL('Personas participantes', 'Persones participants')} <small>(${acL('nº = veces atendida', 'nº = vegades atesa')})</small></h4>
+      <div class="ra-ps">${ps.map(fila).join('')}</div>
+      <h4 class="ra-h4">✍️ ${acL('Consentimiento (protección de datos)', 'Consentiment (protecció de dades)')}</h4>
+      ${f.consentimiento_firmado ? `<div class="ra-ok">✅ ${acL('Firmado el', 'Signat el')} ${raFecha(f.consentimiento_fecha)}${f.consentimiento_declaracion ? `<br><small>${escAttr(f.consentimiento_declaracion)}</small>` : ''}</div>` : `<div class="ra-mal">⚠️ ${acL('Falta el consentimiento firmado. Imprímelo, que lo firmen y márcalo aquí.', 'Falta el consentiment signat. Imprimeix-lo, que el signin i marca-ho aquí.')}</div>`}
+      <div class="ra-fila"><button class="m4-btn" onclick="raConsentimientoImprimir('${f.id}')">🖨️ ${acL('Imprimir autorización', 'Imprimir autorització')}</button>
+        ${f.consentimiento_firmado ? '' : `<button class="m4-btn m4-btn-pri" onclick="raConsentimientoMarcar('${f.id}')">✅ ${acL('Marcar como firmado', 'Marcar com a signat')}</button>`}</div>
+      <h4 class="ra-h4">📈 ${acL('Evaluación', 'Avaluació')}</h4>
+      <div class="ra-fila"><span class="chip ${ev && ev.fecha_final ? 'good' : ev && ev.fecha_inicial ? 'gold' : 'off'}">${ev && ev.fecha_final ? acL('Final hecha', 'Final feta') + ' · ' + raFecha(ev.fecha_final) : ev && ev.fecha_inicial ? acL('Inicial hecha', 'Inicial feta') + ' · ' + raFecha(ev.fecha_inicial) : acL('Sin empezar', 'Sense començar')}</span>
+        <button class="m4-btn m4-btn-pri" onclick="renderRaices('evaluacion','${f.id}')">📈 ${ev ? acL('Abrir evaluación', 'Obrir avaluació') : acL('Empezar la evaluación', 'Començar l\'avaluació')}</button></div>
+      <h4 class="ra-h4">🚪 ${acL('Salida del proyecto', 'Sortida del projecte')}</h4>
+      ${f.estado === 'baja' ? `<div class="ra-mal" style="background:#F3F4F6;border-color:#D1D5DB;color:#374151;">${escAttr(f.motivo_baja || '')} · ${raFecha(f.fecha_salida)}${f.hechos_baja ? '<br><small>' + escAttr(f.hechos_baja) + '</small>' : ''}</div><button class="link-btn" onclick="raReactivar('${f.id}')">↩️ ${acL('Volver a activar', 'Tornar a activar')}</button>`
+        : `<button class="link-btn" onclick="raBajaForm('${f.id}')">🚪 ${acL('Registrar la salida / baja', 'Registrar la sortida / baixa')}</button>`}
+    </section>
+    <section class="panel-card"><div class="ra-ft"><h3 style="margin:0;">🗓️ ${acL('Presencia y actuaciones', 'Presència i actuacions')} <span class="chip">${ses.length}</span></h3>
+      <button class="m4-btn m4-btn-pri" onclick="raSesionForm('${f.id}')">➕ ${acL('Ficha de presencia y actuación', 'Fitxa de presència i actuació')}</button></div>
+      <p class="subtle" style="font-size:12.5px;">${acL('Cada persona presente suma una atención en las cifras de Logos.', 'Cada persona present suma una atenció a les xifres de Logos.')}</p>
+      <div class="ra-tl">${ses.map(s => raSesionItem(s, f)).join('') || `<div class="empty-note">${acL('Aún no hay sesiones.', 'Encara no hi ha sessions.')}</div>`}</div></section>
+  </div>`;
+}
+function raSesionItem(s, f){
+  const t = raTipo(s.tipo), ps = raPersonas(f || __ra.familias.find(x => x.id === s.familia_id) || {});
+  const quien = (s.asistentes || []).map(k => (ps.find(p => p.k === k) || { n: k.toUpperCase() }).n);
+  return `<div class="ra-tl-i"><span class="ra-tl-ic">${t[1]}</span><div class="ra-tl-b"><div class="ra-tl-h"><b>${escAttr(t[2])}</b><small>${raFecha(s.fecha)}${s.hora ? ' · ' + escAttr(s.hora) : ''}${s.duracion_minutos ? ' · ' + s.duracion_minutos + ' min' : ''}</small></div>
+    <small>👥 ${quien.map(escAttr).join(', ') || '—'}</small>
+    ${s.que_se_hizo ? `<p><strong>${acL('Qué se hizo', 'Què es va fer')}:</strong> ${escAttr(s.que_se_hizo)}</p>` : ''}
+    ${s.cambios ? `<p class="ra-cambio">🌱 <strong>${acL('Qué ha cambiado', 'Què ha canviat')}:</strong> ${escAttr(s.cambios)}</p>` : ''}
+    ${s.proximo_paso ? `<p><strong>➡️ ${acL('Próximo paso', 'Proper pas')}:</strong> ${escAttr(s.proximo_paso)}</p>` : ''}
+    <small>👤 ${escAttr(nombreTecnico(s.tecnico_email || ''))}${otrosTecTxt(s.otros_tecnicos)}</small>
+    <button class="link-btn ra-anular" onclick="raSesionAnular('${s.id}','${s.familia_id}')">${acL('Anular', 'Anul·lar')}</button></div></div>`;
+}
+function raSesionForm(famId){
+  const f = __ra.familias.find(x => x.id === famId); if(!f) return;
+  const ps = raPersonas(f);
+  let ov = document.getElementById('ra-ov'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'ra-ov'; ov.className = 'sg-ov';
+  ov.innerHTML = `<div class="sg-caja ra-modal">
+    <h3 style="margin-top:0;">🗓️ ${acL('Ficha de presencia y actuación', 'Fitxa de presència i actuació')} · ${escAttr(f.codigo)}</h3>
+    <div class="ra-g3"><div class="field"><label>${acL('Fecha', 'Data')}</label><input type="date" id="ras-fecha" value="${isoLocal()}"></div>
+      <div class="field"><label>${acL('Hora', 'Hora')}</label><input type="time" id="ras-hora" value="${new Date().toTimeString().slice(0, 5)}"></div>
+      <div class="field"><label>${acL('Duración (min)', 'Durada (min)')}</label><input type="number" id="ras-dur" min="5" step="5" value="45"></div></div>
+    <div class="field"><label>${acL('Actuación', 'Actuació')}</label><div class="ra-tipos">${RA_TIPOS.map((t, i) => `<label class="ra-tipo"><input type="radio" name="ras-tipo" value="${t[0]}" ${i === 0 && !__ra.sesiones.some(s => s.familia_id === famId) ? 'checked' : ''}> ${t[1]} ${t[2]}</label>`).join('')}</div></div>
+    <div class="field"><label>👥 ${acL('¿Quién ha venido? (ficha de presencia)', 'Qui ha vingut? (fitxa de presència)')}</label><div class="ra-tipos">${ps.map(p => `<label class="ra-tipo"><input type="checkbox" name="ras-asis" value="${p.k}" checked> ${p.tipo === 'menor' ? '🧒' : '🧑'} ${escAttr(p.n)}</label>`).join('')}</div></div>
+    <div class="field"><label>${acL('¿Qué se ha hecho?', 'Què s\'ha fet?')}</label><textarea id="ras-que" rows="3"></textarea></div>
+    <div class="field"><label>🌱 ${acL('¿Qué ha cambiado en la persona / la familia?', 'Què ha canviat en la persona / la família?')}</label><textarea id="ras-cambios" rows="2" placeholder="${acL('Ej.: el niño se expresa mejor; la madre ya sabe pedir cita en Servicios Sociales…', 'Ex.: el nen s\'expressa millor; la mare ja sap demanar cita a Serveis Socials…')}"></textarea></div>
+    <div class="field"><label>➡️ ${acL('Próximo paso', 'Proper pas')}</label><input id="ras-prox"></div>
+    ${otrosTecHtml('ras')}
+    <div id="ras-err"></div>
+    <div class="ra-fila"><button class="primary-btn" style="margin:0;" onclick="raSesionGuardar('${famId}')">💾 ${acL('Guardar', 'Desar')}</button><button class="link-btn" onclick="raSesionCerrar()">${acL('Cancelar', 'Cancel·lar')}</button></div></div>`;
+  document.body.appendChild(ov);
+}
+function raSesionCerrar(){
+  if(window.__sinGuardar && window.__sinGuardar.actuacion && !confirm(acL('Has escrito en la ficha y no la has guardado. ¿Salir sin guardar?', 'Has escrit a la fitxa i no l\'has desat. Sortir sense desar?'))) return;
+  try { sgLimpiar('actuacion'); } catch(e){}
+  const ov = document.getElementById('ra-ov'); if(ov) ov.remove();
+}
+async function raSesionGuardar(famId){
+  const v = id => ((document.getElementById(id) || {}).value || '').trim();
+  const tipo = (document.querySelector('input[name="ras-tipo"]:checked') || {}).value;
+  const asistentes = Array.from(document.querySelectorAll('input[name="ras-asis"]:checked')).map(x => x.value);
+  const err = document.getElementById('ras-err');
+  if(!tipo){ err.innerHTML = `<div class="auth-error">${acL('Elige la actuación.', 'Tria l\'actuació.')}</div>`; return; }
+  if(!asistentes.length){ err.innerHTML = `<div class="auth-error">${acL('Marca quién ha venido.', 'Marca qui ha vingut.')}</div>`; return; }
+  const fila = { familia_id: famId, fecha: v('ras-fecha') || isoLocal(), hora: v('ras-hora') || null, duracion_minutos: parseInt(v('ras-dur'), 10) || null, tipo, asistentes,
+    tecnico_email: CURRENT_USER.email, otros_tecnicos: otrosTecValor('ras'), que_se_hizo: v('ras-que') || null, cambios: v('ras-cambios') || null, proximo_paso: v('ras-prox') || null };
+  const { error } = await sb.from('raices_sesiones').insert(fila);
+  if(error){ err.innerHTML = `<div class="auth-error">${escAttr(error.message)}</div>`; return; }
+  try { sgLimpiar('actuacion'); } catch(e){}
+  const ov = document.getElementById('ra-ov'); if(ov) ov.remove();
+  try { m3Toast('✅ ' + acL(`Guardado · suma ${asistentes.length} atención(es)`, `Desat · suma ${asistentes.length} atenció(ns)`)); } catch(e){}
+  renderRaices('familia', famId);
+}
+async function raSesionAnular(id, famId){
+  if(!confirm(acL('¿Anular esta sesión? Queda guardada pero deja de contar en las cifras.', 'Anul·lar aquesta sessió? Queda desada però deixa de comptar a les xifres.'))) return;
+  const { error } = await sb.from('raices_sesiones').update({ anulada: true }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderRaices(__ra.vista === 'sesiones' ? 'sesiones' : 'familia', famId);
+}
+function raSesionesHtml(){
+  const fam = id => __ra.familias.find(f => f.id === id);
+  const porMes = {};
+  __ra.sesiones.forEach(s => { const m = String(s.fecha).slice(0, 7); (porMes[m] = porMes[m] || []).push(s); });
+  const meses = Object.keys(porMes).sort().reverse();
+  const nomMes = m => new Date(m + '-01T00:00:00').toLocaleDateString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES', { month: 'long', year: 'numeric' });
+  return `<div class="ra-fila" style="margin-bottom:10px;"><button class="m4-btn" onclick="raExportarSesiones()">⬇️ ${acL('Descargar registro (Excel)', 'Descarregar registre (Excel)')}</button></div>` +
+    (meses.map((m, i) => `<details class="plegable" ${i === 0 ? 'open' : ''}><summary>🗓️ ${escAttr(nomMes(m))} <span class="chip">${porMes[m].length}</span> <span class="chip good">${porMes[m].reduce((n, s) => n + (s.asistentes || []).length, 0)} ${acL('atenciones', 'atencions')}</span></summary>
+      <div class="ra-tl">${porMes[m].map(s => { const f = fam(s.familia_id); return `<div class="ra-tl-fam"><button class="link-btn" onclick="renderRaices('familia','${s.familia_id}')">${escAttr(f ? f.codigo + ' · ' + raFamNombre(f) : '')}</button></div>` + raSesionItem(s, f); }).join('')}</div></details>`).join('') || `<div class="empty-note">${acL('Aún no hay sesiones registradas.', 'Encara no hi ha sessions registrades.')}</div>`);
+}
+function raExportarSesiones(){
+  const fam = id => __ra.familias.find(f => f.id === id) || {};
+  const filas = [['Fecha', 'Hora', 'Duración (min)', 'Código familia', 'Actuación', 'Personas presentes', 'Nº presentes', 'Técnico/a', 'Otros técnicos', 'Qué se hizo', 'Qué ha cambiado', 'Próximo paso']];
+  __ra.sesiones.forEach(s => { const f = fam(s.familia_id), ps = raPersonas(f);
+    filas.push([s.fecha, s.hora || '', s.duracion_minutos || '', f.codigo || '', raTipo(s.tipo)[2], (s.asistentes || []).map(k => (ps.find(p => p.k === k) || { n: k }).n).join(', '), (s.asistentes || []).length, nombreTecnico(s.tecnico_email || ''), (s.otros_tecnicos || []).map(nombreTecnico).join(', '), s.que_se_hizo || '', s.cambios || '', s.proximo_paso || '']); });
+  const csv = '﻿' + filas.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'raices-registro-' + isoLocal() + '.csv'; a.click();
+}
+
+// ---------- consentimiento ----------
+async function raConsentimientoMarcar(id){
+  let ov = document.getElementById('ra-ov'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'ra-ov'; ov.className = 'sg-ov';
+  ov.innerHTML = `<div class="sg-caja ra-modal"><h3 style="margin-top:0;">✅ ${acL('Consentimiento firmado', 'Consentiment signat')}</h3>
+    <div class="ra-g3"><div class="field"><label>${acL('Fecha de la firma', 'Data de la signatura')}</label><input type="date" id="rac-fecha" value="${isoLocal()}"></div>
+    <div class="field" style="grid-column:span 2"><label>${acL('Lugar', 'Lloc')}</label><input id="rac-lugar" value="Tarragona"></div></div>
+    <div class="field"><label>${acL('Solo si firma una sola persona representante legal: declaración responsable', 'Només si signa una sola persona representant legal: declaració responsable')}</label>
+      <select id="rac-decl"><option value="">${acL('— Firman las dos personas / no aplica —', '— Signen les dues persones / no s\'aplica —')}</option>${RA_DECL.map(d => `<option>${escAttr(d)}</option>`).join('')}</select></div>
+    <p class="subtle" style="font-size:12.5px;">${acL('Guarda el papel firmado en la carpeta del proyecto (o súbelo escaneado a Documentos).', 'Guarda el paper signat a la carpeta del projecte (o puja\'l escanejat a Documents).')}</p>
+    <div class="ra-fila"><button class="primary-btn" style="margin:0;" onclick="raConsentimientoGuardar('${id}')">💾 ${acL('Guardar', 'Desar')}</button><button class="link-btn" onclick="document.getElementById('ra-ov').remove()">${acL('Cancelar', 'Cancel·lar')}</button></div></div>`;
+  document.body.appendChild(ov);
+}
+async function raConsentimientoGuardar(id){
+  const v = k => ((document.getElementById(k) || {}).value || '').trim();
+  const { error } = await sb.from('raices_familias').update({ consentimiento_firmado: true, consentimiento_fecha: v('rac-fecha') || isoLocal(), consentimiento_lugar: v('rac-lugar') || null, consentimiento_declaracion: v('rac-decl') || null }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  const ov = document.getElementById('ra-ov'); if(ov) ov.remove();
+  renderRaices('familia', id);
+}
+function raImprimir(titulo, cuerpo){
+  const css = `body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:11.5pt;line-height:1.4;margin:0;} .pg{max-width:780px;margin:0 auto;padding:18px 26px;}
+    h1{font-size:15pt;text-align:center;margin:4px 0;} h2{font-size:12.5pt;margin:16px 0 6px;} .c{text-align:center;} .logo{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1B4E95;padding-bottom:6px;margin-bottom:10px;font-size:9.5pt;color:#1B4E95;}
+    .logo b{font-size:14pt;} table{width:100%;border-collapse:collapse;margin:6px 0 10px;} td,th{border:1px solid #777;padding:4px 6px;vertical-align:top;font-size:10pt;} th{background:#E8EEFB;text-align:left;}
+    .k{width:32%;background:#F4F6FA;font-weight:bold;} .box{display:inline-block;width:11px;height:11px;border:1px solid #333;margin-right:6px;vertical-align:-1px;text-align:center;font-size:9px;line-height:11px;}
+    .firma{display:flex;gap:24px;margin-top:26px;} .firma div{flex:1;border-top:1px solid #333;padding-top:4px;font-size:9.5pt;min-height:60px;} small{color:#444;} .pie{font-size:8.5pt;color:#555;margin-top:18px;border-top:1px solid #ccc;padding-top:4px;}
+    @page{size:A4;margin:12mm;} .salto{page-break-before:always;}`;
+  let fr = document.getElementById('ra-print'); if(fr) fr.remove();
+  fr = document.createElement('iframe'); fr.id = 'ra-print'; fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+  document.body.appendChild(fr);
+  const d = fr.contentWindow.document;
+  d.open(); d.write(`<!doctype html><html><head><meta charset="utf-8"><title>${escAttr(titulo)}</title><style>${css}</style></head><body><div class="pg">${cuerpo}</div></body></html>`); d.close();
+  setTimeout(() => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch(e){} }, 350);
+}
+function raCabPrint(){ return `<div class="logo"><div><b>Logos λ</b><br>Associació Logos · Projectes Socials</div><div style="text-align:right">Proyecto Raíces: Reconexión Familiar<br>Programa FSE+ · Jóvenes en acción</div></div>`; }
+function raConsentimientoImprimir(id){
+  const f = __ra.familias.find(x => x.id === id); if(!f) return;
+  const x = (v) => escAttr(v || '');
+  const men = i => { const p = (f.menores || [])[i] || {}; return `<tr><th colspan="4">DATOS DE LA PERSONA MENOR DE EDAD ${i + 1}</th></tr><tr><td class="k">APELLIDOS</td><td>${x(p.apellidos)}</td><td class="k">NOMBRE</td><td>${x(p.nombre)}</td></tr><tr><td class="k">NIF</td><td>${x(p.nif)}</td><td class="k">Fecha nacimiento</td><td>${p.fecha_nac ? raFecha(p.fecha_nac) : ''}</td></tr>`; };
+  const adu = i => { const p = (f.adultos || [])[i] || {}; return `<tr><th colspan="4">DATOS DE LA PERSONA REPRESENTANTE LEGAL ${i + 1}</th></tr><tr><td class="k">APELLIDOS</td><td>${x(p.apellidos)}</td><td class="k">NOMBRE</td><td>${x(p.nombre)}</td></tr><tr><td class="k">NIF</td><td>${x(p.nif)}</td><td class="k">Fecha nacimiento</td><td>${p.fecha_nac ? raFecha(p.fecha_nac) : ''}</td></tr><tr><td class="k">Teléfono</td><td>${x(p.telefono)}</td><td class="k">CP</td><td>${x(p.cp)}</td></tr><tr><td class="k">Domicilio</td><td>${x(p.domicilio)}</td><td class="k">Municipio</td><td>${x(p.municipio)}</td></tr>`; };
+  raImprimir('Autorización LOPD · ' + f.codigo, `${raCabPrint()}
+    <h1>AUTORIZACIÓN PARA LA RECOGIDA Y TRATAMIENTO DE DATOS DE CARÁCTER PERSONAL</h1><p class="c"><b>Proyecto Raíces: Reconexión Familiar</b> · Expediente ${x(f.codigo)}</p>
+    <h2>DOCUMENTO DE INFORMACIÓN PARA LA PARTICIPACIÓN EN EL PROYECTO</h2>
+    <p>Este documento sirve para que el representante legal o representantes legales, en su caso, dé/den su consentimiento para la recogida y tratamiento de los datos personales necesarios para la participación en el proyecto Raíces: Reconexión familiar. Puede usted retirar este consentimiento cuando lo desee.</p>
+    <p>Antes de firmar, es importante que lea despacio la información siguiente. Díganos si tiene alguna duda o necesita más información. Le atenderemos con mucho gusto.</p>
+    <p>El Proyecto Raíces: Reconexión Familiar tiene como finalidad ofrecer a las familias un espacio multidisciplinar, presencial y virtual, donde puedan recibir apoyo psicológico, educativo, social y recreativo. Sus servicios están orientados a fortalecer la convivencia, mejorar el bienestar emocional y favorecer relaciones familiares saludables, especialmente en hogares con niñas, niños o jóvenes en situación de vulnerabilidad.</p>
+    <p>El proyecto incluye atención psicológica, mediación familiar, talleres formativos, ludotecas y actividades de ocio como campus de verano y Navidad. Además, se dispone de una plataforma digital para asesoría y seguimiento de familias en riesgo, facilitando un acceso rápido a recursos de apoyo. La participación en este proyecto busca contribuir al desarrollo integral de las familias y proporcionarles herramientas para mejorar su calidad de vida y sus dinámicas relacionales.</p>
+    <p>Los datos consignados en este documento serán tratados de acuerdo con el Reglamento General de Protección de Datos 2016/679 del Parlamento Europeo y del Consejo y a la Ley Orgánica 3/2018, de 5 de diciembre, de Protección de Datos Personales y Garantía de los Derechos Digitales:</p>
+    <table><tr><th colspan="2">INFORMACIÓN BÁSICA SOBRE EL TRATAMIENTO DE DATOS</th></tr>
+      <tr><td class="k">Responsable del tratamiento</td><td>ASSOCIACIÓ LOGOS – PROJECTES SOCIALS · NIF G55725436<br>Carrer de la Pau del Protectorat, 14 – 43004 Tarragona<br>Teléfono: 630 46 15 60<br>Dirección de correo electrónico: info@logostgn.cat</td></tr>
+      <tr><td class="k">Contacto de protección de datos</td><td>info@logostgn.cat</td></tr>
+      <tr><td class="k">Finalidad del tratamiento</td><td>Gestión de la participación en el proyecto Raíces: Reconexión Familiar cofinanciado por el Programa FSE+ de Inclusión Social, Garantía Infantil y lucha contra la pobreza, así como su seguimiento, gestión financiera, verificación y auditoría de las operaciones cofinanciadas por el Fondo Social Europeo Plus.</td></tr>
+      <tr><td class="k">Legitimación del tratamiento</td><td>El artículo 6.1 letras c) y e) del Reglamento 2016/679 del Parlamento Europeo y del Consejo, en cumplimiento de las obligaciones legales derivadas los artículos 8 y 72 del Reglamento (UE) 2021/1060 y en ejercicio de poderes públicos.</td></tr>
+      <tr><td class="k">Destinatarios de cesiones</td><td>Los datos serán cedidos a la UAFSE Unidad Administradora del Fondo Social Europeo (Autoridad de Gestión y Autoridad de Certificación), Ministerio de Derechos Sociales, Consumo y Agenda 2030, Comisión Europea, Autoridad de Auditoría del FSE+, Tribunal de Cuentas Europeo y Nacional, empresas adjudicatarias contratadas por Hogar SI, otros organismos públicos, y a otros Organismos de control interno o externo de la Administración Autonómica, Estatal o de la Unión Europea.</td></tr>
+      <tr><td class="k">Procedencia de los datos y tipología de datos</td><td>Los datos proceden de los aportados por el propio interesado.<br>Los datos objeto de tratamiento son: datos personales y de categorías especiales de datos personales (art. 9, Reglamento (UE) 2016/679 del Parlamento Europeo y del Consejo).</td></tr>
+      <tr><td class="k">Derechos de las personas interesadas</td><td>Los interesados tienen derechos de acceso, rectificación, supresión, limitación del tratamiento y portabilidad de datos, oposición y decisiones individuales automatizadas, en los términos previstos en los artículos 15 a 23 del Reglamento (UE) 2016/679.<br>Puede ejercer estos derechos a través de los siguientes medios:<br><span class="box">✓</span>Por correo electrónico info@logostgn.cat<br><span class="box">✓</span>Presencialmente, en Carrer de la Pau del Protectorat, 14 – 43004 Tarragona.<br><span class="box">✓</span>Asimismo, tiene derecho a reclamar ante la Agencia Española de Protección de Datos: C/ Jorge Juan, 6, 28001 MADRID. https://www.aepd.es/derechos-y-deberes/conoce-tus-derechos</td></tr></table>
+    <h2 class="salto">DATOS DE LAS PERSONAS PARTICIPANTES</h2>
+    <table>${[0, 1, 2].map(men).join('')}</table>
+    <table>${[0, 1].map(adu).join('')}</table>
+    <p>Con la firma del presente documento manifiesto haber sido informado/a sobre el tratamiento y cesión de mis datos y mis derechos al respecto y estoy conforme con los mismo así como con la participación en el proyecto de las personas arriba indicadas, incluidos las personas menores de edad.</p>
+    <p>He leído y comprendido la información anterior. He podido preguntar y aclarar todas mis dudas. Por eso he tomado consciente y libremente la decisión de autorizarla. También sé que puedo retirar mi consentimiento cuando lo estime oportuno.</p>
+    <p><i>Cumplimentar sólo en caso de no poder recabar la firma del segundo responsable legal:</i><br>Por último, DECLARO RESPONSABLEMENTE, (indicar según corresponda):</p>
+    <table>${RA_DECL.map(d => `<tr><td style="width:22px;"><span class="box">${f.consentimiento_declaracion === d ? '✓' : ''}</span></td><td>${escAttr(d)}</td></tr>`).join('')}</table>
+    <p>En ${x(f.consentimiento_lugar || 'Tarragona')}, a ${f.consentimiento_fecha ? raFecha(f.consentimiento_fecha) : '____ de ________________ de 202__'}</p>
+    <div class="firma"><div>Consentimiento de los representantes legales:<br><br>Firma representante legal 1</div><div><br><br>Firma representante legal 2</div></div>
+    <div class="firma"><div>Asentimiento de las personas menores de edad (proporcional a la edad):</div></div>
+    <div class="pie">Associació Logos – Projectes Socials · NIF G55725436 · Carrer de la Pau del Protectorat, 14 · 43004 Tarragona · info@logostgn.cat · Expediente ${x(f.codigo)}</div>`);
+}
+
+// ---------- salida / baja ----------
+function raBajaForm(id){
+  let ov = document.getElementById('ra-ov'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'ra-ov'; ov.className = 'sg-ov';
+  ov.innerHTML = `<div class="sg-caja ra-modal"><h3 style="margin-top:0;">🚪 ${acL('Salida de la operación', 'Sortida de l\'operació')}</h3>
+    <div class="field"><label>${acL('Fecha de salida', 'Data de sortida')}</label><input type="date" id="rab-fecha" value="${isoLocal()}"></div>
+    <div class="field"><label>${acL('Motivo de la baja', 'Motiu de la baixa')}</label><div class="ra-tipos">${RA_MOTIVOS.map((m, i) => `<label class="ra-tipo"><input type="radio" name="rab-mot" value="${escAttr(m)}" ${i === 3 ? 'checked' : ''}> ${escAttr(m)}</label>`).join('')}</div></div>
+    <div class="field"><label>${acL('Descripción de hechos que motivan la baja', 'Descripció dels fets que motiven la baixa')}</label><textarea id="rab-hechos" rows="3"></textarea></div>
+    <p class="subtle" style="font-size:12.5px;">💡 ${acL('Antes de la baja, haz la evaluación final.', 'Abans de la baixa, fes l\'avaluació final.')}</p>
+    <div class="ra-fila"><button class="primary-btn" style="margin:0;" onclick="raBajaGuardar('${id}')">💾 ${acL('Guardar', 'Desar')}</button><button class="link-btn" onclick="document.getElementById('ra-ov').remove()">${acL('Cancelar', 'Cancel·lar')}</button></div></div>`;
+  document.body.appendChild(ov);
+}
+async function raBajaGuardar(id){
+  const { error } = await sb.from('raices_familias').update({ estado: 'baja', fecha_salida: (document.getElementById('rab-fecha') || {}).value || isoLocal(), motivo_baja: (document.querySelector('input[name="rab-mot"]:checked') || {}).value || null, hechos_baja: ((document.getElementById('rab-hechos') || {}).value || '').trim() || null }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  const ov = document.getElementById('ra-ov'); if(ov) ov.remove();
+  renderRaices('familia', id);
+}
+async function raReactivar(id){
+  const { error } = await sb.from('raices_familias').update({ estado: 'activa', fecha_salida: null }).eq('id', id);
+  if(error){ alert(error.message); return; }
+  renderRaices('familia', id);
+}
+
+// ---------- evaluación ----------
+function raSujetos(b, f){
+  if(b.quien === 'familia') return [{ k: 'fam', n: acL('Familia (consensuada)', 'Família (consensuada)') }];
+  return raPersonas(f).filter(p => p.tipo === (b.quien === 'adultos' ? 'adulto' : 'menor'));
+}
+function raValSel(name, val){
+  const ops = ['', '1', '2', '3', '4', '5', 'NS', 'NP'];
+  return `<select class="ra-v" data-k="${name}" onchange="raPuntuar()">${ops.map(o => `<option value="${o}" ${String(val || '') === o ? 'selected' : ''}>${o || '·'}</option>`).join('')}</select>`;
+}
+function raEvaluacionHtml(f){
+  if(!f) return '';
+  const ev = __ra.evals[f.id] || {}, R = ev.respuestas || {}, P = ev.plan || {}, Q = ev.cualitativas || {}, O = ev.observaciones || {}, X = ev.proxy || {};
+  const ses = __ra.sesiones.filter(s => s.familia_id === f.id);
+  const recibidas = RA_TIPOS.filter(t => t[0] !== 'otra').map(t => { const ss = ses.filter(s => s.tipo === t[0]); return `<tr><td>${ss.length ? '☑' : '☐'} ${t[1]} ${escAttr(t[2].toUpperCase())}</td><td>${ss.map(s => raFecha(s.fecha).slice(0, 5)).join(', ') || '—'}</td><td>${ss.length ? ss.length + ' ' + acL('sesión(es)', 'sessió(ns)') : ''}</td></tr>`; }).join('');
+  const bloque = b => {
+    const suj = raSujetos(b, f);
+    if(!suj.length) return `<div class="panel-card"><h3>${escAttr(b.t)}</h3><div class="empty-note">${acL('No aplica: no hay personas de este grupo en la familia.', 'No s\'aplica: no hi ha persones d\'aquest grup a la família.')}</div></div>`;
+    return `<div class="panel-card ra-bloque"><h3>${escAttr(b.t)}</h3><p class="subtle" style="font-size:12.5px;">${escAttr(b.ayuda)}</p>
+      <div class="ra-tabla-w"><table class="ra-tabla"><thead><tr><th rowspan="2">${acL('Afirmación', 'Afirmació')}</th>${suj.map(s => `<th colspan="2">${escAttr(s.n)}${b.id === 'me' ? `<br><label class="ra-proxy"><input type="checkbox" data-proxy="${s.k}" ${X[s.k] ? 'checked' : ''}> proxy</label>` : ''}</th>`).join('')}</tr>
+        <tr>${suj.map(() => `<th>${acL('Antes', 'Abans')}</th><th>${acL('Tras', 'Després')}</th>`).join('')}</tr></thead>
+        <tbody>${b.items.map((it, i) => `<tr><td>${i + 1}. ${escAttr(it)}</td>${suj.map(s => { const k = `${b.id}.${s.k}.${i + 1}`, r = R[k] || {}; return `<td>${raValSel(k + '.a', r.a)}</td><td>${raValSel(k + '.t', r.t)}</td>`; }).join('')}</tr>`).join('')}</tbody></table></div>
+      <div class="field"><label>${acL('Observación breve', 'Observació breu')}</label><textarea data-obs="${b.id}" rows="2">${escAttr(O[b.id] || '')}</textarea></div></div>`;
+  };
+  return `<div class="ra-fila" style="margin-bottom:10px;"><button class="link-btn" onclick="renderRaices('familia','${f.id}')">← ${acL('Volver a la familia', 'Tornar a la família')} ${escAttr(f.codigo)}</button></div>
+  <div class="panel-card ra-ev-cab"><h3 style="margin:0;">📈 ${acL('Evaluación', 'Avaluació')} · ${acL('Familia', 'Família')} ${escAttr(raFamNombre(f))} <span class="ra-cod">${escAttr(f.codigo)}</span></h3>
+    <p class="subtle">${acL('Cada afirmación se valora «ANTES DE RAÍCES» (al entrar, o de forma retrospectiva) y «TRAS RAÍCES» (al salir). Escala: 1 Nada · 2 Poco · 3 Algo · 4 Bastante · 5 Mucho · NS No sabe · NP No procede. No sugerir que ha habido mejora.', 'Cada afirmació es valora «ABANS DE RAÍCES» (en entrar, o de manera retrospectiva) i «DESPRÉS DE RAÍCES» (en sortir). Escala: 1 Gens · 2 Poc · 3 Una mica · 4 Bastant · 5 Molt · NS No ho sap · NP No escau.')}</p>
+    <div class="ra-g3"><div class="field"><label>${acL('Fecha de evaluación inicial', 'Data d\'avaluació inicial')}</label><input type="date" id="rae-fi" value="${escAttr(ev.fecha_inicial || '')}"></div>
+      <div class="field"><label>${acL('Fecha de evaluación final', 'Data d\'avaluació final')}</label><input type="date" id="rae-ff" value="${escAttr(ev.fecha_final || '')}"></div>
+      <div class="field"><label>&nbsp;</label><div class="ra-fila"><button class="primary-btn" style="margin:0;" onclick="raEvaluacionGuardar('${f.id}')">💾 ${acL('Guardar', 'Desar')}</button><button class="m4-btn" onclick="raEvaluacionImprimir('${f.id}')">🖨️ ${acL('Imprimir', 'Imprimir')}</button></div></div></div></div>
+  <div class="panel-card"><h3>${acL('Evaluación de consecución del Plan de intervención', 'Avaluació de consecució del Pla d\'intervenció')}</h3>
+    ${RA_PLAN.map((a, i) => { const p = P[i + 1] || {}; return `<div class="ra-plan"><b>${i + 1}. ${escAttr(a.toUpperCase())}</b>
+      <div class="ra-plan-g"><div class="field"><label>${acL('Definición del objetivo', 'Definició de l\'objectiu')}</label><textarea data-plan="${i + 1}.objetivo" rows="2">${escAttr(p.objetivo || '')}</textarea></div>
+      <div class="field"><label>${acL('Alcance de las necesidades', 'Abast de les necessitats')}</label><div class="ra-tipos">${['SI', 'NO', 'PARCIALMENTE'].map(g => `<label class="ra-tipo"><input type="radio" name="rae-g${i + 1}" value="${g}" ${p.grado === g ? 'checked' : ''}> ${g}</label>`).join('')}</div>
+      <input data-plan="${i + 1}.obs" placeholder="${acL('Observaciones', 'Observacions')}" value="${escAttr(p.obs || '')}"></div></div></div>`; }).join('')}</div>
+  <div class="panel-card"><h3>${acL('Actuaciones recibidas durante la participación', 'Actuacions rebudes durant la participació')}</h3><p class="subtle" style="font-size:12.5px;">${acL('Se rellena solo con las fichas de presencia y actuación.', 'S\'omple sol amb les fitxes de presència i actuació.')}</p>
+    <div class="ra-tabla-w"><table class="ra-tabla"><thead><tr><th>${acL('Actuaciones', 'Actuacions')}</th><th>${acL('Fecha/s', 'Data/es')}</th><th>${acL('Observaciones', 'Observacions')}</th></tr></thead><tbody>${recibidas}</tbody></table></div></div>
+  ${RA_BLOQUES.map(bloque).join('')}
+  <div class="panel-card"><h3>5. ${acL('Valoración cualitativa global y cierre', 'Valoració qualitativa global i tancament')}</h3>${RA_CUALI.map((q, i) => `<div class="field"><label>${i + 1}. ${escAttr(q)}</label><textarea data-cuali="${i + 1}" rows="2">${escAttr(Q[i + 1] || '')}</textarea></div>`).join('')}</div>
+  <div class="panel-card"><h3>📊 ${acL('Hoja de puntuación y registro profesional', 'Full de puntuació i registre professional')} <small class="subtle">(${acL('uso interno, se calcula solo', 'ús intern, es calcula sol')})</small></h3><div id="rae-punt"></div>
+    <p class="subtle" style="font-size:12px;">${acL('Media de los ítems válidos de cada módulo. Si en un bloque faltan más de dos respuestas, no computa. Cambio = después − antes. Mejora relativa = (después − antes) / antes × 100: computa para el indicador si es igual o superior al 15 %. No se suman los módulos.', 'Mitjana dels ítems vàlids de cada mòdul. Si en un bloc falten més de dues respostes, no computa. Canvi = després − abans. Millora relativa = (després − abans) / abans × 100: computa per a l\'indicador si és igual o superior al 15 %.')}</p></div>
+  <div class="panel-card"><h3>${acL('Valoración profesional final', 'Valoració professional final')}</h3><div class="ra-tipos" style="flex-direction:column;">${RA_VALOR.map(v => `<label class="ra-tipo"><input type="radio" name="rae-val" value="${escAttr(v)}" ${ev.valoracion === v ? 'checked' : ''}> ${escAttr(v)}</label>`).join('')}</div>
+    <div class="field"><label>${acL('Actuación acordada / derivación', 'Actuació acordada / derivació')}</label><textarea id="rae-acu" rows="2">${escAttr(ev.actuacion_acordada || '')}</textarea></div>
+    <button class="primary-btn" onclick="raEvaluacionGuardar('${f.id}')">💾 ${acL('Guardar la evaluación', 'Desar l\'avaluació')}</button></div>`;
+}
+function raEvalLeer(){
+  const R = {};
+  document.querySelectorAll('select.ra-v').forEach(s => { const k = s.dataset.k, i = k.lastIndexOf('.'), base = k.slice(0, i), m = k.slice(i + 1); if(!s.value) return; (R[base] = R[base] || {})[m] = s.value; });
+  return R;
+}
+function raModulos(f, R){
+  const mods = [];
+  RA_BLOQUES.forEach(b => raSujetos(b, f).forEach(s => {
+    const n = b.items.length, vals = m => b.items.map((_, i) => (R[`${b.id}.${s.k}.${i + 1}`] || {})[m]).map(v => /^[1-5]$/.test(v || '') ? Number(v) : null);
+    const A = vals('a'), T = vals('t'), vA = A.filter(v => v != null), vT = T.filter(v => v != null);
+    const media = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+    const comp = (n - vA.length) <= 2 && (n - vT.length) <= 2 && vA.length && vT.length;
+    const ma = media(vA), mt = media(vT);
+    const rel = comp && ma ? (mt - ma) / ma * 100 : null;
+    const nom = { ad: 'Bienestar emocional · ', me: 'Bienestar emocional menor · ', inc: 'Inclusión social', coh: 'Cohesión familiar' }[b.id] + (b.quien === 'familia' ? '' : s.n);
+    mods.push({ nom, ma, mt, comp, cambio: comp ? mt - ma : null, rel, computa: comp && rel != null && rel >= 15 });
+  }));
+  return mods;
+}
+function raPuntuar(){
+  const host = document.getElementById('rae-punt'); if(!host) return;
+  const f = __ra.familias.find(x => x.id === __ra.fam); if(!f) return;
+  const mods = raModulos(f, raEvalLeer()), n = v => v == null ? '—' : v.toFixed(2).replace('.', ',');
+  host.innerHTML = `<div class="ra-tabla-w"><table class="ra-tabla ra-punt"><thead><tr><th>${acL('Módulo', 'Mòdul')}</th><th>${acL('Media ANTES', 'Mitjana ABANS')}</th><th>${acL('Media DESPUÉS', 'Mitjana DESPRÉS')}</th><th>${acL('Cambio', 'Canvi')}</th><th>${acL('Mejora relativa', 'Millora relativa')}</th><th>${acL('Mejora (indicador)', 'Millora (indicador)')}</th></tr></thead>
+    <tbody>${mods.map(m => `<tr><td>${escAttr(m.nom)}</td><td>${n(m.ma)}</td><td>${n(m.mt)}</td><td>${m.cambio == null ? '—' : (m.cambio > 0 ? '+' : '') + n(m.cambio)}</td><td>${m.rel == null ? '—' : (m.rel > 0 ? '+' : '') + m.rel.toFixed(1).replace('.', ',') + ' %'}</td>
+      <td>${!m.comp ? `<span class="chip off">${acL('No computable', 'No computable')}</span>` : m.computa ? `<span class="chip good">✅ ${acL('Sí', 'Sí')}</span>` : `<span class="chip ${m.cambio > 0 ? 'gold' : 'bad'}">${m.cambio > 0 ? acL('Cambio positivo (< 15 %)', 'Canvi positiu (< 15 %)') : acL('No', 'No')}</span>`}</td></tr>`).join('')}</tbody></table></div>`;
+}
+async function raEvaluacionGuardar(famId){
+  const plan = {}, cuali = {}, obs = {}, proxy = {};
+  document.querySelectorAll('[data-plan]').forEach(el => { const [i, k] = el.dataset.plan.split('.'); (plan[i] = plan[i] || {})[k] = el.value.trim(); });
+  RA_PLAN.forEach((_, i) => { const g = document.querySelector(`input[name="rae-g${i + 1}"]:checked`); if(g) (plan[i + 1] = plan[i + 1] || {}).grado = g.value; });
+  document.querySelectorAll('[data-cuali]').forEach(el => { if(el.value.trim()) cuali[el.dataset.cuali] = el.value.trim(); });
+  document.querySelectorAll('[data-obs]').forEach(el => { if(el.value.trim()) obs[el.dataset.obs] = el.value.trim(); });
+  document.querySelectorAll('[data-proxy]').forEach(el => { if(el.checked) proxy[el.dataset.proxy] = true; });
+  const fila = { familia_id: famId, fecha_inicial: (document.getElementById('rae-fi') || {}).value || null, fecha_final: (document.getElementById('rae-ff') || {}).value || null,
+    respuestas: raEvalLeer(), plan, cualitativas: cuali, observaciones: obs, proxy,
+    valoracion: (document.querySelector('input[name="rae-val"]:checked') || {}).value || null, actuacion_acordada: ((document.getElementById('rae-acu') || {}).value || '').trim() || null,
+    actualizado_por_email: CURRENT_USER.email, actualizado_en: new Date().toISOString() };
+  const { error } = await sb.from('raices_evaluaciones').upsert(fila, { onConflict: 'familia_id' });
+  if(error){ alert(error.message); return; }
+  try { sgLimpiar(); } catch(e){}
+  __ra.evals[famId] = fila;
+  try { m3Toast('✅ ' + acL('Evaluación guardada', 'Avaluació desada')); } catch(e){ alert(acL('Evaluación guardada', 'Avaluació desada')); }
+}
+function raEvaluacionImprimir(famId){
+  const f = __ra.familias.find(x => x.id === famId); if(!f) return;
+  const ev = Object.assign({}, __ra.evals[famId] || {}, { respuestas: raEvalLeer() }), R = ev.respuestas;
+  const mods = raModulos(f, R), n = v => v == null ? '' : v.toFixed(2).replace('.', ',');
+  const ses = __ra.sesiones.filter(s => s.familia_id === f.id);
+  const pers = (t, arr) => arr.map((p, i) => `<tr><th colspan="4">DATOS DE ${t} ${i + 1}</th></tr><tr><td class="k">APELLIDOS</td><td>${escAttr(p.apellidos || '')}</td><td class="k">NOMBRE</td><td>${escAttr(p.nombre || '')}</td></tr><tr><td class="k">NIF</td><td colspan="3">${escAttr(p.nif || '')}</td></tr>`).join('');
+  const bloque = b => { const suj = raSujetos(b, f); if(!suj.length) return '';
+    return `<h2>${escAttr(b.t)}</h2><table><tr><th>Afirmación</th>${suj.map(s => `<th colspan="2">${escAttr(s.n)}${b.id === 'me' && (ev.proxy || {})[s.k] ? ' (proxy)' : ''}</th>`).join('')}</tr><tr><th></th>${suj.map(() => '<th>ANTES</th><th>TRAS</th>').join('')}</tr>
+      ${b.items.map((it, i) => `<tr><td>${i + 1}. ${escAttr(it)}</td>${suj.map(s => { const r = R[`${b.id}.${s.k}.${i + 1}`] || {}; return `<td class="c">${escAttr(r.a || '')}</td><td class="c">${escAttr(r.t || '')}</td>`; }).join('')}</tr>`).join('')}</table>
+      ${(ev.observaciones || {})[b.id] ? `<p><b>Observación:</b> ${escAttr(ev.observaciones[b.id])}</p>` : ''}`; };
+  raImprimir('Evaluación final · ' + f.codigo, `${raCabPrint()}<h1>EVALUACIÓN FINAL</h1><p class="c"><b>Proyecto Raíces: Reconexión Familiar</b> · Expediente ${escAttr(f.codigo)}</p>
+    <table>${pers('LA PERSONA PARTICIPANTE', f.adultos || [])}${pers('LA PERSONA MENOR DE EDAD', f.menores || [])}</table>
+    <table><tr><td class="k">FECHA DE ENTRADA EN LA OPERACIÓN</td><td>${raFecha(f.fecha_entrada)}</td></tr><tr><td class="k">FECHA DE SALIDA DE LA OPERACIÓN</td><td>${f.fecha_salida ? raFecha(f.fecha_salida) : ''}</td></tr>
+      <tr><td class="k">MOTIVO DE LA BAJA</td><td>${RA_MOTIVOS.map(m => `<span class="box">${f.motivo_baja === m ? '✓' : ''}</span>${escAttr(m)}`).join('<br>')}</td></tr><tr><td class="k">DESCRIPCIÓN DE HECHOS QUE MOTIVAN LA BAJA</td><td>${escAttr(f.hechos_baja || '')}</td></tr></table>
+    <h2>1. Evaluación de consecución del Plan de intervención</h2><table><tr><th>PLAN DE INTERVENCIÓN</th><th>GRADO DE CONSECUCIÓN</th></tr>
+      ${RA_PLAN.map((a, i) => { const p = (ev.plan || {})[i + 1] || {}; return `<tr><td><b>${i + 1}. ${escAttr(a.toUpperCase())}</b><br>Definición del objetivo: ${escAttr(p.objetivo || '')}</td><td>Alcance de las necesidades:<br>${['SI', 'NO', 'PARCIALMENTE'].map(g => `<span class="box">${p.grado === g ? '✓' : ''}</span>${g}`).join(' ')}<br>Observaciones: ${escAttr(p.obs || '')}</td></tr>`; }).join('')}</table>
+    <h2>ACTUACIONES RECIBIDAS DURANTE LA PARTICIPACIÓN</h2><table><tr><th>ACTUACIONES</th><th>FECHA/S</th><th>OBSERVACIONES</th></tr>${RA_TIPOS.filter(t => t[0] !== 'otra').map(t => { const ss = ses.filter(s => s.tipo === t[0]); return `<tr><td><span class="box">${ss.length ? '✓' : ''}</span>${escAttr(t[2].toUpperCase())}</td><td>${ss.map(s => raFecha(s.fecha)).join(', ')}</td><td>${ss.length ? ss.length + ' sesión(es)' : ''}</td></tr>`; }).join('')}</table>
+    <h2 class="salto">2. Entrevista de evaluación</h2><p>Fecha de evaluación inicial: ${ev.fecha_inicial ? raFecha(ev.fecha_inicial) : '________'} · Fecha de evaluación final: ${ev.fecha_final ? raFecha(ev.fecha_final) : '________'}</p><p><small>Escala: 1 Nada · 2 Poco · 3 Algo · 4 Bastante · 5 Mucho · NS No está seguro/a · NP No procede</small></p>
+    ${RA_BLOQUES.map(bloque).join('')}
+    <h2>5. Valoración cualitativa global y cierre</h2>${RA_CUALI.map((q, i) => `<p><b>${i + 1}. ${escAttr(q)}</b><br>${escAttr((ev.cualitativas || {})[i + 1] || '')}</p>`).join('')}
+    <h2>Hoja de puntuación y registro profesional</h2><table><tr><th>Módulo</th><th>Media ANTES</th><th>Media DESPUÉS</th><th>Cambio (DESPUÉS − ANTES)</th><th>Mejora (Sí/No/No computable)</th></tr>
+      ${mods.map(m => `<tr><td>${escAttr(m.nom)}</td><td class="c">${n(m.ma)}</td><td class="c">${n(m.mt)}</td><td class="c">${m.cambio == null ? '' : n(m.cambio)}${m.rel == null ? '' : ' (' + m.rel.toFixed(1).replace('.', ',') + ' %)'}</td><td class="c">${!m.comp ? 'No computable' : m.computa ? 'Sí' : 'No'}</td></tr>`).join('')}</table>
+    <h2>Valoración profesional final</h2>${RA_VALOR.map(v => `<span class="box">${ev.valoracion === v ? '✓' : ''}</span>${escAttr(v)}`).join('<br>')}<p><b>Actuación acordada / derivación:</b> ${escAttr(ev.actuacion_acordada || '')}</p>
+    <p>En Tarragona, a ${ev.fecha_final ? raFecha(ev.fecha_final) : '____ de ______________ de 202__'}</p>
+    <div class="firma"><div>Profesional: ${escAttr(nombreTecnico(f.tecnico_email || ''))}</div><div>Persona/s usuaria/s adulta/s:</div></div><div class="firma"><div>Persona/s usuaria/s menor/es (si &gt; 13 años):</div></div>
+    <div class="pie">Associació Logos – Projectes Socials · NIF G55725436 · Carrer de la Pau del Protectorat, 14 · 43004 Tarragona</div>`);
+}
+
+// ---------- enganches: menú, entrada, Jóvenes en acción ----------
+(function(){
+  const o = window.entrarIntranet;
+  if(typeof o === 'function') window.entrarIntranet = async function(){ const r = await o.apply(this, arguments); try { await raicesComprobar(); } catch(e){} return r; };
+  const j = window.jaiTabsHtml;
+  if(typeof j === 'function') window.jaiTabsHtml = function(){ const h = j.apply(this, arguments);
+    return (window.__raicesMiembro || IS_ADMIN) ? h.replace(/<\/div>\s*$/, `<button class="imp-tab" onclick="showScreen('raices');renderRaices('familias')">🌳 Raíces</button></div>`) : h; };
+})();
+</script>
+<style>
+.ra-hero{background:linear-gradient(135deg,#1F6B3E 0%,#1B4E95 100%);color:#fff;border-radius:18px;padding:18px 20px;margin-bottom:14px;display:flex;flex-direction:column;gap:12px;border-bottom:4px solid #F2BC2C;}
+.ra-hero h2{margin:2px 0 4px;font-size:22px;color:#fff;}
+.ra-hero p{margin:0;font-size:13.5px;color:#DDEBDD;}
+.ra-sup{font-size:12px;font-weight:800;letter-spacing:.04em;color:#F2BC2C;text-transform:uppercase;}
+.ra-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px;}
+.ra-kpi{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;}
+.ra-kpi span{font-size:16px;} .ra-kpi b{font-size:22px;line-height:1.1;} .ra-kpi small{font-size:11.5px;color:#E2ECF8;}
+.ra-barra{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+.ra-barra input{flex:1;min-width:220px;}
+.ra-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.ra-fam{display:flex;flex-direction:column;gap:5px;text-align:left;background:#fff;border:1px solid #E1E6EE;border-left:5px solid #1F8A4C;border-radius:14px;padding:12px 14px;cursor:pointer;font:inherit;color:#1B2333;box-shadow:0 4px 14px -8px rgba(20,40,80,.25);transition:transform .12s;}
+.ra-fam:hover{transform:translateY(-2px);}
+.ra-fam strong{font-size:16px;} .ra-fam small{font-size:12.5px;color:#4B5468;}
+.ra-fam-t{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.ra-cod{display:inline-block;background:#E3F3E8;color:#1D5E35;font-weight:800;font-size:12px;border-radius:8px;padding:2px 8px;letter-spacing:.03em;}
+.ra-ficha{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:14px;align-items:start;}
+@media (max-width:1000px){ .ra-ficha{grid-template-columns:1fr;} }
+.ra-ft{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;}
+.ra-h4{margin:16px 0 8px;font-size:14px;color:#1B4E95;}
+.ra-h4 small{font-weight:500;color:#6B7385;}
+.ra-ps{display:flex;flex-direction:column;gap:6px;}
+.ra-p{display:flex;gap:10px;align-items:center;border:1px solid #E6EAF1;border-radius:12px;padding:7px 10px;}
+.ra-p b{display:block;font-size:14px;} .ra-p small{font-size:12px;color:#5B6478;} .ra-p > div{flex:1;}
+.ra-n{background:#1B4E95;color:#fff;font-weight:800;border-radius:999px;min-width:28px;text-align:center;padding:2px 8px;font-size:13px;}
+.ra-av{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#E8EEFB;font-weight:800;color:#1B4E95;flex:0 0 34px;}
+.ra-av.menor{background:#FFF3DD;}
+.ra-ok{background:#E3F5EA;border:1px solid #BFE3CC;color:#145C33;border-radius:10px;padding:8px 10px;font-size:13.5px;margin-bottom:8px;}
+.ra-mal{background:#FDECEA;border:1px solid #F5C2BC;color:#7A2218;border-radius:10px;padding:8px 10px;font-size:13.5px;margin-bottom:8px;}
+.ra-fila{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.ra-tl{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+.ra-tl-i{display:flex;gap:10px;border:1px solid #E6EAF1;border-radius:12px;padding:10px 12px;background:#FBFCFE;position:relative;}
+.ra-tl-ic{font-size:20px;line-height:1.2;}
+.ra-tl-b{flex:1;min-width:0;} .ra-tl-b p{margin:5px 0 0;font-size:13.5px;}
+.ra-tl-b small{display:block;font-size:12.3px;color:#5B6478;margin-top:2px;}
+.ra-tl-h{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.ra-cambio{background:#F1FAF4;border-radius:8px;padding:5px 8px;}
+.ra-anular{position:absolute;right:10px;bottom:8px;font-size:12px !important;color:#9AA3B5 !important;}
+.ra-tl-fam{margin:6px 0 -4px;}
+.ra-modal{max-width:640px !important;text-align:left !important;max-height:calc(100vh - 40px);overflow-y:auto;border-top-color:#1F8A4C !important;}
+.ra-g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 12px;}
+@media (max-width:700px){ .ra-g3{grid-template-columns:1fr;} }
+.ra-pers{border:1px solid #E1E6EE;border-radius:12px;padding:8px 12px;margin:0 0 10px;}
+.ra-pers legend{font-weight:800;color:#1B4E95;padding:0 6px;font-size:13.5px;}
+.ra-tipos{display:flex;flex-wrap:wrap;gap:6px;}
+.ra-tipo{display:flex;align-items:center;gap:6px;border:1px solid #DCE2EC;border-radius:10px;padding:6px 10px;font-size:13.5px;cursor:pointer;background:#fff;}
+.ra-tipo:has(input:checked){border-color:#1F8A4C;background:#EEF8F1;font-weight:700;}
+.ra-eq{display:flex;flex-direction:column;gap:6px;}
+.ra-eq-i{display:flex;gap:10px;align-items:center;border:1px solid #E6EAF1;border-radius:12px;padding:7px 10px;}
+.ra-eq-i > div{flex:1;} .ra-eq-i b{display:block;} .ra-eq-i small{color:#5B6478;font-size:12px;}
+.ra-aviso{background:#FFF8E6;border-color:#F2D58A;}
+.ra-tabla-w{overflow-x:auto;}
+.ra-tabla{width:100%;border-collapse:collapse;font-size:13px;}
+.ra-tabla th,.ra-tabla td{border:1px solid #E1E6EE;padding:5px 7px;vertical-align:middle;}
+.ra-tabla thead th{background:#F1F5FB;color:#1B4E95;font-size:12.3px;text-align:center;}
+.ra-tabla tbody td:first-child{min-width:260px;}
+.ra-v{width:58px;padding:3px 4px;font-size:13px;border-radius:7px;border:1px solid #CBD3E0;}
+.ra-proxy{font-weight:500;font-size:11.5px;}
+.ra-plan{border-top:1px solid #EEF1F6;padding:10px 0;}
+.ra-plan-g{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;}
+@media (max-width:800px){ .ra-plan-g{grid-template-columns:1fr;} }
+.ra-punt td:not(:first-child){text-align:center;}
 </style>
 </body>
 </html>
