@@ -3340,7 +3340,8 @@ function admEquipoHtml(lista, t){
           </div></div>` : ''}
         <div class="eq-blq"><h5>${acL('Cuenta', 'Compte')}</h5><div class="eq-acc">
           <button type="button" class="link-btn" onclick="editarNombreTecnico('${s.email}')">✏️ ${acL('Cambiar nombre', 'Canviar nom')}</button>
-          <button type="button" class="link-btn" onclick="enviarEnlaceClave('${s.email}')">🔑 ${acL('Enviar enlace de contraseña', 'Enviar enllaç de contrasenya')}</button>
+          ${(!baja && !esYo) ? `<button type="button" class="link-btn" onclick="clavePrevAbrir('${s.email}')">🔑 ${acL('Poner contraseña provisional', 'Posar contrasenya provisional')}</button>` : ''}
+          <button type="button" class="link-btn" onclick="enviarEnlaceClave('${s.email}')">✉️ ${acL('Enviar enlace de contraseña', 'Enviar enllaç de contrasenya')}</button>
           ${!baja ? `<button type="button" class="link-btn" onclick="mfaReiniciarPersona('${s.email}')">🔐 ${acL('Reiniciar los 2 pasos (móvil nuevo)', 'Reiniciar els 2 passos (mòbil nou)')}</button>` : ''}
           ${(!baja && !esYo) ? `<button type="button" class="link-btn" onclick="verComo('${s.email}')">👁️ ${acL('Ver la intranet como esta persona', 'Veure la intranet com aquesta persona')}</button>` : ''}
         </div></div>
@@ -14325,6 +14326,46 @@ async function recuperarClave(){
   renderLogin(error ? error.message : '');
   if(!error) document.getElementById('login-content').insertAdjacentHTML('afterbegin', `<div class="auth-ok">${acL('Si ese correo tiene acceso, te hemos enviado un enlace para elegir una contraseña nueva. Revisa también la carpeta de spam.', 'Si aquest correu té accés, t\'hem enviat un enllaç per triar una contrasenya nova. Revisa també la carpeta de correu brossa.')}</div>`);
 }
+
+// ---------- Contraseña provisional (SQL-83): para quien ha olvidado la suya ----------
+function claveProvisionalSugerida(){
+  const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ', n = '23456789', r = m => m[Math.floor(Math.random() * m.length)];
+  return 'Logos-' + r(a) + r(a) + r(n) + r(n) + r(a) + '-' + new Date().getFullYear();
+}
+function clavePrevAbrir(email){
+  const s = (window.__staffLista || []).find(x => x.email === email), nombre = (s && s.nombre) || email;
+  let ov = document.getElementById('cprov-ov'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'cprov-ov'; ov.className = 'sg-ov';
+  ov.innerHTML = `<div class="sg-caja" style="text-align:left;border-top-color:#2463B8;">
+    <h3 style="margin-top:0;">🔑 ${acL('Contraseña provisional para', 'Contrasenya provisional per a')} ${escAttr(nombre)}</h3>
+    <p>${acL('Ponle esta contraseña y díselo en persona o por teléfono. Al entrar, la intranet le pedirá que elija una suya.', 'Posa-li aquesta contrasenya i digues-l\'hi en persona o per telèfon. En entrar, la intranet li demanarà que en triï una de seva.')}</p>
+    <div class="field"><label>${acL('Contraseña provisional (mínimo 8)', 'Contrasenya provisional (mínim 8)')}</label>
+      <input id="cprov-clave" value="${claveProvisionalSugerida()}" autocomplete="off" style="font-size:18px;font-family:monospace;letter-spacing:1px;"></div>
+    <div id="cprov-msg"></div>
+    <button class="primary-btn" id="cprov-btn" onclick="clavePrevGuardar('${escAttr(email)}')">💾 ${acL('Poner esta contraseña', 'Posar aquesta contrasenya')}</button>
+    <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="document.getElementById('cprov-ov').remove()">${acL('Cancelar', 'Cancel·lar')}</button></div>`;
+  document.body.appendChild(ov);
+}
+async function clavePrevGuardar(email){
+  const clave = ((document.getElementById('cprov-clave') || {}).value || '').trim(), msg = document.getElementById('cprov-msg'), btn = document.getElementById('cprov-btn');
+  if(clave.length < 8){ msg.innerHTML = `<div class="auth-error">${acL('Tiene que tener al menos 8 caracteres.', 'Ha de tenir almenys 8 caràcters.')}</div>`; return; }
+  btn.disabled = true;
+  const { error } = await sb.rpc('admin_poner_clave_provisional', { p_email: email, p_clave: clave });
+  btn.disabled = false;
+  if(error){
+    const falta = /does not exist|schema cache|could not find/i.test(error.message || '');
+    msg.innerHTML = `<div class="auth-error">${falta ? acL('Falta ejecutar el SQL-83 en Supabase (una sola vez).', 'Cal executar l\'SQL-83 a Supabase (una sola vegada).') : escAttr(error.message)}</div>`;
+    return;
+  }
+  const caja = document.querySelector('#cprov-ov .sg-caja');
+  caja.innerHTML = `<div class="sg-ic">✅</div><h3>${acL('Contraseña puesta', 'Contrasenya posada')}</h3>
+    <p>${acL('Dile que entre con su correo y esta contraseña:', 'Digues-li que entri amb el seu correu i aquesta contrasenya:')}</p>
+    <p style="font-size:14px;margin:0;">✉️ <strong>${escAttr(email)}</strong></p>
+    <p style="font-family:monospace;font-size:22px;font-weight:800;background:#FFF8E1;border:1.5px dashed #E9C766;border-radius:10px;padding:10px;margin:8px 0 14px;user-select:all;">${escAttr(clave)}</p>
+    <p class="subtle" style="font-size:12.5px;">${acL('Al entrar le pedirá elegir una contraseña nueva que solo conozca él/ella. Si tiene la app de verificación, también le pedirá el código.', 'En entrar li demanarà triar una contrasenya nova que només conegui ell/ella. Si té l\'app de verificació, també li demanarà el codi.')}</p>
+    <button class="primary-btn" onclick="try{navigator.clipboard.writeText(${JSON.stringify(clave).replace(/"/g, '&quot;')})}catch(e){};this.textContent='✅ ${acL('Copiada', 'Copiada')}'">📋 ${acL('Copiar la contraseña', 'Copiar la contrasenya')}</button>
+    <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="document.getElementById('cprov-ov').remove()">${acL('Cerrar', 'Tancar')}</button>`;
+}
 async function enviarEnlaceClave(email){
   if(!confirm(acL(`¿Enviar a ${email} un enlace para que elija una contraseña nueva?`, `Enviar a ${email} un enllaç perquè triï una contrasenya nova?`))) return;
   const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
@@ -18213,7 +18254,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-05 · v234 (varios técnicos en atención/actuación; técnico responsable automático; «Mi jornada» con alta presencial y citas; aviso de guardar)';
+const APP_VERSION_INTRANET = '2026-11-06 · v237 (contraseña provisional desde Equipo; la visita guiada se cierra con ✕, Esc o pulsando fuera)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -24759,6 +24800,7 @@ function jorAbrir(repintar){
       <div class="jor-rec-i"><span>👥</span><div><b>${acL('La habéis atendido entre varios', 'L\'heu atès entre diversos')}</b><small>${acL('En la atención o la actuación, «👥 ¿Te ha ayudado otro técnico? Añádelo».', 'A l\'atenció o l\'actuació, «👥 T\'ha ajudat un altre tècnic? Afegeix-lo».')}</small></div></div>
       <div class="jor-rec-i"><span>👤</span><div><b>${acL('Técnico responsable', 'Tècnic responsable')}</b><small>${acL('Si la persona no tiene, se te asigna sola al guardar su atención o actuación.', 'Si la persona no en té, se t\'assigna sola en desar la seva atenció o actuació.')}</small></div></div>
     </div>
+    ${typeof tourPantallaActual === 'function' && tourPantallaActual() ? `<button class="tour-lanzar" style="width:100%;margin:10px 0 0;" onclick="tourIniciar(tourPantallaActual())">🎯 ${acL('Visita guiada de esta pantalla', 'Visita guiada d\'aquesta pantalla')}</button>` : ''}
     <div class="jor-pie">💡 ${acL('Regla de oro: <strong>nada se guarda solo</strong>. Antes de cambiar de pantalla o de persona, pulsa siempre «💾 Guardar».', 'Regla d\'or: <strong>res no es desa sol</strong>. Abans de canviar de pantalla o de persona, prem sempre «💾 Desar».')}</div>`;
 }
 function jorCerrar(){ const pn = document.getElementById('jor-panel'); if(pn) pn.remove(); }
@@ -24951,6 +24993,209 @@ window.addEventListener('beforeunload', e => { if(sgHay()){ e.preventDefault(); 
 .sg-caja p{margin:0 0 14px;font-size:14.5px;color:#3B4456;line-height:1.5;}
 .sg-caja .primary-btn{width:100%;margin:0;}
 .sg-salir{display:block;margin:10px auto 0;color:#B42318 !important;font-weight:700;}
+</style>
+
+<script>
+// ================= VISITA GUIADA (globos naranjas que señalan cada parte de la pantalla) · v235 =================
+// Cada paso: { sel: 'selector CSS', txt: 'texto del elemento (opcional)', es, ca }. Si el elemento no está en pantalla, el paso se salta.
+const TOURS = {
+  panel: { titulo: ['Inicio', 'Inici'], pasos: [
+    { sel: '.sidebar nav', es: 'Este es el <b>menú</b>. Desde aquí llegas a todas las partes de la intranet.', ca: 'Aquest és el <b>menú</b>. Des d\'aquí arribes a totes les parts de la intranet.', lado: 'der' },
+    { sel: '.sn-acc', txt: 'Fichar', es: 'Lo primero del día: <b>fichar la entrada</b>. Sin fichar no se puede trabajar.', ca: 'El primer del dia: <b>fitxar l\'entrada</b>. Sense fitxar no es pot treballar.' },
+    { sel: '.sn-ic', txt: '🔔', es: 'La <b>campana</b>: alertas de personas que piden ayuda o cita. Mírala al empezar.', ca: 'La <b>campana</b>: alertes de persones que demanen ajuda o cita. Mira-la en començar.' },
+    { sel: '.sn-ic', txt: '📅', es: 'Tus <b>citas</b> de hoy y de los próximos días.', ca: 'Les teves <b>cites</b> d\'avui i dels propers dies.' },
+    { sel: '#topbar-search-input', es: '<b>Busca a una persona</b> por nombre, DNI o teléfono.', ca: '<b>Cerca una persona</b> pel nom, el DNI o el telèfon.' },
+    { sel: '.sn-cta', es: 'Pulsa aquí para <b>dar una cita</b> o buscar a una persona.', ca: 'Prem aquí per <b>donar una cita</b> o cercar una persona.' },
+    { sel: '.sn-acc', txt: 'Nueva atención|Nova atenció', es: 'Para <b>registrar una atención</b> nueva.', ca: 'Per <b>registrar una atenció</b> nova.' },
+    { sel: '.sn-acc', txt: 'Personas|Persones', es: 'Todas las <b>fichas de las personas</b> usuarias.', ca: 'Totes les <b>fitxes de les persones</b> usuàries.' },
+    { sel: '#plg-fichas-pend', es: '<b>Fichas incompletas</b>: personas a las que les faltan datos. Pulsa «✏️ Completar».', ca: '<b>Fitxes incompletes</b>: persones a qui falten dades. Prem «✏️ Completar».' },
+    { sel: '#jor-btn', es: '<b>Mi jornada</b>: los pasos del día. Si te pierdes, ábrela y pulsa «Llévame».', ca: '<b>La meva jornada</b>: els passos del dia. Si et perds, obre-la i prem «Porta-m\'hi».' },
+    { sel: '.asistente-btn', es: 'El <b>asistente</b>: pregúntale cómo se hace algo.', ca: 'L\'<b>assistent</b>: pregunta-li com es fa alguna cosa.' }
+  ]},
+  aulavirtual: { titulo: ['Aula Virtual', 'Aula Virtual'], pasos: [
+    { sel: '#screen-aulavirtual nav.cmp-menu', es: 'Como puedes observar, el <b>menú del Aula</b> está a la izquierda. Desde aquí accedes a las distintas áreas.', ca: 'Com pots observar, el <b>menú de l\'Aula</b> és a l\'esquerra. Des d\'aquí accedeixes a les diferents àrees.', lado: 'der' },
+    { sel: '.av-tab', txt: 'Cursos', es: 'Al entrar ves <b>todos los cursos</b>. Desde aquí accedes directamente a su contenido.', ca: 'En entrar veus <b>tots els cursos</b>. Des d\'aquí accedeixes directament al contingut.' },
+    { sel: '.av-tab', txt: 'Calendario|Calendari', es: 'El <b>calendario</b> de las clases y las fechas de entrega.', ca: 'El <b>calendari</b> de les classes i les dates de lliurament.' },
+    { sel: '.av-tab', txt: 'Mensajes|Missatges', es: 'Los <b>mensajes</b> con el alumnado y el equipo docente.', ca: 'Els <b>missatges</b> amb l\'alumnat i l\'equip docent.' },
+    { sel: '.av-tab', txt: 'Calificaciones|Qualificacions', es: 'Las <b>calificaciones</b> y el progreso de cada persona.', ca: 'Les <b>qualificacions</b> i el progrés de cada persona.' },
+    { sel: '.av-tab', txt: 'Crear', es: 'Para <b>crear</b> un curso, una clase o un contenido nuevo.', ca: 'Per <b>crear</b> un curs, una classe o un contingut nou.' },
+    { sel: '#av-q', es: '<b>Busca</b> un curso por su nombre.', ca: '<b>Cerca</b> un curs pel seu nom.' },
+    { sel: '.av-filtro', txt: 'Favoritos|Preferits', es: 'Filtra: <b>favoritos</b>, ciudadanía o equipo.', ca: 'Filtra: <b>preferits</b>, ciutadania o equip.' },
+    { sel: '.cmp-pri', es: 'Pulsa aquí para acceder a los <b>contenidos</b> del curso.', ca: 'Prem aquí per accedir als <b>continguts</b> del curs.' },
+    { sel: '.cmp-star', es: 'Marca la <b>estrella</b> para tener el curso en favoritos.', ca: 'Marca l\'<b>estrella</b> per tenir el curs als preferits.' },
+    { sel: '.cmp-der h3, #screen-aulavirtual h3', txt: 'Tareas pendientes|Tasques pendents', es: '<b>Tareas pendientes</b>: entregas por revisar y clases de hoy.', ca: '<b>Tasques pendents</b>: lliuraments per revisar i classes d\'avui.' }
+  ]}
+};
+Object.assign(TOURS, {
+  persona: { titulo: ['Ficha de la persona', 'Fitxa de la persona'], pasos: [
+    { sel: '#screen-persona .m3-nom', es: 'Esta es la <b>ficha de la persona</b>: su nombre, teléfono y técnico responsable, siempre arriba.', ca: 'Aquesta és la <b>fitxa de la persona</b>: el nom, el telèfon i el tècnic responsable, sempre a dalt.' },
+    { sel: '#screen-persona .m3-chip.aviso', es: 'Los <b>avisos</b> te dicen qué le falta. Púlsalos y te llevan a completarlo.', ca: 'Els <b>avisos</b> et diuen què li falta. Prem-los i et porten a completar-ho.' },
+    { sel: '#screen-persona .m4-kpi', es: 'Sus <b>números</b>: atenciones, actuaciones, trámites abiertos y la próxima cita.', ca: 'Els seus <b>números</b>: atencions, actuacions, tràmits oberts i la propera cita.' },
+    { sel: '#screen-persona .m4-at', es: 'A la izquierda, la <b>ficha de atención</b>. Rellénala y pulsa <b>💾 Guardar</b>.', ca: 'A l\'esquerra, la <b>fitxa d\'atenció</b>. Omple-la i prem <b>💾 Desar</b>.', lado: 'der' },
+    { sel: '#screen-persona .m4-ac', es: 'A la derecha, las <b>actuaciones</b>: todo lo que se hace por ella, en orden.', ca: 'A la dreta, les <b>actuacions</b>: tot el que es fa per ella, en ordre.' },
+    { sel: '#screen-persona .m3-pri', es: 'Para apuntar un <b>trámite o una actuación</b> nueva. Si te ha ayudado otro técnico, añádelo ahí.', ca: 'Per apuntar un <b>tràmit o una actuació</b> nova. Si t\'ha ajudat un altre tècnic, afegeix-lo allà.' },
+    { sel: '#screen-persona button', txt: 'Nueva cita|Nova cita', es: 'Antes de que se vaya, dale la <b>próxima cita</b>.', ca: 'Abans que marxi, dona-li la <b>propera cita</b>.' },
+    { sel: '#screen-persona .ptab-btn', es: 'Las <b>pestañas</b>: actuaciones, citas, documentos, datos personales e historial.', ca: 'Les <b>pestanyes</b>: actuacions, cites, documents, dades personals i historial.' },
+    { sel: '#screen-persona h3', txt: 'Acceso a Logos Acompanya|Accés a Logos Acompanya', es: 'Su <b>acceso a Logos Acompanya</b>. Si no tiene teléfono, se hace el alta presencial.', ca: 'El seu <b>accés a Logos Acompanya</b>. Si no té telèfon, es fa l\'alta presencial.' },
+    { sel: '#tecnico-responsable-select', es: 'El <b>técnico responsable</b>. Si no tiene, se te asigna solo al guardar.', ca: 'El <b>tècnic responsable</b>. Si no en té, se t\'assigna sol en desar.' }
+  ]},
+  personas: { titulo: ['Personas usuarias', 'Persones usuàries'], pasos: [
+    { sel: '#personas-buscar', es: '<b>Busca</b> por nombre, DNI o teléfono. ¿No aparece? Hazle el alta presencial.', ca: '<b>Cerca</b> pel nom, el DNI o el telèfon. No hi surt? Fes-li l\'alta presencial.' },
+    { sel: '#personas-pestanas', es: 'Ordénalas <b>por fecha de alta</b>, de la A a la Z o mira las estadísticas.', ca: 'Ordena-les <b>per data d\'alta</b>, de l\'A a la Z o mira\'n les estadístiques.' },
+    { sel: '#screen-personas .aviso-at', es: '<b>⚠️ Sin ficha de atención</b>: pulsa y la haces directamente.', ca: '<b>⚠️ Sense fitxa d\'atenció</b>: prem i la fas directament.' },
+    { sel: '#screen-personas .link-btn', txt: '^Ver$|^Veure$', es: 'Pulsa <b>Ver</b> para abrir su ficha.', ca: 'Prem <b>Veure</b> per obrir la seva fitxa.' },
+    { sel: '#screen-personas .link-btn', txt: 'Excel', es: 'Descarga la lista en <b>Excel o PDF</b>.', ca: 'Descarrega la llista en <b>Excel o PDF</b>.' }
+  ]},
+  miespacio: { titulo: ['Mi espacio', 'El meu espai'], pasos: [
+    { sel: '#screen-miespacio .hero-title', es: '<b>Tu espacio</b>: lo tuyo del día, en una sola pantalla.', ca: '<b>El teu espai</b>: el teu del dia, en una sola pantalla.' },
+    { sel: '#screen-miespacio h3', txt: 'Fichaje de hoy|Fitxatge d', es: 'Tu <b>fichaje</b>: entrada y salida. Si algo falla, «🆘 ¿Algún problema con el fichaje?».', ca: 'El teu <b>fitxatge</b>: entrada i sortida. Si alguna cosa falla, «🆘 Algun problema amb el fitxatge?».' },
+    { sel: '#screen-miespacio .primary-btn', txt: 'Empezar ahora|Començar ara', es: 'Las <b>salas</b>: pulsa «Empezar ahora» al entrar en una con una persona, o resérvala.', ca: 'Les <b>sales</b>: prem «Començar ara» en entrar-hi amb una persona, o reserva-la.' }
+  ]},
+  gestionpersonal: { titulo: ['Recursos Humanos', 'Recursos Humans'], pasos: [
+    { sel: '#screen-gestionpersonal nav.cmp-menu', es: 'El <b>menú de RRHH</b>: «Lo mío» (nóminas, vacaciones, horario) y, si gestionas, «Recursos Humanos».', ca: 'El <b>menú de RRHH</b>: «El meu» (nòmines, vacances, horari) i, si gestiones, «Recursos Humans».', lado: 'der' },
+    { sel: '#screen-gestionpersonal nav.cmp-menu summary', es: 'Cada grupo se <b>abre y se cierra</b>: así las listas largas no estorban.', ca: 'Cada grup s\'<b>obre i es tanca</b>: així les llistes llargues no molesten.' }
+  ]}
+});
+let __tour = null;
+function tourElemento(p){
+  let lista = [];
+  try { lista = Array.from(document.querySelectorAll(p.sel)); } catch(e){}
+  const vis = el => el && el.offsetParent !== null && el.getBoundingClientRect().width > 0;
+  if(p.txt){ const re = new RegExp(p.txt, 'i'); lista = lista.filter(el => re.test(el.textContent || '')); }
+  return lista.find(vis) || null;
+}
+function tourVisto(n){ try { return !!localStorage.getItem('logos_tour_' + n + '_' + (CURRENT_USER ? CURRENT_USER.id : '')); } catch(e){ return true; } }
+function tourMarcarVisto(n){ try { localStorage.setItem('logos_tour_' + n + '_' + (CURRENT_USER ? CURRENT_USER.id : ''), '1'); } catch(e){} }
+function tourIniciar(nombre){
+  const t = TOURS[nombre]; if(!t) return;
+  const pasos = t.pasos.filter(p => tourElemento(p));
+  if(!pasos.length) return;
+  tourCerrar(true); try { jorCerrar(); } catch(e){}
+  __tour = { nombre, pasos, i: 0 };
+  const ov = document.createElement('div'); ov.id = 'tour-ov'; ov.className = 'tour-ov';
+  ov.innerHTML = '<div class="tour-luz" id="tour-luz"></div><div class="tour-punto" id="tour-punto"></div><div class="tour-globo" id="tour-globo" role="dialog" aria-live="polite"></div>';
+  ov.addEventListener('click', e => { if(e.target === ov) tourCerrar(); });
+  document.body.appendChild(ov);
+  document.addEventListener('keydown', tourTeclas);
+  window.addEventListener('resize', tourPintar);
+  tourPintar();
+}
+function tourTeclas(e){ if(!__tour) return; if(e.key === 'Escape') tourCerrar(); else if(e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); tourMover(1); } else if(e.key === 'ArrowLeft') tourMover(-1); }
+function tourMover(d){
+  if(!__tour) return;
+  const n = __tour.i + d;
+  if(n >= __tour.pasos.length){ tourCerrar(); return; }
+  if(n < 0) return;
+  __tour.i = n; tourPintar();
+}
+function tourPintar(){
+  if(!__tour) return;
+  const p = __tour.pasos[__tour.i], el = tourElemento(p), ca = LANG_I === 'ca';
+  if(!el){ tourMover(1); return; }
+  try { el.scrollIntoView({ block: 'center', inline: 'nearest' }); } catch(e){}
+  const r = el.getBoundingClientRect(), m = 6;
+  const luz = document.getElementById('tour-luz'), punto = document.getElementById('tour-punto'), g = document.getElementById('tour-globo');
+  Object.assign(luz.style, { left: (r.left - m) + 'px', top: (r.top - m) + 'px', width: (r.width + m * 2) + 'px', height: (r.height + m * 2) + 'px' });
+  const grande = r.height > 220;
+  Object.assign(punto.style, { left: (grande ? r.left + r.width / 2 : r.left + Math.min(r.width / 2, 60)) - 18 + 'px', top: (grande ? r.top + 90 : r.top + r.height / 2) - 18 + 'px' });
+  const N = __tour.pasos.length, ult = __tour.i === N - 1;
+  const nom = String(CURRENT_USER_NOMBRE || '').trim().split(/\s+/)[0];
+  const t = TOURS[__tour.nombre], tit = t ? (ca ? t.titulo[1] : t.titulo[0]) : '';
+  g.innerHTML = `<button class="tour-x" onclick="tourCerrar()" title="${acL('Cerrar la visita (Esc)', 'Tancar la visita (Esc)')}" aria-label="${acL('Cerrar', 'Tancar')}">✕</button><div class="tour-cab"><span class="tour-lam">λ</span><span>${__tour.i === 0 && nom ? acL('¡Hola, ', 'Hola, ') + escAttr(nom) + '! ' : ''}${acL('Logos te guía', 'Logos et guia')} · ${escAttr(tit)}</span></div>
+    <div class="tour-barra"><i style="width:${Math.round((__tour.i + 1) / __tour.pasos.length * 100)}%"></i></div>
+    <div class="tour-txt">${ca ? p.ca : p.es}</div>
+    <div class="tour-pie"><span class="tour-n">${__tour.i + 1} / ${N}</span>
+      <span class="tour-bts">${__tour.i ? `<button class="tour-b tour-b2" onclick="tourMover(-1)">←</button>` : `<button class="tour-b tour-b2" onclick="tourCerrar()">${acL('Saltar', 'Saltar')}</button>`}
+      <button class="tour-b" onclick="tourMover(1)">${ult ? acL('¡Entendido!', 'Entesos!') : acL('Siguiente', 'Següent') + ' →'}</button></span></div>`;
+  // colocación del globo: a la derecha si es el menú o algo alto; si no, debajo o encima
+  const gw = Math.min(330, innerWidth - 24); g.style.width = gw + 'px';
+  const gh = g.offsetHeight || 140;
+  let x, y, flecha;
+  if(p.lado === 'der' || (grande && r.right + gw + 24 < innerWidth)){ x = r.right + 18; y = Math.max(12, Math.min(r.top + 40, innerHeight - gh - 12)); flecha = 'izq'; }
+  else if(r.bottom + gh + 22 < innerHeight){ x = r.left + r.width / 2 - gw / 2; y = r.bottom + 16; flecha = 'arriba'; }
+  else { x = r.left + r.width / 2 - gw / 2; y = r.top - gh - 16; flecha = 'abajo'; }
+  x = Math.max(12, Math.min(x, innerWidth - gw - 12)); y = Math.max(12, y);
+  Object.assign(g.style, { left: x + 'px', top: y + 'px' });
+  g.dataset.flecha = flecha;
+  const fx = flecha === 'izq' ? 0 : Math.max(18, Math.min(r.left + r.width / 2 - x, gw - 18));
+  g.style.setProperty('--fx', fx + 'px');
+  const b = g.querySelector('.tour-b:not(.tour-b2)'); if(b) b.focus({ preventScroll: true });
+}
+function tourCerrar(silencio){
+  if(__tour && !silencio) tourMarcarVisto(__tour.nombre);
+  __tour = null;
+  const ov = document.getElementById('tour-ov'); if(ov) ov.remove();
+  document.removeEventListener('keydown', tourTeclas);
+  window.removeEventListener('resize', tourPintar);
+}
+function tourPantallaActual(){ const a = document.querySelector('.screen.active'); const n = a ? a.id.replace('screen-', '') : ''; return TOURS[n] ? n : null; }
+// Primera vez en cada pantalla: la visita empieza sola (una vez por persona)
+function tourAuto(nombre){
+  if(!CURRENT_USER || !IS_STAFF || tourVisto(nombre) || __tour) return;
+  let n = 0;
+  const intentar = () => {
+    if(tourPantallaActual() !== nombre || __tour || tourVisto(nombre)) return;
+    // si hay otra ventana delante (bienvenida del Aula, aviso de fichar…), se espera a que se cierre
+    if(document.querySelector('#av-guia-ov, .sg-ov, .mfa, #bloqueo-ov, .gi-ov, .guia-ov, #jor-panel')){ if(++n < 300) setTimeout(intentar, 1000); return; }
+    tourIniciar(nombre);
+  };
+  setTimeout(intentar, 900);
+}
+// Botón «🎯 Visita guiada» en cada pantalla con visita
+function tourBoton(nombre, host, antes){
+  if(!host || host.querySelector('.tour-lanzar')) return;
+  const b = document.createElement('button'); b.className = 'tour-lanzar'; b.type = 'button';
+  b.innerHTML = '🎯 ' + acL('Visita guiada', 'Visita guiada'); b.onclick = () => tourIniciar(nombre);
+  if(antes) host.insertBefore(b, antes); else host.appendChild(b);
+}
+(function(){
+  const envolver = (fn, nombre, ponerBoton) => {
+    const o = window[fn]; if(typeof o !== 'function') return;
+    window[fn] = async function(){ const r = await o.apply(this, arguments); try { ponerBoton(); tourAuto(nombre); } catch(e){} return r; };
+  };
+  envolver('renderPanelGeneral', 'panel', () => {
+    const cta = document.querySelector('#screen-panel .sn-cta');
+    if(cta && cta.parentElement) tourBoton('panel', cta.parentElement);
+  });
+  const conBoton = (nombre, sel) => () => { const h = document.querySelector(sel); if(h) tourBoton(nombre, h, h.firstChild); };
+  envolver('renderPersonasScreen', 'personas', conBoton('personas', '#screen-personas #personas-content'));
+  envolver('renderMiEspacio', 'miespacio', conBoton('miespacio', '#screen-miespacio #miespacio-content'));
+  envolver('renderGestionPersonal', 'gestionpersonal', () => {});
+  envolver('verPersonaStaff', 'persona', () => { const h = document.querySelector('#screen-persona .m3-nom'); if(h && h.parentElement) tourBoton('persona', h.parentElement); });
+  envolver('renderAulaVirtualScreen', 'aulavirtual', () => {
+    const como = Array.from(document.querySelectorAll('#screen-aulavirtual .cmp-mi')).find(x => /funciona/i.test(x.textContent));
+    if(como && como.parentElement) tourBoton('aulavirtual', como.parentElement, como.nextSibling);
+  });
+})();
+</script>
+<style>
+.tour-ov{position:fixed;inset:0;z-index:10040;cursor:pointer;}
+.tour-luz{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(12,18,32,.55);transition:all .3s ease;pointer-events:none;outline:2px solid rgba(255,255,255,.85);}
+.tour-punto{position:fixed;width:36px;height:36px;border-radius:50%;border:3px solid #F2BC2C;background:rgba(242,188,44,.22);pointer-events:none;transition:all .3s ease;animation:tourPulso 1.4s ease-out infinite;}
+.tour-punto::after{content:'';position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#F2BC2C;}
+@keyframes tourPulso{0%{box-shadow:0 0 0 0 rgba(242,188,44,.6);}100%{box-shadow:0 0 0 18px rgba(242,188,44,0);}}
+.tour-globo{position:fixed;cursor:default;background:linear-gradient(155deg,#2463B8 0%,#1B4E95 55%,#163F7A 100%);color:#fff;border-radius:16px;padding:12px 18px 12px;box-shadow:0 20px 44px -12px rgba(10,30,70,.6);border-top:4px solid #F2BC2C;transition:left .3s ease,top .3s ease;font-size:16.5px;line-height:1.45;}
+.tour-globo b{color:#FFD45C;font-weight:800;}
+.tour-x{position:absolute;top:8px;right:8px;width:28px;height:28px;border:none;border-radius:8px;background:rgba(255,255,255,.16);color:#fff;font-size:14px;font-weight:800;cursor:pointer;}
+.tour-x:hover{background:rgba(255,255,255,.3);}
+.tour-cab{padding-right:30px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.02em;color:#CFE0FA;margin-bottom:6px;}
+.tour-lam{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:7px;background:#F2BC2C;color:#163F7A;font-family:Georgia,serif;font-weight:900;font-size:15px;}
+.tour-barra{height:4px;border-radius:4px;background:rgba(255,255,255,.18);margin:0 0 10px;overflow:hidden;}
+.tour-barra i{display:block;height:100%;background:#F2BC2C;border-radius:4px;transition:width .3s ease;}
+.tour-globo::before{content:'';position:absolute;width:16px;height:16px;background:#2463B8;transform:rotate(45deg);}
+.tour-globo[data-flecha="arriba"]::before{top:-9px;left:calc(var(--fx) - 8px);background:#F2BC2C;}
+.tour-globo[data-flecha="abajo"]::before{bottom:-7px;left:calc(var(--fx) - 8px);background:#173F7B;}
+.tour-globo[data-flecha="izq"]::before{left:-7px;top:26px;background:#2160B3;}
+.tour-pie{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:8px;}
+.tour-n{font-size:12.5px;opacity:.85;font-weight:700;}
+.tour-bts{display:flex;gap:6px;}
+.tour-b{border:none;background:#F2BC2C;color:#163F7A;font-weight:800;border-radius:9px;padding:7px 13px;cursor:pointer;font-size:14px;}
+.tour-b:hover{filter:brightness(1.06);}
+.tour-b2{background:rgba(255,255,255,.14);color:#fff;}
+.tour-b:focus-visible{outline:3px solid #FFE7A3;outline-offset:2px;}
+.tour-lanzar{border:1.5px solid #E9C766;background:#FFF8E1;color:#1B4E95;font-weight:800;border-radius:999px;padding:7px 14px;cursor:pointer;font-size:13.5px;margin:6px 6px 8px 0;}
+.tour-lanzar:hover{background:#FFEFC2;}
+@media print{ .tour-ov,.tour-lanzar{display:none !important;} }
 </style>
 </body>
 </html>
