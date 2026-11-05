@@ -4688,9 +4688,14 @@ async function fichSesionViva(){
 }
 
 // ---------- Dónde se ha fichado (solo informa: nunca impide fichar) ----------
-function fichLugarTxt(lat, lng){
+function fichLugarTxt(lat, lng, acc, puesto){
   const cfg = window.__configOficina;
+  if(puesto) return { i: '💻', t: acL('en la oficina', 'a l\'oficina') + ' (' + puesto + ')', clase: 'ok' };
   if(lat == null || lng == null) return { i: '❓', t: acL('sin ubicación', 'sense ubicació'), clase: 'sin' };
+  if(acc != null && cfg && cfg.lat != null && fichEnOficina({ lat, lng, acc })){
+    const d0 = Math.round(calcularDistanciaMetros(lat, lng, cfg.lat, cfg.lng));
+    if(d0 > (cfg.radio_metros || 150)) return { i: '📍', t: acL('en la oficina (ubicación aproximada del ordenador, ± ', 'a l\'oficina (ubicació aproximada de l\'ordinador, ± ') + acc + ' m)', clase: 'ok' };
+  }
   if(!cfg || cfg.lat == null) return { i: '📍', t: acL('ubicación guardada', 'ubicació desada'), clase: 'ok' };
   const d = Math.round(calcularDistanciaMetros(lat, lng, cfg.lat, cfg.lng)), radio = cfg.radio_metros || 150;
   const dt = d < 1000 ? d + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km';
@@ -4713,17 +4718,17 @@ async function fichFueraDeHorario(email, ahora){
 async function ficharEntrada(){
   const t = TI[LANG_I];
   try { actMarcar(); } catch(e){}
-  const ubicacion = await obtenerUbicacionSimple();
+  const [ubicacion, puesto] = await Promise.all([obtenerUbicacionSimple(), puestoActual().catch(() => null), fichConfig().catch(() => null)]);
   const yo = await fichSesionViva(); if(!yo) return;
-  const payload = { tecnico_email: yo };
-  if(ubicacion){ payload.entrada_lat = ubicacion.lat; payload.entrada_lng = ubicacion.lng; }
-  const { error } = await sb.from('fichajes').insert(payload);
+  const modo = puesto ? 'puesto' : (fichEnOficina(ubicacion) ? 'oficina' : null);
+  const { error } = await fichGuardar(extra => sb.from('fichajes').insert(Object.assign({ tecnico_email: yo },
+    extra ? fichCampos('entrada', { ub: ubicacion, modo, puesto }) : (ubicacion ? { entrada_lat: ubicacion.lat, entrada_lng: ubicacion.lng } : {}))));
   if(error){
     fichIncidencia(acL('No se ha podido fichar la entrada', 'No s\'ha pogut fitxar l\'entrada'), 'Error al guardar la entrada: ' + error.message);
     alert(acL('No se ha podido fichar la entrada: ', 'No s\'ha pogut fitxar l\'entrada: ') + error.message + acL('\n\nSe ha avisado a dirección (incidencia de fichaje).', '\n\nS\'ha avisat la direcció (incidència de fitxatge).')); return; }
   // Se informa de la hora y de dónde se ha fichado (sin ventanas que haya que cerrar)
   try { await fichConfig(); } catch(e){}
-  const ahora = new Date(), lugar = fichLugarTxt(ubicacion ? ubicacion.lat : null, ubicacion ? ubicacion.lng : null);
+  const ahora = new Date(), lugar = fichLugarTxt(ubicacion ? ubicacion.lat : null, ubicacion ? ubicacion.lng : null, ubicacion ? ubicacion.acc : null, puesto);
   const fuera = await fichFueraDeHorario(yo, ahora);
   fichAvisoFichado(`✅ ${acL('Entrada fichada a las', 'Entrada fitxada a les')} ${ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · ${lugar.i} ${lugar.t}`
     + (fuera ? `<br>⏰ ${acL('Fuera de tu horario', 'Fora del teu horari')} (${escAttr(fuera)}): ${acL('se avisa a dirección.', 's\'avisa la direcció.')}` : '')
@@ -4751,12 +4756,13 @@ async function ficharSalida(id){
   { const hh = new Date().toLocaleTimeString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES', { hour: '2-digit', minute: '2-digit' });
     if(!confirm(acL('¿Seguro que quieres fichar la SALIDA ahora (' + hh + ')?\n\nSi has tocado el botón sin querer, pulsa «Cancelar» y sigue trabajando.',
                     'Segur que vols fitxar la SORTIDA ara (' + hh + ')?\n\nSi has tocat el botó sense voler, prem «Cancel·la» i continua treballant.'))) return; }
-  const ubicacion = await obtenerUbicacionSimple();
+  const [ubicacion, puesto] = await Promise.all([obtenerUbicacionSimple(), puestoActual().catch(() => null), fichConfig().catch(() => null)]);
   if(!(await fichSesionViva())) return;
-  const payload = { salida: new Date().toISOString() };
-  if(ubicacion){ payload.salida_lat = ubicacion.lat; payload.salida_lng = ubicacion.lng; }
-  const { error } = await sb.from('fichajes').update(payload).eq('id', id);
-  if(!error){ try { await fichConfig(); } catch(e){} const l = fichLugarTxt(ubicacion ? ubicacion.lat : null, ubicacion ? ubicacion.lng : null); fichAvisoFichado(`⏹ ${acL('Salida fichada a las', 'Sortida fitxada a les')} ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · ${l.i} ${l.t}`); }
+  const modo = puesto ? 'puesto' : (fichEnOficina(ubicacion) ? 'oficina' : null);
+  const salidaIso = new Date().toISOString();
+  const { error } = await fichGuardar(extra => sb.from('fichajes').update(Object.assign({ salida: salidaIso },
+    extra ? fichCampos('salida', { ub: ubicacion, modo, puesto }) : (ubicacion ? { salida_lat: ubicacion.lat, salida_lng: ubicacion.lng } : {}))).eq('id', id));
+  if(!error){ try { await fichConfig(); } catch(e){} const l = fichLugarTxt(ubicacion ? ubicacion.lat : null, ubicacion ? ubicacion.lng : null, ubicacion ? ubicacion.acc : null, puesto); fichAvisoFichado(`⏹ ${acL('Salida fichada a las', 'Sortida fitxada a les')} ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · ${l.i} ${l.t}`); }
   if(error){
     fichIncidencia(acL('No se ha podido fichar la salida', 'No s\'ha pogut fitxar la sortida'), 'Error al guardar la salida: ' + error.message);
     alert(acL('No se ha podido fichar la salida: ', 'No s\'ha pogut fitxar la sortida: ') + error.message + acL('\n\nSe ha avisado a dirección (incidencia de fichaje).', '\n\nS\'ha avisat la direcció (incidència de fitxatge).')); return; }
@@ -4769,15 +4775,29 @@ function fichAvisoFichado(html){
   t.onclick = () => t.remove(); document.body.appendChild(t);
   setTimeout(() => { if(t && t.parentNode) t.remove(); }, 7000);
 }
+// Ubicación para fichar: escucha unos segundos y se queda con la lectura más precisa (en un ordenador
+// sin GPS la primera suele ser la de la red, con cientos de metros de error). Devuelve { lat, lng, acc }.
 function obtenerUbicacionSimple(){
   return new Promise((resolve) => {
     if(!navigator.geolocation){ resolve(null); return; }
-    navigator.geolocation.getCurrentPosition(
-      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => resolve(null),
-      { timeout: 8000, enableHighAccuracy: true }
-    );
+    let mejor = null, id = null, hecho = false;
+    const fin = () => { if(hecho) return; hecho = true; try { if(id != null) navigator.geolocation.clearWatch(id); } catch(e){} resolve(mejor); };
+    try {
+      id = navigator.geolocation.watchPosition(pos => {
+        const c = pos.coords, acc = Math.round(c.accuracy || 9999);
+        if(!mejor || acc < mejor.acc) mejor = { lat: c.latitude, lng: c.longitude, acc };
+        if(acc <= 50) fin();                         // ya es buena: no hace falta esperar más
+      }, () => { if(!mejor) fin(); }, { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 });
+    } catch(e){ fin(); return; }
+    setTimeout(fin, 5000);
   });
+}
+// ¿Cuenta como «en la oficina»? Ordenador marcado, o la distancia cabe dentro del radio contando el margen de error
+function fichEnOficina(ub){
+  const cfg = window.__configOficina;
+  if(!ub || !cfg || cfg.lat == null) return null;
+  const d = calcularDistanciaMetros(ub.lat, ub.lng, cfg.lat, cfg.lng), radio = cfg.radio_metros || 150;
+  return d <= radio || (ub.acc != null && d - Math.min(ub.acc, 1000) <= radio);
 }
 
 // Salas de Logos. "plazas" son los puestos que se pueden ocupar por separado; las salas con una sola plaza
@@ -14241,7 +14261,15 @@ async function guardarNuevaClave(){
   if(/^(.)\1+$/.test(a) || a.toLowerCase() === String(CURRENT_USER.email || '').toLowerCase()) return falla(acL('Esa contraseña es demasiado fácil de adivinar. Elige otra.', 'Aquesta contrasenya és massa fàcil d\'endevinar. Tria\'n una altra.'));
   if(a !== b) return falla(acL('Las dos contraseñas no coinciden.', 'Les dues contrasenyes no coincideixen.'));
   const btn = document.getElementById('clave-btn'); if(btn) btn.disabled = true;
-  const { error } = await sb.auth.updateUser({ password: a });
+  let { error } = await sb.auth.updateUser({ password: a });
+  // Con la app de verificación configurada, Supabase exige el código (nivel AAL2) para cambiar la contraseña,
+  // aunque la verificación esté en pausa. Se pide el código aquí mismo y se vuelve a intentar.
+  if(error && /AAL2|aal2/i.test(String(error.message || ''))){
+    const r = await claveVerificarCodigo();
+    if(r === 'pedido'){ if(btn) btn.disabled = false; return; }   // se ha mostrado la casilla del código
+    if(r === 'ok') ({ error } = await sb.auth.updateUser({ password: a }));
+    else if(r) error = { message: r };
+  }
   if(error){
     if(btn) btn.disabled = false;
     const m = String(error.message || '');
@@ -14252,6 +14280,29 @@ async function guardarNuevaClave(){
   try { await sb.rpc('marcar_mi_clave_cambiada'); } catch(e) { /* si el SQL aún no está, no pasa nada */ }
   CLAVE_CAMBIADA = true;
   claveModal(`<h3 style="margin-top:0;">✓ ${acL('Contraseña cambiada', 'Contrasenya canviada')}</h3><p>${acL('A partir de ahora entras con tu nueva contraseña.', 'A partir d\'ara entres amb la teva nova contrasenya.')}</p><button class="primary-btn" onclick="cerrarClaveModal()">${acL('Entendido', 'Entesos')}</button>`, true);
+}
+// Código de la app (Microsoft Authenticator…) dentro de la ventana de la contraseña.
+// 'pedido' = se acaba de mostrar la casilla; 'ok' = código correcto; texto = error
+async function claveVerificarCodigo(){
+  let caja = document.getElementById('clave-mfa');
+  if(!caja){
+    const err = document.getElementById('clave-error');
+    if(err){ err.style.display = 'none'; err.insertAdjacentHTML('beforebegin', `<div id="clave-mfa" class="field" style="background:#EEF4FF;border:1.5px solid #B9CCF5;border-radius:12px;padding:10px 12px;margin:8px 0;">
+      <label>🔐 ${acL('Para cambiar la contraseña, escribe el código de 6 cifras de tu app (Microsoft Authenticator)', 'Per canviar la contrasenya, escriu el codi de 6 xifres de la teva app (Microsoft Authenticator)')}</label>
+      <input id="clave-mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" style="font-size:22px;letter-spacing:6px;text-align:center;" oninput="this.value=this.value.replace(/\\D/g,'')"></div>`); }
+    setTimeout(() => { const i = document.getElementById('clave-mfa-code'); if(i) i.focus(); }, 60);
+    return 'pedido';
+  }
+  const code = ((document.getElementById('clave-mfa-code') || {}).value || '').replace(/\D/g, '');
+  if(code.length !== 6) return acL('Escribe los 6 números del código de tu app.', 'Escriu els 6 números del codi de la teva app.');
+  try {
+    const { data: f } = await sb.auth.mfa.listFactors();
+    const factor = ((f && f.totp) || [])[0];
+    if(!factor) return acL('No se encuentra tu app de verificación. Pide a la administración que te la reinicie.', 'No es troba la teva app de verificació. Demana a l\'administració que te la reiniciï.');
+    const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: factor.id, code });
+    if(error){ const i = document.getElementById('clave-mfa-code'); if(i){ i.value = ''; i.focus(); } return acL('Código incorrecto o caducado. Prueba con el siguiente.', 'Codi incorrecte o caducat. Prova amb el següent.'); }
+    return 'ok';
+  } catch(e){ return e.message; }
 }
 // "He olvidado mi contraseña": se envía un enlace al correo
 async function recuperarClave(){
@@ -18149,7 +18200,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-04 · v230 (alta presencial: la persona puede leer y firmar el consentimiento en su móvil con un QR; menú de RR. HH. en desplegables)';
+const APP_VERSION_INTRANET = '2026-11-05 · v231 (cambiar la contraseña con la app de verificación: pide el código; fichaje: ubicación más precisa, cuenta el margen de error y reconoce los ordenadores de la oficina)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -22832,7 +22883,7 @@ function fichRepintar(){ const el = document.getElementById('admin-fichajes-list
 // Ajustes de la oficina: radio, fichar fuera y ordenadores de la oficina
 async function fichAjustesPintar(){
   const host = document.getElementById('fich-ajustes'); if(!host) return;
-  host.innerHTML = ''; return;   // el fichaje vuelve a ser sencillo (v218): estas normas ya no se usan
+  // v231: el fichaje sigue sencillo; aquí solo el radio de la oficina y los ordenadores de la oficina
   const ca = LANG_I === 'ca', L = (es, cc) => ca ? cc : es;
   const cfg = window.__configOficina || {};
   const sqlOk = 'radio_metros' in cfg;
@@ -22844,13 +22895,13 @@ async function fichAjustesPintar(){
     <div class="fich-aj">
       <h4>⚙️ ${L('Normas del fichaje', 'Normes del fitxatge')}</h4>
       <label>${L('Se ficha «en la oficina» a menos de', 'Es fitxa «a l\'oficina» a menys de')} <input type="number" id="fich-radio" min="30" max="1000" step="10" value="${cfg.radio_metros || 100}" style="width:90px;"> m</label>
-      <label class="fich-chk"><input type="checkbox" id="fich-fuera" ${cfg.permitir_fuera !== false ? 'checked' : ''}> ${L('Se puede fichar fuera de la oficina indicando el motivo (visita, acompañamiento, gestión…)', 'Es pot fitxar fora de l\'oficina indicant el motiu (visita, acompanyament, gestió…)')}</label>
+      
       <button class="primary-btn" style="width:auto;margin:6px 0 0;" onclick="fichAjustesGuardar()">💾 ${L('Guardar normas', 'Desar normes')}</button>
       <p class="subtle" style="font-size:12px;margin:8px 0 0;">${cfg.precision_m != null ? L(`El punto de la oficina se guardó con una precisión de ± ${cfg.precision_m} m.`, `El punt de l'oficina es va desar amb una precisió de ± ${cfg.precision_m} m.`) + ' ' : ''}${L('Para que salga bien, guárdalo desde el MÓVIL dentro de la oficina (no desde un ordenador).', 'Perquè surti bé, desa\'l des del MÒBIL dins de l\'oficina (no des d\'un ordinador).')}</p>
     </div>
     <div class="fich-aj">
       <h4>💻 ${L('Ordenadores de la oficina', 'Ordinadors de l\'oficina')}</h4>
-      <p class="subtle" style="font-size:12.5px;margin:0 0 8px;">${L('Los ordenadores fijos no tienen GPS y su ubicación sale a cientos de metros (por eso salen fichajes a 592 m o sin ubicación). Desde un ordenador marcado aquí se ficha «en la oficina» sin pedir la ubicación. Márcalo desde ESE ordenador.', 'Els ordinadors fixos no tenen GPS i la seva ubicació surt a centenars de metres (per això surten fitxatges a 592 m o sense ubicació). Des d\'un ordinador marcat aquí es fitxa «a l\'oficina» sense demanar la ubicació. Marca\'l des d\'AQUELL ordinador.')}</p>
+      <p class="subtle" style="font-size:12.5px;margin:0 0 8px;">${L('Los ordenadores fijos no tienen GPS y su ubicación sale a cientos de metros (por eso salen fichajes a 592 m o sin ubicación). Desde un ordenador marcado aquí se ficha siempre «en la oficina». Márcalo desde ESE ordenador.', 'Els ordinadors fixos no tenen GPS i la seva ubicació surt a centenars de metres (per això surten fitxatges a 592 m o sense ubicació). Des d\'un ordinador marcat aquí es fitxa «a l\'oficina» sense demanar la ubicació. Marca\'l des d\'AQUELL ordinador.')}</p>
       ${puestos.length ? puestos.map(p => `<div class="panel-stat-row"><span>${p.activo === false ? '⏸️' : '💻'} <strong>${escAttr(p.nombre)}</strong>${p.token === tk ? ` <span class="chip good">${L('este ordenador', 'aquest ordinador')}</span>` : ''}<br><small class="subtle" style="margin:0;">${L('alta', 'alta')}: ${new Date(p.creado_en).toLocaleDateString(TI[LANG_I].localeFecha)}${p.creado_por_email ? ' · ' + escAttr(nombreTecnico(p.creado_por_email)) : ''}</small></span>
         <span><button class="link-btn" style="font-size:12px;" onclick="puestoActivar(${p.id}, ${p.activo === false})">${p.activo === false ? L('Activar', 'Activar') : L('Pausar', 'Pausar')}</button> <button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="puestoBorrar(${p.id})">${L('Quitar', 'Treure')}</button></span></div>`).join('') : `<div class="empty-note">${L('Todavía no hay ningún ordenador marcado.', 'Encara no hi ha cap ordinador marcat.')}</div>`}
       ${este ? `<p style="margin:10px 0 0;font-size:13px;">✅ ${L('Este ordenador ya es de la oficina', 'Aquest ordinador ja és de l\'oficina')}: <strong>${escAttr(este.nombre)}</strong></p>`
@@ -22860,7 +22911,7 @@ async function fichAjustesPintar(){
 async function fichAjustesGuardar(){
   const L = (es, cc) => LANG_I === 'ca' ? cc : es;
   const radio = Math.max(30, Math.min(1000, parseInt(document.getElementById('fich-radio').value, 10) || 100));
-  const fuera = document.getElementById('fich-fuera').checked;
+  const ff = document.getElementById('fich-fuera'), fuera = ff ? ff.checked : true;
   const { error } = await sb.from('configuracion_oficina').update({ radio_metros: radio, permitir_fuera: fuera }).eq('id', 1);
   if(error){ alert(error.message); return; }
   window.__configOficina = Object.assign(window.__configOficina || {}, { radio_metros: radio, permitir_fuera: fuera });
