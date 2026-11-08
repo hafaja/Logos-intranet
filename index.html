@@ -2076,7 +2076,7 @@ body.m3-sin-scroll{overflow:hidden;}
         <button data-target="mipropioproyecto" onclick="showScreen('mipropioproyecto');renderMiPropioProyectoEntrada()">🏛️ Crea un proyecto de Logos</button>
         <button data-target="ideasproyecto" onclick="showScreen('ideasproyecto');renderEmprendimientoListaStaff()">🚀 Emprendimiento</button>
         <button data-target="jovenes" onclick="showScreen('jovenes');renderJovenesScreen()">🌱 Jóvenes en acción</button>
-        <button data-target="raices" class="rol-oculto" onclick="showScreen('raices');renderRaices('familias')">🌳 Proyecto Raíces</button>
+        <button data-target="raices" class="rol-oculto" onclick="showScreen('raices');renderRaices('familias')">🌳 Raíces · Familias</button>
         <button data-target="aulavirtual" onclick="showScreen('aulavirtual');renderAulaVirtualScreen()">🎥 Aula Virtual · Hub Logos</button>
         <button data-target="formaciones" onclick="showScreen('formaciones');renderFormacionesScreen()">🎓 Formaciones</button>
       </details>
@@ -2278,7 +2278,7 @@ body.m3-sin-scroll{overflow:hidden;}
 
   <div class="screen" id="screen-raices">
     <div class="main-content">
-      <div class="topbar"><span class="brand">🌳 Proyecto Raíces</span></div>
+      <div class="topbar"><button class="back-btn" onclick="showScreen('proyectos');renderProyectosScreen()">← Proyectos</button><span class="brand">🌳 Proyecto Raíces</span></div>
       <div class="content" id="raices-content"></div>
     </div>
   </div>
@@ -5137,7 +5137,7 @@ function jaiError(cont, err){
 function jaiTabsHtml(){
   const esCA = LANG_I === 'ca';
   const b = (id, txt) => `<button class="imp-tab${__jaiTab === id ? ' on' : ''}" onclick="renderJovenesScreen('${id}')">${txt}</button>`;
-  return `<div class="imp-tabs">${b('actividades', '🗓️ ' + (esCA?'Activitats':'Actividades'))}${b('menores', '👨‍👩‍👧 ' + (esCA?'Famílies i menors':'Familias y menores'))}${b('salida', '🚪 ' + (esCA?'Sortir sol/a':'Salir solo/a'))}</div><div id="ja-resumen" class="ja-resumen"></div>`;
+  return `<div class="imp-tabs">${b('actividades', '🗓️ ' + (esCA?'Activitats':'Actividades'))}${b('menores', '👨‍👩‍👧 ' + (esCA?'Famílies i menors':'Familias y menores'))}${b('salida', '🚪 ' + (esCA?'Sortir sol/a':'Salir solo/a'))}${b('impacto', '📈 ' + (esCA?'Avaluació i impacte':'Evaluación e impacto'))}</div><div id="ja-resumen" class="ja-resumen"></div>`;
 }
 
 // ---------- resumen con cifras (arriba en todas las pestañas y en el inicio de las profesionales) ----------
@@ -5193,6 +5193,7 @@ async function renderJovenesScreen(tab){
   cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
   if(__jaiTab === 'menores') await renderJovenesMenores(cont);
   else if(__jaiTab === 'salida') await renderJovenesSalida(cont);
+  else if(__jaiTab === 'impacto') await renderJovenesImpacto(cont);
   else await renderJovenesActividades(cont);
   jaiResumenPintar();
 }
@@ -5477,7 +5478,7 @@ function jaiPintarFamilias(texto){
     return `<div class="ja-fam">
       <div class="ja-fam-h"><span class="ja-av">${escAttr(ini(f.nombre_completo))}</span>
         <div style="flex:1;min-width:0;"><strong>${escAttr(f.nombre_completo || (esCA?'Sense nom':'Sin nombre'))}</strong>${f.telefono ? `<div class="subtle" style="margin:0;font-size:12px;">📞 ${escAttr(f.telefono)}</div>` : ''}</div>
-        <span class="ja-fam-a"><button class="link-btn" style="font-size:12px;color:#1E9E52;" onclick="jmAbrir({familiaId:'${fid}',audiencia:'una'})">💬 ${esCA?'Escriure':'Escribir'}</button><button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${fid}','jovenes')">${TI[LANG_I].verInfoCompleta}</button></span></div>
+        <span class="ja-fam-a">${f.telefono ? `<a class="link-btn ja-canal" href="tel:${escAttr(String(f.telefono).replace(/[^\d+]/g, ''))}" onclick="jaContacto('${fid}','telefono')">📞 ${esCA?'Trucar':'Llamar'}</a><a class="link-btn ja-canal" style="color:#1E9E52;" href="${chWaLink(f.telefono, '')}" target="_blank" rel="noopener" onclick="jaContacto('${fid}','whatsapp')">🟢 WhatsApp</a>` : ''}<button class="link-btn" style="font-size:12px;color:#1B4E95;" onclick="jmAbrir({familiaId:'${fid}',audiencia:'una'})">📲 Logos Acompanya</button><button class="link-btn" style="font-size:12px;color:#C4501F;" onclick="evJovenesAbrir('${fid}')">📈 ${esCA?'Avaluar':'Evaluar'}</button><button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${fid}','jovenes')">${TI[LANG_I].verInfoCompleta}</button></span></div>
       ${ms.map(m => `<div class="ja-hijo"><span class="ja-hijo-n"><strong>${escAttr(m.nombre_completo)}</strong>${m.fecha_nacimiento ? ` <span class="subtle" style="font-size:12px;">· ${jaEdad(m.fecha_nacimiento)} ${esCA?'anys':'años'}</span>` : ''}</span><span class="ja-hijo-c">${chipSalida(m.id)}<span class="subtle" style="font-size:12px;margin:0;">${nAut[m.id] || 0} ${esCA?'activitats':'actividades'}</span></span></div>`).join('')}
     </div>`;
   }).join('') : `<div class="empty-note">${esCA?'Cap resultat.':'Sin resultados.'}</div>`;
@@ -18298,7 +18299,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-08 · v240 (La lista de proyectos para trabajar con una persona sale de la pantalla Proyectos: los nuevos aparecen, por orden alfabético) · antes: v239 (Proyectos nuevos en los desplegables de actuaciones; aviso de fichaje discreto que no tapa el menú; RR. HH. ve el historial de fichajes solo para consultar) · antes: v238 (Proyecto Raíces en Jóvenes en acción: familias, consentimiento con Logos, presencia y actuaciones que suman atenciones, evaluación con puntuación; solo el equipo del proyecto)';
+const APP_VERSION_INTRANET = '2026-11-08 · v244 (Evaluaciones y contactos con las familias se apuntan como actuaciones: cuentan en la Intranet y se ven en Logos Acompanya; llamar, WhatsApp y Logos Acompanya en cada familia) · antes: v243 (Evaluación de impacto de Logos en Jóvenes en acción y en cada proyecto: entrada, salida y seguimiento, entrevista pantalla a pantalla y panel de impacto) · antes: v242 (Raíces: entrevista de evaluación pantalla a pantalla, con botones de colores, progreso y Anterior/Siguiente) · antes: v241 (Raíces · Familias entra por Proyectos; guion de la entrevista en la evaluación final) · antes: v240 (La lista de proyectos para trabajar con una persona sale de la pantalla Proyectos: los nuevos aparecen, por orden alfabético) · antes: v239 (Proyectos nuevos en los desplegables de actuaciones; aviso de fichaje discreto que no tapa el menú; RR. HH. ve el historial de fichajes solo para consultar) · antes: v238 (Proyecto Raíces en Jóvenes en acción: familias, consentimiento con Logos, presencia y actuaciones que suman atenciones, evaluación con puntuación; solo el equipo del proyecto)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -20374,7 +20375,7 @@ const PROYECTOS_LOGOS = [
   'Suport digital als Serveis Socials Bàsics', 'LOGOS Social Up-Digital', 'Mirada Endavant',
   'Projecte Arrels: Reconnexió Familiar', "Comunitats contra l'Aïllament",
   "Creació d'empreses d'inserció laboral i CET", 'Temps, cures i equitat',
-  'Català per a Tots: Integrant Veus, Teixint Futurs', 'Cuidem en igualtat'
+  'Català per a Tots: Integrant Veus, Teixint Futurs', 'Cuidem en igualtat', 'Jóvenes en acción'
 ];
 const FORMACIONES_LOGOS = [
   'Formació TIC — Programa 30+', 'Formació TIC — Comunitats Gitanes de Tarragona'
@@ -25375,7 +25376,7 @@ function raKpis(){
 function raCabeceraHtml(miembro){
   const k = miembro ? raKpis() : null;
   const tab = (id, t) => `<button class="imp-tab${__ra.vista === id || (id === 'familias' && ['familia', 'evaluacion'].includes(__ra.vista)) ? ' on' : ''}" onclick="renderRaices('${id}')">${t}</button>`;
-  return `<div class="ra-hero"><div><div class="ra-sup">🌱 Jóvenes en acción · FSE+</div><h2>🌳 Proyecto Raíces: Reconexión Familiar</h2>
+  return `<div class="ra-hero"><div><div class="ra-sup">📁 Proyectos de Logos · FSE+ · familias de Jóvenes en acción</div><h2>🌳 Proyecto Raíces: Reconexión Familiar</h2>
       <p>${acL('Familias con niñas, niños y jóvenes: fichas, presencia, actuaciones y evaluación. 🔒 Solo lo ve el equipo del proyecto.', 'Famílies amb nenes, nens i joves: fitxes, presència, actuacions i avaluació. 🔒 Només ho veu l\'equip del projecte.')}</p></div>
       ${k ? `<div class="ra-kpis">${[['👨‍👩‍👧', k.act, acL('familias activas', 'famílies actives')], ['🧒', k.menores, acL('menores', 'menors')], ['🗓️', k.sesMes, acL('sesiones este mes', 'sessions aquest mes')], ['✅', k.pres, acL('atenciones sumadas', 'atencions sumades')], ['✍️', k.sinCons, acL('sin consentimiento', 'sense consentiment')], ['📈', k.finales, acL('evaluaciones finales', 'avaluacions finals')]].map(x => `<div class="ra-kpi"><span>${x[0]}</span><b>${x[1]}</b><small>${x[2]}</small></div>`).join('')}</div>` : ''}</div>
     ${miembro ? `<div class="imp-tabs">${tab('familias', '👨‍👩‍👧 ' + acL('Familias', 'Famílies'))}${tab('sesiones', '🗓️ ' + acL('Presencia y actuaciones', 'Presència i actuacions'))}${tab('equipo', '👥 ' + acL('Equipo del proyecto', 'Equip del projecte'))}</div>` : ''}`;
@@ -25696,6 +25697,7 @@ function raEvaluacionHtml(f){
   return `<div class="ra-fila" style="margin-bottom:10px;"><button class="link-btn" onclick="renderRaices('familia','${f.id}')">← ${acL('Volver a la familia', 'Tornar a la família')} ${escAttr(f.codigo)}</button></div>
   <div class="panel-card ra-ev-cab"><h3 style="margin:0;">📈 ${acL('Evaluación', 'Avaluació')} · ${acL('Familia', 'Família')} ${escAttr(raFamNombre(f))} <span class="ra-cod">${escAttr(f.codigo)}</span></h3>
     <p class="subtle">${acL('Cada afirmación se valora «ANTES DE RAÍCES» (al entrar, o de forma retrospectiva) y «TRAS RAÍCES» (al salir). Escala: 1 Nada · 2 Poco · 3 Algo · 4 Bastante · 5 Mucho · NS No sabe · NP No procede. No sugerir que ha habido mejora.', 'Cada afirmació es valora «ABANS DE RAÍCES» (en entrar, o de manera retrospectiva) i «DESPRÉS DE RAÍCES» (en sortir). Escala: 1 Gens · 2 Poc · 3 Una mica · 4 Bastant · 5 Molt · NS No ho sap · NP No escau.')}</p>
+    ${raGuionHtml()}
     <div class="ra-g3"><div class="field"><label>${acL('Fecha de evaluación inicial', 'Data d\'avaluació inicial')}</label><input type="date" id="rae-fi" value="${escAttr(ev.fecha_inicial || '')}"></div>
       <div class="field"><label>${acL('Fecha de evaluación final', 'Data d\'avaluació final')}</label><input type="date" id="rae-ff" value="${escAttr(ev.fecha_final || '')}"></div>
       <div class="field"><label>&nbsp;</label><div class="ra-fila"><button class="primary-btn" style="margin:0;" onclick="raEvaluacionGuardar('${f.id}')">💾 ${acL('Guardar', 'Desar')}</button><button class="m4-btn" onclick="raEvaluacionImprimir('${f.id}')">🖨️ ${acL('Imprimir', 'Imprimir')}</button></div></div></div></div>
@@ -25713,6 +25715,105 @@ function raEvaluacionHtml(f){
   <div class="panel-card"><h3>${acL('Valoración profesional final', 'Valoració professional final')}</h3><div class="ra-tipos" style="flex-direction:column;">${RA_VALOR.map(v => `<label class="ra-tipo"><input type="radio" name="rae-val" value="${escAttr(v)}" ${ev.valoracion === v ? 'checked' : ''}> ${escAttr(v)}</label>`).join('')}</div>
     <div class="field"><label>${acL('Actuación acordada / derivación', 'Actuació acordada / derivació')}</label><textarea id="rae-acu" rows="2">${escAttr(ev.actuacion_acordada || '')}</textarea></div>
     <button class="primary-btn" onclick="raEvaluacionGuardar('${f.id}')">💾 ${acL('Guardar la evaluación', 'Desar l\'avaluació')}</button></div>`;
+}
+// Guion de la entrevista (del documento «Evaluación final» de Raíces): apertura, tiempos, criterios, comprobaciones y cierre
+function raGuionHtml(){
+  const li = a => a.map(x => `<li>${x}</li>`).join('');
+  return `<details class="ra-guion"><summary>🗒️ Guion de la entrevista · leer antes de empezar (máx. 30 min)</summary>
+    <p><b>Finalidad.</b> Valorar el cambio percibido en bienestar emocional, cohesión familiar y capacidad para afrontar situaciones relacionadas con la exclusión social. Es una herramienta de evaluación del proyecto, no un instrumento diagnóstico.</p>
+    <p><b>Comprobaciones antes de empezar</b></p><ul class="ra-check">${li(['La persona ha recibido la información y acepta participar.', 'Se garantiza un espacio suficientemente privado.', 'Se ha explicado que puede detener la entrevista o no responder.'])}</ul>
+    <p><b>Guion de apertura</b> (leer en voz alta):<br><i>«Queremos conocer cómo se encuentra usted y su familia antes de comenzar / al finalizar su participación en Raíces. No hay respuestas correctas o incorrectas. Le preguntaré primero por cómo están ahora y después por cómo recuerda que estaban justo antes de comenzar. Sus respuestas se utilizarán para evaluar y mejorar el proyecto. Puede no responder cualquier pregunta.»</i></p>
+    <p><b>Ruta y tiempos orientativos:</b> 1. Apertura (3 min) · 2. Bienestar emocional de las personas adultas (5 min) · 3. Bienestar de la persona menor (5 min, omitir si no hay menores) · 4. Cohesión y funcionamiento familiar (7 min) · 5. Inclusión social y afrontamiento (7 min) · 6. Valoración global y cierre (3 min).</p>
+    <p><b>Criterios de aplicación</b></p><ul>${li(['Cada afirmación se pregunta en dos momentos: «ANTES DE RAÍCES» (al entrar) y «TRAS RAÍCES» (al salir). Si no se pudo tomar el dato inicial, se pregunta de forma retrospectiva: «en el momento de entrada en el proyecto, ¿cómo se hubiera identificado…?».', 'Evite sugerir que necesariamente ha existido mejora.', 'Si la persona no comprende una pregunta, repítala de forma neutral, sin interpretar ni poner ejemplos dirigidos.', 'Marque «NS» si no sabe o no desea responder y «NP» si no procede.', 'Bienestar adulto: individual y en privado, sin otras personas participantes delante.', 'Menores de 13 años: responde una persona adulta (marcar «proxy»). De 13 a 17: responde el/la adolescente, en privado.', 'Inclusión y cohesión: respuesta consensuada de las personas adultas; si no hay acuerdo, anotar las valoraciones por separado en «Observación».', 'Las preguntas no son diagnóstico clínico ni cálculo del indicador AROPE. Si aparece una situación de riesgo o desprotección, aplique el protocolo profesional correspondiente.'])}</ul>
+    <p><b>Guion de cierre:</b><br><i>«Gracias por compartir su valoración. Sus respuestas ayudarán a conocer los resultados y mejorar el proyecto. Si alguna cuestión tratada requiere apoyo o seguimiento, la trasladaremos siguiendo el procedimiento correspondiente.»</i></p>
+    <p class="subtle" style="font-size:12px;margin:0;">La hoja de puntuación es de uso interno: no la rellenes delante de la persona si pudiera condicionar la entrevista.</p></details>`;
+}
+
+// ---------- Modo entrevista: una afirmación por pantalla, botones de colores, progreso, Anterior/Siguiente ----------
+// Escribe en los mismos desplegables de la tabla (select.ra-v), así la puntuación y el guardado no cambian.
+const RA_ESCALA = [['1', 'Nada', 'No describe la situación'], ['2', 'Poco', 'La describe en pequeña medida'], ['3', 'Algo', 'La describe parcialmente'], ['4', 'Bastante', 'La describe claramente'], ['5', 'Mucho', 'La describe por completo']];
+let __raEnt = null;
+function raEntAbrir(famId){
+  const f = __ra.familias.find(x => x.id === famId); if(!f) return;
+  const pasos = [{ tipo: 'inicio' }];
+  RA_BLOQUES.forEach(b => raSujetos(b, f).forEach(su => b.items.forEach((it, i) => pasos.push({ tipo: 'item', b, su, i, it, k: `${b.id}.${su.k}.${i + 1}` }))));
+  pasos.push({ tipo: 'fin' });
+  __raEnt = { famId, pasos, n: 0, momento: (__raEnt && __raEnt.famId === famId && __raEnt.momento) || 'ambos' };
+  let ov = document.getElementById('ra-ent'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'ra-ent'; ov.className = 'ra-ent-ov';
+  document.body.appendChild(ov);
+  document.addEventListener('keydown', raEntTecla);
+  raEntPintar();
+}
+function raEntCerrar(){ const ov = document.getElementById('ra-ent'); if(ov) ov.remove(); document.removeEventListener('keydown', raEntTecla); try { raPuntuar(); } catch(e){} }
+function raEntTecla(e){
+  if(!document.getElementById('ra-ent')) return;
+  if(e.key === 'Escape') raEntCerrar();
+  else if(e.key === 'ArrowRight') raEntIr(1); else if(e.key === 'ArrowLeft') raEntIr(-1);
+}
+const raEntSel = k => document.querySelector(`select.ra-v[data-k="${k}"]`);
+function raEntVal(k){ const s = raEntSel(k); return s ? s.value : ''; }
+function raEntPoner(k, v){
+  const s = raEntSel(k); if(!s) return;
+  s.value = (s.value === v) ? '' : v;   // tocar otra vez el mismo botón lo quita
+  try { raPuntuar(); } catch(e){}
+  const p = __raEnt.pasos[__raEnt.n];
+  const lados = __raEnt.momento === 'ambos' ? ['a', 't'] : [__raEnt.momento];
+  const completo = p && p.tipo === 'item' && lados.every(m => raEntVal(`${p.k}.${m}`));
+  raEntPintar();
+  if(completo && s.value) setTimeout(() => { if(__raEnt && __raEnt.pasos[__raEnt.n] === p) raEntIr(1); }, 380);   // con la pantalla completa, pasa sola a la siguiente
+}
+function raEntIr(d){ if(!__raEnt) return; __raEnt.n = Math.max(0, Math.min(__raEnt.pasos.length - 1, __raEnt.n + d)); raEntPintar(); }
+function raEntReset(){ const p = __raEnt.pasos[__raEnt.n]; if(!p || p.tipo !== 'item') return; ['a', 't'].forEach(m => { const s = raEntSel(`${p.k}.${m}`); if(s) s.value = ''; }); try { raPuntuar(); } catch(e){} raEntPintar(); }
+function raEntMomento(m){ __raEnt.momento = m; raEntPintar(); }
+function raEntProxy(k, on){ const c = document.querySelector(`[data-proxy="${k}"]`); if(c) c.checked = on; }
+function raEntFila(p, m){
+  const v = raEntVal(`${p.k}.${m}`);
+  const tit = m === 'a' ? acL('ANTES DE RAÍCES', 'ABANS DE RAÍCES') : acL('TRAS RAÍCES', 'DESPRÉS DE RAÍCES');
+  const sub = m === 'a' ? acL('Cómo estaba justo antes de empezar', 'Com estava just abans de començar') : acL('Cómo está ahora', 'Com està ara');
+  return `<div class="ra-ent-mom ${m === 'a' ? 'ante' : 'tras'}"><div class="ra-ent-mom-t"><b>${tit}</b><small>${sub}</small></div>
+    <div class="ra-ent-btns">${RA_ESCALA.map(([n, t, d]) => `<button class="ra-ent-b e${n}${v === n ? ' on' : ''}" title="${escAttr(d)}" onclick="raEntPoner('${p.k}.${m}','${n}')"><b>${n}</b><span>${t}</span></button>`).join('')}</div>
+    <div class="ra-ent-otros">${[['NS', acL('No está seguro/a', 'No n\'està segur/a')], ['NP', acL('No procede', 'No escau')]].map(([n, t]) => `<button class="ra-ent-o${v === n ? ' on' : ''}" onclick="raEntPoner('${p.k}.${m}','${n}')">${n} · ${t}</button>`).join('')}</div></div>`;
+}
+function raEntPintar(){
+  const ov = document.getElementById('ra-ent'); if(!ov || !__raEnt) return;
+  const E = __raEnt, p = E.pasos[E.n], f = __ra.familias.find(x => x.id === E.famId) || {};
+  const items = E.pasos.filter(x => x.tipo === 'item'), lados = E.momento === 'ambos' ? ['t', 'a'] : [E.momento];   // retrospectiva: primero «ahora», después «antes» (como dice el guion)
+  const hechos = items.filter(x => lados.every(m => raEntVal(`${x.k}.${m}`))).length;
+  const pct = items.length ? Math.round(hechos / items.length * 100) : 0;
+  let cuerpo = '';
+  if(p.tipo === 'inicio'){
+    cuerpo = `<div class="ra-ent-card ra-ent-intro"><h2>🎙️ ${acL('Entrevista de evaluación', 'Entrevista d\'avaluació')}</h2>
+      <p class="subtle">${acL('Familia', 'Família')} ${escAttr(raFamNombre(f))} · <span class="ra-cod">${escAttr(f.codigo || '')}</span> · ${items.length} ${acL('afirmaciones', 'afirmacions')}</p>
+      <h4>${acL('¿Qué momento vas a registrar?', 'Quin moment registraràs?')}</h4>
+      <div class="ra-ent-momsel">${[['a', '🟦 ' + acL('Entrada (ANTES)', 'Entrada (ABANS)'), acL('Al empezar en Raíces', 'En començar a Raíces')], ['t', '🟧 ' + acL('Salida (TRAS)', 'Sortida (DESPRÉS)'), acL('Al terminar, si ya hay datos de entrada', 'En acabar, si ja hi ha dades d\'entrada')], ['ambos', '🔁 ' + acL('Los dos (retrospectiva)', 'Els dos (retrospectiva)'), acL('Al salir: «ahora» y «justo antes de empezar»', 'En sortir: «ara» i «just abans de començar»')]].map(([k, t, d]) => `<button class="${E.momento === k ? 'on' : ''}" onclick="raEntMomento('${k}')"><b>${t}</b><small>${d}</small></button>`).join('')}</div>
+      <div class="ra-ent-guion"><b>${acL('Comprueba antes', 'Comprova abans')}:</b> ${acL('ha recibido la información y acepta · espacio privado · sabe que puede parar o no responder.', 'ha rebut la informació i accepta · espai privat · sap que pot aturar-se o no respondre.')}<br><br>
+        <b>${acL('Lee en voz alta', 'Llegeix en veu alta')}:</b> <i>«Queremos conocer cómo se encuentra usted y su familia antes de comenzar / al finalizar su participación en Raíces. No hay respuestas correctas o incorrectas. Le preguntaré primero por cómo están ahora y después por cómo recuerda que estaban justo antes de comenzar. Sus respuestas se utilizarán para evaluar y mejorar el proyecto. Puede no responder cualquier pregunta.»</i></div>
+      <button class="ra-ent-empezar" onclick="raEntIr(1)">${hechos ? acL('Continuar', 'Continuar') : acL('Empezar', 'Començar')} ›</button></div>`;
+  } else if(p.tipo === 'fin'){
+    const faltan = items.filter(x => !lados.every(m => raEntVal(`${x.k}.${m}`))).length;
+    cuerpo = `<div class="ra-ent-card ra-ent-intro"><h2>✅ ${acL('Fin de la entrevista', 'Fi de l\'entrevista')}</h2>
+      <p>${faltan ? `⚠️ ${acL(`Quedan ${faltan} afirmaciones sin respuesta. Puedes volver con «Anterior» o dejarlas en blanco (si en un bloque faltan más de 2, ese bloque no computa).`, `Queden ${faltan} afirmacions sense resposta. Pots tornar amb «Anterior» o deixar-les en blanc (si en un bloc en falten més de 2, aquell bloc no computa).`)}` : acL('Todas las afirmaciones tienen respuesta.', 'Totes les afirmacions tenen resposta.')}</p>
+      <div class="ra-ent-guion"><b>${acL('Lee en voz alta', 'Llegeix en veu alta')}:</b> <i>«Gracias por compartir su valoración. Sus respuestas ayudarán a conocer los resultados y mejorar el proyecto. Si alguna cuestión tratada requiere apoyo o seguimiento, la trasladaremos siguiendo el procedimiento correspondiente.»</i></div>
+      <p class="subtle" style="font-size:12.5px;">${acL('Después, en la página, rellena las preguntas abiertas, el plan de intervención y la valoración profesional. La hoja de puntuación no se enseña a la persona.', 'Després, a la pàgina, omple les preguntes obertes, el pla d\'intervenció i la valoració professional. El full de puntuació no s\'ensenya a la persona.')}</p>
+      <button class="ra-ent-empezar" onclick="raEntCerrar();raEvaluacionGuardar('${E.famId}')">💾 ${acL('Guardar y volver a la evaluación', 'Desar i tornar a l\'avaluació')}</button></div>`;
+  } else {
+    const b = p.b, X = (__ra.evals[E.famId] || {}).proxy || {};
+    const proxyOn = !!(document.querySelector(`[data-proxy="${p.su.k}"]`) || {}).checked || (!document.querySelector(`[data-proxy="${p.su.k}"]`) && X[p.su.k]);
+    cuerpo = `<div class="ra-ent-card">
+      <div class="ra-ent-bloque">${escAttr(b.t)}</div>
+      <div class="ra-ent-quien">👤 ${escAttr(p.su.n)}${b.id === 'me' ? ` <label class="ra-ent-proxy"><input type="checkbox" ${proxyOn ? 'checked' : ''} onchange="raEntProxy('${p.su.k}', this.checked)"> ${acL('responde una persona adulta (proxy)', 'respon una persona adulta (proxy)')}</label>` : ''}</div>
+      ${p.i === 0 ? `<p class="ra-ent-ayuda">${escAttr(b.ayuda)}</p>` : ''}
+      <div class="ra-ent-frase"><span>${p.i + 1}/${b.items.length}</span>${escAttr(p.it)}</div>
+      ${lados.map(m => raEntFila(p, m)).join('')}</div>`;
+  }
+  ov.innerHTML = `<div class="ra-ent-caja">
+    <div class="ra-ent-top"><span>🌳 Raíces · ${escAttr(f.codigo || '')}</span><button class="ra-ent-x" onclick="raEntCerrar()" aria-label="${acL('Cerrar', 'Tancar')}">✕</button></div>
+    <div class="ra-ent-prog"><span>${acL('Progreso', 'Progrés')}</span><b>${hechos}/${items.length}</b><div class="ra-ent-barra"><i style="width:${pct}%"></i></div></div>
+    ${cuerpo}
+    <div class="ra-ent-pie"><button class="ra-ent-reset" onclick="raEntReset()" ${p.tipo === 'item' ? '' : 'disabled'}>Reset</button>
+      <div><button class="ra-ent-nav" onclick="raEntIr(-1)" ${E.n === 0 ? 'disabled' : ''}>‹ ${acL('Anterior', 'Anterior')}</button><button class="ra-ent-nav" onclick="raEntIr(1)" ${E.n === E.pasos.length - 1 ? 'disabled' : ''}>${acL('Siguiente', 'Següent')} ›</button></div></div>
+  </div>`;
 }
 function raEvalLeer(){
   const R = {};
@@ -25779,23 +25880,513 @@ function raEvaluacionImprimir(famId){
     ${RA_BLOQUES.map(bloque).join('')}
     <h2>5. Valoración cualitativa global y cierre</h2>${RA_CUALI.map((q, i) => `<p><b>${i + 1}. ${escAttr(q)}</b><br>${escAttr((ev.cualitativas || {})[i + 1] || '')}</p>`).join('')}
     <h2>Hoja de puntuación y registro profesional</h2><table><tr><th>Módulo</th><th>Media ANTES</th><th>Media DESPUÉS</th><th>Cambio (DESPUÉS − ANTES)</th><th>Mejora (Sí/No/No computable)</th></tr>
-      ${mods.map(m => `<tr><td>${escAttr(m.nom)}</td><td class="c">${n(m.ma)}</td><td class="c">${n(m.mt)}</td><td class="c">${m.cambio == null ? '' : n(m.cambio)}${m.rel == null ? '' : ' (' + m.rel.toFixed(1).replace('.', ',') + ' %)'}</td><td class="c">${!m.comp ? 'No computable' : m.computa ? 'Sí' : 'No'}</td></tr>`).join('')}</table>
+      ${mods.map(m => `<tr><td>${escAttr(m.nom)}</td><td class="c">${n(m.ma)}</td><td class="c">${n(m.mt)}</td><td class="c">${m.cambio == null ? '' : n(m.cambio)}${m.rel == null ? '' : ' (' + m.rel.toFixed(1).replace('.', ',') + ' %)'}</td><td class="c">${!m.comp ? 'No computable' : m.computa ? 'Sí' : (m.cambio > 0 ? 'No (cambio positivo < 15 %)' : 'No')}</td></tr>`).join('')}</table>
     <h2>Valoración profesional final</h2>${RA_VALOR.map(v => `<span class="box">${ev.valoracion === v ? '✓' : ''}</span>${escAttr(v)}`).join('<br>')}<p><b>Actuación acordada / derivación:</b> ${escAttr(ev.actuacion_acordada || '')}</p>
     <p>En Tarragona, a ${ev.fecha_final ? raFecha(ev.fecha_final) : '____ de ______________ de 202__'}</p>
     <div class="firma"><div>Profesional: ${escAttr(nombreTecnico(f.tecnico_email || ''))}</div><div>Persona/s usuaria/s adulta/s:</div></div><div class="firma"><div>Persona/s usuaria/s menor/es (si &gt; 13 años):</div></div>
     <div class="pie">Associació Logos – Projectes Socials · NIF G55725436 · Carrer de la Pau del Protectorat, 14 · 43004 Tarragona</div>`);
 }
 
+
+// =====================================================================================================
+// EVALUACIÓN DE IMPACTO LOGOS · Jóvenes en acción y Proyectos · v243 · SQL-85
+// Mismas preguntas que la evaluación final que ya teníamos (bienestar adultos, bienestar menores, inclusión
+// social, cohesión familiar), pero de Logos. Tres momentos: ENTRADA (antes), SALIDA (tras) y SEGUIMIENTO
+// (unos 6 meses después) para ver si el cambio se mantiene. Entrevista pantalla a pantalla y panel de impacto.
+// =====================================================================================================
+const EV_SEG_MESES = 6;
+const EV_MOM = {
+  a: ['ANTES', 'Entrada', 'Cómo estaba justo antes de empezar', 'ABANS', 'Entrada', 'Com estava just abans de començar'],
+  t: ['TRAS', 'Salida', 'Cómo está ahora, al terminar', 'DESPRÉS', 'Sortida', 'Com està ara, en acabar'],
+  s: ['SEGUIMIENTO', 'Seguimiento', `Cómo está ahora, unos ${EV_SEG_MESES} meses después de terminar`, 'SEGUIMENT', 'Seguiment', `Com està ara, uns ${EV_SEG_MESES} mesos després d'acabar`]
+};
+const evMomTit = m => acL(EV_MOM[m][0], EV_MOM[m][3]), evMomNom = m => acL(EV_MOM[m][1], EV_MOM[m][4]), evMomSub = m => acL(EV_MOM[m][2], EV_MOM[m][5]);
+const EV_BLOQ_NOM = { ad: ['Bienestar emocional (personas adultas)', 'Benestar emocional (persones adultes)'], me: ['Bienestar emocional (menores)', 'Benestar emocional (menors)'], inc: ['Inclusión social y afrontamiento', 'Inclusió social i afrontament'], coh: ['Cohesión familiar', 'Cohesió familiar'] };
+let __ev = { ctx: null, lista: [], evals: {}, sql: true, cur: null };
+
+// Las preguntas son las de la evaluación que ya teníamos; donde decía «Raíces» ahora sale el programa
+function evBloques(prog){ return RA_BLOQUES.map(b => Object.assign({}, b, { ayuda: String(b.ayuda || '').replace(/Raíces/g, prog || 'el programa') })); }
+function evCuali(prog){ return RA_CUALI.map(q => q.replace(/el Proyecto Raíces/g, prog).replace(/Raíces/g, prog)); }
+function evSujetos(b, ev){
+  const s = ev.sujetos || {};
+  if(b.quien === 'familia') return [{ k: 'fam', n: (s.menores || []).length || (s.adultos || []).length > 1 ? acL('Familia (consensuada)', 'Família (consensuada)') : ((s.adultos || [])[0] || {}).n || acL('Persona', 'Persona') }];
+  return (b.quien === 'adultos' ? (s.adultos || []) : (s.menores || [])).filter(p => p && p.n);
+}
+function evBloquesActivos(ev){ const act = ev.bloques && ev.bloques.length ? ev.bloques : ['ad', 'me', 'inc', 'coh']; return evBloques(ev.programa).filter(b => act.includes(b.id) && evSujetos(b, ev).length); }
+const evNum = v => /^[1-5]$/.test(String(v || '')) ? Number(v) : null;
+// Puntuación: misma regla que la evaluación de partida (media de ítems válidos, no computa si faltan más de 2, mejora relativa ≥ 15 %)
+function evModulos(ev){
+  const R = ev.respuestas || {}, mods = [];
+  evBloquesActivos(ev).forEach(b => evSujetos(b, ev).forEach(su => {
+    const n = b.items.length, col = m => b.items.map((_, i) => evNum((R[`${b.id}.${su.k}.${i + 1}`] || {})[m])).filter(v => v != null);
+    const media = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+    const A = col('a'), T = col('t'), S = col('s');
+    const ok = a => a.length && (n - a.length) <= 2;
+    const ma = ok(A) ? media(A) : null, mt = ok(T) ? media(T) : null, ms = ok(S) ? media(S) : null;
+    const rel = (x, y) => x != null && y != null && x ? (y - x) / x * 100 : null;
+    const relT = rel(ma, mt), relS = rel(ma, ms);
+    mods.push({ bloque: b.id, nom: acL(EV_BLOQ_NOM[b.id][0], EV_BLOQ_NOM[b.id][1]) + (b.quien === 'familia' ? '' : ' · ' + su.n), ma, mt, ms,
+      cambio: ma != null && mt != null ? mt - ma : null, relT, mejora: relT != null && relT >= 15,
+      cambioS: ma != null && ms != null ? ms - ma : null, relS, mantiene: relS != null && relS >= 15 });
+  }));
+  return mods;
+}
+function evEstado(ev){
+  const R = (ev && ev.respuestas) || {}, hay = m => Object.values(R).some(r => r && r[m]);
+  const e = { a: hay('a'), t: hay('t'), s: hay('s') };
+  e.tocaSeg = !e.s && e.t && ev.fecha_final && (Date.now() - new Date(ev.fecha_final + 'T00:00:00').getTime()) > EV_SEG_MESES * 30.4 * 86400000;
+  return e;
+}
+function evChips(ev){
+  if(!ev) return `<span class="chip off">${acL('Sin evaluar', 'Sense avaluar')}</span>`;
+  const e = evEstado(ev), c = (on, t) => `<span class="chip ${on ? 'good' : 'off'}">${on ? '✓' : '○'} ${t}</span>`;
+  return c(e.a, evMomNom('a')) + ' ' + c(e.t, evMomNom('t')) + ' ' + c(e.s, evMomNom('s')) + (e.tocaSeg ? ` <span class="chip gold">⏰ ${acL('Toca el seguimiento', 'Toca el seguiment')}</span>` : '');
+}
+async function evCargar(contexto, proyectoId){
+  let q = sb.from('evaluaciones_impacto').select('*').eq('contexto', contexto).eq('anulada', false);
+  if(proyectoId) q = q.eq('proyecto_id', String(proyectoId));
+  const r = await q;
+  __ev.sql = !(r.error && /evaluaciones_impacto|does not exist|schema cache/i.test(r.error.message || ''));
+  const map = {}; (r.data || []).forEach(e => { map[e.clave] = e; });
+  return map;
+}
+function evAvisoSql(){ return `<div class="info-box info-box-gold">${acL('Para guardar las evaluaciones falta ejecutar en Supabase el SQL-85 «evaluaciones-impacto».', 'Per desar les avaluacions cal executar a Supabase l\'SQL-85 «evaluaciones-impacto».')}</div>`; }
+
+// ---------- Panel de impacto (resumen de todas las evaluaciones de un programa o proyecto) ----------
+function evPanelHtml(evals, prog){
+  const lista = Object.values(evals || {});
+  const conA = lista.filter(e => evEstado(e).a).length, conT = lista.filter(e => evEstado(e).t).length, conS = lista.filter(e => evEstado(e).s).length;
+  const porB = {};
+  lista.forEach(e => evModulos(e).forEach(m => { const x = porB[m.bloque] = porB[m.bloque] || { n: 0, mej: 0, sumC: 0, nS: 0, mant: 0 };
+    if(m.relT != null){ x.n++; x.sumC += m.cambio; if(m.mejora) x.mej++; }
+    if(m.relS != null){ x.nS++; if(m.mantiene) x.mant++; } }));
+  const pct = (a, b) => b ? Math.round(a / b * 100) + ' %' : '–';
+  const tarjetas = ['ad', 'me', 'inc', 'coh'].filter(k => porB[k] && (porB[k].n || porB[k].nS)).map(k => { const x = porB[k];
+    return `<div class="ev-imp-c"><div class="ev-imp-t">${acL(EV_BLOQ_NOM[k][0], EV_BLOQ_NOM[k][1])}</div>
+      <div class="ev-imp-big">${pct(x.mej, x.n)}</div><div class="ev-imp-s">${acL('mejora ≥ 15 % al salir', 'millora ≥ 15 % en sortir')} · n = ${x.n}${x.n ? ` · ${acL('cambio medio', 'canvi mitjà')} ${(x.sumC / x.n > 0 ? '+' : '') + (x.sumC / x.n).toFixed(2).replace('.', ',')}` : ''}</div>
+      <div class="ev-imp-bar"><i style="width:${x.n ? Math.round(x.mej / x.n * 100) : 0}%"></i></div>
+      <div class="ev-imp-s">🔁 ${acL('Se mantiene en el seguimiento', 'Es manté en el seguiment')}: <b>${pct(x.mant, x.nS)}</b> · n = ${x.nS}</div></div>`; }).join('');
+  return `<div class="ev-imp"><div class="ev-imp-h"><div><div class="ev-imp-sup">📈 ${acL('Impacto en las personas beneficiarias', 'Impacte en les persones beneficiàries')}</div><h3>${escAttr(prog)}</h3></div>
+      <div class="ev-imp-kpis"><span><b>${lista.length}</b>${acL('evaluaciones', 'avaluacions')}</span><span><b>${conA}</b>${acL('con entrada', 'amb entrada')}</span><span><b>${conT}</b>${acL('con salida', 'amb sortida')}</span><span><b>${conS}</b>${acL('con seguimiento', 'amb seguiment')}</span></div></div>
+    ${tarjetas ? `<div class="ev-imp-g">${tarjetas}</div>` : `<p class="subtle" style="margin:6px 0 0;">${acL('Las cifras aparecen cuando haya evaluaciones con entrada y salida.', 'Les xifres apareixen quan hi hagi avaluacions amb entrada i sortida.')}</p>`}
+    <p class="ev-imp-nota">${acL('Mejora: la media al salir es al menos un 15 % más alta que al entrar. Se mantiene: en el seguimiento sigue al menos un 15 % por encima de la entrada. Con pocas personas, los porcentajes cambian mucho: mira siempre la n. Muestra cambio percibido, no demuestra causalidad.', 'Millora: la mitjana en sortir és almenys un 15 % més alta que en entrar. Es manté: en el seguiment continua almenys un 15 % per sobre de l\'entrada. Amb poques persones, els percentatges canvien molt: mira sempre la n. Mostra canvi percebut, no demostra causalitat.')}</p></div>`;
+}
+
+// ---------- Ficha de evaluación (pantalla completa) ----------
+// base = { clave, contexto, proyecto_id, ref_id, nombre, programa, sujetos:{adultos,menores}, bloques }
+function evAbrir(clave){
+  const base = (window.__evBases || {})[clave]; if(!base) return;
+  const guardada = __ev.evals[clave];
+  __ev.cur = JSON.parse(JSON.stringify(Object.assign({ respuestas: {}, proxy: {}, observaciones: {}, plan: {}, cualitativas: {} }, base, guardada ? { id: guardada.id, respuestas: guardada.respuestas || {}, proxy: guardada.proxy || {}, observaciones: guardada.observaciones || {}, plan: guardada.plan || {}, cualitativas: guardada.cualitativas || {},
+    valoracion: guardada.valoracion, actuacion_acordada: guardada.actuacion_acordada, fecha_inicial: guardada.fecha_inicial, fecha_final: guardada.fecha_final, fecha_seguimiento: guardada.fecha_seguimiento,
+    sujetos: guardada.sujetos || base.sujetos, bloques: guardada.bloques && guardada.bloques.length ? guardada.bloques : base.bloques, tecnico_email: guardada.tecnico_email, actuaciones: guardada.actuaciones || {} } : {})));
+  let ov = document.getElementById('ev-ov'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'ev-ov'; ov.className = 'ev-ov'; document.body.appendChild(ov);
+  evPintar();
+}
+function evCerrar(){ const ov = document.getElementById('ev-ov'); if(ov) ov.remove(); __ev.cur = null; }
+function evSel(k, val){
+  const ops = ['', '1', '2', '3', '4', '5', 'NS', 'NP'];
+  return `<select class="ev-v" data-k="${k}" onchange="evSet('${k}', this.value)">${ops.map(o => `<option value="${o}" ${String(val || '') === o ? 'selected' : ''}>${o || '·'}</option>`).join('')}</select>`;
+}
+function evSet(k, v){ const i = k.lastIndexOf('.'), base = k.slice(0, i), m = k.slice(i + 1); const R = __ev.cur.respuestas; R[base] = R[base] || {}; if(v) R[base][m] = v; else delete R[base][m]; evPuntPintar(); }
+function evLeerCampos(){
+  const E = __ev.cur, ov = document.getElementById('ev-ov'); if(!E || !ov) return;
+  const v = id => (ov.querySelector('#' + id) || {}).value;
+  ['fecha_inicial', 'fecha_final', 'fecha_seguimiento'].forEach(c => { const x = v('ev-' + c); if(x !== undefined) E[c] = x || null; });
+  ov.querySelectorAll('[data-evobs]').forEach(el => { E.observaciones[el.dataset.evobs] = el.value.trim(); });
+  ov.querySelectorAll('[data-evcuali]').forEach(el => { E.cualitativas[el.dataset.evcuali] = el.value.trim(); });
+  ov.querySelectorAll('[data-evplan]').forEach(el => { const [i, k] = el.dataset.evplan.split('.'); (E.plan[i] = E.plan[i] || {})[k] = el.value.trim(); });
+  RA_PLAN.forEach((_, i) => { const g = ov.querySelector(`input[name="ev-g${i + 1}"]:checked`); if(g) (E.plan[i + 1] = E.plan[i + 1] || {}).grado = g.value; });
+  ov.querySelectorAll('[data-evproxy]').forEach(el => { E.proxy[el.dataset.evproxy] = el.checked; });
+  const val = ov.querySelector('input[name="ev-val"]:checked'); E.valoracion = val ? val.value : (E.valoracion || null);
+  const acu = ov.querySelector('#ev-acu'); if(acu) E.actuacion_acordada = acu.value.trim() || null;
+}
+function evConfig(){
+  evLeerCampos();
+  const E = __ev.cur, ov = document.getElementById('ev-ov');
+  E.bloques = [...ov.querySelectorAll('[data-evbloq]:checked')].map(x => x.dataset.evbloq);
+  const nombres = sel => [...ov.querySelectorAll(sel)].map((x, i) => ({ k: x.dataset.k, n: x.value.trim() })).filter(p => p.n);
+  E.sujetos = { adultos: nombres('[data-evadu]'), menores: nombres('[data-evmen]') };
+  evPintar();
+}
+function evQuitarMenor(k){ evLeerCampos(); const E = __ev.cur; E.sujetos.menores = (E.sujetos.menores || []).filter(p => p.k !== k).map((p, i) => Object.assign(p, { n: acL('Menor', 'Menor') + ' ' + (i + 1) })); evPintar(); }
+function evAnadirSujeto(tipo){
+  evLeerCampos();
+  const E = __ev.cur, l = E.sujetos[tipo === 'a' ? 'adultos' : 'menores'] = E.sujetos[tipo === 'a' ? 'adultos' : 'menores'] || [];
+  const n = tipo === 'a' ? prompt(acL('Nombre de la persona adulta:', 'Nom de la persona adulta:'), '') : acL('Menor', 'Menor') + ' ' + (l.length + 1);   // los menores nunca con su nombre
+  if(!n || !n.trim()) return;
+  l.push({ k: (tipo === 'a' ? 'a' : 'm') + Date.now().toString(36), n: n.trim() });
+  evPintar();
+}
+function evPuntPintar(){
+  const host = document.getElementById('ev-punt'); if(!host || !__ev.cur) return;
+  const mods = evModulos(__ev.cur), n = v => v == null ? '—' : v.toFixed(2).replace('.', ','), p = v => v == null ? '—' : (v > 0 ? '+' : '') + v.toFixed(1).replace('.', ',') + ' %';
+  const chip = (rel, ok, cam) => rel == null ? `<span class="chip off">${acL('No computable', 'No computable')}</span>` : ok ? `<span class="chip good">✅ ${acL('Sí', 'Sí')}</span>` : `<span class="chip ${cam > 0 ? 'gold' : 'bad'}">${cam > 0 ? acL('Positivo < 15 %', 'Positiu < 15 %') : 'No'}</span>`;
+  host.innerHTML = `<div class="ra-tabla-w"><table class="ra-tabla ra-punt"><thead><tr><th>${acL('Módulo', 'Mòdul')}</th><th>${evMomNom('a')}</th><th>${evMomNom('t')}</th><th>${acL('Mejora relativa', 'Millora relativa')}</th><th>${acL('Mejora', 'Millora')}</th><th>${evMomNom('s')}</th><th>${acL('Respecto a la entrada', 'Respecte a l\'entrada')}</th><th>${acL('Se mantiene', 'Es manté')}</th></tr></thead>
+    <tbody>${mods.map(m => `<tr><td>${escAttr(m.nom)}</td><td>${n(m.ma)}</td><td>${n(m.mt)}</td><td>${p(m.relT)}</td><td>${chip(m.relT, m.mejora, m.cambio)}</td><td>${n(m.ms)}</td><td>${p(m.relS)}</td><td>${chip(m.relS, m.mantiene, m.cambioS)}</td></tr>`).join('') || `<tr><td colspan="8" class="subtle">${acL('Elige arriba los bloques y las personas.', 'Tria a dalt els blocs i les persones.')}</td></tr>`}</tbody></table></div>`;
+}
+function evPintar(){
+  const ov = document.getElementById('ev-ov'), E = __ev.cur; if(!ov || !E) return;
+  const prog = E.programa, bloques = evBloques(prog), act = E.bloques && E.bloques.length ? E.bloques : ['ad', 'me', 'inc', 'coh'];
+  const adu = (E.sujetos || {}).adultos || [], men = (E.sujetos || {}).menores || [];
+  const tabla = b => { const suj = evSujetos(b, E); if(!act.includes(b.id) || !suj.length) return '';
+    return `<div class="panel-card"><h3>${escAttr(b.t)}</h3><p class="subtle" style="font-size:12.5px;">${escAttr(b.ayuda)}</p>
+      <div class="ra-tabla-w"><table class="ra-tabla"><thead><tr><th rowspan="2">${acL('Afirmación', 'Afirmació')}</th>${suj.map(s => `<th colspan="3">${escAttr(s.n)}${b.id === 'me' ? `<br><label class="ra-proxy"><input type="checkbox" data-evproxy="${s.k}" ${(E.proxy || {})[s.k] ? 'checked' : ''}> proxy</label>` : ''}</th>`).join('')}</tr>
+      <tr>${suj.map(() => `<th>${evMomNom('a')}</th><th>${evMomNom('t')}</th><th>${acL('Seguim.', 'Seguim.')}</th>`).join('')}</tr></thead>
+      <tbody>${b.items.map((it, i) => `<tr><td>${i + 1}. ${escAttr(it)}</td>${suj.map(s => { const k = `${b.id}.${s.k}.${i + 1}`, r = E.respuestas[k] || {}; return ['a', 't', 's'].map(m => `<td>${evSel(k + '.' + m, r[m])}</td>`).join(''); }).join('')}</tr>`).join('')}</tbody></table></div>
+      <div class="field"><label>${acL('Observación breve', 'Observació breu')}</label><textarea data-evobs="${b.id}" rows="2">${escAttr((E.observaciones || {})[b.id] || '')}</textarea></div></div>`; };
+  ov.innerHTML = `<div class="ev-pag">
+    <div class="ev-top"><div><div class="ev-sup">📈 ${acL('Evaluación de impacto · Logos', 'Avaluació d\'impacte · Logos')} · ${escAttr(prog)}</div><h2>${escAttr(E.nombre)}</h2></div>
+      <div class="ev-top-a"><button class="primary-btn" style="margin:0;width:auto;" onclick="evGuardar()">💾 ${acL('Guardar', 'Desar')}</button><button class="m4-btn" onclick="evImprimir()">🖨️ ${acL('Imprimir', 'Imprimir')}</button><button class="ra-ent-x" style="background:#1B4E95;" onclick="evCerrar()" aria-label="${acL('Cerrar', 'Tancar')}">✕</button></div></div>
+    ${__ev.sql ? '' : evAvisoSql()}
+    <div class="panel-card ev-lanzar"><button class="ra-ent-go" onclick="evLeerCampos();evEntAbrir()">🎙️ ${acL('Hacer la entrevista pantalla a pantalla', 'Fer l\'entrevista pantalla a pantalla')}</button>
+      <span>${acL('Una afirmación cada vez, con botones grandes y barra de progreso. Eliges el momento: entrada, salida o seguimiento.', 'Una afirmació cada vegada, amb botons grans i barra de progrés. Tries el moment: entrada, sortida o seguiment.')}</span>
+      <div class="ev-chips">${evChips(Object.keys(E.respuestas).length ? E : null)}</div></div>
+    <div class="panel-card"><h3>👥 ${acL('Personas y bloques que se evalúan', 'Persones i blocs que s\'avaluen')}</h3>
+      <div class="ev-cfg"><div><b>${acL('Personas adultas', 'Persones adultes')}</b>${adu.map(p => `<input data-evadu data-k="${p.k}" value="${escAttr(p.n)}" onchange="evConfig()">`).join('')}<button class="link-btn" onclick="evAnadirSujeto('a')">➕ ${acL('Añadir', 'Afegir')}</button></div>
+        <div><b>${acL('Personas menores', 'Persones menors')} <small class="subtle">(${acL('sin nombre', 'sense nom')})</small></b>${men.map(p => `<input data-evmen data-k="${p.k}" value="${escAttr(p.n)}" readonly title="${acL('Los menores no se identifican por su nombre', 'Els menors no s\'identifiquen pel seu nom')}"><button class="link-btn" style="font-size:12px;align-self:flex-start;" onclick="evQuitarMenor('${p.k}')">✕ ${acL('Quitar', 'Treure')}</button>`).join('') || `<small class="subtle">${acL('Ninguna', 'Cap')}</small>`}<button class="link-btn" onclick="evAnadirSujeto('m')">➕ ${acL('Añadir', 'Afegir')}</button></div>
+        <div><b>${acL('Bloques', 'Blocs')}</b>${bloques.map(b => `<label class="ev-bq"><input type="checkbox" data-evbloq="${b.id}" ${act.includes(b.id) ? 'checked' : ''} onchange="evConfig()"> ${escAttr(acL(EV_BLOQ_NOM[b.id][0], EV_BLOQ_NOM[b.id][1]))}</label>`).join('')}</div></div>
+      <div class="ra-g3"><div class="field"><label>📅 ${acL('Fecha de entrada', 'Data d\'entrada')}</label><input type="date" id="ev-fecha_inicial" value="${escAttr(E.fecha_inicial || '')}"></div>
+        <div class="field"><label>📅 ${acL('Fecha de salida', 'Data de sortida')}</label><input type="date" id="ev-fecha_final" value="${escAttr(E.fecha_final || '')}"></div>
+        <div class="field"><label>📅 ${acL(`Fecha de seguimiento (≈ ${EV_SEG_MESES} meses después)`, `Data de seguiment (≈ ${EV_SEG_MESES} mesos després)`)}</label><input type="date" id="ev-fecha_seguimiento" value="${escAttr(E.fecha_seguimiento || '')}"></div></div></div>
+    <div class="panel-card"><h3>📊 ${acL('Resultado', 'Resultat')} <small class="subtle">(${acL('se calcula solo · uso interno', 'es calcula sol · ús intern')})</small></h3><div id="ev-punt"></div>
+      <p class="subtle" style="font-size:12px;">${acL('Media de los ítems válidos de cada módulo; si faltan más de dos respuestas no computa. Mejora relativa = (salida − entrada) / entrada × 100; cuenta como mejora si es del 15 % o más. En el seguimiento se compara con la entrada: si sigue un 15 % o más por encima, la mejora se mantiene. Los módulos no se suman.', 'Mitjana dels ítems vàlids de cada mòdul; si falten més de dues respostes no computa. Millora relativa = (sortida − entrada) / entrada × 100; compta com a millora si és del 15 % o més. En el seguiment es compara amb l\'entrada: si continua un 15 % o més per sobre, la millora es manté. Els mòduls no se sumen.')}</p></div>
+    <div class="panel-card"><h3>🎯 ${acL('Plan de intervención y grado de consecución', 'Pla d\'intervenció i grau de consecució')}</h3>
+      ${RA_PLAN.map((a, i) => { const p = (E.plan || {})[i + 1] || {}; return `<div class="ra-plan"><b>${i + 1}. ${escAttr(a)}</b>
+        <div class="ra-plan-g"><div class="field"><label>${acL('Objetivo', 'Objectiu')}</label><textarea data-evplan="${i + 1}.objetivo" rows="2">${escAttr(p.objetivo || '')}</textarea></div>
+        <div class="field"><label>${acL('¿Se ha alcanzado?', 'S\'ha assolit?')}</label><div class="ra-tipos">${['SI', 'NO', 'PARCIALMENTE'].map(g => `<label class="ra-tipo"><input type="radio" name="ev-g${i + 1}" value="${g}" ${p.grado === g ? 'checked' : ''}> ${g}</label>`).join('')}</div>
+        <input data-evplan="${i + 1}.obs" placeholder="${acL('Observaciones', 'Observacions')}" value="${escAttr(p.obs || '')}"></div></div></div>`; }).join('')}</div>
+    ${bloques.map(tabla).join('')}
+    <div class="panel-card"><h3>💬 ${acL('Valoración cualitativa y cierre', 'Valoració qualitativa i tancament')}</h3>${evCuali(prog).map((q, i) => `<div class="field"><label>${i + 1}. ${escAttr(q)}</label><textarea data-evcuali="${i + 1}" rows="2">${escAttr((E.cualitativas || {})[i + 1] || '')}</textarea></div>`).join('')}
+      <div class="field"><label>${acL('Impacto en el seguimiento: ¿qué ha cambiado en su vida desde que terminó? (trabajo, estudios, familia, salud, red de apoyo…)', 'Impacte en el seguiment: què ha canviat a la seva vida des que va acabar? (feina, estudis, família, salut, xarxa de suport…)')}</label><textarea data-evcuali="seg" rows="2">${escAttr((E.cualitativas || {}).seg || '')}</textarea></div></div>
+    <div class="panel-card"><h3>🧭 ${acL('Valoración profesional final', 'Valoració professional final')}</h3><div class="ra-tipos" style="flex-direction:column;">${RA_VALOR.map(v => `<label class="ra-tipo"><input type="radio" name="ev-val" value="${escAttr(v)}" ${E.valoracion === v ? 'checked' : ''}> ${escAttr(v)}</label>`).join('')}</div>
+      <div class="field"><label>${acL('Actuación acordada / derivación', 'Actuació acordada / derivació')}</label><textarea id="ev-acu" rows="2">${escAttr(E.actuacion_acordada || '')}</textarea></div>
+      <button class="primary-btn" onclick="evGuardar()">💾 ${acL('Guardar la evaluación', 'Desar l\'avaluació')}</button></div>
+  </div>`;
+  evPuntPintar();
+}
+async function evGuardar(){
+  evLeerCampos();
+  const E = __ev.cur; if(!E) return;
+  const fila = { clave: E.clave, contexto: E.contexto, proyecto_id: E.proyecto_id ? String(E.proyecto_id) : null, ref_id: E.ref_id ? String(E.ref_id) : null, nombre: E.nombre, programa: E.programa,
+    sujetos: E.sujetos, bloques: E.bloques && E.bloques.length ? E.bloques : ['ad', 'me', 'inc', 'coh'], respuestas: E.respuestas, proxy: E.proxy, observaciones: E.observaciones, plan: E.plan, cualitativas: E.cualitativas,
+    valoracion: E.valoracion || null, actuacion_acordada: E.actuacion_acordada || null, fecha_inicial: E.fecha_inicial || null, fecha_final: E.fecha_final || null, fecha_seguimiento: E.fecha_seguimiento || null,
+    tecnico_email: E.tecnico_email || CURRENT_USER.email, actualizado_por_email: CURRENT_USER.email, actualizado_en: new Date().toISOString() };
+  const { data, error } = await sb.from('evaluaciones_impacto').upsert(fila, { onConflict: 'clave' }).select('*');
+  if(error){ alert(/evaluaciones_impacto|does not exist|schema cache/i.test(error.message || '') ? acL('Falta ejecutar en Supabase el SQL-85 «evaluaciones-impacto».', 'Cal executar a Supabase l\'SQL-85 «evaluaciones-impacto».') : error.message); return; }
+  const g = (data && data[0]) || fila; __ev.evals[E.clave] = g; E.id = g.id; E.tecnico_email = fila.tecnico_email; E.actuaciones = g.actuaciones || E.actuaciones || {};
+  try { await evRegistrarActuaciones(E); __ev.evals[E.clave].actuaciones = E.actuaciones; } catch(e){}
+  try { m3Toast('✅ ' + acL('Evaluación guardada', 'Avaluació desada')); } catch(e){ alert(acL('Evaluación guardada', 'Avaluació desada')); }
+  try { if(typeof __ev.refrescar === 'function') __ev.refrescar(); } catch(e){}
+  evPintar();
+}
+function evImprimir(){
+  evLeerCampos();
+  const E = __ev.cur; if(!E) return;
+  const x = v => escAttr(v || ''), n = v => v == null ? '' : v.toFixed(2).replace('.', ','), p = v => v == null ? '' : (v > 0 ? '+' : '') + v.toFixed(1).replace('.', ',') + ' %', f = d => d ? raFecha(d) : '________';
+  const bloque = b => { const suj = evSujetos(b, E); if(!(E.bloques || []).includes(b.id) || !suj.length) return '';
+    return `<h2>${x(b.t)}</h2><table><tr><th>Afirmación</th>${suj.map(s => `<th colspan="3">${x(s.n)}${b.id === 'me' && (E.proxy || {})[s.k] ? ' (proxy)' : ''}</th>`).join('')}</tr><tr><th></th>${suj.map(() => '<th>ENTRADA</th><th>SALIDA</th><th>SEGUIM.</th>').join('')}</tr>
+      ${b.items.map((it, i) => `<tr><td>${i + 1}. ${x(it)}</td>${suj.map(s => { const r = E.respuestas[`${b.id}.${s.k}.${i + 1}`] || {}; return ['a', 't', 's'].map(m => `<td class="c">${x(r[m])}</td>`).join(''); }).join('')}</tr>`).join('')}</table>
+      ${(E.observaciones || {})[b.id] ? `<p><b>Observación:</b> ${x(E.observaciones[b.id])}</p>` : ''}`; };
+  raImprimir('Evaluación de impacto · ' + E.nombre, `<div class="logo"><div><b>Logos λ</b><br>Associació Logos · Projectes Socials</div><div style="text-align:right">Evaluación de impacto<br>${x(E.programa)}</div></div>
+    <h1>EVALUACIÓN DE IMPACTO</h1><p class="c"><b>${x(E.programa)}</b> · ${x(E.nombre)}</p>
+    <table><tr><td class="k">Personas adultas</td><td>${((E.sujetos || {}).adultos || []).map(s => x(s.n)).join(', ')}</td></tr><tr><td class="k">Personas menores</td><td>${((E.sujetos || {}).menores || []).map(s => x(s.n)).join(', ') || '—'}</td></tr>
+      <tr><td class="k">Fecha de entrada</td><td>${f(E.fecha_inicial)}</td></tr><tr><td class="k">Fecha de salida</td><td>${f(E.fecha_final)}</td></tr><tr><td class="k">Fecha de seguimiento</td><td>${f(E.fecha_seguimiento)}</td></tr></table>
+    <h2>Plan de intervención</h2><table><tr><th>Área y objetivo</th><th>Grado de consecución</th></tr>${RA_PLAN.map((a, i) => { const q = (E.plan || {})[i + 1] || {}; return `<tr><td><b>${i + 1}. ${x(a)}</b><br>${x(q.objetivo)}</td><td>${['SI', 'NO', 'PARCIALMENTE'].map(g => `<span class="box">${q.grado === g ? '✓' : ''}</span>${g}`).join(' ')}<br>${x(q.obs)}</td></tr>`; }).join('')}</table>
+    <p><small>Escala: 1 Nada · 2 Poco · 3 Algo · 4 Bastante · 5 Mucho · NS No está seguro/a · NP No procede</small></p>
+    ${evBloques(E.programa).map(bloque).join('')}
+    <h2>Valoración cualitativa y cierre</h2>${evCuali(E.programa).map((q, i) => `<p><b>${i + 1}. ${x(q)}</b><br>${x((E.cualitativas || {})[i + 1])}</p>`).join('')}<p><b>Impacto en el seguimiento:</b><br>${x((E.cualitativas || {}).seg)}</p>
+    <h2>Resultado</h2><table><tr><th>Módulo</th><th>Entrada</th><th>Salida</th><th>Mejora relativa</th><th>Mejora</th><th>Seguimiento</th><th>Respecto a la entrada</th><th>Se mantiene</th></tr>
+      ${evModulos(E).map(m => `<tr><td>${x(m.nom)}</td><td class="c">${n(m.ma)}</td><td class="c">${n(m.mt)}</td><td class="c">${p(m.relT)}</td><td class="c">${m.relT == null ? 'No computable' : m.mejora ? 'Sí' : (m.cambio > 0 ? 'No (positivo < 15 %)' : 'No')}</td><td class="c">${n(m.ms)}</td><td class="c">${p(m.relS)}</td><td class="c">${m.relS == null ? '' : m.mantiene ? 'Sí' : 'No'}</td></tr>`).join('')}</table>
+    <h2>Valoración profesional final</h2>${RA_VALOR.map(v => `<span class="box">${E.valoracion === v ? '✓' : ''}</span>${x(v)}`).join('<br>')}<p><b>Actuación acordada / derivación:</b> ${x(E.actuacion_acordada)}</p>
+    <p>En Tarragona, a ${E.fecha_seguimiento || E.fecha_final ? raFecha(E.fecha_seguimiento || E.fecha_final) : '____ de ______________ de 202__'}</p>
+    <div class="firma"><div>Profesional: ${x(nombreTecnico(E.tecnico_email || CURRENT_USER.email))}</div><div>Persona/s participante/s:</div></div>
+    <div class="pie">Associació Logos – Projectes Socials · Carrer de la Pau del Protectorat, 14 · 43004 Tarragona · info@logostgn.cat</div>`);
+}
+
+// ---------- Entrevista pantalla a pantalla (entrada, salida, seguimiento o retrospectiva) ----------
+let __evEnt = null;
+function evEntAbrir(){
+  const E = __ev.cur; if(!E) return;
+  const pasos = [{ tipo: 'inicio' }];
+  evBloquesActivos(E).forEach(b => evSujetos(b, E).forEach(su => b.items.forEach((it, i) => pasos.push({ tipo: 'item', b, su, i, it, k: `${b.id}.${su.k}.${i + 1}` }))));
+  pasos.push({ tipo: 'fin' });
+  const e = evEstado(E);
+  __evEnt = { pasos, n: 0, momento: (__evEnt && __evEnt.clave === E.clave && __evEnt.momento) || (!e.a ? 'a' : !e.t ? 't' : 's'), clave: E.clave };
+  let ov = document.getElementById('ev-ent'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'ev-ent'; ov.className = 'ra-ent-ov'; document.body.appendChild(ov);
+  document.addEventListener('keydown', evEntTecla);
+  evEntPintar();
+}
+function evEntCerrar(){ const ov = document.getElementById('ev-ent'); if(ov) ov.remove(); document.removeEventListener('keydown', evEntTecla); evPintar(); }
+function evEntTecla(e){ if(!document.getElementById('ev-ent')) return; if(e.key === 'Escape') evEntCerrar(); else if(e.key === 'ArrowRight') evEntIr(1); else if(e.key === 'ArrowLeft') evEntIr(-1); }
+const evEntLados = () => __evEnt.momento === 'retro' ? ['t', 'a'] : [__evEnt.momento];   // retrospectiva: primero «ahora», después «antes»
+const evEntVal = k => { const i = k.lastIndexOf('.'); return ((__ev.cur.respuestas[k.slice(0, i)] || {})[k.slice(i + 1)]) || ''; };
+function evEntPoner(k, v){
+  const actual = evEntVal(k); evSet(k, actual === v ? '' : v);
+  const p = __evEnt.pasos[__evEnt.n], completo = p && p.tipo === 'item' && evEntLados().every(m => evEntVal(`${p.k}.${m}`));
+  evEntPintar();
+  if(completo && actual !== v) setTimeout(() => { if(__evEnt && __evEnt.pasos[__evEnt.n] === p) evEntIr(1); }, 380);
+}
+function evEntIr(d){ if(!__evEnt) return; __evEnt.n = Math.max(0, Math.min(__evEnt.pasos.length - 1, __evEnt.n + d)); evEntPintar(); }
+function evEntReset(){ const p = __evEnt.pasos[__evEnt.n]; if(!p || p.tipo !== 'item') return; evEntLados().forEach(m => evSet(`${p.k}.${m}`, '')); evEntPintar(); }
+function evEntMomento(m){ __evEnt.momento = m; evEntPintar(); }
+function evEntFila(p, m){
+  const v = evEntVal(`${p.k}.${m}`), cls = m === 'a' ? 'ante' : m === 't' ? 'tras' : 'seg';
+  return `<div class="ra-ent-mom ${cls}"><div class="ra-ent-mom-t"><b>${evMomTit(m)}</b><small>${evMomSub(m)}</small></div>
+    <div class="ra-ent-btns">${RA_ESCALA.map(([nn, t, d]) => `<button class="ra-ent-b e${nn}${v === nn ? ' on' : ''}" title="${escAttr(d)}" onclick="evEntPoner('${p.k}.${m}','${nn}')"><b>${nn}</b><span>${t}</span></button>`).join('')}</div>
+    <div class="ra-ent-otros">${[['NS', acL('No está seguro/a', 'No n\'està segur/a')], ['NP', acL('No procede', 'No escau')]].map(([nn, t]) => `<button class="ra-ent-o${v === nn ? ' on' : ''}" onclick="evEntPoner('${p.k}.${m}','${nn}')">${nn} · ${t}</button>`).join('')}</div></div>`;
+}
+function evEntPintar(){
+  const ov = document.getElementById('ev-ent'), E = __ev.cur; if(!ov || !__evEnt || !E) return;
+  const S = __evEnt, p = S.pasos[S.n], prog = E.programa, items = S.pasos.filter(x => x.tipo === 'item'), lados = evEntLados();
+  const hechos = items.filter(x => lados.every(m => evEntVal(`${x.k}.${m}`))).length, pct = items.length ? Math.round(hechos / items.length * 100) : 0;
+  let cuerpo = '';
+  if(p.tipo === 'inicio'){
+    const ops = [['a', '🟦 ' + acL('Entrada', 'Entrada'), acL('Al empezar: cómo está antes del programa', 'En començar: com està abans del programa')], ['t', '🟧 ' + acL('Salida', 'Sortida'), acL('Al terminar: cómo está ahora', 'En acabar: com està ara')],
+      ['s', '🟩 ' + acL('Seguimiento', 'Seguiment'), acL(`Unos ${EV_SEG_MESES} meses después: ¿se mantiene el cambio?`, `Uns ${EV_SEG_MESES} mesos després: es manté el canvi?`)], ['retro', '🔁 ' + acL('Salida + entrada (retrospectiva)', 'Sortida + entrada (retrospectiva)'), acL('Si no se hizo la entrada: «ahora» y «justo antes de empezar»', 'Si no es va fer l\'entrada: «ara» i «just abans de començar»')]];
+    cuerpo = `<div class="ra-ent-card ra-ent-intro"><h2>🎙️ ${acL('Entrevista de evaluación', 'Entrevista d\'avaluació')}</h2>
+      <p class="subtle">${escAttr(prog)} · ${escAttr(E.nombre)} · ${items.length} ${acL('afirmaciones', 'afirmacions')}</p>
+      <h4>${acL('¿Qué momento vas a registrar?', 'Quin moment registraràs?')}</h4>
+      <div class="ra-ent-momsel">${ops.map(([k, t, d]) => `<button class="${S.momento === k ? 'on' : ''}" onclick="evEntMomento('${k}')"><b>${t}</b><small>${d}</small></button>`).join('')}</div>
+      <div class="ra-ent-guion"><b>${acL('Comprueba antes', 'Comprova abans')}:</b> ${acL('ha recibido la información y acepta · espacio privado · sabe que puede parar o no responder.', 'ha rebut la informació i accepta · espai privat · sap que pot aturar-se o no respondre.')}<br><br>
+        <b>${acL('Lee en voz alta', 'Llegeix en veu alta')}:</b> <i>«${S.momento === 's' ? `Hace un tiempo que terminó su participación en ${escAttr(prog)}. Queremos saber cómo se encuentran ahora usted y su familia.` : `Queremos conocer cómo se encuentra usted y su familia ${S.momento === 'a' ? 'al empezar' : 'al finalizar'} su participación en ${escAttr(prog)}.`} No hay respuestas correctas o incorrectas. Sus respuestas se utilizarán para evaluar y mejorar el programa. Puede no responder cualquier pregunta.»</i></div>
+      <button class="ra-ent-empezar" onclick="evEntIr(1)">${hechos ? acL('Continuar', 'Continuar') : acL('Empezar', 'Començar')} ›</button></div>`;
+  } else if(p.tipo === 'fin'){
+    const faltan = items.length - hechos;
+    cuerpo = `<div class="ra-ent-card ra-ent-intro"><h2>✅ ${acL('Fin de la entrevista', 'Fi de l\'entrevista')}</h2>
+      <p>${faltan ? `⚠️ ${acL(`Quedan ${faltan} afirmaciones sin respuesta. Puedes volver con «Anterior» o dejarlas en blanco (si en un bloque faltan más de 2, ese bloque no computa).`, `Queden ${faltan} afirmacions sense resposta. Pots tornar amb «Anterior» o deixar-les en blanc (si en un bloc en falten més de 2, aquell bloc no computa).`)}` : acL('Todas las afirmaciones tienen respuesta.', 'Totes les afirmacions tenen resposta.')}</p>
+      <div class="ra-ent-guion"><b>${acL('Lee en voz alta', 'Llegeix en veu alta')}:</b> <i>«Gracias por compartir su valoración. Sus respuestas ayudarán a conocer los resultados y mejorar el programa. Si alguna cuestión tratada requiere apoyo o seguimiento, la trasladaremos siguiendo el procedimiento correspondiente.»</i></div>
+      ${S.momento === 's' ? `<p class="subtle" style="font-size:12.5px;">💡 ${acL('En la ficha, apunta también qué ha cambiado en su vida desde que terminó (trabajo, estudios, familia, red de apoyo).', 'A la fitxa, apunta també què ha canviat a la seva vida des que va acabar (feina, estudis, família, xarxa de suport).')}</p>` : ''}
+      <button class="ra-ent-empezar" onclick="evEntFin()">💾 ${acL('Guardar y volver a la ficha', 'Desar i tornar a la fitxa')}</button></div>`;
+  } else {
+    const b = p.b;
+    cuerpo = `<div class="ra-ent-card"><div class="ra-ent-bloque">${escAttr(b.t)}</div>
+      <div class="ra-ent-quien">👤 ${escAttr(p.su.n)}${b.id === 'me' ? ` <label class="ra-ent-proxy"><input type="checkbox" ${(E.proxy || {})[p.su.k] ? 'checked' : ''} onchange="__ev.cur.proxy['${p.su.k}']=this.checked"> ${acL('responde una persona adulta (proxy)', 'respon una persona adulta (proxy)')}</label>` : ''}</div>
+      ${p.i === 0 ? `<p class="ra-ent-ayuda">${escAttr(b.ayuda)}</p>` : ''}
+      <div class="ra-ent-frase"><span>${p.i + 1}/${b.items.length}</span>${escAttr(p.it)}</div>
+      ${lados.map(m => evEntFila(p, m)).join('')}</div>`;
+  }
+  ov.innerHTML = `<div class="ra-ent-caja">
+    <div class="ra-ent-top"><span>📈 ${escAttr(prog)} · ${escAttr(E.nombre)}</span><button class="ra-ent-x" onclick="evEntCerrar()" aria-label="${acL('Cerrar', 'Tancar')}">✕</button></div>
+    <div class="ra-ent-prog"><span>${acL('Progreso', 'Progrés')}${p.tipo === 'inicio' ? '' : ' · ' + lados.map(evMomNom).join(' + ')}</span><b>${hechos}/${items.length}</b><div class="ra-ent-barra"><i style="width:${pct}%"></i></div></div>
+    ${cuerpo}
+    <div class="ra-ent-pie"><button class="ra-ent-reset" onclick="evEntReset()" ${p.tipo === 'item' ? '' : 'disabled'}>Reset</button>
+      <div><button class="ra-ent-nav" onclick="evEntIr(-1)" ${S.n === 0 ? 'disabled' : ''}>‹ ${acL('Anterior', 'Anterior')}</button><button class="ra-ent-nav" onclick="evEntIr(1)" ${S.n === S.pasos.length - 1 ? 'disabled' : ''}>${acL('Siguiente', 'Següent')} ›</button></div></div></div>`;
+}
+async function evEntFin(){
+  const E = __ev.cur, m = __evEnt.momento, hoy = isoLocal();
+  if((m === 'a' || m === 'retro') && !E.fecha_inicial) E.fecha_inicial = hoy;
+  if((m === 't' || m === 'retro') && !E.fecha_final) E.fecha_final = hoy;
+  if(m === 's' && !E.fecha_seguimiento) E.fecha_seguimiento = hoy;
+  const ov = document.getElementById('ev-ent'); if(ov) ov.remove(); document.removeEventListener('keydown', evEntTecla);
+  evPintar(); await evGuardar();
+}
+
+
+// ---------- Contacto con la familia (teléfono / WhatsApp): se puede apuntar como actuación ----------
+// Así cuenta en las cifras de la Intranet y la familia lo ve en «Mi historial con Logos» (Logos Acompanya).
+function jaContacto(fid, canal){
+  setTimeout(async () => {
+    const txt = canal === 'telefono' ? acL('Llamada telefónica con la familia', 'Trucada telefònica amb la família') : acL('Mensaje de WhatsApp a la familia', 'Missatge de WhatsApp a la família');
+    if(!confirm(acL(`¿Apuntar este contacto en el historial de la familia?\n\n«${txt}» · Jóvenes en acción\n\nCuenta como actuación y la familia lo verá en Logos Acompanya.`, `Apuntar aquest contacte a l'historial de la família?\n\n«${txt}» · Joves en acció\n\nCompta com a actuació i la família ho veurà a Logos Acompanya.`))) return;
+    const { error } = await sb.from('actuaciones').insert({ usuario_id: fid, tecnico_email: CURRENT_USER.email, fecha: isoLocal(), categoria: 'Jóvenes en acción', objetivo: acL('Contacto con la familia', 'Contacte amb la família'), descripcion: txt });
+    if(error){ alert(error.message); return; }
+    try { m3Toast('✅ ' + acL('Contacto apuntado en el historial', 'Contacte apuntat a l\'historial')); } catch(e){}
+  }, 600);
+}
+// ---------- Evaluación de impacto → actuación en el historial (una por momento: entrada, salida, seguimiento) ----------
+async function evRegistrarActuaciones(E){
+  const uid = E.ref_id; if(!uid) return;
+  const est = evEstado(E), hechas = Object.assign({}, E.actuaciones || {}), nuevas = [];
+  const nom = { a: acL('entrada', 'entrada'), t: acL('salida', 'sortida'), s: acL('seguimiento', 'seguiment') }, fecha = { a: E.fecha_inicial, t: E.fecha_final, s: E.fecha_seguimiento };
+  for(const m of ['a', 't', 's']){
+    if(!est[m] || hechas[m]) continue;
+    const fila = { usuario_id: uid, tecnico_email: CURRENT_USER.email, fecha: fecha[m] || isoLocal(), categoria: E.programa, objetivo: acL('Evaluación de impacto', 'Avaluació d\'impacte'),
+      descripcion: acL(`Evaluación de ${nom[m]} · ${E.programa}`, `Avaluació de ${nom[m]} · ${E.programa}`) };
+    if(E.contexto === 'proyecto' && E.proyecto_id) fila.proyecto_id = E.proyecto_id;
+    let r = await sb.from('actuaciones').insert(fila).select('id');
+    if(r.error && fila.proyecto_id){ delete fila.proyecto_id; r = await sb.from('actuaciones').insert(fila).select('id'); }
+    if(r.error){ console.warn('actuación de evaluación', r.error.message); continue; }
+    hechas[m] = (r.data && r.data[0] && r.data[0].id) || true; nuevas.push(m);
+  }
+  if(nuevas.length){
+    E.actuaciones = hechas;
+    const u = await sb.from('evaluaciones_impacto').update({ actuaciones: hechas }).eq('clave', E.clave);
+    if(u.error) console.warn('evaluaciones_impacto.actuaciones', u.error.message);
+    try { m3Toast('📝 ' + acL('Apuntado en el historial de la persona', 'Apuntat a l\'historial de la persona')); } catch(e){}
+  }
+}
+
+// ---------- Jóvenes en acción: pestaña «Evaluación e impacto» (una evaluación por familia) ----------
+// Los menores NO aparecen con su nombre en la evaluación: «Familia X» y «Menor 1», «Menor 2»…
+function evBaseJovenes(fid, nom, ms){
+  const clave = 'jovenes:' + fid;
+  return { clave, contexto: 'jovenes', proyecto_id: null, ref_id: fid, nombre: acL('Familia', 'Família') + ' ' + nom, programa: 'Jóvenes en acción',
+    sujetos: { adultos: [{ k: 'a1', n: nom }], menores: (ms || []).map((m, i) => ({ k: 'm_' + m.id, n: acL('Menor', 'Menor') + ' ' + (i + 1) })) }, bloques: ['ad', 'me', 'inc', 'coh'] };
+}
+async function evJovenesAbrir(fid){
+  const [men, per, evals] = await Promise.all([sb.from('menores_familia').select('id').eq('familiar_usuario_id', fid).order('fecha_nacimiento', { ascending: true }),
+    sb.from('perfiles').select('nombre_completo').eq('id', fid).maybeSingle(), evCargar('jovenes')]);
+  const nom = (per.data || {}).nombre_completo || acL('sin nombre', 'sense nom');
+  __ev.evals = evals; __ev.refrescar = null;
+  const base = evBaseJovenes(fid, nom, men.data || []);
+  window.__evBases = { [base.clave]: base };
+  evAbrir(base.clave);
+}
+async function renderJovenesImpacto(cont){
+  const prog = 'Jóvenes en acción';
+  cont.innerHTML = jaiTabsHtml() + `<div id="ja-impacto"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`;
+  const box = document.getElementById('ja-impacto');
+  const [men, evals] = await Promise.all([sb.from('menores_familia').select('*').order('nombre_completo', { ascending: true }), evCargar('jovenes')]);
+  if(men.error){ box.innerHTML = `<div class="auth-error">${escAttr(men.error.message)}</div>`; return; }
+  const lista = men.data || [], ids = [...new Set(lista.map(m => m.familiar_usuario_id).filter(Boolean))];
+  let fam = {};
+  if(ids.length){ const { data } = await sb.from('perfiles').select('id, nombre_completo').in('id', ids); (data || []).forEach(p => { fam[p.id] = p; }); }
+  __ev.evals = evals; __ev.refrescar = () => { if(document.getElementById('ja-impacto')) renderJovenesImpacto(document.getElementById('jovenes-content')); };
+  const porF = {}; lista.forEach(m => { (porF[m.familiar_usuario_id] = porF[m.familiar_usuario_id] || []).push(m); });
+  window.__evBases = {};
+  const filas = Object.entries(porF).map(([fid, ms]) => {
+    const nom = (fam[fid] || {}).nombre_completo || acL('sin nombre', 'sense nom'), clave = 'jovenes:' + fid;
+    ms.sort((a, b) => String(a.fecha_nacimiento || '').localeCompare(String(b.fecha_nacimiento || '')));
+    window.__evBases[clave] = evBaseJovenes(fid, nom, ms);
+    return { clave, nom, ms, ev: evals[clave] };
+  }).sort((a, b) => a.nom.localeCompare(b.nom));
+  box.innerHTML = (__ev.sql ? '' : evAvisoSql()) + evPanelHtml(evals, prog) + `
+    <div class="ja-barra"><div class="field" style="flex:1;min-width:200px;margin:0;"><input type="text" placeholder="🔎 ${acL('Buscar familia…', 'Cercar família…')}" oninput="evFiltrar(this.value)"></div></div>
+    <div id="ev-lista">${filas.length ? filas.map(f => `<div class="ev-fila" data-q="${escAttr(normTxt(f.nom))}">
+      <div class="ev-fila-c"><strong>👨‍👩‍👧 ${acL('Familia', 'Família')} ${escAttr(f.nom)}</strong><small>${f.ms.length} ${f.ms.length === 1 ? acL('menor', 'menor') : acL('menores', 'menors')}</small><div class="ev-chips">${evChips(f.ev)}</div></div>
+      <button class="primary-btn" style="margin:0;width:auto;" onclick="evAbrir('${f.clave}')">📈 ${f.ev ? acL('Abrir evaluación', 'Obrir avaluació') : acL('Empezar evaluación', 'Començar avaluació')}</button></div>`).join('')
+      : `<div class="empty-note">${acL('Todavía no hay familias con menores registrados.', 'Encara no hi ha famílies amb menors registrats.')}</div>`}</div>`;
+}
+function evFiltrar(t){ const q = normTxt(String(t || '').trim()); document.querySelectorAll('#ev-lista .ev-fila, #pj-ev-lista .ev-fila').forEach(el => { el.style.display = !q || el.dataset.q.includes(q) ? '' : 'none'; }); }
+
+// ---------- Proyectos: sección «Evaluación e impacto» dentro de cada proyecto (una por persona beneficiaria) ----------
+async function evProyectoSeccion(proyectoId){
+  const w = document.getElementById('proyecto-detalle-wrap'); if(!w) return;
+  let host = document.getElementById('pj-ev'); if(host) host.remove();
+  host = document.createElement('div'); host.id = 'pj-ev'; host.className = 'panel-card pj-ev'; w.appendChild(host);
+  host.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const [pr, part, evals] = await Promise.all([sb.from('proyectos').select('id, nombre').eq('id', proyectoId).maybeSingle(),
+    sb.from('proyecto_participantes').select('usuario_id, rol').eq('proyecto_id', proyectoId).eq('rol', 'beneficiario'), evCargar('proyecto', proyectoId)]);
+  if(window.__proyectoActual !== proyectoId) return;
+  const prog = (pr.data || {}).nombre || acL('Proyecto', 'Projecte');
+  const ids = [...new Set((part.data || []).map(x => x.usuario_id).filter(Boolean))];
+  let per = {};
+  if(ids.length){ const { data } = await sb.from('perfiles').select('id, nombre_completo').in('id', ids); (data || []).forEach(p => { per[p.id] = p; }); }
+  __ev.evals = evals; __ev.refrescar = () => { if(window.__proyectoActual === proyectoId) evProyectoSeccion(proyectoId); };
+  window.__evBases = {};
+  const filas = ids.map(uid => { const nom = (per[uid] || {}).nombre_completo || acL('Persona', 'Persona'), clave = `proyecto:${proyectoId}:${uid}`;
+    window.__evBases[clave] = { clave, contexto: 'proyecto', proyecto_id: proyectoId, ref_id: uid, nombre: nom, programa: prog, sujetos: { adultos: [{ k: 'a1', n: nom }], menores: [] }, bloques: ['ad', 'inc'] };
+    return { clave, nom, ev: evals[clave] }; }).sort((a, b) => a.nom.localeCompare(b.nom));
+  host.innerHTML = `<h3 style="margin-top:0;">📈 ${acL('Evaluación e impacto en las personas beneficiarias', 'Avaluació i impacte en les persones beneficiàries')}</h3>
+    <p class="subtle" style="font-size:12.5px;margin:0 0 10px;">${acL(`Las mismas preguntas en tres momentos: entrada, salida y seguimiento (≈ ${EV_SEG_MESES} meses después). Por defecto: bienestar emocional e inclusión social; si es una familia, se pueden añadir menores y cohesión familiar.`, `Les mateixes preguntes en tres moments: entrada, sortida i seguiment (≈ ${EV_SEG_MESES} mesos després). Per defecte: benestar emocional i inclusió social; si és una família, es poden afegir menors i cohesió familiar.`)}</p>
+    ${__ev.sql ? '' : evAvisoSql()}${evPanelHtml(evals, prog)}
+    ${filas.length > 6 ? `<div class="field" style="margin:10px 0 6px;"><input type="text" placeholder="🔎 ${acL('Buscar persona…', 'Cercar persona…')}" oninput="evFiltrar(this.value)"></div>` : ''}
+    <div id="pj-ev-lista">${filas.length ? filas.map(f => `<div class="ev-fila" data-q="${escAttr(normTxt(f.nom))}"><div class="ev-fila-c"><strong>👤 ${escAttr(f.nom)}</strong><div class="ev-chips">${evChips(f.ev)}</div></div>
+      <button class="primary-btn" style="margin:0;width:auto;" onclick="evAbrir('${f.clave}')">📈 ${f.ev ? acL('Abrir', 'Obrir') : acL('Evaluar', 'Avaluar')}</button></div>`).join('')
+      : `<div class="empty-note">${acL('Añade personas beneficiarias al proyecto para poder evaluarlas.', 'Afegeix persones beneficiàries al projecte per poder avaluar-les.')}</div>`}</div>`;
+}
+
 // ---------- enganches: menú, entrada, Jóvenes en acción ----------
 (function(){
   const o = window.entrarIntranet;
   if(typeof o === 'function') window.entrarIntranet = async function(){ const r = await o.apply(this, arguments); try { await raicesComprobar(); } catch(e){} return r; };
+  // Raíces (familias) entra por «Proyectos»: tarjeta arriba de la lista y botón dentro del proyecto «Arrels / Raíces»
+  const raPuede = () => !!(window.__raicesMiembro || IS_ADMIN);
+  const raTarjeta = () => `<div class="ra-pj-card"><div><div class="ra-sup">🌳 ${acL('Proyecto con familias', 'Projecte amb famílies')} · FSE+</div><strong>Proyecto Raíces: Reconexión Familiar</strong>
+      <small>${acL('Familias (2 personas adultas + 3 menores), consentimiento, actuaciones y evaluación final. Solo lo ve el equipo del proyecto.', 'Famílies (2 persones adultes + 3 menors), consentiment, actuacions i avaluació final. Només ho veu l\'equip del projecte.')}</small></div>
+      <button class="primary-btn" style="margin:0;width:auto;" onclick="showScreen('raices');renderRaices('familias')">👨‍👩‍👧 ${acL('Abrir familias', 'Obrir famílies')}</button></div>`;
+  const rp = window.renderProyectosScreen;
+  if(typeof rp === 'function') window.renderProyectosScreen = async function(){ const r = await rp.apply(this, arguments);
+    try { if(raPuede()){ const c = document.getElementById('proyectos-content'); if(c && !c.querySelector('.ra-pj-card')) c.insertAdjacentHTML('afterbegin', raTarjeta()); } } catch(e){}
+    try { if(IS_ADMIN || IS_JOVENES){ const c = document.getElementById('proyectos-content'); if(c && !c.querySelector('.ja-pj-card')) c.insertAdjacentHTML('afterbegin', `<div class="ra-pj-card ja-pj-card"><div><div class="ra-sup">🌱 ${acL('Programa de Logos', 'Programa de Logos')}</div><strong>Jóvenes en acción</strong>
+      <small>${acL('Actividades, familias y menores, salidas y la evaluación de impacto (entrada, salida y seguimiento).', 'Activitats, famílies i menors, sortides i l\'avaluació d\'impacte (entrada, sortida i seguiment).')}</small></div>
+      <div class="ra-fila"><button class="primary-btn" style="margin:0;width:auto;" onclick="showScreen('jovenes');renderJovenesScreen('impacto')">📈 ${acL('Evaluación e impacto', 'Avaluació i impacte')}</button><button class="m4-btn" onclick="showScreen('jovenes');renderJovenesScreen('actividades')">🌱 ${acL('Abrir', 'Obrir')}</button></div></div>`); } } catch(e){}
+    return r; };
+  const vp = window.verProyecto;
+  if(typeof vp === 'function') window.verProyecto = async function(id){ const r = await vp.apply(this, arguments);
+    try { await evProyectoSeccion(id); } catch(e){}
+    try { if(raPuede()){ const { data } = await sb.from('proyectos').select('nombre').eq('id', id).maybeSingle(); const w = document.getElementById('proyecto-detalle-wrap');
+      if(data && /arrels|ra[ií]ces/i.test(data.nombre || '') && w && !w.querySelector('.ra-pj-card')) w.insertAdjacentHTML('afterbegin', raTarjeta()); } } catch(e){}
+    return r; };
   const j = window.jaiTabsHtml;
   if(typeof j === 'function') window.jaiTabsHtml = function(){ const h = j.apply(this, arguments);
     return (window.__raicesMiembro || IS_ADMIN) ? h.replace(/<\/div>\s*$/, `<button class="imp-tab" onclick="showScreen('raices');renderRaices('familias')">🌳 Raíces</button></div>`) : h; };
 })();
 </script>
 <style>
+.ja-canal{font-size:12px;text-decoration:none;margin-right:2px;}
+.ev-ov{position:fixed;inset:0;z-index:9980;background:#F4F2EC;overflow:auto;}
+.ev-pag{max-width:1100px;margin:0 auto;padding:16px 18px 40px;}
+.ev-top{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg,#163F7A 0%,#2463B8 100%);color:#fff;border-radius:18px;padding:14px 18px;margin-bottom:14px;border-bottom:4px solid #F2BC2C;}
+.ev-top h2{margin:2px 0 0;font-size:21px;color:#fff;} .ev-sup{font-size:12px;font-weight:800;letter-spacing:.04em;color:#F2BC2C;text-transform:uppercase;}
+.ev-top-a{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.ev-lanzar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;} .ev-lanzar > span{font-size:12.5px;color:#4B5468;flex:1;min-width:220px;}
+.ev-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;} .ev-lanzar .ev-chips{width:100%;}
+.ev-cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:10px;}
+.ev-cfg > div{display:flex;flex-direction:column;gap:5px;} .ev-cfg input[type=text],.ev-cfg input:not([type]){padding:6px 9px;border:1px solid #CBD3E0;border-radius:8px;font:inherit;}
+.ev-bq{font-size:13.5px;}
+.ra-ent-mom.seg{background:#E8F5EC;} .ra-ent-mom.seg .ra-ent-mom-t b{color:#1D6B3E;}
+.ev-imp{background:#fff;border:1px solid #E1E6EE;border-radius:16px;padding:14px 16px;margin:0 0 14px;}
+.ev-imp-h{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end;} .ev-imp-h h3{margin:2px 0 0;}
+.ev-imp-sup{font-size:12px;font-weight:800;color:#1B4E95;letter-spacing:.03em;text-transform:uppercase;}
+.ev-imp-kpis{display:flex;gap:8px;flex-wrap:wrap;} .ev-imp-kpis span{background:#F1F4F9;border-radius:10px;padding:5px 10px;font-size:12px;color:#4B5468;display:flex;flex-direction:column;align-items:center;min-width:76px;} .ev-imp-kpis b{font-size:19px;color:#1B2333;}
+.ev-imp-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:12px;}
+.ev-imp-c{border:1px solid #E6E9F0;border-radius:14px;padding:10px 12px;background:#FBFCFE;} .ev-imp-t{font-weight:700;font-size:13.5px;}
+.ev-imp-big{font-size:28px;font-weight:800;color:#E0582E;line-height:1.1;margin-top:4px;} .ev-imp-s{font-size:12px;color:#5B6274;margin:2px 0;}
+.ev-imp-bar{height:7px;background:#ECEAE4;border-radius:4px;overflow:hidden;margin:6px 0;} .ev-imp-bar i{display:block;height:100%;background:#E0582E;}
+.ev-imp-nota{font-size:11.5px;color:#6B7280;margin:10px 0 0;}
+.ev-fila{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid #E1E6EE;border-left:5px solid #E5673A;border-radius:14px;padding:10px 14px;margin-bottom:8px;}
+.ev-fila-c{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;} .ev-fila-c small{color:#5B6274;font-size:12.5px;}
+.pj-ev{margin-top:16px;}
+.ra-ent-lanzar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:10px 0 4px;}
+.ra-ent-lanzar span{font-size:12.5px;color:#4B5468;flex:1;min-width:200px;}
+.ra-ent-go{background:#E5673A;color:#fff;border:0;border-radius:999px;padding:11px 20px;font-weight:800;font-size:14.5px;cursor:pointer;box-shadow:0 4px 12px -4px rgba(229,103,58,.6);font-family:inherit;}
+.ra-ent-ov{position:fixed;inset:0;z-index:9995;background:rgba(18,28,48,.62);display:flex;align-items:center;justify-content:center;padding:12px;}
+.ra-ent-caja{background:#F7F5F0;border-radius:22px;width:min(760px,100%);max-height:96vh;overflow:auto;padding:14px 18px 16px;box-shadow:0 20px 50px -10px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:12px;}
+.ra-ent-top{display:flex;justify-content:space-between;align-items:center;background:#E5673A;color:#fff;border-radius:999px;padding:9px 10px 9px 18px;font-weight:700;}
+.ra-ent-x{background:rgba(255,255,255,.22);color:#fff;border:0;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;}
+.ra-ent-prog{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:center;font-size:14px;color:#3A4254;}
+.ra-ent-prog b{justify-self:end;} .ra-ent-barra{grid-column:1/-1;height:7px;background:#E2E0DA;border-radius:4px;overflow:hidden;}
+.ra-ent-barra i{display:block;height:100%;background:#E5673A;border-radius:4px;transition:width .25s;}
+.ra-ent-card{background:#fff;border-radius:16px;padding:16px;box-shadow:0 2px 10px -4px rgba(20,40,80,.18);}
+.ra-ent-bloque{font-size:12px;font-weight:800;letter-spacing:.03em;color:#1B4E95;text-transform:uppercase;}
+.ra-ent-quien{font-size:14px;font-weight:700;margin:4px 0 6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+.ra-ent-proxy{font-weight:400;font-size:12.5px;color:#4B5468;}
+.ra-ent-ayuda{font-size:12.5px;color:#5B6274;background:#FBF8EE;border-radius:10px;padding:6px 10px;margin:0 0 8px;}
+.ra-ent-frase{font-size:21px;line-height:1.35;color:#1B2333;padding:14px 16px;border:2px dashed #E9C9B8;border-radius:14px;margin:6px 0 12px;background:#FFFBF8;}
+.ra-ent-frase span{display:block;font-size:12px;color:#9A7A6A;font-weight:700;margin-bottom:4px;}
+.ra-ent-mom{border-radius:14px;padding:10px 12px;margin-bottom:10px;} .ra-ent-mom.ante{background:#EEF3FB;} .ra-ent-mom.tras{background:#FDF1EA;}
+.ra-ent-mom-t{display:flex;gap:10px;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;} .ra-ent-mom-t b{font-size:13px;letter-spacing:.04em;} .ra-ent-mom-t small{color:#5B6274;font-size:12.5px;}
+.ra-ent-mom.ante .ra-ent-mom-t b{color:#1B4E95;} .ra-ent-mom.tras .ra-ent-mom-t b{color:#C4501F;}
+.ra-ent-btns{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.ra-ent-b{border:0;border-radius:14px;padding:10px 4px;min-height:64px;cursor:pointer;color:#fff;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;box-shadow:0 3px 8px -3px rgba(0,0,0,.3);transition:transform .1s, outline .1s;opacity:.86;}
+.ra-ent-b b{font-size:20px;line-height:1;} .ra-ent-b span{font-size:13px;}
+.ra-ent-b:hover{transform:translateY(-2px);opacity:1;}
+.ra-ent-b.e1{background:#2E4FA8;} .ra-ent-b.e2{background:#5D86D6;} .ra-ent-b.e3{background:#E9B949;color:#3A2A00;} .ra-ent-b.e4{background:#EE8A55;} .ra-ent-b.e5{background:#E0582E;}
+.ra-ent-b.on{opacity:1;outline:4px solid #1B2333;outline-offset:2px;transform:scale(1.04);}
+.ra-ent-otros{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.ra-ent-o{border:1.5px solid #CBD3E0;background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;cursor:pointer;font-family:inherit;color:#3A4254;}
+.ra-ent-o.on{background:#1B2333;color:#fff;border-color:#1B2333;}
+.ra-ent-pie{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.ra-ent-reset{background:#E5673A;color:#fff;border:0;border-radius:999px;padding:9px 20px;font-weight:700;cursor:pointer;font-family:inherit;}
+.ra-ent-reset:disabled,.ra-ent-nav:disabled{opacity:.4;cursor:default;}
+.ra-ent-nav{background:#E9B949;color:#fff;border:0;padding:10px 16px;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px;}
+.ra-ent-nav:first-child{border-radius:10px 0 0 10px;margin-right:2px;} .ra-ent-nav:last-child{border-radius:0 10px 10px 0;}
+.ra-ent-intro h2{margin:0 0 4px;font-size:22px;color:#1B2333;} .ra-ent-intro h4{margin:14px 0 8px;}
+.ra-ent-momsel{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;}
+.ra-ent-momsel button{border:2px solid #E1E6EE;background:#fff;border-radius:14px;padding:10px 12px;text-align:left;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;gap:3px;}
+.ra-ent-momsel button.on{border-color:#E5673A;background:#FDF1EA;} .ra-ent-momsel small{color:#5B6274;font-size:12px;}
+.ra-ent-guion{background:#FBF8EE;border:1px solid #EADFB8;border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.5;margin:14px 0;}
+.ra-ent-empezar{background:#E5673A;color:#fff;border:0;border-radius:999px;padding:12px 26px;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit;}
+@media (max-width:600px){ .ra-ent-frase{font-size:18px;} .ra-ent-btns{gap:5px;} .ra-ent-b{min-height:58px;padding:8px 2px;} .ra-ent-b span{font-size:11px;} .ra-ent-caja{padding:10px;border-radius:16px;} }
+.ra-pj-card{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:linear-gradient(135deg,#E3F3E8 0%,#E8EEFB 100%);border:1px solid #CFE3D6;border-left:6px solid #1F8A4C;border-radius:16px;padding:14px 16px;margin:0 0 14px;}
+.ra-pj-card strong{display:block;font-size:17px;color:#1B2333;margin:2px 0;} .ra-pj-card small{color:#4B5468;font-size:12.5px;} .ra-pj-card .ra-sup{color:#1D5E35;}
+#proyectos-content.pj-abierto > .ra-pj-card{display:none;}
+.ra-guion{margin:10px 0 4px;background:#FBF8EE;border:1px solid #EADFB8;border-radius:12px;padding:8px 12px;font-size:13px;line-height:1.5;}
+.ra-guion summary{cursor:pointer;font-weight:800;color:#1B4E95;} .ra-guion ul{margin:4px 0 8px 18px;padding:0;}
 .ra-hero{background:linear-gradient(135deg,#1F6B3E 0%,#1B4E95 100%);color:#fff;border-radius:18px;padding:18px 20px;margin-bottom:14px;display:flex;flex-direction:column;gap:12px;border-bottom:4px solid #F2BC2C;}
 .ra-hero h2{margin:2px 0 4px;font-size:22px;color:#fff;}
 .ra-hero p{margin:0;font-size:13.5px;color:#DDEBDD;}
