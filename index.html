@@ -1847,6 +1847,24 @@ body.m3-sin-scroll{overflow:hidden;}
   .m3-b{max-width:none;}
 }
 
+/* ===== Centro editorial del Canal (v247) ===== */
+.ed-ia{border:1px solid #D9C27A;background:linear-gradient(180deg,#FFFBEF,#fff);border-radius:14px;padding:12px 14px;margin:0 0 12px;}
+.ed-ia legend{font-weight:800;font-size:13.5px;padding:0 6px;color:#16325A;}
+.ed-ia textarea,.ed-ia select,.ed-idiomas input,.ed-idiomas textarea{width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #CBD5E1;border-radius:10px;font:inherit;}
+.ed-ia label{display:block;font-size:13px;font-weight:600;margin:0 0 8px;}
+.ed-acc{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.ed-est{font-size:12.5px;color:#475569;}
+.ed-aviso{font-size:12px;color:#64748B;margin:8px 0 0;}
+.ed-idiomas{margin:0 0 12px;border:1px solid #E3E7EE;border-radius:12px;padding:8px 12px;}
+.ed-idiomas summary{cursor:pointer;font-weight:700;font-size:13.5px;}
+.ed-idiomas h5{margin:10px 0 6px;font-size:13px;color:#16325A;}
+.ed-idiomas .ed-c{margin:0 0 6px;}
+.ed-rev{border:2px solid #E0A526;background:#FFF8E6;border-radius:12px;padding:10px 12px;margin:0 0 12px;}
+.ed-rev label{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;font-weight:700;}
+.ed-rev label input{margin-top:3px;flex:none;}
+.ed-fuentes{list-style:none;margin:8px 0 0;padding:0;font-size:13px;}
+.ed-fuentes li{display:flex;justify-content:space-between;gap:8px;padding:3px 0;}
+.ed-fuentes a{overflow-wrap:anywhere;}
 /* ===== Blog de Logos (artículos del canal) ===== */
 .blog-art{--b-a:#1E4FA8;--b-s:#E8EEFB;--b-t:#14306B;max-width:760px;margin:0 auto;color:#1B2333;font-size:18px;line-height:1.7;}
 .blog-cab{padding:8px 0 18px;}
@@ -2063,7 +2081,7 @@ body.m3-sin-scroll{overflow:hidden;}
       <details class="nav-grupo" open>
         <summary>💬 Equipo y yo</summary>
         <button data-target="comunicacion" onclick="showScreen('comunicacion');renderComunicacionScreen()">✉️ Comunicación</button>
-        <button data-target="canal" onclick="showScreen('canal');renderCanal()">📣 Canal: noticias y agenda</button>
+        <button data-target="canal" onclick="showScreen('canal');renderCanal()">📣 LOGOS 360 · Canal</button>
         <button data-target="equipo" onclick="showScreen('equipo');renderEquipoScreen()">🤝 Trabajo en equipo</button>
         <button data-target="gestionpersonal" id="nav-gp-btn" onclick="showScreen('gestionpersonal');renderGestionPersonal('inicio')">👤 Mi gestión personal</button>
         <button data-target="miformacion" onclick="showScreen('miformacion');renderMiFormacion()">🎓 Mi formación</button>
@@ -18306,7 +18324,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-08 · v246 (Familias asignadas: cada técnico ve solo sus familias, compartidas si hace falta; la administración asigna) · antes: v245 (Apartado Familias: las familias de Jóvenes en acción y de Raíces juntas, con contacto, evaluación y ficha) · antes: v244 (Evaluaciones y contactos con las familias se apuntan como actuaciones: cuentan en la Intranet y se ven en Logos Acompanya; llamar, WhatsApp y Logos Acompanya en cada familia) · antes: v243 (Evaluación de impacto de Logos en Jóvenes en acción y en cada proyecto: entrada, salida y seguimiento, entrevista pantalla a pantalla y panel de impacto) · antes: v242 (Raíces: entrevista de evaluación pantalla a pantalla, con botones de colores, progreso y Anterior/Siguiente) · antes: v241 (Raíces · Familias entra por Proyectos; guion de la entrevista en la evaluación final) · antes: v240 (La lista de proyectos para trabajar con una persona sale de la pantalla Proyectos: los nuevos aparecen, por orden alfabético) · antes: v239 (Proyectos nuevos en los desplegables de actuaciones; aviso de fichaje discreto que no tapa el menú; RR. HH. ve el historial de fichajes solo para consultar) · antes: v238 (Proyecto Raíces en Jóvenes en acción: familias, consentimiento con Logos, presencia y actuaciones que suman atenciones, evaluación con puntuación; solo el equipo del proyecto)';
+const APP_VERSION_INTRANET = '2026-11-08 · v248 (LOGOS 360: portadas automáticas con título, categoría y colores elegidos por la IA) · antes: v247 (Canal: centro editorial con IA, cuatro idiomas, fuentes y revisión humana obligatoria) · antes: v246 (Familias asignadas: cada técnico ve solo sus familias, compartidas si hace falta; la administración asigna) · antes: v245 (Apartado Familias: las familias de Jóvenes en acción y de Raíces juntas, con contacto, evaluación y ficha) · antes: v244 (Evaluaciones y contactos con las familias se apuntan como actuaciones: cuentan en la Intranet y se ven en Logos Acompanya; llamar, WhatsApp y Logos Acompanya en cada familia) · antes: v243 (Evaluación de impacto de Logos en Jóvenes en acción y en cada proyecto: entrada, salida y seguimiento, entrevista pantalla a pantalla y panel de impacto) · antes: v242 (Raíces: entrevista de evaluación pantalla a pantalla, con botones de colores, progreso y Anterior/Siguiente) · antes: v241 (Raíces · Familias entra por Proyectos; guion de la entrevista en la evaluación final) · antes: v240 (La lista de proyectos para trabajar con una persona sale de la pantalla Proyectos: los nuevos aparecen, por orden alfabético) · antes: v239 (Proyectos nuevos en los desplegables de actuaciones; aviso de fichaje discreto que no tapa el menú; RR. HH. ve el historial de fichajes solo para consultar) · antes: v238 (Proyecto Raíces en Jóvenes en acción: familias, consentimiento con Logos, presencia y actuaciones que suman atenciones, evaluación con puntuación; solo el equipo del proyecto)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -18657,7 +18675,8 @@ const TEC_SQL = [
   ['69', 'Interruptor de los dos pasos', () => sb.rpc('mfa_en_pausa')],
   ['70', 'Cifrado de campos sensibles', async () => { const r = await sb.rpc('cifrado_estado'); if(!r.error && r.data && !r.data.clave) return { error: { message: 'falta la clave de cifrado en Vault: does not exist' } }; return r; }],
   ['71', 'Consentimiento v2 y derechos', () => sb.from('solicitudes_derechos').select('id').limit(1)],
-  ['73', 'Historial, papelera y deshacer', () => sb.rpc('historial_actividad', { p_limite: 1 })]
+  ['73', 'Historial, papelera y deshacer', () => sb.rpc('historial_actividad', { p_limite: 1 })],
+  ['87', 'Canal: centro editorial', () => sb.from('canal_publicaciones').select('ia_asistido').limit(1)]
 ];
 const TEC_FALTA = /does not exist|schema cache|Could not find|PGRST20[0-9]|42P01|42703|42883|versión antigua/i;
 async function tecComprobar(){
@@ -18970,12 +18989,13 @@ async function renderCanal(){
   const { data, error } = await sb.from('canal_publicaciones').select('*').order('creado_en', { ascending: false }).limit(400);
   if(error){ c.innerHTML = `<div class="empty-note">${/canal_publicaciones|schema cache|does not exist/i.test(error.message || '') ? acL('El canal se activa con el SQL-65 en Supabase.', 'El canal s\'activa amb l\'SQL-65 a Supabase.') : escAttr(error.message)}</div>`; return; }
   const st = window.__canal; st.lista = (data || []).map(x => (!x.video_url && x.imagen_url && canalVid(x.imagen_url)) ? Object.assign(x, { video_url: x.imagen_url, imagen_url: null }) : x);
+  st.sql87 = !(await sb.from('canal_publicaciones').select('ia_asistido').limit(1)).error;
   const hoy = isoLocal(), L = st.lista;
   const vivas = L.filter(x => canalEstado(x)[0] === 'vivo'), prox = L.filter(x => x.tipo === 'evento' && x.estado === 'publicado' && (x.fecha_fin || x.fecha_evento) >= hoy);
   const borr = L.filter(x => x.estado === 'borrador');
   c.innerHTML = `
     <div class="canal-hero">
-      <div><h2>📣 ${acL('Canal de Logos', 'Canal de Logos')}</h2>
+      <div><h2>LOGOS 360</h2><p style="font-weight:800;color:var(--gold);margin:0 0 6px;">${acL('Centro Inteligente de Conocimiento y Acción Social', 'Centre Intel·ligent de Coneixement i Acció Social')}</p>
         <p>${acL('Lo que publiques aquí sale solo en la <strong>web logostgn.cat</strong> y en <strong>Logos Acompanya</strong>: noticias, eventos con su fecha en la agenda, anuncios y convocatorias.', 'El que publiquis aquí surt sol al <strong>web logostgn.cat</strong> i a <strong>Logos Acompanya</strong>: notícies, esdeveniments amb la data a l\'agenda, anuncis i convocatòries.')}</p></div>
       <button class="primary-btn" style="width:auto;margin:0;background:var(--gold);color:#16325A;" onclick="canalEditar()">➕ ${acL('Nueva publicación', 'Nova publicació')}</button>
     </div>
@@ -18983,10 +19003,11 @@ async function renderCanal(){
       <div><strong class="stat-num">${vivas.length}</strong><span>${acL('publicadas ahora', 'publicades ara')}</span></div>
       <div><strong class="stat-num">${prox.length}</strong><span>${acL('eventos próximos', 'esdeveniments propers')}</span></div>
       <div><strong class="stat-num">${borr.length}</strong><span>${acL('borradores', 'esborranys')}</span></div>
+      <div><strong class="stat-num">${L.filter(canalPorRevisar).length}</strong><span>${acL('por revisar', 'per revisar')}</span></div>
     </div>
     <div class="canal-cols">
       <div>
-        <div class="canal-filtros" role="tablist">${[['todas', acL('Todas', 'Totes')], ['vivo', acL('Publicadas', 'Publicades')], ['evento', acL('Agenda', 'Agenda')], ['articulo', acL('Blog', 'Blog')], ['publicidad', acL('Publicidad', 'Publicitat')], ['borrador', acL('Borradores', 'Esborranys')], ['retirado', acL('Retiradas y pasadas', 'Retirades i passades')]].map(([k, t]) => `<button role="tab" aria-selected="${st.filtro === k}" class="${st.filtro === k ? 'on' : ''}" onclick="window.__canal.filtro='${k}';canalPintarLista()">${t}</button>`).join('')}</div>
+        <div class="canal-filtros" role="tablist">${[['todas', acL('Todas', 'Totes')], ['vivo', acL('Publicadas', 'Publicades')], ['evento', acL('Agenda', 'Agenda')], ['articulo', acL('Blog', 'Blog')], ['publicidad', acL('Publicidad', 'Publicitat')], ['borrador', acL('Borradores', 'Esborranys')], ['revisar', '✨ ' + acL('Por revisar', 'Per revisar') + ' (' + L.filter(canalPorRevisar).length + ')'], ['retirado', acL('Retiradas y pasadas', 'Retirades i passades')]].map(([k, t]) => `<button role="tab" aria-selected="${st.filtro === k}" class="${st.filtro === k ? 'on' : ''}" onclick="window.__canal.filtro='${k}';canalPintarLista()">${t}</button>`).join('')}</div>
         <div id="canal-lista"></div>
       </div>
       <aside class="canal-cal-box"><h3>🗓️ ${acL('Calendario', 'Calendari')}</h3><div id="canal-cal"></div><p class="subtle" style="font-size:12px;margin:8px 0 0;">${acL('Los días con evento salen marcados. Tócalos para verlos.', 'Els dies amb esdeveniment surten marcats. Toca\'ls per veure\'ls.')}</p></aside>
@@ -19001,6 +19022,7 @@ function canalPintarLista(){
   if(st.filtro === 'vivo') L = L.filter(x => ['vivo', 'prog'].includes(canalEstado(x)[0]));
   else if(st.filtro === 'evento') L = L.filter(x => x.tipo === 'evento' && x.estado !== 'retirado' && (x.fecha_fin || x.fecha_evento) >= hoy).sort((a, b) => a.fecha_evento.localeCompare(b.fecha_evento));
   else if(st.filtro === 'borrador') L = L.filter(x => x.estado === 'borrador');
+  else if(st.filtro === 'revisar') L = L.filter(canalPorRevisar);
   else if(st.filtro === 'publicidad') L = L.filter(x => x.tipo === 'publicidad');
   else if(st.filtro === 'articulo') L = L.filter(x => x.tipo === 'articulo');
   else if(st.filtro === 'retirado') L = L.filter(x => ['retirado', 'caducada'].includes(canalEstado(x)[0]));
@@ -19012,7 +19034,7 @@ function canalPintarLista(){
       return `<article class="canal-item">
         ${x.tipo === 'publicidad' ? `<div class="canal-anu-mini">${canalAnuncioHtml(x, LANG_I === 'ca')}</div>` : (x.imagen_url ? `<img src="${escAttr(x.imagen_url)}" alt="" loading="lazy">` : `<div class="canal-ic" aria-hidden="true">${t[0]}</div>`)}
         <div class="canal-x">
-          <div class="canal-meta"><span class="canal-tipo t-${x.tipo}">${t[0]} ${acL(t[1], t[2])}</span><span class="canal-est" style="--c:${e[2]}">● ${e[1]}</span>${x.destacado ? `<span class="canal-dest">⭐ ${acL('Destacada', 'Destacada')}</span>` : ''}${x.video_url ? `<span class="canal-dest" style="color:#7C3AED;">🎬 ${acL('Con vídeo', 'Amb vídeo')}</span>` : ''}</div>
+          <div class="canal-meta"><span class="canal-tipo t-${x.tipo}">${t[0]} ${acL(t[1], t[2])}</span><span class="canal-est" style="--c:${e[2]}">● ${e[1]}</span>${canalPorRevisar(x) ? `<span class="canal-dest" style="color:#B45309;">✨ ${acL('IA · por revisar', 'IA · per revisar')}</span>` : ''}${x.destacado ? `<span class="canal-dest">⭐ ${acL('Destacada', 'Destacada')}</span>` : ''}${x.video_url ? `<span class="canal-dest" style="color:#7C3AED;">🎬 ${acL('Con vídeo', 'Amb vídeo')}</span>` : ''}</div>
           <h4>${escAttr(LANG_I === 'ca' && x.titulo_ca ? x.titulo_ca : x.titulo)}</h4>
           ${x.fecha_evento ? `<p class="canal-cuando">🗓️ ${escAttr(canalFechaTxt(x))}${x.lugar ? ' · 📍 ' + escAttr(x.lugar) : ''}</p>` : ''}
           ${x.texto ? `<p class="canal-txt">${escAttr((LANG_I === 'ca' && x.texto_ca ? x.texto_ca : x.texto).slice(0, 220))}${(x.texto || '').length > 220 ? '…' : ''}</p>` : ''}
@@ -19021,7 +19043,7 @@ function canalPintarLista(){
           ${puede ? `<div class="canal-acc">
             <button class="link-btn" onclick="canalEditar('${x.id}')">✏️ ${acL('Editar', 'Editar')}</button>
             <button class="link-btn" onclick="canalEditar('${x.id}', true)">📄 ${acL('Duplicar', 'Duplicar')}</button>
-            ${x.estado === 'publicado' ? `<button class="link-btn" onclick="canalCambiarEstado('${x.id}','retirado')">🙈 ${acL('Retirar', 'Retirar')}</button>` : `<button class="link-btn" onclick="canalCambiarEstado('${x.id}','publicado')">🚀 ${acL('Publicar', 'Publicar')}</button>`}
+            ${x.estado === 'publicado' ? `<button class="link-btn" onclick="canalCambiarEstado('${x.id}','retirado')">🙈 ${acL('Retirar', 'Retirar')}</button>` : (canalPorRevisar(x) ? `<button class="link-btn" onclick="canalEditar('${x.id}')">✅ ${acL('Revisar y publicar', 'Revisar i publicar')}</button>` : `<button class="link-btn" onclick="canalCambiarEstado('${x.id}','publicado')">🚀 ${acL('Publicar', 'Publicar')}</button>`)}
             <button class="link-btn" style="color:var(--alert);" onclick="canalBorrar('${x.id}')">🗑️ ${acL('Borrar', 'Esborrar')}</button>
           </div>` : ''}
         </div></article>`; }).join('') || `<div class="empty-note">${acL('No hay publicaciones aquí todavía.', 'Encara no hi ha publicacions aquí.')}</div>`);
@@ -19046,14 +19068,16 @@ function canalPintarCal(){
 }
 function canalEditar(id, duplicar){
   const x0 = id ? (window.__canal.lista.find(x => x.id === id) || {}) : {};
-  const x = duplicar ? Object.assign({}, x0, { id: null, estado: 'borrador', titulo: x0.titulo }) : x0;
+  const x = duplicar ? Object.assign({}, x0, { id: null, estado: 'borrador', titulo: x0.titulo, revisado_en: null, revisado_por: null }) : x0;
   const v = k => escAttr(x[k] == null ? '' : String(x[k]));
   const dt = k => { if(!x[k]) return ''; const d = new Date(x[k]); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
   document.getElementById('canal-ov')?.remove();
+  window.__canalIA = { fuentes: Array.isArray(x.fuentes) ? x.fuentes.slice() : [], asistido: !!x.ia_asistido };
   document.body.insertAdjacentHTML('beforeend', `<div class="canal-ov" id="canal-ov" onclick="if(event.target===this)this.remove()">
     <form class="canal-form" onsubmit="event.preventDefault();canalGuardar('${x.id || ''}', 'publicado')">
       <div class="canal-form-h"><h3>${x.id ? '✏️ ' + acL('Editar publicación', 'Editar publicació') : '➕ ' + acL('Nueva publicación', 'Nova publicació')}</h3><button type="button" class="link-btn" aria-label="${acL('Cerrar', 'Tancar')}" onclick="document.getElementById('canal-ov').remove()">✕</button></div>
       <div class="canal-tipos">${Object.entries(CANAL_TIPOS).map(([k, t]) => `<label><input type="radio" name="cf-tipo" value="${k}" ${(x.tipo || 'noticia') === k ? 'checked' : ''} onchange="canalFormTipo()"><span>${t[0]} ${acL(t[1], t[2])}</span></label>`).join('')}</div>
+      ${canalIaPanelHtml()}
       <div class="field"><label>${acL('Título (castellano)', 'Títol (castellà)')} *</label><input id="cf-titulo" required minlength="3" maxlength="160" value="${v('titulo')}" oninput="canalPrevia()"></div>
       <div class="field"><label>${acL('Título en catalán (opcional; si no, sale el castellano)', 'Títol en català (opcional; si no, surt el castellà)')}</label><input id="cf-titulo-ca" maxlength="160" value="${v('titulo_ca')}"></div>
       <div class="field"><label>${acL('Texto (castellano)', 'Text (castellà)')}</label><textarea id="cf-texto" rows="4" maxlength="5000" oninput="canalPrevia()">${v('texto')}</textarea></div>
@@ -19073,7 +19097,7 @@ function canalEditar(id, duplicar){
         <div class="field"><label>${acL('Subtítulo (castellano)', 'Subtítol (castellà)')}</label><input id="cf-sub" maxlength="300" value="${v('subtitulo')}" oninput="canalPrevia()" placeholder="${acL('Una frase que explique de qué va', 'Una frase que expliqui de què va')}"></div>
         <div class="field"><label>${acL('Subtítulo en catalán (opcional)', 'Subtítol en català (opcional)')}</label><input id="cf-sub-ca" maxlength="300" value="${v('subtitulo_ca')}"></div>
         <div class="canal-fila"><label>${acL('Categoría', 'Categoria')}<input id="cf-cat" maxlength="60" list="cf-cats" value="${v('categoria')}" oninput="canalPrevia()" placeholder="${acL('Ej.: Formación', 'Ex.: Formació')}"></label>
-          <datalist id="cf-cats">${['Formació', 'Ocupació', 'Bretxa digital', 'Català', 'Històries', 'Projectes', 'Comunitat', 'Formación', 'Empleo', 'Historias', 'Proyectos', 'Comunidad'].map(c => `<option value="${c}">`).join('')}</datalist>
+          <datalist id="cf-cats">${['Salut i benestar', 'Nutrició', 'Esport', 'Cures i acompanyament', 'Serveis socials', 'Psicologia positiva', 'Salud y bienestar', 'Nutrición', 'Deporte', 'Cuidados y acompañamiento', 'Servicios sociales', 'Formació', 'Ocupació', 'Bretxa digital', 'Català', 'Històries', 'Projectes', 'Comunitat', 'Formación', 'Empleo', 'Historias', 'Proyectos', 'Comunidad'].map(c => `<option value="${c}">`).join('')}</datalist>
           <div class="cf-lab">${acL('Color del artículo', 'Color de l\'article')}<span class="cf-colores">${Object.entries(BLOG_COLORES).map(([k, c]) => `<label><input type="radio" name="cf-color" value="${k}" ${(x.color || 'azul') === k ? 'checked' : ''} onchange="canalPrevia()"><i style="background:${c.a}"></i>${k.charAt(0).toUpperCase() + k.slice(1)}</label>`).join('')}</span></div></div>
         <div class="field" style="margin-top:10px;"><label>${acL('Cuerpo del artículo (castellano)', 'Cos de l\'article (castellà)')}</label>
           ${blogBarraHtml('cf-cuerpo')}
@@ -19087,7 +19111,9 @@ function canalEditar(id, duplicar){
         <p class="subtle" style="font-size:12px;margin:6px 0 0;">${acL('La «Imagen» de abajo es la portada. El «Texto» de arriba es la entradilla (el resumen que sale en la lista).', 'La «Imatge» de sota és la portada. El «Text» de dalt és l\'entradeta (el resum que surt a la llista).')}</p>
       </fieldset>
       <div class="field"><label>${acL('Imagen (opcional)', 'Imatge (opcional)')}</label>
-        <div class="canal-img"><input type="file" id="cf-img-f" accept="image/*" onchange="canalSubirImagen(this)"><input id="cf-img" type="url" placeholder="https://…" value="${v('imagen_url')}" oninput="canalImgOVideo(this)"><span id="cf-img-est" class="subtle" style="font-size:12px;"></span></div></div>
+        <div class="canal-img"><input type="file" id="cf-img-f" accept="image/*" onchange="canalSubirImagen(this)"><input id="cf-img" type="url" placeholder="https://…" value="${v('imagen_url')}" oninput="canalImgOVideo(this)"><span id="cf-img-est" class="subtle" style="font-size:12px;"></span></div>
+        <div class="ed-acc" id="cf-portada" style="margin-top:8px;"><button type="button" class="link-btn" style="font-weight:800;" onclick="canalPortadaGenerar()">🎨 ${acL('Generar portada automática', 'Generar portada automàtica')}</button>
+          <label style="font-size:12.5px;">${acL('Idioma del título', 'Idioma del títol')} <select id="cf-portada-l" aria-label="${acL('Idioma del título en la portada', 'Idioma del títol a la portada')}" onchange="canalPortadaSiAuto()"><option value="ca" selected>Català</option><option value="es">Castellano</option><option value="fr">Français</option><option value="en">English</option></select></label></div></div>
       <div class="field"><label>🎬 ${acL('Vídeo (opcional): enlace de YouTube o Vimeo, o sube un vídeo corto', 'Vídeo (opcional): enllaç de YouTube o Vimeo, o puja un vídeo curt')}</label>
         <div class="canal-img"><input id="cf-video" type="url" placeholder="https://www.youtube.com/watch?v=…" value="${v('video_url')}" oninput="canalPrevia()"><input type="file" id="cf-video-f" accept="video/mp4,video/webm,video/quicktime" onchange="canalSubirVideo(this)"><span id="cf-video-est" class="subtle" style="font-size:12px;">${acL('Mejor YouTube o Vimeo (no ocupa espacio). Si lo subes: MP4, máximo 50 MB. La imagen de arriba se usa como portada del vídeo.', 'Millor YouTube o Vimeo (no ocupa espai). Si el puges: MP4, màxim 50 MB. La imatge de dalt es fa servir com a portada del vídeo.')}</span></div></div>
       <div class="canal-fila"><label>${acL('Enlace (opcional)', 'Enllaç (opcional)')}<input id="cf-enlace" type="url" placeholder="https://…" value="${v('enlace')}"></label><label>${acL('Texto del botón', 'Text del botó')}<input id="cf-enlace-t" maxlength="60" placeholder="${acL('Inscríbete', 'Inscriu-t\'hi')}" value="${v('enlace_texto')}"></label></div>
@@ -19098,26 +19124,150 @@ function canalEditar(id, duplicar){
       </div>
       <div class="canal-fila"><label>${acL('Publicar desde', 'Publicar des de')}<input type="datetime-local" id="cf-desde" value="${dt('publicar_desde')}"></label><label>${acL('Quitar el (opcional)', 'Treure el (opcional)')}<input type="datetime-local" id="cf-hasta" value="${dt('publicar_hasta')}"></label></div>
       <div class="canal-previa-box"><span class="subtle" style="font-size:12px;">${acL('Así se verá', 'Així es veurà')}:</span><div id="cf-previa"></div></div>
+      ${canalIdiomasHtml(x)}
+      <div class="ed-rev" id="cf-rev-box" style="display:none"><label><input type="checkbox" id="cf-rev"> <span>${acL('He leído todo el contenido y sus traducciones, y he comprobado los datos, plazos y fuentes. Me hago responsable de esta revisión.', 'He llegit tot el contingut i les traduccions, i he comprovat les dades, terminis i fonts. Em faig responsable d\'aquesta revisió.')}</span></label><div id="cf-fuentes"></div></div>
       <div id="cf-err"></div>
       <div class="canal-form-pie">
         <button type="button" class="link-btn" onclick="canalGuardar('${x.id || ''}', 'borrador')">💾 ${acL('Guardar como borrador', 'Desar com a esborrany')}</button>
         <button type="submit" class="primary-btn" style="width:auto;margin:0;">🚀 ${acL('Publicar', 'Publicar')}</button>
       </div>
     </form></div>`);
-  canalFormTipo(); canalPrevia();
+  canalFormTipo(); canalPrevia(); canalIaPintar();
   setTimeout(() => document.getElementById('cf-titulo')?.focus(), 30);
+}
+// ---------- Centro editorial: IA, idiomas y revisión (v247 · SQL-87) ----------
+function canalPorRevisar(x){ return !!x.ia_asistido && !x.revisado_en && x.estado === 'borrador'; }
+function canalIaPanelHtml(){
+  if(!window.__canal.sql87) return `<div class="info-box info-box-gold" style="margin-bottom:12px;">${acL('Para usar el asistente editorial falta ejecutar en Supabase el SQL-87.', 'Per fer servir l\'assistent editorial cal executar a Supabase l\'SQL-87.')}</div>`;
+  return `<fieldset class="ed-ia" id="cf-ia"><legend>✨ ${acL('Asistente editorial', 'Assistent editorial')}</legend>
+    <div id="cf-ia-red">
+      <label>${acL('¿Sobre qué quieres publicar?', 'Sobre què vols publicar?')}<textarea id="cf-ia-tema" rows="2" maxlength="1500" placeholder="${acL('Ej.: Cómo cuidar la alimentación de una persona mayor en casa', 'Ex.: Com cuidar l\'alimentació d\'una persona gran a casa')}"></textarea></label>
+      <label>${acL('¿De dónde sale la información?', 'D\'on surt la informació?')}<select id="cf-ia-modo"><option value="web">${acL('Investigar en internet', 'Investigar a internet')}</option><option value="texto">${acL('Solo el texto que pego abajo (resumir una fuente)', 'Només el text que enganxo a sota (resumir una font)')}</option></select></label>
+      <label>${acL('Material o enlaces de Logos (opcional)', 'Material o enllaços de Logos (opcional)')}<textarea id="cf-ia-notas" rows="3" maxlength="30000"></textarea></label>
+    </div>
+    <div class="ed-acc"><button type="button" class="primary-btn" id="cf-ia-b1" style="width:auto;margin:0;background:#16325A;" onclick="canalIaRedactar()">✨ ${acL('Preparar borrador', 'Preparar esborrany')}</button>
+      <button type="button" class="primary-btn" id="cf-ia-b2" style="width:auto;margin:0;background:var(--gold);color:#16325A;" onclick="canalIaTraducir()">🌍 ${acL('Traducir a catalán, francés e inglés', 'Traduir a català, francès i anglès')}</button>
+      <span class="ed-est" id="cf-ia-est" role="status"></span></div>
+    <p class="ed-aviso">${acL('No escribas datos de personas atendidas: el texto se envía a un servicio de IA. Nada se publica sin revisión.', 'No escriguis dades de persones ateses: el text s\'envia a un servei d\'IA. Res es publica sense revisió.')}</p>
+  </fieldset>`;
+}
+function canalIdiomasHtml(x){
+  const v = k => escAttr(x[k] == null ? '' : String(x[k]));
+  const b = (c, n) => `<h5>${n}</h5>
+    <div class="ed-c"><input id="cf-titulo-${c}" maxlength="160" aria-label="${acL('Título', 'Títol')} ${n}" placeholder="${acL('Título', 'Títol')}" value="${v('titulo_' + c)}"></div>
+    <div class="ed-c ed-art"><input id="cf-sub-${c}" maxlength="300" aria-label="${acL('Subtítulo', 'Subtítol')} ${n}" placeholder="${acL('Subtítulo', 'Subtítol')}" value="${v('subtitulo_' + c)}"></div>
+    <div class="ed-c"><textarea id="cf-texto-${c}" rows="2" maxlength="5000" aria-label="${acL('Texto', 'Text')} ${n}" placeholder="${acL('Texto', 'Text')}">${v('texto_' + c)}</textarea></div>
+    <div class="ed-c ed-art"><textarea id="cf-cuerpo-${c}" rows="5" maxlength="60000" aria-label="${acL('Cuerpo', 'Cos')} ${n}" placeholder="${acL('Cuerpo del artículo', 'Cos de l\'article')}">${v('cuerpo_' + c)}</textarea></div>`;
+  if(!window.__canal.sql87) return '';
+  return `<details class="ed-idiomas" id="cf-idiomas"><summary>🌍 ${acL('Francés e inglés (se guardan y se revisan aquí)', 'Francès i anglès (es desen i es revisen aquí)')}</summary>${b('fr', 'Français')}${b('en', 'English')}</details>`;
+}
+function canalIaPintar(){
+  const st = window.__canalIA || { fuentes: [], asistido: false }, box = document.getElementById('cf-rev-box'), h = document.getElementById('cf-fuentes');
+  if(!box || !h) return;
+  box.style.display = st.asistido ? '' : 'none';
+  h.innerHTML = st.fuentes.length ? `<ul class="ed-fuentes">${st.fuentes.map((f, i) => `<li><a href="${escAttr(f.url)}" target="_blank" rel="noopener">${escAttr(f.titulo || f.url)}</a><button type="button" class="link-btn" aria-label="${acL('Quitar fuente', 'Treure font')}" onclick="window.__canalIA.fuentes.splice(${i},1);canalIaPintar()">✕</button></li>`).join('')}</ul>` : `<p class="ed-aviso">${acL('Este contenido no tiene fuentes guardadas: compruébalo con especial cuidado.', 'Aquest contingut no té fonts desades: comprova\'l amb especial cura.')}</p>`;
+}
+// ---------- Portada automática (v248): se dibuja aquí y solo se sube al guardar ----------
+function canalPortadaDatos(){
+  const g = k => ((document.getElementById(k) || {}).value || '').trim();
+  const l = g('cf-portada-l') || 'ca', tipo = (document.querySelector('input[name=cf-tipo]:checked') || {}).value || 'noticia', t = CANAL_TIPOS[tipo] || CANAL_TIPOS.noticia;
+  const cats = (window.__canalIA && window.__canalIA.cats) || {};
+  return { titulo: (l !== 'es' && g('cf-titulo-' + l)) || g('cf-titulo'), categoria: (l !== 'es' && cats[l]) || (tipo === 'articulo' ? g('cf-cat') : '') || (l === 'ca' ? t[2] : t[1]), color: (document.querySelector('input[name=cf-color]:checked') || {}).value || 'azul' };
+}
+async function canalPortadaDibujar(d){
+  const W = 1600, H = 900, M = 110, c = BLOG_COLORES[d.color] || BLOG_COLORES.azul, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const x = cv.getContext('2d'), F = 'Figtree, "Segoe UI", Arial, sans-serif';
+  try { await Promise.all([document.fonts.load('800 80px Figtree'), document.fonts.load('700 34px Figtree')]); } catch(_){}
+  let gr = x.createLinearGradient(0, 0, W, H); gr.addColorStop(0, c.t); gr.addColorStop(.62, c.t); gr.addColorStop(1, c.a); x.fillStyle = gr; x.fillRect(0, 0, W, H);
+  x.globalAlpha = .16; x.fillStyle = c.s; x.beginPath(); x.arc(W - 90, 130, 330, 0, 7); x.fill();
+  x.globalAlpha = .10; x.beginPath(); x.arc(W - 330, H + 40, 300, 0, 7); x.fill();
+  x.globalAlpha = .20; x.fillStyle = '#F2BC2C'; x.font = '800 430px Georgia, serif'; x.textAlign = 'right'; x.textBaseline = 'alphabetic'; x.fillText('λ', W - 95, 500);
+  x.globalAlpha = 1; x.textAlign = 'left'; x.fillStyle = '#F2BC2C'; x.fillRect(M, 118, 12, 56);
+  const cat = String(d.categoria || '').toUpperCase().slice(0, 42); x.font = '800 38px ' + F; x.textBaseline = 'middle'; x.fillStyle = '#FFFFFF'; x.fillText(cat, M + 34, 148);
+  const texto = String(d.titulo || ''), ancho = W - 2 * M - 110, partir = fs => { x.font = '800 ' + fs + 'px ' + F; const li = []; let a = ''; texto.split(/\s+/).filter(Boolean).forEach(p => { const n = a ? a + ' ' + p : p; if(x.measureText(n).width > ancho && a){ li.push(a); a = p; } else a = n; }); if(a) li.push(a); return li; };
+  let fs = 104, li = partir(fs); while((li.length > 4 || li.some(l => x.measureText(l).width > ancho)) && fs > 50){ fs -= 4; li = partir(fs); }
+  if(li.length > 5){ li = li.slice(0, 5); li[4] = li[4].replace(/\s*\S*$/, '') + '…'; }
+  const lh = Math.round(fs * 1.14), y0 = 450 - (li.length - 1) * lh / 2; x.fillStyle = '#FFFFFF'; x.textBaseline = 'middle'; li.forEach((l, i) => x.fillText(l, M, y0 + i * lh));
+  x.fillStyle = '#F2BC2C'; x.font = '800 40px ' + F; x.textBaseline = 'alphabetic'; x.fillText('LOGOS 360', M, H - 92); const w = x.measureText('LOGOS 360').width;
+  x.fillStyle = 'rgba(255,255,255,.86)'; x.font = '600 32px ' + F; x.fillText('Associació Logos · Tarragona', M + w + 34, H - 92);
+  return cv.toDataURL('image/jpeg', .9);
+}
+async function canalPortadaGenerar(){
+  const d = canalPortadaDatos(), est = document.getElementById('cf-img-est'), inp = document.getElementById('cf-img');
+  if(d.titulo.length < 3){ est.textContent = '⚠️ ' + acL('Escribe primero el título.', 'Escriu primer el títol.'); return; }
+  inp.value = await canalPortadaDibujar(d); inp.style.color = 'transparent';
+  est.textContent = '✅ ' + acL('Portada generada: se guarda al guardar o publicar.', 'Portada generada: es desa en desar o publicar.'); canalPrevia();
+}
+function canalPortadaSiAuto(){ const v = (document.getElementById('cf-img') || {}).value || ''; if(!v || v.startsWith('data:image/')) return canalPortadaGenerar(); }
+async function canalPortadaSubir(dataUrl){
+  const blob = await (await fetch(dataUrl)).blob(), ruta = `${new Date().getFullYear()}/portada-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+  const { error } = await sb.storage.from('canal').upload(ruta, blob, { contentType: 'image/jpeg', upsert: false });
+  if(error) throw error;
+  return sb.storage.from('canal').getPublicUrl(ruta).data.publicUrl;
+}
+async function canalIaLlamar(body){
+  let res;
+  try { res = await fetch(SUPABASE_URL + '/functions/v1/editorial-ia', { signal: AbortSignal.timeout(170000), method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await tokenParaFunciones()), 'apikey': SUPABASE_KEY }, body: JSON.stringify(body) }); }
+  catch(e){ throw new Error(acL('No se ha podido conectar con el asistente. Comprueba que la función «editorial-ia» está desplegada.', 'No s\'ha pogut connectar amb l\'assistent. Comprova que la funció «editorial-ia» està desplegada.')); }
+  const d = await res.json().catch(() => ({}));
+  if(!res.ok) throw new Error(d.error || (res.status === 404 ? acL('Falta desplegar la función «editorial-ia».', 'Cal desplegar la funció «editorial-ia».') : acL('El asistente no ha podido responder.', 'L\'assistent no ha pogut respondre.')));
+  return d;
+}
+function canalIaOcupado(on, msg){
+  ['cf-ia-b1', 'cf-ia-b2'].forEach(k => { const b = document.getElementById(k); if(b) b.disabled = on; });
+  const e = document.getElementById('cf-ia-est'); if(e) e.textContent = msg || '';
+}
+function canalPon(id, val){ const el = document.getElementById(id); if(el && val != null) el.value = val; }
+async function canalIaRedactar(){
+  const tema = document.getElementById('cf-ia-tema').value.trim(), notas = document.getElementById('cf-ia-notas').value.trim(), modo = document.getElementById('cf-ia-modo').value;
+  const tipo = (document.querySelector('input[name=cf-tipo]:checked') || {}).value || 'noticia';
+  if(tema.length < 5){ canalIaOcupado(false, '⚠️ ' + acL('Escribe primero el tema.', 'Escriu primer el tema.')); return; }
+  if(modo === 'texto' && notas.length < 40){ canalIaOcupado(false, '⚠️ ' + acL('Pega el texto de la fuente.', 'Enganxa el text de la font.')); return; }
+  if((document.getElementById('cf-titulo').value.trim() || document.getElementById('cf-texto').value.trim()) && !confirm(acL('Ya hay texto escrito y se va a sustituir. ¿Continuar?', 'Ja hi ha text escrit i se substituirà. Continuar?'))) return;
+  canalIaOcupado(true, '⏳ ' + acL('Investigando y redactando… puede tardar un par de minutos.', 'Investigant i redactant… pot trigar un parell de minuts.'));
+  try {
+    const d = await canalIaLlamar({ accion: 'redactar', tema, notas, modo, tipo });
+    canalPon('cf-titulo', d.titulo); canalPon('cf-texto', d.texto); canalPon('cf-sub', d.subtitulo); canalPon('cf-cuerpo', d.cuerpo); canalPon('cf-cat', d.categoria);
+    if(d.color && BLOG_COLORES[d.color]){ const c = document.querySelector('input[name=cf-color][value="' + d.color + '"]'); if(c) c.checked = true; }
+    window.__canalIA.asistido = true; window.__canalIA.fuentes = d.fuentes || [];
+    canalIaPintar(); canalPrevia(); if(tipo !== 'publicidad') await canalPortadaSiAuto();
+    canalIaOcupado(false, '✅ ' + acL('Borrador listo. Revísalo y corrige lo marcado con [VERIFICAR].', 'Esborrany llest. Revisa\'l i corregeix el que està marcat amb [VERIFICAR].'));
+  } catch(e){ canalIaOcupado(false, '⚠️ ' + e.message); }
+}
+async function canalIaTraducir(){
+  const g = k => ((document.getElementById(k) || {}).value || '').trim();
+  const art = ((document.querySelector('input[name=cf-tipo]:checked') || {}).value) === 'articulo';
+  const campos = { titulo: g('cf-titulo'), texto: g('cf-texto'), subtitulo: art ? g('cf-sub') : '', cuerpo: art ? g('cf-cuerpo') : '', categoria: g('cf-cat') };
+  if(campos.titulo.length < 3){ canalIaOcupado(false, '⚠️ ' + acL('Escribe primero el título en castellano.', 'Escriu primer el títol en castellà.')); return; }
+  if(['ca', 'fr', 'en'].some(l => g('cf-titulo-' + l)) && !confirm(acL('Se sustituirán las traducciones que ya hay. ¿Continuar?', 'Se substituiran les traduccions que ja hi ha. Continuar?'))) return;
+  const nom = { ca: 'català', fr: 'français', en: 'English' };
+  for(const l of ['ca', 'fr', 'en']){
+    canalIaOcupado(true, '⏳ ' + acL('Traduciendo a ', 'Traduint a ') + nom[l] + '…');
+    try {
+      const d = await canalIaLlamar({ accion: 'traducir', idioma: l, campos });
+      canalPon('cf-titulo-' + l, d.titulo); canalPon('cf-texto-' + l, d.texto); if(art){ canalPon('cf-sub-' + l, d.subtitulo); canalPon('cf-cuerpo-' + l, d.cuerpo); }
+      window.__canalIA.asistido = true; canalIaPintar(); if(d.categoria){ window.__canalIA.cats = window.__canalIA.cats || {}; window.__canalIA.cats[l] = d.categoria; }
+    } catch(e){ canalIaOcupado(false, '⚠️ ' + nom[l] + ': ' + e.message); return; }
+  }
+  const det = document.getElementById('cf-idiomas'); if(det) det.open = true;
+  await canalPortadaSiAuto();
+  canalIaOcupado(false, '✅ ' + acL('Traducciones listas para revisar.', 'Traduccions llestes per revisar.'));
 }
 function canalFormTipo(){
   const t = (document.querySelector('input[name=cf-tipo]:checked') || {}).value || 'noticia';
   const ev = document.getElementById('cf-ev'); if(ev) ev.style.display = t === 'evento' ? '' : 'none';
   const pb = document.getElementById('cf-pub'); if(pb) pb.style.display = t === 'publicidad' ? '' : 'none';
   const bl = document.getElementById('cf-blog'); if(bl) bl.style.display = t === 'articulo' ? '' : 'none';
+  const po = document.getElementById('cf-portada'); if(po) po.style.display = t === 'publicidad' ? 'none' : '';
   const en = document.getElementById('cf-entidad'); if(en) en.required = t === 'publicidad';
+  const red = document.getElementById('cf-ia-red'), b1 = document.getElementById('cf-ia-b1'); if(red) red.style.display = t === 'publicidad' ? 'none' : ''; if(b1) b1.style.display = t === 'publicidad' ? 'none' : '';
+  document.querySelectorAll('#cf-idiomas .ed-art').forEach(e => { e.style.display = t === 'articulo' ? '' : 'none'; });
   const f = document.getElementById('cf-fecha'); if(f) f.required = t === 'evento';
   canalPrevia();
 }
 // Si en «Imagen» se pega un enlace de YouTube o Vimeo, se pasa solo al campo del vídeo
 function canalImgOVideo(inp){
+  inp.style.color = '';
   const u = (inp.value || '').trim();
   if(u && canalVid(u) && canalVid(u).t !== 'mp4'){ const v = document.getElementById('cf-video'); if(v && !v.value.trim()) v.value = u; inp.value = ''; const e = document.getElementById('cf-img-est'); if(e) e.textContent = '🎬 ' + acL('Era un vídeo: lo he puesto en el campo «Vídeo».', 'Era un vídeo: l\'he posat al camp «Vídeo».'); }
   canalPrevia();
@@ -19215,7 +19365,7 @@ async function canalSubirImagen(inp){
     const { error } = await sb.storage.from('canal').upload(ruta, blob, { contentType: 'image/jpeg', upsert: false });
     if(error) throw error;
     const { data } = sb.storage.from('canal').getPublicUrl(ruta);
-    document.getElementById('cf-img').value = data.publicUrl; est.textContent = '✅ ' + acL('Imagen subida', 'Imatge pujada'); canalPrevia();
+    document.getElementById('cf-img').value = data.publicUrl; document.getElementById('cf-img').style.color = ''; est.textContent = '✅ ' + acL('Imagen subida', 'Imatge pujada'); canalPrevia();
   } catch(e){ est.textContent = '⚠️ ' + (/bucket|not found/i.test(e.message || '') ? acL('Falta la carpeta «canal» (SQL-65).', 'Falta la carpeta «canal» (SQL-65).') : (e.message || e)); }
 }
 async function canalSubirVideo(inp){
@@ -19255,13 +19405,30 @@ async function canalGuardar(id, estado){
   }
   if(tipo === 'publicidad') Object.assign(fila, { entidad: (g('cf-entidad') || '').trim(), formato: g('cf-formato') || 'horizontal', estilo: (document.querySelector('input[name=cf-estilo]:checked') || {}).value || 'azul' });
   if(tipo !== 'evento'){ fila.fecha_evento = null; }
+  const ia = window.__canalIA || { fuentes: [], asistido: false };
+  if(window.__canal.sql87){
+    Object.assign(fila, { titulo_fr: nz(g('cf-titulo-fr')), titulo_en: nz(g('cf-titulo-en')), texto_fr: nz(g('cf-texto-fr')), texto_en: nz(g('cf-texto-en')), fuentes: ia.fuentes, ia_asistido: !!ia.asistido });
+    if(tipo === 'articulo') Object.assign(fila, { subtitulo_fr: nz(g('cf-sub-fr')), subtitulo_en: nz(g('cf-sub-en')), cuerpo_fr: nz(g('cf-cuerpo-fr')), cuerpo_en: nz(g('cf-cuerpo-en')) });
+    const rev = !!(document.getElementById('cf-rev') || {}).checked && !!ia.asistido;
+    if(ia.asistido && estado === 'publicado'){
+      if(!rev) return fallo(acL('Este contenido se ha preparado con IA: marca la casilla de revisión antes de publicar.', 'Aquest contingut s\'ha preparat amb IA: marca la casella de revisió abans de publicar.'));
+      if(['cf-titulo', 'cf-texto', 'cf-sub', 'cf-cuerpo', 'cf-titulo-ca', 'cf-texto-ca', 'cf-sub-ca', 'cf-cuerpo-ca', 'cf-titulo-fr', 'cf-texto-fr', 'cf-sub-fr', 'cf-cuerpo-fr', 'cf-titulo-en', 'cf-texto-en', 'cf-sub-en', 'cf-cuerpo-en'].some(k => /\[VERIFICAR\]/i.test(g(k) || ''))) return fallo(acL('Aún queda algún [VERIFICAR] en el texto o en las traducciones: compruébalo y quítalo antes de publicar.', 'Encara queda algun [VERIFICAR] al text o a les traduccions: comprova\'l i treu-lo abans de publicar.'));
+    }
+    fila.revisado_en = rev ? new Date().toISOString() : null;
+    fila.revisado_por = rev ? String(CURRENT_USER.email).toLowerCase() : null;
+  }
   if(fila.fecha_fin && fila.fecha_fin < fila.fecha_evento) return fallo(acL('La fecha «hasta» es anterior al día del evento.', 'La data «fins a» és anterior al dia de l\'esdeveniment.'));
   if(estado === 'publicado' && !fila.en_web && !fila.en_acompanya) return fallo(acL('Marca dónde sale: web, Logos Acompanya o las dos.', 'Marca on surt: web, Logos Acompanya o les dues.'));
+  if(String(fila.imagen_url || '').startsWith('data:image/')){
+    try { fila.imagen_url = await canalPortadaSubir(fila.imagen_url); const ci = document.getElementById('cf-img'); ci.value = fila.imagen_url; ci.style.color = ''; }
+    catch(e){ return fallo(acL('No se ha podido guardar la portada: ', 'No s\'ha pogut desar la portada: ') + escAttr(e.message || e)); }
+  }
   let r;
   if(id) r = await sb.from('canal_publicaciones').update(fila).eq('id', id);
   else r = await sb.from('canal_publicaciones').insert(Object.assign(fila, { autor_email: String(CURRENT_USER.email).toLowerCase(), autor_nombre: CURRENT_USER_NOMBRE || null }));
   if(r.error && tipo === 'articulo' && /cuerpo|subtitulo|categoria|color|canal_tipo|articulo/i.test(r.error.message || '')) return fallo(acL('Para publicar artículos del blog falta ejecutar el SQL-80 en Supabase.', 'Per publicar articles del blog cal executar l\'SQL-80 a Supabase.'));
   if(r.error && /video_url/i.test(r.error.message || '')) return fallo(acL('Para poner vídeos falta ejecutar el SQL-67 en Supabase.', 'Per posar vídeos cal executar l\'SQL-67 a Supabase.'));
+  if(r.error && /EDITORIAL_SIN_REVISAR/.test(r.error.message || '')) return fallo(acL('Este contenido necesita la revisión humana antes de publicarse.', 'Aquest contingut necessita la revisió humana abans de publicar-se.'));
   if(r.error) return fallo(/entidad|formato|estilo|canal_tipo|publicidad/i.test(r.error.message || '') && tipo === 'publicidad' ? acL('Para publicar publicidad falta ejecutar el SQL-66 en Supabase.', 'Per publicar publicitat cal executar l\'SQL-66 a Supabase.') : escAttr(r.error.message));
   document.getElementById('canal-ov')?.remove();
   renderCanal();
@@ -19269,7 +19436,7 @@ async function canalGuardar(id, estado){
 async function canalCambiarEstado(id, estado){
   if(estado === 'retirado' && !confirm(acL('¿Retirar esta publicación? Deja de verse en la web y en Logos Acompanya (puedes volver a publicarla).', 'Retirar aquesta publicació? Deixa de veure\'s al web i a Logos Acompanya (la pots tornar a publicar).'))) return;
   const { error } = await sb.from('canal_publicaciones').update({ estado }).eq('id', id);
-  if(error){ alert(error.message); return; }
+  if(error){ alert(/EDITORIAL_SIN_REVISAR/.test(error.message || '') ? acL('Este contenido necesita la revisión humana: ábrelo con «Revisar y publicar».', 'Aquest contingut necessita la revisió humana: obre\'l amb «Revisar i publicar».') : error.message); return; }
   renderCanal();
 }
 async function canalBorrar(id){
