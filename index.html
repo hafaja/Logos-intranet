@@ -2076,7 +2076,7 @@ body.m3-sin-scroll{overflow:hidden;}
         <button data-target="mipropioproyecto" onclick="showScreen('mipropioproyecto');renderMiPropioProyectoEntrada()">🏛️ Crea un proyecto de Logos</button>
         <button data-target="ideasproyecto" onclick="showScreen('ideasproyecto');renderEmprendimientoListaStaff()">🚀 Emprendimiento</button>
         <button data-target="jovenes" onclick="showScreen('jovenes');renderJovenesScreen()">🌱 Jóvenes en acción</button>
-        <button data-target="raices" class="rol-oculto" onclick="showScreen('raices');renderRaices('familias')">🌳 Raíces · Familias</button>
+        <button data-target="familias" class="rol-oculto" onclick="showScreen('familias');renderFamiliasLogos()">👨‍👩‍👧 Familias</button>
         <button data-target="aulavirtual" onclick="showScreen('aulavirtual');renderAulaVirtualScreen()">🎥 Aula Virtual · Hub Logos</button>
         <button data-target="formaciones" onclick="showScreen('formaciones');renderFormacionesScreen()">🎓 Formaciones</button>
       </details>
@@ -2276,9 +2276,15 @@ body.m3-sin-scroll{overflow:hidden;}
     </div>
   </div>
 
+  <div class="screen" id="screen-familias">
+    <div class="main-content">
+      <div class="topbar"><span class="brand">👨‍👩‍👧 Familias</span></div>
+      <div class="content" id="familias-content"></div>
+    </div>
+  </div>
   <div class="screen" id="screen-raices">
     <div class="main-content">
-      <div class="topbar"><button class="back-btn" onclick="showScreen('proyectos');renderProyectosScreen()">← Proyectos</button><span class="brand">🌳 Proyecto Raíces</span></div>
+      <div class="topbar"><button class="back-btn" onclick="showScreen('familias');renderFamiliasLogos()">← Familias</button><span class="brand">🌳 Proyecto Raíces</span></div>
       <div class="content" id="raices-content"></div>
     </div>
   </div>
@@ -3280,12 +3286,12 @@ function aplicarTraduccionesSidebar(){
 // Quien es de Jóvenes en acción solo entra a su espacio; el resto de la plataforma queda oculta (y cerrada también en la base de datos)
 // Jóvenes en acción (y su pestaña de Familias) queda oculto del menú para el equipo general. Para volver a mostrarlo: MOSTRAR_JOVENES = true.
 const MOSTRAR_JOVENES = false;
-const PANTALLAS_JOVENES = ['login', 'panel', 'miespacio', 'gestionpersonal', 'jovenes', 'raices', 'miformacion', 'config', 'incidencias', 'papelera'];
+const PANTALLAS_JOVENES = ['login', 'panel', 'miespacio', 'gestionpersonal', 'jovenes', 'raices', 'familias', 'miformacion', 'config', 'incidencias', 'papelera'];
 const PANTALLAS_DOCENTE = ['login', 'aulavirtual', 'config', 'incidencias', 'papelera'];
 const PANTALLAS_RRHH_SOLO = ['login', 'panel', 'miespacio', 'gestionpersonal', 'subvenciones', 'miformacion', 'config', 'incidencias', 'papelera'];
 function aplicarMenuPorRol(){
   document.querySelectorAll('.sidebar nav button[data-target]').forEach(b => {
-    b.classList.toggle('rol-oculto', (IS_DOCENTE && !PANTALLAS_DOCENTE.includes(b.dataset.target)) || (IS_JOVENES && !PANTALLAS_JOVENES.includes(b.dataset.target)) || (IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(b.dataset.target)) || (!MOSTRAR_JOVENES && !IS_JOVENES && b.dataset.target === 'jovenes') || (b.dataset.target === 'subvenciones' && !(IS_ADMIN || IS_RRHH)) || (b.dataset.target === 'raices' && !(window.__raicesMiembro || IS_ADMIN)));
+    b.classList.toggle('rol-oculto', (IS_DOCENTE && !PANTALLAS_DOCENTE.includes(b.dataset.target)) || (IS_JOVENES && !PANTALLAS_JOVENES.includes(b.dataset.target)) || (IS_RRHH_SOLO && !PANTALLAS_RRHH_SOLO.includes(b.dataset.target)) || (!MOSTRAR_JOVENES && !IS_JOVENES && b.dataset.target === 'jovenes') || (b.dataset.target === 'subvenciones' && !(IS_ADMIN || IS_RRHH)) || (b.dataset.target === 'raices' && !(window.__raicesMiembro || IS_ADMIN)) || (b.dataset.target === 'familias' && !(IS_ADMIN || IS_JOVENES || window.__raicesMiembro || (typeof famTieneAlguna === 'function' && famTieneAlguna()))));
   });
   document.querySelectorAll('.sidebar nav .nav-grupo').forEach(g => {
     g.classList.toggle('rol-oculto', (IS_JOVENES || IS_RRHH_SOLO || IS_DOCENTE) && !g.querySelector('button[data-target]:not(.rol-oculto)'));
@@ -3779,7 +3785,7 @@ function showScreen(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.querySelectorAll('.sidebar nav button').forEach(b=>b.classList.remove('active'));
-  const group = { atencion:'miespacio', persona:'panel' };
+  const group = { atencion:'miespacio', persona:'panel', raices:'familias' };
   const target = group[name] || name;
   const btn = document.querySelector('.sidebar nav button[data-target="'+target+'"]');
   if(btn){ btn.classList.add('active'); const g = btn.closest('details.nav-grupo'); if(g && !g.open) g.open = true; }
@@ -5449,7 +5455,8 @@ async function renderJovenesMenores(cont){
   const chipSalida = id => { const s = salidaDe[id]; if(!s) return `<span class="chip off">🚪 ${esCA?'No pot sortir sol/a':'No puede salir solo/a'}</span>`;
     return jaSalidaEstado(s) === 'futura' ? `<span class="chip gold">🚪 ${esCA?'A partir del':'A partir del'} ${jaFecha(s.fecha_inicio, esCA)}</span>`
       : `<span class="chip good">🚪 ${esCA?'Pot sortir sol/a':'Puede salir solo/a'}</span>`; };
-  const lista = men.data || [];
+  try { if(!window.__famAsig) await famCargarAsig(); } catch(e){}
+  const lista = (men.data || []).filter(m => famVeo('jovenes:' + m.familiar_usuario_id, true));   // cada técnico, solo sus familias
   const ids = [...new Set(lista.map(m => m.familiar_usuario_id))];
   let fam = {};
   if(ids.length){
@@ -18299,7 +18306,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-08 · v244 (Evaluaciones y contactos con las familias se apuntan como actuaciones: cuentan en la Intranet y se ven en Logos Acompanya; llamar, WhatsApp y Logos Acompanya en cada familia) · antes: v243 (Evaluación de impacto de Logos en Jóvenes en acción y en cada proyecto: entrada, salida y seguimiento, entrevista pantalla a pantalla y panel de impacto) · antes: v242 (Raíces: entrevista de evaluación pantalla a pantalla, con botones de colores, progreso y Anterior/Siguiente) · antes: v241 (Raíces · Familias entra por Proyectos; guion de la entrevista en la evaluación final) · antes: v240 (La lista de proyectos para trabajar con una persona sale de la pantalla Proyectos: los nuevos aparecen, por orden alfabético) · antes: v239 (Proyectos nuevos en los desplegables de actuaciones; aviso de fichaje discreto que no tapa el menú; RR. HH. ve el historial de fichajes solo para consultar) · antes: v238 (Proyecto Raíces en Jóvenes en acción: familias, consentimiento con Logos, presencia y actuaciones que suman atenciones, evaluación con puntuación; solo el equipo del proyecto)';
+const APP_VERSION_INTRANET = '2026-11-08 · v246 (Familias asignadas: cada técnico ve solo sus familias, compartidas si hace falta; la administración asigna) · antes: v245 (Apartado Familias: las familias de Jóvenes en acción y de Raíces juntas, con contacto, evaluación y ficha) · antes: v244 (Evaluaciones y contactos con las familias se apuntan como actuaciones: cuentan en la Intranet y se ven en Logos Acompanya; llamar, WhatsApp y Logos Acompanya en cada familia) · antes: v243 (Evaluación de impacto de Logos en Jóvenes en acción y en cada proyecto: entrada, salida y seguimiento, entrevista pantalla a pantalla y panel de impacto) · antes: v242 (Raíces: entrevista de evaluación pantalla a pantalla, con botones de colores, progreso y Anterior/Siguiente) · antes: v241 (Raíces · Familias entra por Proyectos; guion de la entrevista en la evaluación final) · antes: v240 (La lista de proyectos para trabajar con una persona sale de la pantalla Proyectos: los nuevos aparecen, por orden alfabético) · antes: v239 (Proyectos nuevos en los desplegables de actuaciones; aviso de fichaje discreto que no tapa el menú; RR. HH. ve el historial de fichajes solo para consultar) · antes: v238 (Proyecto Raíces en Jóvenes en acción: familias, consentimiento con Logos, presencia y actuaciones que suman atenciones, evaluación con puntuación; solo el equipo del proyecto)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -20650,7 +20657,8 @@ async function verPersonaStaffInterno(usuarioId, origen){
     personas: "showScreen('personas');renderPersonasScreen()",
     seguimiento: "showScreen('seguimiento');renderSeguimientoScreen()",
     proyectos: "showScreen('proyectos');Promise.resolve(renderProyectosScreen()).then(()=>{ if(window.__volverAProyecto) verProyecto(window.__volverAProyecto); })",
-    jovenes: "showScreen('jovenes');renderJovenesScreen('menores')"
+    jovenes: "showScreen('jovenes');renderJovenesScreen('menores')",
+    familias: "showScreen('familias');renderFamiliasLogos()"
   };
   btnVolver.setAttribute('onclick', destinos[origen] || "showScreen('panel');renderPanelGeneral()");
 
@@ -26241,7 +26249,8 @@ async function renderJovenesImpacto(cont){
   const box = document.getElementById('ja-impacto');
   const [men, evals] = await Promise.all([sb.from('menores_familia').select('*').order('nombre_completo', { ascending: true }), evCargar('jovenes')]);
   if(men.error){ box.innerHTML = `<div class="auth-error">${escAttr(men.error.message)}</div>`; return; }
-  const lista = men.data || [], ids = [...new Set(lista.map(m => m.familiar_usuario_id).filter(Boolean))];
+  try { if(!window.__famAsig) await famCargarAsig(); } catch(e){}
+  const lista = (men.data || []).filter(m => famVeo('jovenes:' + m.familiar_usuario_id, true)), ids = [...new Set(lista.map(m => m.familiar_usuario_id).filter(Boolean))];
   let fam = {};
   if(ids.length){ const { data } = await sb.from('perfiles').select('id, nombre_completo').in('id', ids); (data || []).forEach(p => { fam[p.id] = p; }); }
   __ev.evals = evals; __ev.refrescar = () => { if(document.getElementById('ja-impacto')) renderJovenesImpacto(document.getElementById('jovenes-content')); };
@@ -26289,10 +26298,132 @@ async function evProyectoSeccion(proyectoId){
       : `<div class="empty-note">${acL('Añade personas beneficiarias al proyecto para poder evaluarlas.', 'Afegeix persones beneficiàries al projecte per poder avaluar-les.')}</div>`}</div>`;
 }
 
+
+// =====================================================================================================
+// FAMILIAS DE LOGOS · v245 — un solo apartado con todas las familias: las de Jóvenes en acción y las de
+// Raíces. Si una familia está en los dos (mismo teléfono), sale una sola vez con los dos programas.
+// Los menores no salen con su nombre: solo cuántos son.
+// =====================================================================================================
+let __famL = { filtro: 'todas', q: '', lista: [], sel: new Set(), modoSel: false };
+// ---------- Familias: técnicos asignados (v246 · SQL-86) ----------
+// Cada técnico ve solo las familias que tiene asignadas (si se comparten, las ven todos los asignados).
+// La administración las ve todas y es quien asigna.
+window.__famAsig = null;   // null = aún sin SQL-86 (se mantiene lo de antes); objeto = { 'jovenes:<id>': [emails] }
+window.__famMias = new Set();
+async function famCargarAsig(){
+  try {
+    const r = await sb.from('familias_asignaciones').select('tipo, familia_ref, tecnico_email');
+    if(r.error){ window.__famAsig = null; return; }
+    const m = {}, mias = new Set(), yo = String((CURRENT_USER || {}).email || '').toLowerCase();
+    (r.data || []).forEach(a => { const k = a.tipo + ':' + a.familia_ref; (m[k] = m[k] || []).push(String(a.tecnico_email).toLowerCase()); if(String(a.tecnico_email).toLowerCase() === yo) mias.add(k); });
+    window.__famAsig = m; window.__famMias = mias;
+  } catch(e){ window.__famAsig = null; }
+  try { aplicarMenuPorRol(); } catch(e){}
+}
+// ¿Puedo ver esta familia? (administración: todas; resto: solo las asignadas; sin SQL-86: como antes)
+function famVeo(clave, sinSqlPorDefecto){ if(IS_ADMIN) return true; if(!window.__famAsig) return !!sinSqlPorDefecto; return window.__famMias.has(clave); }
+function famTieneAlguna(){ return window.__famMias && window.__famMias.size > 0; }
+function famAsigChips(clave){
+  const l = ((window.__famAsig || {})[clave] || []);
+  return l.length ? `<span class="chip fam-asig-chip">👥 ${l.map(e => escAttr(String(nombreTecnico(e) || e).split(' ')[0])).join(', ')}</span>` : (IS_ADMIN && window.__famAsig ? `<span class="chip bad">👥 ${acL('Sin técnico', 'Sense tècnic')}</span>` : '');
+}
+async function famAsignarAbrir(claves){
+  if(!IS_ADMIN) return;
+  if(!window.__famAsig){ alert(acL('Para asignar familias falta ejecutar en Supabase el SQL-86 «familias-asignaciones».', 'Per assignar famílies cal executar a Supabase l\'SQL-86 «familias-asignaciones».')); return; }
+  claves = (claves || []).filter(Boolean); if(!claves.length){ alert(acL('Marca primero alguna familia.', 'Marca primer alguna família.')); return; }
+  const { data: st } = await sb.from('staff').select('email, nombre, activo, ambito').eq('activo', true).order('nombre', { ascending: true });
+  const una = claves.length === 1, ya = una ? ((window.__famAsig || {})[claves[0]] || []) : [];
+  const nom = una ? ((__famL.lista.find(x => x.clave === claves[0]) || {}).nombre || '') : '';
+  let ov = document.getElementById('fam-asig-ov'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'fam-asig-ov'; ov.className = 'sg-ov';
+  ov.innerHTML = `<div class="sg-caja fam-asig-caja"><h3 style="margin-top:0;">👥 ${una ? acL('Técnicos de la familia', 'Tècnics de la família') + ' ' + escAttr(nom) : acL(`Asignar ${claves.length} familias`, `Assignar ${claves.length} famílies`)}</h3>
+    <p class="subtle" style="font-size:12.5px;">${una ? acL('Solo estas personas (y la administración) verán la familia. Puede compartirse entre varias.', 'Només aquestes persones (i l\'administració) veuran la família. Es pot compartir entre diverses.') : acL('Se añaden a las familias marcadas; no se quita a nadie.', 'S\'afegeixen a les famílies marcades; no es treu ningú.')}</p>
+    <div class="fam-asig-l">${(st || []).filter(s => s.ambito !== 'docente').map(s => `<label><input type="checkbox" value="${escAttr(String(s.email).toLowerCase())}" ${ya.includes(String(s.email).toLowerCase()) ? 'checked' : ''}> ${escAttr(s.nombre || s.email)}${s.ambito === 'jovenes' ? ' <small>🌱</small>' : ''}</label>`).join('')}</div>
+    <div class="ra-fila" style="justify-content:center;"><button class="primary-btn" style="margin:0;width:auto;" onclick="famAsignarGuardar(${escAttr(JSON.stringify(claves))}, ${una})">💾 ${acL('Guardar', 'Desar')}</button><button class="link-btn" onclick="document.getElementById('fam-asig-ov').remove()">${acL('Cancelar', 'Cancel·lar')}</button></div></div>`;
+  document.body.appendChild(ov);
+}
+async function famAsignarGuardar(claves, una){
+  const ov = document.getElementById('fam-asig-ov'); if(!ov) return;
+  const marcados = [...ov.querySelectorAll('input[type=checkbox]:checked')].map(i => i.value);
+  const filas = [], quitar = [];
+  claves.forEach(cl => { const i = cl.indexOf(':'), tipo = cl.slice(0, i), ref = cl.slice(i + 1), ya = (window.__famAsig || {})[cl] || [];
+    marcados.filter(e => !ya.includes(e)).forEach(e => filas.push({ tipo, familia_ref: ref, tecnico_email: e, asignado_por_email: CURRENT_USER.email }));
+    if(una) ya.filter(e => !marcados.includes(e)).forEach(e => quitar.push({ tipo, ref, e })); });
+  if(filas.length){ const r = await sb.from('familias_asignaciones').insert(filas); if(r.error){ alert(r.error.message); return; } }
+  for(const q of quitar){ const r = await sb.from('familias_asignaciones').delete().eq('tipo', q.tipo).eq('familia_ref', q.ref).eq('tecnico_email', q.e); if(r.error){ alert(r.error.message); return; } }
+  ov.remove(); __famL.sel = new Set(); __famL.modoSel = false;
+  try { m3Toast('✅ ' + acL('Asignación guardada', 'Assignació desada')); } catch(e){}
+  await famCargarAsig(); renderFamiliasLogos();
+}
+function famSelToggle(clave, on){ __famL.sel = __famL.sel || new Set(); if(on) __famL.sel.add(clave); else __famL.sel.delete(clave); const b = document.getElementById('fam-sel-n'); if(b) b.textContent = __famL.sel.size; }
+
+const famTel = t => String(t || '').replace(/\D/g, '').slice(-9);
+async function renderFamiliasLogos(filtro){
+  if(filtro) __famL.filtro = filtro;
+  const cont = document.getElementById('familias-content'); if(!cont) return;
+  cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  await famCargarAsig();
+  const misJ = [...window.__famMias].some(k => k.startsWith('jovenes:'));
+  const puedeJ = !!(IS_ADMIN || IS_JOVENES || misJ), puedeR = !!(window.__raicesMiembro || IS_ADMIN);
+  const vacio = Promise.resolve({ data: [] });
+  const [men, ra, evals] = await Promise.all([
+    puedeJ ? sb.from('menores_familia').select('id, familiar_usuario_id, fecha_nacimiento') : vacio,
+    puedeR ? sb.from('raices_familias').select('id, codigo, adultos, menores, estado').neq('estado', 'anulada').then(r => r, () => ({ data: [] })) : vacio,
+    puedeJ ? evCargar('jovenes').catch(() => ({})) : Promise.resolve({})
+  ]);
+  __ev.evals = evals || {}; __ev.refrescar = () => { if(document.getElementById('familias-content') && document.getElementById('screen-familias').classList.contains('active')) renderFamiliasLogos(); };
+  const porF = {}; ((men && men.data) || []).forEach(m => { if(m.familiar_usuario_id) (porF[m.familiar_usuario_id] = porF[m.familiar_usuario_id] || []).push(m); });
+  const ids = Object.keys(porF); let per = {};
+  if(ids.length){ const { data } = await sb.from('perfiles').select('id, nombre_completo, telefono').in('id', ids); (data || []).forEach(p => { per[p.id] = p; }); }
+  let lista = ids.map(fid => ({ key: 'j:' + fid, clave: 'jovenes:' + fid, nombre: (per[fid] || {}).nombre_completo || acL('sin nombre', 'sense nom'), tel: (per[fid] || {}).telefono || '', jov: fid, nMen: porF[fid].length, ra: null, ev: (evals || {})['jovenes:' + fid] }));
+  ((ra && ra.data) || []).forEach(f => {
+    const a = (f.adultos || [])[0] || {}, tel = (f.adultos || []).map(x => famTel(x && x.telefono)).filter(Boolean);
+    const igual = tel.length && lista.find(x => x.jov && tel.includes(famTel(x.tel)));
+    const nMen = (f.menores || []).filter(m => raNombre(m)).length;
+    if(igual){ igual.ra = f; igual.nMen = Math.max(igual.nMen, nMen); }
+    else lista.push({ key: 'r:' + f.id, clave: 'raices:' + f.id, nombre: raNombre(a) || f.codigo, tel: a.telefono || '', jov: null, nMen, ra: f });
+  });
+  // solo las familias asignadas (la administración, todas). Sin SQL-86: como antes (por equipo).
+  lista = lista.filter(x => famVeo(x.clave, x.jov ? IS_JOVENES : !!window.__raicesMiembro) || (x.ra && x.jov && famVeo('raices:' + x.ra.id, !!window.__raicesMiembro)));
+  lista.sort((x, y) => x.nombre.localeCompare(y.nombre));
+  __famL.lista = lista;
+  const nJ = lista.filter(x => x.jov).length, nR = lista.filter(x => x.ra).length, nAm = lista.filter(x => x.jov && x.ra).length;
+  const tab = (k, t, n) => `<button class="imp-tab${__famL.filtro === k ? ' on' : ''}" onclick="__famL.filtro='${k}';famPintar()">${t} <b>${n}</b></button>`;
+  cont.innerHTML = `<div class="fam-hero"><div><div class="ra-sup">👨‍👩‍👧 ${acL('Familias de Logos', 'Famílies de Logos')}</div><h2>${acL('Todas las familias en un solo sitio', 'Totes les famílies en un sol lloc')}</h2>
+      <p>${acL('Las de Jóvenes en acción y las de los demás programas. Contacto por teléfono, WhatsApp o Logos Acompanya, evaluación de impacto y ficha.', 'Les de Joves en acció i les dels altres programes. Contacte per telèfon, WhatsApp o Logos Acompanya, avaluació d\'impacte i fitxa.')}</p></div>
+      <div class="ev-imp-kpis"><span><b>${lista.length}</b>${acL('familias', 'famílies')}</span>${puedeJ ? `<span><b>${nJ}</b>Jóvenes en acción</span>` : ''}${puedeR ? `<span><b>${nR}</b>Raíces</span>` : ''}${puedeJ && puedeR ? `<span><b>${nAm}</b>${acL('en los dos', 'als dos')}</span>` : ''}</div></div>
+    <div class="fam-barra"><div class="imp-tabs" style="margin:0;">${tab('todas', acL('Todas', 'Totes'), lista.length)}${puedeJ ? tab('jovenes', '🌱 Jóvenes en acción', nJ) : ''}${puedeR ? tab('raices', '🌳 Raíces', nR) : ''}</div>
+      <input type="search" placeholder="🔎 ${acL('Buscar familia…', 'Cercar família…')}" value="${escAttr(__famL.q)}" oninput="__famL.q=this.value;famPintar()">
+      ${puedeJ ? `<button class="m4-btn" onclick="showScreen('jovenes');renderJovenesScreen('impacto')">📈 ${acL('Impacto', 'Impacte')}</button><button class="m4-btn" onclick="jmAbrir({audiencia:'todas'})">📲 ${acL('Escribir a todas', 'Escriure a totes')}</button>` : ''}
+      ${puedeR ? `<button class="m4-btn" onclick="showScreen('raices');renderRaices('familias')">🌳 ${acL('Abrir Raíces', 'Obrir Raíces')}</button>` : ''}
+      ${IS_ADMIN ? (__famL.modoSel ? `<button class="m4-btn m4-btn-pri" onclick="famAsignarAbrir([...__famL.sel])">👥 ${acL('Asignar las marcadas', 'Assignar les marcades')} (<span id="fam-sel-n">${__famL.sel.size}</span>)</button><button class="link-btn" onclick="__famL.modoSel=false;__famL.sel=new Set();renderFamiliasLogos()">${acL('Cancelar', 'Cancel·lar')}</button>` : `<button class="m4-btn" onclick="__famL.modoSel=true;renderFamiliasLogos()">☑ ${acL('Asignar varias', 'Assignar-ne diverses')}</button>`) : ''}</div>
+    ${IS_ADMIN && !window.__famAsig ? `<div class="info-box info-box-gold" style="margin-bottom:10px;">${acL('Para que cada técnico vea solo sus familias falta ejecutar en Supabase el SQL-86 «familias-asignaciones». Mientras tanto, cada equipo ve todas las de su programa.', 'Perquè cada tècnic vegi només les seves famílies cal executar a Supabase l\'SQL-86 «familias-asignaciones». Mentrestant, cada equip veu totes les del seu programa.')}</div>` : ''}
+    ${IS_ADMIN && window.__famAsig ? `<p class="subtle" style="font-size:12.5px;margin:0 0 10px;">🔒 ${acL('Cada técnico ve solo las familias que tiene asignadas (si se comparten, las ven todos los asignados). Tú las ves todas.', 'Cada tècnic veu només les famílies que té assignades (si es comparteixen, les veuen tots els assignats). Tu les veus totes.')}</p>` : ''}
+    <div id="fam-lista"></div>`;
+  famPintar();
+}
+function famPintar(){
+  const host = document.getElementById('fam-lista'); if(!host) return;
+  const q = normTxt(String(__famL.q || '').trim()), f = __famL.filtro;
+  const vis = __famL.lista.filter(x => (f === 'todas' || (f === 'jovenes' && x.jov) || (f === 'raices' && x.ra)) && (!q || normTxt(x.nombre).includes(q)));
+  host.innerHTML = vis.length ? vis.map(x => {
+    const tel = String(x.tel || '').replace(/[^\d+]/g, '');
+    return `<div class="fam-card">
+      <div class="fam-card-c"><strong>${IS_ADMIN && __famL.modoSel ? `<input type="checkbox" class="fam-sel" ${__famL.sel.has(x.clave) ? 'checked' : ''} onchange="famSelToggle('${x.clave}', this.checked)"> ` : ''}👨‍👩‍👧 ${acL('Familia', 'Família')} ${escAttr(x.nombre)}</strong>
+        <div class="fam-chips">${x.jov ? '<span class="chip good">🌱 Jóvenes en acción</span>' : ''}${x.ra ? `<span class="chip gold">🌳 Raíces · ${escAttr(x.ra.codigo || '')}</span>` : ''}<span class="chip off">${x.nMen} ${x.nMen === 1 ? acL('menor', 'menor') : acL('menores', 'menors')}</span>${tel ? `<span class="chip off">📞 ${escAttr(x.tel)}</span>` : ''}${famAsigChips(x.clave)}</div>
+        ${x.jov ? `<div class="ev-chips">${evChips(x.ev)}</div>` : ''}</div>
+      <div class="fam-acc">
+        ${tel ? `<a class="m4-btn" href="tel:${escAttr(tel)}" ${x.jov ? `onclick="jaContacto('${x.jov}','telefono')"` : ''}>📞 ${acL('Llamar', 'Trucar')}</a><a class="m4-btn" style="color:#1E9E52;" href="${chWaLink(x.tel, '')}" target="_blank" rel="noopener" ${x.jov ? `onclick="jaContacto('${x.jov}','whatsapp')"` : ''}>🟢 WhatsApp</a>` : ''}
+        ${x.jov ? `<button class="m4-btn" onclick="jmAbrir({familiaId:'${x.jov}',audiencia:'una'})">📲 Acompanya</button><button class="m4-btn m4-btn-pri" onclick="evJovenesAbrir('${x.jov}')">📈 ${acL('Evaluar', 'Avaluar')}</button><button class="m4-btn" onclick="verPersonaStaff('${x.jov}','familias')">👤 ${acL('Ficha', 'Fitxa')}</button>` : ''}
+        ${x.ra ? `<button class="m4-btn" onclick="showScreen('raices');renderRaices('familia','${x.ra.id}')">🌳 ${acL('Ficha Raíces', 'Fitxa Raíces')}</button>` : ''}
+        ${IS_ADMIN ? `<button class="m4-btn" onclick="famAsignarAbrir(['${x.clave}'])">👥 ${acL('Técnicos', 'Tècnics')}</button>` : ''}</div></div>`;
+  }).join('') : `<div class="empty-note">${__famL.lista.length ? acL('Ninguna familia con este filtro.', 'Cap família amb aquest filtre.') : (!IS_ADMIN && window.__famAsig) ? acL('La administración todavía no te ha asignado ninguna familia.', 'L\'administració encara no t\'ha assignat cap família.') : acL('Todavía no hay familias. Las familias de Jóvenes en acción aparecen cuando registran a sus hijos/as en Logos Acompanya.', 'Encara no hi ha famílies. Les famílies de Joves en acció apareixen quan registren els seus fills/es a Logos Acompanya.')}</div>`;
+}
+
 // ---------- enganches: menú, entrada, Jóvenes en acción ----------
 (function(){
   const o = window.entrarIntranet;
-  if(typeof o === 'function') window.entrarIntranet = async function(){ const r = await o.apply(this, arguments); try { await raicesComprobar(); } catch(e){} return r; };
+  if(typeof o === 'function') window.entrarIntranet = async function(){ const r = await o.apply(this, arguments); try { await raicesComprobar(); } catch(e){} try { await famCargarAsig(); } catch(e){} return r; };
   // Raíces (familias) entra por «Proyectos»: tarjeta arriba de la lista y botón dentro del proyecto «Arrels / Raíces»
   const raPuede = () => !!(window.__raicesMiembro || IS_ADMIN);
   const raTarjeta = () => `<div class="ra-pj-card"><div><div class="ra-sup">🌳 ${acL('Proyecto con familias', 'Projecte amb famílies')} · FSE+</div><strong>Proyecto Raíces: Reconexión Familiar</strong>
@@ -26318,6 +26449,16 @@ async function evProyectoSeccion(proyectoId){
 </script>
 <style>
 .ja-canal{font-size:12px;text-decoration:none;margin-right:2px;}
+.fam-asig-chip{background:#E6EEF9;color:#163F7A;}
+.fam-asig-caja{max-width:460px;text-align:left;} .fam-asig-l{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;margin:8px 0 14px;padding:8px;border:1px solid #E1E6EE;border-radius:10px;}
+.fam-asig-l label{display:flex;gap:8px;align-items:center;font-size:14px;} .fam-sel{width:18px;height:18px;vertical-align:-3px;}
+.fam-hero{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:flex-end;background:linear-gradient(135deg,#1F6B3E 0%,#1B4E95 100%);color:#fff;border-radius:18px;padding:16px 20px;margin-bottom:12px;border-bottom:4px solid #F2BC2C;}
+.fam-hero h2{margin:2px 0 4px;color:#fff;font-size:21px;} .fam-hero p{margin:0;font-size:13px;color:#DDEBDD;max-width:620px;}
+.fam-hero .ev-imp-kpis span{background:rgba(255,255,255,.14);color:#E2ECF8;} .fam-hero .ev-imp-kpis b{color:#fff;}
+.fam-barra{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;} .fam-barra input{flex:1;min-width:200px;padding:9px 12px;border:1px solid #CBD3E0;border-radius:10px;font:inherit;}
+.fam-card{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;background:#fff;border:1px solid #E1E6EE;border-left:5px solid #1F8A4C;border-radius:14px;padding:12px 14px;margin-bottom:8px;}
+.fam-card-c{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1;} .fam-card-c strong{font-size:15.5px;}
+.fam-chips{display:flex;gap:5px;flex-wrap:wrap;} .fam-acc{display:flex;gap:6px;flex-wrap:wrap;} .fam-acc a.m4-btn{text-decoration:none;}
 .ev-ov{position:fixed;inset:0;z-index:9980;background:#F4F2EC;overflow:auto;}
 .ev-pag{max-width:1100px;margin:0 auto;padding:16px 18px 40px;}
 .ev-top{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg,#163F7A 0%,#2463B8 100%);color:#fff;border-radius:18px;padding:14px 18px;margin-bottom:14px;border-bottom:4px solid #F2BC2C;}
