@@ -18324,7 +18324,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-08 · v250 (Canal: corregido el guardado de la portada automática) · antes: v249 (Canal: el aviso de [VERIFICAR] dice idioma y campo, y solo mira lo que se publica) · antes: v248 (LOGOS 360: portadas automáticas con título, categoría y colores elegidos por la IA) · antes: v247 (Canal: centro editorial con IA, cuatro idiomas, fuentes y revisión humana obligatoria) · antes: v246 (Familias asignadas: cada técnico ve solo sus familias, compartidas si hace falta; la administración asigna) · antes: v245 (Apartado Familias: las familias de Jóvenes en acción y de Raíces juntas, con contacto, evaluación y ficha) · antes: v244 (Evaluaciones y contactos con las familias se apuntan como actuaciones: cuentan en la Intranet y se ven en Logos Acompanya; llamar, WhatsApp y Logos Acompanya en cada familia) · antes: v243 (Evaluación de impacto de Logos en Jóvenes en acción y en cada proyecto: entrada, salida y seguimiento, entrevista pantalla a pantalla y panel de impacto) · antes: v242 (Raíces: entrevista de evaluación pantalla a pantalla, con botones de colores, progreso y Anterior/Siguiente) · antes: v241 (Raíces · Familias entra por Proyectos; guion de la entrevista en la evaluación final) · antes: v240 (La lista de proyectos para trabajar con una persona sale de la pantalla Proyectos: los nuevos aparecen, por orden alfabético) · antes: v239 (Proyectos nuevos en los desplegables de actuaciones; aviso de fichaje discreto que no tapa el menú; RR. HH. ve el historial de fichajes solo para consultar) · antes: v238 (Proyecto Raíces en Jóvenes en acción: familias, consentimiento con Logos, presencia y actuaciones que suman atenciones, evaluación con puntuación; solo el equipo del proyecto)';
+const APP_VERSION_INTRANET = '2026-11-08 · v255 (LOGOS 360: banco de imágenes conectado a Pixabay) · antes: v254 (banco de imágenes con 14 carpetas) · antes: v253 (Canal: la portada se ve junto al botón y avisa si falla) · antes: v252 (LOGOS 360: lote de artículos breves y portada propia en cada idioma) · antes: v251 (Canal: limpia las marcas técnicas de la IA; la noticia con IA pasa a artículo completo) · antes: v250 (Canal: corregido el guardado de la portada automática) · antes: v249 (Canal: el aviso de [VERIFICAR] dice idioma y campo, y solo mira lo que se publica) · antes: v248 (LOGOS 360: portadas automáticas con título, categoría y colores elegidos por la IA) · antes: v247 (Canal: centro editorial con IA, cuatro idiomas, fuentes y revisión humana obligatoria) · antes: v246 (Familias asignadas: cada técnico ve solo sus familias, compartidas si hace falta; la administración asigna) · antes: v245 (Apartado Familias: las familias de Jóvenes en acción y de Raíces juntas, con contacto, evaluación y ficha) · antes: v244 (Evaluaciones y contactos con las familias se apuntan como actuaciones: cuentan en la Intranet y se ven en Logos Acompanya; llamar, WhatsApp y Logos Acompanya en cada familia) · antes: v243 (Evaluación de impacto de Logos en Jóvenes en acción y en cada proyecto: entrada, salida y seguimiento, entrevista pantalla a pantalla y panel de impacto) · antes: v242 (Raíces: entrevista de evaluación pantalla a pantalla, con botones de colores, progreso y Anterior/Siguiente) · antes: v241 (Raíces · Familias entra por Proyectos; guion de la entrevista en la evaluación final) · antes: v240 (La lista de proyectos para trabajar con una persona sale de la pantalla Proyectos: los nuevos aparecen, por orden alfabético) · antes: v239 (Proyectos nuevos en los desplegables de actuaciones; aviso de fichaje discreto que no tapa el menú; RR. HH. ve el historial de fichajes solo para consultar) · antes: v238 (Proyecto Raíces en Jóvenes en acción: familias, consentimiento con Logos, presencia y actuaciones que suman atenciones, evaluación con puntuación; solo el equipo del proyecto)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -18676,7 +18676,8 @@ const TEC_SQL = [
   ['70', 'Cifrado de campos sensibles', async () => { const r = await sb.rpc('cifrado_estado'); if(!r.error && r.data && !r.data.clave) return { error: { message: 'falta la clave de cifrado en Vault: does not exist' } }; return r; }],
   ['71', 'Consentimiento v2 y derechos', () => sb.from('solicitudes_derechos').select('id').limit(1)],
   ['73', 'Historial, papelera y deshacer', () => sb.rpc('historial_actividad', { p_limite: 1 })],
-  ['87', 'Canal: centro editorial', () => sb.from('canal_publicaciones').select('ia_asistido').limit(1)]
+  ['87', 'Canal: centro editorial', () => sb.from('canal_publicaciones').select('ia_asistido').limit(1)],
+  ['89', 'Canal: idiomas y portadas', () => sb.rpc('canal_idiomas', { p_donde: 'web' })]
 ];
 const TEC_FALTA = /does not exist|schema cache|Could not find|PGRST20[0-9]|42P01|42703|42883|versión antigua/i;
 async function tecComprobar(){
@@ -18990,6 +18991,7 @@ async function renderCanal(){
   if(error){ c.innerHTML = `<div class="empty-note">${/canal_publicaciones|schema cache|does not exist/i.test(error.message || '') ? acL('El canal se activa con el SQL-65 en Supabase.', 'El canal s\'activa amb l\'SQL-65 a Supabase.') : escAttr(error.message)}</div>`; return; }
   const st = window.__canal; st.lista = (data || []).map(x => (!x.video_url && x.imagen_url && canalVid(x.imagen_url)) ? Object.assign(x, { video_url: x.imagen_url, imagen_url: null }) : x);
   st.sql87 = !(await sb.from('canal_publicaciones').select('ia_asistido').limit(1)).error;
+  st.sql89 = !(await sb.from('canal_publicaciones').select('portadas').limit(1)).error;
   const hoy = isoLocal(), L = st.lista;
   const vivas = L.filter(x => canalEstado(x)[0] === 'vivo'), prox = L.filter(x => x.tipo === 'evento' && x.estado === 'publicado' && (x.fecha_fin || x.fecha_evento) >= hoy);
   const borr = L.filter(x => x.estado === 'borrador');
@@ -18997,7 +18999,7 @@ async function renderCanal(){
     <div class="canal-hero">
       <div><h2>LOGOS 360</h2><p style="font-weight:800;color:var(--gold);margin:0 0 6px;">${acL('Centro Inteligente de Conocimiento y Acción Social', 'Centre Intel·ligent de Coneixement i Acció Social')}</p>
         <p>${acL('Lo que publiques aquí sale solo en la <strong>web logostgn.cat</strong> y en <strong>Logos Acompanya</strong>: noticias, eventos con su fecha en la agenda, anuncios y convocatorias.', 'El que publiquis aquí surt sol al <strong>web logostgn.cat</strong> i a <strong>Logos Acompanya</strong>: notícies, esdeveniments amb la data a l\'agenda, anuncis i convocatòries.')}</p></div>
-      <button class="primary-btn" style="width:auto;margin:0;background:var(--gold);color:#16325A;" onclick="canalEditar()">➕ ${acL('Nueva publicación', 'Nova publicació')}</button>
+      <button class="primary-btn" style="width:auto;margin:0;background:var(--gold);color:#16325A;" onclick="canalEditar()">➕ ${acL('Nueva publicación', 'Nova publicació')}</button>${IS_ADMIN ? `<button class="primary-btn" style="width:auto;margin:0;background:#fff;color:#16325A;" onclick="canalLoteAbrir()">⚡ ${acL('Generar varios', 'Generar-ne uns quants')}</button>` : ''}
     </div>
     <div class="canal-kpis">
       <div><strong class="stat-num">${vivas.length}</strong><span>${acL('publicadas ahora', 'publicades ara')}</span></div>
@@ -19072,7 +19074,7 @@ function canalEditar(id, duplicar){
   const v = k => escAttr(x[k] == null ? '' : String(x[k]));
   const dt = k => { if(!x[k]) return ''; const d = new Date(x[k]); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
   document.getElementById('canal-ov')?.remove();
-  window.__canalIA = { fuentes: Array.isArray(x.fuentes) ? x.fuentes.slice() : [], asistido: !!x.ia_asistido };
+  window.__canalIA = { credito: '', fuentes: Array.isArray(x.fuentes) ? x.fuentes.slice() : [], asistido: !!x.ia_asistido, portadas: x.portadas || {}, cats: Object.assign({}, x.categorias || {}) };
   document.body.insertAdjacentHTML('beforeend', `<div class="canal-ov" id="canal-ov" onclick="if(event.target===this)this.remove()">
     <form class="canal-form" onsubmit="event.preventDefault();canalGuardar('${x.id || ''}', 'publicado')">
       <div class="canal-form-h"><h3>${x.id ? '✏️ ' + acL('Editar publicación', 'Editar publicació') : '➕ ' + acL('Nueva publicación', 'Nova publicació')}</h3><button type="button" class="link-btn" aria-label="${acL('Cerrar', 'Tancar')}" onclick="document.getElementById('canal-ov').remove()">✕</button></div>
@@ -19113,7 +19115,10 @@ function canalEditar(id, duplicar){
       <div class="field"><label>${acL('Imagen (opcional)', 'Imatge (opcional)')}</label>
         <div class="canal-img"><input type="file" id="cf-img-f" accept="image/*" onchange="canalSubirImagen(this)"><input id="cf-img" type="url" placeholder="https://…" value="${v('imagen_url')}" oninput="canalImgOVideo(this)"><span id="cf-img-est" class="subtle" style="font-size:12px;"></span></div>
         <div class="ed-acc" id="cf-portada" style="margin-top:8px;"><button type="button" class="link-btn" style="font-weight:800;" onclick="canalPortadaGenerar()">🎨 ${acL('Generar portada automática', 'Generar portada automàtica')}</button>
-          <label style="font-size:12.5px;">${acL('Idioma del título', 'Idioma del títol')} <select id="cf-portada-l" aria-label="${acL('Idioma del título en la portada', 'Idioma del títol a la portada')}" onchange="canalPortadaSiAuto()"><option value="ca" selected>Català</option><option value="es">Castellano</option><option value="fr">Français</option><option value="en">English</option></select></label></div></div>
+          <label style="font-size:12.5px;">${acL('Idioma del título', 'Idioma del títol')} <select id="cf-portada-l" aria-label="${acL('Idioma del título en la portada', 'Idioma del títol a la portada')}" onchange="canalPortadaSiAuto()"><option value="ca" selected>Català</option><option value="es">Castellano</option><option value="fr">Français</option><option value="en">English</option></select></label></div>
+        <button type="button" class="link-btn" style="font-weight:800;margin-top:6px;" onclick="canalBancoAbrir()">📷 ${acL('Elegir foto del banco', 'Triar foto del banc')}</button>
+        <div id="cf-banco" style="display:none;"></div>
+        <img id="cf-portada-img" alt="${acL('Vista previa de la imagen', 'Vista prèvia de la imatge')}" style="display:none;width:100%;max-width:420px;aspect-ratio:16/9;object-fit:cover;border-radius:12px;margin-top:8px;"></div>
       <div class="field"><label>🎬 ${acL('Vídeo (opcional): enlace de YouTube o Vimeo, o sube un vídeo corto', 'Vídeo (opcional): enllaç de YouTube o Vimeo, o puja un vídeo curt')}</label>
         <div class="canal-img"><input id="cf-video" type="url" placeholder="https://www.youtube.com/watch?v=…" value="${v('video_url')}" oninput="canalPrevia()"><input type="file" id="cf-video-f" accept="video/mp4,video/webm,video/quicktime" onchange="canalSubirVideo(this)"><span id="cf-video-est" class="subtle" style="font-size:12px;">${acL('Mejor YouTube o Vimeo (no ocupa espacio). Si lo subes: MP4, máximo 50 MB. La imagen de arriba se usa como portada del vídeo.', 'Millor YouTube o Vimeo (no ocupa espai). Si el puges: MP4, màxim 50 MB. La imatge de dalt es fa servir com a portada del vídeo.')}</span></div></div>
       <div class="canal-fila"><label>${acL('Enlace (opcional)', 'Enllaç (opcional)')}<input id="cf-enlace" type="url" placeholder="https://…" value="${v('enlace')}"></label><label>${acL('Texto del botón', 'Text del botó')}<input id="cf-enlace-t" maxlength="60" placeholder="${acL('Inscríbete', 'Inscriu-t\'hi')}" value="${v('enlace_texto')}"></label></div>
@@ -19168,11 +19173,12 @@ function canalIaPintar(){
   h.innerHTML = st.fuentes.length ? `<ul class="ed-fuentes">${st.fuentes.map((f, i) => `<li><a href="${escAttr(f.url)}" target="_blank" rel="noopener">${escAttr(f.titulo || f.url)}</a><button type="button" class="link-btn" aria-label="${acL('Quitar fuente', 'Treure font')}" onclick="window.__canalIA.fuentes.splice(${i},1);canalIaPintar()">✕</button></li>`).join('')}</ul>` : `<p class="ed-aviso">${acL('Este contenido no tiene fuentes guardadas: compruébalo con especial cuidado.', 'Aquest contingut no té fonts desades: comprova\'l amb especial cura.')}</p>`;
 }
 // ---------- Portada automática (v248): se dibuja aquí y solo se sube al guardar ----------
-function canalPortadaDatos(){
+const CANAL_TIPO_L = { fr: { noticia: 'Actualité', articulo: 'Article', evento: 'Événement', anuncio: 'Annonce', convocatoria: 'Appel' }, en: { noticia: 'News', articulo: 'Article', evento: 'Event', anuncio: 'Notice', convocatoria: 'Call' } };
+function canalPortadaDatos(lang){
   const g = k => ((document.getElementById(k) || {}).value || '').trim();
-  const l = g('cf-portada-l') || 'ca', tipo = (document.querySelector('input[name=cf-tipo]:checked') || {}).value || 'noticia', t = CANAL_TIPOS[tipo] || CANAL_TIPOS.noticia;
+  const l = lang || g('cf-portada-l') || 'ca', tipo = (document.querySelector('input[name=cf-tipo]:checked') || {}).value || 'noticia', t = CANAL_TIPOS[tipo] || CANAL_TIPOS.noticia;
   const cats = (window.__canalIA && window.__canalIA.cats) || {};
-  return { titulo: (l !== 'es' && g('cf-titulo-' + l)) || g('cf-titulo'), categoria: (l !== 'es' && cats[l]) || (tipo === 'articulo' ? g('cf-cat') : '') || (l === 'ca' ? t[2] : t[1]), color: (document.querySelector('input[name=cf-color]:checked') || {}).value || 'azul' };
+  return { titulo: (l !== 'es' && g('cf-titulo-' + l)) || g('cf-titulo'), categoria: (l !== 'es' && cats[l]) || (tipo === 'articulo' ? g('cf-cat') : '') || (CANAL_TIPO_L[l] && CANAL_TIPO_L[l][tipo]) || (l === 'ca' ? t[2] : t[1]), color: (document.querySelector('input[name=cf-color]:checked') || {}).value || 'azul' };
 }
 async function canalPortadaDibujar(d){
   const W = 1600, H = 900, M = 110, c = BLOG_COLORES[d.color] || BLOG_COLORES.azul, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
@@ -19195,7 +19201,9 @@ async function canalPortadaDibujar(d){
 async function canalPortadaGenerar(){
   const d = canalPortadaDatos(), est = document.getElementById('cf-img-est'), inp = document.getElementById('cf-img');
   if(d.titulo.length < 3){ est.textContent = '⚠️ ' + acL('Escribe primero el título.', 'Escriu primer el títol.'); return; }
-  inp.value = await canalPortadaDibujar(d); inp.style.color = 'transparent';
+  est.textContent = '⏳ ' + acL('Generando la portada…', 'Generant la portada…');
+  try { inp.value = await canalPortadaDibujar(d); inp.style.color = 'transparent'; }
+  catch(e){ est.textContent = '⚠️ ' + acL('No se ha podido generar la portada: ', 'No s\'ha pogut generar la portada: ') + (e.message || e); return; }
   est.textContent = '✅ ' + acL('Portada generada: se guarda al guardar o publicar.', 'Portada generada: es desa en desar o publicar.'); canalPrevia();
 }
 function canalPortadaSiAuto(){ const v = (document.getElementById('cf-img') || {}).value || ''; if(!v || v.startsWith('data:image/')) return canalPortadaGenerar(); }
@@ -19205,6 +19213,99 @@ async function canalPortadaSubir(dataUrl){
   const { error } = await sb.storage.from('canal').upload(ruta, blob, { contentType: 'image/jpeg', upsert: false });
   if(error) throw error;
   return sb.storage.from('canal').getPublicUrl(ruta).data.publicUrl;
+}
+// ---------- Lote de artículos breves (v252): todo queda en «Por revisar» ----------
+const CANAL_LOTE_TEMAS = [['Alimentación saludable', 'Alimentació saludable', 'verde'], ['Cuidados y acompañamiento en casa', 'Cures i acompanyament a casa', 'turquesa'], ['Deporte y actividad física', 'Esport i activitat física', 'verde'], ['Psicología positiva y bienestar', 'Psicologia positiva i benestar', 'dorado'], ['Envejecimiento activo', 'Envelliment actiu', 'turquesa'], ['Servicios sociales: cómo orientarse y pedir ayuda', 'Serveis socials: com orientar-se i demanar ajuda', 'azul'], ['Educación, infancia y juventud', 'Educació, infància i joventut', 'dorado'], ['Familias e inclusión', 'Famílies i inclusió', 'morado'], ['Voluntariado y comunidad', 'Voluntariat i comunitat', 'morado']];
+function canalLoteAbrir(){
+  if(!window.__canal.sql87 || !window.__canal.sql89){ alert(acL('Antes hay que ejecutar en Supabase el SQL-87 y el SQL-89.', 'Abans cal executar a Supabase l\'SQL-87 i l\'SQL-89.')); return; }
+  document.getElementById('canal-lote')?.remove();
+  document.body.insertAdjacentHTML('beforeend', `<div class="canal-ov" id="canal-lote"><div class="canal-form">
+    <div class="canal-form-h"><h3>⚡ ${acL('Generar varios artículos breves', 'Generar uns quants articles breus')}</h3><button type="button" class="link-btn" id="lote-x" aria-label="${acL('Cerrar', 'Tancar')}" onclick="document.getElementById('canal-lote').remove()">✕</button></div>
+    <p class="subtle" style="font-size:13px;margin:0 0 10px;">${acL('Cada artículo se prepara con su portada y en cuatro idiomas, y queda en «Por revisar». No se publica ninguno sin vuestra revisión.', 'Cada article es prepara amb la portada i en quatre idiomes, i queda a «Per revisar». No se\'n publica cap sense la vostra revisió.')}</p>
+    <div class="canal-checks" style="flex-direction:column;gap:6px;">${CANAL_LOTE_TEMAS.map((t, i) => `<label><input type="checkbox" class="lote-t" value="${i}" ${i < 5 ? 'checked' : ''}> ${LANG_I === 'ca' ? t[1] : t[0]}</label>`).join('')}</div>
+    <div class="field"><label>${acL('¿Cuántos artículos?', 'Quants articles?')}</label><select id="lote-n"><option>3</option><option selected>5</option><option>8</option><option>10</option></select></div>
+    <div class="field"><label>${acL('Imagen', 'Imatge')}</label><select id="lote-img"><option value="foto">${acL('Foto real del banco (Pixabay)', 'Foto real del banc (Pixabay)')}</option><option value="diseno">${acL('Portada de diseño con título', 'Portada de disseny amb títol')}</option></select></div>
+    <p class="ed-aviso">${acL('Tarda unos 2 minutos por artículo y gasta saldo de la API. Deja esta ventana abierta hasta que termine.', 'Triga uns 2 minuts per article i gasta saldo de l\'API. Deixa aquesta finestra oberta fins que acabi.')}</p>
+    <ul class="ed-fuentes" id="lote-prog" role="status"></ul>
+    <div class="canal-form-pie"><span></span><button type="button" class="primary-btn" id="lote-go" style="width:auto;margin:0;" onclick="canalLoteIniciar()">⚡ ${acL('Empezar', 'Començar')}</button></div>
+  </div></div>`);
+}
+async function canalLoteUno(tema, evitar, usadas, conFoto){
+  const d = await canalIaLlamar({ accion: 'redactar', breve: true, modo: 'web', tipo: 'articulo', evitar, tema: tema[0] + '. Artículo breve, práctico y atemporal, con un enfoque concreto, útil para las personas y familias de Tarragona.' });
+  if(!d.titulo || !d.cuerpo) throw new Error(acL('Respuesta incompleta', 'Resposta incompleta'));
+  const color = BLOG_COLORES[d.color] ? d.color : tema[2], campos = { titulo: d.titulo, subtitulo: d.subtitulo, texto: d.texto, cuerpo: d.cuerpo, categoria: d.categoria };
+  const tr = {}, fallos = [];
+  await Promise.all(['ca', 'fr', 'en'].map(async l => { try { tr[l] = await canalIaLlamar({ accion: 'traducir', idioma: l, campos }); } catch(e){ fallos.push(l); tr[l] = {}; } }));
+  const portadas = {}, cats = {};
+  let foto = null, sinFoto = false; if(conFoto){ try { foto = await canalLoteFoto(tema, usadas); } catch(_){} sinFoto = !foto; }
+  for(const l of ['es', 'ca', 'fr', 'en']){ if(l !== 'es' && tr[l].categoria) cats[l] = canalLimpiar(tr[l].categoria); if(foto) continue; portadas[l] = await canalPortadaSubir(await canalPortadaDibujar({ titulo: canalLimpiar(l === 'es' ? d.titulo : (tr[l].titulo || d.titulo)), categoria: l === 'es' ? canalLimpiar(d.categoria) : (cats[l] || canalLimpiar(d.categoria)), color })); }
+  const c = (o, k) => canalLimpiar(o[k] || '') || null;
+  const fila = { tipo: 'articulo', estado: 'borrador', titulo: canalLimpiar(d.titulo), subtitulo: c(d, 'subtitulo'), texto: c(d, 'texto'), cuerpo: canalLimpiar(d.cuerpo), categoria: c(d, 'categoria'), color, imagen_url: foto ? foto.url : portadas.ca, portadas: foto ? {} : portadas, categorias: cats, fuentes: d.fuentes || [], ia_asistido: true, en_web: true, en_acompanya: true, destacado: false, publicar_desde: new Date().toISOString(), autor_email: String(CURRENT_USER.email).toLowerCase(), autor_nombre: CURRENT_USER_NOMBRE || null };
+  ['ca', 'fr', 'en'].forEach(l => ['titulo', 'subtitulo', 'texto', 'cuerpo'].forEach(k => { fila[k + '_' + l] = c(tr[l], k); }));
+  if(foto && foto.credito) ['cuerpo', 'cuerpo_ca', 'cuerpo_fr', 'cuerpo_en'].forEach(k => { if(fila[k]) fila[k] += '\n\n' + foto.credito; });
+  const r = await sb.from('canal_publicaciones').insert(fila);
+  if(r.error) throw new Error(r.error.message);
+  return { titulo: fila.titulo, fallos, sinFoto };
+}
+async function canalLoteIniciar(){
+  const sel = [...document.querySelectorAll('.lote-t:checked')].map(i => CANAL_LOTE_TEMAS[+i.value]), n = +document.getElementById('lote-n').value, go = document.getElementById('lote-go'), x = document.getElementById('lote-x'), pr = document.getElementById('lote-prog');
+  if(!sel.length){ pr.innerHTML = `<li>⚠️ ${acL('Elige al menos un tema.', 'Tria almenys un tema.')}</li>`; return; }
+  go.disabled = true; x.style.display = 'none'; pr.innerHTML = '';
+  const evitar = window.__canal.lista.map(y => y.titulo).filter(Boolean).slice(0, 60), usadas = new Set(), conFoto = document.getElementById('lote-img').value === 'foto'; let ok = 0;
+  for(let i = 0; i < n; i++){
+    const tema = sel[i % sel.length], li = document.createElement('li'); li.textContent = `⏳ ${i + 1}/${n} · ${LANG_I === 'ca' ? tema[1] : tema[0]}…`; pr.appendChild(li);
+    try { const r = await canalLoteUno(tema, evitar, usadas, conFoto); evitar.push(r.titulo); ok++; li.textContent = '✅ ' + r.titulo + (r.sinFoto ? ' · ⚠️ ' + acL('sin foto: lleva portada de diseño', 'sense foto: porta portada de disseny') : '') + (r.fallos.length ? ' · ⚠️ ' + acL('falta traducir: ', 'falta traduir: ') + r.fallos.join(', ') : ''); }
+    catch(e){ li.textContent = '⚠️ ' + (e.message || e); if(/l[ií]mite/i.test(e.message || '')) break; }
+  }
+  x.style.display = ''; go.style.display = 'none';
+  const fin = document.createElement('li'); fin.innerHTML = `<strong>${ok} ${acL('listos en «Por revisar».', 'llestos a «Per revisar».')}</strong>`; pr.appendChild(fin);
+  window.__canal.filtro = 'revisar'; renderCanal();
+}
+// ---------- Banco de imágenes Logos: 14 carpetas + fotos libres de Pixabay ----------
+const CANAL_BANCO = [['01_SOCIALES', 'Sociales'], ['02_EDUCACION', 'Educación'], ['03_ADMINISTRACION', 'Administración'], ['04_ALIMENTACION', 'Alimentación'], ['05_MAYORES_CUIDADOS', 'Mayores y cuidados'], ['06_JUVENTUD_FAMILIAS', 'Juventud y familias'], ['07_TECNOLOGIA', 'Tecnología'], ['08_COMUNIDAD_CULTURA', 'Comunidad y cultura'], ['09_DISCAPACIDAD', 'Discapacidad'], ['10_VIVIENDA', 'Vivienda'], ['11_ORIENTACION', 'Orientación'], ['12_DEPORTE_OCIO', 'Deporte y ocio'], ['13_MEDIOAMBIENTE', 'Medio ambiente'], ['14_VOLUNTARIADO', 'Voluntariado']];
+function canalCredito(nombre){ const m = String(nombre || '').match(/^pixabay-(\d+)--(.+)\.jpg$/i); return m ? `*Foto: [${m[2].replace(/-/g, ' ')}](https://pixabay.com/photos/id-${m[1]}/) · Pixabay*` : ''; }
+function canalBancoAbrir(){
+  const h = document.getElementById('cf-banco'); if(!h) return;
+  if(h.style.display === 'block'){ h.style.display = 'none'; return; }
+  h.style.display = 'block';
+  h.innerHTML = `<div class="ed-ia" style="margin-top:8px;"><div class="canal-fila"><label>${acL('Carpeta', 'Carpeta')}<select id="bn-c" style="padding:9px;border-radius:10px;" onchange="canalBancoCargar()">${CANAL_BANCO.map(c => `<option value="${c[0]}">${c[1]}</option>`).join('')}</select></label><label>${acL('Buscar (opcional)', 'Cercar (opcional)')}<input id="bn-q" maxlength="80" placeholder="${acL('Ej.: mujer mayor cocinando', 'Ex.: dona gran cuinant')}"></label></div>
+    <div class="ed-acc"><button type="button" class="primary-btn" style="width:auto;margin:0;background:#16325A;" onclick="canalBancoBuscar()">🔎 ${acL('Buscar fotos libres', 'Cercar fotos lliures')}</button>${IS_ADMIN ? `<label class="link-btn" style="cursor:pointer;">⬆️ ${acL('Añadir al banco', 'Afegir al banc')}<input type="file" accept="image/*" style="display:none" onchange="canalBancoSubir(this)"></label>` : ''}<span class="ed-est" id="bn-est" role="status"></span></div>
+    <div id="bn-g" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:10px;"></div>
+    <p class="ed-aviso">${acL('Sube solo fotos propias o con licencia, y con consentimiento de las personas que aparecen. Nunca menores reconocibles.', 'Puja només fotos pròpies o amb llicència, i amb consentiment de les persones que hi apareixen. Mai menors reconeixibles.')}</p></div>`;
+  canalBancoCargar();
+}
+function canalBancoPintar(items, pexels){
+  const g = document.getElementById('bn-g'); if(!g) return; window.__bnItems = items;
+  g.innerHTML = items.map((it, i) => `<button type="button" title="${escAttr(it.alt || '')}" aria-label="${escAttr(it.alt || acL('Foto', 'Foto'))}" style="padding:0;border:2px solid transparent;border-radius:10px;overflow:hidden;cursor:pointer;background:none;aspect-ratio:4/3;" onclick="canalBancoElegir(${i},${pexels ? 1 : 0})"><img src="${escAttr(it.thumb)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;"></button>`).join('');
+}
+async function canalBancoCargar(){
+  const c = document.getElementById('bn-c').value, e = document.getElementById('bn-est'); e.textContent = '⏳';
+  const { data, error } = await sb.storage.from('canal').list('banco/' + c, { limit: 200, sortBy: { column: 'created_at', order: 'desc' } });
+  const L = (data || []).filter(f => /\.(jpe?g|png|webp)$/i.test(f.name)).map(f => { const url = sb.storage.from('canal').getPublicUrl(`banco/${c}/${f.name}`).data.publicUrl; return { url, thumb: url, nombre: f.name }; });
+  canalBancoPintar(L, false); e.textContent = error ? '⚠️ ' + error.message : (L.length ? L.length + ' ' + acL('fotos en esta carpeta', 'fotos en aquesta carpeta') : acL('Carpeta vacía: busca fotos libres.', 'Carpeta buida: cerca fotos lliures.'));
+}
+async function canalBancoBuscar(){
+  const e = document.getElementById('bn-est'); e.textContent = '⏳ ' + acL('Buscando…', 'Cercant…');
+  try { const d = await canalIaLlamar({ accion: 'imagenes', carpeta: document.getElementById('bn-c').value, q: document.getElementById('bn-q').value.trim() }); canalBancoPintar((d.fotos || []).map(f => Object.assign({ thumb: f.miniatura }, f)), true); e.textContent = (d.fotos || []).length ? acL('Toca una foto para usarla.', 'Toca una foto per fer-la servir.') : acL('Sin resultados.', 'Sense resultats.'); }
+  catch(x){ e.textContent = '⚠️ ' + x.message; }
+}
+async function canalBancoElegir(i, pexels){
+  const it = window.__bnItems[i], e = document.getElementById('bn-est'), inp = document.getElementById('cf-img'); let url = it.url, nombre = it.nombre;
+  if(pexels){ e.textContent = '⏳ ' + acL('Guardando en el banco…', 'Desant al banc…'); try { const d = await canalIaLlamar({ accion: 'imagen_guardar', carpeta: document.getElementById('bn-c').value, foto: it }); url = d.url; nombre = d.nombre; } catch(x){ e.textContent = '⚠️ ' + x.message; return; } }
+  inp.value = url; inp.style.color = ''; window.__canalIA.credito = canalCredito(nombre); e.textContent = '✅ ' + acL('Foto elegida.', 'Foto triada.'); canalPrevia();
+}
+async function canalBancoSubir(inp){
+  const file = inp.files && inp.files[0], e = document.getElementById('bn-est'); if(!file) return; e.textContent = '⏳';
+  try {
+    const blob = await new Promise((ok, ko) => { const img = new Image(); img.onload = () => { const k = Math.min(1, 1600 / Math.max(img.width, img.height)), cv = document.createElement('canvas'); cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); cv.toBlob(b => b ? ok(b) : ko(new Error('imagen')), 'image/jpeg', .85); }; img.onerror = () => ko(new Error(acL('No es una imagen válida', 'No és una imatge vàlida'))); img.src = URL.createObjectURL(file); });
+    const { error } = await sb.storage.from('canal').upload(`banco/${document.getElementById('bn-c').value}/${Date.now()}.jpg`, blob, { contentType: 'image/jpeg', upsert: false }); if(error) throw error; canalBancoCargar();
+  } catch(x){ e.textContent = '⚠️ ' + (x.message || x); }
+}
+const CANAL_LOTE_CARPETA = ['04_ALIMENTACION', '05_MAYORES_CUIDADOS', '12_DEPORTE_OCIO', '11_ORIENTACION', '05_MAYORES_CUIDADOS', '01_SOCIALES', '02_EDUCACION', '06_JUVENTUD_FAMILIAS', '14_VOLUNTARIADO'];
+async function canalLoteFoto(tema, usadas){
+  const carpeta = CANAL_LOTE_CARPETA[CANAL_LOTE_TEMAS.indexOf(tema)], d = await canalIaLlamar({ accion: 'imagenes', carpeta, pagina: 1 + Math.floor(Math.random() * 3) });
+  const f = (d.fotos || []).find(x => !usadas.has(x.id)); if(!f) return null; usadas.add(f.id);
+  const g = await canalIaLlamar({ accion: 'imagen_guardar', carpeta, foto: f }); return { url: g.url, credito: canalCredito(g.nombre) };
 }
 async function canalIaLlamar(body){
   let res;
@@ -19218,10 +19319,12 @@ function canalIaOcupado(on, msg){
   ['cf-ia-b1', 'cf-ia-b2'].forEach(k => { const b = document.getElementById(k); if(b) b.disabled = on; });
   const e = document.getElementById('cf-ia-est'); if(e) e.textContent = msg || '';
 }
-function canalPon(id, val){ const el = document.getElementById(id); if(el && val != null) el.value = val; }
+function canalLimpiar(t){ return String(t == null ? '' : t).replace(/<\/?cite\b[^>]*>/gi, ''); }
+function canalPon(id, val){ const el = document.getElementById(id); if(el && val != null) el.value = canalLimpiar(val); }
 async function canalIaRedactar(){
   const tema = document.getElementById('cf-ia-tema').value.trim(), notas = document.getElementById('cf-ia-notas').value.trim(), modo = document.getElementById('cf-ia-modo').value;
-  const tipo = (document.querySelector('input[name=cf-tipo]:checked') || {}).value || 'noticia';
+  let tipo = (document.querySelector('input[name=cf-tipo]:checked') || {}).value || 'noticia';
+  if(tipo === 'noticia'){ const ra = document.querySelector('input[name=cf-tipo][value=articulo]'); if(ra){ ra.checked = true; tipo = 'articulo'; canalFormTipo(); } }
   if(tema.length < 5){ canalIaOcupado(false, '⚠️ ' + acL('Escribe primero el tema.', 'Escriu primer el tema.')); return; }
   if(modo === 'texto' && notas.length < 40){ canalIaOcupado(false, '⚠️ ' + acL('Pega el texto de la fuente.', 'Enganxa el text de la font.')); return; }
   if((document.getElementById('cf-titulo').value.trim() || document.getElementById('cf-texto').value.trim()) && !confirm(acL('Ya hay texto escrito y se va a sustituir. ¿Continuar?', 'Ja hi ha text escrit i se substituirà. Continuar?'))) return;
@@ -19275,6 +19378,7 @@ function canalImgOVideo(inp){
 }
 function canalPrevia(){
   const host = document.getElementById('cf-previa'); if(!host) return;
+  const thumb = document.getElementById('cf-portada-img'), thumbV = ((document.getElementById('cf-img') || {}).value || '').trim(); if(thumb){ if(thumbV){ if(thumb.getAttribute('src') !== thumbV) thumb.src = thumbV; thumb.style.display = 'block'; } else { thumb.removeAttribute('src'); thumb.style.display = 'none'; } }
   const t = CANAL_TIPOS[(document.querySelector('input[name=cf-tipo]:checked') || {}).value || 'noticia'];
   const tit = document.getElementById('cf-titulo').value.trim(), tx = document.getElementById('cf-texto').value.trim(), img = document.getElementById('cf-img').value.trim(), f = document.getElementById('cf-fecha').value;
   const tipo = (document.querySelector('input[name=cf-tipo]:checked') || {}).value;
@@ -19406,10 +19510,12 @@ async function canalGuardar(id, estado){
   }
   if(tipo === 'publicidad') Object.assign(fila, { entidad: (g('cf-entidad') || '').trim(), formato: g('cf-formato') || 'horizontal', estilo: (document.querySelector('input[name=cf-estilo]:checked') || {}).value || 'azul' });
   if(tipo !== 'evento'){ fila.fecha_evento = null; }
+  Object.keys(fila).forEach(k => { if(/^(titulo|subtitulo|texto|cuerpo)(_|$)/.test(k) && typeof fila[k] === 'string') fila[k] = canalLimpiar(fila[k]); });
   const ia = window.__canalIA || { fuentes: [], asistido: false };
+  if(ia.credito && tipo === 'articulo' && fila.imagen_url && String(fila.imagen_url).includes('/banco/')) ['cuerpo', 'cuerpo_ca'].forEach(k => { if(fila[k] && !fila[k].includes(ia.credito)) fila[k] += '\n\n' + ia.credito; });
   if(window.__canal.sql87){
     Object.assign(fila, { titulo_fr: nz(g('cf-titulo-fr')), titulo_en: nz(g('cf-titulo-en')), texto_fr: nz(g('cf-texto-fr')), texto_en: nz(g('cf-texto-en')), fuentes: ia.fuentes, ia_asistido: !!ia.asistido });
-    if(tipo === 'articulo') Object.assign(fila, { subtitulo_fr: nz(g('cf-sub-fr')), subtitulo_en: nz(g('cf-sub-en')), cuerpo_fr: nz(g('cf-cuerpo-fr')), cuerpo_en: nz(g('cf-cuerpo-en')) });
+    if(tipo === 'articulo'){ Object.assign(fila, { subtitulo_fr: nz(g('cf-sub-fr')), subtitulo_en: nz(g('cf-sub-en')), cuerpo_fr: nz(g('cf-cuerpo-fr')), cuerpo_en: nz(g('cf-cuerpo-en')) }); if(ia.credito && String(fila.imagen_url || '').includes('/banco/')) ['cuerpo_fr', 'cuerpo_en'].forEach(k => { if(fila[k] && !fila[k].includes(ia.credito)) fila[k] += '\n\n' + ia.credito; }); }
     const rev = !!(document.getElementById('cf-rev') || {}).checked && !!ia.asistido;
     if(ia.asistido && estado === 'publicado'){
       if(!rev) return fallo(acL('Este contenido se ha preparado con IA: marca la casilla de revisión antes de publicar.', 'Aquest contingut s\'ha preparat amb IA: marca la casella de revisió abans de publicar.'));
@@ -19422,6 +19528,14 @@ async function canalGuardar(id, estado){
   }
   if(fila.fecha_fin && fila.fecha_fin < fila.fecha_evento) return fallo(acL('La fecha «hasta» es anterior al día del evento.', 'La data «fins a» és anterior al dia de l\'esdeveniment.'));
   if(estado === 'publicado' && !fila.en_web && !fila.en_acompanya) return fallo(acL('Marca dónde sale: web, Logos Acompanya o las dos.', 'Marca on surt: web, Logos Acompanya o les dues.'));
+  if(String(fila.imagen_url || '').startsWith('data:image/') && window.__canal.sql89){
+    try {
+      const map = {};
+      for(const l of ['es', 'ca', 'fr', 'en']) map[l] = await canalPortadaSubir(await canalPortadaDibujar(canalPortadaDatos(l)));
+      fila.imagen_url = map.ca; fila.portadas = map; const ci = document.getElementById('cf-img'); ci.value = map.ca; ci.style.color = ''; ia.portadas = map;
+    } catch(e){ return fallo(acL('No se ha podido guardar la portada: ', 'No s\'ha pogut desar la portada: ') + escAttr(e.message || e)); }
+  } else if(window.__canal.sql89){ fila.portadas = Object.values(ia.portadas || {}).includes(fila.imagen_url) ? ia.portadas : {}; }
+  if(window.__canal.sql89) fila.categorias = ia.cats || {};
   if(String(fila.imagen_url || '').startsWith('data:image/')){
     try { fila.imagen_url = await canalPortadaSubir(fila.imagen_url); const ci = document.getElementById('cf-img'); ci.value = fila.imagen_url; ci.style.color = ''; }
     catch(e){ return fallo(acL('No se ha podido guardar la portada: ', 'No s\'ha pogut desar la portada: ') + escAttr(e.message || e)); }
