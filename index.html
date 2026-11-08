@@ -412,25 +412,24 @@
   .persona-tabs .ptab-btn.active{background:var(--navy,#1d3557);color:#fff;border-color:var(--navy,#1d3557);}
   .persona-tabs .ptab-btn.secundaria{font-size:13px;font-weight:600;color:var(--ink-soft);background:#faf8f2;}
   .persona-tabs .ptab-btn.secundaria.active{color:#fff;}
-  body.con-fichaje{padding-bottom:52px;}
-  .fichaje-banner{position:fixed;left:0;right:0;bottom:0;z-index:9990;background:#7A1F1F;color:#fff;padding:9px 14px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:13.5px;box-shadow:0 -3px 12px rgba(0,0,0,.25);}
-  .fichaje-banner.tarde{background:#B23A0E;}
-  .fichaje-banner button{background:#fff;color:#7A1F1F;border:0;border-radius:8px;padding:7px 14px;font-weight:700;cursor:pointer;font-family:var(--font-body);}
+  /* (v-fichaje-discreto) El aviso de fichaje ya no es una barra fija: va arriba del contenido, en su sitio, y no tapa nada (menú, Configuración, Cerrar sesión). */
+  body.con-fichaje{}
+  .fichaje-banner{position:static;margin:0 0 4px;background:#FBF3DC;color:var(--navy,#1d3557);border-bottom:1.5px solid var(--gold,#C9A227);padding:6px 14px;display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;font-size:12.5px;}
+  .fichaje-banner.tarde{background:#FDE7DC;border-bottom-color:#B23A0E;color:#7A2A0E;}
+  .fichaje-banner button{background:#fff;color:var(--navy,#1d3557);border:1.5px solid var(--line,#ddd);border-radius:8px;padding:4px 10px;font-weight:700;font-size:12.5px;cursor:pointer;font-family:var(--font-body);}
+  .fichaje-banner.tarde button.fb-salida{background:#B23A0E;color:#fff;border-color:#B23A0E;}
   .fichaje-banner .fb-corto{display:none;}
-  .fichaje-banner .fb-sala{background:var(--gold);color:var(--navy);}
+  .fichaje-banner .fb-sala{background:var(--gold);color:var(--navy);border-color:var(--gold);}
   .sala-pick-fila{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px;font-weight:700;}
   .sala-pick-fila > div{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
   .sala-pick{min-width:58px;padding:7px 10px;border-radius:10px;border:2px solid var(--good);background:var(--good-soft,#E8F5EC);color:var(--navy);font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.1;font-family:var(--font-body);}
   .sala-pick small{font-weight:400;font-size:10.5px;color:var(--ink-soft);}
   .sala-pick:hover:not(:disabled){background:var(--good);color:#fff;} .sala-pick:hover:not(:disabled) small{color:#fff;}
   .sala-pick.ocupada{border-color:var(--line);background:#F3F4F6;opacity:.6;cursor:not-allowed;}
-  body.con-fichaje > .asistente-btn{bottom:74px;}
   @media (max-width:760px){
-    .fichaje-banner{top:0;bottom:auto;padding:6px 10px;gap:8px;font-size:13px;flex-wrap:nowrap;justify-content:space-between;box-shadow:0 3px 10px rgba(0,0,0,.25);}
+    .fichaje-banner{padding:5px 10px;gap:8px;font-size:12.5px;flex-wrap:nowrap;justify-content:space-between;}
     .fichaje-banner .fb-largo{display:none;} .fichaje-banner .fb-corto{display:inline;}
-    .fichaje-banner button{padding:6px 12px;font-size:13px;white-space:nowrap;}
-    body.con-fichaje{padding-bottom:0;padding-top:44px;}
-    body.con-fichaje > .asistente-btn{bottom:134px !important;}
+    .fichaje-banner button{padding:4px 10px;font-size:12.5px;white-space:nowrap;}
   }
   .nota-trabajo{background:var(--ochre-soft);border:2px solid var(--ochre);border-radius:12px;padding:12px 14px;margin:0 0 10px;font-size:14px;line-height:1.5;}
   .nota-trabajo strong.t{display:block;font-size:15px;color:#7A4A1F;margin-bottom:2px;}
@@ -2098,6 +2097,7 @@ body.m3-sin-scroll{overflow:hidden;}
         <button data-target="gestionpersonal" data-rh="personas" onclick="rrhhIr('personas', this)">👥 Por persona</button>
         <button data-target="gestionpersonal" data-rh="horarios" onclick="rrhhIr('horarios', this)">🕘 Horarios del personal</button>
         <button data-target="gestionpersonal" data-rh="vacaciones" onclick="rrhhIr('vacaciones', this)">🌴 Vacaciones <span class="cmp-n" id="vac-nav-n" style="display:none;margin-left:6px;background:#D6336C;color:#fff;border-radius:999px;font-size:11px;padding:0 6px;"></span></button>
+        <button data-target="gestionpersonal" data-rh="fichajes" onclick="rrhhIr('fichajes', this)">🕒 Historial de fichajes</button>
         <button data-target="gestionpersonal" data-rh="comunicados" onclick="rrhhIr('comunicados', this)">📣 Comunicados</button>
         <button data-target="gestionpersonal" data-rh="avisos" onclick="rrhhIr('avisos', this)">📰 Noticias y recordatorios</button>
         <button data-target="gestionpersonal" data-rh="docgen" onclick="rrhhIr('docgen', this)">📄 Documentos generales</button>
@@ -2502,6 +2502,7 @@ const SUPABASE_KEY = 'sb_publishable_Ght82ml0pvg0_nQvunlXVA_u0WjRscq';
     try {
       const url = typeof input === 'string' ? input : (input && input.url) || '';
       const m = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+      if(r.ok && m !== 'GET' && /\/rest\/v1\/proyectos(?:\?|$)/.test(url) && typeof proyectosLogosRefrescar === 'function') setTimeout(proyectosLogosRefrescar, 300);   // proyecto nuevo o cambiado → desplegables al día
       if(r.ok && (m === 'DELETE' || m === 'PATCH') && typeof hcAvisoDeshacer === 'function'){
         const t = /\/rest\/v1\/([a-z_]+)(?:\?|$)/.exec(url);
         if(t && VIGILADAS.has(t[1])) hcAvisoDeshacer(m, t[1]);
@@ -3876,6 +3877,7 @@ async function checkStaff(){
   if(IS_STAFF && !VER_COMO) setTimeout(() => { try { staffPedirTelefono(false); } catch(e){} }, 2500);
   aplicarMenuPorRol();
   if(IS_STAFF) fichajeRefrescar();
+  if(IS_STAFF) proyectosLogosRefrescar();
   // Datos nuevos (contraseña propia y reparto de alertas). Si el SQL aún no está en Supabase se ignoran y todo sigue como antes.
   CLAVE_CAMBIADA = true; REPARTO_OK = false; JOVENES_OK = false; GP_OK = false; HR_OK = false; DELEGACION_OK = false;
   if(IS_STAFF){
@@ -4590,7 +4592,7 @@ function fichajePintarBanner(){
   const f = window.__fichajeAbierto;
   if(!f){ if(b) b.remove(); document.body.classList.remove('con-fichaje'); return; }
   const hora = new Date(f.entrada).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-  if(!b){ b = document.createElement('div'); b.id = 'fichaje-banner'; document.body.appendChild(b); }
+  if(!b){ b = document.createElement('div'); b.id = 'fichaje-banner'; b.setAttribute('role', 'status'); const mn = document.querySelector('.main'); if(mn) mn.insertBefore(b, mn.firstChild); else document.body.appendChild(b); }
   document.body.classList.add('con-fichaje');
   b.className = 'fichaje-banner';
   b.style.cssText = '';
@@ -4598,11 +4600,11 @@ function fichajePintarBanner(){
   const pasado = finTurno && Date.now() > finTurno.getTime() + 30 * 60000;
   const hFin = finTurno ? finTurno.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '';
   b.classList.toggle('tarde', !!pasado);
-  b.innerHTML = `<span class="fb-largo">${pasado ? `⏰ ${acL('Tu horario terminó a las', 'El teu horari va acabar a les')} <strong>${hFin}</strong>. ${acL('¿Te has olvidado de fichar la salida?', 'T\'has oblidat de fitxar la sortida?')}` : `🔴 ${acL('Tienes la entrada fichada desde las', 'Tens l\'entrada fitxada des de les')} <strong>${hora}</strong>. ${acL('Ficha la salida antes de cerrar el ordenador.', 'Fitxa la sortida abans de tancar l\'ordinador.')}`}</span>
-    <span class="fb-corto">${pasado ? `⏰ ${acL('Horario acabado', 'Horari acabat')} (${hFin})` : `🔴 ${acL('Entrada', 'Entrada')} ${hora}`}</span>
+  b.innerHTML = `<span class="fb-largo">${pasado ? `⏰ ${acL('Tu horario terminó a las', 'El teu horari va acabar a les')} <strong>${hFin}</strong>. ${acL('¿Te has olvidado de fichar la salida?', 'T\'has oblidat de fitxar la sortida?')}` : `🟢 ${acL('Entrada fichada desde las', 'Entrada fitxada des de les')} <strong>${hora}</strong> · ${acL('recuerda fichar la salida al acabar', 'recorda fitxar la sortida en acabar')}`}</span>
+    <span class="fb-corto">${pasado ? `⏰ ${acL('Horario acabado', 'Horari acabat')} (${hFin})` : `🟢 ${acL('Entrada', 'Entrada')} ${hora}`}</span>
     ${('entrada_lat' in f) ? (() => { const l = fichLugarTxt(f.entrada_lat, f.entrada_lng, f.entrada_precision, (f.entrada_modo === 'puesto' || f.entrada_modo === 'validado') ? (f.entrada_puesto || acL('ordenador de la oficina', 'ordinador de l\'oficina')) : null); return `<span class="fb-lugar fb-largo" title="${acL('Desde dónde has fichado la entrada', 'Des d\'on has fitxat l\'entrada')}">${l.i} ${escAttr(l.t)}</span>`; })() : ''}
     ${salaFaltaMarcar() && !pasado ? `<span class="fb-largo">📍 ${acL('Aún no has marcado en qué sala estás.', 'Encara no has marcat a quina sala ets.')}</span><button class="fb-sala" onclick="salaElegirRapido()">📍 ${acL('Elegir sala', 'Triar sala')}</button>` : ''}
-    <button onclick="ficharSalidaDesdeAviso()">⏹ ${acL('Fichar salida', 'Fitxar sortida')}</button>`;
+    <button class="fb-salida" onclick="ficharSalidaDesdeAviso()">⏹ ${acL('Fichar salida', 'Fitxar sortida')}</button>`;
 }
 // ===== Regla: un técnico no puede trabajar en la intranet sin fichar la entrada y marcar su sala =====
 // (v224) Regla de oro para todo el personal, también administración: sin fichar la entrada no se trabaja en la intranet.
@@ -6137,7 +6139,8 @@ function notaPintarPersonas(){
     || `<span class="subtle" style="font-size:12px;margin:0;">${acL('Ninguna persona vinculada.', 'Cap persona vinculada.')}</span>`;
 }
 
-function abrirNotaAtencion(fichajeSalaId, plazaId){
+async function abrirNotaAtencion(fichajeSalaId, plazaId){
+  await proyectosLogosRefrescar();   // proyectos nuevos de la Intranet, también aquí
   const esCA = LANG_I === 'ca';
   const ocup = (window.__ocupacionPorPlaza || {})[plazaId];
   __notaPersonas = ocup && ocup.id === fichajeSalaId ? mesaPersonas(ocup) : [];
@@ -6170,7 +6173,7 @@ function abrirNotaAtencion(fichajeSalaId, plazaId){
           <label>${esCA?'Tipus d\'actuació':'Tipo de actuación'}</label>
           <select id="nota-categoria">
             <option value="">—</option>
-            <optgroup label="${esCA?'Projectes':'Proyectos'}">${PROYECTOS_LOGOS.map(p => `<option value="${p}">${p}</option>`).join('')}</optgroup>
+            <optgroup label="${esCA?'Projectes':'Proyectos'}">${proyectosLogosParaElegir().map(p => `<option value="${escAttr(p)}">${escAttr(p)}</option>`).join('')}</optgroup>
             <optgroup label="${esCA?'Formacions':'Formaciones'}">${FORMACIONES_LOGOS.map(f => `<option value="${f}">${f}</option>`).join('')}</optgroup>
             <option value="Trámite administrativo">${esCA?'Tràmit administratiu':'Trámite administrativo'}</option>
             <option value="Atención general">${esCA?'Atenció general':'Atención general'}</option>
@@ -14606,7 +14609,7 @@ async function renderGestionPersonal(tab){
         ${esRH ? `<div class="cmp-mi-sep"></div><details class="gp-menu-g"${t === 'rrhh' || window.innerWidth <= 900 ? ' open' : ''}><summary class="gp-menu-h">${IS_RRHH ? acL('Recursos Humanos', 'Recursos Humans') : acL('Administración', 'Administració')} <span class="gp-menu-n">${subsRH.length}</span></summary>
         ${(() => {
           const boton = ([k, tx]) => { const m = String(tx).match(/^(\p{Extended_Pictographic}\uFE0F?)\s*(.*)$/u); return `<button class="cmp-mi${sel === 'rh:' + k ? ' on' : ''}" data-sel="rh:${k}" ${sel === 'rh:' + k ? 'aria-current="page"' : ''} onclick="window.__gpSub='${k}';renderGestionPersonal('rrhh')"><span>${m ? m[1] : GP_RH_IC[k] || '•'}</span>${m ? m[2] : tx}${k === 'vacaciones' ? '<span class="cmp-n" id="gp-n-rhvac" style="display:none;background:#D6336C;color:#fff;"></span>' : ''}</button>`; };
-          const G = [['🧾', acL('Nóminas y personal', 'Nòmines i personal'), ['nominas', 'personas']], ['🕘', acL('Horarios y vacaciones', 'Horaris i vacances'), ['horarios', 'vacaciones']],
+          const G = [['🧾', acL('Nóminas y personal', 'Nòmines i personal'), ['nominas', 'personas']], ['🕘', acL('Horarios, fichajes y vacaciones', 'Horaris, fitxatges i vacances'), ['horarios', 'fichajes', 'vacaciones']],
                      ['📣', acL('Comunicación', 'Comunicació'), ['comunicados', 'avisos']], ['📄', acL('Documentos y registro', 'Documents i registre'), ['docgen', 'registro']]];
           const usados = new Set(G.flatMap(g => g[2]));
           const sueltos = subsRH.filter(x => !usados.has(x[0]));
@@ -14632,7 +14635,7 @@ async function renderGestionPersonal(tab){
   else await gpRenderInicio(cuerpo);
   setTimeout(gpIrASeccion, 30); setTimeout(gpIrASeccion, 700);   // al terminar de cargar, el título del apartado se queda a la vista
 }
-const GP_RH_IC = { resumen: '🔔', nominas: '🧾', personas: '👥', horarios: '🕘', vacaciones: '🌴', comunicados: '📣', avisos: '📰', docgen: '📄', registro: '📋' };
+const GP_RH_IC = { fichajes: '🕒', resumen: '🔔', nominas: '🧾', personas: '👥', horarios: '🕘', vacaciones: '🌴', comunicados: '📣', avisos: '📰', docgen: '📄', registro: '📋' };
 // Cifras de la cabecera (se pulsan para ir a cada apartado)
 async function gpPintarKpis(t){
   const host = document.getElementById('gp-kpis'); if(!host) return;
@@ -14893,6 +14896,7 @@ function gpRrhhSubs(){
   const subs = IS_RRHH ? [['resumen', '🔔 ' + acL('Pendientes', 'Pendents')], ['nominas', acL('Cargar nóminas', 'Carregar nòmines')], ['personas', acL('Por persona', 'Per persona')], ['comunicados', acL('Comunicados', 'Comunicats')], ['avisos', acL('Noticias y recordatorios', 'Notícies i recordatoris')], ['docgen', acL('Documentos generales', 'Documents generals')], ['registro', acL('Registro', 'Registre')]] : [['comunicados', acL('Comunicados', 'Comunicats')]];
   if(IS_RRHH || IS_RRHH_SOLO || IS_ADMIN) subs.splice(IS_RRHH ? 3 : 1, 0, ['horarios', '🕘 ' + acL('Horarios del personal', 'Horaris del personal')]);
   if(IS_RRHH || IS_RRHH_SOLO || IS_ADMIN) subs.splice(IS_RRHH ? 4 : 2, 0, ['vacaciones', '🌴 ' + acL('Vacaciones', 'Vacances')]);
+  if(IS_RRHH || IS_RRHH_SOLO || IS_ADMIN) subs.splice(IS_RRHH ? 5 : 3, 0, ['fichajes', '🕒 ' + acL('Historial de fichajes', 'Historial de fitxatges')]);
   return subs.map(([k, t]) => [k, /^\p{Extended_Pictographic}/u.test(t) ? t : (GP_RH_IC[k] || '•') + ' ' + t]);
 }
 // Lleva la pantalla al principio de la sección elegida (si el título ha quedado fuera de la vista)
@@ -14917,6 +14921,7 @@ async function gpRenderRrhh(cuerpo, sinPestanas){
   else if(window.__gpSub === 'registro') await gpRrhhRegistro(c);
   else if(window.__gpSub === 'horarios') await gpRrhhHorarios(c);
   else if(window.__gpSub === 'vacaciones') await gpRrhhVacaciones(c);
+  else if(window.__gpSub === 'fichajes') await gpRrhhFichajes(c);
   else await gpRrhhComunicados(c);
 }
 async function gpPersonasActivas(){
@@ -15331,6 +15336,38 @@ async function gpRrhhHorarios(c){
   c.innerHTML = `<p class="subtle" style="margin:0 0 10px;font-size:12.5px;">${acL('Horario general y horarios propios de cada persona. Se usa para el fichaje (horas previstas, salida olvidada) y para las horas de cita de cada técnico.', 'Horari general i horaris propis de cada persona. Es fa servir per al fitxatge (hores previstes, sortida oblidada) i per a les hores de cita de cada tècnic.')}</p>
     <div class="panel-card" id="hr-admin-card">${hrAdminHtml()}</div>`;
   hrActualizarTotal();
+}
+// ---------- RR. HH.: historial de fichajes SOLO PARA MIRAR (sin corregir, validar ni borrar) ----------
+const RH_FICH_PAG = 200;
+async function gpRrhhFichajes(c){
+  c.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  if(!window.__configOficina){ try { window.__configOficina = await fichConfig(); } catch(e){} }
+  if(!window.__staffLista || !window.__staffLista.length){ try { const r = await sb.from('staff').select('email, nombre, activo').order('nombre', { ascending: true }); window.__staffLista = r.data || []; } catch(e){} }
+  const [r, n] = await Promise.all([
+    sb.from('fichajes').select('*').order('entrada', { ascending: false }).range(0, RH_FICH_PAG - 1),
+    sb.from('fichajes').select('id', { count: 'exact', head: true })
+  ]);
+  if(r.error){ c.innerHTML = gpAviso(escAttr(r.error.message)); return; }
+  window.__rhFich = r.data || []; window.__rhFichTotal = n.count || window.__rhFich.length;
+  c.innerHTML = `<div class="info-box" style="margin:0 0 10px;font-size:12.5px;">👁️ ${acL('Solo consulta: aquí puedes ver y descargar los fichajes de todo el equipo, pero no cambiarlos. Las correcciones las hace la administración.', 'Només consulta: aquí pots veure i descarregar els fitxatges de tot l\'equip, però no canviar-los. Les correccions les fa l\'administració.')}</div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin:0 0 8px;">
+      <button class="link-btn" onclick="exportarFichajesExcel()">⬇️ Excel</button>
+      <button class="link-btn" onclick="exportarFichajesPDF()">⬇️ PDF</button>
+    </div>
+    <div class="panel-card" id="rh-fichajes-lista">${renderFilasFichajes(window.__rhFich, true)}</div>
+    <div style="text-align:center;margin:8px 0 18px;" id="rh-fichajes-mas">${rhFichMasBtn()}</div>`;
+}
+function rhFichMasBtn(){
+  const falta = (window.__rhFichTotal || 0) - (window.__rhFich || []).length;
+  return falta > 0 ? `<button class="link-btn" onclick="rhFichCargarMas()">${acL('Cargar', 'Carregar')} ${Math.min(RH_FICH_PAG, falta)} ${acL('más', 'més')} (${window.__rhFichTotal} ${acL('en total', 'en total')})</button>` : '';
+}
+async function rhFichCargarMas(){
+  const w = document.getElementById('rh-fichajes-mas'); if(w) w.innerHTML = `<span class="subtle">${TI[LANG_I].cargando}</span>`;
+  const desde = (window.__rhFich || []).length;
+  const { data } = await sb.from('fichajes').select('*').order('entrada', { ascending: false }).range(desde, desde + RH_FICH_PAG - 1);
+  window.__rhFich = (window.__rhFich || []).concat(data || []);
+  fichRepintar();
+  if(w) w.innerHTML = rhFichMasBtn();
 }
 async function gpRrhhRegistro(c){
   const { data, error } = await sb.from('personal_registro').select('*').order('cuando', { ascending: false }).limit(100);
@@ -18261,7 +18298,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-06 · v238 (Proyecto Raíces en Jóvenes en acción: familias, consentimiento con Logos, presencia y actuaciones que suman atenciones, evaluación con puntuación; solo el equipo del proyecto)';
+const APP_VERSION_INTRANET = '2026-11-08 · v240 (La lista de proyectos para trabajar con una persona sale de la pantalla Proyectos: los nuevos aparecen, por orden alfabético) · antes: v239 (Proyectos nuevos en los desplegables de actuaciones; aviso de fichaje discreto que no tapa el menú; RR. HH. ve el historial de fichajes solo para consultar) · antes: v238 (Proyecto Raíces en Jóvenes en acción: familias, consentimiento con Logos, presencia y actuaciones que suman atenciones, evaluación con puntuación; solo el equipo del proyecto)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -20342,6 +20379,36 @@ const PROYECTOS_LOGOS = [
 const FORMACIONES_LOGOS = [
   'Formació TIC — Programa 30+', 'Formació TIC — Comunitats Gitanes de Tarragona'
 ];
+// ===== Proyectos creados desde la Intranet → también en los desplegables (actuaciones, notas de atención) =====
+// PROYECTOS_LOGOS = lista fija + todos los proyectos de la tabla «proyectos» (también los finalizados, para que las cifras antiguas sigan contando).
+// En los desplegables solo se ofrecen los que no están finalizados.
+const PROYECTOS_LOGOS_BASE = PROYECTOS_LOGOS.slice();
+let PROYECTOS_LOGOS_FINALIZADOS = new Set();
+function proyectosLogosParaElegir(){ return PROYECTOS_LOGOS.filter(n => !PROYECTOS_LOGOS_FINALIZADOS.has(n)); }
+// Junta la lista fija con los proyectos de la tabla «proyectos» (data = filas con nombre y, si hay, estado)
+function proyectosLogosAplicar(data){
+  if(!Array.isArray(data)) return;
+  const lista = PROYECTOS_LOGOS_BASE.slice(), fin = new Set();
+  const ya = n => lista.find(x => proyNorm(x) === proyNorm(n));
+  data.forEach(p => {
+    const n = String((p && p.nombre) || '').trim(); if(!n) return;
+    const existe = ya(n);
+    if(!existe) lista.push(n);
+    if(p.estado === 'finalizado' && !PROYECTOS_LOGOS_BASE.includes(existe || '')) fin.add(existe || n);
+  });
+  lista.sort((a, b) => a.localeCompare(b, 'ca', { sensitivity: 'base' }));   // por orden alfabético, los nuevos mezclados con los de siempre
+  PROYECTOS_LOGOS.length = 0; PROYECTOS_LOGOS.push(...lista);
+  PROYECTOS_LOGOS_FINALIZADOS = fin;
+}
+async function proyectosLogosRefrescar(){
+  try {
+    if(!CURRENT_USER) return;
+    const { data, error } = await sb.from('proyectos').select('nombre, estado').order('nombre', { ascending: true });
+    if(error || !data) return;
+    proyectosLogosAplicar(data);
+  } catch(e){}
+}
+setInterval(() => { if(CURRENT_USER && IS_STAFF) proyectosLogosRefrescar(); }, 5 * 60000);
 
 function renderTramiteCardExpediente(tr){
   const esCA = LANG_I === 'ca';
@@ -20600,11 +20667,12 @@ async function verPersonaStaffInterno(usuarioId, origen){
     sb.from('citas').select('*').eq('usuario_id', usuarioId).order('fecha', { ascending:false }),
     sb.from('mensajes_enviados').select('*').eq('usuario_id', usuarioId).order('fecha', { ascending:false }),
     sb.from('proyecto_participantes').select('*, proyectos(id, nombre, estado)').eq('usuario_id', usuarioId).eq('rol', 'beneficiario').then(dedupPart),
-    sb.from('proyectos').select('id, nombre').order('nombre', { ascending:true }),
+    sb.from('proyectos').select('id, nombre, estado').order('nombre', { ascending:true }),
     sb.from('emprendimiento').select('*').eq('usuario_id', usuarioId).maybeSingle(),
     sb.from('consultas_orientacion').select('*').eq('usuario_id', usuarioId).order('creado_en', { ascending:false })
   ]);
 
+  try { if(!todosProyectosRes.error) proyectosLogosAplicar(todosProyectosRes.data); } catch(e){}   // la lista de proyectos de la ficha, siempre al día
   (staffListRes.data || []).forEach(s => { if(s.nombre) __mapaNombresTecnicos[s.email] = s.nombre; });
 
   if(tramitesRes) tramitesRes.data = sinBorrados(tramitesRes.data);
@@ -20956,7 +21024,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
             <label>${t.proyectoTramiteFormacion}</label>
             <select id="act-categoria" onchange="document.getElementById('act-categoria-otro').style.display = this.value==='__otro__' ? 'block' : 'none';">
               <option value="">—</option>
-              <optgroup label="${t.tabProyectos}">${PROYECTOS_LOGOS.map(p => `<option value="${p}">${p}</option>`).join('')}</optgroup>
+              <optgroup label="${t.tabProyectos}">${proyectosLogosParaElegir().map(p => `<option value="${escAttr(p)}">${escAttr(p)}</option>`).join('')}</optgroup>
               <optgroup label="${t.tabFormaciones}">${FORMACIONES_LOGOS.map(f => `<option value="${f}">${f}</option>`).join('')}</optgroup>
               <option value="Trámite administrativo">${t.tramiteAdministrativo}</option>
               <option value="__otro__">${t.otroEspecificar}</option>
@@ -22893,7 +22961,7 @@ async function exportarTraductorPDF(){
   descargarPDFTabla('Traductor en directo — historial — Logos Intranet', cabecera, filas, 'Traductor-historial.pdf');
 }
 
-function renderFilasFichajes(fichajes){
+function renderFilasFichajes(fichajes, soloLectura){
   const t = TI[LANG_I], ca = LANG_I === 'ca', L = (es, cc) => ca ? cc : es;
   const horaFmt = iso => new Date(iso).toLocaleTimeString(t.localeFecha, { hour:'2-digit', minute:'2-digit' });
   const diaFmt = iso => new Date(iso).toLocaleDateString(t.localeFecha, { weekday:'long', day:'numeric', month:'long' });
@@ -22926,7 +22994,7 @@ function renderFilasFichajes(fichajes){
   const filtros = `<div class="fich-filtros">
       <select aria-label="${L('Persona', 'Persona')}" onchange="window.__fichFiltro.persona=this.value;fichRepintar()"><option value="">${L('Todo el equipo', 'Tot l\'equip')}</option>${personas.map(e => `<option value="${escAttr(e)}" ${fl.persona === e ? 'selected' : ''}>${escAttr(nombreTecnico(e))}</option>`).join('')}</select>
       <label><input type="checkbox" ${fl.inc ? 'checked' : ''} onchange="window.__fichFiltro.inc=this.checked;fichRepintar()"> ${L('Solo lo que hay que mirar (fuera, sin ubicación, lejos, salida olvidada)', 'Només el que cal mirar (fora, sense ubicació, lluny, sortida oblidada)')}</label>
-      ${(() => { const n = lista.filter(f => porValidar(f).length).length; return n && IS_ADMIN ? `<button class="link-btn" style="font-weight:700;" onclick="fichValidarVarios()">✅ ${L(`Validar los ${n} que se ven (estaban en la oficina)`, `Validar els ${n} que es veuen (eren a l'oficina)`)}</button>` : ''; })()}
+      ${(() => { const n = lista.filter(f => porValidar(f).length).length; return n && IS_ADMIN && !soloLectura ? `<button class="link-btn" style="font-weight:700;" onclick="fichValidarVarios()">✅ ${L(`Validar los ${n} que se ven (estaban en la oficina)`, `Validar els ${n} que es veuen (eren a l'oficina)`)}</button>` : ''; })()}
       <span class="fich-leyenda">✅ ${L('validado por la administración', 'validat per l\'administració')} · 💻 ${L('ordenador de la oficina', 'ordinador de l\'oficina')} · 📍 ${L('oficina', 'oficina')} · 🚶 ${L('fuera con motivo', 'fora amb motiu')} · ❓ ${L('sin ubicación', 'sense ubicació')} · ⚠️ ${L('lejos', 'lluny')}</span>
     </div>`;
   if(!lista.length) return filtros + `<div class="empty-note">${fichajes.length ? L('Ningún fichaje con este filtro.', 'Cap fitxatge amb aquest filtre.') : t.sinFichajes}</div>`;
@@ -22939,10 +23007,10 @@ function renderFilasFichajes(fichajes){
       <div class="fich-tramo">${f.salida ? `<span class="fich-h">${L('Salida', 'Sortida')} <b>${horaFmt(f.salida)}</b></span>${f.cerrado_automaticamente ? '' : estado(f, 'salida')}` : `<span class="chip gold">${t.enCurso}</span>`}</div>
       <div class="fich-dur">${f.salida ? duracionFmt(f.entrada, f.salida) : ''}
         ${f.cerrado_automaticamente ? (FICHAJE_MARCA_REVISADO.test(f.nota || '') ? `<span class="chip gold" title="${escAttr(f.nota||'')}">✍️ ${L('Salida indicada por la persona', 'Sortida indicada per la persona')}</span>` : `<span class="chip alert" title="${escAttr(f.nota||'')}">⚠️ ${L('Salida olvidada', 'Sortida oblidada')}</span>`) : ''}</div>
-      <div class="fich-acc2">
+      <div class="fich-acc2">${soloLectura ? '' : `
         ${f.cerrado_automaticamente && f.salida ? `<button class="link-btn" style="font-size:11.5px;" onclick="fichajeCorregirAdmin('${f.id}', '${f.entrada}')">✏️ ${L('Corregir salida', 'Corregir sortida')}</button>` : ''}
         ${IS_ADMIN && porValidar(f).length ? `<button class="link-btn" style="font-size:11.5px;color:#1E6B3A;font-weight:700;" title="${L('Confirmo que estaba en la oficina', 'Confirmo que era a l\'oficina')}" onclick="fichValidar('${f.id}')">✅ ${L('Validar', 'Validar')}</button>` : ''}
-        <button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="borrarFichaje('${f.id}')">${L('Borrar', 'Esborrar')}</button>
+        <button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="borrarFichaje('${f.id}')">${L('Borrar', 'Esborrar')}</button>`}
       </div>
     </div>`; }).join('');
 }
@@ -22972,7 +23040,7 @@ function fichValidarVarios(){
   if(!confirm(acL(`¿Validar ${ids.length} fichajes como «en la oficina»? Revisa antes la lista (puedes elegir una sola persona arriba).`, `Validar ${ids.length} fitxatges com a «a l'oficina»? Revisa abans la llista (pots triar una sola persona a dalt).`))) return;
   fichValidarIds(ids);
 }
-function fichRepintar(){ const el = document.getElementById('admin-fichajes-lista'); if(el) el.innerHTML = renderFilasFichajes(__adminFichajesTodos); }
+function fichRepintar(){ const el = document.getElementById('admin-fichajes-lista'); if(el) el.innerHTML = renderFilasFichajes(__adminFichajesTodos); const rh = document.getElementById('rh-fichajes-lista'); if(rh) rh.innerHTML = renderFilasFichajes(window.__rhFich || [], true); }
 // Ajustes de la oficina: radio, fichar fuera y ordenadores de la oficina
 async function fichAjustesPintar(){
   const host = document.getElementById('fich-ajustes'); if(!host) return;
