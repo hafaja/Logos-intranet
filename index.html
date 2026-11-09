@@ -2483,7 +2483,7 @@ const SUPABASE_KEY = 'sb_publishable_Ght82ml0pvg0_nQvunlXVA_u0WjRscq';
       const f = firma(APP + tipo + mensaje.replace(/\d+/g, '#'));
       if(enviados[f] || n >= 25 || typeof sb === 'undefined' || !sb.rpc) return; enviados[f] = 1; n++;
       const act = document.querySelector('.screen.active');
-      sb.rpc('reportar_error', { p: { app: APP, tipo, mensaje, firma: f, detalle: String(detalle || '').slice(0, 4000), pantalla: act ? act.id.replace('screen-', '') : '', version: version(), navegador: navigator.userAgent.slice(0, 200) } }).then(() => {}, () => {});
+      sb.rpc('reportar_error', { p: { app: APP, tipo, mensaje, firma: f, detalle: ('[' + version() + '] ' + String(detalle || '')).slice(0, 4000), pantalla: act ? act.id.replace('screen-', '') : '', version: version(), navegador: navigator.userAgent.slice(0, 200) } }).then(() => {}, () => {});
     } catch(e){}
   };
   window.addEventListener('error', e => { if(e && e.message) reportarFallo('js', e.message, (e.filename || '').split('/').pop() + ':' + (e.lineno || '') + ':' + (e.colno || '') + '\n' + ((e.error && e.error.stack) || '')); });
@@ -4675,7 +4675,7 @@ async function ficharSalidaDesdeAviso(){
 }
 // El navegador pregunta "¿Salir de la página?" si intentas cerrar la pestaña o la ventana con la entrada fichada
 window.addEventListener('beforeunload', function(e){
-  if(window.__abriendoCorreo) return;   // abrir el programa de correo no es salir de la página
+  if(window.__abriendoCorreo || window.__actualizandoApp) return;   // abrir el programa de correo o actualizar la Intranet no es salir de la página
   if(window.__fichajeAbierto){ e.preventDefault(); e.returnValue = ''; return ''; }
 });
 // Por si se deja el ordenador abierto: se comprueba de vez en cuando que el aviso sigue siendo correcto
@@ -18324,7 +18324,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-09 · v261 (Ficha de la persona: el guardado comprueba que los datos se han guardado de verdad y dice cuáles no y por qué) · antes: v260 (LOGOS 360: publicidad también en el blog y vídeos libres en el banco) · antes: v259 (LOGOS 360: correo de los lunes con artículos por revisar y Excel) · antes: v258 (LOGOS 360: descarga en Excel de todas las publicaciones) · antes: v257 (LOGOS 360: artículos preparados cada semana, siempre con revisión) · antes: v256 (LOGOS 360: lote con temas propios, uno por línea) · antes: v255 (LOGOS 360: banco de imágenes conectado a Pixabay) · antes: v254 (banco de imágenes con 14 carpetas) · antes: v253 (Canal: la portada se ve junto al botón y avisa si falla) · antes: v252 (LOGOS 360: lote de artículos breves y portada propia en cada idioma) · antes: v251 (Canal: limpia las marcas técnicas de la IA; la noticia con IA pasa a artículo completo) · antes: v250 (Canal: corregido el guardado de la portada automática) · antes: v249 (Canal: el aviso de [VERIFICAR] dice idioma y campo, y solo mira lo que se publica) · antes: v248 (LOGOS 360: portadas automáticas con título, categoría y colores elegidos por la IA) · antes: v247 (Canal: centro editorial con IA, cuatro idiomas, fuentes y revisión humana obligatoria) · antes: v246 (Familias asignadas: cada técnico ve solo sus familias, compartidas si hace falta; la administración asigna) · antes: v245 (Apartado Familias: las familias de Jóvenes en acción y de Raíces juntas, con contacto, evaluación y ficha) · antes: v244 (Evaluaciones y contactos con las familias se apuntan como actuaciones: cuentan en la Intranet y se ven en Logos Acompanya; llamar, WhatsApp y Logos Acompanya en cada familia) · antes: v243 (Evaluación de impacto de Logos en Jóvenes en acción y en cada proyecto: entrada, salida y seguimiento, entrevista pantalla a pantalla y panel de impacto) · antes: v242 (Raíces: entrevista de evaluación pantalla a pantalla, con botones de colores, progreso y Anterior/Siguiente) · antes: v241 (Raíces · Familias entra por Proyectos; guion de la entrevista en la evaluación final) · antes: v240 (La lista de proyectos para trabajar con una persona sale de la pantalla Proyectos: los nuevos aparecen, por orden alfabético) · antes: v239 (Proyectos nuevos en los desplegables de actuaciones; aviso de fichaje discreto que no tapa el menú; RR. HH. ve el historial de fichajes solo para consultar) · antes: v238 (Proyecto Raíces en Jóvenes en acción: familias, consentimiento con Logos, presencia y actuaciones que suman atenciones, evaluación con puntuación; solo el equipo del proyecto)';
+const APP_VERSION_INTRANET = '2026-11-09 · v262 (Aviso de versión nueva: quien deja la Intranet abierta días se actualiza; los avisos técnicos dicen la versión que fallaba) · antes: v261 (Ficha de la persona: el guardado comprueba que los datos se han guardado de verdad y dice cuáles no y por qué) · antes: v260 (LOGOS 360: publicidad también en el blog y vídeos libres en el banco) · antes: v259 (LOGOS 360: correo de los lunes con artículos por revisar y Excel) · antes: v258 (LOGOS 360: descarga en Excel de todas las publicaciones) · antes: v257 (LOGOS 360: artículos preparados cada semana, siempre con revisión) · antes: v256 (LOGOS 360: lote con temas propios, uno por línea) · antes: v255 (LOGOS 360: banco de imágenes conectado a Pixabay) · antes: v254 (banco de imágenes con 14 carpetas) · antes: v253 (Canal: la portada se ve junto al botón y avisa si falla) · antes: v252 (LOGOS 360: lote de artículos breves y portada propia en cada idioma) · antes: v251 (Canal: limpia las marcas técnicas de la IA; la noticia con IA pasa a artículo completo) · antes: v250 (Canal: corregido el guardado de la portada automática) · antes: v249 (Canal: el aviso de [VERIFICAR] dice idioma y campo, y solo mira lo que se publica) · antes: v248 (LOGOS 360: portadas automáticas con título, categoría y colores elegidos por la IA) · antes: v247 (Canal: centro editorial con IA, cuatro idiomas, fuentes y revisión humana obligatoria) · antes: v246 (Familias asignadas: cada técnico ve solo sus familias, compartidas si hace falta; la administración asigna) · antes: v245 (Apartado Familias: las familias de Jóvenes en acción y de Raíces juntas, con contacto, evaluación y ficha) · antes: v244 (Evaluaciones y contactos con las familias se apuntan como actuaciones: cuentan en la Intranet y se ven en Logos Acompanya; llamar, WhatsApp y Logos Acompanya en cada familia) · antes: v243 (Evaluación de impacto de Logos en Jóvenes en acción y en cada proyecto: entrada, salida y seguimiento, entrevista pantalla a pantalla y panel de impacto) · antes: v242 (Raíces: entrevista de evaluación pantalla a pantalla, con botones de colores, progreso y Anterior/Siguiente) · antes: v241 (Raíces · Familias entra por Proyectos; guion de la entrevista en la evaluación final) · antes: v240 (La lista de proyectos para trabajar con una persona sale de la pantalla Proyectos: los nuevos aparecen, por orden alfabético) · antes: v239 (Proyectos nuevos en los desplegables de actuaciones; aviso de fichaje discreto que no tapa el menú; RR. HH. ve el historial de fichajes solo para consultar) · antes: v238 (Proyecto Raíces en Jóvenes en acción: familias, consentimiento con Logos, presencia y actuaciones que suman atenciones, evaluación con puntuación; solo el equipo del proyecto)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -26948,5 +26948,39 @@ function famPintar(){
 @media (max-width:800px){ .ra-plan-g{grid-template-columns:1fr;} }
 .ra-punt td:not(:first-child){text-align:center;}
 </style>
+<script>
+// ===== Versión nueva de la Intranet (v262) =====
+// Si alguien deja la Intranet abierta días, sigue usando la versión vieja (con fallos ya arreglados).
+// Cada 15 minutos y al volver a la pestaña se mira si hay una versión nueva: en la pantalla de entrada se recarga sola;
+// en el resto sale un aviso pequeño con «Actualizar» (no se pierde nada: el fichaje y lo guardado están en la base de datos).
+(function(){
+  const num = v => { const m = /v(\d+)/.exec(String(v || '')); return m ? parseInt(m[1], 10) : 0; };
+  let avisada = 0, ultima = 0;
+  async function mirar(){
+    if(Date.now() - ultima < 60000) return; ultima = Date.now();
+    try {
+      const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
+      if(!r.ok) return;
+      const t = await r.text(), m = /APP_VERSION_INTRANET = '[^']*?(v\d+)/.exec(t);
+      const nueva = m ? num(m[1]) : 0, mia = num(typeof APP_VERSION_INTRANET !== 'undefined' ? APP_VERSION_INTRANET : '');
+      if(!nueva || !mia || nueva <= mia || nueva === avisada) return;
+      avisada = nueva;
+      const act = document.querySelector('.screen.active');
+      if(!act || act.id === 'screen-login'){ window.__actualizandoApp = true; location.reload(); return; }
+      let b = document.getElementById('nv-aviso'); if(b) b.remove();
+      b = document.createElement('div'); b.id = 'nv-aviso'; b.setAttribute('role', 'status');
+      b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:9996;background:#163F7A;color:#fff;border-radius:999px;padding:8px 8px 8px 16px;display:flex;gap:10px;align-items:center;box-shadow:0 8px 24px -8px rgba(0,0,0,.45);font-size:13.5px;max-width:calc(100% - 24px);';
+      b.innerHTML = `<span>🔄 ${acL('Hay una versión nueva de la Intranet', 'Hi ha una versió nova de la Intranet')}</span><button style="background:#F2BC2C;color:#1B2333;border:0;border-radius:999px;padding:6px 14px;font-weight:800;cursor:pointer;font-family:inherit;">${acL('Actualizar', 'Actualitzar')}</button><button aria-label="${acL('Cerrar', 'Tancar')}" style="background:transparent;color:#fff;border:0;font-size:16px;cursor:pointer;padding:0 6px;">✕</button>`;
+      const [btnAct, btnX] = b.querySelectorAll('button');
+      btnAct.onclick = () => { window.__actualizandoApp = true; location.reload(); };
+      btnX.onclick = () => b.remove();
+      document.body.appendChild(b);
+    } catch(e){}
+  }
+  setInterval(mirar, 15 * 60000);
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) mirar(); });
+  setTimeout(mirar, 20000);
+})();
+</script>
 </body>
 </html>
