@@ -1755,6 +1755,8 @@ button.m3-chip{cursor:pointer;}
 .m3-grid > .m3-ancho{grid-column:1/-1;}
 .m3-lab{font-size:12.5px;font-weight:700;margin:4px 0 7px;}
 .m3-pills{display:flex;flex-wrap:wrap;gap:7px;}
+.m3-s2-at{margin-top:18px;border-top:1px solid var(--line);padding-top:6px;}
+.at-opts .otro-w{flex-basis:100%;}
 .m3-pill, .m3-grupo .at-opts label.checkbox-row{position:relative;display:inline-flex !important;align-items:center;gap:0;border:1px solid #C9CFDA;border-radius:20px;padding:6px 13px !important;margin:0 !important;font-size:13px;background:#fff;cursor:pointer;line-height:1.3;font-weight:500;color:var(--ink,#1B2333);width:auto !important;}
 .m3-pill input, .m3-grupo .at-opts label.checkbox-row input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;}
 .m3-pill:has(input:checked), .m3-pill.on, .m3-grupo .at-opts label.checkbox-row:has(input:checked){background:#1E4FA8;border-color:#1E4FA8;color:#fff;}
@@ -2868,6 +2870,8 @@ const TXT_ES_CA = {
   "Búsqueda de empleo":"Cerca de feina",
   "Competencias digitales":"Competències digitals",
   "Otros":"Altres",
+  "Yoga":"Ioga", "Crecimiento personal":"Creixement personal", "Manualidades":"Manualitats", "Castellano":"Castellà", "Catalán":"Català",
+  "Uso del móvil":"Ús del mòbil", "Mejora de la gestión del tiempo":"Millora de la gestió del temps", "Alimentación saludable":"Alimentació saludable",
   "🏠 Situación residencial (ETHOS)":"🏠 Situació residencial (ETHOS)",
   "No procede":"No procedeix",
   "ETHOS 1 – Sin techo":"ETHOS 1 – Sense sostre",
@@ -6539,6 +6543,9 @@ const TRAMITES_BRETXA_OPTS = [
 const DERIVACION_OPTS = [
   ['no_procedeix','No procede'], ['logos','Logos'], ['omac','OMAC'], ['imsst','IMSST'], ['siad','SIAD'], ['pass','PASS'], ['icat','ICAT']
 ];
+// v252: varias opciones a la vez. En las columnas de texto (derivacion, como_conocio) se guardan unidas con «|»
+// (p. ej. «omac|siad|otro:Cruz Roja»). Las atenciones antiguas (un solo valor) se leen igual.
+function multiPartes(v){ return v == null ? [] : (Array.isArray(v) ? v : String(v).split('|')).map(x => String(x).trim()).filter(Boolean); }
 const EMPRENDEDURIA_OPTS = [
   ['cap','Ninguna'], ['capitalitzacio_atur','Capitalización paro'], ['alta_autonoms','Alta autónomo/a'],
   ['emprenedoria_social','Emprendeduría social'], ['compatibilitzacio_atur_emprenedoria','Compatibilización paro/emprendeduría'],
@@ -6565,7 +6572,9 @@ const ETHOS_OPTS = [
   ['ethos3','ETHOS 3 – Vivienda insegura'], ['ethos4','ETHOS 4 – Vivienda inadecuada'], ['no_consta','No consta']
 ];
 const TALLERES_OPTS = [
-  ['cap','Ninguno'], ['recerca_feina','Búsqueda de empleo'], ['competencies_digitals','Competencias digitales'], ['altres','Otros']
+  ['cap','Ninguno'], ['recerca_feina','Búsqueda de empleo'], ['competencies_digitals','Competencias digitales'],
+  ['ioga','Yoga'], ['creixement_personal','Crecimiento personal'], ['manualitats','Manualidades'], ['castella','Castellano'], ['catala','Catalán'],
+  ['us_mobil','Uso del móvil'], ['gestio_temps','Mejora de la gestión del tiempo'], ['alimentacio_saludable','Alimentación saludable'], ['altres','Otros']
 ];
 const PROGRAMAS_OPTS = [
   ['nomes_bretxa','Solo Bretxa Logos'], ['convo','CONVO – Mirada Endavant'], ['raices','Raíces – Reconnexió Familiar'],
@@ -6573,7 +6582,48 @@ const PROGRAMAS_OPTS = [
   ['red_arana','Red Araña – Ruraliza-T / YoEmprendo / Impulsa-T'], ['cuidem','Cuidem en igualtat']
 ];
 // Traduce un código guardado a su etiqueta visible (si no está en la lista, se muestra tal cual).
-function etiquetaOpt(opts, v){ const f = opts.find(o => o[0] === v); return f ? f[1] : (typeof v === 'string' && v.indexOf('otro:') === 0 ? v.slice(5) : v); }
+function etiquetaOpt(opts, v){
+  if(typeof v === 'string' && v.indexOf('|') >= 0) return multiPartes(v).map(x => etiquetaOpt(opts, x)).join(', ');
+  const f = opts.find(o => o[0] === v); return f ? f[1] : (typeof v === 'string' && v.indexOf('otro:') === 0 ? v.slice(5) : v);
+}
+// Suma por opción las filas de una vista de estadísticas cuando una atención tiene varias opciones («a|b»)
+function sumarMulti(filas, clave, opts){
+  const m = {};
+  (filas || []).forEach(r => { const partes = multiPartes(r[clave]); (partes.length ? partes : ['']).forEach(k => { m[k] = (m[k] || 0) + (Number(r.total) || 0); }); });
+  return Object.entries(m).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ label: (k ? etiquetaOpt(opts, k) : '') || '—', value: v }));
+}
+// Derivación real (no cuenta «No procede»)
+function derivacionReal(v){ return multiPartes(v).some(x => !/^(no|ninguna|no_procede|no_procedeix)$/i.test(x)); }
+// Casillas con «Otros: escríbelo» y opciones que excluyen a las demás («Ninguno», «No procede»…)
+function checkboxGroupOtro(name, opts, excl, otroVal){
+  const ca = LANG_I === 'ca', ex = excl || [], ov = otroVal || 'altres';
+  return opts.map(([v, l]) => `<label class="checkbox-row"><input type="checkbox" name="${name}" value="${v}"${ex.includes(v) ? ' data-excl="1"' : ''}${v === ov ? ` data-otro="${name}-otro"` : ''}>${l}</label>`
+    + (v === ov ? `<div id="${name}-otro-w" class="otro-w" style="display:none;margin:2px 0 8px 28px;"><input type="text" id="${name}-otro" maxlength="80" placeholder="${ca ? 'Escriu quin…' : 'Escribe cuál…'}" style="width:100%;border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px;"></div>` : '')).join('');
+}
+// Valores marcados; «Otros» con texto se guarda como «otro:<texto>»
+function checkedOtro(name){
+  const out = [];
+  document.querySelectorAll(`input[name="${name}"]:checked`).forEach(el => {
+    if(el.dataset.otro){ const t = String((document.getElementById(el.dataset.otro) || {}).value || '').trim().replace(/\s+/g, ' '); out.push(t ? 'otro:' + t.charAt(0).toUpperCase() + t.slice(1) : el.value); }
+    else out.push(el.value);
+  });
+  return out;
+}
+function marcaOtro(name, vals){
+  const set = multiPartes(vals), boxes = Array.from(document.querySelectorAll(`input[name="${name}"]`));
+  boxes.forEach(el => { el.checked = set.includes(el.value); });
+  const libre = set.find(v => v.indexOf('otro:') === 0), o = boxes.find(el => el.dataset.otro);
+  if(libre && o){ o.checked = true; const i = document.getElementById(o.dataset.otro); if(i) i.value = libre.slice(5); }
+  boxes.forEach(el => { if(el.dataset.otro){ const w = document.getElementById(el.dataset.otro + '-w'); if(w) w.style.display = el.checked ? '' : 'none'; } });
+}
+document.addEventListener('change', e => {
+  const el = e.target; if(!el || el.type !== 'checkbox' || !el.name) return;
+  if(el.dataset.otro){ const w = document.getElementById(el.dataset.otro + '-w'); if(w){ w.style.display = el.checked ? '' : 'none'; if(el.checked){ const i = document.getElementById(el.dataset.otro); if(i) setTimeout(() => i.focus(), 30); } } }
+  if(!el.checked) return;
+  const grupo = Array.from(document.querySelectorAll(`input[type="checkbox"][name="${el.name}"]`));
+  if(el.dataset.excl) grupo.forEach(x => { if(x !== el && x.checked){ x.checked = false; if(x.dataset.otro){ const w = document.getElementById(x.dataset.otro + '-w'); if(w) w.style.display = 'none'; } } });
+  else grupo.forEach(x => { if(x.dataset.excl) x.checked = false; });
+});
 function etiquetasOpt(opts, arr){ return (arr || []).map(v => etiquetaOpt(opts, v)).join(', '); }
 
 // Datos de los campos nuevos de «Registrar atención» para Estadísticas e Impacto.
@@ -6639,7 +6689,7 @@ function conocioCargarExtra(){
     sb.from('atenciones').select('como_conocio').like('como_conocio', 'otro:%').limit(1000).then(r => (r && r.data) || [], () => [])
   ]).then(([a, b]) => {
     const vistos = new Set();
-    window.__conocioExtra = a.concat(b).map(x => String(x.como_conocio || '')).filter(v => v.indexOf('otro:') === 0 && v.length > 5)
+    window.__conocioExtra = a.concat(b).flatMap(x => multiPartes(x.como_conocio)).filter(v => v.indexOf('otro:') === 0 && v.length > 5)
       .filter(v => { const k = normTxt(v); if(vistos.has(k)) return false; vistos.add(k); return true; })
       .sort((a, b) => a.localeCompare(b)).map(v => [v, v.slice(5)]);
     return window.__conocioExtra;
@@ -6647,10 +6697,10 @@ function conocioCargarExtra(){
 }
 function conocioGroupHtml(){
   const ca = LANG_I === 'ca';
-  return radioGroup('at-conocio', COMO_CONOCIO_OPTS.concat(window.__conocioExtra || []))
-    + `<label class="checkbox-row"><input type="radio" name="at-conocio" value="__otro" onchange="conocioOtro(true)">➕ ${ca ? 'Altres (escriu-lo)' : 'Otros (escríbelo)'}</label>
+  return `<p class="subtle" style="margin:0 0 6px;font-size:12px;">${ca ? 'Pots marcar-ne més d\'una.' : 'Puedes marcar más de una.'}</p>` + checkboxGroup('at-conocio', COMO_CONOCIO_OPTS.concat(window.__conocioExtra || []))
+    + `<label class="checkbox-row"><input type="checkbox" name="at-conocio" value="__otro" onchange="conocioOtro(this.checked)">➕ ${ca ? 'Altres (escriu-lo)' : 'Otros (escríbelo)'}</label>
     <div id="at-conocio-otro-w" style="display:none;margin:4px 0 6px 28px;">
-      <input type="text" id="at-conocio-otro" maxlength="60" placeholder="${ca ? 'P. ex.: Creu Roja, parròquia, cartell al barri…' : 'P. ej.: Cruz Roja, parroquia, cartel en el barrio…'}" style="width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-size:14px;">
+      <input type="text" id="at-conocio-otro" maxlength="150" placeholder="${ca ? 'P. ex.: Creu Roja, parròquia, cartell al barri…' : 'P. ej.: Cruz Roja, parroquia, cartel en el barrio…'}" style="width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-size:14px;">
       <div class="subtle" style="font-size:11.5px;margin:4px 0 0;">${ca ? 'Es guarda i la propera vegada sortirà a la llista per triar-la.' : 'Se guarda y la próxima vez saldrá en la lista para elegirla.'}</div>
     </div>`;
 }
@@ -6658,27 +6708,35 @@ function conocioRepintar(){
   const g = document.getElementById('at-conocio-grupo'); if(!g) return;
   const v = conocioValor();
   g.innerHTML = conocioGroupHtml();
-  if(!v) return;
-  const r = Array.from(g.querySelectorAll('input[name="at-conocio"]')).find(x => x.value === v);
-  if(r){ r.checked = true; return; }
-  const o = g.querySelector('input[value="__otro"]'), i = document.getElementById('at-conocio-otro');
-  if(o && i){ o.checked = true; i.value = String(v).replace(/^otro:/, ''); conocioOtro(true); }
+  conocioMarcar(v);
+}
+function conocioMarcar(v){
+  const vals = multiPartes(v); if(!vals.length) return;
+  const cajas = Array.from(document.querySelectorAll('input[name="at-conocio"]'));
+  cajas.forEach(x => { x.checked = vals.includes(x.value); });
+  const sueltos = vals.filter(x => !cajas.some(c => c.value === x));
+  const o = cajas.find(c => c.value === '__otro'), i = document.getElementById('at-conocio-otro');
+  if(sueltos.length && o && i){ o.checked = true; i.value = sueltos.map(x => String(x).replace(/^otro:/, '')).join(', '); conocioOtro(true); }
 }
 function conocioOtro(abrir){
   const w = document.getElementById('at-conocio-otro-w'); if(!w) return;
   w.style.display = abrir ? '' : 'none';
   if(abrir){ const i = document.getElementById('at-conocio-otro'); if(i) setTimeout(() => i.focus(), 30); }
 }
-document.addEventListener('change', e => { if(e.target && e.target.name === 'at-conocio' && e.target.value !== '__otro') conocioOtro(false); });
-// Valor que se guarda: una opción de la lista o «otro:<texto>» (si ya existe con otras mayúsculas, se usa la existente)
+// Valor que se guarda: las opciones marcadas unidas con «|»; «Otros» → «otro:<texto>» (se pueden escribir varios separados por comas;
+// si ya existe con otras mayúsculas, se usa la existente)
 function conocioValor(){
-  const el = document.querySelector('input[name="at-conocio"]:checked'); if(!el) return null;
-  if(el.value !== '__otro') return el.value;
-  const t = String((document.getElementById('at-conocio-otro') || {}).value || '').trim().replace(/\s+/g, ' ');
-  if(!t) return null;
-  const fija = COMO_CONOCIO_OPTS.find(o => normTxt(o[1]) === normTxt(t)); if(fija) return fija[0];
-  const ya = (window.__conocioExtra || []).find(o => normTxt(o[1]) === normTxt(t)); if(ya) return ya[0];
-  return 'otro:' + t.charAt(0).toUpperCase() + t.slice(1);
+  const out = [];
+  document.querySelectorAll('input[name="at-conocio"]:checked').forEach(el => {
+    if(el.value !== '__otro'){ out.push(el.value); return; }
+    String((document.getElementById('at-conocio-otro') || {}).value || '').split(/[,;]/).map(t => t.trim().replace(/\s+/g, ' ')).filter(Boolean).forEach(t => {
+      const fija = COMO_CONOCIO_OPTS.find(o => normTxt(o[1]) === normTxt(t)); if(fija){ out.push(fija[0]); return; }
+      const ya = (window.__conocioExtra || []).find(o => normTxt(o[1]) === normTxt(t)); if(ya){ out.push(ya[0]); return; }
+      out.push('otro:' + t.replace(/\|/g, '/').charAt(0).toUpperCase() + t.replace(/\|/g, '/').slice(1));
+    });
+  });
+  const unicos = [...new Set(out)];
+  return unicos.length ? unicos.join('|') : null;
 }
 function radioGroup(name, opts){
   return opts.map(([v,l]) => `<label class="checkbox-row"><input type="radio" name="${name}" value="${v}">${l}</label>`).join('');
@@ -7055,11 +7113,8 @@ function atPrefill(prev){
   if(!prev) return;
   const marca = (name, vals) => { const set = [].concat(vals || []); document.querySelectorAll(`input[name="${name}"]`).forEach(el => { el.checked = set.includes(el.value); }); };
   marca('at-prestaciones', prev.prestaciones); marca('at-tramites', prev.tramites_bretxa); marca('at-programas', prev.derivacion_programas);
-  marca('at-talleres', prev.talleres); marca('at-ethos', prev.ethos); marca('at-derivacion', prev.derivacion); marca('at-emprendeduria', prev.emprendeduria); marca('at-conocio', prev.como_conocio);
-  if(prev.como_conocio && !document.querySelector('input[name="at-conocio"]:checked')){
-    const o = document.querySelector('input[name="at-conocio"][value="__otro"]'), i = document.getElementById('at-conocio-otro');
-    if(o && i){ o.checked = true; i.value = String(prev.como_conocio).replace(/^otro:/, ''); conocioOtro(true); }
-  }
+  marcaOtro('at-talleres', prev.talleres); marca('at-ethos', prev.ethos); marcaOtro('at-derivacion', prev.derivacion); marca('at-emprendeduria', prev.emprendeduria);
+  conocioMarcar(prev.como_conocio);
   const nn = document.getElementById('at-necesidades-nuevas'); if(nn && prev.necesidades_no_catalogadas) nn.value = prev.necesidades_no_catalogadas;
   const nt = document.getElementById('at-notas'); if(nt && prev.notas) nt.value = prev.notas;
 }
@@ -7123,9 +7178,9 @@ function renderAtencionForm(opts){
     ${secAt('💶 Prestaciones económicas básicas', checkboxGroup('at-prestaciones', PRESTACIONES_OPTS), 'at-prestaciones')}
     ${secAt('🧾 Trámites / proyectos dentro de Bretxa Logos', checkboxGroup('at-tramites', TRAMITES_BRETXA_OPTS), 'at-tramites')}
     ${secAt('🧭 Derivación a los programas', checkboxGroup('at-programas', PROGRAMAS_OPTS), 'at-programas')}
-    ${secAt('🛠️ Talleres', checkboxGroup('at-talleres', TALLERES_OPTS), 'at-talleres')}
+    ${secAt('🛠️ Talleres', checkboxGroupOtro('at-talleres', TALLERES_OPTS, ['cap']), 'at-talleres')}
     ${secAt('🏠 Situación residencial (ETHOS)', radioGroup('at-ethos', ETHOS_OPTS), 'at-ethos')}
-    ${secAt('↗️ Derivación', radioGroup('at-derivacion', DERIVACION_OPTS), 'at-derivacion')}
+    ${secAt('↗️ Derivación', checkboxGroupOtro('at-derivacion', DERIVACION_OPTS.concat([['altres', 'Otros']]), ['no_procedeix']), 'at-derivacion')}
     ${secAt('🚀 Emprendeduría', checkboxGroup('at-emprendeduria', EMPRENDEDURIA_OPTS), 'at-emprendeduria')}
     ${secAt('📣 ¿Cómo nos conoció / quién derivó?', `<div id="at-conocio-grupo">${conocioGroupHtml()}</div>`, 'at-conocio')}
 
@@ -7302,11 +7357,11 @@ async function guardarAtencion(){
     duracion_minutos: document.getElementById('at-duracion').value ? parseInt(document.getElementById('at-duracion').value, 10) : null,
     prestaciones: getChecked('at-prestaciones'),
     tramites_bretxa: getChecked('at-tramites'),
-    derivacion: getRadio('at-derivacion'),
+    derivacion: (checkedOtro('at-derivacion').map(x => x.replace(/\|/g, '/')).join('|') || null),
     emprendeduria: getChecked('at-emprendeduria'),
     como_conocio: conocioValor(),
     derivacion_programas: getChecked('at-programas'),
-    talleres: getChecked('at-talleres'),
+    talleres: checkedOtro('at-talleres'),
     ethos: getRadio('at-ethos'),
     necesidades_no_catalogadas: document.getElementById('at-necesidades-nuevas').value.trim() || null,
     notas: document.getElementById('at-notas').value.trim() || null
@@ -11101,6 +11156,12 @@ const CAMPOS_PERSONA = [
   ['familia_numerosa', 'Familia numerosa', 'Família nombrosa', p => personaSiNo(p.familia_numerosa)],
   ['situacion_laboral', 'Situación laboral', 'Situació laboral', p => p.situacion_laboral || ''],
   ['situacion_desempleo', 'En situación de desempleo', 'En situació d\'atur', p => personaSiNo(p.situacion_desempleo)],
+  ['origen_migrante', 'Con personas de origen migrante', 'Amb persones d\'origen migrant', p => personaSiNo(p.origen_migrante)],
+  ['dependientes_a_cargo', 'Personas dependientes a cargo', 'Dependents a càrrec', p => personaSiNo(p.dependientes_a_cargo)],
+  ['menores_en_riesgo', 'Menores en situación de riesgo', 'Infants o adolescents en risc', p => personaSiNo(p.menores_en_riesgo)],
+  ['dificultades_emocionales', 'Dificultades emocionales o psicológicas', 'Dificultats emocionals o psicològiques', p => personaSiNo(p.dificultades_emocionales)],
+  ['violencia_genero', 'Violencia de género', 'Violència de gènere', p => personaSiNo(p.violencia_genero)],
+  ['situaciones_respuesta', 'Situaciones: respuesta', 'Situacions: resposta', p => p.situaciones_respuesta === 'ninguna' ? 'Ninguna de las anteriores' : (p.situaciones_respuesta === 'no_responde' ? 'Prefiere no responder' : '')],
   ['discapacidad_reconocida', 'Discapacidad reconocida', 'Discapacitat reconeguda', p => personaSiNo(p.discapacidad_reconocida)],
   ['porcentaje_discapacidad', '% de discapacidad', '% de discapacitat', p => p.porcentaje_discapacidad ? p.porcentaje_discapacidad + '%' : ''],
   ['dependencia_reconocida', 'Dependencia reconocida', 'Dependència reconeguda', p => personaSiNo(p.dependencia_reconocida)],
@@ -16107,7 +16168,7 @@ async function impResultadosAuto(desde, hasta){
     const empleo = conseguido.filter(x => /labor|empleo|ocupa|feina|treball|trabajo|inserci/i.test(x.categoria || ''));
     const personasLogro = new Set(conseguido.map(x => x.usuario_id).filter(Boolean)).size;
     const tramFin = trams.filter(x => x.estado === 'hecho').length;
-    const deriv = ats.filter(a => a.derivacion && !/^(no|ninguna|no_procede)$/i.test(a.derivacion)).length + acts.filter(x => x.derivado_a && !/^no/i.test(x.derivado_a)).length;
+    const deriv = ats.filter(a => derivacionReal(a.derivacion)).length + acts.filter(x => x.derivado_a && !/^no/i.test(x.derivado_a)).length;
     let satis = null, satisN = 0;
     if(en && en.data && Number(en.data.media_global) > 0){ satis = Math.round(Number(en.data.media_global) * 100) / 100; satisN = en.data.total_respuestas || 0; }
     const TR = estTrayectoria((await estCargarPersonas()).filas);
@@ -18275,7 +18336,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-10 · v245 (consentimiento v3 en el alta presencial, igual que Logos Acompanya)';
+const APP_VERSION_INTRANET = '2026-11-10 · v246 (ficha de atención: opción múltiple, «Otros» con texto, «A més…», nacionalidad con lista)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -19581,9 +19642,9 @@ async function renderInformesScreen(){
       <div class="panel-card" id="inf-tram"><h3>${t.tramitesPorEstado}</h3>${(tramEstado.data||[]).length ? graficoCircular((tramEstado.data||[]).map(r => ({label: r.estado || '—', value: r.total})), ['var(--gold)', 'var(--navy)', 'var(--good)']) : `<div class="placeholder">${t.cargando}</div>`}</div>
       <div class="panel-card"><h3>${t.prestacionesEconomicas}</h3>${graficoCircular((prestaciones.data||[]).map(r => ({label: etiquetaOpt(PRESTACIONES_OPTS, r.prestacion) || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
       <div class="panel-card"><h3>${t.tramitesBretxaTitulo}</h3>${graficoCircular((tramitesBretxa.data||[]).map(r => ({label: etiquetaOpt(TRAMITES_BRETXA_OPTS, r.tramite) || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
-      <div class="panel-card"><h3>${t.derivacionRecursos}</h3>${graficoCircular((derivacion.data||[]).map(r => ({label: etiquetaOpt(DERIVACION_OPTS, r.derivacion) || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
+      <div class="panel-card"><h3>${t.derivacionRecursos}</h3>${graficoCircular(sumarMulti(derivacion.data, 'derivacion', DERIVACION_OPTS), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
       <div class="panel-card"><h3>${t.emprendeduriaTitulo}</h3>${graficoCircular((emprendeduria.data||[]).map(r => ({label: etiquetaOpt(EMPRENDEDURIA_OPTS, r.accion) || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
-      <div class="panel-card"><h3>${t.comoConocioTitulo}</h3>${graficoCircular((comoConocio.data||[]).map(r => ({label: etiquetaOpt(COMO_CONOCIO_OPTS, r.como_conocio) || '—', value: r.total})), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
+      <div class="panel-card"><h3>${t.comoConocioTitulo}</h3>${graficoCircular(sumarMulti(comoConocio.data, 'como_conocio', COMO_CONOCIO_OPTS), ['var(--navy)', 'var(--gold)', '#888780', 'var(--good)', '#B5651D'])}</div>
       ${bloqueAtencionNuevos(atNuevos)}
       <p class="subtle" style="grid-column:1/-1;margin:4px 0 0;font-size:12px;">ℹ️ ${LANG_I==='ca' ? 'Prestacions, tràmits de Bretxa, derivacions, emprenedoria i com ens coneixen surten de les atencions registrades a la plataforma (l\'històric en paper no té aquestes dades).' : 'Prestaciones, trámites de Bretxa, derivaciones, emprendeduría y cómo nos conocen salen de las atenciones registradas en la plataforma (el histórico en papel no tiene estos datos).'}</p>
       <div class="panel-card"><h3>${t.resultadosActuaciones}</h3><p class="subtle" style="margin:0 0 8px;">${totalActStats} ${t.actuacionesRegistradasTotal}</p>${resultadosHtml}</div>
@@ -20882,7 +20943,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
             <option value="false" ${p.dependencia_reconocida===false?'selected':''}>${LANG_I==='ca'?'No':'No'}</option>
           </select>
         </div>
-        <div class="field"><label>${LANG_I==='ca'?'Nacionalitat':'Nacionalidad'}</label><input type="text" id="pds-nacionalidad" value="${escAttr(p.nacionalidad||'')}"></div>
+        <div class="field"><label>${LANG_I==='ca'?'Nacionalitat':'Nacionalidad'}</label><input type="text" id="pds-nacionalidad" list="pds-nac-lista" autocomplete="off" placeholder="${LANG_I==='ca'?'Tria o escriu-la':'Elige o escríbela'}" value="${escAttr(p.nacionalidad||'')}">${nacionalidadDatalist()}</div>
         <div class="field">
           <label>${LANG_I==='ca'?'Situació de regularització':'Situación de regularización'}</label>
           <select id="pds-regularizacion">
@@ -20906,10 +20967,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
         </div>
         <div class="field"><label>${LANG_I==='ca'?'Titulacions o cursos':'Titulaciones o cursos'}</label><input type="text" id="pds-titulaciones" value="${escAttr(p.titulaciones_cursos||'')}"></div>
         <div class="field"><label>${LANG_I==='ca'?'Experiència laboral prèvia':'Experiencia laboral previa'}</label><input type="text" id="pds-experiencia" value="${escAttr(p.experiencia_laboral||'')}"></div>
-        <label class="checkbox-row"><input type="checkbox" id="pds-monoparental" ${p.familia_monoparental?'checked':''}>${LANG_I==='ca'?'Família monoparental':'Familia monoparental'}</label>
-        <label class="checkbox-row"><input type="checkbox" id="pds-numerosa" ${p.familia_numerosa?'checked':''}>${LANG_I==='ca'?'Família nombrosa':'Familia numerosa'}</label>
-        <label class="checkbox-row"><input type="checkbox" id="pds-hijos-cargo" ${p.hijos_a_cargo?'checked':''}>${LANG_I==='ca'?'Fills a càrrec':'Hijos a cargo'}</label>
-        <label class="checkbox-row"><input type="checkbox" id="pds-desempleo" ${p.situacion_desempleo?'checked':''}>${LANG_I==='ca'?'Situació de desocupació':'Situación de desempleo'}</label>
+        ${situacionesHtml(p)}
         <p class="subtle" style="margin:6px 0 0;font-size:12px;">${LANG_I==='ca'?'Es desa amb el botó «Desar» del final de la fitxa.':'Se guarda con el botón «Guardar» del final de la ficha.'}</p>
       </div>
       </div></details>
@@ -21391,10 +21449,15 @@ async function guardarDatosPersonaStaff(usuarioId, silencioso){
     hijos_a_cargo: document.getElementById('pds-hijos-cargo').checked,
     situacion_desempleo: document.getElementById('pds-desempleo').checked,
   };
+  Object.assign(payload, situacionesValor());
   if(PERFIL_ETHOS && document.getElementById('pds-ethos')) payload.ethos = val('pds-ethos') || null;
   // Se comprueba que el cambio se ha guardado de verdad: si la base de datos no deja (ficha de otra persona del equipo),
   // no da error, solo no cambia nada. Entonces se usa la función segura del SQL 76, que deja corregir a todo el equipo.
   let { data: filasUpd, error } = await sb.from('perfiles').update(payload).eq('id', usuarioId).select('id');
+  if(error && /origen_migrante|situaciones_respuesta|violencia_genero|dificultades_emocionales|menores_en_riesgo|dependientes_a_cargo/i.test(error.message || '')){
+    SITUACIONES_NUEVAS.forEach(k => delete payload[k]);   // falta el SQL-89: se guarda lo demás
+    ({ data: filasUpd, error } = await sb.from('perfiles').update(payload).eq('id', usuarioId).select('id'));
+  }
   if(error || !(filasUpd || []).length){
     const r = await sb.rpc('staff_actualizar_perfil', { p_id: usuarioId, p_datos: payload });
     if(r.error){
@@ -21509,7 +21572,7 @@ function m4FichaAtencionHtml(p, atenciones){
   const L = acL, a = [...(atenciones || [])].sort((x, y) => String(y.creado_en).localeCompare(String(x.creado_en)))[0];
   const bool = v => v === true ? L('Sí', 'Sí') : (v === false ? 'No' : '');
   const dir = [p.calle, p.codigo_postal, p.municipio].filter(Boolean).join(', ');
-  const extras = [p.familia_monoparental && L('Familia monoparental', 'Família monoparental'), p.familia_numerosa && L('Familia numerosa', 'Família nombrosa'), p.hijos_a_cargo && L('Hijos a cargo', 'Fills a càrrec'), p.situacion_desempleo && L('En desempleo', 'En atur')].filter(Boolean);
+  const extras = SITUACIONES.filter(x => p[x[1]] === true).map(x => L(x[2], x[3])).concat([p.hijos_a_cargo && L('Hijos a cargo', 'Fills a càrrec'), p.situaciones_respuesta === 'ninguna' && L('Ninguna de las situaciones', 'Cap de les situacions'), p.situaciones_respuesta === 'no_responde' && L('Prefiere no responder', 'Prefereix no respondre')]).filter(Boolean);
   let pct = null; try { pct = fichaPorcentaje(p); } catch(e){}
   const grupo = (t, html) => html ? `<div class="m4-grupo"><div class="m4-gt">${t}</div>${html}</div>` : '';
   const ult = a ? [
@@ -21613,6 +21676,37 @@ function m3AccesoHtml(p){
   </div>`;
 }
 // Datos personales: dos tarjetas (datos personales / hogar y situación) en dos columnas
+// ===== v252 · «A més…» (situaciones de la persona) y nacionalidad con lista =====
+const NACIONALIDADES = [['Española', 'Espanyola'], ['Marroquí', 'Marroquina'], ['Colombiana', 'Colombiana'], ['Rumana', 'Romanesa'], ['Italiana', 'Italiana'], ['Venezolana', 'Veneçolana'], ['China', 'Xinesa'], ['Ucraniana', 'Ucraïnesa']];
+function nacionalidadDatalist(){ return `<datalist id="pds-nac-lista">${NACIONALIDADES.map(n => `<option value="${LANG_I === 'ca' ? n[1] : n[0]}">`).join('')}</datalist>`; }
+// [id del input, columna en «perfiles», es, ca]. Las 4 primeras columnas ya existían; las demás vienen del SQL-89
+// (violencia_genero, dificultades_emocionales y menores_en_riesgo ya las usa Logos Acompanya).
+const SITUACIONES = [
+  ['pds-monoparental', 'familia_monoparental', 'Monoparental', 'Monoparental'],
+  ['pds-numerosa', 'familia_numerosa', 'Numerosa', 'Nombrosa'],
+  ['pds-migrante', 'origen_migrante', 'Con personas de origen migrante', 'Amb persones d\'origen migrant'],
+  ['pds-desempleo', 'situacion_desempleo', 'Situación de desempleo', 'Situació de desocupació'],
+  ['pds-emocionales', 'dificultades_emocionales', 'Dificultades emocionales o psicológicas', 'Dificultats emocionals o psicològiques'],
+  ['pds-menores-riesgo', 'menores_en_riesgo', 'Niños/as o adolescentes en situación de riesgo social o educativo', 'Infants o adolescents en situació de risc social o educatiu'],
+  ['pds-dependientes', 'dependientes_a_cargo', 'Personas dependientes a cargo (mayores, con discapacidad u otras)', 'Dependents a càrrec (persones grans, persones amb discapacitat o altres)'],
+  ['pds-violencia', 'violencia_genero', 'Violencia de género', 'Violència de gènere']
+];
+const SITUACIONES_NUEVAS = ['origen_migrante', 'dificultades_emocionales', 'menores_en_riesgo', 'dependientes_a_cargo', 'violencia_genero', 'situaciones_respuesta'];
+function situacionesHtml(p){
+  const ca = LANG_I === 'ca', r = p.situaciones_respuesta || '';
+  const fila = (id, on, txt, extra) => `<label class="checkbox-row"><input type="checkbox" id="${id}" name="pds-sit" ${extra || ''} ${on ? 'checked' : ''}>${txt}</label>`;
+  return SITUACIONES.map(([id, col, es, c]) => fila(id, p[col] === true, ca ? c : es)).join('')
+    + fila('pds-sit-cap', r === 'ninguna', ca ? 'Cap de les anteriors' : 'Ninguna de las anteriores', 'data-excl="1"')
+    + fila('pds-sit-nr', r === 'no_responde', ca ? 'Prefereixo NO respondre' : 'Prefiere NO responder', 'data-excl="1"')
+    // «Hijos a cargo» ya no se pregunta aquí, pero se conserva lo que había
+    + `<input type="checkbox" id="pds-hijos-cargo" hidden ${p.hijos_a_cargo ? 'checked' : ''}>`;
+}
+function situacionesValor(){
+  const o = {}, chk = id => !!(document.getElementById(id) || {}).checked;
+  SITUACIONES.forEach(([id, col]) => { if(SITUACIONES_NUEVAS.includes(col)) o[col] = chk(id); });
+  o.situaciones_respuesta = chk('pds-sit-cap') ? 'ninguna' : (chk('pds-sit-nr') ? 'no_responde' : null);
+  return o;
+}
 function m3DatosMontar(){
   const sd = document.getElementById('sec-datos'); if(!sd || sd.dataset.m3) return;
   sd.dataset.m3 = '1'; sd.open = true;
@@ -21793,8 +21887,13 @@ function m3AtencionMontar(){
     const s3 = mk('m3-s3', '3 · ' + L('Qué necesita hoy', 'Què necessita avui'), L('Toca para marcar.', 'Toca per marcar.'));
     const s4 = mk('m3-s4', '4 · ' + L('Cómo nos conoció', 'Com ens va conèixer'), '');
     const s5 = mk('m3-s5', '5 · ' + L('Observaciones', 'Observacions'), '');
+    // v252: «Prestaciones económicas» y «Situación residencial (ETHOS)» van en «2 · Hogar y situación»
+    const s2 = document.getElementById('m3-s2');
+    let s2at = document.getElementById('m3-s2-at'); if(s2at) s2at.remove();
+    if(s2){ s2at = document.createElement('div'); s2at.id = 'm3-s2-at'; s2at.className = 'm3-s2-at'; s2.appendChild(s2at); }
     form.querySelectorAll('.at-sec2[data-clave]').forEach(d => {
       d.open = true; d.classList.add('m3-grupo');
+      if(s2at && (d.dataset.clave === 'at-prestaciones' || d.dataset.clave === 'at-ethos')){ s2at.appendChild(d); return; }
       (d.dataset.clave === 'at-conocio' ? s4 : s3).appendChild(d);
     });
     const g5 = document.createElement('div'); g5.className = 'm3-grid'; s5.appendChild(g5);
@@ -21839,7 +21938,7 @@ function m3IrA(id){
 function m3AtencionDesmontar(){
   const pt = document.getElementById('ptab-atencion'); if(!pt) return;
   pt.classList.remove('m3-con-at');
-  ['m3-at-cab', 'm3-at-nav'].forEach(id => { const el = document.getElementById(id); if(el) el.remove(); });
+  ['m3-at-cab', 'm3-at-nav', 'm3-s2-at'].forEach(id => { const el = document.getElementById(id); if(el) el.remove(); });
 }
 
 function mostrarTabPersona(nombre){
@@ -22620,7 +22719,7 @@ function renderFilasAtenciones(atenciones){
   const t = TI[LANG_I];
   return atenciones.length
     ? atenciones.map(a => {
-        const servicios = [...(a.prestaciones||[]), ...(a.tramites_bretxa||[]), ...(a.emprendeduria||[]), a.derivacion].filter(Boolean).join(', ') || '—';
+        const servicios = [...(a.prestaciones||[]), ...(a.tramites_bretxa||[]), ...(a.emprendeduria||[]), a.derivacion ? etiquetaOpt(DERIVACION_OPTS, a.derivacion) : ''].filter(Boolean).join(', ') || '—';
         return `
           <div class="panel-card">
             <div class="panel-stat-row"><span>${t.tecnicoLbl}</span><span><strong>${nombreTecnico(a.creado_por_email)}</strong></span></div>
@@ -23953,10 +24052,10 @@ async function memDatos(desde, hasta, programa){
   tramites.forEach(t => suma(t.nombre_servicio));
   actuaciones.forEach(x => suma(x.categoria));
   const servicios = Object.entries(cuenta).sort((a, b) => b[1] - a[1]).slice(0, 12);
-  const conocio = {}; atenciones.forEach(a => { if(a.como_conocio){ const o = COMO_CONOCIO_OPTS.find(x => x[0] === a.como_conocio); const k = o ? ((typeof TXT_ES_CA !== 'undefined' && LANG_I === 'ca' && TXT_ES_CA[o[1]]) ? TXT_ES_CA[o[1]] : o[1]) : String(a.como_conocio).replace(/^otro:/, ''); conocio[k] = (conocio[k] || 0) + 1; } });
+  const conocio = {}; atenciones.forEach(a => { multiPartes(a.como_conocio).forEach(cv => { const o = COMO_CONOCIO_OPTS.find(x => x[0] === cv); const k = o ? ((typeof TXT_ES_CA !== 'undefined' && LANG_I === 'ca' && TXT_ES_CA[o[1]]) ? TXT_ES_CA[o[1]] : o[1]) : String(cv).replace(/^otro:/, ''); conocio[k] = (conocio[k] || 0) + 1; }); });
   const minutos = atenciones.reduce((s, a) => s + (Number(a.duracion_minutos) || 0), 0);
   const tramFin = tramites.filter(t => t.estado === 'hecho').length;
-  const derivaciones = atenciones.filter(a => a.derivacion && a.derivacion !== 'no' && a.derivacion !== 'ninguna').length + actuaciones.filter(x => x.derivado_a && !/^no/i.test(x.derivado_a)).length;
+  const derivaciones = atenciones.filter(a => derivacionReal(a.derivacion)).length + actuaciones.filter(x => x.derivado_a && !/^no/i.test(x.derivado_a)).length;
   const resultados = {}; actuaciones.forEach(x => { if(x.resultado) resultados[x.resultado] = (resultados[x.resultado] || 0) + 1; });
   const tray = estTrayectoria(per.filas);
   return { desde, hasta, programa, atendidas, filasHist, sinCuenta, tray, nuevas, T: estTablas(atendidas), act: act || {}, atencionesN: atenciones.length, actuacionesN: actuaciones.length,
