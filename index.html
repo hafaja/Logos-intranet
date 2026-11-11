@@ -4016,6 +4016,9 @@ async function cerrarSesion(forzado){
 // Un minuto antes sale un aviso con cuenta atrás. Cuenta la actividad de todas las pestañas abiertas
 // y también al despertar el ordenador (si estuvo dormido más tiempo del permitido, se cierra al volver).
 const INACTIVIDAD_MIN = 25, INACTIVIDAD_AVISO_SEG = 60;
+// v253: los QR de firma (consentimiento, actuación grupal, Raíces) duran 1 hora (SQL-94). Antes 30 min, y la sesión
+// se podía cerrar por inactividad mientras la persona firmaba en su móvil: eso cerraba el QR. Ahora no.
+const QR_FIRMA_MIN = 60;
 let __actUlt = Date.now(), __actGuardada = 0;
 function actMarcar(){
   __actUlt = Date.now();
@@ -4026,6 +4029,7 @@ function actUltima(){
   let x = __actUlt;
   try { const v = Number(localStorage.getItem('logos_ult_act')); if(v > x) x = v; } catch(e){}
   if([...document.querySelectorAll('video, audio')].some(v => !v.paused && !v.ended)) x = Date.now();   // viendo un vídeo del Aula Virtual
+  if(document.querySelector('#ap-qr-ov, #ag-qr-ov, #ra-ov')) x = Date.now();   // v253: hay un QR de firma abierto: la persona está leyendo y firmando en su móvil
   return x;
 }
 function actRevisar(){
@@ -6964,9 +6968,9 @@ async function apFirmaMovilAbrir(){
     <div class="ap-qr-img">${qrSvgDe(url, 7)}</div>
     <p class="ap-qr-url">${escAttr(url.replace(/^https:\/\//, ''))}</p>
     <div class="ap-qr-est" id="ap-qr-est">⏳ ${esCA ? 'Esperant la signatura…' : 'Esperando la firma…'} <small id="ap-qr-t"></small></div>
-    <p class="subtle" style="font-size:12px;margin:8px 0 0;">${esCA ? 'El QR serveix una sola vegada i caduca en 30 minuts.' : 'El QR sirve una sola vez y caduca en 30 minutos.'}</p></div>`;
+    <p class="subtle" style="font-size:12px;margin:8px 0 0;">${esCA ? 'El QR serveix una sola vegada i caduca en 1 hora.' : 'El QR sirve una sola vez y caduca en 1 hora.'}</p></div>`;
   document.body.appendChild(ov);
-  const fin = Date.now() + 30 * 60000;
+  const fin = Date.now() + QR_FIRMA_MIN * 60000;
   window.__apQr = { id, token, timer: setInterval(async () => {
     const q = window.__apQr; if(!q) return;
     const queda = Math.max(0, Math.round((fin - Date.now()) / 60000)); const t = document.getElementById('ap-qr-t'); if(t) t.textContent = '· ' + queda + ' min';
@@ -7080,6 +7084,7 @@ async function guardarAltaPresencial(){
   const btn = document.getElementById('ap-btn-guardar');
   btn.disabled = true;
   btn.textContent = esCA ? 'Creant…' : 'Creando…';
+  if(!window.__histActivarId){ try { const h = await apBuscarFichaPapel(nombre, telefono, dni); if(h){ __histCache[h.id] = h; window.__histActivarId = h.id; window.__apUnidaPapel = h.nombre_completo; } } catch(e){} }
 
   const firma = document.getElementById('ap-firma-canvas').toDataURL('image/png');
 
@@ -7115,6 +7120,8 @@ async function guardarAltaPresencial(){
     try { await sb.from('avisos_espera').insert({ usuario_id: data.usuario_id, clave: 'breve', creado_por_email: CURRENT_USER.email }); } catch(e){}
     try { if(data.usuario_id) await sb.from('perfiles').update({ consentimiento_version: CONSENT_VERSION }).eq('id', data.usuario_id); } catch(e){}
     if(window.__histActivarId){ const hid = window.__histActivarId; window.__histActivarId = null; try { await histVincularPerfil(hid, data.usuario_id); } catch(e){} }
+    if(window.__apUnidaPapel){ mensajeFinal += '\n\n📄 ' + (esCA ? `Ja tenia una fitxa amb consentiment en paper («${window.__apUnidaPapel}»): s'ha unit a aquest compte, no s'ha duplicat.` : `Ya tenía una ficha con consentimiento en papel («${window.__apUnidaPapel}»): se ha unido a esta cuenta, no se ha duplicado.`); window.__apUnidaPapel = null; }
+    window.__personasHistUnif = null; window.__histCacheLista = null;
     alert(mensajeFinal);
     showScreen('personas'); verPersonaStaff(data.usuario_id, 'personas');
   } catch(e){
@@ -18485,7 +18492,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-11 · v252 (🔑 «Alguien no puede entrar»: contraseña provisional sin correo, y crea la cuenta si no la tiene)';
+const APP_VERSION_INTRANET = '2026-11-11 · v253 (QR de firma: 1 hora y sin cerrarse por inactividad; quien firmó en papel ya no se duplica al darle de alta)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -23770,12 +23777,15 @@ async function histCargarParaListaServidor(){
 function histUnificar(perfiles, filas){
   const dniPerfil = new Set((perfiles || []).map(p => pNormDni(p.dni_nie)).filter(d => d.length >= 5));
   const idsPerfil = new Set((perfiles || []).map(p => p.id));
+  const pila = n => normTxt(n || '').split(/\s+/)[0] || '';
+  const telPila = new Set((perfiles || []).map(p => { const t = pSoloDigitos(p.telefono).slice(-9); return t.length >= 9 ? t + '|' + pila(p.nombre_completo) : ''; }).filter(Boolean));
   const grupos = {};
   (filas || []).forEach(h => {
     if(!h.nombre_completo) return;
     if(h.perfil_id && idsPerfil.has(h.perfil_id)) return;
     const d = pNormDni(h.dni_nie);
     if(d.length >= 5 && dniPerfil.has(d)) return;
+    { const t = pSoloDigitos(h.telefono).slice(-9); if(t.length >= 9 && telPila.has(t + '|' + pila(h.nombre_completo))) return; }   // v253: misma persona (teléfono + nombre)
     const k = d.length >= 5 ? 'd:' + d : 'n:' + normTxt(h.nombre_completo).replace(/\s+/g, ' ').trim() + '|' + pSoloDigitos(h.telefono);
     (grupos[k] = grupos[k] || []).push(h);
   });
@@ -23900,6 +23910,19 @@ function histActivarCuenta(id){
   if(cont) cont.insertAdjacentHTML('afterbegin', `<div class="info-box info-box-gold" style="margin-bottom:12px;">📄 ${acL('Estás activando la cuenta de una persona del histórico. Hemos rellenado sus datos; al terminar, su ficha antigua quedará unida a la nueva cuenta (fecha de alta, sexo, nacionalidad…).', 'Estàs activant el compte d\'una persona de l\'històric. Hem omplert les seves dades; en acabar, la fitxa antiga quedarà unida al compte nou (data d\'alta, sexe, nacionalitat…).')}</div>`);
 }
 // Tras crear la cuenta: une la ficha del histórico con el perfil nuevo y le pasa los datos que faltan
+// v253: ¿esta persona ya tiene una ficha SIN CUENTA (consentimiento en papel o histórico)? Mismo DNI/NIE, o mismo teléfono y mismo nombre de pila
+async function apBuscarFichaPapel(nombre, telefono, dni){
+  if(typeof HISTORICAS_OK !== 'undefined' && !HISTORICAS_OK) return null;
+  const nd = pNormDni(dni), nt = pSoloDigitos(telefono).slice(-9), pila = normTxt(nombre).split(/\s+/)[0] || '';
+  const ors = [nd.length >= 5 ? `dni_nie.ilike.%${nd.slice(-7)}%` : '', nt.length >= 9 ? `telefono.ilike.%${nt.slice(-9)}%` : ''].filter(Boolean).join(',');
+  if(!ors) return null;
+  const { data, error } = await sb.from('personas_historicas').select('*').or(ors).limit(20);
+  if(error || !data) return null;
+  const libres = data.filter(h => !h.perfil_id);
+  return libres.find(h => nd.length >= 5 && pNormDni(h.dni_nie) === nd)
+    || libres.find(h => nt.length >= 9 && pSoloDigitos(h.telefono).slice(-9) === nt && (normTxt(h.nombre_completo).split(/\s+/)[0] || '') === pila)
+    || null;
+}
 async function histVincularPerfil(histId, usuarioId){
   const unif = (window.__personasHistUnif || []).find(x => x.histIds && x.histIds.includes(histId));
   const p = unif || __histCache[histId]; if(!p || !usuarioId) return;
@@ -25944,9 +25967,9 @@ async function raFirmaMovilQr(famId, quien){
     <div class="ap-qr-img">${qrSvgDe(url, 7)}</div>
     <p class="ap-qr-url">${escAttr(url.replace(/^https:\/\//, ''))}</p>
     <div class="ap-qr-est" id="ra-qr-est">⏳ ${acL('Esperando la firma…', 'Esperant la signatura…')} <small id="ra-qr-t"></small></div>
-    <p class="subtle" style="font-size:12px;margin:8px 0 0;">${acL('El QR sirve una sola vez y caduca en 30 minutos.', 'El QR serveix una sola vegada i caduca en 30 minuts.')}</p></div>`;
+    <p class="subtle" style="font-size:12px;margin:8px 0 0;">${acL('El QR sirve una sola vez y caduca en 1 hora.', 'El QR serveix una sola vegada i caduca en 1 hora.')}</p></div>`;
   document.body.appendChild(ov);
-  const fin = Date.now() + 30 * 60000;
+  const fin = Date.now() + QR_FIRMA_MIN * 60000;
   window.__raQr = { id, timer: setInterval(async () => {
     const q = window.__raQr; if(!q) return;
     const t = document.getElementById('ra-qr-t'); if(t) t.textContent = '· ' + Math.max(0, Math.round((fin - Date.now()) / 60000)) + ' min';
@@ -26355,9 +26378,9 @@ async function agConsQr(i){
     <p class="subtle" style="margin:0 0 10px;">${acL('Que abra la cámara del móvil y apunte al QR. Leerá el consentimiento y firmará con el dedo. No necesita cuenta.', 'Que obri la càmera del mòbil i apunti al QR. Llegirà el consentiment i signarà amb el dit. No cal compte.')}</p>
     <div class="ap-qr-img">${qrSvgDe(url, 7)}</div>
     <div class="ap-qr-est" id="ag-qr-est">⏳ ${acL('Esperando la firma…', 'Esperant la signatura…')}</div>
-    <p class="subtle" style="font-size:12px;margin:8px 0 0;">${acL('El QR sirve una sola vez y caduca en 30 minutos.', 'El QR serveix una sola vegada i caduca en 30 minuts.')}</p></div>`;
+    <p class="subtle" style="font-size:12px;margin:8px 0 0;">${acL('El QR sirve una sola vez y caduca en 1 hora.', 'El QR serveix una sola vegada i caduca en 1 hora.')}</p></div>`;
   document.body.appendChild(ov);
-  const fin = Date.now() + 30 * 60000;
+  const fin = Date.now() + QR_FIRMA_MIN * 60000;
   window.__agQr = { id, timer: setInterval(async () => {
     const q = window.__agQr; if(!q) return;
     if(Date.now() > fin){ clearInterval(q.timer); const e = document.getElementById('ag-qr-est'); if(e) e.innerHTML = '⌛ ' + acL('El QR ha caducado.', 'El QR ha caducat.'); return; }
