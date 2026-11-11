@@ -4544,6 +4544,7 @@ async function salaElegirPlaza(id){
   const ov = document.getElementById('sala-ov'); if(ov) ov.remove();
   window.__tengoSala = true;
   await iniciarAtencionSala(id);
+  try { await fichajeRefrescar(); if(window.__fichajeAbierto) fichAvisoFichado('🏢 ' + acL('Fichaje: en la oficina', 'Fitxatge: a l\'oficina') + ' · ' + escAttr(nombrePlaza(id))); } catch(e){}
   window.__salaMarcadaTurno = undefined;
   await salaEstadoRefrescar(); fichajePintarBanner();
 }
@@ -4551,6 +4552,7 @@ async function salaElegirReunion(){
   const ov = document.getElementById('sala-ov'); if(ov) ov.remove();
   window.__tengoSala = true;
   await iniciarReunion();
+  try { await fichajeRefrescar(); if(window.__fichajeAbierto) fichAvisoFichado('🏢 ' + acL('Fichaje: en la oficina', 'Fitxatge: a l\'oficina') + ' · ' + acL('sala de reuniones', 'sala de reunions')); } catch(e){}
   await salaEstadoRefrescar(); fichajePintarBanner();
 }
 function salaHoyNoEstoy(){
@@ -4623,7 +4625,7 @@ function fichajePintarBanner(){
   b.classList.toggle('tarde', !!pasado);
   b.innerHTML = `<span class="fb-largo">${pasado ? `⏰ ${acL('Tu horario terminó a las', 'El teu horari va acabar a les')} <strong>${hFin}</strong>. ${acL('¿Te has olvidado de fichar la salida?', 'T\'has oblidat de fitxar la sortida?')}` : `🔴 ${acL('Tienes la entrada fichada desde las', 'Tens l\'entrada fitxada des de les')} <strong>${hora}</strong>. ${acL('Ficha la salida antes de cerrar el ordenador.', 'Fitxa la sortida abans de tancar l\'ordinador.')}`}</span>
     <span class="fb-corto">${pasado ? `⏰ ${acL('Horario acabado', 'Horari acabat')} (${hFin})` : `🔴 ${acL('Entrada', 'Entrada')} ${hora}`}</span>
-    ${('entrada_lat' in f) ? (() => { const l = fichLugarTxt(f.entrada_lat, f.entrada_lng, f.entrada_precision, (f.entrada_modo === 'puesto' || f.entrada_modo === 'validado') ? (f.entrada_puesto || acL('ordenador de la oficina', 'ordinador de l\'oficina')) : null); return `<span class="fb-lugar fb-largo" title="${acL('Desde dónde has fichado la entrada', 'Des d\'on has fitxat l\'entrada')}">${l.i} ${escAttr(l.t)}</span>`; })() : ''}
+    ${('entrada_lat' in f) ? (() => { const l = fichLugarTxt(f.entrada_lat, f.entrada_lng, f.entrada_precision, (f.entrada_modo === 'puesto' || f.entrada_modo === 'validado' || f.entrada_modo === 'sala') ? (f.entrada_puesto || acL('ordenador de la oficina', 'ordinador de l\'oficina')) : null, f.entrada_modo); return `<span class="fb-lugar fb-largo" title="${acL('Desde dónde has fichado la entrada', 'Des d\'on has fitxat l\'entrada')}">${l.i} ${escAttr(l.t)}</span>`; })() : ''}
     ${salaFaltaMarcar() && !pasado ? `<span class="fb-largo">📍 ${acL('Aún no has marcado en qué sala estás.', 'Encara no has marcat a quina sala ets.')}</span><button class="fb-sala" onclick="salaElegirRapido()">📍 ${acL('Elegir sala', 'Triar sala')}</button>` : ''}
     <button onclick="ficharSalidaDesdeAviso()">⏹ ${acL('Fichar salida', 'Fitxar sortida')}</button>`;
 }
@@ -4727,9 +4729,12 @@ async function fichSesionViva(){
 }
 
 // ---------- Dónde se ha fichado (solo informa: nunca impide fichar) ----------
-function fichLugarTxt(lat, lng, acc, puesto){
+function fichLugarTxt(lat, lng, acc, puesto, modo){
   const cfg = window.__configOficina;
+  if(modo === 'sala') return { i: '🏢', t: acL('en la oficina', 'a l\'oficina') + (puesto ? ' (' + puesto + ')' : ''), clase: 'ok' };
   if(puesto) return { i: '💻', t: acL('en la oficina', 'a l\'oficina') + ' (' + puesto + ')', clase: 'ok' };
+  // v255: ordenador sin GPS: la sala que marques es la que dice que estás en la oficina
+  if(acc != null && acc > 1000 || (lat == null && !esMovilOTableta())) return { i: '💻', t: acL('desde un ordenador: marca tu sala', 'des d\'un ordinador: marca la teva sala'), clase: 'sin' };
   if(lat == null || lng == null) return { i: '❓', t: acL('sin ubicación', 'sense ubicació'), clase: 'sin' };
   if(acc != null && cfg && cfg.lat != null && fichEnOficina({ lat, lng, acc })){
     const d0 = Math.round(calcularDistanciaMetros(lat, lng, cfg.lat, cfg.lng));
@@ -18494,7 +18499,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-11 · v254 (la administración puede borrar una atención de prueba; va a la papelera)';
+const APP_VERSION_INTRANET = '2026-11-11 · v255 (fichaje: la sala marcada cuenta como oficina; sin distancias falsas de ordenadores sin GPS)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -23136,7 +23141,7 @@ async function exportarFichajesExcel(){
   const { data } = await sb.from('fichajes').select('*').order('entrada', { ascending:false });
   const cabecera = ['Técnico','Entrada','Cómo (entrada)','Salida','Cómo (salida)','Duración (min)','Cerrado automático','Nota'];
   const of = window.__configOficina || await fichConfig();
-  const como = (f, p) => { const m = f[p + '_modo']; if(m === 'puesto') return 'Ordenador de la oficina: ' + (f[p + '_puesto'] || ''); if(m === 'oficina') return 'En la oficina'; if(m === 'fuera') return 'Fuera: ' + (f[p + '_motivo'] || ''); if(m === 'sin_ubicacion' || f[p + '_lat'] == null) return 'Sin ubicación';
+  const como = (f, p) => { const m = f[p + '_modo']; if(m === 'puesto') return 'Ordenador de la oficina: ' + (f[p + '_puesto'] || ''); if(m === 'sala') return 'En la oficina: ' + (f[p + '_puesto'] || 'sala'); if(m === 'oficina') return 'En la oficina'; if(m === 'fuera') return 'Fuera: ' + (f[p + '_motivo'] || ''); if(m === 'sin_ubicacion' || f[p + '_lat'] == null) return 'Sin ubicación';
     return of && of.lat != null ? calcularDistanciaMetros(f[p + '_lat'], f[p + '_lng'], of.lat, of.lng) + ' m de la oficina' : 'Con ubicación'; };
   const filas = (data||[]).map(f => [
     nombreTecnico(f.tecnico_email), new Date(f.entrada).toLocaleString('es-ES'), como(f, 'entrada'),
@@ -23210,6 +23215,9 @@ function renderFilasFichajes(fichajes){
     const pm = acc != null ? ` <small>± ${acc} m</small>` : '';
     if(modo === 'validado') return chip('ok', `✅ ${L('Oficina', 'Oficina')} · ${L('validado', 'validat')}`, L('Validado por', 'Validat per') + ' ' + (f[pref + '_puesto'] || ''));
     if(modo === 'puesto') return chip('ok', `💻 ${escAttr(f[pref + '_puesto'] || L('Ordenador de la oficina', 'Ordinador de l\'oficina'))}`, L('Fichado desde un ordenador de la oficina', 'Fitxat des d\'un ordinador de l\'oficina'));
+    if(modo === 'sala') return `<span class="fich-chip ok" title="${escAttr(L('En la oficina: marcó su sala al fichar', 'A l\'oficina: va marcar la seva sala en fitxar'))}">🏢 ${L('Oficina', 'Oficina')} · ${escAttr(f[pref + '_puesto'] || L('sala', 'sala'))}</span>`;
+    // v255: un ordenador sin GPS da una ubicación «por la red» de varios km: no se enseña una distancia falsa
+    if(acc != null && acc > 1000) return `<span class="fich-chip sin" title="${escAttr(L('El ordenador no tiene GPS: la ubicación que da el navegador no es fiable. Si marcó sala, sale como oficina.', 'L\'ordinador no té GPS: la ubicació que dona el navegador no és fiable. Si va marcar sala, surt com a oficina.'))}">💻 ${L('Ordenador sin GPS · no marcó sala', 'Ordinador sense GPS · no va marcar sala')}</span>`;
     if(modo === 'oficina') return chip('ok', `📍 ${L('Oficina', 'Oficina')}${dist != null ? ' · ' + dist + ' m' : ''}${pm}`);
     if(modo === 'fuera') return chip('fuera', `🚶 ${L('Fuera', 'Fora')}: ${escAttr(f[pref + '_motivo'] || '')}${dist != null ? ' · ' + dist + ' m' : ''}`, f[pref + '_motivo'] || '');
     if(modo === 'sin_ubicacion' || lat == null) return chip('sin', `❓ ${L('Sin ubicación', 'Sense ubicació')}`, L('El navegador no dio la ubicación (permiso denegado o un ordenador sin GPS).', 'El navegador no va donar la ubicació (permís denegat o un ordinador sense GPS).'));
@@ -23217,8 +23225,8 @@ function renderFilasFichajes(fichajes){
     const dudosa = acc != null && acc > FICH_PREC_BUENA;
     return dist <= radio ? chip('ok', `📍 ${dist} m${pm}`) : chip(dudosa ? 'sin' : 'lejos', `⚠️ ${dist} m${pm}`, dudosa ? L('Ubicación poco precisa', 'Ubicació poc precisa') : L('Lejos de la oficina', 'Lluny de l\'oficina'));
   };
-  const esIncidencia = f => ['entrada', 'salida'].some(p => { if(p === 'salida' && !f.salida) return false; const m = f[p + '_modo']; if(m === 'oficina' || m === 'puesto' || m === 'validado') return false; if(m === 'fuera' || m === 'sin_ubicacion') return true; const lat = f[p + '_lat']; if(lat == null) return true; if(!oficina || oficina.lat == null) return false; return calcularDistanciaMetros(lat, f[p + '_lng'], oficina.lat, oficina.lng) > radio; }) || f.cerrado_automaticamente;
-  const porValidar = f => ['entrada', 'salida'].filter(p => { if(p === 'salida' && (!f.salida || f.cerrado_automaticamente)) return false; const m = f[p + '_modo']; if(m === 'oficina' || m === 'puesto' || m === 'validado' || m === 'fuera') return false;
+  const esIncidencia = f => ['entrada', 'salida'].some(p => { if(p === 'salida' && !f.salida) return false; const m = f[p + '_modo']; if(m === 'oficina' || m === 'puesto' || m === 'validado' || m === 'sala') return false; if(m === 'fuera' || m === 'sin_ubicacion') return true; const lat = f[p + '_lat']; if(lat == null) return true; if(!oficina || oficina.lat == null) return false; return calcularDistanciaMetros(lat, f[p + '_lng'], oficina.lat, oficina.lng) > radio; }) || f.cerrado_automaticamente;
+  const porValidar = f => ['entrada', 'salida'].filter(p => { if(p === 'salida' && (!f.salida || f.cerrado_automaticamente)) return false; const m = f[p + '_modo']; if(m === 'oficina' || m === 'puesto' || m === 'validado' || m === 'fuera' || m === 'sala') return false;
     const lat = f[p + '_lat']; if(lat == null) return true; if(!oficina || oficina.lat == null) return false; return calcularDistanciaMetros(lat, f[p + '_lng'], oficina.lat, oficina.lng) > radio; });
   window.__fichPorValidar = porValidar;
   // Filtros (persona y «solo lo que hay que mirar»)
@@ -23229,7 +23237,7 @@ function renderFilasFichajes(fichajes){
       <select aria-label="${L('Persona', 'Persona')}" onchange="window.__fichFiltro.persona=this.value;fichRepintar()"><option value="">${L('Todo el equipo', 'Tot l\'equip')}</option>${personas.map(e => `<option value="${escAttr(e)}" ${fl.persona === e ? 'selected' : ''}>${escAttr(nombreTecnico(e))}</option>`).join('')}</select>
       <label><input type="checkbox" ${fl.inc ? 'checked' : ''} onchange="window.__fichFiltro.inc=this.checked;fichRepintar()"> ${L('Solo lo que hay que mirar (fuera, sin ubicación, lejos, salida olvidada)', 'Només el que cal mirar (fora, sense ubicació, lluny, sortida oblidada)')}</label>
       ${(() => { const n = lista.filter(f => porValidar(f).length).length; return n && IS_ADMIN ? `<button class="link-btn" style="font-weight:700;" onclick="fichValidarVarios()">✅ ${L(`Validar los ${n} que se ven (estaban en la oficina)`, `Validar els ${n} que es veuen (eren a l'oficina)`)}</button>` : ''; })()}
-      <span class="fich-leyenda">✅ ${L('validado por la administración', 'validat per l\'administració')} · 💻 ${L('ordenador de la oficina', 'ordinador de l\'oficina')} · 📍 ${L('oficina', 'oficina')} · 🚶 ${L('fuera con motivo', 'fora amb motiu')} · ❓ ${L('sin ubicación', 'sense ubicació')} · ⚠️ ${L('lejos', 'lluny')}</span>
+      <span class="fich-leyenda">✅ ${L('validado por la administración', 'validat per l\'administració')} · 💻 ${L('ordenador de la oficina', 'ordinador de l\'oficina')} · 🏢 ${L('oficina (sala marcada)', 'oficina (sala marcada)')} · 📍 ${L('oficina', 'oficina')} · 🚶 ${L('fuera con motivo', 'fora amb motiu')} · ❓ ${L('sin ubicación', 'sense ubicació')} · ⚠️ ${L('lejos', 'lluny')}</span>
     </div>`;
   if(!lista.length) return filtros + `<div class="empty-note">${fichajes.length ? L('Ningún fichaje con este filtro.', 'Cap fitxatge amb aquest filtre.') : t.sinFichajes}</div>`;
   let diaAnt = '';
