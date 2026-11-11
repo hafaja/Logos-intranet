@@ -1764,6 +1764,8 @@ button.m3-chip{cursor:pointer;}
 .mas-otro-ok{background:var(--navy,#1B2A44);color:#fff;border:0;border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer;}
 .mas-otro-x{background:none;border:0;color:#888;font-size:16px;cursor:pointer;}
 .eq-clave{font-weight:700;white-space:nowrap;}
+.veces-borrar{background:none;border:0;cursor:pointer;font-size:13px;opacity:.55;padding:0 4px;margin-left:4px;}
+.veces-borrar:hover{opacity:1;}
 .m3-s2-at{margin-top:18px;border-top:1px solid var(--line);padding-top:6px;}
 .at-opts .otro-w{flex-basis:100%;}
 .m3-pill, .m3-grupo .at-opts label.checkbox-row{position:relative;display:inline-flex !important;align-items:center;gap:0;border:1px solid #C9CFDA;border-radius:20px;padding:6px 13px !important;margin:0 !important;font-size:13px;background:#fff;cursor:pointer;line-height:1.3;font-weight:500;color:var(--ink,#1B2333);width:auto !important;}
@@ -18492,7 +18494,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-11 · v253 (QR de firma: 1 hora y sin cerrarse por inactividad; quien firmó en papel ya no se duplica al darle de alta)';
+const APP_VERSION_INTRANET = '2026-11-11 · v254 (la administración puede borrar una atención de prueba; va a la papelera)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -19490,8 +19492,21 @@ function vecesAtendidaHtml(atenciones, actuaciones, historico){
       <span class="veces-n stat-num">${ok.length}</span>
       <span><strong>${ok.length === 1 ? acL('vez atendida', 'vegada atesa') : acL('veces atendida', 'vegades atesa')}</strong><small>${nH ? nH + ' ' + acL('del histórico', 'de l\'històric') + ' · ' : ''}${nAt} ${acL('atenciones', 'atencions')} · ${nAc} ${acL('actuaciones', 'actuacions')} · ${acL('desde', 'des de')} ${ok[ok.length - 1].soloAnio ? primera.slice(0, 4) : fd(primera)}</small></span>
       <span class="veces-ver">${acL('Ver todas', 'Veure-les totes')} ⌄</span></summary>
-    <ol class="veces-lista" reversed>${ok.map(e => `<li><span class="veces-f">${e.soloAnio ? e.f.slice(0, 4) : fd(e.f)}</span>${e.tipo === 'h' ? `<span class="veces-t h">🗂️ ${escAttr(e.txt)}</span>` : `<button type="button" class="veces-t veces-abrir ${e.tipo}" title="${acL('Abrir', 'Obrir')}" onclick="vecesAbrir('${e.tipo}', '${escAttr(e.id || '')}')">${e.tipo === 'at' ? '📋' : '📝'} ${escAttr(e.txt)} ›</button>`}<span class="veces-tec">${escAttr(nombreTecnico(e.tec) || e.tec || '')}</span></li>`).join('')}</ol>
+    <ol class="veces-lista" reversed>${ok.map(e => `<li><span class="veces-f">${e.soloAnio ? e.f.slice(0, 4) : fd(e.f)}</span>${e.tipo === 'h' ? `<span class="veces-t h">🗂️ ${escAttr(e.txt)}</span>` : `<button type="button" class="veces-t veces-abrir ${e.tipo}" title="${acL('Abrir', 'Obrir')}" onclick="vecesAbrir('${e.tipo}', '${escAttr(e.id || '')}')">${e.tipo === 'at' ? '📋' : '📝'} ${escAttr(e.txt)} ›</button>`}<span class="veces-tec">${escAttr(nombreTecnico(e.tec) || e.tec || '')}</span>${IS_ADMIN && e.tipo === 'at' && e.id ? `<button type="button" class="veces-borrar" title="${acL('Borrar esta atención (prueba o error)', 'Esborrar aquesta atenció (prova o error)')}" onclick="atBorrarPrueba('${escAttr(e.id)}')">🗑️</button>` : ''}</li>`).join('')}</ol>
   </details>`;
+}
+// v254: la administración puede borrar una atención de prueba (o hecha por error). Va a la papelera (SQL-73) y se puede restaurar.
+async function atBorrarPrueba(id){
+  const a = (window.__atencionesPersona || []).find(x => String(x.id) === String(id));
+  const cuando = a && a.creado_en ? new Date(a.creado_en).toLocaleString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+  const quien = a ? ' (' + (nombreTecnico(a.creado_por_email) || a.creado_por_email || '') + ')' : '';
+  if(!confirm(acL(`¿Borrar la atención del ${cuando}${quien}?\n\nÚsalo solo para atenciones de PRUEBA o hechas por error. Deja de contar en las estadísticas. Queda en la papelera (Administración › Historial y papelera) y se puede restaurar.`,
+    `Esborrar l'atenció del ${cuando}${quien}?\n\nFes-ho servir només per a atencions de PROVA o fetes per error. Deixa de comptar a les estadístiques. Queda a la paperera (Administració › Historial i paperera) i es pot restaurar.`))) return;
+  const { data, error } = await sb.from('atenciones').delete().eq('id', id).select('id');
+  if(error || !data || !data.length){ alert(acL('No se ha podido borrar: ', 'No s\'ha pogut esborrar: ') + (error ? error.message : acL('no tienes permiso para borrar atenciones (falta el SQL-95).', 'no tens permís per esborrar atencions (falta l\'SQL-95).'))); return; }
+  window.__estCache = null;
+  alert('🗑️ ' + acL('Atención borrada. Si ha sido un error, está en la papelera.', 'Atenció esborrada. Si ha estat un error, és a la paperera.'));
+  const uid = window.__usuarioIdVisto; if(uid) verPersonaStaff(uid, 'personas');
 }
 // «Veces atendida»: tocar una ficha de atención o una actuación la abre
 function vecesAbrir(tipo, id){
