@@ -6569,6 +6569,10 @@ const DERIVACION_OPTS = [
 // v252: varias opciones a la vez. En las columnas de texto (derivacion, como_conocio) se guardan unidas con «|»
 // (p. ej. «omac|siad|otro:Cruz Roja»). Las atenciones antiguas (un solo valor) se leen igual.
 function multiPartes(v){ return v == null ? [] : (Array.isArray(v) ? v : String(v).split('|')).map(x => String(x).trim()).filter(Boolean); }
+// v256: «¿Ha encontrado trabajo?» en la ficha de atención. Cuenta para «insercions laborals» de la web (SQL-98).
+const TRABAJO_OPTS = [['temporal','Sí · contrato temporal'], ['indefinido','Sí · contrato indefinido'], ['autonomo','Sí · por cuenta propia (autónomo/a)'], ['practicas','Sí · prácticas o formación con contrato']];
+function trabajoEtiqueta(v){ const o = TRABAJO_OPTS.find(x => x[0] === v); return o ? '💼 ' + o[1] : ''; }
+let AT_TRABAJO_OK = true;   // false si la base de datos aún no tiene la columna (falta el SQL-98)
 const EMPRENDEDURIA_OPTS = [
   ['cap','Ninguna'], ['capitalitzacio_atur','Capitalización paro'], ['alta_autonoms','Alta autónomo/a'],
   ['emprenedoria_social','Emprendeduría social'], ['compatibilitzacio_atur_emprenedoria','Compatibilización paro/emprendeduría'],
@@ -7175,6 +7179,7 @@ function atPrefill(prev){
   marca('at-prestaciones', prev.prestaciones); marca('at-tramites', prev.tramites_bretxa); marca('at-programas', prev.derivacion_programas);
   marcaOtro('at-talleres', prev.talleres); marca('at-ethos', prev.ethos); marcaOtro('at-derivacion', prev.derivacion); marca('at-emprendeduria', prev.emprendeduria);
   conocioMarcar(prev.como_conocio);
+  if(prev.encontro_trabajo){ try { if(atencionHoyMia()) marca('at-trabajo', prev.encontro_trabajo); } catch(e){} }   // solo al corregir la atención de hoy
   const nn = document.getElementById('at-necesidades-nuevas'); if(nn && prev.necesidades_no_catalogadas) nn.value = prev.necesidades_no_catalogadas;
   const nt = document.getElementById('at-notas'); if(nt && prev.notas) nt.value = prev.notas;
 }
@@ -7241,6 +7246,7 @@ function renderAtencionForm(opts){
     ${secAt('🛠️ Talleres', checkboxGroupOtro('at-talleres', TALLERES_OPTS, ['cap']), 'at-talleres')}
     ${secAt('🏠 Situación residencial (ETHOS)', radioGroup('at-ethos', ETHOS_OPTS), 'at-ethos')}
     ${secAt('↗️ Derivación', checkboxGroupOtro('at-derivacion', DERIVACION_OPTS.concat([['altres', 'Otros']]), ['no_procedeix']), 'at-derivacion')}
+    ${secAt('💼 ¿Ha encontrado trabajo?', `<p class="subtle" style="margin:0 0 6px;font-size:12.5px;flex-basis:100%;width:100%;">Márcalo solo cuando la persona te diga que ha empezado a trabajar. Si no, déjalo en blanco.</p>` + radioGroup('at-trabajo', TRABAJO_OPTS) + `<button type="button" class="link-btn" style="font-size:12px;margin-top:4px;flex-basis:100%;text-align:left;" onclick="document.querySelectorAll('input[name=at-trabajo]').forEach(x => x.checked = false)">Quitar la marca</button>`, 'at-trabajo')}
     ${secAt('🚀 Emprendeduría', checkboxGroup('at-emprendeduria', EMPRENDEDURIA_OPTS) + masOtroHtml('at-emprendeduria'), 'at-emprendeduria')}
     ${secAt('📣 ¿Cómo nos conoció / quién derivó?', `<div id="at-conocio-grupo">${conocioGroupHtml()}</div>`, 'at-conocio')}
 
@@ -7427,6 +7433,9 @@ async function guardarAtencion(){
     notas: document.getElementById('at-notas').value.trim() || null
   };
   const otrosAt = otrosTecValor('at'); if(otrosAt.length && !window.__sinOtrosTec) payload.otros_tecnicos = otrosAt;
+  const trabajoV = getRadio('at-trabajo');
+  if(AT_TRABAJO_OK && (trabajoV || document.querySelector('input[name="at-trabajo"]'))) payload.encontro_trabajo = trabajoV || null;
+  let avisoTrabajo = false;
 
   // Cada atención cuenta: se guarda como atención NUEVA (para los informes a los organismos), con los datos de la anterior.
   // Solo si la misma persona técnica ya la atendió HOY, se corrige esa atención de hoy en vez de duplicarla.
@@ -7436,6 +7445,7 @@ async function guardarAtencion(){
     const { creado_por_email, usuario_id, nombre_referencia, ...cambios0 } = payload;
     let cambios = Object.assign({}, cambios0, { actualizado_por_email: CURRENT_USER.email, actualizado_en: new Date().toISOString() });
     let r = await sb.from('atenciones').update(cambios).eq('id', previa.id).select('id');
+    if(r.error && /encontro_trabajo/.test(r.error.message || '')){ AT_TRABAJO_OK = false; avisoTrabajo = !!cambios.encontro_trabajo; delete cambios.encontro_trabajo; delete cambios0.encontro_trabajo; r = await sb.from('atenciones').update(cambios).eq('id', previa.id).select('id'); }
     if(r.error && /otros_tecnicos/.test(r.error.message || '')){ window.__sinOtrosTec = true; delete cambios.otros_tecnicos; delete cambios0.otros_tecnicos; r = await sb.from('atenciones').update(cambios).eq('id', previa.id).select('id'); }
     if(r.error && /actualizado_/.test(r.error.message || '')){ cambios = cambios0; r = await sb.from('atenciones').update(cambios).eq('id', previa.id).select('id'); }   // sin el SQL-56
     if(r.error && /derivacion_programas|talleres|ethos/.test(r.error.message || '')){
@@ -7446,6 +7456,7 @@ async function guardarAtencion(){
   }
   if(!hecho){
     ({ error } = await sb.from('atenciones').insert(payload));
+    if(error && /encontro_trabajo/.test(error.message || '')){ AT_TRABAJO_OK = false; avisoTrabajo = !!payload.encontro_trabajo; delete payload.encontro_trabajo; ({ error } = await sb.from('atenciones').insert(payload)); }
     if(error && /otros_tecnicos/.test(error.message || '')){ window.__sinOtrosTec = true; delete payload.otros_tecnicos; ({ error } = await sb.from('atenciones').insert(payload)); }
     // Si la base de datos aún no tiene las columnas nuevas, se guarda igualmente sin ellas.
     if(error && /derivacion_programas|talleres|ethos/.test(error.message || '')){
@@ -7458,6 +7469,7 @@ async function guardarAtencion(){
     btn.disabled = false; btn.textContent = 'Guardar atención';
     return;
   }
+  if(avisoTrabajo) alert('La atención se ha guardado, pero «Ha encontrado trabajo» todavía no: falta ejecutar el SQL-98 en Supabase. Avisa a Soporte.');
   if(window.__atencionUsuarioVinculado) await autoAsignarResponsable(window.__atencionUsuarioVinculado);
   if(window.__atencionUsuarioVinculado && window.__conAtencion) window.__conAtencion.add(window.__atencionUsuarioVinculado);
   if(window.__atencionUsuarioVinculado){ try { await sb.from('avisos_espera').update({ atendido_en: new Date().toISOString(), atendido_por_email: CURRENT_USER.email }).eq('usuario_id', window.__atencionUsuarioVinculado).is('atendido_en', null); } catch(e){} }
@@ -7494,13 +7506,13 @@ async function exportarAtencionesExcel(uid){
   }
   const lista = (arr, opts) => (arr || []).map(v => etiquetaOpt(opts, v)).join(', ');
   const cabecera = ['Nº', 'Fecha', 'Hora', 'Técnico', 'Persona (referencia)', 'Nombre en la ficha', 'Correo', 'Teléfono', 'DNI/NIE', 'Fecha de nacimiento', 'Sexo', 'Municipio', 'Situación laboral', 'Ingresos',
-    'Duración (min)', 'Prestaciones', 'Trámites Bretxa', 'Derivación a programas', 'Talleres', 'Situación residencial (ETHOS)', 'Derivación', 'Emprendeduría', 'Cómo nos conoció', 'Necesidades no catalogadas', 'Notas'];
+    'Duración (min)', 'Prestaciones', 'Trámites Bretxa', 'Derivación a programas', 'Talleres', 'Situación residencial (ETHOS)', 'Derivación', 'Emprendeduría', 'Ha encontrado trabajo', 'Cómo nos conoció', 'Necesidades no catalogadas', 'Notas'];
   const filasXls = filas.map((a, i) => {
     const pf = perfiles[a.usuario_id] || {}, d = new Date(a.creado_en);
     return [i + 1, d.toLocaleDateString('es-ES'), d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }), nombreTecnico(a.creado_por_email), a.nombre_referencia || '',
       pf.nombre_completo || '', pf.email || '', pf.telefono || '', pf.dni_nie || '', pf.fecha_nacimiento || '', pf.sexo || '', pf.municipio || '', pf.situacion_laboral || '', pf.nivel_ingresos || '',
       a.duracion_minutos ?? '', lista(a.prestaciones, PRESTACIONES_OPTS), lista(a.tramites_bretxa, TRAMITES_BRETXA_OPTS), lista(a.derivacion_programas, PROGRAMAS_OPTS), lista(a.talleres, TALLERES_OPTS),
-      a.ethos ? etiquetaOpt(ETHOS_OPTS, a.ethos) : '', a.derivacion ? etiquetaOpt(DERIVACION_OPTS, a.derivacion) : '', lista(a.emprendeduria, EMPRENDEDURIA_OPTS),
+      a.ethos ? etiquetaOpt(ETHOS_OPTS, a.ethos) : '', a.derivacion ? etiquetaOpt(DERIVACION_OPTS, a.derivacion) : '', lista(a.emprendeduria, EMPRENDEDURIA_OPTS), a.encontro_trabajo ? trabajoEtiqueta(a.encontro_trabajo).replace('💼 ', '') : '',
       a.como_conocio ? etiquetaOpt(COMO_CONOCIO_OPTS, a.como_conocio) : '', a.necesidades_no_catalogadas || '', a.notas || ''];
   });
   const nombre = uid ? 'Atenciones-' + String((perfiles[uid] || {}).nombre_completo || 'persona').replace(/[^a-zA-Z0-9]+/g, '-') + '.xlsx' : 'Atenciones-Logos-' + isoLocal() + '.xlsx';
@@ -18499,7 +18511,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-11 · v255 (fichaje: la sala marcada cuenta como oficina; sin distancias falsas de ordenadores sin GPS)';
+const APP_VERSION_INTRANET = '2026-11-11 · v256 (ficha de atención: «¿Ha encontrado trabajo?», cuenta en las inserciones de la web)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -18850,7 +18862,8 @@ const TEC_SQL = [
   ['69', 'Interruptor de los dos pasos', () => sb.rpc('mfa_en_pausa')],
   ['70', 'Cifrado de campos sensibles', async () => { const r = await sb.rpc('cifrado_estado'); if(!r.error && r.data && !r.data.clave) return { error: { message: 'falta la clave de cifrado en Vault: does not exist' } }; return r; }],
   ['71', 'Consentimiento v2 y derechos', () => sb.from('solicitudes_derechos').select('id').limit(1)],
-  ['73', 'Historial, papelera y deshacer', () => sb.rpc('historial_actividad', { p_limite: 1 })]
+  ['73', 'Historial, papelera y deshacer', () => sb.rpc('historial_actividad', { p_limite: 1 })],
+  ['98', 'Atención: ¿ha encontrado trabajo?', () => sb.from('atenciones').select('encontro_trabajo').limit(1)]
 ];
 const TEC_FALTA = /does not exist|schema cache|Could not find|PGRST20[0-9]|42P01|42703|42883|versión antigua/i;
 async function tecComprobar(){
@@ -19541,6 +19554,7 @@ function verAtencionGuardada(a){
     fila('ETHOS', lst(ETHOS_OPTS, a.ethos)),
     fila(acL('Derivación', 'Derivació'), lst(DERIVACION_OPTS, a.derivacion)),
     fila(acL('Emprendeduría', 'Emprenedoria'), lst(EMPRENDEDURIA_OPTS, a.emprendeduria)),
+    fila(acL('Ha encontrado trabajo', 'Ha trobat feina'), a.encontro_trabajo ? trabajoEtiqueta(a.encontro_trabajo) : ''),
     fila(acL('Cómo nos conoció', 'Com ens va conèixer'), lst(COMO_CONOCIO_OPTS, a.como_conocio)),
     fila(acL('Necesidades no catalogadas', 'Necessitats no catalogades'), escAttr(a.necesidades_no_catalogadas || '')),
     fila(acL('Observaciones', 'Observacions'), typeof a.notas === 'string' && !/^\\x|^enc:/.test(a.notas) ? escAttr(a.notas) : '')
@@ -20914,6 +20928,7 @@ async function verPersonaStaffInterno(usuarioId, origen){
           ${a.ethos ? `<div class="panel-stat-row"><span>ETHOS</span><span>${etiquetaOpt(ETHOS_OPTS, a.ethos)}</span></div>` : ''}
           ${a.derivacion ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Derivació':'Derivación'}</span><span>${etiquetaOpt(DERIVACION_OPTS, a.derivacion)}</span></div>` : ''}
           ${a.emprendeduria && a.emprendeduria.length ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Emprenedoria':'Emprendeduría'}</span><span>${etiquetasOpt(EMPRENDEDURIA_OPTS, a.emprendeduria)}</span></div>` : ''}
+          ${a.encontro_trabajo ? `<div class="panel-stat-row"><span>${LANG_I==='ca'?'Ha trobat feina':'Ha encontrado trabajo'}</span><span>${trabajoEtiqueta(a.encontro_trabajo)}</span></div>` : ''}
           ${a.notas ? `<div class="panel-stat-row"><span>${t.notasLbl}</span><span>${a.notas}</span></div>` : ''}
         </div>`;
   const resumenAtendio = (() => {
@@ -21753,7 +21768,8 @@ function m4FichaAtencionHtml(p, atenciones){
   const grupo = (t, html) => html ? `<div class="m4-grupo"><div class="m4-gt">${t}</div>${html}</div>` : '';
   const ult = a ? [
     m4Pills(PRESTACIONES_OPTS, a.prestaciones), m4Pills(TRAMITES_BRETXA_OPTS, a.tramites_bretxa), m4Pills(PROGRAMAS_OPTS, a.derivacion_programas, 'b'),
-    m4Pills(TALLERES_OPTS, a.talleres, 'b'), m4Pills(EMPRENDEDURIA_OPTS, a.emprendeduria, 'b')
+    m4Pills(TALLERES_OPTS, a.talleres, 'b'), m4Pills(EMPRENDEDURIA_OPTS, a.emprendeduria, 'b'),
+    a.encontro_trabajo ? `<span class="m4-pills"><span class="m4-pill b">${escAttr(trabajoEtiqueta(a.encontro_trabajo))}</span></span>` : ''
   ].filter(Boolean).join('') : '';
   return `<section class="m4-col m4-at">
     <header class="m4-ch"><div><span class="m4-ico">📋</span><div><h3>${L('Ficha de atención', 'Fitxa d\'atenció')}</h3>
