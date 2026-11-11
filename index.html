@@ -2107,6 +2107,7 @@ body.m3-sin-scroll{overflow:hidden;}
         <button data-target="gestionpersonal" data-rh="nominas" onclick="rrhhIr('nominas', this)">🧾 Nóminas</button>
         <button data-target="gestionpersonal" data-rh="personas" onclick="rrhhIr('personas', this)">👥 Por persona</button>
         <button data-target="gestionpersonal" data-rh="horarios" onclick="rrhhIr('horarios', this)">🕘 Horarios del personal</button>
+        <button data-target="gestionpersonal" data-rh="fichajes" onclick="rrhhIr('fichajes', this)">🕒 Fichajes del personal</button>
         <button data-target="gestionpersonal" data-rh="vacaciones" onclick="rrhhIr('vacaciones', this)">🌴 Vacaciones <span class="cmp-n" id="vac-nav-n" style="display:none;margin-left:6px;background:#D6336C;color:#fff;border-radius:999px;font-size:11px;padding:0 6px;"></span></button>
         <button data-target="gestionpersonal" data-rh="comunicados" onclick="rrhhIr('comunicados', this)">📣 Comunicados</button>
         <button data-target="gestionpersonal" data-rh="avisos" onclick="rrhhIr('avisos', this)">📰 Noticias y recordatorios</button>
@@ -14769,7 +14770,7 @@ async function renderGestionPersonal(tab){
         ${esRH ? `<div class="cmp-mi-sep"></div><details class="gp-menu-g"${t === 'rrhh' || window.innerWidth <= 900 ? ' open' : ''}><summary class="gp-menu-h">${IS_RRHH ? acL('Recursos Humanos', 'Recursos Humans') : acL('Administración', 'Administració')} <span class="gp-menu-n">${subsRH.length}</span></summary>
         ${(() => {
           const boton = ([k, tx]) => { const m = String(tx).match(/^(\p{Extended_Pictographic}\uFE0F?)\s*(.*)$/u); return `<button class="cmp-mi${sel === 'rh:' + k ? ' on' : ''}" data-sel="rh:${k}" ${sel === 'rh:' + k ? 'aria-current="page"' : ''} onclick="window.__gpSub='${k}';renderGestionPersonal('rrhh')"><span>${m ? m[1] : GP_RH_IC[k] || '•'}</span>${m ? m[2] : tx}${k === 'vacaciones' ? '<span class="cmp-n" id="gp-n-rhvac" style="display:none;background:#D6336C;color:#fff;"></span>' : ''}</button>`; };
-          const G = [['🧾', acL('Nóminas y personal', 'Nòmines i personal'), ['nominas', 'personas']], ['🕘', acL('Horarios y vacaciones', 'Horaris i vacances'), ['horarios', 'vacaciones']],
+          const G = [['🧾', acL('Nóminas y personal', 'Nòmines i personal'), ['nominas', 'personas']], ['🕘', acL('Horarios, fichajes y vacaciones', 'Horaris, fitxatges i vacances'), ['horarios', 'fichajes', 'vacaciones']],
                      ['📣', acL('Comunicación', 'Comunicació'), ['comunicados', 'avisos']], ['📄', acL('Documentos y registro', 'Documents i registre'), ['docgen', 'registro']]];
           const usados = new Set(G.flatMap(g => g[2]));
           const sueltos = subsRH.filter(x => !usados.has(x[0]));
@@ -14795,7 +14796,7 @@ async function renderGestionPersonal(tab){
   else await gpRenderInicio(cuerpo);
   setTimeout(gpIrASeccion, 30); setTimeout(gpIrASeccion, 700);   // al terminar de cargar, el título del apartado se queda a la vista
 }
-const GP_RH_IC = { resumen: '🔔', nominas: '🧾', personas: '👥', horarios: '🕘', vacaciones: '🌴', comunicados: '📣', avisos: '📰', docgen: '📄', registro: '📋' };
+const GP_RH_IC = { resumen: '🔔', nominas: '🧾', personas: '👥', horarios: '🕘', fichajes: '🕒', vacaciones: '🌴', comunicados: '📣', avisos: '📰', docgen: '📄', registro: '📋' };
 // Cifras de la cabecera (se pulsan para ir a cada apartado)
 async function gpPintarKpis(t){
   const host = document.getElementById('gp-kpis'); if(!host) return;
@@ -15056,6 +15057,8 @@ function gpRrhhSubs(){
   const subs = IS_RRHH ? [['resumen', '🔔 ' + acL('Pendientes', 'Pendents')], ['nominas', acL('Cargar nóminas', 'Carregar nòmines')], ['personas', acL('Por persona', 'Per persona')], ['comunicados', acL('Comunicados', 'Comunicats')], ['avisos', acL('Noticias y recordatorios', 'Notícies i recordatoris')], ['docgen', acL('Documentos generales', 'Documents generals')], ['registro', acL('Registro', 'Registre')]] : [['comunicados', acL('Comunicados', 'Comunicats')]];
   if(IS_RRHH || IS_RRHH_SOLO || IS_ADMIN) subs.splice(IS_RRHH ? 3 : 1, 0, ['horarios', '🕘 ' + acL('Horarios del personal', 'Horaris del personal')]);
   if(IS_RRHH || IS_RRHH_SOLO || IS_ADMIN) subs.splice(IS_RRHH ? 4 : 2, 0, ['vacaciones', '🌴 ' + acL('Vacaciones', 'Vacances')]);
+  // v251: RR. HH. ve también los fichajes del personal (como la administración)
+  if(IS_RRHH || IS_RRHH_SOLO || IS_ADMIN){ const i = subs.findIndex(x => x[0] === 'horarios'); subs.splice(i + 1, 0, ['fichajes', '🕒 ' + acL('Fichajes del personal', 'Fitxatges del personal')]); }
   return subs.map(([k, t]) => [k, /^\p{Extended_Pictographic}/u.test(t) ? t : (GP_RH_IC[k] || '•') + ' ' + t]);
 }
 // Lleva la pantalla al principio de la sección elegida (si el título ha quedado fuera de la vista)
@@ -15079,6 +15082,7 @@ async function gpRenderRrhh(cuerpo, sinPestanas){
   else if(window.__gpSub === 'personas') await gpRrhhPersonas(c);
   else if(window.__gpSub === 'registro') await gpRrhhRegistro(c);
   else if(window.__gpSub === 'horarios') await gpRrhhHorarios(c);
+  else if(window.__gpSub === 'fichajes') await gpRrhhFichajes(c);
   else if(window.__gpSub === 'vacaciones') await gpRrhhVacaciones(c);
   else await gpRrhhComunicados(c);
 }
@@ -15481,6 +15485,38 @@ async function gpBorrarComunicado(i){
   renderGestionPersonal('rrhh');
 }
 // Recursos Humanos también edita los horarios del personal (el mismo editor que la administración)
+// v251: fichajes del personal para RR. HH. (lo mismo que ve la administración: horas del equipo, lista, Excel/PDF y corregir salidas olvidadas)
+async function gpRrhhFichajes(c){
+  const t = TI[LANG_I];
+  c.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
+  // nunca dos listas a la vez (la de Administración usa los mismos identificadores)
+  document.querySelectorAll('#admin-fichajes-lista, #admin-fichajes-cargar-mas-wrap, #adm-horas-equipo').forEach(e => { e.innerHTML = ''; e.removeAttribute('id'); });
+  try { await cerrarFichajesCaducados(); } catch(e){}
+  if(!window.__configOficina){ try { window.__configOficina = await fichConfig(); } catch(e){} }
+  if(!window.__staffLista || !window.__staffLista.length){ try { window.__staffLista = (await sb.from('staff').select('email, nombre, activo').order('nombre', { ascending: true })).data || []; } catch(e){} }
+  const [pag, cnt] = await Promise.all([
+    sb.from('fichajes').select('*').order('entrada', { ascending: false }).range(0, ADMIN_PAGE_SIZE - 1),
+    sb.from('fichajes').select('id', { count: 'exact', head: true })
+  ]);
+  if(pag.error){ c.innerHTML = `<div class="panel-card" style="background:var(--alert-soft);border-color:var(--alert);">⚠️ ${escAttr(pag.error.message)}</div>`; return; }
+  __adminFichajesTodos = pag.data || []; __adminFichajesOffset = __adminFichajesTodos.length;
+  const total = cnt.count || 0;
+  if(!total && !IS_ADMIN){
+    c.innerHTML = `<div class="panel-card" style="background:var(--ochre-soft);border-color:var(--ochre);">⚠️ ${acL('No se ve ningún fichaje. Si el equipo ya ficha, falta ejecutar el SQL-91 en Supabase (permiso de RR. HH. para ver los fichajes).', 'No es veu cap fitxatge. Si l\'equip ja fitxa, cal executar l\'SQL-91 a Supabase (permís de RR. HH. per veure els fitxatges).')}</div>`;
+    return;
+  }
+  c.innerHTML = `<p class="subtle" style="margin:0 0 10px;font-size:12.5px;">${acL('Entradas y salidas de todo el equipo, horas trabajadas y salidas olvidadas.', 'Entrades i sortides de tot l\'equip, hores treballades i sortides oblidades.')}</p>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+      <strong>${total} ${acL('fichajes', 'fitxatges')}</strong>
+      <div style="display:flex;gap:10px;"><button class="link-btn" onclick="exportarFichajesExcel()">⬇️ Excel</button><button class="link-btn" onclick="exportarFichajesPDF()">⬇️ PDF</button></div>
+    </div>
+    <div id="adm-horas-equipo"></div>
+    <div class="panel-card" id="admin-fichajes-lista">${renderFilasFichajes(__adminFichajesTodos)}</div>
+    <div style="text-align:center;margin-top:8px;margin-bottom:18px;" id="admin-fichajes-cargar-mas-wrap">
+      ${total > __adminFichajesTodos.length ? `<button class="link-btn" onclick="cargarMasFichajes()">${t.cargarTexto} ${Math.min(ADMIN_PAGE_SIZE, total - __adminFichajesTodos.length)} ${t.masDeTexto} ${total} ${t.enTotalTexto}</button>` : ''}
+    </div>`;
+  try { await renderHorasEquipo(); } catch(e){}
+}
 async function gpRrhhHorarios(c){
   c.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
   // a la vez: lista del equipo (si falta) y horarios
@@ -18424,7 +18460,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-11 · v250 (Personas usuarias: ordenadas por la última atención, de la más reciente a la más antigua)';
+const APP_VERSION_INTRANET = '2026-11-11 · v251 (RR. HH. ve los fichajes del personal)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -23161,7 +23197,7 @@ function renderFilasFichajes(fichajes){
       <div class="fich-acc2">
         ${f.cerrado_automaticamente && f.salida ? `<button class="link-btn" style="font-size:11.5px;" onclick="fichajeCorregirAdmin('${f.id}', '${f.entrada}')">✏️ ${L('Corregir salida', 'Corregir sortida')}</button>` : ''}
         ${IS_ADMIN && porValidar(f).length ? `<button class="link-btn" style="font-size:11.5px;color:#1E6B3A;font-weight:700;" title="${L('Confirmo que estaba en la oficina', 'Confirmo que era a l\'oficina')}" onclick="fichValidar('${f.id}')">✅ ${L('Validar', 'Validar')}</button>` : ''}
-        <button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="borrarFichaje('${f.id}')">${L('Borrar', 'Esborrar')}</button>
+        ${IS_ADMIN ? `<button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="borrarFichaje('${f.id}')">${L('Borrar', 'Esborrar')}</button>` : ''}
       </div>
     </div>`; }).join('');
 }
