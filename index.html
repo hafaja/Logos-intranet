@@ -8442,6 +8442,28 @@ async function atencionPrimero(uid){
   await verPersonaStaff(uid, document.querySelector('.screen.active') ? document.querySelector('.screen.active').id.replace('screen-', '') : 'personas');
   setTimeout(() => { if(window.__usuarioIdVisto === uid) abrirAtencionEnFicha(); }, 150);
 }
+// v247: la ficha de atención está abierta pero sin guardar → «Guardar y abrir el trámite / la actuación»
+function atGuardarYSeguir(modo){
+  let ov = document.getElementById('apa-ov'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'apa-ov'; ov.className = 'sg-ov';
+  const que = modo === 'nuevo' ? acL('el trámite nuevo', 'el tràmit nou') : acL('la actuación', 'l\'actuació');
+  ov.innerHTML = `<div class="sg-caja" role="dialog" aria-modal="true" style="border-top-color:#2463B8;">
+    <div class="sg-ic">💾</div><h3>${acL('Primero hay que guardar la ficha de atención', 'Primer cal desar la fitxa d\'atenció')}</h3>
+    <p>${acL('Estás rellenando la ficha de atención y todavía no está guardada. Al guardarla, se abre ' + que + ' directamente.', 'Estàs omplint la fitxa d\'atenció i encara no està desada. En desar-la, s\'obre ' + que + ' directament.')}</p>
+    <button class="primary-btn" id="apa-seguir">💾 ${acL('Guardar la atención y abrir ', 'Desar l\'atenció i obrir ') + que}</button>
+    <button class="link-btn" style="display:block;margin:8px auto 0;" onclick="document.getElementById('apa-ov').remove()">${acL('Seguir rellenando la ficha', 'Continuar omplint la fitxa')}</button></div>`;
+  document.body.appendChild(ov);
+  document.getElementById('apa-seguir').onclick = async () => {
+    ov.remove();
+    const uid = window.__usuarioIdVisto;
+    try { await guardarUnaVez('atencion', guardarAtencion); } catch(e){ return; }
+    // espera a que la ficha se recargue con la atención ya guardada (máx. 8 s) y abre el trámite / la actuación
+    for(let i = 0; i < 40; i++){
+      if(window.__usuarioIdVisto === uid && (window.__atencionesPersona || []).length && document.getElementById('act-form-nodo')){ m3NuevaActuacion(modo); return; }
+      await new Promise(r => setTimeout(r, 200));
+    }
+  };
+}
 function atencionPrimeroAviso(){
   // v244: si es una actividad de grupo no hace falta la ficha de atención completa
   let ov = document.getElementById('apa-ov'); if(ov) ov.remove();
@@ -18336,7 +18358,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-10 · v246 (ficha de atención: opción múltiple, «Otros» con texto, «A més…», nacionalidad con lista)';
+const APP_VERSION_INTRANET = '2026-11-11 · v247 («Obrir un tràmit nou» desde la ficha de atención sin guardar: guarda y abre el trámite)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -21747,7 +21769,11 @@ function m3Toast(txt){
 
 // ---------- Nueva actuación en un panel a la derecha ----------
 function m3NuevaActuacion(modo){
-  if(!(window.__atencionesPersona || []).length){ try { atencionPrimeroAviso(); } catch(e){ abrirAtencionEnFicha(); } return; }
+  if(!(window.__atencionesPersona || []).length){
+    // v247: si ya está rellenando la ficha de atención (aún sin guardar), no se vuelve a pedir: se guarda y se sigue
+    if(document.getElementById('m3-at-cab') || document.querySelector('[data-guardar="atencion"]')){ atGuardarYSeguir(modo); return; }
+    try { atencionPrimeroAviso(); } catch(e){ abrirAtencionEnFicha(); } return;
+  }
   const nodo = document.getElementById('act-form-nodo'); if(!nodo) return;
   m3CerrarActuacion(true);
   const L = acL;
