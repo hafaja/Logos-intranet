@@ -1755,6 +1755,14 @@ button.m3-chip{cursor:pointer;}
 .m3-grid > .m3-ancho{grid-column:1/-1;}
 .m3-lab{font-size:12.5px;font-weight:700;margin:4px 0 7px;}
 .m3-pills{display:flex;flex-wrap:wrap;gap:7px;}
+.mas-otro{flex-basis:100%;margin:6px 0 2px;}
+.mas-otro-btn{background:none;border:1.5px dashed #9DB4D6;color:#1E4E8C;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;}
+.mas-otro-btn:hover{background:#EEF4FB;}
+.mas-otro-f{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;width:100%;}
+.mas-otro-f[hidden]{display:none;}
+.mas-otro-f input{flex:1;min-width:180px;border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px;}
+.mas-otro-ok{background:var(--navy,#1B2A44);color:#fff;border:0;border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer;}
+.mas-otro-x{background:none;border:0;color:#888;font-size:16px;cursor:pointer;}
 .m3-s2-at{margin-top:18px;border-top:1px solid var(--line);padding-top:6px;}
 .at-opts .otro-w{flex-basis:100%;}
 .m3-pill, .m3-grupo .at-opts label.checkbox-row{position:relative;display:inline-flex !important;align-items:center;gap:0;border:1px solid #C9CFDA;border-radius:20px;padding:6px 13px !important;margin:0 !important;font-size:13px;background:#fff;cursor:pointer;line-height:1.3;font-weight:500;color:var(--ink,#1B2333);width:auto !important;}
@@ -6597,7 +6605,7 @@ function derivacionReal(v){ return multiPartes(v).some(x => !/^(no|ninguna|no_pr
 // Casillas con «Otros: escríbelo» y opciones que excluyen a las demás («Ninguno», «No procede»…)
 function checkboxGroupOtro(name, opts, excl, otroVal){
   const ca = LANG_I === 'ca', ex = excl || [], ov = otroVal || 'altres';
-  return opts.map(([v, l]) => `<label class="checkbox-row"><input type="checkbox" name="${name}" value="${v}"${ex.includes(v) ? ' data-excl="1"' : ''}${v === ov ? ` data-otro="${name}-otro"` : ''}>${l}</label>`
+  return opts.map(([v, l]) => `<label class="checkbox-row"><input type="checkbox" name="${name}" value="${v}"${ex.includes(v) ? ' data-excl="1"' : ''}${v === ov ? ` data-otro="${name}-otro"` : ''}>${v === ov ? '➕ ' + (ca ? 'Altres (escriu-lo)' : 'Otros (escríbelo)') : l}</label>`
     + (v === ov ? `<div id="${name}-otro-w" class="otro-w" style="display:none;margin:2px 0 8px 28px;"><input type="text" id="${name}-otro" maxlength="80" placeholder="${ca ? 'Escriu quin…' : 'Escribe cuál…'}" style="width:100%;border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px;"></div>` : '')).join('');
 }
 // Valores marcados; «Otros» con texto se guarda como «otro:<texto>»
@@ -6677,6 +6685,40 @@ const COMO_CONOCIO_OPTS = [
   ['xarxes_socials','Redes sociales'], ['ia','IA (ChatGPT, Gemini, Claude…)'], ['internet','Internet / buscador (Google…)'], ['escola_saavedra','Escuela Saavedra'], ['escola_pau_delclos','Escuela Pau Delclós']
 ];
 
+// ===== v248 · «➕ Añadir otro» debajo de cada apartado de la ficha =====
+// Crea una casilla nueva ya marcada con lo que se escribe; se guarda como «otro:<texto>» junto a las demás opciones.
+function masOtroHtml(name){
+  const ca = LANG_I === 'ca';
+  return `<div class="mas-otro" data-name="${name}"><button type="button" class="mas-otro-btn" onclick="masOtroAbrir(this)">➕ ${ca ? 'Afegir-ne un altre' : 'Añadir otro'}</button>`
+    + `<span class="mas-otro-f" hidden><input type="text" maxlength="80" placeholder="${ca ? 'Escriu quin…' : 'Escribe cuál…'}" onkeydown="if(event.key==='Enter'){event.preventDefault();masOtroAnadir(this)}if(event.key==='Escape'){masOtroCerrar(this)}">`
+    + `<button type="button" class="mas-otro-ok" onclick="masOtroAnadir(this)">${ca ? 'Afegir' : 'Añadir'}</button><button type="button" class="mas-otro-x" onclick="masOtroCerrar(this)" title="${ca ? 'Tancar' : 'Cerrar'}">✕</button></span></div>`;
+}
+function masOtroAbrir(b){ const d = b.closest('.mas-otro'); b.hidden = true; const f = d.querySelector('.mas-otro-f'); f.hidden = false; f.querySelector('input').focus(); }
+function masOtroCerrar(el){ const d = el.closest('.mas-otro'); d.querySelector('.mas-otro-f').hidden = true; d.querySelector('input').value = ''; d.querySelector('.mas-otro-btn').hidden = false; }
+function masOtroCasilla(d, texto, marcar){
+  const name = d.dataset.name, t = String(texto || '').trim().replace(/\s+/g, ' ').replace(/\|/g, '/'); if(!t) return null;
+  const val = 'otro:' + t.charAt(0).toUpperCase() + t.slice(1);
+  const ya = Array.from(document.querySelectorAll(`input[type="checkbox"][name="${name}"]`)).find(x => normTxt(x.value.replace(/^otro:/, '')) === normTxt(t) || normTxt((x.closest('label') || {}).textContent || '') === normTxt(t));
+  if(ya){ if(marcar && !ya.checked){ ya.checked = true; ya.dispatchEvent(new Event('change', { bubbles: true })); } return ya; }
+  const lab = document.createElement('label'); lab.className = 'checkbox-row' + (d.dataset.pill ? ' m3-pill' : '');
+  const inp = document.createElement('input'); inp.type = 'checkbox'; inp.name = name; inp.value = val; inp.checked = !!marcar;
+  lab.appendChild(inp); lab.appendChild(document.createTextNode(val.slice(5)));
+  const destino = d.dataset.pill ? document.querySelector(d.dataset.pill) : null;
+  if(destino) destino.appendChild(lab); else d.parentNode.insertBefore(lab, d);
+  if(marcar) inp.dispatchEvent(new Event('change', { bubbles: true }));
+  return inp;
+}
+function masOtroAnadir(el){
+  const d = el.closest('.mas-otro'), i = d.querySelector('input');
+  if(!String(i.value || '').trim()){ i.focus(); return; }
+  masOtroCasilla(d, i.value, true); masOtroCerrar(el);
+  try { atContadores(); } catch(e){}
+}
+// Al abrir una atención guardada: vuelve a crear las casillas «otro:…» que se habían añadido
+function masOtroRestaurar(name, vals){
+  const d = document.querySelector(`.mas-otro[data-name="${name}"]`); if(!d) return;
+  multiPartes(vals).filter(v => v.indexOf('otro:') === 0).forEach(v => masOtroCasilla(d, v.slice(5), true));
+}
 function checkboxGroup(name, opts){
   return opts.map(([v,l]) => `<label class="checkbox-row"><input type="checkbox" name="${name}" value="${v}">${l}</label>`).join('');
 }
@@ -7111,7 +7153,7 @@ function atContadores(){
 }
 function atPrefill(prev){
   if(!prev) return;
-  const marca = (name, vals) => { const set = [].concat(vals || []); document.querySelectorAll(`input[name="${name}"]`).forEach(el => { el.checked = set.includes(el.value); }); };
+  const marca = (name, vals) => { masOtroRestaurar(name, vals); const set = [].concat(vals || []); document.querySelectorAll(`input[name="${name}"]`).forEach(el => { el.checked = set.includes(el.value); }); };
   marca('at-prestaciones', prev.prestaciones); marca('at-tramites', prev.tramites_bretxa); marca('at-programas', prev.derivacion_programas);
   marcaOtro('at-talleres', prev.talleres); marca('at-ethos', prev.ethos); marcaOtro('at-derivacion', prev.derivacion); marca('at-emprendeduria', prev.emprendeduria);
   conocioMarcar(prev.como_conocio);
@@ -7175,13 +7217,13 @@ function renderAtencionForm(opts){
     </div>
     ${otrosTecHtml('at')}
 
-    ${secAt('💶 Prestaciones económicas básicas', checkboxGroup('at-prestaciones', PRESTACIONES_OPTS), 'at-prestaciones')}
-    ${secAt('🧾 Trámites / proyectos dentro de Bretxa Logos', checkboxGroup('at-tramites', TRAMITES_BRETXA_OPTS), 'at-tramites')}
-    ${secAt('🧭 Derivación a los programas', checkboxGroup('at-programas', PROGRAMAS_OPTS), 'at-programas')}
+    ${secAt('💶 Prestaciones económicas básicas', checkboxGroup('at-prestaciones', PRESTACIONES_OPTS) + masOtroHtml('at-prestaciones'), 'at-prestaciones')}
+    ${secAt('🧾 Trámites / proyectos dentro de Bretxa Logos', checkboxGroup('at-tramites', TRAMITES_BRETXA_OPTS) + masOtroHtml('at-tramites'), 'at-tramites')}
+    ${secAt('🧭 Derivación a los programas', checkboxGroup('at-programas', PROGRAMAS_OPTS) + masOtroHtml('at-programas'), 'at-programas')}
     ${secAt('🛠️ Talleres', checkboxGroupOtro('at-talleres', TALLERES_OPTS, ['cap']), 'at-talleres')}
     ${secAt('🏠 Situación residencial (ETHOS)', radioGroup('at-ethos', ETHOS_OPTS), 'at-ethos')}
     ${secAt('↗️ Derivación', checkboxGroupOtro('at-derivacion', DERIVACION_OPTS.concat([['altres', 'Otros']]), ['no_procedeix']), 'at-derivacion')}
-    ${secAt('🚀 Emprendeduría', checkboxGroup('at-emprendeduria', EMPRENDEDURIA_OPTS), 'at-emprendeduria')}
+    ${secAt('🚀 Emprendeduría', checkboxGroup('at-emprendeduria', EMPRENDEDURIA_OPTS) + masOtroHtml('at-emprendeduria'), 'at-emprendeduria')}
     ${secAt('📣 ¿Cómo nos conoció / quién derivó?', `<div id="at-conocio-grupo">${conocioGroupHtml()}</div>`, 'at-conocio')}
 
     <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);margin-bottom:16px;">
@@ -18358,7 +18400,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-11 · v247 («Obrir un tràmit nou» desde la ficha de atención sin guardar: guarda y abre el trámite)';
+const APP_VERSION_INTRANET = '2026-11-11 · v248 (ficha de atención: «➕ Añadir otro» debajo de cada apartado)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -21476,7 +21518,7 @@ async function guardarDatosPersonaStaff(usuarioId, silencioso){
   // Se comprueba que el cambio se ha guardado de verdad: si la base de datos no deja (ficha de otra persona del equipo),
   // no da error, solo no cambia nada. Entonces se usa la función segura del SQL 76, que deja corregir a todo el equipo.
   let { data: filasUpd, error } = await sb.from('perfiles').update(payload).eq('id', usuarioId).select('id');
-  if(error && /origen_migrante|situaciones_respuesta|violencia_genero|dificultades_emocionales|menores_en_riesgo|dependientes_a_cargo/i.test(error.message || '')){
+  if(error && /origen_migrante|situaciones_respuesta|situaciones_otras|violencia_genero|dificultades_emocionales|menores_en_riesgo|dependientes_a_cargo/i.test(error.message || '')){
     SITUACIONES_NUEVAS.forEach(k => delete payload[k]);   // falta el SQL-89: se guarda lo demás
     ({ data: filasUpd, error } = await sb.from('perfiles').update(payload).eq('id', usuarioId).select('id'));
   }
@@ -21594,7 +21636,7 @@ function m4FichaAtencionHtml(p, atenciones){
   const L = acL, a = [...(atenciones || [])].sort((x, y) => String(y.creado_en).localeCompare(String(x.creado_en)))[0];
   const bool = v => v === true ? L('Sí', 'Sí') : (v === false ? 'No' : '');
   const dir = [p.calle, p.codigo_postal, p.municipio].filter(Boolean).join(', ');
-  const extras = SITUACIONES.filter(x => p[x[1]] === true).map(x => L(x[2], x[3])).concat([p.hijos_a_cargo && L('Hijos a cargo', 'Fills a càrrec'), p.situaciones_respuesta === 'ninguna' && L('Ninguna de las situaciones', 'Cap de les situacions'), p.situaciones_respuesta === 'no_responde' && L('Prefiere no responder', 'Prefereix no respondre')]).filter(Boolean);
+  const extras = SITUACIONES.filter(x => p[x[1]] === true).map(x => L(x[2], x[3])).concat([p.hijos_a_cargo && L('Hijos a cargo', 'Fills a càrrec'), p.situaciones_respuesta === 'ninguna' && L('Ninguna de las situaciones', 'Cap de les situacions'), p.situaciones_respuesta === 'no_responde' && L('Prefiere no responder', 'Prefereix no respondre')]).concat([].concat(p.situaciones_otras || [])).filter(Boolean);
   let pct = null; try { pct = fichaPorcentaje(p); } catch(e){}
   const grupo = (t, html) => html ? `<div class="m4-grupo"><div class="m4-gt">${t}</div>${html}</div>` : '';
   const ult = a ? [
@@ -21713,7 +21755,7 @@ const SITUACIONES = [
   ['pds-dependientes', 'dependientes_a_cargo', 'Personas dependientes a cargo (mayores, con discapacidad u otras)', 'Dependents a càrrec (persones grans, persones amb discapacitat o altres)'],
   ['pds-violencia', 'violencia_genero', 'Violencia de género', 'Violència de gènere']
 ];
-const SITUACIONES_NUEVAS = ['origen_migrante', 'dificultades_emocionales', 'menores_en_riesgo', 'dependientes_a_cargo', 'violencia_genero', 'situaciones_respuesta'];
+const SITUACIONES_NUEVAS = ['origen_migrante', 'dificultades_emocionales', 'menores_en_riesgo', 'dependientes_a_cargo', 'violencia_genero', 'situaciones_respuesta', 'situaciones_otras'];
 function situacionesHtml(p){
   const ca = LANG_I === 'ca', r = p.situaciones_respuesta || '';
   const fila = (id, on, txt, extra) => `<label class="checkbox-row"><input type="checkbox" id="${id}" name="pds-sit" ${extra || ''} ${on ? 'checked' : ''}>${txt}</label>`;
@@ -21721,12 +21763,15 @@ function situacionesHtml(p){
     + fila('pds-sit-cap', r === 'ninguna', ca ? 'Cap de les anteriors' : 'Ninguna de las anteriores', 'data-excl="1"')
     + fila('pds-sit-nr', r === 'no_responde', ca ? 'Prefereixo NO respondre' : 'Prefiere NO responder', 'data-excl="1"')
     // «Hijos a cargo» ya no se pregunta aquí, pero se conserva lo que había
-    + `<input type="checkbox" id="pds-hijos-cargo" hidden ${p.hijos_a_cargo ? 'checked' : ''}>`;
+    + [].concat(p.situaciones_otras || []).filter(Boolean).map(t => `<label class="checkbox-row"><input type="checkbox" name="pds-sit" value="otro:${escAttr(t)}" checked>${escAttr(t)}</label>`).join('')
+    + `<input type="checkbox" id="pds-hijos-cargo" hidden ${p.hijos_a_cargo ? 'checked' : ''}>`
+    + masOtroHtml('pds-sit').replace('class="mas-otro"', 'class="mas-otro" data-pill="#m3-s2 .m3-pills"');
 }
 function situacionesValor(){
   const o = {}, chk = id => !!(document.getElementById(id) || {}).checked;
   SITUACIONES.forEach(([id, col]) => { if(SITUACIONES_NUEVAS.includes(col)) o[col] = chk(id); });
   o.situaciones_respuesta = chk('pds-sit-cap') ? 'ninguna' : (chk('pds-sit-nr') ? 'no_responde' : null);
+  o.situaciones_otras = Array.from(document.querySelectorAll('input[name="pds-sit"][value^="otro:"]:checked')).map(x => x.value.slice(5));
   return o;
 }
 function m3DatosMontar(){
@@ -21745,6 +21790,7 @@ function m3DatosMontar(){
   ['pds-personas-hogar', 'pds-num-hijos', 'pds-laboral', 'pds-nivel-estudios', 'pds-discapacidad', 'pds-pct-discapacidad', 'pds-dependencia', 'pds-titulaciones', 'pds-experiencia']
     .forEach(id => { const f = campo(id); if(f) g2.appendChild(f); });
   cont.querySelectorAll('label.checkbox-row').forEach(l => { l.classList.add('m3-pill'); pills.appendChild(l); });
+  { const mo = cont.querySelector('.mas-otro[data-name="pds-sit"]'); if(mo) pills.parentNode.insertBefore(mo, pills.nextSibling); }
   // lo que quede (otros campos que se añadan en el futuro) va al final de la primera tarjeta
   [...cont.children].forEach(ch => { if(ch.classList && ch.classList.contains('field')) g1.appendChild(ch); });
   cont.querySelectorAll(':scope > p.subtle').forEach(x => x.remove());
