@@ -8417,7 +8417,7 @@ function letraInicialPersona(nombre){
 function personasPestanasHtml(){
   const esCA = LANG_I === 'ca';
   const b = (id, txt) => `<button class="imp-tab${__personasVista === id ? ' on' : ''}" onclick="personasCambiarVista('${id}')">${txt}</button>`;
-  return `<div class="imp-tabs" style="margin-bottom:10px;">${FECHA_ALTA_OK ? b('fecha', '📅 ' + (esCA?'Per data d\'alta':'Por fecha de alta')) : ''}${b('az', '🔤 A–Z')}${b('stats', '📊 ' + (esCA?'Estadístiques':'Estadísticas'))}${HISTORICAS_OK ? b('hist', '🗄️ ' + (esCA?'Històric':'Histórico')) : ''}</div>`;
+  return `<div class="imp-tabs" style="margin-bottom:10px;">${b('aten', '🕒 ' + (esCA?'Per última atenció':'Por última atención'))}${FECHA_ALTA_OK ? b('fecha', '📅 ' + (esCA?'Per data d\'alta':'Por fecha de alta')) : ''}${b('az', '🔤 A–Z')}${b('stats', '📊 ' + (esCA?'Estadístiques':'Estadísticas'))}${HISTORICAS_OK ? b('hist', '🗄️ ' + (esCA?'Històric':'Histórico')) : ''}</div>`;
 }
 function personasCambiarVista(v){
   __personasVista = v;
@@ -8442,7 +8442,7 @@ async function renderPersonasScreen(texto){
     window.__personasHistUnif = HISTORICAS_OK ? histUnificar(res.data, await pHist) : [];
     __personasTodas = res.data.concat(window.__personasHistUnif)
       .sort((a, b) => normTxt(a.nombre_completo).localeCompare(normTxt(b.nombre_completo)));
-    if(!__personasVista || (__personasVista === 'fecha' && !FECHA_ALTA_OK) || (__personasVista === 'hist' && !HISTORICAS_OK)) __personasVista = FECHA_ALTA_OK ? 'fecha' : 'az';
+    if(!__personasVista || (__personasVista === 'fecha' && !FECHA_ALTA_OK) || (__personasVista === 'hist' && !HISTORICAS_OK)) __personasVista = 'aten';
     cont.innerHTML = `
       <div class="per-fija">
       <div class="field"><input type="text" id="personas-buscar" placeholder="${esCA?'Cerca per nom, DNI o telèfon (també a l\'històric)...':'Buscar por nombre, DNI o teléfono (también en el histórico)...'}" value="${escAttr(texto || '')}" oninput="renderPersonasScreen(this.value)"></div>
@@ -8466,8 +8466,13 @@ async function renderPersonasScreen(texto){
 window.__conAtencion = window.__conAtencion || null;   // Set de usuario_id con ficha de atención (null = aún no se sabe)
 async function conAtencionCargar(forzar){
   if(window.__conAtencion && !forzar) return window.__conAtencion;
-  const r = await traerTodoPaginado((a, b) => sb.from('atenciones').select('usuario_id').not('usuario_id', 'is', null).range(a, b)).catch(() => ({ error: true }));
-  if(r && !r.error) window.__conAtencion = new Set((r.data || []).map(x => x.usuario_id));
+  const r = await traerTodoPaginado((a, b) => sb.from('atenciones').select('usuario_id, creado_en').not('usuario_id', 'is', null).range(a, b)).catch(() => ({ error: true }));
+  if(r && !r.error){
+    window.__conAtencion = new Set((r.data || []).map(x => x.usuario_id));
+    // v250: fecha de la última atención de cada persona (para ordenar la lista de la más reciente a la más antigua)
+    const ult = {}; (r.data || []).forEach(x => { const f = String(x.creado_en || ''); if(f && (!ult[x.usuario_id] || f > ult[x.usuario_id])) ult[x.usuario_id] = f; });
+    window.__ultAtencion = ult;
+  }
   return window.__conAtencion;
 }
 async function conAtencionDe(ids){
@@ -8558,7 +8563,8 @@ function perSaltar(i){
 
 function filaPersonaActual(p){
   const t = TI[LANG_I];
-  const alta = p.fecha_alta ? ' · ' + (LANG_I === 'ca' ? 'alta ' : 'alta ') + fechaCorta(p.fecha_alta) : '';
+  const ua = window.__ultAtencion && window.__ultAtencion[p.id];
+  const alta = (ua ? ' · ' + (LANG_I === 'ca' ? 'última atenció ' : 'última atención ') + fechaCorta(ua) : '') + (p.fecha_alta ? ' · ' + (LANG_I === 'ca' ? 'alta ' : 'alta ') + fechaCorta(p.fecha_alta) : '');
   const sinAt = window.__conAtencion && !window.__conAtencion.has(p.id);
   return `<div class="panel-stat-row"><span>${escAttr(p.nombre_completo)}${sinAt ? ' ' + avisoSinAtencionHtml(p.id, true) : ''}<br><span class="subtle" style="font-size:11px;margin:0;">${escAttr(p.municipio || '')}${p.telefono ? ' · ' + escAttr(p.telefono) : ''}${alta}</span></span><button class="link-btn" style="font-size:12px;" onclick="verPersonaStaff('${p.id}','personas')">${t.ver}</button></div>`;
 }
@@ -8589,6 +8595,24 @@ function pintarListaPersonas(texto){
   if(__personasVista === 'hist'){ histPintarVista(caja); return; }
   if(!lista.length){ caja.innerHTML = personasFiltroHtml() + `<div class="empty-note">${esCA ? 'Encara no hi ha persones.' : 'Todavía no hay personas.'}</div>`; return; }
 
+  if(__personasVista === 'aten'){
+    // v250: por la fecha de la ÚLTIMA ATENCIÓN, de la más reciente a la más antigua (año → mes).
+    // Las personas sin ninguna atención van al final, por fecha de alta (la más reciente primero).
+    const ult = window.__ultAtencion;
+    if(!ult){ caja.innerHTML = personasFiltroHtml() + `<div class="placeholder">${esCA ? 'Carregant les atencions…' : 'Cargando las atenciones…'}</div>`; return; }
+    const con = lista.filter(p => !p.__hist && ult[p.id]).sort((x, y) => ult[y.id].localeCompare(ult[x.id]));
+    const sin = lista.filter(p => p.__hist || !ult[p.id]).sort((x, y) => String(y.fecha_alta || '').localeCompare(String(x.fecha_alta || '')) || normTxt(x.nombre_completo).localeCompare(normTxt(y.nombre_completo)));
+    const grupos = [];
+    con.forEach(p => { const d = new Date(ult[p.id]); const k = d.getFullYear() * 12 + d.getMonth(); let g = grupos[grupos.length - 1]; if(!g || g.k !== k){ g = { k, a: d.getFullYear(), m: d.getMonth(), l: [] }; grupos.push(g); } g.l.push(p); });
+    const hoy = new Date(), kHoy = hoy.getFullYear() * 12 + hoy.getMonth();
+    const anios = []; grupos.forEach(g => { let a = anios[anios.length - 1]; if(!a || a.a !== g.a){ a = { a: g.a, g: [] }; anios.push(a); } a.g.push(g); });
+    caja.innerHTML = personasFiltroHtml() + `<div class="carpetas-lista">${carpetasBarra(personasResumenTxt(lista))}${anios.map(A => carpetaDesplegable({
+        clave: 'persa:' + A.a, icono: '🕒', titulo: A.a, cuenta: A.g.reduce((s, g) => s + g.l.length, 0), abierta: A.a === hoy.getFullYear() || A === anios[0],
+        cuerpo: A.g.map(g => carpetaDesplegable({ clave: `persa:${A.a}-${g.m}`, icono: '🗓️', titulo: `${nombreMes(g.m)} ${g.a}`, cuenta: g.l.length,
+          abierta: g.k === kHoy || g === grupos[0], cuerpo: g.l.map(fila).join('') })).join('')
+      })).join('')}${sin.length ? carpetaDesplegable({ clave: 'persa:sin', icono: '⚪', titulo: esCA ? 'Encara sense cap atenció' : 'Todavía sin ninguna atención', cuenta: sin.length, abierta: false, cuerpo: sin.map(fila).join('') }) : ''}</div>`;
+    return;
+  }
   if(__personasVista === 'fecha' && FECHA_ALTA_OK){
     // Año → mes de alta. Lo más reciente primero.
     const anios = {};
@@ -18400,7 +18424,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-11 · v249 (arreglo: después de guardar ya no vuelve a salir «¿Has olvidado guardar?»)';
+const APP_VERSION_INTRANET = '2026-11-11 · v250 (Personas usuarias: ordenadas por la última atención, de la más reciente a la más antigua)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
