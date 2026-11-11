@@ -1763,6 +1763,7 @@ button.m3-chip{cursor:pointer;}
 .mas-otro-f input{flex:1;min-width:180px;border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px;}
 .mas-otro-ok{background:var(--navy,#1B2A44);color:#fff;border:0;border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer;}
 .mas-otro-x{background:none;border:0;color:#888;font-size:16px;cursor:pointer;}
+.eq-clave{font-weight:700;white-space:nowrap;}
 .m3-s2-at{margin-top:18px;border-top:1px solid var(--line);padding-top:6px;}
 .at-opts .otro-w{flex-basis:100%;}
 .m3-pill, .m3-grupo .at-opts label.checkbox-row{position:relative;display:inline-flex !important;align-items:center;gap:0;border:1px solid #C9CFDA;border-radius:20px;padding:6px 13px !important;margin:0 !important;font-size:13px;background:#fff;cursor:pointer;line-height:1.3;font-weight:500;color:var(--ink,#1B2333);width:auto !important;}
@@ -3374,6 +3375,7 @@ function admEquipoHtml(lista, t){
     </article>`;
   };
   return `<div class="eq-bar"><input type="search" class="eq-q" placeholder="🔍 ${acL('Buscar por nombre o correo…', 'Cercar per nom o correu…')}" aria-label="${acL('Buscar en el equipo', 'Cercar a l\'equip')}" oninput="admEquipoFiltrar()">
+      <button type="button" class="link-btn eq-clave" onclick="claveAyudaAbrir()" title="${acL('Contraseña provisional sin correo', 'Contrasenya provisional sense correu')}">🔑 ${acL('Alguien no puede entrar', 'Algú no pot entrar')}</button>
       <button type="button" class="primary-btn eq-nuevo" onclick="document.getElementById('admin-nuevo-email').scrollIntoView({behavior:'smooth',block:'center'});document.getElementById('admin-nuevo-email').focus()">➕ ${acL('Añadir persona', 'Afegir persona')}</button></div>
     <div class="eq-fil" role="group" aria-label="${acL('Filtrar', 'Filtrar')}">${filtros.map(([k, tx, n], i) => `<button type="button" data-f="${k}" class="${k === 'activos' ? 'on' : ''}" aria-pressed="${k === 'activos'}" onclick="this.parentNode.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',b===this);b.setAttribute('aria-pressed',b===this)});admEquipoFiltrar()">${tx} <b>${n}</b></button>`).join('')}</div>
     <div class="eq-grid">${ord.map(card).join('')}</div><div class="eq-vacio" hidden>${acL('Nadie coincide con la búsqueda.', 'Ningú coincideix amb la cerca.')}</div>
@@ -3955,6 +3957,7 @@ function renderLogin(errorMsg){
       <button class="link-btn" onclick="toggleAuthMode()">${AUTH_MODE === 'login' ? '¿Primera vez? Crear cuenta' : '¿Ya tienes cuenta? Entra'}</button>
     </p>
     <p style="text-align:center;margin-top:6px;"><button class="link-btn" style="font-weight:700;" onclick="recuperarClave()">🔑 ¿Has olvidado la contraseña?</button></p>
+    <p class="subtle" style="text-align:center;margin:6px 8px 0;font-size:12.5px;line-height:1.45;">📵 ¿No puedes abrir tu correo o no te llega el enlace? Pide a la administración de Logos una <strong>contraseña provisional</strong>: entrarás sin necesidad del correo.</p>
   `;
 }
 
@@ -14503,6 +14506,23 @@ function claveProvisionalSugerida(){
   const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ', n = '23456789', r = m => m[Math.floor(Math.random() * m.length)];
   return 'Logos-' + r(a) + r(a) + r(n) + r(n) + r(a) + '-' + new Date().getFullYear();
 }
+// v252: «🔑 Alguien no puede entrar»: se elige la persona y se le pone una contraseña provisional (sin correo)
+function claveAyudaAbrir(){
+  const lista = (window.__staffLista || []).filter(s => s.activo !== false && String(s.email).toLowerCase() !== String(CURRENT_USER.email || '').toLowerCase())
+    .sort((a, b) => String(a.nombre || a.email).localeCompare(String(b.nombre || b.email)));
+  let ov = document.getElementById('cprov-ov'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'cprov-ov'; ov.className = 'sg-ov';
+  ov.innerHTML = `<div class="sg-caja" style="text-align:left;border-top-color:#2463B8;">
+    <h3 style="margin-top:0;">🔑 ${acL('Alguien no puede entrar', 'Algú no pot entrar')}</h3>
+    <p>${acL('Para quien ha olvidado la contraseña o no puede abrir su correo. Le pones una contraseña provisional y entra <strong>sin necesidad del correo</strong>. Si aún no tenía cuenta, se le crea.', 'Per a qui ha oblidat la contrasenya o no pot obrir el seu correu. Li poses una contrasenya provisional i entra <strong>sense necessitat del correu</strong>. Si encara no tenia compte, se li crea.')}</p>
+    <div class="field"><label>${acL('¿Quién?', 'Qui?')}</label>
+      <select id="cprov-quien" style="width:100%;font-size:15px;"><option value="">${acL('Elige la persona…', 'Tria la persona…')}</option>${lista.map(s => `<option value="${escAttr(s.email)}">${escAttr(s.nombre || s.email)} · ${escAttr(s.email)}</option>`).join('')}</select></div>
+    <button class="primary-btn" onclick="const v=document.getElementById('cprov-quien').value; if(!v){document.getElementById('cprov-quien').focus();return;} clavePrevAbrir(v)">${acL('Continuar', 'Continuar')} →</button>
+    <p class="subtle" style="font-size:12px;margin:10px 0 0;">${acL('¿No sale en la lista? Primero añádela al equipo con «➕ Añadir persona».', 'No surt a la llista? Primer afegeix-la a l\'equip amb «➕ Afegir persona».')}</p>
+    <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="document.getElementById('cprov-ov').remove()">${acL('Cancelar', 'Cancel·lar')}</button></div>`;
+  document.body.appendChild(ov);
+  setTimeout(() => { const q = document.getElementById('cprov-quien'); if(q) q.focus(); }, 30);
+}
 function clavePrevAbrir(email){
   const s = (window.__staffLista || []).find(x => x.email === email), nombre = (s && s.nombre) || email;
   let ov = document.getElementById('cprov-ov'); if(ov) ov.remove();
@@ -14521,7 +14541,7 @@ async function clavePrevGuardar(email){
   const clave = ((document.getElementById('cprov-clave') || {}).value || '').trim(), msg = document.getElementById('cprov-msg'), btn = document.getElementById('cprov-btn');
   if(clave.length < 8){ msg.innerHTML = `<div class="auth-error">${acL('Tiene que tener al menos 8 caracteres.', 'Ha de tenir almenys 8 caràcters.')}</div>`; return; }
   btn.disabled = true;
-  const { error } = await sb.rpc('admin_poner_clave_provisional', { p_email: email, p_clave: clave });
+  const { data: resRpc, error } = await sb.rpc('admin_poner_clave_provisional', { p_email: email, p_clave: clave });
   btn.disabled = false;
   if(error){
     const falta = /does not exist|schema cache|could not find/i.test(error.message || '');
@@ -14529,12 +14549,17 @@ async function clavePrevGuardar(email){
     return;
   }
   const caja = document.querySelector('#cprov-ov .sg-caja');
-  caja.innerHTML = `<div class="sg-ic">✅</div><h3>${acL('Contraseña puesta', 'Contrasenya posada')}</h3>
+  const urlIntra = location.origin + location.pathname;
+  const instrucciones = acL(`Para entrar en la intranet de Logos:\n1. Abre ${urlIntra}\n2. Correo: ${email}\n3. Contraseña: ${clave}\n4. Te pedirá elegir una contraseña nueva, solo tuya. Apúntala en un sitio seguro.`,
+    `Per entrar a la intranet de Logos:\n1. Obre ${urlIntra}\n2. Correu: ${email}\n3. Contrasenya: ${clave}\n4. Et demanarà triar una contrasenya nova, només teva. Apunta-la en un lloc segur.`);
+  caja.innerHTML = `<div class="sg-ic">✅</div><h3>${resRpc === 'creada' ? acL('Cuenta creada', 'Compte creat') : acL('Contraseña puesta', 'Contrasenya posada')}</h3>
+    ${resRpc === 'creada' ? `<p style="font-size:13px;">${acL('Esta persona aún no tenía cuenta: ya la tiene, lista para entrar.', 'Aquesta persona encara no tenia compte: ja el té, a punt per entrar.')}</p>` : ''}
     <p>${acL('Dile que entre con su correo y esta contraseña:', 'Digues-li que entri amb el seu correu i aquesta contrasenya:')}</p>
     <p style="font-size:14px;margin:0;">✉️ <strong>${escAttr(email)}</strong></p>
     <p style="font-family:monospace;font-size:22px;font-weight:800;background:#FFF8E1;border:1.5px dashed #E9C766;border-radius:10px;padding:10px;margin:8px 0 14px;user-select:all;">${escAttr(clave)}</p>
     <p class="subtle" style="font-size:12.5px;">${acL('Al entrar le pedirá elegir una contraseña nueva que solo conozca él/ella. Si tiene la app de verificación, también le pedirá el código.', 'En entrar li demanarà triar una contrasenya nova que només conegui ell/ella. Si té l\'app de verificació, també li demanarà el codi.')}</p>
     <button class="primary-btn" onclick="try{navigator.clipboard.writeText(${JSON.stringify(clave).replace(/"/g, '&quot;')})}catch(e){};this.textContent='✅ ${acL('Copiada', 'Copiada')}'">📋 ${acL('Copiar la contraseña', 'Copiar la contrasenya')}</button>
+    <button class="link-btn" style="display:block;margin:10px auto 0;font-weight:700;" onclick="try{navigator.clipboard.writeText(${JSON.stringify(instrucciones).replace(/"/g, '&quot;')})}catch(e){};this.textContent='✅ ${acL('Instrucciones copiadas: pégalas en un WhatsApp', 'Instruccions copiades: enganxa-les en un WhatsApp')}'">📋 ${acL('Copiar las instrucciones para enviárselas (WhatsApp)', 'Copiar les instruccions per enviar-les-hi (WhatsApp)')}</button>
     <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="document.getElementById('cprov-ov').remove()">${acL('Cerrar', 'Tancar')}</button>`;
 }
 async function enviarEnlaceClave(email){
@@ -18460,7 +18485,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-11 · v251 (RR. HH. ve los fichajes del personal)';
+const APP_VERSION_INTRANET = '2026-11-11 · v252 (🔑 «Alguien no puede entrar»: contraseña provisional sin correo, y crea la cuenta si no la tiene)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
