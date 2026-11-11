@@ -6695,17 +6695,17 @@ function masOtroHtml(name){
 }
 function masOtroAbrir(b){ const d = b.closest('.mas-otro'); b.hidden = true; const f = d.querySelector('.mas-otro-f'); f.hidden = false; f.querySelector('input').focus(); }
 function masOtroCerrar(el){ const d = el.closest('.mas-otro'); d.querySelector('.mas-otro-f').hidden = true; d.querySelector('input').value = ''; d.querySelector('.mas-otro-btn').hidden = false; }
-function masOtroCasilla(d, texto, marcar){
+function masOtroCasilla(d, texto, marcar, silencioso){
   const name = d.dataset.name, t = String(texto || '').trim().replace(/\s+/g, ' ').replace(/\|/g, '/'); if(!t) return null;
   const val = 'otro:' + t.charAt(0).toUpperCase() + t.slice(1);
   const ya = Array.from(document.querySelectorAll(`input[type="checkbox"][name="${name}"]`)).find(x => normTxt(x.value.replace(/^otro:/, '')) === normTxt(t) || normTxt((x.closest('label') || {}).textContent || '') === normTxt(t));
-  if(ya){ if(marcar && !ya.checked){ ya.checked = true; ya.dispatchEvent(new Event('change', { bubbles: true })); } return ya; }
+  if(ya){ if(marcar && !ya.checked){ ya.checked = true; if(!silencioso) ya.dispatchEvent(new Event('change', { bubbles: true })); } return ya; }
   const lab = document.createElement('label'); lab.className = 'checkbox-row' + (d.dataset.pill ? ' m3-pill' : '');
   const inp = document.createElement('input'); inp.type = 'checkbox'; inp.name = name; inp.value = val; inp.checked = !!marcar;
   lab.appendChild(inp); lab.appendChild(document.createTextNode(val.slice(5)));
   const destino = d.dataset.pill ? document.querySelector(d.dataset.pill) : null;
   if(destino) destino.appendChild(lab); else d.parentNode.insertBefore(lab, d);
-  if(marcar) inp.dispatchEvent(new Event('change', { bubbles: true }));
+  if(marcar && !silencioso) inp.dispatchEvent(new Event('change', { bubbles: true }));
   return inp;
 }
 function masOtroAnadir(el){
@@ -6717,7 +6717,7 @@ function masOtroAnadir(el){
 // Al abrir una atención guardada: vuelve a crear las casillas «otro:…» que se habían añadido
 function masOtroRestaurar(name, vals){
   const d = document.querySelector(`.mas-otro[data-name="${name}"]`); if(!d) return;
-  multiPartes(vals).filter(v => v.indexOf('otro:') === 0).forEach(v => masOtroCasilla(d, v.slice(5), true));
+  multiPartes(vals).filter(v => v.indexOf('otro:') === 0).forEach(v => masOtroCasilla(d, v.slice(5), true, true));
 }
 function checkboxGroup(name, opts){
   return opts.map(([v,l]) => `<label class="checkbox-row"><input type="checkbox" name="${name}" value="${v}">${l}</label>`).join('');
@@ -18400,7 +18400,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-11 · v248 (ficha de atención: «➕ Añadir otro» debajo de cada apartado)';
+const APP_VERSION_INTRANET = '2026-11-11 · v249 (arreglo: después de guardar ya no vuelve a salir «¿Has olvidado guardar?»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -25091,7 +25091,10 @@ setInterval(() => { try { jorPintarBoton(); } catch(e){} }, 3000);
 // sale un aviso con dos opciones: volver a guardar o salir sin guardar.
 window.__sinGuardar = { atencion: false, actuacion: false };
 let __avisosN = 0;
-(function(){ const al = window.alert; window.alert = function(){ __avisosN++; return al.apply(this, arguments); }; })();
+// v249: solo cuentan los avisos de ERROR. Los de «✅ guardado correctamente» no (antes, al guardar bien, el aviso de
+// «¿Has olvidado guardar?» seguía saliendo porque el mensaje de éxito contaba como error).
+const SG_EXITO = /^\s*✅|correctament|^\s*(Guardad|Desad|Desat)/i;
+(function(){ const al = window.alert; window.alert = function(m){ if(!SG_EXITO.test(String(m == null ? '' : m))) __avisosN++; return al.apply(this, arguments); }; })();
 function sgZona(el){
   if(!el || !el.closest) return null;
   if(el.closest('.m3-panel, .ra-modal')) return 'actuacion';
@@ -25182,9 +25185,17 @@ function sgAviso(zona, continuar){
   const o = window[nombre]; if(typeof o !== 'function') return;
   const zona = nombre === 'guardarAtencion' ? 'atencion' : 'actuacion';
   const w = async function(){ const n0 = __avisosN, e0 = document.querySelectorAll('.auth-error').length; window.__sgGuardando = true;
-    try { const r = await o.apply(this, arguments); if(__avisosN === n0 && document.querySelectorAll('.auth-error').length <= e0) sgLimpiar(zona); return r; } finally { window.__sgGuardando = false; } };
+    try { const r = await o.apply(this, arguments);
+      if(__avisosN === n0 && document.querySelectorAll('.auth-error').length <= e0){ sgLimpiar(zona); setTimeout(() => sgLimpiar(zona), 400); }   // también tras volver a abrir la ficha ya guardada
+      return r; } finally { window.__sgGuardando = false; } };
   Object.assign(w, o); window[nombre] = w;
 });
+// Datos de la persona guardados bien → tampoco hay nada pendiente en la ficha
+(function(){
+  const o = window.guardarDatosPersonaStaff; if(typeof o !== 'function') return;
+  const w = async function(){ const r = await o.apply(this, arguments); if(r === true){ sgLimpiar('atencion'); setTimeout(() => sgLimpiar('atencion'), 400); } return r; };
+  Object.assign(w, o); window.guardarDatosPersonaStaff = w;
+})();
 // Cerrar la pestaña o recargar
 window.addEventListener('beforeunload', e => { if(sgHay()){ e.preventDefault(); e.returnValue = ''; return ''; } });
 </script>
