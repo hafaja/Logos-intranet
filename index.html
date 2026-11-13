@@ -7554,7 +7554,7 @@ async function responderConsulta(id){
 // Fecha AAAA-MM-DD en hora local (toISOString usa la hora de Londres y en España cambia el día de madrugada)
 let __agendaFechaActual = isoLocal();
 
-let __agendaVista = 'dia'; // 'dia' | 'proximas'
+let __agendaVista = 'cal'; // 'cal' (calendario v258) | 'dia' | 'proximas'
 
 function contactoCitaHtml(p){
   if(!p.telefono) return '';
@@ -7798,14 +7798,16 @@ function respuestaCitaHtml(c){
 }
 function tabsAgendaHtml(){
   return `${logosEstadoHtml()}<div style="display:flex;gap:8px;margin-bottom:14px;">
-    <button class="link-btn" style="${__agendaVista==='dia'?'font-weight:700;text-decoration:underline;':''}" onclick="__agendaVista='dia';renderAgendaCitas()">${LANG_I==='ca'?'Per dia':'Por día'}</button>
+    <button class="link-btn" style="${__agendaVista==='cal'?'font-weight:700;text-decoration:underline;':''}" onclick="__agendaVista='cal';renderCalendario()">🗓️ ${LANG_I==='ca'?'Calendari':'Calendario'}</button>
+    <button class="link-btn" style="${__agendaVista==='dia'?'font-weight:700;text-decoration:underline;':''}" onclick="__agendaVista='dia';renderAgendaCitas()">${LANG_I==='ca'?'Llista del dia':'Lista del día'}</button>
     <button class="link-btn" style="${__agendaVista==='proximas'?'font-weight:700;text-decoration:underline;':''}" onclick="__agendaVista='proximas';renderProximasCitas()">${LANG_I==='ca'?'Properes cites':'Próximas citas'}</button>
-    <button class="link-btn" style="margin-left:auto;font-weight:700;" onclick="abrirNuevaCitaStaff()">➕ ${LANG_I==='ca'?'Nova cita':'Nueva cita'}</button>
+    ${__agendaVista === 'cal' ? '' : `<button class="link-btn" style="margin-left:auto;font-weight:700;" onclick="abrirNuevaCitaStaff()">➕ ${LANG_I==='ca'?'Nova cita':'Nueva cita'}</button>`}
   </div>`;
 }
 
 async function renderAgendaCitas(fecha){
   if(__agendaVista === 'proximas') { renderProximasCitas(); return; }
+  if(__agendaVista === 'cal') { if(fecha) window.__cal.fecha = fecha; renderCalendario(); return; }
   if(fecha) __agendaFechaActual = fecha;
   const cont = document.getElementById('agenda-content');
   const t = TI[LANG_I];
@@ -7856,6 +7858,409 @@ async function renderAgendaCitas(fecha){
   `;
 }
 
+
+// ================= v258 · CALENDARIO TIPO GOOGLE (mes / semana / día) + AGENDA PROPIA =================
+// Muestra en un mismo calendario las citas con personas (tabla citas) y lo que cada técnico apunta
+// en su agenda (tabla agenda_eventos, SQL-99): reuniones, formaciones, coordinación… con hora de inicio,
+// hora de fin y color. «Mis citas» = lo mío; «Todo el equipo» = todo.
+const CAL_COLORES = [['#2463B8', 'Azul', 'Blau'], ['#1F8A4C', 'Verde', 'Verd'], ['#D9731A', 'Naranja', 'Taronja'], ['#C8102E', 'Rojo', 'Vermell'],
+  ['#7B3FB5', 'Morado', 'Lila'], ['#0E8C8C', 'Turquesa', 'Turquesa'], ['#C2417F', 'Rosa', 'Rosa'], ['#5B6573', 'Gris', 'Gris']];
+const CAL_H_INI = 8, CAL_H_FIN = 20, CAL_PX = 52;   // de 8:00 a 20:00, 52 px por hora
+window.__cal = window.__cal || { modo: (window.innerWidth || 1200) < 700 ? 'dia' : 'semana', fecha: isoLocal(), quien: 'mios', finde: false };   // en el móvil empieza por «Día»
+let CAL_EVENTOS_OK = true, CAL_CITAS_FIN_OK = true;
+function calMin(h){ if(!h) return null; const s = String(h); return Number(s.slice(0, 2)) * 60 + Number(s.slice(3, 5)); }
+function calHHMM(m){ m = Math.max(0, Math.min(24 * 60 - 1, m)); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); }
+function calIso(d){ return isoLocal(d); }
+function calSumarDias(iso, n){ const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return calIso(d); }
+function calLunes(iso){ const d = new Date(iso + 'T00:00:00'); const w = (d.getDay() + 6) % 7; d.setDate(d.getDate() - w); return calIso(d); }
+function calColorTec(email){
+  const e = String(email || '').toLowerCase(); if(!e) return '#5B6573';
+  let h = 0; for(const ch of e) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return CAL_COLORES[h % (CAL_COLORES.length - 1)][0];
+}
+function calYo(){ return String((CURRENT_USER && CURRENT_USER.email) || '').toLowerCase(); }
+function calEsMia(c){ const y = calYo(); return [c.tecnico_email, c.tecnico2_email].some(x => String(x || '').toLowerCase() === y) || (!c.tecnico_email && String(c.creada_por_email || '').toLowerCase() === y); }
+function calRango(){
+  const c = window.__cal;
+  if(c.modo === 'dia') return [c.fecha, c.fecha];
+  if(c.modo === 'semana'){ const l = calLunes(c.fecha); return [l, calSumarDias(l, 6)]; }
+  const d = new Date(c.fecha + 'T00:00:00'); const p = calIso(new Date(d.getFullYear(), d.getMonth(), 1));
+  const ini = calLunes(p); return [ini, calSumarDias(ini, 41)];
+}
+async function calCargar(desde, hasta){
+  const [rc, re] = await Promise.all([
+    sb.from('citas').select('*').gte('fecha', desde).lte('fecha', hasta).order('hora', { ascending: true }),
+    CAL_EVENTOS_OK ? sb.from('agenda_eventos').select('*').gte('fecha', desde).lte('fecha', hasta).then(r => r, () => ({ error: { message: 'agenda_eventos' } })) : Promise.resolve({ data: [] })
+  ]);
+  if(re.error){ CAL_EVENTOS_OK = false; }
+  const citas = sinBorrados(rc.data || []).filter(c => c.estado !== 'cancelada');
+  if(citas.some(c => c.tecnico_email) && !(window.__equipoCitas || []).length) { try { await cargarEquipoCitas(); } catch(e){} }
+  const ids = [...new Set(citas.map(c => c.usuario_id).filter(Boolean))];
+  const per = {};
+  if(ids.length){ const { data } = await sb.from('perfiles').select('id, nombre_completo, telefono').in('id', ids); (data || []).forEach(p => { per[p.id] = p; }); }
+  const durDef = (window.__NC && __NC.horario && Number(__NC.horario.duracion_cita_minutos)) || 45;
+  const yo = calYo(), q = window.__cal.quien;
+  const items = [];
+  citas.forEach(c => {
+    if(q === 'mios' && !calEsMia(c)) return;
+    const p = citaPersona(c, per);
+    const ini = calMin(c.hora), fin = calMin(c.hora_fin) || (ini != null ? ini + durDef : null);
+    items.push({ tipo: 'cita', id: c.id, fecha: c.fecha, ini, fin, color: c.color || calColorTec(c.tecnico_email),
+      titulo: (p.nombre_completo || acL('Cita', 'Cita')) + (c.modalidad === 'telefono' ? ' 📞' : '') + (c.urgente ? ' 🔴' : ''),
+      sub: [c.motivo || '', c.tecnico_email ? equipoNombre(c.tecnico_email) : acL('sin asignar', 'sense assignar')].filter(Boolean).join(' · '), raw: c, persona: p });
+  });
+  (re.data || []).forEach(e => {
+    const mia = String(e.tecnico_email || '').toLowerCase() === yo;
+    if(q === 'mios' && !mia) return;
+    const priv = e.privado && !mia;
+    const ini = e.todo_el_dia ? null : calMin(e.hora_inicio), fin = e.todo_el_dia ? null : (calMin(e.hora_fin) || (ini != null ? ini + 60 : null));
+    items.push({ tipo: 'evento', id: e.id, fecha: e.fecha, ini, fin, todo: !!e.todo_el_dia || ini == null, color: e.color || calColorTec(e.tecnico_email), mia,
+      titulo: priv ? acL('Ocupado', 'Ocupat') : e.titulo, sub: [priv ? '' : (e.lugar || ''), mia ? '' : equipoNombre(e.tecnico_email)].filter(Boolean).join(' · '), raw: e });
+  });
+  return items;
+}
+function calTitulo(){ const t = calTitulo0(); return t.charAt(0).toUpperCase() + t.slice(1); }
+function calTitulo0(){
+  const c = window.__cal, loc = LANG_I === 'ca' ? 'ca-ES' : 'es-ES', d = new Date(c.fecha + 'T00:00:00');
+  if(c.modo === 'dia') return d.toLocaleDateString(loc, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  if(c.modo === 'mes') return d.toLocaleDateString(loc, { month: 'long', year: 'numeric' });
+  const l = new Date(calLunes(c.fecha) + 'T00:00:00'), v = new Date(l); v.setDate(v.getDate() + (c.finde ? 6 : 4));
+  const mismo = l.getMonth() === v.getMonth();
+  return `${l.getDate()}${mismo ? '' : ' ' + l.toLocaleDateString(loc, { month: 'short' })} – ${v.getDate()} ${v.toLocaleDateString(loc, { month: 'long', year: 'numeric' })}`;
+}
+function calMover(n){
+  const c = window.__cal;
+  if(c.modo === 'dia') c.fecha = calSumarDias(c.fecha, n);
+  else if(c.modo === 'semana') c.fecha = calSumarDias(c.fecha, 7 * n);
+  else { const d = new Date(c.fecha + 'T00:00:00'); c.fecha = calIso(new Date(d.getFullYear(), d.getMonth() + n, 1)); }
+  renderCalendario();
+}
+function calHoy(){ window.__cal.fecha = isoLocal(); renderCalendario(); }
+function calModo(m, fecha){ window.__cal.modo = m; if(fecha) window.__cal.fecha = fecha; renderCalendario(); }
+async function renderCalendario(){
+  const cont = document.getElementById('agenda-content'); if(!cont) return;
+  const c = window.__cal, ca = LANG_I === 'ca';
+  const seg = (m, es, cat) => `<button class="cal-seg${c.modo === m ? ' on' : ''}" onclick="calModo('${m}')">${ca ? cat : es}</button>`;
+  const cab = `${tabsAgendaHtml()}
+    <div class="cal-bar">
+      <div class="cal-nav"><button class="cal-btn" onclick="calHoy()">${ca ? 'Avui' : 'Hoy'}</button>
+        <button class="cal-ic" onclick="calMover(-1)" aria-label="${ca ? 'Anterior' : 'Anterior'}">‹</button><button class="cal-ic" onclick="calMover(1)" aria-label="${ca ? 'Següent' : 'Siguiente'}">›</button>
+        <h3 class="cal-tit">${escAttr(calTitulo())}</h3></div>
+      <div class="cal-ctrl">
+        <div class="cal-segs">${seg('dia', 'Día', 'Dia')}${seg('semana', 'Semana', 'Setmana')}${seg('mes', 'Mes', 'Mes')}</div>
+        <select class="cal-sel" onchange="window.__cal.quien=this.value;renderCalendario()">
+          <option value="mios" ${c.quien === 'mios' ? 'selected' : ''}>👤 ${ca ? 'La meva agenda' : 'Mi agenda'}</option>
+          <option value="equipo" ${c.quien === 'equipo' ? 'selected' : ''}>👥 ${ca ? 'Tot l\'equip' : 'Todo el equipo'}</option></select>
+        ${c.modo === 'semana' ? `<label class="cal-finde"><input type="checkbox" ${c.finde ? 'checked' : ''} onchange="window.__cal.finde=this.checked;renderCalendario()"> ${ca ? 'Cap de setmana' : 'Fin de semana'}</label>` : ''}
+        <button class="primary-btn cal-nuevo" onclick="calNuevo(window.__cal.fecha)">＋ ${ca ? 'Nou' : 'Nuevo'}</button>
+      </div>
+    </div>`;
+  cont.innerHTML = cab + `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const [desde, hasta] = calRango();
+  let items = [];
+  try { items = await calCargar(desde, hasta); } catch(e){ cont.innerHTML = cab + `<div class="auth-error">${escAttr(e.message || String(e))}</div>`; return; }
+  window.__calItems = items;
+  const aviso = !CAL_EVENTOS_OK ? `<div class="info-box info-box-gold" style="font-size:12.5px;margin-bottom:10px;">${ca ? 'Per apuntar reunions i altres coses a la teva agenda falta executar l\'SQL-99 a Supabase. Les cites sí que es veuen.' : 'Para apuntar reuniones y otras cosas en tu agenda falta ejecutar el SQL-99 en Supabase. Las citas sí se ven.'}</div>` : '';
+  const cuerpo = c.modo === 'mes' ? calMesHtml(items) : calSemanaHtml(items, c.modo === 'dia' ? [c.fecha] : Array.from({ length: c.finde ? 7 : 5 }, (_, i) => calSumarDias(calLunes(c.fecha), i)));
+  cont.innerHTML = cab + aviso + cuerpo;
+  const sc = cont.querySelector('.cal-scroll');
+  if(sc){ const ahora = new Date(); const m = ahora.getHours() * 60 + ahora.getMinutes(); sc.scrollTop = Math.max(0, ((Math.min(Math.max(m, CAL_H_INI * 60), CAL_H_FIN * 60) - CAL_H_INI * 60) / 60) * CAL_PX - 120); }
+}
+// Reparte en columnas los que se solapan (como Google Calendar)
+function calCarriles(lista){
+  lista.sort((a, b) => a.ini - b.ini || (b.fin - b.ini) - (a.fin - a.ini));
+  let grupo = [], finGrupo = -1; const grupos = [];
+  lista.forEach(e => { if(e.ini >= finGrupo && grupo.length){ grupos.push(grupo); grupo = []; } grupo.push(e); finGrupo = Math.max(finGrupo, e.fin); });
+  if(grupo.length) grupos.push(grupo);
+  grupos.forEach(g => { const fines = []; g.forEach(e => { let k = fines.findIndex(f => f <= e.ini); if(k < 0){ k = fines.length; fines.push(0); } fines[k] = e.fin; e.__k = k; }); g.forEach(e => { e.__n = fines.length; }); });
+  return lista;
+}
+function calEventoBloque(e){
+  const top = ((Math.max(e.ini, CAL_H_INI * 60) - CAL_H_INI * 60) / 60) * CAL_PX;
+  const alto = Math.max(20, ((Math.min(e.fin, CAL_H_FIN * 60) - Math.max(e.ini, CAL_H_INI * 60)) / 60) * CAL_PX - 2);
+  const w = 100 / e.__n;
+  return `<button class="cal-ev${e.tipo === 'evento' ? ' cal-ev-ag' : ''}" style="top:${top}px;height:${alto}px;left:calc(${e.__k * w}% + 1px);width:calc(${w}% - 3px);--c:${escAttr(e.color)};" onclick="event.stopPropagation();calAbrir('${e.tipo}','${e.id}')" title="${escAttr(calHHMM(e.ini) + '–' + calHHMM(e.fin) + ' · ' + e.titulo + (e.sub ? ' · ' + e.sub : ''))}">
+    <span class="cal-ev-t">${escAttr(e.titulo)}</span><span class="cal-ev-h">${calHHMM(e.ini)}–${calHHMM(e.fin)}${e.sub && alto > 40 ? ' · ' + escAttr(e.sub) : ''}</span></button>`;
+}
+function calSemanaHtml(items, dias){
+  const ca = LANG_I === 'ca', hoy = isoLocal(), loc = ca ? 'ca-ES' : 'es-ES';
+  const horas = []; for(let h = CAL_H_INI; h < CAL_H_FIN; h++) horas.push(h);
+  const alto = (CAL_H_FIN - CAL_H_INI) * CAL_PX;
+  const ahora = new Date(), mAhora = ahora.getHours() * 60 + ahora.getMinutes();
+  const col = iso => {
+    const delDia = items.filter(e => e.fecha === iso);
+    const conHora = calCarriles(delDia.filter(e => !e.todo && e.ini != null && e.fin > CAL_H_INI * 60 && e.ini < CAL_H_FIN * 60).map(e => Object.assign({}, e)));
+    const lineaAhora = iso === hoy && mAhora >= CAL_H_INI * 60 && mAhora <= CAL_H_FIN * 60 ? `<div class="cal-ahora" style="top:${((mAhora - CAL_H_INI * 60) / 60) * CAL_PX}px"></div>` : '';
+    return `<div class="cal-col${iso === hoy ? ' hoy' : ''}" style="height:${alto}px" onclick="calClicHueco(event,'${iso}')">${horas.map(() => `<div class="cal-hueco" style="height:${CAL_PX}px"></div>`).join('')}${conHora.map(calEventoBloque).join('')}${lineaAhora}</div>`;
+  };
+  const todoDia = iso => items.filter(e => e.fecha === iso && (e.todo || e.ini == null || e.fin <= CAL_H_INI * 60 || e.ini >= CAL_H_FIN * 60))
+    .map(e => `<button class="cal-chip" style="--c:${escAttr(e.color)}" onclick="calAbrir('${e.tipo}','${e.id}')">${e.ini != null && !e.todo ? calHHMM(e.ini) + ' ' : ''}${escAttr(e.titulo)}</button>`).join('');
+  const hayTodo = dias.some(d => todoDia(d));
+  const plantilla = `grid-template-columns:54px repeat(${dias.length}, minmax(${dias.length > 1 ? 96 : 200}px, 1fr));`;
+  return `<div class="cal-sem">
+    <div class="cal-cabdias" style="${plantilla}"><div></div>${dias.map(d => { const x = new Date(d + 'T00:00:00'); return `<button class="cal-dia-cab${d === hoy ? ' hoy' : ''}" onclick="calModo('dia','${d}')"><span>${x.toLocaleDateString(loc, { weekday: 'short' })}</span><b>${x.getDate()}</b></button>`; }).join('')}</div>
+    ${hayTodo ? `<div class="cal-todo" style="${plantilla}"><div class="cal-todo-l">${ca ? 'Tot el dia' : 'Todo el día'}</div>${dias.map(d => `<div>${todoDia(d)}</div>`).join('')}</div>` : ''}
+    <div class="cal-scroll"><div class="cal-rejilla" style="${plantilla}">
+      <div class="cal-horas">${horas.map(h => `<div style="height:${CAL_PX}px"><span>${String(h).padStart(2, '0')}:00</span></div>`).join('')}</div>
+      ${dias.map(col).join('')}
+    </div></div></div>
+    <p class="subtle" style="font-size:12px;margin:8px 2px 0;">${ca ? 'Fes clic en un espai buit per afegir una cita o una cosa a la teva agenda. Clic en un bloc per veure\'l o canviar-ne el color.' : 'Haz clic en un hueco vacío para añadir una cita o algo a tu agenda. Clic en un bloque para verlo o cambiarle el color.'}</p>`;
+}
+function calMesHtml(items){
+  const ca = LANG_I === 'ca', c = window.__cal, hoy = isoLocal();
+  const ref = new Date(c.fecha + 'T00:00:00'), mesRef = ref.getMonth();
+  const ini = calLunes(calIso(new Date(ref.getFullYear(), mesRef, 1)));
+  const nombres = ca ? ['dl', 'dt', 'dc', 'dj', 'dv', 'ds', 'dg'] : ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];
+  const celdas = Array.from({ length: 42 }, (_, i) => calSumarDias(ini, i));
+  const ultimaFila = celdas.slice(35).every(d => new Date(d + 'T00:00:00').getMonth() !== mesRef) ? 35 : 42;
+  return `<div class="cal-mes"><div class="cal-mes-cab">${nombres.map(n => `<div>${n}</div>`).join('')}</div>
+    <div class="cal-mes-grid">${celdas.slice(0, ultimaFila).map(d => {
+      const x = new Date(d + 'T00:00:00'), fuera = x.getMonth() !== mesRef;
+      const lista = items.filter(e => e.fecha === d).sort((a, b) => (a.ini == null ? -1 : a.ini) - (b.ini == null ? -1 : b.ini));
+      const max = 3;
+      return `<div class="cal-mes-d${fuera ? ' fuera' : ''}${d === hoy ? ' hoy' : ''}" onclick="calClicDiaMes(event,'${d}')">
+        <button class="cal-mes-n" onclick="event.stopPropagation();calModo('dia','${d}')">${x.getDate()}</button>
+        ${lista.slice(0, max).map(e => `<button class="cal-mes-ev" style="--c:${escAttr(e.color)}" onclick="event.stopPropagation();calAbrir('${e.tipo}','${e.id}')"><i></i>${e.ini != null && !e.todo ? calHHMM(e.ini) + ' ' : ''}${escAttr(e.titulo)}</button>`).join('')}
+        ${lista.length > max ? `<button class="cal-mes-mas" onclick="event.stopPropagation();calModo('dia','${d}')">+${lista.length - max} ${ca ? 'més' : 'más'}</button>` : ''}
+      </div>`;
+    }).join('')}</div></div>`;
+}
+function calClicHueco(ev, iso){
+  if(ev.target.closest('.cal-ev')) return;
+  const r = ev.currentTarget.getBoundingClientRect();
+  const m = CAL_H_INI * 60 + Math.floor(((ev.clientY - r.top) / CAL_PX) * 60 / 15) * 15;
+  calNuevo(iso, calHHMM(m));
+}
+function calClicDiaMes(ev, iso){ calNuevo(iso, ''); }
+function calCerrarOv(){ const o = document.getElementById('cal-ov'); if(o) o.remove(); }
+function calOv(html){
+  calCerrarOv();
+  const ov = document.createElement('div'); ov.id = 'cal-ov'; ov.className = 'sg-ov';
+  ov.addEventListener('click', e => { if(e.target === ov) calCerrarOv(); });
+  ov.innerHTML = `<div class="sg-caja cal-caja" role="dialog" aria-modal="true"><button class="ag-x" onclick="calCerrarOv()" aria-label="${acL('Cerrar', 'Tancar')}">✕</button>${html}</div>`;
+  document.body.appendChild(ov);
+}
+function calNuevo(fecha, hora){
+  const ca = LANG_I === 'ca', f = new Date(fecha + 'T00:00:00').toLocaleDateString(ca ? 'ca-ES' : 'es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+  calOv(`<h3 style="margin:0 0 4px;">＋ ${ca ? 'Afegir' : 'Añadir'}</h3>
+    <p class="subtle" style="margin:0 0 14px;text-transform:capitalize;">${escAttr(f)}${hora ? ' · ' + hora : ''}</p>
+    <div class="cal-opc">
+      <button class="cal-opc-b" onclick="calCerrarOv();calNuevaCita('${fecha}','${hora}')"><span>📅</span><b>${ca ? 'Cita amb una persona' : 'Cita con una persona'}</b><small>${ca ? 'Persona usuària: rep l\'avís de la cita' : 'Persona usuaria: recibe el aviso de la cita'}</small></button>
+      <button class="cal-opc-b" onclick="calEventoForm(null,'${fecha}','${hora}')"><span>🗓️</span><b>${ca ? 'A la meva agenda' : 'En mi agenda'}</b><small>${ca ? 'Reunió, formació, coordinació, tasca…' : 'Reunión, formación, coordinación, tarea…'}</small></button>
+    </div>`);
+}
+function calNuevaCita(fecha, hora){
+  abrirNuevaCitaStaff();
+  if(fecha && fecha >= isoLocal()){ __NC.fecha = fecha; __NC.horaPref = hora || ''; pintarNuevaCitaStaff(); }
+}
+function calColoresHtml(nombre, actual, onchange){
+  return `<div class="cal-colores">${CAL_COLORES.map(([hex, es, cat]) => `<label title="${LANG_I === 'ca' ? cat : es}"><input type="radio" name="${nombre}" value="${hex}" ${String(actual || '').toLowerCase() === hex.toLowerCase() ? 'checked' : ''} ${onchange ? `onchange="${onchange}"` : ''}><span style="background:${hex}"></span></label>`).join('')}</div>`;
+}
+function calEventoForm(id, fecha, hora){
+  const ca = LANG_I === 'ca';
+  if(!CAL_EVENTOS_OK){ calOv(`<h3>🗓️ ${ca ? 'La meva agenda' : 'Mi agenda'}</h3><p>${ca ? 'Falta executar l\'SQL-99 a Supabase per poder apuntar coses a la teva agenda.' : 'Falta ejecutar el SQL-99 en Supabase para poder apuntar cosas en tu agenda.'}</p>`); return; }
+  const e = id ? ((window.__calItems || []).find(x => x.tipo === 'evento' && x.id === id) || {}).raw || {} : {};
+  const ini = e.hora_inicio ? String(e.hora_inicio).slice(0, 5) : (hora || '09:00');
+  const fin = e.hora_fin ? String(e.hora_fin).slice(0, 5) : calHHMM((calMin(ini) || 540) + 60);
+  calOv(`<h3 style="margin:0 0 10px;">🗓️ ${id ? (ca ? 'Editar a la meva agenda' : 'Editar en mi agenda') : (ca ? 'Nou a la meva agenda' : 'Nuevo en mi agenda')}</h3>
+    <div class="field"><label>${ca ? 'Què és' : 'Qué es'}</label><input type="text" id="ce-titulo" maxlength="140" value="${escAttr(e.titulo || '')}" placeholder="${ca ? 'Ex.: Reunió de coordinació Bretxa' : 'Ej.: Reunión de coordinación Bretxa'}"></div>
+    <div class="cal-g3">
+      <div class="field"><label>${ca ? 'Dia' : 'Día'}</label><input type="date" id="ce-fecha" value="${escAttr(e.fecha || fecha || isoLocal())}"></div>
+      <div class="field"><label>${ca ? 'Comença' : 'Empieza'}</label><input type="time" id="ce-ini" step="300" value="${ini}"></div>
+      <div class="field"><label>${ca ? 'Acaba' : 'Termina'}</label><input type="time" id="ce-fin" step="300" value="${fin}"></div>
+    </div>
+    <label class="cal-check"><input type="checkbox" id="ce-todo" ${e.todo_el_dia ? 'checked' : ''}> ${ca ? 'Tot el dia' : 'Todo el día'}</label>
+    <div class="field"><label>${ca ? 'Color' : 'Color'}</label>${calColoresHtml('ce-color', e.color || CAL_COLORES[0][0])}</div>
+    <div class="field"><label>${ca ? 'Lloc (opcional)' : 'Lugar (opcional)'}</label><input type="text" id="ce-lugar" maxlength="140" value="${escAttr(e.lugar || '')}" placeholder="${ca ? 'Sala, adreça o enllaç' : 'Sala, dirección o enlace'}"></div>
+    <div class="field"><label>${ca ? 'Notes (opcional)' : 'Notas (opcional)'}</label><textarea id="ce-notas" rows="2">${escAttr(e.notas || '')}</textarea></div>
+    <label class="cal-check"><input type="checkbox" id="ce-priv" ${e.privado ? 'checked' : ''}> 🔒 ${ca ? 'Privat: l\'equip només veurà «Ocupat»' : 'Privado: el equipo solo verá «Ocupado»'}</label>
+    <div id="ce-msg"></div>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap;">
+      <button class="primary-btn" style="margin:0;" onclick="calEventoGuardar(${id ? `'${id}'` : 'null'})">💾 ${ca ? 'Desar' : 'Guardar'}</button>
+      ${id ? `<button class="link-btn" style="color:var(--alert,#C8102E);margin-left:auto;" onclick="calEventoBorrar('${id}')">🗑️ ${ca ? 'Esborrar' : 'Borrar'}</button>` : ''}
+    </div>`);
+  setTimeout(() => { const t = document.getElementById('ce-titulo'); if(t && !id) t.focus(); }, 50);
+}
+async function calEventoGuardar(id){
+  const v = x => ((document.getElementById(x) || {}).value || '').trim(), ca = LANG_I === 'ca', msg = document.getElementById('ce-msg');
+  const todo = !!(document.getElementById('ce-todo') || {}).checked;
+  const fila = { titulo: v('ce-titulo'), fecha: v('ce-fecha'), todo_el_dia: todo, hora_inicio: todo ? null : (v('ce-ini') || null), hora_fin: todo ? null : (v('ce-fin') || null),
+    color: (document.querySelector('input[name="ce-color"]:checked') || {}).value || null, lugar: v('ce-lugar') || null, notas: v('ce-notas') || null, privado: !!(document.getElementById('ce-priv') || {}).checked };
+  if(!fila.titulo || !fila.fecha){ msg.innerHTML = `<div class="auth-error">${ca ? 'Posa què és i el dia.' : 'Pon qué es y el día.'}</div>`; return; }
+  if(!todo && fila.hora_inicio && fila.hora_fin && calMin(fila.hora_fin) <= calMin(fila.hora_inicio)){ msg.innerHTML = `<div class="auth-error">${ca ? 'L\'hora d\'acabar ha de ser després de la de començar.' : 'La hora de terminar tiene que ser después de la de empezar.'}</div>`; return; }
+  const r = id ? await sb.from('agenda_eventos').update(fila).eq('id', id).select('id') : await sb.from('agenda_eventos').insert(Object.assign({ tecnico_email: calYo() }, fila)).select('id');
+  if(r.error || !(r.data || []).length){ msg.innerHTML = `<div class="auth-error">${ca ? 'No s\'ha pogut desar.' : 'No se ha podido guardar.'} ${escAttr((r.error && r.error.message) || (ca ? 'Només ho pot canviar qui ho va crear.' : 'Solo lo puede cambiar quien lo creó.'))}</div>`; return; }
+  calCerrarOv(); window.__cal.fecha = fila.fecha; renderCalendario();
+}
+async function calEventoBorrar(id){
+  if(!confirm(acL('¿Borrar esto de tu agenda?', 'Esborrar això de la teva agenda?'))) return;
+  const r = await sb.from('agenda_eventos').delete().eq('id', id).select('id');
+  if(r.error || !(r.data || []).length){ alert(acL('No se ha podido borrar. Solo lo puede borrar quien lo creó.', 'No s\'ha pogut esborrar. Només ho pot esborrar qui ho va crear.')); return; }
+  calCerrarOv(); renderCalendario();
+}
+function calAbrir(tipo, id){
+  const e = (window.__calItems || []).find(x => x.tipo === tipo && String(x.id) === String(id)); if(!e) return;
+  const ca = LANG_I === 'ca', loc = ca ? 'ca-ES' : 'es-ES';
+  const f = new Date(e.fecha + 'T00:00:00').toLocaleDateString(loc, { weekday: 'long', day: 'numeric', month: 'long' });
+  const cuando = `${escAttr(f)}${e.ini != null && !e.todo ? ' · ' + calHHMM(e.ini) + '–' + calHHMM(e.fin) : ' · ' + (ca ? 'tot el dia' : 'todo el día')}`;
+  if(tipo === 'evento'){
+    const r = e.raw;
+    if(e.mia){ calEventoForm(id); return; }
+    calOv(`<div class="cal-det-c" style="--c:${escAttr(e.color)}"></div><h3 style="margin:0 0 4px;">${escAttr(e.titulo)}</h3><p class="subtle" style="margin:0 0 10px;text-transform:capitalize;">${cuando}</p>
+      ${r.privado ? '' : `${r.lugar ? `<div class="panel-stat-row"><span>${ca ? 'Lloc' : 'Lugar'}</span><span>${escAttr(r.lugar)}</span></div>` : ''}${r.notas ? `<div class="panel-stat-row"><span>${ca ? 'Notes' : 'Notas'}</span><span>${escAttr(r.notas)}</span></div>` : ''}`}
+      <div class="panel-stat-row"><span>${ca ? 'De' : 'De'}</span><span>${escAttr(equipoNombre(r.tecnico_email))}</span></div>`);
+    return;
+  }
+  const c = e.raw, p = e.persona || {};
+  calOv(`<div class="cal-det-c" style="--c:${escAttr(e.color)}"></div><h3 style="margin:0 0 4px;">📅 ${escAttr(p.nombre_completo || (ca ? 'Cita' : 'Cita'))}${chipSinCuenta(p)}</h3>
+    <p class="subtle" style="margin:0 0 10px;text-transform:capitalize;">${cuando}</p>
+    ${p.telefono ? `<div class="panel-stat-row"><span>${ca ? 'Telèfon' : 'Teléfono'}</span><span>${escAttr(p.telefono)}</span></div>` : ''}
+    ${c.motivo ? `<div class="panel-stat-row"><span>${ca ? 'Motiu' : 'Motivo'}</span><span>${escAttr(c.motivo)}</span></div>` : ''}
+    <div class="panel-stat-row"><span>${ca ? 'Qui l\'atén' : 'Quién atiende'}</span><span>${escAttr(c.tecnico_email ? equipoNombre(c.tecnico_email) : (ca ? 'Sense assignar' : 'Sin asignar'))}${c.tecnico2_email ? ' + ' + escAttr(equipoNombre(c.tecnico2_email)) : ''}</span></div>
+    ${respuestaCitaHtml(c)}
+    <div class="field" style="margin-top:10px;"><label>${ca ? 'Color de la cita' : 'Color de la cita'}</label>${calColoresHtml('cc-color', c.color || '', `calCitaColor('${c.id}', this.value)`)}</div>
+    ${CAL_CITAS_FIN_OK ? `<div class="cal-g3" style="grid-template-columns:1fr 1fr;">
+      <div class="field"><label>${ca ? 'Comença' : 'Empieza'}</label><input type="time" value="${calHHMM(e.ini)}" disabled></div>
+      <div class="field"><label>${ca ? 'Acaba' : 'Termina'}</label><input type="time" id="cc-fin" step="300" value="${calHHMM(e.fin)}" onchange="calCitaFin('${c.id}', this.value)"></div></div>` : ''}
+    <div id="cc-msg"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;">
+      <button class="link-btn" onclick="calCerrarOv();__agendaVista='dia';renderAgendaCitas('${c.fecha}')">📋 ${ca ? 'Obrir al dia (canviar, passar o cancel·lar)' : 'Abrir en el día (cambiar, pasar o cancelar)'}</button>
+      ${c.usuario_id ? `<button class="link-btn" onclick="calCerrarOv();verPersonaStaff('${c.usuario_id}','agenda')">👤 ${ca ? 'Fitxa' : 'Ficha'}</button>` : ''}
+    </div>`);
+}
+async function calCitaGuardarCampo(id, campo, valor){
+  const r = await sb.from('citas').update({ [campo]: valor }).eq('id', id).select('id');
+  const msg = document.getElementById('cc-msg');
+  if(r.error && /hora_fin|color/.test(r.error.message || '')){ CAL_CITAS_FIN_OK = false; if(msg) msg.innerHTML = `<div class="auth-error">${acL('Falta ejecutar el SQL-99 en Supabase.', 'Falta executar l\'SQL-99 a Supabase.')}</div>`; return false; }
+  if(r.error || !(r.data || []).length){ if(msg) msg.innerHTML = `<div class="auth-error">${acL('No se ha podido guardar.', 'No s\'ha pogut desar.')} ${escAttr((r.error && r.error.message) || '')}</div>`; return false; }
+  const it = (window.__calItems || []).find(x => x.tipo === 'cita' && String(x.id) === String(id)); if(it) it.raw[campo] = valor;
+  if(msg) msg.innerHTML = `<div class="subtle" style="color:#1F8A4C;font-size:12.5px;">✅ ${acL('Guardado', 'Desat')}</div>`;
+  return true;
+}
+async function calCitaColor(id, hex){ if(await calCitaGuardarCampo(id, 'color', hex)){ const d = document.querySelector('#cal-ov .cal-det-c'); if(d) d.style.setProperty('--c', hex); renderCalendario(); } }
+async function calCitaFin(id, hhmm){
+  const it = (window.__calItems || []).find(x => x.tipo === 'cita' && String(x.id) === String(id));
+  if(it && calMin(hhmm) <= it.ini){ const m = document.getElementById('cc-msg'); if(m) m.innerHTML = `<div class="auth-error">${acL('Tiene que terminar después de empezar.', 'Ha d\'acabar després de començar.')}</div>`; return; }
+  if(await calCitaGuardarCampo(id, 'hora_fin', hhmm || null)) renderCalendario();
+}
+
+// ----- «Nueva cita»: hora de fin, color y «otra hora» (fuera de los huecos) -----
+function ncFinPintar(){
+  const w = document.getElementById('nc-fin-wrap'); if(!w) return;
+  if(!__NC.fecha){ w.innerHTML = ''; return; }
+  const ca = LANG_I === 'ca';
+  if(__NC.horaPref && !__NC.hora){
+    const b = [...document.querySelectorAll('#nc-horas button')].find(x => x.textContent.trim().slice(0, 5) === __NC.horaPref && !x.disabled);
+    if(b){ __NC.hora = __NC.horaPref; __NC.horaPref = ''; elegirDiaNuevaCita(__NC.fecha, true); const g = document.getElementById('nc-guardar'); if(g) g.disabled = false; return; }
+  }
+  const dur = (__NC.horario && Number(__NC.horario.duracion_cita_minutos)) || 45;
+  const ini = calMin(__NC.hora);
+  if(ini != null && (!__NC.horaFin || calMin(__NC.horaFin) <= ini)) __NC.horaFin = calHHMM(ini + dur);
+  const opciones = []; if(ini != null) for(let m = ini + 15; m <= Math.min(ini + 240, 21 * 60); m += 15) opciones.push(calHHMM(m));
+  w.innerHTML = `
+    ${ini != null ? `<div class="nc-fin"><span>⏱️ ${ca ? 'De' : 'De'} <b>${__NC.hora}</b> ${ca ? 'a' : 'a'}</span>
+      <select id="nc-hora-fin" onchange="__NC.horaFin=this.value">${opciones.map(o => `<option value="${o}" ${o === __NC.horaFin ? 'selected' : ''}>${o} (${(calMin(o) - ini)} min)</option>`).join('')}</select></div>` : ''}
+    <details class="nc-otra" ${__NC.horaLibre ? 'open' : ''}><summary>🕐 ${ca ? 'Una altra hora (fora dels buits)' : 'Otra hora (fuera de los huecos)'}</summary>
+      <div class="cal-g3" style="grid-template-columns:1fr 1fr;margin-top:6px;">
+        <div class="field"><label>${ca ? 'Comença' : 'Empieza'}</label><input type="time" id="nc-libre-ini" step="300" value="${__NC.horaLibre ? __NC.hora : ''}"></div>
+        <div class="field"><label>${ca ? 'Acaba' : 'Termina'}</label><input type="time" id="nc-libre-fin" step="300" value="${__NC.horaLibre ? (__NC.horaFin || '') : ''}"></div></div>
+      <button type="button" class="link-btn" style="font-weight:700;" onclick="ncHoraLibre()">✔️ ${ca ? 'Fer servir aquesta hora' : 'Usar esta hora'}</button>
+      <p class="subtle" style="font-size:11.5px;margin:4px 0 0;">${ca ? 'Per a cites fora de l\'horari habitual. Comprova que no xoqui amb altres cites.' : 'Para citas fuera del horario habitual. Comprueba que no choque con otras citas.'}</p></details>
+    <div class="field" style="margin-top:10px;"><label>${ca ? 'Color al calendari (opcional)' : 'Color en el calendario (opcional)'}</label>${calColoresHtml('nc-color', __NC.color || '', '__NC.color=this.value')}</div>`;
+}
+function ncHoraLibre(){
+  const i = (document.getElementById('nc-libre-ini') || {}).value, f = (document.getElementById('nc-libre-fin') || {}).value;
+  if(!i){ alert(acL('Pon la hora de empezar.', 'Posa l\'hora de començar.')); return; }
+  if(f && calMin(f) <= calMin(i)){ alert(acL('Tiene que terminar después de empezar.', 'Ha d\'acabar després de començar.')); return; }
+  __NC.hora = i; __NC.horaFin = f || ''; __NC.horaLibre = true;
+  const g = document.getElementById('nc-guardar'); if(g) g.disabled = false;
+  ncFinPintar();
+}
+(function(){
+  const orig = elegirDiaNuevaCita;
+  elegirDiaNuevaCita = async function(fechaIso, mantener){ if(!mantener) { __NC.horaLibre = false; } await orig(fechaIso, mantener); ncFinPintar(); };
+})();
+
+// ================= v258 · MIS PERSONAS (las asignadas a mí y las que he atendido) + por PROYECTOS =================
+window.__misP = window.__misP || { sub: 'personas', ids: null, origen: {}, part: null, proyectos: [] };
+async function misPersonasCargar(forzar){
+  const M = window.__misP, yo = calYo();
+  if(M.ids && !forzar) return M;
+  const [asig, at, ac] = await Promise.all([
+    sb.from('perfiles').select('id').ilike('tecnico_responsable_email', yo).then(r => r, () => ({ data: [] })),
+    traerTodoPaginado((a, b) => sb.from('atenciones').select('usuario_id').ilike('creado_por_email', yo).not('usuario_id', 'is', null).range(a, b)).catch(() => ({ data: [] })),
+    traerTodoPaginado((a, b) => sb.from('actuaciones').select('usuario_id').ilike('tecnico_email', yo).not('usuario_id', 'is', null).range(a, b)).catch(() => ({ data: [] }))
+  ]);
+  const origen = {};
+  ((at && at.data) || []).concat((ac && ac.data) || []).forEach(x => { if(x.usuario_id) origen[x.usuario_id] = 'atendida'; });
+  ((asig && asig.data) || []).forEach(x => { origen[x.id] = 'asignada'; });
+  M.origen = origen; M.ids = Object.keys(origen);
+  M.part = null;
+  return M;
+}
+async function misPersonasProyectosCargar(){
+  const M = window.__misP, yo = calYo();
+  if(M.part) return M;
+  const ids = M.ids || [];
+  const trozos = []; for(let i = 0; i < ids.length; i += 150) trozos.push(ids.slice(i, i + 150));
+  const [bens, mios] = await Promise.all([
+    Promise.all(trozos.map(t => sb.from('proyecto_participantes').select('proyecto_id, usuario_id, rol, proyectos(id, nombre, estado)').eq('rol', 'beneficiario').in('usuario_id', t).then(r => r.data || [], () => []))).then(a => a.flat()),
+    sb.from('proyecto_participantes').select('proyecto_id, proyectos(id, nombre, estado)').eq('rol', 'profesional').ilike('tecnico_email', yo).then(r => r.data || [], () => [])
+  ]);
+  const proy = {};
+  const add = x => { const p = x.proyectos; const id = x.proyecto_id; if(!id) return; if(!proy[id]) proy[id] = { id, nombre: (p && p.nombre) || acL('Proyecto', 'Projecte'), estado: p && p.estado, personas: new Set(), mio: false }; return proy[id]; };
+  bens.forEach(x => { const p = add(x); if(p && x.usuario_id) p.personas.add(x.usuario_id); });
+  mios.forEach(x => { const p = add(x); if(p) p.mio = true; });
+  M.part = bens; M.proyectos = Object.values(proy).sort((a, b) => (b.personas.size - a.personas.size) || normTxt(a.nombre).localeCompare(normTxt(b.nombre)));
+  return M;
+}
+async function misPersonasPintar(caja){
+  const ca = LANG_I === 'ca', M = window.__misP;
+  caja.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  await misPersonasCargar();
+  if(__personasVista !== 'mias') return;
+  const porId = {}; (__personasTodas || []).forEach(p => { if(!p.__hist) porId[p.id] = p; });
+  const mias = M.ids.map(id => porId[id]).filter(Boolean);
+  const nAsig = mias.filter(p => M.origen[p.id] === 'asignada').length;
+  const sub = (k, t) => `<button class="cal-seg${M.sub === k ? ' on' : ''}" onclick="window.__misP.sub='${k}';misPersonasPintar(document.getElementById('personas-lista'))">${t}</button>`;
+  const cab = `<div class="mp-cab"><div><h3 style="margin:0;">👤 ${ca ? 'Les meves persones' : 'Mis personas'} <span class="cmp-n">${mias.length}</span></h3>
+      <p class="subtle" style="margin:2px 0 0;font-size:12.5px;">${ca ? `${nAsig} assignades a tu com a responsable · ${mias.length - nAsig} que has atès` : `${nAsig} asignadas a ti como responsable · ${mias.length - nAsig} que has atendido`}</p></div>
+    <div class="cal-segs">${sub('personas', '👥 ' + (ca ? 'Persones' : 'Personas'))}${sub('proyectos', '📁 ' + (ca ? 'Per projectes' : 'Por proyectos'))}</div></div>`;
+  if(!mias.length){ caja.innerHTML = cab + `<div class="empty-note">${ca ? 'Encara no tens cap persona assignada ni atesa.' : 'Todavía no tienes ninguna persona asignada ni atendida.'}</div>`; return; }
+  const ult = window.__ultAtencion || {};
+  const orden = l => l.slice().sort((a, b) => String(ult[b.id] || '').localeCompare(String(ult[a.id] || '')) || normTxt(a.nombre_completo).localeCompare(normTxt(b.nombre_completo)));
+  const fila = p => filaPersonaUnif(p).replace(/(<\/[a-z]+>\s*)$/, `$1`) + '';
+  const etiqueta = p => M.origen[p.id] === 'asignada' ? `<span class="mp-chip a">${ca ? 'Responsable' : 'Responsable'}</span>` : `<span class="mp-chip">${ca ? 'Atesa' : 'Atendida'}</span>`;
+  const filaMia = p => `<div class="mp-fila">${etiqueta(p)}<div class="mp-fila-p">${fila(p)}</div></div>`;
+  if(M.sub === 'personas'){
+    caja.innerHTML = cab + `<div class="panel-card mp-lista">${orden(mias).map(filaMia).join('')}</div>`;
+    return;
+  }
+  caja.innerHTML = cab + `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  await misPersonasProyectosCargar();
+  if(__personasVista !== 'mias' || M.sub !== 'proyectos') return;
+  const enAlguno = new Set(); M.proyectos.forEach(pr => pr.personas.forEach(id => enAlguno.add(id)));
+  const sin = mias.filter(p => !enAlguno.has(p.id));
+  const opcionesAnadir = pr => orden(mias.filter(p => !pr.personas.has(p.id))).map(p => `<option value="${p.id}">${escAttr(p.nombre_completo || '—')}</option>`).join('');
+  const bloque = pr => {
+    const gente = orden(mias.filter(p => pr.personas.has(p.id)));
+    const ops = opcionesAnadir(pr);
+    return carpetaDesplegable({ clave: 'misp:' + pr.id, icono: '📁', titulo: pr.nombre + (pr.estado && !/activo|en curso|curs/i.test(pr.estado) ? ` · ${pr.estado}` : ''), cuenta: gente.length, abierta: gente.length > 0 && M.proyectos.indexOf(pr) < 3,
+      cuerpo: (gente.length ? gente.map(filaMia).join('') : `<div class="empty-note" style="margin:6px 0;">${ca ? 'Cap de les teves persones en aquest projecte encara.' : 'Ninguna de tus personas en este proyecto todavía.'}</div>`)
+        + (ops ? `<div class="mp-anadir"><select id="mp-sel-${pr.id}"><option value="">${ca ? '➕ Afegir-hi una de les meves persones…' : '➕ Añadir una de mis personas…'}</option>${ops}</select><button class="link-btn" style="font-weight:700;" onclick="misPersonasAnadir('${pr.id}')">${ca ? 'Afegir' : 'Añadir'}</button></div>` : '')
+        + `<button class="link-btn" style="font-size:12.5px;margin-top:6px;" onclick="showScreen('proyectos');renderProyectosScreen()">${ca ? 'Obrir el projecte' : 'Abrir el proyecto'} →</button>` });
+  };
+  caja.innerHTML = cab + `<div class="mp-pbar"><p class="subtle" style="margin:0;font-size:12.5px;">${ca ? 'Una persona pot estar en més d\'un projecte. Aquí surten els projectes de les teves persones i aquells en què treballes.' : 'Una persona puede estar en más de un proyecto. Aquí salen los proyectos de tus personas y aquellos en los que trabajas.'}</p>
+      <button class="primary-btn" style="margin:0;white-space:nowrap;" onclick="showScreen('proyectos');renderProyectosScreen()">＋ ${ca ? 'Nou projecte' : 'Nuevo proyecto'}</button></div>
+    <div class="carpetas-lista">${M.proyectos.map(bloque).join('')}
+    ${sin.length ? carpetaDesplegable({ clave: 'misp:sin', icono: '⚪', titulo: ca ? 'Sense projecte' : 'Sin proyecto', cuenta: sin.length, abierta: !M.proyectos.length, cuerpo: orden(sin).map(filaMia).join('') }) : ''}</div>`;
+}
+async function misPersonasAnadir(proyectoId){
+  const sel = document.getElementById('mp-sel-' + proyectoId); const uid = sel && sel.value; if(!uid) return;
+  const { error } = await sb.from('proyecto_participantes').insert({ proyecto_id: proyectoId, rol: 'beneficiario', usuario_id: uid, anadido_por_email: CURRENT_USER.email });
+  if(error){ alert(acL('No se ha podido añadir: ', 'No s\'ha pogut afegir: ') + (error.message || '')); return; }
+  window.__misP.part = null; misPersonasPintar(document.getElementById('personas-lista'));
+}
 
 // ================= NUEVA CITA PUESTA POR UN TÉCNICO =================
 // El técnico crea la cita a nombre de la persona (con las mismas horas y topes que usa la ciudadanía).
@@ -7917,6 +8322,7 @@ function pintarNuevaCitaStaff(){
     <div class="field" style="margin-top:12px;"><label>${acL('Día', 'Dia')}</label>
       <input type="date" id="nc-fecha" min="${hoy}" value="${__NC.fecha}" onchange="elegirDiaNuevaCita(this.value)"></div>
     <div id="nc-horas"></div>
+    <div id="nc-fin-wrap"></div>
     <div class="field" style="margin-top:12px;"><label>${acL('Motivo (opcional)', 'Motiu (opcional)')}</label>
       <textarea id="nc-motivo" rows="2" placeholder="${acL('Para qué es la cita', 'Per a què és la cita')}">${escAttr(__NC.motivo || '')}</textarea></div>
     <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px;"><input type="checkbox" id="nc-telefono"> 📞 ${acL('Por teléfono: la llamamos nosotros (no hace falta que venga)', 'Per telèfon: la truquem nosaltres (no cal que vingui)')}</label>
@@ -8020,6 +8426,8 @@ async function guardarNuevaCitaStaff(){
     ? { usuario_id: null, historico_id: String(__NC.hist.id), nombre_contacto: __NC.hist.nombre || __NC.nombre || '', telefono_contacto: __NC.hist.telefono || null, email_contacto: __NC.hist.email || null, fecha: __NC.fecha, hora: __NC.hora, creada_por_email: CURRENT_USER.email }
     : { usuario_id: __NC.uid, fecha: __NC.fecha, hora: __NC.hora, creada_por_email: CURRENT_USER.email };
   if(motivo) fila.motivo = motivo;
+  if(__NC.horaFin && calMin(__NC.horaFin) > calMin(__NC.hora)) fila.hora_fin = __NC.horaFin;   // v258 (SQL-99)
+  if(__NC.color) fila.color = __NC.color;
   const urgente = !!(document.getElementById('nc-urgente') && document.getElementById('nc-urgente').checked);
   if(urgente) fila.urgente = true;
   if(__NC.tecnico && document.getElementById('nc-tecnico')) fila.tecnico_email = __NC.tecnico;
@@ -8027,6 +8435,7 @@ async function guardarNuevaCitaStaff(){
   const porTel = !!(document.getElementById('nc-telefono') && document.getElementById('nc-telefono').checked);
   if(porTel) fila.modalidad = 'telefono';
   let { error } = await sb.from('citas').insert(fila);
+  if(error && /hora_fin|color/.test(error.message || '')){ delete fila.hora_fin; delete fila.color; ({ error } = await sb.from('citas').insert(fila)); }   // sin el SQL-99
   if(error && porTel && /modalidad/.test(error.message || '')){ delete fila.modalidad; fila.motivo = '📞 Cita por teléfono' + (fila.motivo ? ' · ' + fila.motivo : ''); ({ error } = await sb.from('citas').insert(fila)); }
   if(error && fila.tecnico2_email && /tecnico2/.test(error.message || '')){ delete fila.tecnico2_email; ({ error } = await sb.from('citas').insert(fila)); }
   if(error && /tecnico_email|tecnico_nombre|tecnico_clave/.test(error.message || '')){ delete fila.tecnico_email; delete fila.tecnico2_email; ({ error } = await sb.from('citas').insert(fila)); }
@@ -8067,9 +8476,9 @@ async function guardarNuevaCitaStaff(){
     try { const r = await sb.from('notificaciones').insert(fN); if(r.error){ delete fN.asignada_a_email; await sb.from('notificaciones').insert(fN); } } catch(e){}
   }
   avisarCitaCreada(uid, nombreC, fecha, horaC, motivo, urgente, Object.assign(reemplaza ? { modo:'cambiada', antes } : {}, histC ? { contacto: histC } : {}));
-  if(histC){ __agendaVista = 'dia'; __agendaFechaActual = fecha; showScreen('agenda'); renderAgendaCitas(fecha); return; }
+  if(histC){ if(__agendaVista !== 'cal') __agendaVista = 'dia'; __agendaFechaActual = fecha; showScreen('agenda'); renderAgendaCitas(fecha); return; }
   if(document.getElementById('screen-persona') && document.getElementById('screen-persona').classList.contains('active') && window.__usuarioIdVisto === uid) verPersonaStaff(uid, window.__origenPersonaVista);
-  else { __agendaVista = 'dia'; __agendaFechaActual = fecha; showScreen('agenda'); renderAgendaCitas(fecha); }
+  else { if(__agendaVista !== 'cal') __agendaVista = 'dia'; __agendaFechaActual = fecha; showScreen('agenda'); renderAgendaCitas(fecha); }
 }
 
 // Alertas y mensajes de la ciudadanía: se abren arriba, en la cabecera azul del Inicio (ya no se repiten abajo)
@@ -8449,7 +8858,7 @@ function letraInicialPersona(nombre){
 function personasPestanasHtml(){
   const esCA = LANG_I === 'ca';
   const b = (id, txt) => `<button class="imp-tab${__personasVista === id ? ' on' : ''}" onclick="personasCambiarVista('${id}')">${txt}</button>`;
-  return `<div class="imp-tabs" style="margin-bottom:10px;">${b('aten', '🕒 ' + (esCA?'Per última atenció':'Por última atención'))}${FECHA_ALTA_OK ? b('fecha', '📅 ' + (esCA?'Per data d\'alta':'Por fecha de alta')) : ''}${b('az', '🔤 A–Z')}${b('stats', '📊 ' + (esCA?'Estadístiques':'Estadísticas'))}${HISTORICAS_OK ? b('hist', '🗄️ ' + (esCA?'Històric':'Histórico')) : ''}</div>`;
+  return `<div class="imp-tabs" style="margin-bottom:10px;">${b('mias', '👤 ' + (esCA?'Les meves persones':'Mis personas'))}${b('aten', '🕒 ' + (esCA?'Per última atenció':'Por última atención'))}${FECHA_ALTA_OK ? b('fecha', '📅 ' + (esCA?'Per data d\'alta':'Por fecha de alta')) : ''}${b('az', '🔤 A–Z')}${b('stats', '📊 ' + (esCA?'Estadístiques':'Estadísticas'))}${HISTORICAS_OK ? b('hist', '🗄️ ' + (esCA?'Històric':'Histórico')) : ''}</div>`;
 }
 function personasCambiarVista(v){
   __personasVista = v;
@@ -8610,6 +9019,7 @@ function pintarListaPersonas(texto){
   const fila = filaPersonaUnif;
   const unificado = !!(window.__personasHistUnif && window.__personasHistUnif.length);
   if(__personasVista === 'stats' && q.length < 2){ estPintar(caja); return; }
+  if(__personasVista === 'mias' && q.length < 2){ misPersonasPintar(caja); return; }   // v258
   const lista = personasFiltradas();
 
   if(q.length >= 2){
@@ -18513,7 +18923,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-13 · v257 (botón «👥 Atención grupal» en Expediente / Actuación y en Persona nueva)';
+const APP_VERSION_INTRANET = '2026-11-13 · v258 (calendario tipo Google: mes, semana y día, con agenda propia y colores; «Mis personas» por proyectos)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -26581,6 +26991,83 @@ async function agGuardar(){
 .ag-g3{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:0 10px;margin-top:8px;}
 @media (max-width:700px){ .ag-fuente,.ag-g3{grid-template-columns:1fr;} }
 .m3-pill-grupal{background:#EEF4FF !important;border-color:#B9CCF5 !important;}
+/* v258 · calendario tipo Google y «Mis personas» */
+.cal-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;}
+.cal-nav{display:flex;align-items:center;gap:6px;}
+.cal-btn{border:1.5px solid var(--line,#DCE3EE);background:#fff;border-radius:999px;padding:6px 14px;font-weight:700;font-size:13px;cursor:pointer;color:var(--navy,#1B2A4A);}
+.cal-ic{border:none;background:transparent;width:34px;height:34px;border-radius:50%;font-size:22px;line-height:1;cursor:pointer;color:var(--navy,#1B2A4A);}
+.cal-ic:hover,.cal-btn:hover{background:#EEF2F7;}
+.cal-tit{margin:0 0 0 6px;font-size:18px;font-weight:700;}
+.cal-ctrl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.cal-segs{display:inline-flex;border:1.5px solid var(--line,#DCE3EE);border-radius:999px;overflow:hidden;background:#fff;}
+.cal-seg{border:none;background:transparent;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--navy,#1B2A4A);}
+.cal-seg.on{background:#E3ECFB;color:#1E4E8C;font-weight:800;}
+.cal-sel{width:auto !important;padding:6px 10px !important;font-size:13px !important;border-radius:999px !important;}
+.cal-finde{font-size:12.5px;display:flex;align-items:center;gap:4px;}
+.cal-nuevo{margin:0 !important;padding:8px 16px !important;border-radius:999px !important;background:#1E4E8C !important;box-shadow:0 2px 6px rgba(30,78,140,.25);}
+.cal-sem{border:1px solid var(--line,#DCE3EE);border-radius:14px;background:#fff;overflow:hidden;}
+.cal-cabdias,.cal-todo,.cal-rejilla{display:grid;}
+.cal-cabdias{border-bottom:1px solid var(--line,#DCE3EE);}
+.cal-dia-cab{border:none;background:transparent;padding:8px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;color:#5B6573;}
+.cal-dia-cab span{font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;}
+.cal-dia-cab b{font-size:20px;font-weight:600;color:var(--navy,#1B2A4A);width:38px;height:38px;line-height:38px;border-radius:50%;}
+.cal-dia-cab.hoy span{color:#1E4E8C;} .cal-dia-cab.hoy b{background:#1E4E8C;color:#fff;}
+.cal-todo{border-bottom:1px solid var(--line,#DCE3EE);padding:4px 0;}
+.cal-todo>div{padding:0 2px;display:flex;flex-direction:column;gap:2px;}
+.cal-todo-l{font-size:10.5px;color:#5B6573;text-align:right;padding-right:6px !important;}
+.cal-chip{border:none;text-align:left;background:var(--c);color:#fff;border-radius:6px;padding:2px 6px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-scroll{max-height:620px;overflow-y:auto;overflow-x:auto;}
+.cal-horas>div{position:relative;border-top:1px solid transparent;}
+.cal-horas span{position:absolute;top:-8px;right:8px;font-size:10.5px;color:#7A8494;}
+.cal-horas>div:first-child span{display:none;}
+.cal-col{position:relative;border-left:1px solid #E6EBF2;cursor:pointer;}
+.cal-col.hoy{background:#FAFCFF;}
+.cal-hueco{border-top:1px solid #EEF1F6;box-sizing:border-box;}
+.cal-hueco:hover{background:rgba(30,78,140,.04);}
+.cal-ev{position:absolute;border:none;text-align:left;background:var(--c);color:#fff;border-radius:7px;padding:3px 6px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;gap:1px;box-shadow:0 1px 2px rgba(0,0,0,.18);font-family:inherit;z-index:1;}
+.cal-ev:hover{filter:brightness(1.08);z-index:3;box-shadow:0 3px 10px rgba(0,0,0,.22);}
+.cal-ev-ag{background:color-mix(in srgb, var(--c) 18%, #fff);color:var(--navy,#1B2A4A);border-left:4px solid var(--c);}
+.cal-ev-t{font-size:12px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-ev-h{font-size:11px;opacity:.92;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-ahora{position:absolute;left:0;right:0;height:2px;background:#C8102E;z-index:4;pointer-events:none;}
+.cal-ahora::before{content:"";position:absolute;left:-5px;top:-4px;width:10px;height:10px;border-radius:50%;background:#C8102E;}
+.cal-mes{border:1px solid var(--line,#DCE3EE);border-radius:14px;background:#fff;overflow:hidden;}
+.cal-mes-cab,.cal-mes-grid{display:grid;grid-template-columns:repeat(7, minmax(0,1fr));}
+.cal-mes-cab div{font-size:11px;text-transform:uppercase;font-weight:700;color:#5B6573;text-align:center;padding:8px 0;border-bottom:1px solid var(--line,#DCE3EE);}
+.cal-mes-d{min-height:104px;border-right:1px solid #EEF1F6;border-bottom:1px solid #EEF1F6;padding:4px;display:flex;flex-direction:column;gap:2px;cursor:pointer;min-width:0;}
+.cal-mes-d:nth-child(7n){border-right:none;}
+.cal-mes-d.fuera{background:#FAFBFD;} .cal-mes-d.fuera .cal-mes-n{color:#A0A8B5;}
+.cal-mes-n{align-self:center;border:none;background:transparent;font-size:12.5px;font-weight:600;width:26px;height:26px;border-radius:50%;cursor:pointer;color:var(--navy,#1B2A4A);}
+.cal-mes-d.hoy .cal-mes-n{background:#1E4E8C;color:#fff;}
+.cal-mes-ev{border:none;background:transparent;text-align:left;font-size:11.5px;padding:1px 4px;border-radius:5px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--navy,#1B2A4A);display:flex;align-items:center;gap:4px;}
+.cal-mes-ev i{flex:0 0 8px;height:8px;border-radius:50%;background:var(--c);}
+.cal-mes-ev:hover{background:#EEF2F7;}
+.cal-mes-mas{border:none;background:transparent;font-size:11px;font-weight:700;color:#1E4E8C;text-align:left;padding:1px 4px;cursor:pointer;}
+.cal-caja{max-width:470px !important;text-align:left !important;}
+.cal-opc{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.cal-opc-b{border:1.5px solid var(--line,#DCE3EE);background:#fff;border-radius:14px;padding:14px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;font-family:inherit;}
+.cal-opc-b:hover{border-color:#1E4E8C;background:#F4F8FF;}
+.cal-opc-b span{font-size:24px;} .cal-opc-b b{font-size:14px;color:var(--navy,#1B2A4A);} .cal-opc-b small{font-size:12px;color:#5B6573;}
+.cal-g3{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:0 10px;}
+.cal-check{display:flex;gap:8px;align-items:center;font-size:13px;margin:4px 0 8px;}
+.cal-colores{display:flex;gap:8px;flex-wrap:wrap;}
+.cal-colores label{cursor:pointer;} .cal-colores input{position:absolute;opacity:0;pointer-events:none;}
+.cal-colores span{display:block;width:26px;height:26px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(255,255,255,.6);transition:transform .1s;}
+.cal-colores input:checked+span{box-shadow:0 0 0 3px #fff, 0 0 0 5px var(--navy,#1B2A4A);transform:scale(1.05);}
+.cal-colores input:focus-visible+span{outline:2px solid #1E4E8C;outline-offset:3px;}
+.cal-det-c{height:6px;border-radius:6px;background:var(--c);margin:-4px 30px 12px 0;}
+.nc-fin{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:13.5px;}
+.nc-fin select{width:auto !important;}
+.nc-otra{margin-top:10px;font-size:13px;} .nc-otra summary{cursor:pointer;font-weight:600;color:#1E4E8C;}
+.mp-cab{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;}
+.mp-fila{display:flex;align-items:center;gap:8px;} .mp-fila-p{flex:1;min-width:0;}
+.mp-chip{flex:0 0 auto;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:#EEF2F7;color:#5B6573;}
+.mp-chip.a{background:#E3ECFB;color:#1E4E8C;}
+.mp-pbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 10px;padding:10px 12px;background:#F4F8FF;border:1px solid #D6E2F5;border-radius:12px;}
+.mp-pbar p{flex:1;min-width:220px;}
+.mp-anadir{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;} .mp-anadir select{width:auto !important;max-width:320px;font-size:13px !important;padding:6px 8px !important;}
+@media (max-width:700px){ .cal-tit{font-size:15px;} .cal-opc,.cal-g3{grid-template-columns:1fr;} .cal-mes-d{min-height:74px;} .cal-mes-ev{font-size:10.5px;} }
+
 .ag-atajo{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 16px;padding:10px 12px;background:#EEF4FF;border:1px solid #B9CCF5;border-radius:12px;}
 .ag-atajo-btn{margin:0 !important;background:#1E4E8C !important;white-space:nowrap;}
 .ag-atajo .subtle{flex:1;min-width:200px;margin:0;font-size:13px;}
