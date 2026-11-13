@@ -7196,7 +7196,8 @@ function renderAtencionForm(opts){
     <h2 class="screen-title">${enFicha ? 'Ficha de atención' + (opts.nombre ? ' · ' + escAttr(opts.nombre) : '') : 'Persona nueva · ficha de atención'}</h2>
     ${enFicha
       ? `<div class="nota-trabajo" style="margin-bottom:12px;"><strong class="t">📋 ${(window.__atencionesPersona || []).length ? `Atención nº ${(window.__atencionesPersona || []).length + (atencionHoyMia() ? 0 : 1)}` : 'Primera atención'}</strong>${(window.__atencionesPersona || [])[0] ? (atencionHoyMia() ? 'Ya registraste hoy una atención a esta persona: al guardar <strong>se corrige esa misma</strong>.' : 'Los datos vienen de su última atención: <strong>revísalos, complétalos y guarda</strong>. Se guarda como <strong>una atención nueva</strong> (cuenta para los informes); las anteriores quedan en su historial.') : 'Aquí van los datos de la persona (los que ella ya rellenó solos o en el alta presencial) y los indicadores que completas tú.'} Lo trabajado en concreto se apunta en el <strong>Expediente</strong> (actuación).</div>`
-      : `<p class="subtle">Para una persona que todavía no tiene cuenta. Se guardará a tu nombre (${CURRENT_USER.email}).</p>`}
+      : `<p class="subtle">Para una persona que todavía no tiene cuenta. Se guardará a tu nombre (${CURRENT_USER.email}).</p>
+         <div class="ag-atajo"><button type="button" class="primary-btn ag-atajo-btn" onclick="agAbrir()">👥 ${acL('Atención grupal', 'Atenció grupal')}</button><span class="subtle">${acL('¿Son varias personas a la vez? Apúntalas todas juntas.', 'Són diverses persones alhora? Apunta-les totes juntes.')}</span></div>`}
     <p style="margin:0 0 12px;"><button class="link-btn" onclick="exportarAtencionesExcel(${enFicha ? "'" + opts.usuarioId + "'" : ''})">⬇️ ${enFicha ? 'Excel de las atenciones de esta persona' : 'Excel con todas las atenciones (se completa solo con cada nueva)'}</button></p>
 
     ${enFicha ? '' : `
@@ -7320,6 +7321,7 @@ async function renderBuscarPersonaActuacion(){
   cont.innerHTML = `
     <h2 class="screen-title">Expediente / Actuación</h2>
     <p class="subtle">Busca a la persona y abre su expediente: allí apuntas cada visita, trámite o paso hasta el cierre. Si todavía no tiene cuenta, crea primero su ficha desde «Ficha de atención».</p>
+    <div class="ag-atajo"><button type="button" class="primary-btn ag-atajo-btn" onclick="agAbrir()">👥 ${acL('Atención grupal', 'Atenció grupal')}</button><span class="subtle">${acL('Taller, formación o sesión con varias personas: se apunta una sola vez y queda en el expediente de cada una (también las que aún no tienen ficha).', 'Taller, formació o sessió amb diverses persones: s\'apunta una sola vegada i queda a l\'expedient de cadascuna (també les que encara no tenen fitxa).')}</span></div>
     <div class="panel-card">
       <h3>Acceso rápido — personas recientes</h3>
       <p class="subtle" style="margin:0 0 10px;">Un clic te lleva directo a su ficha, pestaña "Actuaciones".</p>
@@ -18511,7 +18513,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-11 · v256 (ficha de atención: «¿Ha encontrado trabajo?», cuenta en las inserciones de la web)';
+const APP_VERSION_INTRANET = '2026-11-13 · v257 (botón «👥 Atención grupal» en Expediente / Actuación y en Persona nueva)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -26579,6 +26581,9 @@ async function agGuardar(){
 .ag-g3{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:0 10px;margin-top:8px;}
 @media (max-width:700px){ .ag-fuente,.ag-g3{grid-template-columns:1fr;} }
 .m3-pill-grupal{background:#EEF4FF !important;border-color:#B9CCF5 !important;}
+.ag-atajo{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 16px;padding:10px 12px;background:#EEF4FF;border:1px solid #B9CCF5;border-radius:12px;}
+.ag-atajo-btn{margin:0 !important;background:#1E4E8C !important;white-space:nowrap;}
+.ag-atajo .subtle{flex:1;min-width:200px;margin:0;font-size:13px;}
 </style>
 </body>
 </html>
