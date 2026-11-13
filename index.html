@@ -7952,7 +7952,8 @@ async function renderCalendario(){
           <option value="mios" ${c.quien === 'mios' ? 'selected' : ''}>👤 ${ca ? 'La meva agenda' : 'Mi agenda'}</option>
           <option value="equipo" ${c.quien === 'equipo' ? 'selected' : ''}>👥 ${ca ? 'Tot l\'equip' : 'Todo el equipo'}</option></select>
         ${c.modo === 'semana' ? `<label class="cal-finde"><input type="checkbox" ${c.finde ? 'checked' : ''} onchange="window.__cal.finde=this.checked;renderCalendario()"> ${ca ? 'Cap de setmana' : 'Fin de semana'}</label>` : ''}
-        <button class="primary-btn cal-nuevo" onclick="calNuevo(window.__cal.fecha)">＋ ${ca ? 'Nou' : 'Nuevo'}</button>
+        <button class="cal-btn cal-act" onclick="calEventoForm(null, window.__cal.modo === 'dia' || window.__cal.fecha >= isoLocal() ? window.__cal.fecha : isoLocal(), '')">＋ ${ca ? 'Afegir activitat' : 'Añadir actividad'}</button>
+        <button class="primary-btn cal-nuevo" onclick="calNuevaCita(window.__cal.fecha >= isoLocal() ? window.__cal.fecha : isoLocal(), '')">＋ ${ca ? 'Nova cita' : 'Nueva cita'}</button>
       </div>
     </div>`;
   cont.innerHTML = cab + `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
@@ -8041,12 +8042,12 @@ function calOv(html){
   document.body.appendChild(ov);
 }
 function calNuevo(fecha, hora){
-  const ca = LANG_I === 'ca', f = new Date(fecha + 'T00:00:00').toLocaleDateString(ca ? 'ca-ES' : 'es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+  const ca = LANG_I === 'ca', f0 = new Date(fecha + 'T00:00:00').toLocaleDateString(ca ? 'ca-ES' : 'es-ES', { weekday: 'long', day: 'numeric', month: 'long' }), f = f0.charAt(0).toUpperCase() + f0.slice(1);
   calOv(`<h3 style="margin:0 0 4px;">＋ ${ca ? 'Afegir' : 'Añadir'}</h3>
-    <p class="subtle" style="margin:0 0 14px;text-transform:capitalize;">${escAttr(f)}${hora ? ' · ' + hora : ''}</p>
+    <p class="subtle" style="margin:0 0 14px;">${escAttr(f)}${hora ? ' · ' + hora : ''}</p>
     <div class="cal-opc">
       <button class="cal-opc-b" onclick="calCerrarOv();calNuevaCita('${fecha}','${hora}')"><span>📅</span><b>${ca ? 'Cita amb una persona' : 'Cita con una persona'}</b><small>${ca ? 'Persona usuària: rep l\'avís de la cita' : 'Persona usuaria: recibe el aviso de la cita'}</small></button>
-      <button class="cal-opc-b" onclick="calEventoForm(null,'${fecha}','${hora}')"><span>🗓️</span><b>${ca ? 'A la meva agenda' : 'En mi agenda'}</b><small>${ca ? 'Reunió, formació, coordinació, tasca…' : 'Reunión, formación, coordinación, tarea…'}</small></button>
+      <button class="cal-opc-b" onclick="calEventoForm(null,'${fecha}','${hora}')"><span>🗓️</span><b>${ca ? 'Una altra activitat' : 'Otra actividad'}</b><small>${ca ? 'Reunió, formació, taller, visita, tasca…' : 'Reunión, formación, taller, visita, tarea…'}</small></button>
     </div>`);
 }
 function calNuevaCita(fecha, hora){
@@ -8056,21 +8057,40 @@ function calNuevaCita(fecha, hora){
 function calColoresHtml(nombre, actual, onchange){
   return `<div class="cal-colores">${CAL_COLORES.map(([hex, es, cat]) => `<label title="${LANG_I === 'ca' ? cat : es}"><input type="radio" name="${nombre}" value="${hex}" ${String(actual || '').toLowerCase() === hex.toLowerCase() ? 'checked' : ''} ${onchange ? `onchange="${onchange}"` : ''}><span style="background:${hex}"></span></label>`).join('')}</div>`;
 }
+const CAL_TIPOS = [['reunion', '🤝', 'Reunión', 'Reunió', '#7B3FB5'], ['formacion', '🎓', 'Formación', 'Formació', '#D9731A'], ['taller', '🛠️', 'Taller', 'Taller', '#0E8C8C'],
+  ['coordinacion', '🧩', 'Coordinación', 'Coordinació', '#2463B8'], ['visita', '🚶', 'Visita / salida', 'Visita / sortida', '#1F8A4C'], ['tarea', '✅', 'Tarea', 'Tasca', '#5B6573'],
+  ['personal', '🙋', 'Personal', 'Personal', '#C2417F'], ['otra', '📌', 'Otra', 'Altra', '#C8102E']];
+function calTipoDe(titulo){ const t = String(titulo || ''); return CAL_TIPOS.find(x => t.startsWith(x[1])) || null; }
+function calTipoElegir(k){
+  const t = CAL_TIPOS.find(x => x[0] === k); if(!t) return;
+  window.__calTipo = k;
+  document.querySelectorAll('.cal-tipo').forEach(b => b.classList.toggle('on', b.dataset.k === k));
+  if(!window.__calColorTocado){ const r = document.querySelector(`input[name="ce-color"][value="${t[4]}"]`); if(r) r.checked = true; }
+  const ti = document.getElementById('ce-titulo'); if(ti && !ti.value.trim()) ti.placeholder = (LANG_I === 'ca' ? t[3] : t[2]) + '…';
+}
 function calEventoForm(id, fecha, hora){
   const ca = LANG_I === 'ca';
   if(!CAL_EVENTOS_OK){ calOv(`<h3>🗓️ ${ca ? 'La meva agenda' : 'Mi agenda'}</h3><p>${ca ? 'Falta executar l\'SQL-99 a Supabase per poder apuntar coses a la teva agenda.' : 'Falta ejecutar el SQL-99 en Supabase para poder apuntar cosas en tu agenda.'}</p>`); return; }
   const e = id ? ((window.__calItems || []).find(x => x.tipo === 'evento' && x.id === id) || {}).raw || {} : {};
   const ini = e.hora_inicio ? String(e.hora_inicio).slice(0, 5) : (hora || '09:00');
   const fin = e.hora_fin ? String(e.hora_fin).slice(0, 5) : calHHMM((calMin(ini) || 540) + 60);
-  calOv(`<h3 style="margin:0 0 10px;">🗓️ ${id ? (ca ? 'Editar a la meva agenda' : 'Editar en mi agenda') : (ca ? 'Nou a la meva agenda' : 'Nuevo en mi agenda')}</h3>
-    <div class="field"><label>${ca ? 'Què és' : 'Qué es'}</label><input type="text" id="ce-titulo" maxlength="140" value="${escAttr(e.titulo || '')}" placeholder="${ca ? 'Ex.: Reunió de coordinació Bretxa' : 'Ej.: Reunión de coordinación Bretxa'}"></div>
+  const tipo0 = calTipoDe(e.titulo); window.__calTipo = tipo0 ? tipo0[0] : (id ? 'otra' : 'reunion'); window.__calColorTocado = !!id;
+  const tituloSin = tipo0 ? String(e.titulo).slice(tipo0[1].length).trim() : (e.titulo || '');
+  calOv(`<h3 style="margin:0 0 10px;">🗓️ ${id ? (ca ? 'Editar l\'activitat' : 'Editar la actividad') : (ca ? 'Afegir una activitat' : 'Añadir una actividad')}</h3>
+    <div class="field"><label>${ca ? 'Tipus' : 'Tipo'}</label><div class="cal-tipos">${CAL_TIPOS.map(t => `<button type="button" class="cal-tipo${t[0] === window.__calTipo ? ' on' : ''}" data-k="${t[0]}" style="--c:${t[4]}" onclick="calTipoElegir('${t[0]}')">${t[1]} ${ca ? t[3] : t[2]}</button>`).join('')}</div></div>
+    <div class="field"><label>${ca ? 'Què és' : 'Qué es'}</label><input type="text" id="ce-titulo" maxlength="140" value="${escAttr(tituloSin)}" placeholder="${ca ? 'Ex.: Reunió de coordinació Bretxa' : 'Ej.: Reunión de coordinación Bretxa'}"></div>
     <div class="cal-g3">
       <div class="field"><label>${ca ? 'Dia' : 'Día'}</label><input type="date" id="ce-fecha" value="${escAttr(e.fecha || fecha || isoLocal())}"></div>
       <div class="field"><label>${ca ? 'Comença' : 'Empieza'}</label><input type="time" id="ce-ini" step="300" value="${ini}"></div>
       <div class="field"><label>${ca ? 'Acaba' : 'Termina'}</label><input type="time" id="ce-fin" step="300" value="${fin}"></div>
     </div>
     <label class="cal-check"><input type="checkbox" id="ce-todo" ${e.todo_el_dia ? 'checked' : ''}> ${ca ? 'Tot el dia' : 'Todo el día'}</label>
-    <div class="field"><label>${ca ? 'Color' : 'Color'}</label>${calColoresHtml('ce-color', e.color || CAL_COLORES[0][0])}</div>
+    <div class="field" onchange="window.__calColorTocado=true"><label>${ca ? 'Color' : 'Color'}</label>${calColoresHtml('ce-color', e.color || (CAL_TIPOS.find(t => t[0] === window.__calTipo) || CAL_TIPOS[0])[4])}</div>
+    ${id ? '' : `<div class="cal-g3" style="grid-template-columns:1.3fr 1fr;">
+      <div class="field"><label>${ca ? 'Repetir' : 'Repetir'}</label><select id="ce-rep" onchange="document.getElementById('ce-hasta-w').style.display=this.value?'':'none'">
+        <option value="">${ca ? 'No es repeteix' : 'No se repite'}</option><option value="semana">${ca ? 'Cada setmana' : 'Cada semana'}</option>
+        <option value="2semanas">${ca ? 'Cada 2 setmanes' : 'Cada 2 semanas'}</option><option value="laborables">${ca ? 'Cada dia laborable (dl–dv)' : 'Cada día laborable (lun–vie)'}</option><option value="mes">${ca ? 'Cada mes (mateix dia)' : 'Cada mes (mismo día)'}</option></select></div>
+      <div class="field" id="ce-hasta-w" style="display:none"><label>${ca ? 'Fins al' : 'Hasta el'}</label><input type="date" id="ce-hasta"></div></div>`}
     <div class="field"><label>${ca ? 'Lloc (opcional)' : 'Lugar (opcional)'}</label><input type="text" id="ce-lugar" maxlength="140" value="${escAttr(e.lugar || '')}" placeholder="${ca ? 'Sala, adreça o enllaç' : 'Sala, dirección o enlace'}"></div>
     <div class="field"><label>${ca ? 'Notes (opcional)' : 'Notas (opcional)'}</label><textarea id="ce-notas" rows="2">${escAttr(e.notas || '')}</textarea></div>
     <label class="cal-check"><input type="checkbox" id="ce-priv" ${e.privado ? 'checked' : ''}> 🔒 ${ca ? 'Privat: l\'equip només veurà «Ocupat»' : 'Privado: el equipo solo verá «Ocupado»'}</label>
@@ -8084,11 +8104,28 @@ function calEventoForm(id, fecha, hora){
 async function calEventoGuardar(id){
   const v = x => ((document.getElementById(x) || {}).value || '').trim(), ca = LANG_I === 'ca', msg = document.getElementById('ce-msg');
   const todo = !!(document.getElementById('ce-todo') || {}).checked;
-  const fila = { titulo: v('ce-titulo'), fecha: v('ce-fecha'), todo_el_dia: todo, hora_inicio: todo ? null : (v('ce-ini') || null), hora_fin: todo ? null : (v('ce-fin') || null),
+  const tipoSel = CAL_TIPOS.find(t => t[0] === window.__calTipo);
+  const fila = { titulo: (tipoSel && v('ce-titulo') ? tipoSel[1] + ' ' : '') + v('ce-titulo'), fecha: v('ce-fecha'), todo_el_dia: todo, hora_inicio: todo ? null : (v('ce-ini') || null), hora_fin: todo ? null : (v('ce-fin') || null),
     color: (document.querySelector('input[name="ce-color"]:checked') || {}).value || null, lugar: v('ce-lugar') || null, notas: v('ce-notas') || null, privado: !!(document.getElementById('ce-priv') || {}).checked };
   if(!fila.titulo || !fila.fecha){ msg.innerHTML = `<div class="auth-error">${ca ? 'Posa què és i el dia.' : 'Pon qué es y el día.'}</div>`; return; }
   if(!todo && fila.hora_inicio && fila.hora_fin && calMin(fila.hora_fin) <= calMin(fila.hora_inicio)){ msg.innerHTML = `<div class="auth-error">${ca ? 'L\'hora d\'acabar ha de ser després de la de començar.' : 'La hora de terminar tiene que ser después de la de empezar.'}</div>`; return; }
-  const r = id ? await sb.from('agenda_eventos').update(fila).eq('id', id).select('id') : await sb.from('agenda_eventos').insert(Object.assign({ tecnico_email: calYo() }, fila)).select('id');
+  // Repetición (solo al crear): una fila por cada día, hasta la fecha elegida (máximo 1 año / 120 veces)
+  let fechas = [fila.fecha];
+  const rep = id ? '' : v('ce-rep'), hasta = v('ce-hasta');
+  if(rep){
+    if(!hasta || hasta <= fila.fecha){ msg.innerHTML = `<div class="auth-error">${ca ? 'Posa fins a quin dia es repeteix.' : 'Pon hasta qué día se repite.'}</div>`; return; }
+    const tope = calSumarDias(fila.fecha, 366); let d = fila.fecha; fechas = [];
+    const ini0 = new Date(fila.fecha + 'T00:00:00');
+    for(let n = 0; d <= hasta && d <= tope && fechas.length < 120; n++){
+      const x = new Date(d + 'T00:00:00'), w = x.getDay();
+      if(rep !== 'laborables' || (w >= 1 && w <= 5)) fechas.push(d);
+      if(rep === 'semana') d = calSumarDias(d, 7);
+      else if(rep === '2semanas') d = calSumarDias(d, 14);
+      else if(rep === 'laborables') d = calSumarDias(d, 1);
+      else { const m = new Date(ini0.getFullYear(), ini0.getMonth() + n + 1, ini0.getDate()); d = m.getDate() === ini0.getDate() ? calIso(m) : calIso(new Date(ini0.getFullYear(), ini0.getMonth() + n + 2, 0)); }
+    }
+  }
+  const r = id ? await sb.from('agenda_eventos').update(fila).eq('id', id).select('id') : await sb.from('agenda_eventos').insert(fechas.map(f => Object.assign({ tecnico_email: calYo() }, fila, { fecha: f }))).select('id');
   if(r.error || !(r.data || []).length){ msg.innerHTML = `<div class="auth-error">${ca ? 'No s\'ha pogut desar.' : 'No se ha podido guardar.'} ${escAttr((r.error && r.error.message) || (ca ? 'Només ho pot canviar qui ho va crear.' : 'Solo lo puede cambiar quien lo creó.'))}</div>`; return; }
   calCerrarOv(); window.__cal.fecha = fila.fecha; renderCalendario();
 }
@@ -8101,19 +8138,19 @@ async function calEventoBorrar(id){
 function calAbrir(tipo, id){
   const e = (window.__calItems || []).find(x => x.tipo === tipo && String(x.id) === String(id)); if(!e) return;
   const ca = LANG_I === 'ca', loc = ca ? 'ca-ES' : 'es-ES';
-  const f = new Date(e.fecha + 'T00:00:00').toLocaleDateString(loc, { weekday: 'long', day: 'numeric', month: 'long' });
+  const f0 = new Date(e.fecha + 'T00:00:00').toLocaleDateString(loc, { weekday: 'long', day: 'numeric', month: 'long' }), f = f0.charAt(0).toUpperCase() + f0.slice(1);
   const cuando = `${escAttr(f)}${e.ini != null && !e.todo ? ' · ' + calHHMM(e.ini) + '–' + calHHMM(e.fin) : ' · ' + (ca ? 'tot el dia' : 'todo el día')}`;
   if(tipo === 'evento'){
     const r = e.raw;
     if(e.mia){ calEventoForm(id); return; }
-    calOv(`<div class="cal-det-c" style="--c:${escAttr(e.color)}"></div><h3 style="margin:0 0 4px;">${escAttr(e.titulo)}</h3><p class="subtle" style="margin:0 0 10px;text-transform:capitalize;">${cuando}</p>
+    calOv(`<div class="cal-det-c" style="--c:${escAttr(e.color)}"></div><h3 style="margin:0 0 4px;">${escAttr(e.titulo)}</h3><p class="subtle" style="margin:0 0 10px;">${cuando}</p>
       ${r.privado ? '' : `${r.lugar ? `<div class="panel-stat-row"><span>${ca ? 'Lloc' : 'Lugar'}</span><span>${escAttr(r.lugar)}</span></div>` : ''}${r.notas ? `<div class="panel-stat-row"><span>${ca ? 'Notes' : 'Notas'}</span><span>${escAttr(r.notas)}</span></div>` : ''}`}
       <div class="panel-stat-row"><span>${ca ? 'De' : 'De'}</span><span>${escAttr(equipoNombre(r.tecnico_email))}</span></div>`);
     return;
   }
   const c = e.raw, p = e.persona || {};
   calOv(`<div class="cal-det-c" style="--c:${escAttr(e.color)}"></div><h3 style="margin:0 0 4px;">📅 ${escAttr(p.nombre_completo || (ca ? 'Cita' : 'Cita'))}${chipSinCuenta(p)}</h3>
-    <p class="subtle" style="margin:0 0 10px;text-transform:capitalize;">${cuando}</p>
+    <p class="subtle" style="margin:0 0 10px;">${cuando}</p>
     ${p.telefono ? `<div class="panel-stat-row"><span>${ca ? 'Telèfon' : 'Teléfono'}</span><span>${escAttr(p.telefono)}</span></div>` : ''}
     ${c.motivo ? `<div class="panel-stat-row"><span>${ca ? 'Motiu' : 'Motivo'}</span><span>${escAttr(c.motivo)}</span></div>` : ''}
     <div class="panel-stat-row"><span>${ca ? 'Qui l\'atén' : 'Quién atiende'}</span><span>${escAttr(c.tecnico_email ? equipoNombre(c.tecnico_email) : (ca ? 'Sense assignar' : 'Sin asignar'))}${c.tecnico2_email ? ' + ' + escAttr(equipoNombre(c.tecnico2_email)) : ''}</span></div>
@@ -8123,8 +8160,9 @@ function calAbrir(tipo, id){
       <div class="field"><label>${ca ? 'Comença' : 'Empieza'}</label><input type="time" value="${calHHMM(e.ini)}" disabled></div>
       <div class="field"><label>${ca ? 'Acaba' : 'Termina'}</label><input type="time" id="cc-fin" step="300" value="${calHHMM(e.fin)}" onchange="calCitaFin('${c.id}', this.value)"></div></div>` : ''}
     <div id="cc-msg"></div>
+    <div class="cal-acc" onclick="if(event.target.closest('.cita-acc')) setTimeout(calCerrarOv, 0)">${citaAccionesHtml(c, p.nombre_completo)}</div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;">
-      <button class="link-btn" onclick="calCerrarOv();__agendaVista='dia';renderAgendaCitas('${c.fecha}')">📋 ${ca ? 'Obrir al dia (canviar, passar o cancel·lar)' : 'Abrir en el día (cambiar, pasar o cancelar)'}</button>
+      <button class="link-btn" onclick="calCerrarOv();__agendaVista='dia';renderAgendaCitas('${c.fecha}')">📋 ${ca ? 'Veure-la a la llista del dia' : 'Verla en la lista del día'}</button>
       ${c.usuario_id ? `<button class="link-btn" onclick="calCerrarOv();verPersonaStaff('${c.usuario_id}','agenda')">👤 ${ca ? 'Fitxa' : 'Ficha'}</button>` : ''}
     </div>`);
 }
@@ -18923,7 +18961,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-13 · v258 (calendario tipo Google: mes, semana y día, con agenda propia y colores; «Mis personas» por proyectos)';
+const APP_VERSION_INTRANET = '2026-11-13 · v259 (calendario: «Añadir actividad» con tipos, colores y repetición; corregir, mover o cancelar citas desde el calendario; «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -27043,7 +27081,13 @@ async function agGuardar(){
 .cal-mes-ev i{flex:0 0 8px;height:8px;border-radius:50%;background:var(--c);}
 .cal-mes-ev:hover{background:#EEF2F7;}
 .cal-mes-mas{border:none;background:transparent;font-size:11px;font-weight:700;color:#1E4E8C;text-align:left;padding:1px 4px;cursor:pointer;}
-.cal-caja{max-width:470px !important;text-align:left !important;}
+.cal-act{border-color:#1E4E8C !important;color:#1E4E8C !important;}
+.cal-acc{margin-top:10px;} .cal-acc .cita-acc{font-size:12.5px;}
+.cal-tipos{display:flex;flex-wrap:wrap;gap:6px;}
+.cal-tipo{border:1.5px solid var(--line,#DCE3EE);background:#fff;border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--navy,#1B2A4A);font-family:inherit;}
+.cal-tipo:hover{border-color:var(--c);}
+.cal-tipo.on{background:var(--c);border-color:var(--c);color:#fff;}
+.cal-caja{max-width:500px !important;text-align:left !important;max-height:92vh;overflow-y:auto;}
 .cal-opc{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .cal-opc-b{border:1.5px solid var(--line,#DCE3EE);background:#fff;border-radius:14px;padding:14px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;font-family:inherit;}
 .cal-opc-b:hover{border-color:#1E4E8C;background:#F4F8FF;}
