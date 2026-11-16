@@ -94,6 +94,32 @@
   .imp-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
   .imp-tab{font-family:var(--font-body);font-weight:800;font-size:13px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:7px 15px;cursor:pointer;}
   .imp-tab.on{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .sv-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:0 0 14px;}
+  .sv-stat{background:var(--paper);border:1.5px solid var(--line);border-top:3px solid var(--gold);border-radius:14px;padding:10px 12px;}
+  .sv-stat b{display:block;font-size:21px;color:var(--navy);font-family:var(--font-display);line-height:1.15;}
+  .sv-stat span{font-size:12px;color:var(--ink-soft);}
+  .sv-grid{display:grid;grid-template-columns:minmax(230px,310px) minmax(0,1fr);gap:14px;align-items:start;}
+  .sv-lista{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:8px;max-height:78vh;overflow:auto;position:sticky;top:10px;}
+  .sv-cat{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:10px 6px 4px;}
+  .sv-item{display:block;width:100%;text-align:left;border:1.5px solid transparent;background:none;border-radius:12px;padding:8px 10px;cursor:pointer;font-family:var(--font-body);color:var(--ink);}
+  .sv-item:hover{background:var(--bg);}
+  .sv-item.on{border-color:var(--navy);background:#EEF4FC;}
+  .sv-item b{font-size:13.5px;display:block;line-height:1.3;}
+  .sv-item small{font-size:11.5px;color:var(--ink-soft);}
+  .sv-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+  .sv-det{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:18px 20px;min-width:0;box-shadow:var(--shadow);}
+  .sv-sec{border-top:1px solid var(--line);padding-top:12px;margin-top:14px;}
+  .sv-sec h4{margin:0 0 8px;font-size:14.5px;}
+  .sv-btns{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;}
+  .sv-btn{font-family:var(--font-body);font-weight:700;font-size:13px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:10px;padding:8px 12px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+  .sv-btn.pri{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .sv-btn:disabled{opacity:.5;cursor:default;}
+  .sv-doc{display:flex;gap:8px;align-items:center;padding:4px 0;font-size:13.5px;cursor:pointer;}
+  .sv-doc.ok span{text-decoration:line-through;color:var(--ink-soft);}
+  .sv-ap{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 10px;}
+  .sv-det textarea,#sv-cuerpo textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font-family:var(--font-body);font-size:13.5px;line-height:1.5;color:var(--ink);background:var(--paper);resize:vertical;}
+  .sv-res{border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 10px;background:var(--paper);}
+  @media (max-width:820px){ .sv-grid{grid-template-columns:1fr;} .sv-lista{max-height:none;position:static;} .sv-det{padding:14px;} }
   .imp-filtros{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;}
   .imp-filtros label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;font-weight:700;color:var(--ink-soft);}
   .imp-filtros select,.imp-busca{border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;font-family:var(--font-body);font-size:13px;background:var(--paper);color:var(--ink);}
@@ -10711,7 +10737,7 @@ function subvCalcularAvisos(filas){
       if(!['seguimiento', 'abierta'].includes(f.estado)) return;
       const d = subvDias(f.fecha_limite);
       if(d !== null && d <= SUBV_AVISO_DIAS) plazos.push({ f, d });
-    } else {
+    } else if(f.tipo === 'fuente'){
       const ult = f.ultima_revision ? new Date(f.ultima_revision + 'T00:00:00') : null;
       const dias = ult ? Math.round((hoy - ult) / 86400000) : 9999;
       if(dias >= (f.revisar_cada_dias || 15)) revisar.push({ f, dias });
@@ -10732,69 +10758,479 @@ async function subvencionesResumenHtml(){
   const av = subvCalcularAvisos(data);
   return { html: subvAvisosHtml(av), n: av.plazos.length + av.revisar.length };
 }
-async function renderSubvencionesScreen(){
+// ---------- v266 · Panel de acción de subvenciones (estilo Kizuna) + IA: buscar convocatorias y redactar la solicitud por apartados ----------
+const SUBV_CATEGORIAS = ['Generalitat', 'Estado', 'Europa', 'Diputació y municipios', 'Fundaciones y empresas', 'Premios', 'Otros'];
+const SUBV_DOCS_BASICOS = ['Estatutos de la entidad', 'NIF de la entidad', 'Inscripción en el registro de entidades', 'Certificado de estar al corriente con Hacienda (AEAT)', 'Certificado de estar al corriente con la Seguridad Social (TGSS)', 'Certificado de la ATC (Generalitat), si lo piden', 'DNI y acreditación de la persona representante', 'Certificado digital de la entidad o idCAT del representante', 'Memoria del proyecto (formulario oficial)', 'Presupuesto del proyecto', 'Declaración responsable', 'Datos bancarios de la entidad'];
+const SUBV_TEMA_IA = 'Innovación y talento al servicio de la ciudadanía y de las personas vulnerables: inclusión digital, personas mayores y cuidados, acompañamiento, empleo, formación de adultos e IA con control humano.';
+const SUBV_IA_ESTADO = { abierta: ['🟢 Abierta', '🟢 Oberta'], proxima: ['🟡 Se abre pronto', '🟡 S\'obre aviat'], prevista: ['⚪ Prevista', '⚪ Prevista'] };
+const SUBV_DOT = { seguimiento: '#9AA6B8', abierta: '#2E9E5B', presentada: '#2463B8', concedida: '#C98A1B', denegada: '#C0392B', cerrada: '#CBD2DC' };
+window.__subv = window.__subv || { tab: 'panel', sel: null, filas: [], ia: null, pdf: {}, verCerradas: false };
+function subvEur(n){ return (Number(n) || 0).toLocaleString(TI[LANG_I].localeFecha, { maximumFractionDigits: 0 }) + ' €'; }
+function subvDocs(f){ return (Array.isArray(f.documentos) ? f.documentos : []).map(d => typeof d === 'string' ? { t: d, ok: false } : { t: String(d.t || ''), ok: !!d.ok }).filter(d => d.t); }
+function subvPasos(f){ return (Array.isArray(f.pasos) ? f.pasos : []).map(String).filter(Boolean); }
+function subvNorm(t){ return normTxt(String(t || '')).replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim(); }
+function subvPareceIgual(a, b){ const x = subvNorm(a), y = subvNorm(b); if(!x || !y) return false; if(x === y || x.includes(y) || y.includes(x)) return true; const wx = new Set(x.split(' ').filter(w => w.length > 3)), wy = y.split(' ').filter(w => w.length > 3); if(!wx.size || !wy.length) return false; return wy.filter(w => wx.has(w)).length / Math.max(wx.size, wy.length) >= 0.6; }
+// Inserta aunque todavía no se haya ejecutado el SQL-100 (entonces guarda solo las columnas de siempre)
+async function subvInsertarSeguro(fila){
+  const base = ['tipo', 'titulo', 'organismo', 'url', 'fecha_limite', 'importe', 'notas', 'estado'];
+  let { error } = await sb.from('subvenciones').insert(Object.assign({ creado_por_email: CURRENT_USER.email }, fila));
+  if(error && /column|schema cache/i.test(error.message || '')){
+    const f2 = {}; base.forEach(k => { if(fila[k] !== undefined) f2[k] = fila[k]; });
+    if(fila.linea) f2.notas = [fila.notas, fila.linea].filter(Boolean).join(' · ');
+    ({ error } = await sb.from('subvenciones').insert(Object.assign({ creado_por_email: CURRENT_USER.email }, f2)));
+  }
+  if(error){ alert(error.message); return false; } return true;
+}
+async function renderSubvencionesScreen(tab){
   const cont = document.getElementById('subvenciones-content'); if(!cont) return;
   if(!(IS_ADMIN || IS_RRHH)){ cont.innerHTML = `<div class="empty-note">${acL('Esta pantalla es solo para la dirección y Recursos Humanos.', 'Aquesta pantalla és només per a la direcció i Recursos Humans.')}</div>`; return; }
-  cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const st = window.__subv; if(typeof tab === 'string') st.tab = tab;
+  if(!cont.querySelector('.sv-stats')) cont.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
   const { data, error } = await sb.from('subvenciones').select('*').order('fecha_limite', { ascending: true, nullsFirst: false }).order('creado_en', { ascending: true });
   if(error){
     cont.innerHTML = `<div class="auth-error">${/subvenciones|schema cache|does not exist/i.test(error.message || '') ? acL('Falta ejecutar el SQL 27 en Supabase para activar las subvenciones.', 'Cal executar l\'SQL 27 a Supabase per activar les subvencions.') : escAttr(error.message)}</div>`;
     return;
   }
-  const filas = data || [];
-  const conv = filas.filter(f => f.tipo === 'convocatoria'), fuentes = filas.filter(f => f.tipo === 'fuente');
-  // Páginas que se añaden solas a «Páginas que vigilamos» si todavía no están (una sola vez por navegador: si alguien la borra, no vuelve a salir)
+  const filas = data || []; st.filas = filas;
+  const fuentes = filas.filter(f => f.tipo === 'fuente');
   for(const fb of SUBV_FUENTES_BASE){
     const clave = 'subv-auto:' + fb.url; let hecho = false; try { hecho = localStorage.getItem(clave) === '1'; } catch(e){}
     if(hecho || fuentes.some(f => String(f.url || '').replace(/\/+$/, '').toLowerCase() === fb.url.toLowerCase())) { try { localStorage.setItem(clave, '1'); } catch(e){} continue; }
     try { localStorage.setItem(clave, '1'); } catch(e){}
     if(await subvInsertar({ tipo: 'fuente', titulo: fb.titulo, organismo: fb.organismo, url: fb.url })) return renderSubvencionesScreen();
   }
+  st.sql100 = !filas.length || filas.some(f => 'pasos' in f);
+  const conv = filas.filter(f => f.tipo === 'convocatoria'), red = filas.filter(f => f.tipo === 'entidad');
   const av = subvCalcularAvisos(filas);
-  const estadoOpts = sel => Object.entries(SUBV_ESTADOS).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${acL(v[0], v[1])}</option>`).join('');
-  const tarjetaConv = f => { const d = subvDias(f.fecha_limite); return `<div class="panel-card" style="margin:0 0 8px;${f.activo === false ? 'opacity:.55;' : ''}">
-      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:flex-start;">
-        <div style="min-width:0;"><strong>${escAttr(f.titulo)}</strong>${f.organismo ? `<div class="subtle" style="font-size:12.5px;margin:2px 0 0;">${escAttr(f.organismo)}${f.importe ? ' · ' + escAttr(f.importe) : ''}</div>` : ''}
-          <div class="subtle" style="font-size:12.5px;margin:2px 0 0;">${acL('Plazo:', 'Termini:')} <strong>${subvFecha(f.fecha_limite)}</strong>${d !== null && ['seguimiento','abierta'].includes(f.estado) ? ` <span class="chip ${d < 0 ? '' : (d <= 7 ? 'off' : 'gold')}" style="font-size:11px;">${d < 0 ? acL('vencido', 'vençut') : acL(d + ' días', d + ' dies')}</span>` : ''}</div>
-          ${f.notas ? `<div class="subtle" style="font-size:12.5px;margin:3px 0 0;">${escAttr(f.notas)}</div>` : ''}${subvEtapasEnviadasTxt(f) ? `<div class="subtle" style="font-size:11.5px;margin:3px 0 0;">${subvEtapasEnviadasTxt(f)}</div>` : ''}</div>
-        <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <select onchange="subvEstado('${f.id}', this.value)" style="width:auto;padding:5px 8px;font-size:12.5px;">${estadoOpts(f.estado)}</select>
-          ${f.url ? `<a class="primary-btn" style="width:auto;margin:0;padding:6px 12px;text-decoration:none;font-size:12.5px;" href="${escAttr(f.url)}" target="_blank" rel="noopener noreferrer">${acL('Abrir', 'Obrir')} ↗</a>` : ''}
-          <button class="link-btn" style="font-size:11.5px;" onclick="subvEditarPlazo('${f.id}')">${acL('Cambiar plazo', 'Canviar termini')}</button>
-          <button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="subvBorrar('${f.id}')">${acL('Borrar', 'Esborrar')}</button></span></div></div>`; };
-  const tarjetaFuente = f => { const ult = f.ultima_revision; const dias = ult ? Math.round((new Date() - new Date(ult + 'T00:00:00')) / 86400000) : null; const toca = dias === null || dias >= (f.revisar_cada_dias || 15); return `<div class="panel-card" style="margin:0 0 8px;${f.activo === false ? 'opacity:.55;' : ''}">
+  const vivas = conv.filter(f => ['seguimiento', 'abierta'].includes(f.estado));
+  const prox = vivas.map(f => subvDias(f.fecha_limite)).filter(d => d !== null && d >= 0).sort((a, b) => a - b)[0];
+  const pres = conv.filter(f => ['presentada', 'concedida', 'denegada'].includes(f.estado));
+  const conc = conv.filter(f => f.estado === 'concedida');
+  const stat = (n, t) => `<div class="sv-stat"><b>${n}</b><span>${t}</span></div>`;
+  const tabs = [['panel', '🎯', acL('Panel de acción', 'Panell d\'acció')], ['buscar', '🔎', acL('Buscar con IA', 'Cercar amb IA')], ['fuentes', '🌐', acL('Páginas que vigilamos', 'Pàgines que vigilem') + ` (${fuentes.length})`], ['red', '🤝', acL('Nuestra red', 'La nostra xarxa') + ` (${red.length})`], ['perfil', '🏛️', acL('Datos de Logos para la IA', 'Dades de Logos per a la IA')]];
+  cont.innerHTML = `
+    <h2 class="screen-title">💶 ${acL('Subvenciones', 'Subvencions')}</h2>
+    <p class="subtle" style="margin:0 0 12px;">${acL('Para la dirección y Recursos Humanos. Encontrar convocatorias, preparar la solicitud con el formulario oficial y no perder ningún plazo. La IA propone; una persona revisa y presenta.', 'Per a la direcció i Recursos Humans. Trobar convocatòries, preparar la sol·licitud amb el formulari oficial i no perdre cap termini. La IA proposa; una persona revisa i presenta.')}</p>
+    ${st.sql100 ? '' : `<div class="auth-error" style="margin-bottom:12px;">${acL('Falta ejecutar el SQL-100 en Supabase: sin él no se guardan los pasos, los documentos ni el borrador de la solicitud.', 'Cal executar l\'SQL-100 a Supabase: sense ell no es desen els passos, els documents ni l\'esborrany de la sol·licitud.')}</div>`}
+    <div class="sv-stats">
+      ${stat(vivas.length, acL('convocatorias en marcha', 'convocatòries en marxa'))}
+      ${stat(prox === undefined ? '—' : prox + ' ' + acL('días', 'dies'), acL('al próximo plazo', 'al proper termini'))}
+      ${stat(pres.length, acL('presentadas', 'presentades'))}
+      ${stat(conc.length, acL('concedidas', 'concedides'))}
+      ${stat(subvEur(conc.reduce((s, f) => s + (Number(f.importe_concedido) || 0), 0)), acL('conseguido', 'aconseguit'))}
+    </div>
+    <div class="imp-tabs">${tabs.map(([k, ic, t]) => `<button class="imp-tab${st.tab === k ? ' on' : ''}" onclick="renderSubvencionesScreen('${k}')">${ic} ${t}</button>`).join('')}</div>
+    <div id="sv-cuerpo"></div>`;
+  const cuerpo = document.getElementById('sv-cuerpo');
+  if(st.tab === 'buscar') cuerpo.innerHTML = subvBuscarHtml(fuentes, conv);
+  else if(st.tab === 'fuentes') cuerpo.innerHTML = subvFuentesHtml(fuentes);
+  else if(st.tab === 'red') cuerpo.innerHTML = subvRedHtml(red);
+  else if(st.tab === 'perfil') await subvPerfilPintar(cuerpo);
+  else cuerpo.innerHTML = subvPanelHtml(conv, av);
+}
+
+// ===== Panel de acción: lista por categorías + ficha de la convocatoria =====
+function subvPanelHtml(conv, av){
+  const st = window.__subv;
+  const visibles = conv.filter(f => st.verCerradas || !['cerrada', 'denegada'].includes(f.estado));
+  if(!visibles.some(f => f.id === st.sel)){
+    const orden = visibles.slice().sort((a, b) => { const da = subvDias(a.fecha_limite), db = subvDias(b.fecha_limite); return (da === null || da < 0 ? 9e9 : da) - (db === null || db < 0 ? 9e9 : db); });
+    st.sel = orden[0] ? orden[0].id : null;
+  }
+  const grupos = {};
+  visibles.forEach(f => { const k = f.categoria || acL('Sin categoría', 'Sense categoria'); (grupos[k] = grupos[k] || []).push(f); });
+  const ordenCat = Object.keys(grupos).sort((a, b) => { const ia = SUBV_CATEGORIAS.indexOf(a), ib = SUBV_CATEGORIAS.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
+  const item = f => { const d = subvDias(f.fecha_limite); const chip = d === null ? '' : ` · <span style="font-weight:800;color:${d < 0 ? 'var(--ink-soft)' : d <= 7 ? 'var(--alert)' : d <= 30 ? 'var(--ochre)' : 'var(--navy)'}">${d < 0 ? acL('vencida', 'vençuda') : d + ' ' + acL('días', 'dies')}</span>`;
+    return `<button class="sv-item${f.id === st.sel ? ' on' : ''}" onclick="subvSel('${f.id}')"><b><span class="sv-dot" style="background:${SUBV_DOT[f.estado] || '#9AA6B8'}"></span>${escAttr(f.titulo)}</b><small>${escAttr(f.organismo || '')}${chip}</small></button>`; };
+  const sel = visibles.find(f => f.id === st.sel);
+  return `
+    ${(av.plazos.length || av.revisar.length) ? `<div class="panel-card" style="border-color:var(--ochre);margin-bottom:14px;padding:14px 18px;"><h3 style="margin:0 0 6px;font-size:15px;">🔔 ${acL('Avisos', 'Avisos')}</h3>${subvAvisosHtml(av)}
+      <p class="subtle" style="font-size:12px;margin:8px 0 0;">⏰ ${acL(`Recordatorios por correo 5 meses, 1 mes y 1 semana antes, a ${SUBV_CORREO_AVISOS} y a Recursos Humanos.`, `Recordatoris per correu 5 mesos, 1 mes i 1 setmana abans, a ${SUBV_CORREO_AVISOS} i a Recursos Humans.`)}${IS_ADMIN ? ` <button class="link-btn" id="subv-prueba-btn" style="font-size:12px;" onclick="subvCorreoPrueba()">📧 ${acL('Enviar correo de prueba', 'Enviar correu de prova')}</button>` : ''}</p></div>` : ''}
+    <div class="sv-grid">
+      <aside class="sv-lista">
+        ${visibles.length ? ordenCat.map(k => `<div class="sv-cat">${escAttr(k)} · ${grupos[k].length}</div>${grupos[k].map(item).join('')}`).join('') : `<div class="empty-note" style="margin:6px;">${acL('Todavía no hay convocatorias. Búscalas con la IA o apúntalas a mano.', 'Encara no hi ha convocatòries. Cerca-les amb la IA o apunta-les a mà.')}</div>`}
+        <label class="subtle" style="display:flex;gap:6px;align-items:center;font-size:12px;margin:10px 6px 4px;"><input type="checkbox" ${st.verCerradas ? 'checked' : ''} onchange="window.__subv.verCerradas=this.checked;renderSubvencionesScreen()" style="width:auto;margin:0;"> ${acL('Ver también cerradas y denegadas', 'Veure també tancades i denegades')}</label>
+        <div class="sv-btns" style="margin:8px 4px 2px;"><button class="sv-btn pri" onclick="renderSubvencionesScreen('buscar')">🔎 ${acL('Buscar con IA', 'Cercar amb IA')}</button></div>
+        <details style="margin:4px 6px;"><summary class="link-btn" style="font-size:12.5px;cursor:pointer;">➕ ${acL('Apuntar una a mano', 'Apuntar-ne una a mà')}</summary>
+          <div style="margin-top:8px;">
+            <input type="text" id="sv-titulo" placeholder="${acL('Nombre de la convocatoria', 'Nom de la convocatòria')}" style="margin-bottom:6px;">
+            <input type="text" id="sv-org" placeholder="${acL('Organismo (Generalitat, Diputació, SOC…)', 'Organisme (Generalitat, Diputació, SOC…)')}" style="margin-bottom:6px;">
+            <select id="sv-cat" style="margin-bottom:6px;">${SUBV_CATEGORIAS.map(c => `<option>${c}</option>`).join('')}</select>
+            <input type="url" id="sv-url" placeholder="https://… (${acL('web oficial', 'web oficial')})" style="margin-bottom:6px;">
+            <label class="subtle" style="font-size:12px;">${acL('Fecha límite', 'Data límit')}</label><input type="date" id="sv-limite" style="margin-bottom:6px;">
+            <input type="text" id="sv-importe" placeholder="${acL('Importe (opcional)', 'Import (opcional)')}" style="margin-bottom:6px;">
+            <input type="text" id="sv-notas" placeholder="${acL('Notas (opcional)', 'Notes (opcional)')}" style="margin-bottom:8px;">
+            <button class="primary-btn" style="width:auto;margin:0;" onclick="subvAnadir()">${acL('Añadir', 'Afegir')}</button></div></details>
+      </aside>
+      <section class="sv-det" id="sv-det">${sel ? subvDetalleHtml(sel) : `<div class="empty-note" style="margin:0;">${acL('Elige una convocatoria de la lista.', 'Tria una convocatòria de la llista.')}</div>`}</section>
+    </div>`;
+}
+function subvSel(id){
+  window.__subv.sel = id;
+  document.querySelectorAll('.sv-item').forEach(b => b.classList.toggle('on', (b.getAttribute('onclick') || '').includes(id)));
+  const f = window.__subv.filas.find(x => x.id === id), det = document.getElementById('sv-det');
+  if(f && det){ det.innerHTML = subvDetalleHtml(f); if(window.innerWidth < 820) det.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+function subvMensajeBase(f){
+  return acL(`Buenos días:\n\nOs escribimos desde la Associació Logos - Projectes Socials (Tarragona). Estamos preparando la solicitud para «${f.titulo}» y querríamos confirmar:\n\n- [Escribe aquí la duda: plazo, gastos que se pueden incluir, formulario, documentación…]\n\nMuchas gracias.\n\n${CURRENT_USER_NOMBRE || ''}\nAssociació Logos - Projectes Socials`,
+    `Bon dia,\n\nUs escrivim des de l'Associació Logos - Projectes Socials (Tarragona). Estem preparant la sol·licitud per a «${f.titulo}» i voldríem confirmar:\n\n- [Escriu aquí el dubte: termini, despeses que es poden incloure, formulari, documentació…]\n\nMoltes gràcies.\n\n${CURRENT_USER_NOMBRE || ''}\nAssociació Logos - Projectes Socials`);
+}
+function subvDetalleHtml(f){
+  const d = subvDias(f.fecha_limite), docs = subvDocs(f), pasos = subvPasos(f), sol = f.solicitud && Array.isArray(f.solicitud.apartados) ? f.solicitud : null;
+  const hechos = docs.filter(x => x.ok).length, msg = f.mensaje || subvMensajeBase(f);
+  const asunto = acL('Consulta: ', 'Consulta: ') + f.titulo;
+  const mailto = f.contacto_email ? `mailto:${encodeURIComponent(f.contacto_email)}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(msg)}` : '';
+  const estadoOpts = Object.entries(SUBV_ESTADOS).map(([k, v]) => `<option value="${k}" ${k === f.estado ? 'selected' : ''}>${acL(v[0], v[1])}</option>`).join('');
+  const inp = (id, val, ph, type) => `<input type="${type || 'text'}" id="${id}" value="${escAttr(val || '')}" placeholder="${escAttr(ph)}" style="margin-bottom:6px;">`;
+  return `
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start;">
+      <div style="min-width:0;flex:1;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">${f.categoria ? `<span class="chip">${escAttr(f.categoria)}</span>` : ''}${f.origen === 'ia' ? `<span class="chip gold" title="${acL('Comprobar en la web oficial', 'Comprovar a la web oficial')}">🤖 ${acL('Encontrada con IA', 'Trobada amb IA')}</span>` : ''}</div>
+        <h3 style="margin:0 0 4px;font-size:18px;line-height:1.3;">${escAttr(f.titulo)}</h3>
+        <div class="subtle" style="font-size:13px;margin:0;">${escAttr(f.organismo || '')}${f.importe ? ' · <strong>' + escAttr(f.importe) + '</strong>' : ''}</div>
+        <div style="font-size:13px;margin-top:6px;">📅 ${f.fecha_apertura ? acL('Abre', 'Obre') + ' ' + subvFecha(f.fecha_apertura) + ' · ' : ''}${acL('Plazo:', 'Termini:')} <strong>${subvFecha(f.fecha_limite)}</strong>${d !== null && ['seguimiento', 'abierta'].includes(f.estado) ? ` <span class="chip ${d < 0 ? '' : (d <= 7 ? 'off' : 'gold')}" style="font-size:11px;">${d < 0 ? acL('vencido', 'vençut') : subvQuedan(d)}</span>` : ''}</div>
+      </div>
+      <select onchange="subvEstado('${f.id}', this.value)" style="width:auto;padding:6px 10px;font-size:13px;">${estadoOpts}</select>
+    </div>
+    ${f.linea ? `<div style="background:#EEF4FC;border-radius:10px;padding:9px 12px;margin-top:10px;font-size:13.5px;">🎯 <strong>${acL('Encaje con Logos:', 'Encaix amb Logos:')}</strong> ${escAttr(f.linea)}</div>` : ''}
+    ${f.notas ? `<div class="subtle" style="font-size:12.5px;margin:8px 0 0;">📝 ${escAttr(f.notas)}</div>` : ''}
+    ${subvEtapasEnviadasTxt(f) ? `<div class="subtle" style="font-size:11.5px;margin:4px 0 0;">${subvEtapasEnviadasTxt(f)}</div>` : ''}
+
+    <div class="sv-sec"><h4>📇 ${acL('Contacto y enlaces', 'Contacte i enllaços')}</h4>
+      <div style="font-size:13.5px;">${f.contacto_email ? '📧 ' + escAttr(f.contacto_email) : `<span class="subtle" style="margin:0;">${acL('Sin correo de contacto todavía (la IA lo saca de las bases al preparar la solicitud).', 'Encara sense correu de contacte (la IA el treu de les bases en preparar la sol·licitud).')}</span>`}${f.contacto_tel ? ' · ☎ ' + escAttr(f.contacto_tel) : ''}</div>
+      <div class="sv-btns">
+        ${mailto ? `<a class="sv-btn pri" href="${escAttr(mailto)}">📧 ${acL('Abrir en el correo', 'Obrir al correu')}</a>` : `<button class="sv-btn" disabled>📧 ${acL('Abrir en el correo', 'Obrir al correu')}</button>`}
+        <button class="sv-btn" ${f.contacto_email ? '' : 'disabled'} onclick="subvCopiar(${escAttr(JSON.stringify(f.contacto_email || ''))}, this)">📋 ${acL('Copiar correo', 'Copiar correu')}</button>
+        ${f.url ? `<a class="sv-btn" href="${escAttr(f.url)}" target="_blank" rel="noopener noreferrer">🌐 ${acL('Web oficial', 'Web oficial')} ↗</a>` : ''}
+      </div>
+      <details><summary class="link-btn" style="font-size:12.5px;cursor:pointer;">✏️ ${acL('Editar los datos de la convocatoria', 'Editar les dades de la convocatòria')}</summary>
+        <div style="margin-top:8px;">
+          ${inp('svf-titulo', f.titulo, acL('Nombre', 'Nom'))}${inp('svf-org', f.organismo, acL('Organismo', 'Organisme'))}
+          <select id="svf-cat" style="margin-bottom:6px;"><option value="">${acL('Categoría…', 'Categoria…')}</option>${SUBV_CATEGORIAS.map(c => `<option ${c === f.categoria ? 'selected' : ''}>${c}</option>`).join('')}</select>
+          ${inp('svf-url', f.url, 'https://…', 'url')}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><label class="subtle" style="font-size:12px;margin:0;">${acL('Abre', 'Obre')}${inp('svf-ap', f.fecha_apertura, '', 'date')}</label><label class="subtle" style="font-size:12px;margin:0;">${acL('Fecha límite', 'Data límit')}${inp('svf-lim', f.fecha_limite, '', 'date')}</label></div>
+          ${inp('svf-imp', f.importe, acL('Importe', 'Import'))}${inp('svf-linea', f.linea, acL('Encaje con Logos', 'Encaix amb Logos'))}${inp('svf-notas', f.notas, acL('Notas', 'Notes'))}
+          ${inp('svf-mail', f.contacto_email, acL('Correo de contacto', 'Correu de contacte'), 'email')}${inp('svf-tel', f.contacto_tel, acL('Teléfono', 'Telèfon'))}
+          <div class="sv-btns"><button class="sv-btn pri" onclick="subvGuardarFicha('${f.id}')">💾 ${acL('Guardar', 'Desar')}</button><button class="sv-btn" style="color:var(--alert);" onclick="subvBorrar('${f.id}')">🗑 ${acL('Borrar', 'Esborrar')}</button></div>
+        </div></details>
+    </div>
+
+    <div class="sv-sec"><h4>🪜 ${acL('Pasos para presentarla', 'Passos per presentar-la')}</h4>
+      ${pasos.length ? `<ol style="margin:0 0 6px;padding-left:20px;font-size:13.5px;line-height:1.55;">${pasos.map(p => `<li>${escAttr(p)}</li>`).join('')}</ol>` : `<p class="subtle" style="font-size:12.5px;margin:0 0 6px;">${acL('Todavía sin pasos. Al preparar la solicitud con IA se rellenan solos con lo que dicen las bases.', 'Encara sense passos. En preparar la sol·licitud amb IA s\'omplen sols amb el que diuen les bases.')}</p>`}
+      <details><summary class="link-btn" style="font-size:12.5px;cursor:pointer;">✏️ ${acL('Editar los pasos (uno por línea)', 'Editar els passos (un per línia)')}</summary>
+        <textarea id="svf-pasos" rows="5" style="margin-top:6px;">${escAttr(pasos.join('\n'))}</textarea>
+        <div class="sv-btns"><button class="sv-btn pri" onclick="subvGuardarPasos('${f.id}')">💾 ${acL('Guardar pasos', 'Desar passos')}</button></div></details>
+    </div>
+
+    <div class="sv-sec"><h4>📎 ${acL('Documentos', 'Documents')} <span class="chip" style="font-size:11px;">${hechos}/${docs.length}</span></h4>
+      ${docs.map((x, i) => `<label class="sv-doc${x.ok ? ' ok' : ''}"><input type="checkbox" ${x.ok ? 'checked' : ''} onchange="subvDocMarcar('${f.id}', ${i}, this.checked)" style="width:auto;margin:0;"><span style="flex:1;">${escAttr(x.t)}</span><button class="link-btn" style="font-size:12px;color:var(--ink-soft);" onclick="event.preventDefault();subvDocQuitar('${f.id}', ${i})" title="${acL('Quitar', 'Treure')}">✕</button></label>`).join('') || `<p class="subtle" style="font-size:12.5px;margin:0;">${acL('Lista vacía.', 'Llista buida.')}</p>`}
+      <div style="display:flex;gap:6px;margin-top:6px;"><input type="text" id="svf-doc" placeholder="${acL('Añadir un documento…', 'Afegir un document…')}" style="margin:0;" onkeydown="if(event.key==='Enter')subvDocAnadir('${f.id}')"><button class="sv-btn" onclick="subvDocAnadir('${f.id}')">➕</button></div>
+      ${docs.length < 3 ? `<button class="link-btn" style="font-size:12.5px;margin-top:6px;" onclick="subvDocBasicos('${f.id}')">📋 ${acL('Añadir la lista básica de documentos de una entidad', 'Afegir la llista bàsica de documents d\'una entitat')}</button>` : ''}
+    </div>
+
+    <div class="sv-sec"><h4>✉️ ${acL('Mensaje al organismo (consulta)', 'Missatge a l\'organisme (consulta)')}</h4>
+      <textarea id="svf-msg" rows="7">${escAttr(msg)}</textarea>
+      <div class="sv-btns"><button class="sv-btn" onclick="subvGuardarMensaje('${f.id}')">💾 ${acL('Guardar mensaje', 'Desar missatge')}</button><button class="sv-btn" onclick="subvCopiar(document.getElementById('svf-msg').value, this)">📋 ${acL('Copiar mensaje', 'Copiar missatge')}</button></div>
+    </div>
+
+    <div class="sv-sec" id="sv-sol"><h4>✍️ ${acL('Solicitud según el formulario oficial', 'Sol·licitud segons el formulari oficial')}</h4>
+      ${subvSolicitudHtml(f, sol)}
+    </div>
+
+    <div class="sv-sec" style="background:var(--bg);border-radius:12px;padding:12px 14px;">
+      ${['presentada', 'concedida', 'denegada'].includes(f.estado)
+        ? `<div style="font-size:13.5px;">📨 ${acL('Presentada', 'Presentada')}${f.presentada_en ? ' ' + acL('el', 'el') + ' ' + subvFecha(f.presentada_en) : ''}${f.importe_solicitado ? ' · ' + acL('solicitado', 'sol·licitat') + ' <strong>' + subvEur(f.importe_solicitado) + '</strong>' : ''}${f.estado === 'concedida' ? ' · 🎉 ' + acL('concedido', 'concedit') + ' <strong>' + subvEur(f.importe_concedido) + '</strong>' : f.estado === 'denegada' ? ' · ' + acL('denegada', 'denegada') : ''}</div>
+           ${f.estado === 'presentada' ? `<div class="sv-btns"><button class="sv-btn pri" onclick="subvResolucion('${f.id}', 'concedida')">🎉 ${acL('Concedida', 'Concedida')}</button><button class="sv-btn" onclick="subvResolucion('${f.id}', 'denegada')">${acL('Denegada', 'Denegada')}</button></div>` : ''}`
+        : `<button class="sv-btn pri" onclick="subvMarcarPresentada('${f.id}')">✅ ${acL('Marcar como presentada', 'Marcar com a presentada')}</button>
+           <span class="subtle" style="font-size:12px;margin:0 0 0 6px;">${acL('Se para el aviso de plazo y queda en «Presentadas».', 'S\'atura l\'avís de termini i queda a «Presentades».')}</span>`}
+    </div>`;
+}
+function subvSolicitudHtml(f, sol){
+  const st = window.__subv, pdf = st.pdf[f.id];
+  const form = `
+    <p class="subtle" style="font-size:12.5px;margin:0 0 8px;">${acL('1) Dale a la IA el <strong>formulario oficial</strong> (PDF o texto copiado) o las bases. Si no le das nada, lo busca en la web oficial. 2) Revisa el proyecto. 3) La IA rellena cada apartado con el mismo número, nombre y límite que el original, con los datos de Logos.', '1) Dona a la IA el <strong>formulari oficial</strong> (PDF o text copiat) o les bases. Si no li dones res, el cerca a la web oficial. 2) Revisa el projecte. 3) La IA omple cada apartat amb el mateix número, nom i límit que l\'original, amb les dades de Logos.')}</p>
+    <label class="subtle" style="font-size:12.5px;font-weight:700;margin:0;">📄 ${acL('Formulario oficial o bases', 'Formulari oficial o bases')}</label>
+    <div class="sv-btns" style="margin:4px 0 6px;"><label class="sv-btn" style="cursor:pointer;">📎 ${pdf ? escAttr(pdf.nombre) + ' ✓' : acL('Subir el PDF del formulario', 'Pujar el PDF del formulari')}<input type="file" accept=".pdf,.txt,.md,application/pdf,text/plain" style="display:none;" onchange="subvArchivo('${f.id}', this)"></label>${pdf ? `<button class="link-btn" style="font-size:12px;" onclick="delete window.__subv.pdf['${f.id}'];subvSel('${f.id}')">${acL('Quitar PDF', 'Treure PDF')}</button>` : ''}</div>
+    <textarea id="svs-form" rows="4" placeholder="${acL('…o pega aquí el texto de los apartados del formulario (Ctrl+A, Ctrl+C en el PDF o en la web)', '…o enganxa aquí el text dels apartats del formulari (Ctrl+A, Ctrl+C al PDF o a la web)')}"></textarea>
+    <label class="subtle" style="font-size:12.5px;font-weight:700;margin:8px 0 0;display:block;">🧩 ${acL('Proyecto que presentamos', 'Projecte que presentem')}</label>
+    <textarea id="svs-proy" rows="4" placeholder="${acL('Qué haremos, para quién, con quién, cuánto cuesta… (si lo dejas vacío, usa el proyecto de referencia de «Datos de Logos»)', 'Què farem, per a qui, amb qui, quant costa… (si ho deixes buit, fa servir el projecte de referència de «Dades de Logos»)')}">${escAttr(f.proyecto || f.linea || '')}</textarea>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0;">
+      <label class="subtle" style="font-size:12.5px;margin:0;">${acL('Idioma', 'Idioma')} <select id="svs-idioma" style="width:auto;padding:5px 8px;font-size:12.5px;"><option value="auto">${acL('El del formulario', 'El del formulari')}</option><option value="es">Castellano</option><option value="ca">Català</option></select></label>
+      <label class="subtle" style="font-size:12.5px;margin:0;display:flex;gap:6px;align-items:center;"><input type="checkbox" id="svs-cifras" checked style="width:auto;margin:0;"> ${acL('Usar cifras de la intranet (12 meses)', 'Fer servir xifres de la intranet (12 mesos)')}</label>
+    </div>
+    <div class="sv-btns"><button class="sv-btn pri" id="svs-btn" onclick="subvRedactar('${f.id}')">✍️ ${sol ? acL('Volver a redactar con IA', 'Tornar a redactar amb IA') : acL('Redactar la solicitud con IA', 'Redactar la sol·licitud amb IA')}</button></div>
+    <div id="svs-est" class="subtle" style="font-size:12.5px;margin:0;"></div>`;
+  if(!sol) return form;
+  const e = sol.estructura || {};
+  return `
+    <div style="background:#F3F8F1;border:1.5px solid #CFE3C8;border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:13px;">
+      <strong>📋 ${acL('Borrador preparado', 'Esborrany preparat')}</strong> · ${sol.creado_en ? new Date(sol.creado_en).toLocaleString(TI[LANG_I].localeFecha, { dateStyle: 'short', timeStyle: 'short' }) : ''} · ${sol.apartados.length} ${acL('apartados', 'apartats')}${e.formulario_detectado === false ? ' · ⚠️ ' + acL('no se encontró un formulario: apartados sacados de las bases', 'no s\'ha trobat un formulari: apartats trets de les bases') : ''}
+      ${e.resumen ? `<div style="margin-top:6px;">${escAttr(e.resumen)}</div>` : ''}
+      ${e.criterios && e.criterios.length ? `<details style="margin-top:6px;"><summary style="cursor:pointer;font-weight:700;">⚖️ ${acL('Criterios de valoración', 'Criteris de valoració')} (${e.criterios.length})</summary><ul style="margin:6px 0 0;padding-left:18px;">${e.criterios.map(c => `<li>${escAttr(c)}</li>`).join('')}</ul></details>` : ''}
+      ${e.requisitos && e.requisitos.length ? `<details style="margin-top:4px;"><summary style="cursor:pointer;font-weight:700;">✔️ ${acL('Requisitos de la entidad', 'Requisits de l\'entitat')} (${e.requisitos.length})</summary><ul style="margin:6px 0 0;padding-left:18px;">${e.requisitos.map(c => `<li>${escAttr(c)}</li>`).join('')}</ul></details>` : ''}
+      ${e.gastos_elegibles ? `<div style="margin-top:4px;">💶 <strong>${acL('Gastos elegibles:', 'Despeses elegibles:')}</strong> ${escAttr(e.gastos_elegibles)}</div>` : ''}
+      ${e.fuentes && e.fuentes.length ? `<div style="margin-top:4px;">🔗 ${e.fuentes.map(x => `<a href="${escAttr(x.url)}" target="_blank" rel="noopener noreferrer">${escAttr(x.titulo)}</a>`).join(' · ')}</div>` : ''}
+    </div>
+    ${sol.apartados.map((a, i) => { const n = (a.texto || '').length, falta = /\[(COMPLETAR|VERIFICAR)/.test(a.texto || '');
+      return `<div class="sv-ap"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap;"><strong style="font-size:13.5px;">${a.n ? escAttr(a.n) + '. ' : ''}${escAttr(a.titulo)}</strong><span class="subtle" style="font-size:11.5px;margin:0;"><span id="svs-n-${i}">${n}</span> ${acL('caracteres', 'caràcters')}${a.limite ? ' · ' + acL('límite', 'límit') + ': ' + escAttr(a.limite) : ''}</span></div>
+        ${a.pide ? `<div class="subtle" style="font-size:12px;margin:2px 0 6px;">${escAttr(a.pide)}</div>` : ''}
+        <textarea id="svs-ap-${i}" rows="${Math.min(14, Math.max(4, Math.ceil(n / 90)))}" oninput="document.getElementById('svs-n-${i}').textContent=this.value.length">${escAttr(a.texto || '')}</textarea>
+        ${a.consejo ? `<div class="subtle" style="font-size:12px;margin:4px 0 0;">💡 ${escAttr(a.consejo)}</div>` : ''}${falta ? `<div style="font-size:12px;margin:4px 0 0;color:var(--ochre);font-weight:700;">⚠️ ${acL('Tiene datos por completar o verificar', 'Té dades per completar o verificar')}</div>` : ''}
+        <div class="sv-btns" style="margin:6px 0 0;"><button class="sv-btn" onclick="subvCopiar(document.getElementById('svs-ap-${i}').value, this)">📋 ${acL('Copiar', 'Copiar')}</button><button class="sv-btn" onclick="subvRehacer('${f.id}', ${i}, this)">↻ ${acL('Rehacer este apartado', 'Refer aquest apartat')}</button></div></div>`; }).join('')}
+    <div class="sv-btns"><button class="sv-btn pri" onclick="subvGuardarTextos('${f.id}')">💾 ${acL('Guardar cambios', 'Desar canvis')}</button><button class="sv-btn" onclick="subvCopiar(subvTextoCompleto('${f.id}'), this)">📋 ${acL('Copiar todo', 'Copiar-ho tot')}</button><button class="sv-btn" onclick="subvImprimir('${f.id}')">🖨️ ${acL('Imprimir / PDF', 'Imprimir / PDF')}</button></div>
+    <details style="margin-top:10px;"><summary class="link-btn" style="font-size:12.5px;cursor:pointer;">✍️ ${acL('Volver a preparar con otro formulario o proyecto', 'Tornar a preparar amb un altre formulari o projecte')}</summary><div style="margin-top:8px;">${form}</div></details>`;
+}
+async function subvCopiar(t, btn){
+  const ok = () => { if(btn){ const o = btn.innerHTML; btn.innerHTML = '✅ ' + acL('Copiado', 'Copiat'); setTimeout(() => { btn.innerHTML = o; }, 1500); } };
+  try { await navigator.clipboard.writeText(String(t || '')); ok(); } catch(e){ prompt(acL('Copia el texto:', 'Copia el text:'), String(t || '')); }
+}
+function subvFila(id){ return window.__subv.filas.find(x => x.id === id); }
+async function subvGuardar(id, cambios, repintarTodo){
+  const { data, error } = await sb.from('subvenciones').update(cambios).eq('id', id).select();
+  if(error){ alert(/column|schema cache/i.test(error.message || '') ? acL('Falta ejecutar el SQL-100 en Supabase.', 'Cal executar l\'SQL-100 a Supabase.') : error.message); return false; }
+  if(!data || !data.length){ alert(acL('No se pudo guardar el cambio (permisos).', 'No s\'ha pogut desar el canvi (permisos).')); return false; }
+  const i = window.__subv.filas.findIndex(x => x.id === id); if(i >= 0) window.__subv.filas[i] = data[0];
+  if(repintarTodo) await renderSubvencionesScreen(); else subvSel(id);
+  return true;
+}
+async function subvGuardarFicha(id){
+  const f = subvFila(id), v = k => ((document.getElementById(k) || {}).value || '').trim();
+  const titulo = v('svf-titulo'); if(!titulo){ alert(acL('Falta el nombre.', 'Falta el nom.')); return; }
+  const url = v('svf-url'); if(url && !formacionUrlValida(url)){ alert(acL('El enlace debe empezar por https://', 'L\'enllaç ha de començar per https://')); return; }
+  const mail = v('svf-mail'); if(mail && !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(mail)){ alert(acL('El correo no es válido.', 'El correu no és vàlid.')); return; }
+  const c = { titulo, organismo: v('svf-org') || null, categoria: v('svf-cat') || null, url: url || null, fecha_apertura: v('svf-ap') || null, fecha_limite: v('svf-lim') || null, importe: v('svf-imp') || null, linea: v('svf-linea') || null, notas: v('svf-notas') || null, contacto_email: mail || null, contacto_tel: v('svf-tel') || null };
+  if((f.fecha_limite || null) !== c.fecha_limite) c.avisos_enviados = [];
+  await subvGuardar(id, c, true);
+}
+async function subvGuardarPasos(id){ await subvGuardar(id, { pasos: ((document.getElementById('svf-pasos') || {}).value || '').split('\n').map(s => s.replace(/^\s*\d+[.)-]\s*/, '').trim()).filter(Boolean) }); }
+async function subvGuardarMensaje(id){ await subvGuardar(id, { mensaje: (document.getElementById('svf-msg') || {}).value || null }); }
+async function subvDocMarcar(id, i, ok){ const d = subvDocs(subvFila(id)); if(d[i]) d[i].ok = ok; await subvGuardar(id, { documentos: d }); }
+async function subvDocQuitar(id, i){ const d = subvDocs(subvFila(id)); d.splice(i, 1); await subvGuardar(id, { documentos: d }); }
+async function subvDocAnadir(id){ const t = ((document.getElementById('svf-doc') || {}).value || '').trim(); if(!t) return; const d = subvDocs(subvFila(id)); d.push({ t, ok: false }); await subvGuardar(id, { documentos: d }); }
+async function subvDocBasicos(id){ const d = subvDocs(subvFila(id)); SUBV_DOCS_BASICOS.forEach(t => { if(!d.some(x => subvNorm(x.t) === subvNorm(t))) d.push({ t, ok: false }); }); await subvGuardar(id, { documentos: d }); }
+async function subvMarcarPresentada(id){
+  const f = subvFila(id);
+  const imp = prompt(acL('¿Cuánto se ha solicitado? (en euros, opcional)', 'Quant s\'ha sol·licitat? (en euros, opcional)'), f.importe_solicitado || '');
+  if(imp === null) return;
+  const n = parseFloat(String(imp).replace(/\./g, '').replace(',', '.'));
+  await subvGuardar(id, { estado: 'presentada', presentada_en: isoLocal(), importe_solicitado: isNaN(n) ? null : n }, true);
+}
+async function subvResolucion(id, estado){
+  const c = { estado };
+  if(estado === 'concedida'){ const imp = prompt(acL('¿Cuánto se ha concedido? (euros)', 'Quant s\'ha concedit? (euros)'), ''); if(imp === null) return; const n = parseFloat(String(imp).replace(/\./g, '').replace(',', '.')); c.importe_concedido = isNaN(n) ? null : n; }
+  await subvGuardar(id, c, true);
+}
+function subvArchivo(id, input){
+  const file = input.files && input.files[0]; if(!file) return;
+  if(/\.pdf$/i.test(file.name) || file.type === 'application/pdf'){
+    if(file.size > 6 * 1024 * 1024){ alert(acL('El PDF pesa más de 6 MB. Copia y pega el texto de los apartados.', 'El PDF pesa més de 6 MB. Copia i enganxa el text dels apartats.')); return; }
+    const r = new FileReader(); r.onload = () => { window.__subv.pdf[id] = { nombre: file.name, data: String(r.result).split(',')[1] }; const t = document.getElementById('svs-form') ? document.getElementById('svs-form').value : ''; const p = document.getElementById('svs-proy') ? document.getElementById('svs-proy').value : null; subvSel(id); if(t) document.getElementById('svs-form').value = t; if(p !== null) document.getElementById('svs-proy').value = p; }; r.readAsDataURL(file);
+  } else { const r = new FileReader(); r.onload = () => { const el = document.getElementById('svs-form'); if(el) el.value = String(r.result).slice(0, 60000); }; r.readAsText(file); }
+}
+async function subvPerfilTexto(){ const { data } = await sb.from('subvenciones_perfil').select('texto').eq('id', 1).maybeSingle(); return (data && data.texto) || ''; }
+async function subvCifras(){
+  const hoy = new Date(), d = new Date(hoy); d.setFullYear(d.getFullYear() - 1);
+  const a = await impActividad(d.toISOString().slice(0, 10), hoy.toISOString().slice(0, 10));
+  const c = {}; if(a.atenciones != null) c.atenciones_ultimos_12_meses = a.atenciones; if(a.actuaciones != null) c.actuaciones_ultimos_12_meses = a.actuaciones; if(a.tramites != null) c.tramites_ultimos_12_meses = a.tramites; if(a.certificados != null) c.certificados_de_formacion_12_meses = a.certificados;
+  return Object.keys(c).length ? c : null;
+}
+async function subvRedactar(id){
+  const f = subvFila(id); if(!f) return;
+  if(!window.__subv.sql100){ alert(acL('Primero hay que ejecutar el SQL-100 en Supabase.', 'Primer cal executar l\'SQL-100 a Supabase.')); return; }
+  const est = document.getElementById('svs-est'), btn = document.getElementById('svs-btn');
+  const pon = t => { if(est) est.innerHTML = t; };
+  const formulario = ((document.getElementById('svs-form') || {}).value || '').trim(), proyecto = ((document.getElementById('svs-proy') || {}).value || '').trim();
+  const idiomaSel = (document.getElementById('svs-idioma') || {}).value || 'auto', conCifras = !!(document.getElementById('svs-cifras') || {}).checked;
+  const pdf = window.__subv.pdf[id];
+  if(!formulario && !pdf && !f.url){ alert(acL('Sube el PDF del formulario, pega su texto o pon la web oficial en «Editar los datos».', 'Puja el PDF del formulari, enganxa\'n el text o posa la web oficial a «Editar les dades».')); return; }
+  if(btn) btn.disabled = true;
+  try {
+    pon('⏳ ' + acL('Preparando los datos de Logos…', 'Preparant les dades de Logos…'));
+    const perfil = await subvPerfilTexto();
+    if(proyecto !== (f.proyecto || '')) await sb.from('subvenciones').update({ proyecto: proyecto || null }).eq('id', id);
+    const cifras = conCifras ? await subvCifras() : null;
+    const conv = { titulo: f.titulo, organismo: f.organismo, url: f.url, importe: f.importe };
+    pon('⏳ ' + (formulario || pdf ? acL('Leyendo el formulario oficial… (1 minuto aprox.)', 'Llegint el formulari oficial… (1 minut aprox.)') : acL('Buscando las bases y el formulario en la web oficial… (1-2 minutos)', 'Cercant les bases i el formulari a la web oficial… (1-2 minuts)')));
+    const e = await canalIaLlamar({ accion: 'subv_estructura', conv, formulario, pdf: pdf ? pdf.data : '' });
+    if(!e.apartados || !e.apartados.length) throw new Error(acL('No he encontrado los apartados del formulario. Sube el PDF oficial o pega su texto.', 'No he trobat els apartats del formulari. Puja el PDF oficial o enganxa\'n el text.'));
+    const idioma = idiomaSel === 'auto' ? (e.idioma_formulario || 'es') : idiomaSel;
+    const aps = e.apartados.map(a => Object.assign({}, a, { texto: '', consejo: '' }));
+    const guardarSol = async () => {
+      const cambios = { solicitud: { creado_en: new Date().toISOString(), idioma, estructura: { resumen: e.resumen, criterios: e.criterios, requisitos: e.requisitos, gastos_elegibles: e.gastos_elegibles, plazo: e.plazo, importe_max: e.importe_max, formulario_detectado: e.formulario_detectado, fuentes: e.fuentes }, apartados: aps } };
+      const cur = subvFila(id) || f;
+      if(!cur.contacto_email && e.contacto_email) cambios.contacto_email = e.contacto_email;
+      if(!cur.contacto_tel && e.contacto_tel) cambios.contacto_tel = e.contacto_tel;
+      if(!subvPasos(cur).length && e.pasos && e.pasos.length) cambios.pasos = e.pasos;
+      if(e.documentos && e.documentos.length){ const d = subvDocs(cur); e.documentos.forEach(t => { if(!d.some(x => subvPareceIgual(x.t, t))) d.push({ t, ok: false }); }); cambios.documentos = d; }
+      const { data, error } = await sb.from('subvenciones').update(cambios).eq('id', id).select();
+      if(error) throw error;
+      const i = window.__subv.filas.findIndex(x => x.id === id); if(i >= 0 && data && data[0]) window.__subv.filas[i] = data[0];
+    };
+    const TROZO = 3;
+    for(let k = 0; k < aps.length; k += TROZO){
+      const lote = aps.slice(k, k + TROZO);
+      pon(`⏳ ${acL('Redactando apartados', 'Redactant apartats')} ${k + 1}–${Math.min(k + TROZO, aps.length)} ${acL('de', 'de')} ${aps.length}…`);
+      try {
+        const r = await canalIaLlamar({ accion: 'subv_apartados', conv, estructura: { resumen: e.resumen, criterios: e.criterios, gastos_elegibles: e.gastos_elegibles }, apartados: lote.map(a => ({ n: a.n, titulo: a.titulo, limite: a.limite, pide: a.pide })), perfil, proyecto, cifras, idioma });
+        (r.apartados || []).forEach((x, j) => { const a = lote.find(y => y.n && y.n === x.n) || lote[j]; if(a){ a.texto = x.texto || ''; a.consejo = x.consejo || ''; } });
+      } catch(err){ await guardarSol(); throw new Error(acL(`Se ha parado en los apartados ${k + 1}–${Math.min(k + TROZO, aps.length)}: ${err.message}. Lo hecho está guardado; usa «Rehacer este apartado» en los que estén vacíos.`, `S'ha aturat als apartats ${k + 1}–${Math.min(k + TROZO, aps.length)}: ${err.message}. El que s'ha fet està desat; fes servir «Refer aquest apartat» als que estiguin buits.`)); }
+    }
+    await guardarSol();
+    subvSel(id);
+    const s = document.getElementById('sv-sol'); if(s) s.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch(err){
+    subvSel(id);
+    const e2 = document.getElementById('svs-est'); if(e2) e2.innerHTML = '<span style="color:var(--alert);">⚠️ ' + escAttr(err.message || String(err)) + '</span>';
+  } finally { const b = document.getElementById('svs-btn'); if(b) b.disabled = false; }
+}
+function subvTextosEditados(id){ const f = subvFila(id); return (f.solicitud.apartados || []).map((a, i) => Object.assign({}, a, { texto: (document.getElementById('svs-ap-' + i) || {}).value ?? a.texto })); }
+async function subvGuardarTextos(id){ const f = subvFila(id); await subvGuardar(id, { solicitud: Object.assign({}, f.solicitud, { apartados: subvTextosEditados(id) }) }); }
+async function subvRehacer(id, i, btn){
+  const f = subvFila(id), sol = f.solicitud; if(!sol) return;
+  const aps = subvTextosEditados(id), a = aps[i]; if(btn){ btn.disabled = true; btn.textContent = '⏳ ' + acL('Redactando…', 'Redactant…'); }
+  try {
+    const perfil = await subvPerfilTexto(), e = sol.estructura || {};
+    const r = await canalIaLlamar({ accion: 'subv_apartados', conv: { titulo: f.titulo, organismo: f.organismo }, estructura: { resumen: e.resumen, criterios: e.criterios, gastos_elegibles: e.gastos_elegibles }, apartados: [{ n: a.n, titulo: a.titulo, limite: a.limite, pide: a.pide }], perfil, proyecto: f.proyecto || f.linea || '', cifras: await subvCifras(), idioma: sol.idioma || 'es' });
+    const x = (r.apartados || [])[0]; if(x){ a.texto = x.texto || a.texto; a.consejo = x.consejo || a.consejo; }
+    await subvGuardar(id, { solicitud: Object.assign({}, sol, { apartados: aps }) });
+  } catch(err){ alert('⚠️ ' + (err.message || err)); if(btn){ btn.disabled = false; btn.textContent = '↻ ' + acL('Rehacer este apartado', 'Refer aquest apartat'); } }
+}
+function subvTextoCompleto(id){ const f = subvFila(id); return f.titulo + '\n' + (f.organismo || '') + '\n\n' + subvTextosEditados(id).map(a => `${a.n ? a.n + '. ' : ''}${a.titulo}\n${a.texto || ''}`).join('\n\n'); }
+function subvImprimir(id){
+  const f = subvFila(id), aps = subvTextosEditados(id), w = window.open('', '_blank'); if(!w){ alert(acL('Permite las ventanas emergentes para imprimir.', 'Permet les finestres emergents per imprimir.')); return; }
+  const esc = s => String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(f.titulo)}</title><style>body{font-family:Georgia,serif;max-width:760px;margin:30px auto;padding:0 20px;color:#1B2A44;line-height:1.55}h1{font-size:20px}h2{font-size:15px;margin:22px 0 6px;border-bottom:1px solid #ccd;padding-bottom:3px}p{white-space:pre-wrap;margin:0}.s{color:#5D6B82;font-size:13px}.l{color:#5D6B82;font-size:11px;font-weight:normal}</style></head><body>
+    <h1>${esc(f.titulo)}</h1><div class="s">${esc(f.organismo)} · ${acL('Borrador de solicitud de la Associació Logos', 'Esborrany de sol·licitud de l\'Associació Logos')} · ${new Date().toLocaleDateString(TI[LANG_I].localeFecha)}</div>
+    ${aps.map(a => `<h2>${esc(a.n ? a.n + '. ' : '')}${esc(a.titulo)} <span class="l">${(a.texto || '').length} ${acL('caracteres', 'caràcters')}${a.limite ? ' · ' + esc(a.limite) : ''}</span></h2><p>${esc(a.texto)}</p>`).join('')}
+    <script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close();
+}
+
+// ===== Buscar próximas convocatorias con IA =====
+function subvFuentesOrdenadas(fuentes){ return fuentes.filter(f => f.activo !== false && f.url).slice().sort((a, b) => (/serveiocupacio/i.test(b.url) ? 1 : 0) - (/serveiocupacio/i.test(a.url) ? 1 : 0)); }
+function subvBuscarHtml(fuentes, conv){
+  const st = window.__subv;
+  if(!st.ia){ try { const g = JSON.parse(localStorage.getItem('subv-ia-ultima') || 'null'); if(g && g.convocatorias) st.ia = g; } catch(e){} }
+  const lista = subvFuentesOrdenadas(fuentes).slice(0, 15);
+  const res = st.ia;
+  const tarjeta = (c, i) => {
+    const ya = conv.find(f => subvPareceIgual(f.titulo, c.titulo) || (c.url && f.url === c.url));
+    const plazo = c.fecha_limite ? subvFecha(c.fecha_limite) : (c.plazo_texto || acL('sin fecha confirmada', 'sense data confirmada'));
+    return `<div class="sv-res"${c.descartada ? ' style="opacity:.45;"' : ''}>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;"><span class="chip" style="font-size:11px;">${acL(...(SUBV_IA_ESTADO[c.estado] || SUBV_IA_ESTADO.prevista))}</span><span class="chip ${c.prioridad === 'alta' ? 'gold' : ''}" style="font-size:11px;">${acL('Prioridad', 'Prioritat')} ${escAttr(c.prioridad)}</span>${c.categoria ? `<span class="chip" style="font-size:11px;">${escAttr(c.categoria)}</span>` : ''}</div>
+      <strong>${escAttr(c.titulo)}</strong><div class="subtle" style="font-size:12.5px;margin:2px 0;">${escAttr(c.organismo || '')}${c.importe ? ' · ' + escAttr(c.importe) : ''}</div>
+      <div style="font-size:13px;">📅 ${c.fecha_apertura ? acL('Abre', 'Obre') + ' ' + subvFecha(c.fecha_apertura) + ' · ' : ''}${acL('Plazo:', 'Termini:')} <strong>${escAttr(plazo)}</strong></div>
+      ${c.encaje ? `<div style="font-size:13px;margin-top:4px;">🎯 ${escAttr(c.encaje)}</div>` : ''}${c.requisitos ? `<div class="subtle" style="font-size:12.5px;margin:4px 0 0;">✔️ ${escAttr(c.requisitos)}</div>` : ''}
+      <div class="sv-btns">${ya ? `<button class="sv-btn" onclick="window.__subv.sel='${ya.id}';renderSubvencionesScreen('panel')">✅ ${acL('Ya apuntada: abrir', 'Ja apuntada: obrir')}</button>` : `<button class="sv-btn pri" onclick="subvIaApuntar(${i})">➕ ${acL('Apuntar', 'Apuntar')}</button>`}
+        <a class="sv-btn" href="${escAttr(c.url)}" target="_blank" rel="noopener noreferrer">🌐 ${acL('Ver la fuente', 'Veure la font')} ↗</a>${!ya && !c.descartada ? `<button class="sv-btn" onclick="window.__subv.ia.convocatorias[${i}].descartada=true;renderSubvencionesScreen('buscar')">${acL('Descartar', 'Descartar')}</button>` : ''}</div></div>`; };
+  return `
+    <div class="panel-card" style="margin-bottom:14px;">
+      <h3 style="margin-top:0;">🔎 ${acL('Buscar próximas convocatorias con IA', 'Cercar properes convocatòries amb IA')}</h3>
+      <p class="subtle" style="font-size:12.5px;margin:0 0 10px;">${acL('La IA revisa estas páginas en este orden (empieza por el SOC) y busca convocatorias abiertas o que se abrirán en los próximos 6 meses. Solo propone: tú decides cuáles se apuntan. Comprueba siempre la fecha en la web oficial.', 'La IA revisa aquestes pàgines en aquest ordre (comença pel SOC) i cerca convocatòries obertes o que s\'obriran en els propers 6 mesos. Només proposa: tu decideixes quines s\'apunten. Comprova sempre la data a la web oficial.')}</p>
+      <label class="subtle" style="font-size:12.5px;font-weight:700;margin:0;">${acL('¿Qué buscamos?', 'Què cerquem?')}</label>
+      <textarea id="svb-tema" rows="2" style="width:100%;margin:4px 0 10px;">${escAttr(SUBV_TEMA_IA)}</textarea>
+      <div style="display:grid;gap:4px;margin-bottom:10px;">${lista.map((f, i) => `<label style="display:flex;gap:8px;align-items:center;font-size:13px;"><input type="checkbox" class="svb-f" value="${i}" checked style="width:auto;margin:0;"><span><strong>${i + 1}.</strong> ${escAttr(f.titulo)} <span class="subtle" style="font-size:11.5px;margin:0;">${escAttr(f.organismo || '')}</span></span></label>`).join('') || `<div class="empty-note">${acL('No hay páginas en la lista. Añádelas en «Páginas que vigilamos».', 'No hi ha pàgines a la llista. Afegeix-les a «Pàgines que vigilem».')}</div>`}</div>
+      <div class="sv-btns"><button class="sv-btn pri" id="svb-btn" onclick="subvIaBuscar()">🔎 ${acL('Buscar ahora', 'Cercar ara')}</button><span id="svb-est" class="subtle" style="font-size:12.5px;margin:0;align-self:center;"></span></div>
+    </div>
+    ${res ? `<h3 style="margin:0 0 8px;">${acL('Resultados', 'Resultats')} <span class="chip">${res.convocatorias.length}</span> <span class="subtle" style="font-size:12px;font-weight:400;margin:0;">${res.fecha ? new Date(res.fecha).toLocaleString(TI[LANG_I].localeFecha, { dateStyle: 'short', timeStyle: 'short' }) : ''}</span></h3>
+      ${res.nota ? `<p class="subtle" style="font-size:12.5px;margin:0 0 10px;">💬 ${escAttr(res.nota)}</p>` : ''}
+      ${res.convocatorias.length ? res.convocatorias.map(tarjeta).join('') : `<div class="empty-note">${acL('No ha encontrado convocatorias nuevas que encajen. Prueba con otro enfoque o más páginas.', 'No ha trobat convocatòries noves que encaixin. Prova amb un altre enfocament o més pàgines.')}</div>`}` : ''}`;
+}
+async function subvIaBuscar(){
+  const st = window.__subv, lista = subvFuentesOrdenadas(st.filas.filter(f => f.tipo === 'fuente')).slice(0, 15);
+  const elegidas = [...document.querySelectorAll('.svb-f:checked')].map(x => lista[+x.value]).filter(Boolean);
+  const btn = document.getElementById('svb-btn'), est = document.getElementById('svb-est');
+  if(btn) btn.disabled = true; if(est) est.textContent = '⏳ ' + acL('Buscando… suele tardar 1-2 minutos. Puedes seguir en otra pestaña.', 'Cercant… sol trigar 1-2 minuts. Pots continuar en una altra pestanya.');
+  try {
+    const r = await canalIaLlamar({ accion: 'subv_buscar', tema: (document.getElementById('svb-tema') || {}).value || SUBV_TEMA_IA, fuentes: elegidas.map(f => ({ titulo: f.titulo, url: f.url })), ya: st.filas.filter(f => f.tipo === 'convocatoria' && !['cerrada', 'denegada'].includes(f.estado)).map(f => f.titulo) });
+    st.ia = { fecha: new Date().toISOString(), convocatorias: r.convocatorias || [], nota: r.nota || '' };
+    try { localStorage.setItem('subv-ia-ultima', JSON.stringify(st.ia)); } catch(e){}
+    const hoy = isoLocal(); for(const f of elegidas) await sb.from('subvenciones').update({ ultima_revision: hoy }).eq('id', f.id);
+    renderSubvencionesScreen('buscar');
+  } catch(err){ if(est) est.innerHTML = '<span style="color:var(--alert);">⚠️ ' + escAttr(err.message || String(err)) + '</span>'; if(btn) btn.disabled = false; }
+}
+async function subvIaApuntar(i){
+  const c = window.__subv.ia.convocatorias[i]; if(!c) return;
+  const notas = [c.plazo_texto, c.requisitos, '🤖 ' + acL('Encontrada con IA: comprobar en la web oficial', 'Trobada amb IA: comprovar a la web oficial')].filter(Boolean).join(' · ');
+  if(await subvInsertarSeguro({ tipo: 'convocatoria', titulo: c.titulo, organismo: c.organismo || null, url: c.url || null, categoria: c.categoria || null, importe: c.importe || null, fecha_apertura: c.fecha_apertura || null, fecha_limite: c.fecha_limite || null, linea: c.encaje || null, notas, estado: c.estado === 'abierta' ? 'abierta' : 'seguimiento', origen: 'ia' })) renderSubvencionesScreen('buscar');
+}
+
+// ===== Páginas que vigilamos =====
+function subvFuentesHtml(fuentes){
+  const tarjeta = f => { const ult = f.ultima_revision; const dias = ult ? Math.round((new Date() - new Date(ult + 'T00:00:00')) / 86400000) : null; const toca = dias === null || dias >= (f.revisar_cada_dias || 15); return `<div class="panel-card" style="margin:0 0 8px;padding:14px 18px;${f.activo === false ? 'opacity:.55;' : ''}">
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:flex-start;">
         <div style="min-width:0;"><strong>${escAttr(f.titulo)}</strong><div class="subtle" style="font-size:12.5px;margin:2px 0 0;">${escAttr(f.organismo || '')}</div>
           <div class="subtle" style="font-size:12px;margin:2px 0 0;">${ult ? acL('Última revisión:', 'Última revisió:') + ' ' + subvFecha(ult) : acL('Todavía sin revisar', 'Encara sense revisar')} <span class="chip ${toca ? 'gold' : ''}" style="font-size:11px;">${toca ? acL('toca revisar', 'toca revisar') : acL('al día', 'al dia')}</span></div></div>
         <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          ${f.url ? `<a class="primary-btn" style="width:auto;margin:0;padding:6px 12px;text-decoration:none;font-size:12.5px;" href="${escAttr(f.url)}" target="_blank" rel="noopener noreferrer">${acL('Abrir', 'Obrir')} ↗</a>` : ''}
+          ${f.url ? `<a class="sv-btn" href="${escAttr(f.url)}" target="_blank" rel="noopener noreferrer">${acL('Abrir', 'Obrir')} ↗</a>` : ''}
           <button class="link-btn" style="font-size:12px;" onclick="subvRevisada('${f.id}')">✔ ${acL('Revisada hoy', 'Revisada avui')}</button>
           <button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="subvBorrar('${f.id}')">${acL('Borrar', 'Esborrar')}</button></span></div></div>`; };
-  cont.innerHTML = `
-    <h2 class="screen-title">💶 ${acL('Subvenciones', 'Subvencions')}</h2>
-    <p class="subtle" style="margin:0 0 14px;">${acL('Para la dirección y Recursos Humanos. Aquí se apuntan las convocatorias y se avisa cuando se acerca un plazo o hace tiempo que no se mira una página. Los avisos también salen en el Inicio.', 'Per a la direcció i Recursos Humans. Aquí s\'apunten les convocatòries i s\'avisa quan s\'acosta un termini o fa temps que no es mira una pàgina. Els avisos també surten a l\'Inici.')}</p>
-    <div class="panel-card" style="border-color:var(--ochre);margin-bottom:14px;"><h3 style="margin-top:0;">🔔 ${acL('Avisos', 'Avisos')}</h3>
-      <p class="subtle" style="font-size:12.5px;margin:0 0 10px;">⏰ ${acL(`Recordatorios automáticos de cada convocatoria con fecha límite: <strong>5 meses, 1 mes y 1 semana antes</strong>. Salen aquí y en el Inicio, y llegan por correo a <strong>${SUBV_CORREO_AVISOS}</strong> y a <strong>Recursos Humanos</strong>.`, `Recordatoris automàtics de cada convocatòria amb data límit: <strong>5 mesos, 1 mes i 1 setmana abans</strong>. Surten aquí i a l'Inici, i arriben per correu a <strong>${SUBV_CORREO_AVISOS}</strong> i a <strong>Recursos Humans</strong>.`)}</p>
-      ${subvAvisosHtml(av)}
-      ${IS_ADMIN ? `<div style="margin-top:10px;"><button class="link-btn" id="subv-prueba-btn" style="font-size:12.5px;" onclick="subvCorreoPrueba()">📧 ${acL('Enviar correo de prueba', 'Enviar correu de prova')}</button></div>` : ''}</div>
-    <h3>${acL('Convocatorias', 'Convocatòries')} <span class="chip">${conv.length}</span></h3>
-    ${conv.length ? conv.map(tarjetaConv).join('') : `<div class="empty-note">${acL('Todavía no hay convocatorias apuntadas.', 'Encara no hi ha convocatòries apuntades.')}</div>`}
-    <div class="panel-card" style="margin:10px 0 18px;background:var(--ochre-soft);border-color:var(--ochre);">
-      <h3 style="margin-top:0;color:#7A4A1F;">➕ ${acL('Apuntar una convocatoria', 'Apuntar una convocatòria')}</h3>
-      <input type="text" id="sv-titulo" placeholder="${acL('Nombre de la convocatoria', 'Nom de la convocatòria')}" style="margin-bottom:6px;">
-      <input type="text" id="sv-org" placeholder="${acL('Organismo (Generalitat, Diputació, SOC…)', 'Organisme (Generalitat, Diputació, SOC…)')}" style="margin-bottom:6px;">
-      <input type="url" id="sv-url" placeholder="https://… (${acL('enlace, opcional', 'enllaç, opcional')})" style="margin-bottom:6px;">
-      <label class="subtle" style="font-size:12px;">${acL('Fecha límite para presentarla', 'Data límit per presentar-la')}</label>
-      <input type="date" id="sv-limite" style="margin-bottom:6px;">
-      <input type="text" id="sv-importe" placeholder="${acL('Importe (opcional)', 'Import (opcional)')}" style="margin-bottom:6px;">
-      <input type="text" id="sv-notas" placeholder="${acL('Notas (opcional)', 'Notes (opcional)')}" style="margin-bottom:8px;">
-      <button class="primary-btn" style="width:auto;margin:0;" onclick="subvAnadir()">${acL('Añadir', 'Afegir')}</button></div>
-    <h3>${acL('Páginas que vigilamos', 'Pàgines que vigilem')} <span class="chip">${fuentes.length}</span></h3>
-    <p class="subtle" style="margin:0 0 10px;font-size:12.5px;">${acL('Cada una se marca como "revisada" cuando alguien la mira. Si pasan 15 días, sale un aviso.', 'Cadascuna es marca com a "revisada" quan algú la mira. Si passen 15 dies, surt un avís.')}</p>
-    ${fuentes.map(tarjetaFuente).join('')}
-    <div class="panel-card" style="margin-top:10px;"><div class="field"><label>${acL('Añadir una página para vigilar', 'Afegir una pàgina per vigilar')}</label>
-      <input type="text" id="sv-f-titulo" placeholder="${acL('Título', 'Títol')}" style="margin-bottom:6px;"><input type="text" id="sv-f-org" placeholder="${acL('Organismo', 'Organisme')}" style="margin-bottom:6px;"><input type="url" id="sv-f-url" placeholder="https://…"></div>
-      <button class="primary-btn" style="width:auto;margin:0;" onclick="subvAnadirFuente()">${acL('Añadir página', 'Afegir pàgina')}</button></div>`;
+  return `
+    <p class="subtle" style="margin:0 0 10px;font-size:12.5px;">${acL('Son las páginas que la IA revisa al buscar (en este orden) y las que miramos a mano. Si pasan 15 días sin revisarse, sale un aviso.', 'Són les pàgines que la IA revisa en cercar (en aquest ordre) i les que mirem a mà. Si passen 15 dies sense revisar-se, surt un avís.')}</p>
+    ${subvFuentesOrdenadas(fuentes).concat(fuentes.filter(f => f.activo === false || !f.url)).map(tarjeta).join('')}
+    <div class="panel-card" style="margin-top:10px;padding:14px 18px;">
+      <h3 style="margin:0 0 8px;font-size:15px;">➕ ${acL('Añadir páginas', 'Afegir pàgines')}</h3>
+      <p class="subtle" style="font-size:12.5px;margin:0 0 6px;">${acL('Pega la lista (por ejemplo, la de David): una página por línea, «Título | https://…» o solo el enlace.', 'Enganxa la llista (per exemple, la del David): una pàgina per línia, «Títol | https://…» o només l\'enllaç.')}</p>
+      <textarea id="sv-f-lista" rows="5" style="width:100%;" placeholder="SOC · Ajuts i subvencions | https://serveiocupacio.gencat.cat/ca/entitats/ajuts-i-subvencions/"></textarea>
+      <div class="sv-btns"><button class="sv-btn pri" onclick="subvAnadirFuentes()">${acL('Añadir a la lista', 'Afegir a la llista')}</button></div>
+    </div>`;
+}
+async function subvAnadirFuentes(){
+  const lineas = ((document.getElementById('sv-f-lista') || {}).value || '').split('\n').map(l => l.trim()).filter(Boolean);
+  const ya = new Set(window.__subv.filas.filter(f => f.tipo === 'fuente').map(f => String(f.url || '').replace(/\/+$/, '').toLowerCase()));
+  const filas = [], malas = [];
+  lineas.forEach(l => {
+    const m = l.match(/https?:\/\/\S+/i); if(!m || !formacionUrlValida(m[0])){ malas.push(l); return; }
+    const url = m[0].replace(/[),.;]+$/, ''), clave = url.replace(/\/+$/, '').toLowerCase(); if(ya.has(clave)) return; ya.add(clave);
+    let titulo = l.replace(m[0], '').replace(/[|·\-–:]+\s*$/, '').replace(/^\s*[|·\-–:]+/, '').trim();
+    if(!titulo){ try { titulo = new URL(url).hostname.replace(/^www\./, ''); } catch(e){ titulo = url; } }
+    filas.push({ tipo: 'fuente', titulo: titulo.slice(0, 200), url, creado_por_email: CURRENT_USER.email });
+  });
+  if(!filas.length){ alert(malas.length ? acL('No he encontrado enlaces válidos (deben empezar por https://).', 'No he trobat enllaços vàlids (han de començar per https://).') : acL('Esas páginas ya están en la lista.', 'Aquestes pàgines ja són a la llista.')); return; }
+  const { error } = await sb.from('subvenciones').insert(filas);
+  if(error){ alert(error.message); return; }
+  alert(acL(`Añadidas ${filas.length} página(s).`, `Afegides ${filas.length} pàgina(es).`) + (malas.length ? '\n' + acL('Sin enlace válido:', 'Sense enllaç vàlid:') + ' ' + malas.length : ''));
+  renderSubvencionesScreen('fuentes');
+}
+
+// ===== Nuestra red =====
+function subvRedHtml(red){
+  if(!window.__subv.sql100) return `<div class="empty-note">${acL('Ejecuta el SQL-100 en Supabase para ver el mapa de la red.', 'Executa l\'SQL-100 a Supabase per veure el mapa de la xarxa.')}</div>`;
+  const grupos = {}; red.forEach(f => { const k = f.papel || acL('Otros', 'Altres'); (grupos[k] = grupos[k] || []).push(f); });
+  return `
+    <p class="subtle" style="margin:0 0 10px;font-size:12.5px;">${acL('Las entidades de logostgn.cat que sirven para «Innovación y talento al servicio de la ciudadanía y las personas vulnerables»: quién financia, quién acompaña y quién puede ser el primer cliente.', 'Les entitats de logostgn.cat que serveixen per a «Innovació i talent al servei de la ciutadania i les persones vulnerables»: qui finança, qui acompanya i qui pot ser el primer client.')}</p>
+    ${Object.keys(grupos).map(k => `<div class="sv-cat" style="margin:12px 2px 6px;">${escAttr(k)} · ${grupos[k].length}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;">${grupos[k].map(f => `<div class="sv-res" style="margin:0;"><strong>${escAttr(f.titulo)}</strong>
+        ${f.linea ? `<div style="font-size:13px;margin-top:4px;">🎯 ${escAttr(f.linea)}</div>` : ''}${f.notas ? `<div class="subtle" style="font-size:12px;margin:4px 0 0;">📅 ${escAttr(f.notas)}</div>` : ''}
+        <div class="sv-btns" style="margin:6px 0 0;">${f.url ? `<a class="sv-btn" href="${escAttr(f.url)}" target="_blank" rel="noopener noreferrer">🌐 ${acL('Web', 'Web')} ↗</a>` : ''}<button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="subvBorrar('${f.id}')">${acL('Borrar', 'Esborrar')}</button></div></div>`).join('')}</div>`).join('') || `<div class="empty-note">${acL('Todavía no hay entidades.', 'Encara no hi ha entitats.')}</div>`}
+    <details class="panel-card" style="margin-top:14px;padding:14px 18px;"><summary style="cursor:pointer;font-weight:800;">➕ ${acL('Añadir una entidad', 'Afegir una entitat')}</summary><div style="margin-top:8px;">
+      <input type="text" id="svr-t" placeholder="${acL('Entidad', 'Entitat')}" style="margin-bottom:6px;"><input type="text" id="svr-p" placeholder="${acL('Papel (Financia, Acompaña, Primer cliente…)', 'Paper (Finança, Acompanya, Primer client…)')}" style="margin-bottom:6px;">
+      <input type="text" id="svr-l" placeholder="${acL('Qué pedirle', 'Què demanar-li')}" style="margin-bottom:6px;"><input type="text" id="svr-c" placeholder="${acL('Cuándo', 'Quan')}" style="margin-bottom:6px;"><input type="url" id="svr-u" placeholder="https://… (${acL('opcional', 'opcional')})" style="margin-bottom:8px;">
+      <button class="primary-btn" style="width:auto;margin:0;" onclick="subvRedAnadir()">${acL('Añadir', 'Afegir')}</button></div></details>`;
+}
+async function subvRedAnadir(){
+  const v = id => ((document.getElementById(id) || {}).value || '').trim();
+  if(!v('svr-t')){ alert(acL('Escribe el nombre de la entidad.', 'Escriu el nom de l\'entitat.')); return; }
+  const url = v('svr-u'); if(url && !formacionUrlValida(url)){ alert(acL('El enlace debe empezar por https://', 'L\'enllaç ha de començar per https://')); return; }
+  if(await subvInsertarSeguro({ tipo: 'entidad', titulo: v('svr-t'), papel: v('svr-p') || null, linea: v('svr-l') || null, notas: v('svr-c') || null, url: url || null })) renderSubvencionesScreen('red');
+}
+
+// ===== Datos de Logos que usa la IA =====
+async function subvPerfilPintar(cuerpo){
+  const { data, error } = await sb.from('subvenciones_perfil').select('*').eq('id', 1).maybeSingle();
+  if(error){ cuerpo.innerHTML = `<div class="auth-error">${/subvenciones_perfil|schema cache|does not exist/i.test(error.message || '') ? acL('Falta ejecutar el SQL-100 en Supabase.', 'Cal executar l\'SQL-100 a Supabase.') : escAttr(error.message)}</div>`; return; }
+  const t = (data && data.texto) || '';
+  cuerpo.innerHTML = `<div class="panel-card">
+    <h3 style="margin-top:0;">🏛️ ${acL('Datos de Logos que usa la IA para redactar', 'Dades de Logos que fa servir la IA per redactar')}</h3>
+    <p class="subtle" style="font-size:12.5px;margin:0 0 8px;">${acL('La IA solo escribe con lo que hay aquí, con el proyecto de cada convocatoria y con las cifras de la intranet. Lo que falte lo marca como [COMPLETAR]. Rellena NIF, registro, representante y equipo, y quita lo que no quieras que salga. No pongas datos de personas atendidas.', 'La IA només escriu amb el que hi ha aquí, amb el projecte de cada convocatòria i amb les xifres de la intranet. El que falti ho marca com a [COMPLETAR]. Omple NIF, registre, representant i equip, i treu el que no vulguis que surti. No hi posis dades de persones ateses.')}</p>
+    <textarea id="svp-texto" rows="22" style="width:100%;font-size:13px;line-height:1.5;">${escAttr(t)}</textarea>
+    <div class="sv-btns"><button class="sv-btn pri" onclick="subvPerfilGuardar()">💾 ${acL('Guardar', 'Desar')}</button><span class="subtle" style="font-size:12px;margin:0;align-self:center;">${data && data.actualizado_en ? acL('Última modificación:', 'Última modificació:') + ' ' + new Date(data.actualizado_en).toLocaleString(TI[LANG_I].localeFecha, { dateStyle: 'short', timeStyle: 'short' }) + (data.actualizado_por ? ' · ' + escAttr(data.actualizado_por) : '') : ''}</span></div></div>`;
+}
+async function subvPerfilGuardar(){
+  const texto = ((document.getElementById('svp-texto') || {}).value || '').slice(0, 15000);
+  const { error } = await sb.from('subvenciones_perfil').upsert({ id: 1, texto, actualizado_en: new Date().toISOString(), actualizado_por: CURRENT_USER.email });
+  if(error){ alert(error.message); return; }
+  renderSubvencionesScreen('perfil');
 }
 async function subvInsertar(fila){
   const { error } = await sb.from('subvenciones').insert(Object.assign({ creado_por_email: CURRENT_USER.email }, fila));
@@ -10804,7 +11240,7 @@ async function subvAnadir(){
   const v = id => ((document.getElementById(id) || {}).value || '').trim();
   const titulo = v('sv-titulo'); if(!titulo){ alert(acL('Escribe el nombre de la convocatoria.', 'Escriu el nom de la convocatòria.')); return; }
   const url = v('sv-url'); if(url && !formacionUrlValida(url)){ alert(acL('El enlace debe empezar por https://', 'L\'enllaç ha de començar per https://')); return; }
-  if(await subvInsertar({ tipo: 'convocatoria', titulo, organismo: v('sv-org') || null, url: url || null, fecha_limite: v('sv-limite') || null, importe: v('sv-importe') || null, notas: v('sv-notas') || null, estado: 'seguimiento' })) renderSubvencionesScreen();
+  if(await subvInsertarSeguro({ tipo: 'convocatoria', titulo, organismo: v('sv-org') || null, categoria: v('sv-cat') || null, url: url || null, fecha_limite: v('sv-limite') || null, importe: v('sv-importe') || null, notas: v('sv-notas') || null, estado: 'seguimiento' })) renderSubvencionesScreen();
 }
 async function subvAnadirFuente(){
   const v = id => ((document.getElementById(id) || {}).value || '').trim();
@@ -19135,7 +19571,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-16 · v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-17 · v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
