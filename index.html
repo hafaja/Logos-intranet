@@ -4045,7 +4045,7 @@ async function cerrarSesion(forzado){
 // ===== Seguridad: la sesión se cierra sola tras INACTIVIDAD_MIN minutos sin usar la intranet =====
 // Un minuto antes sale un aviso con cuenta atrás. Cuenta la actividad de todas las pestañas abiertas
 // y también al despertar el ordenador (si estuvo dormido más tiempo del permitido, se cierra al volver).
-const INACTIVIDAD_MIN = 25, INACTIVIDAD_AVISO_SEG = 60;
+const INACTIVIDAD_MIN = 60, INACTIVIDAD_AVISO_SEG = 60;   // v263: 1 hora (antes 25 min)
 // v253: los QR de firma (consentimiento, actuación grupal, Raíces) duran 1 hora (SQL-94). Antes 30 min, y la sesión
 // se podía cerrar por inactividad mientras la persona firmaba en su móvil: eso cerraba el QR. Ahora no.
 const QR_FIRMA_MIN = 60;
@@ -19069,7 +19069,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-16 · v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-16 · v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
