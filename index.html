@@ -4760,9 +4760,15 @@ async function fichFueraDeHorario(email, ahora){
 // Fichaje sencillo, como antes (v213): se pulsa y se guarda. Se intenta coger la ubicación (máx. 8 s);
 // si no se puede, se ficha igual. Sin ventanas ni motivos.
 async function ficharEntrada(){
+  if(window.__fichando) return;
+  fichOcupado(true, 'entrada');
+  try { await ficharEntradaHacer(); } finally { fichOcupado(false); }
+}
+async function ficharEntradaHacer(){
   const t = TI[LANG_I];
   try { actMarcar(); } catch(e){}
-  const [ubicacion, puesto] = await Promise.all([obtenerUbicacionSimple(), puestoActual().catch(() => null), fichConfig().catch(() => null)]);
+  const cfgP = fichConfig().catch(() => null);
+  const [ubicacion, puesto] = await Promise.all([cfgP.then(() => obtenerUbicacionSimple()), puestoActual().catch(() => null)]);
   const yo = await fichSesionViva(); if(!yo) return;
   const modo = puesto ? 'puesto' : (fichEnOficina(ubicacion) ? 'oficina' : null);
   const { error } = await fichGuardar(extra => sb.from('fichajes').insert(Object.assign({ tecnico_email: yo },
@@ -4779,6 +4785,7 @@ async function ficharEntrada(){
     + (!ubicacion ? `<br><small>${acL('Para que se guarde la ubicación, deja que el navegador la use.', 'Perquè es desi la ubicació, deixa que el navegador la faci servir.')}</small>` : ''));
   if(fuera) fichIncidencia(acL('Entrada fichada fuera de horario', 'Entrada fitxada fora d\'horari'), `Ha fichado la entrada a las ${ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} (${ahora.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}); ${fuera}. Lugar: ${lugar.t}.`);
   await fichajeRefrescar();
+  fichOcupado(false);
   await renderMiEspacio();
   if(!window.__tengoSala && !salaHoyFuera()) salaElegirRapido();
 }
@@ -4795,12 +4802,19 @@ function fichToast(d, tipo){
   document.body.appendChild(el); setTimeout(() => el.remove(), 5000);
 }
 async function ficharSalida(id){
+  if(window.__fichando) return;
   try { actMarcar(); } catch(e){}
   // Pregunta corta para que un toque sin querer no cierre la jornada
   { const hh = new Date().toLocaleTimeString(LANG_I === 'ca' ? 'ca-ES' : 'es-ES', { hour: '2-digit', minute: '2-digit' });
     if(!confirm(acL('¿Seguro que quieres fichar la SALIDA ahora (' + hh + ')?\n\nSi has tocado el botón sin querer, pulsa «Cancelar» y sigue trabajando.',
                     'Segur que vols fitxar la SORTIDA ara (' + hh + ')?\n\nSi has tocat el botó sense voler, prem «Cancel·la» i continua treballant.'))) return; }
-  const [ubicacion, puesto] = await Promise.all([obtenerUbicacionSimple(), puestoActual().catch(() => null), fichConfig().catch(() => null)]);
+  if(window.__fichando) return;
+  fichOcupado(true, 'salida');
+  try { await ficharSalidaHacer(id); } finally { fichOcupado(false); }
+}
+async function ficharSalidaHacer(id){
+  const cfgP = fichConfig().catch(() => null);
+  const [ubicacion, puesto] = await Promise.all([cfgP.then(() => obtenerUbicacionSimple()), puestoActual().catch(() => null)]);
   if(!(await fichSesionViva())) return;
   const modo = puesto ? 'puesto' : (fichEnOficina(ubicacion) ? 'oficina' : null);
   const salidaIso = new Date().toISOString();
@@ -4811,6 +4825,7 @@ async function ficharSalida(id){
     fichIncidencia(acL('No se ha podido fichar la salida', 'No s\'ha pogut fitxar la sortida'), 'Error al guardar la salida: ' + error.message);
     alert(acL('No se ha podido fichar la salida: ', 'No s\'ha pogut fitxar la sortida: ') + error.message + acL('\n\nSe ha avisado a dirección (incidencia de fichaje).', '\n\nS\'ha avisat la direcció (incidència de fitxatge).')); return; }
   await fichajeRefrescar();
+  fichOcupado(false);
   renderMiEspacio();
 }
 function fichAvisoFichado(html){
@@ -4819,22 +4834,37 @@ function fichAvisoFichado(html){
   t.onclick = () => t.remove(); document.body.appendChild(t);
   setTimeout(() => { if(t && t.parentNode) t.remove(); }, 7000);
 }
-// Ubicación para fichar: escucha unos segundos y se queda con la lectura más precisa (en un ordenador
-// sin GPS la primera suele ser la de la red, con cientos de metros de error). Devuelve { lat, lng, acc }.
+// Ubicación para fichar (v260: más rápida). Escucha unos segundos y se queda con la lectura más precisa.
+// Acaba en cuanto la lectura es buena (± 50 m) o ya sitúa a la persona en la oficina. Acepta una lectura
+// reciente (de hace menos de 1 min) para no esperar. Tope: 4 s en el móvil y 2 s en el ordenador (sin GPS).
 function obtenerUbicacionSimple(){
   return new Promise((resolve) => {
     if(!navigator.geolocation){ resolve(null); return; }
-    let mejor = null, id = null, hecho = false;
-    const fin = () => { if(hecho) return; hecho = true; try { if(id != null) navigator.geolocation.clearWatch(id); } catch(e){} resolve(mejor); };
+    const tope = (typeof esMovilOTableta === 'function' && esMovilOTableta()) ? 4000 : 2000;
+    let mejor = null, id = null, hecho = false, tm = null;
+    const fin = () => { if(hecho) return; hecho = true; clearTimeout(tm); try { if(id != null) navigator.geolocation.clearWatch(id); } catch(e){} resolve(mejor); };
     try {
       id = navigator.geolocation.watchPosition(pos => {
         const c = pos.coords, acc = Math.round(c.accuracy || 9999);
         if(!mejor || acc < mejor.acc) mejor = { lat: c.latitude, lng: c.longitude, acc };
-        if(acc <= 50) fin();                         // ya es buena: no hace falta esperar más
-      }, () => { if(!mejor) fin(); }, { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 });
+        if(mejor.acc <= 50) return fin();                                   // ya es buena
+        try { if(mejor.acc <= FICH_PREC_BUENA && fichEnOficina(mejor)) return fin(); } catch(e){}   // ya se sabe que está en la oficina
+      }, () => fin(), { enableHighAccuracy: true, maximumAge: 60000, timeout: tope });
     } catch(e){ fin(); return; }
-    setTimeout(fin, 5000);
+    tm = setTimeout(fin, tope);
   });
+}
+// v260: mientras se ficha, el botón se bloquea y se ve «Fichando…» (evita el doble fichaje por pulsar dos veces)
+function fichOcupado(on, tipo){
+  window.__fichando = !!on;
+  document.querySelectorAll('button[onclick^="ficharEntrada"], button[onclick^="ficharSalida"], #fichaje-banner button').forEach(b => {
+    if(on){ if(!b.dataset.txt) b.dataset.txt = b.innerHTML; b.disabled = true; b.innerHTML = '⏳ ' + acL('Fichando…', 'Fitxant…'); }
+    else { b.disabled = false; if(b.dataset.txt){ b.innerHTML = b.dataset.txt; delete b.dataset.txt; } }
+  });
+  let el = document.getElementById('fich-ubic-av');
+  if(on){ if(!el){ el = document.createElement('div'); el.id = 'fich-ubic-av'; el.className = 'fich-ubic-av'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+    el.textContent = '⏳ ' + (tipo === 'salida' ? acL('Fichando la salida…', 'Fitxant la sortida…') : acL('Fichando la entrada…', 'Fitxant l\'entrada…')); }
+  else if(el) el.remove();
 }
 // ¿Cuenta como «en la oficina»? Ordenador marcado, o la distancia cabe dentro del radio contando el margen de error
 function fichEnOficina(ub){
@@ -18961,7 +18991,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-13 · v259 (calendario: «Añadir actividad» con tipos, colores y repetición; corregir, mover o cancelar citas desde el calendario; «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-16 · v260 (fichar más rápido: «Fichando…» al momento, sin doble fichaje, ubicación en 2–4 s; calendario: «Añadir actividad» con tipos, colores y repetición; corregir, mover o cancelar citas desde el calendario; «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
