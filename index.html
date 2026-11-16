@@ -6878,8 +6878,9 @@ function apPapelHtml(){
         <h3 style="margin-top:0;">📄 ${acL('Alta con consentimiento en papel', 'Alta amb consentiment en paper')}</h3>
         <p class="subtle" style="margin:0 0 12px;font-size:12.5px;">${acL('Para cuando la persona ya firmó el papel pero hoy no está. No se le crea usuario ni hace falta correo: queda como <strong>ficha sin cuenta</strong> en «Personas usuarias», se le pueden dar citas y cuenta en las estadísticas. El día que venga, «Activar su cuenta» la pasa a cuenta normal sin perder nada.', 'Per quan la persona ja va signar el paper però avui no hi és. No se li crea usuari ni cal correu: queda com a <strong>fitxa sense compte</strong> a «Persones usuàries», se li poden donar cites i compta a les estadístiques. El dia que vingui, «Activar el compte» la passa a compte normal sense perdre res.')}</p>
         <div class="field"><label>${acL('Nombre y apellidos', 'Nom i cognoms')} *</label><input type="text" id="app-nombre"></div>
-        <div class="field"><label>${acL('Teléfono', 'Telèfon')} *</label><input type="tel" id="app-telefono"></div>
-        <div class="field"><label>DNI/NIE <span class="subtle">(${acL('si lo tienes', 'si el tens')})</span></label><input type="text" id="app-dni"></div>
+        <div class="field"><label>${acL('Teléfono', 'Telèfon')} *</label><input type="tel" id="app-telefono" onblur="apAvisoExiste('app')"></div>
+        <div class="field"><label>DNI/NIE <span class="subtle">(${acL('si lo tienes', 'si el tens')})</span></label><input type="text" id="app-dni" onblur="apAvisoExiste('app')"></div>
+        <div id="app-ya-aviso"></div>
         <div class="field"><label>${acL('Correo (opcional)', 'Correu (opcional)')}</label><input type="email" id="app-email"></div>
         <div class="field"><label>${acL('Municipio', 'Municipi')}</label><input type="text" id="app-municipio" value="Tarragona"></div>
         <div class="field"><label>${acL('¿Qué necesita? (servicio o motivo)', 'Què necessita? (servei o motiu)')}</label><input type="text" id="app-servicio" placeholder="${acL('Ej.: renovación NIE, búsqueda de empleo…', 'Ex.: renovació NIE, cerca de feina…')}"></div>
@@ -6899,6 +6900,75 @@ function apModo(m){
   const pp = document.getElementById('ap-papel'); if(pp) pp.style.display = papel ? '' : 'none';
   if(papel){ const n = document.getElementById('app-nombre'); if(n) n.focus(); }
 }
+// v264: antes de dar de alta, mira si la persona YA está (cuenta o ficha sin cuenta) por DNI/NIE o teléfono.
+// Si está, sale un aviso sencillo: «Abrir su ficha» (lo normal) o «Es otra persona» (crear igualmente).
+async function apBuscarExistentes(telefono, dni){
+  const nd = String(dni || '').toUpperCase().replace(/[^0-9A-Z]/g, ''), nt = String(telefono || '').replace(/\D/g, '').slice(-9);
+  const nucleo = nd.replace(/^[XYZ]/, '').replace(/[A-Z]$/, '');
+  const ors = [nucleo.length >= 6 ? `dni_nie.ilike.%${nucleo.slice(-7)}%` : '', nt.length >= 9 ? `telefono.ilike.%${nt}%` : ''].filter(Boolean).join(',');
+  if(!ors) return [];
+  const [a, b] = await Promise.all([
+    sb.from('perfiles').select('id, nombre_completo, dni_nie, telefono').or(ors).limit(5),
+    (typeof HISTORICAS_OK === 'undefined' || HISTORICAS_OK) ? sb.from('personas_historicas').select('id, nombre_completo, dni_nie, telefono, perfil_id').or(ors).limit(5) : Promise.resolve({ data: [] })
+  ]);
+  const limpio = x => String(x || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+  const coincide = x => (nucleo.length >= 6 && limpio(x.dni_nie).includes(nucleo.slice(-7))) || (nt.length >= 9 && String(x.telefono || '').replace(/\D/g, '').endsWith(nt));
+  const conCuenta = (a.data || []).filter(coincide).map(x => ({ tipo: 'cuenta', id: x.id, nombre: x.nombre_completo, dni: x.dni_nie, tel: x.telefono }));
+  const sinCuenta = (b.data || []).filter(x => coincide(x) && !x.perfil_id).map(x => ({ tipo: 'papel', id: x.id, nombre: x.nombre_completo, dni: x.dni_nie, tel: x.telefono }));
+  return [...conCuenta, ...sinCuenta];
+}
+function apYaExiste(nombre, telefono, dni, soloCuentas){
+  return new Promise(async resolve => {
+    let lista = [];
+    try { lista = await apBuscarExistentes(telefono, dni); } catch(e){ resolve('crear'); return; }
+    if(soloCuentas) lista = lista.filter(x => x.tipo === 'cuenta');
+    if(!lista.length){ resolve('crear'); return; }
+    let ov = document.getElementById('ap-ya-ov'); if(ov) ov.remove();
+    ov = document.createElement('div'); ov.id = 'ap-ya-ov'; ov.className = 'inact-ov';
+    const fila = (x, i) => `<button type="button" class="primary-btn" style="margin:0 0 8px;text-align:left;display:block;width:100%;" data-i="${i}">📂 ${acL('Abrir la ficha de', 'Obrir la fitxa de')} <strong>${escAttr(x.nombre || '')}</strong><br><small style="font-weight:400;opacity:.9;">${x.tipo === 'cuenta' ? acL('Tiene cuenta', 'Té compte') : acL('Ficha sin cuenta · consentimiento en papel', 'Fitxa sense compte · consentiment en paper')}${x.dni ? ' · ' + escAttr(x.dni) : ''}${x.tel ? ' · ' + escAttr(x.tel) : ''}</small></button>`;
+    ov.innerHTML = `<div class="inact-card" style="max-width:440px;"><div class="inact-i">✋</div>
+      <h3>${acL('Esta persona ya está dada de alta', 'Aquesta persona ja està donada d\'alta')}</h3>
+      <p style="font-size:14px;">${acL('No hace falta darla de alta otra vez. Abre su ficha y trabaja desde ahí (atención, cita, actuación…).', 'No cal donar-la d\'alta un altre cop. Obre la seva fitxa i treballa des d\'allà (atenció, cita, actuació…).')}</p>
+      ${lista.map(fila).join('')}
+      <div style="display:flex;justify-content:space-between;gap:10px;margin-top:6px;flex-wrap:wrap;">
+        <button type="button" class="link-btn" data-a="cancelar">${acL('Cancelar', 'Cancel·lar')}</button>
+        <button type="button" class="link-btn" style="font-size:12px;color:#8A6100;" data-a="crear">${acL('Es otra persona distinta: crear igualmente', 'És una altra persona: crear igualment')}</button>
+      </div></div>`;
+    document.body.appendChild(ov);
+    ov.addEventListener('click', e => {
+      const b = e.target.closest('button'); if(!b) return;
+      const cerrar = r => { ov.remove(); resolve(r); };
+      if(b.dataset.a === 'cancelar') return cerrar('cancelar');
+      if(b.dataset.a === 'crear'){ const ok = confirm(acL(`¿Seguro que «${nombre}» es otra persona distinta? Se creará una ficha nueva.`, `Segur que «${nombre}» és una altra persona? Es crearà una fitxa nova.`)); if(ok) window.__apOtraPersona = true; return cerrar(ok ? 'crear' : 'cancelar'); }
+      const x = lista[Number(b.dataset.i)]; if(!x) return;
+      cerrar('abierta');
+      try { if(x.tipo === 'cuenta'){ showScreen('personas'); verPersonaStaff(x.id, 'personas'); } else { showScreen('personas'); Promise.resolve(renderPersonasScreen()).catch(() => {}).then(() => histVerDesdeCita(x.id)); } } catch(err){}
+    });
+  });
+}
+// v265: aviso EN CUANTO se escribe el DNI o el teléfono (antes de leer y firmar), no al final
+async function apAvisoExiste(pre){
+  pre = pre || 'ap';
+  const host = document.getElementById(pre + '-ya-aviso'); if(!host) return;
+  const v = id => ((document.getElementById(pre + '-' + id) || {}).value || '').trim();
+  let lista = [];
+  try { lista = await apBuscarExistentes(v('telefono'), v('dni')); } catch(e){ host.innerHTML = ''; return; }
+  if(pre === 'ap' && window.__histActivarId) lista = lista.filter(x => !(x.tipo === 'papel' && x.id === window.__histActivarId));
+  if(!lista.length){ host.innerHTML = ''; return; }
+  const abrir = x => `<button type="button" class="primary-btn" style="width:auto;margin:6px 8px 0 0;padding:8px 14px;font-size:13px;" onclick="apAbrirExistente('${x.tipo}','${x.id}')">📂 ${acL('Abrir la ficha de', 'Obrir la fitxa de')} ${escAttr(x.nombre || '')}</button>`;
+  const cuentas = lista.filter(x => x.tipo === 'cuenta'), papel = lista.filter(x => x.tipo === 'papel');
+  if(pre === 'ap' && !cuentas.length && papel.length){
+    host.innerHTML = `<div class="info-box" style="margin:0 0 12px;background:#E3F5E8;border-color:#1F8A4C;">📄 ${acL(`<strong>${escAttr(papel[0].nombre)}</strong> ya tiene ficha con consentimiento en papel. Si firma ahora, esa ficha se une a su cuenta nueva: <strong>no se duplica</strong>. Puedes seguir.`, `<strong>${escAttr(papel[0].nombre)}</strong> ja té fitxa amb consentiment en paper. Si signa ara, aquesta fitxa s'uneix al seu compte nou: <strong>no es duplica</strong>. Pots continuar.`)}</div>`;
+    return;
+  }
+  const mostrar = pre === 'ap' ? cuentas : lista;
+  host.innerHTML = `<div class="info-box info-box-gold" style="margin:0 0 12px;">✋ <strong>${acL('Esta persona ya está dada de alta', 'Aquesta persona ja està donada d\'alta')}</strong>. ${acL('No hace falta que vuelva a firmar: abre su ficha.', 'No cal que torni a signar: obre la seva fitxa.')}<br>${mostrar.map(abrir).join('')}</div>`;
+}
+function apAbrirExistente(tipo, id){
+  showScreen('personas');
+  if(tipo === 'cuenta') verPersonaStaff(id, 'personas');
+  else Promise.resolve(renderPersonasScreen()).catch(() => {}).then(() => histVerDesdeCita(id));
+}
 async function apGuardarPapel(){
   const v = id => ((document.getElementById(id) || {}).value || '').trim();
   const nombre = v('app-nombre'), telefono = v('app-telefono'), dni = v('app-dni'), email = v('app-email'), municipio = v('app-municipio'), servicio = v('app-servicio'), fecha = v('app-fecha'), notas = v('app-notas');
@@ -6907,16 +6977,8 @@ async function apGuardarPapel(){
   if(!HISTORICAS_OK){ alert(acL('Las fichas sin cuenta aún no están activadas en la base de datos (SQL del histórico).', 'Les fitxes sense compte encara no estan activades a la base de dades (SQL de l\'històric).')); return; }
   const btn = document.getElementById('app-btn'); btn.disabled = true; btn.textContent = acL('Guardando…', 'Desant…');
   const fin = () => { btn.disabled = false; btn.textContent = '📄 ' + acL('Dar de alta (ficha sin cuenta)', 'Donar d\'alta (fitxa sense compte)'); };
-  // ¿Ya existe? (por DNI/NIE o teléfono)
-  try {
-    const nd = dni.replace(/[\s.\-]/g, ''), nt = telefono.replace(/\D/g, '').slice(-9);
-    const ors = [nd ? `dni_nie.ilike.%${nd}%` : '', nt.length >= 9 ? `telefono.ilike.%${nt}%` : ''].filter(Boolean).join(',');
-    if(ors){
-      const [a, b] = await Promise.all([sb.from('perfiles').select('id, nombre_completo').or(ors).limit(3), sb.from('personas_historicas').select('id, nombre_completo').or(ors).limit(3)]);
-      const ya = [...(a.data || []).map(x => '💻 ' + x.nombre_completo), ...(b.data || []).map(x => '📄 ' + x.nombre_completo)];
-      if(ya.length && !confirm(acL('Ya hay alguien con ese DNI/NIE o teléfono:\n', 'Ja hi ha algú amb aquest DNI/NIE o telèfon:\n') + ya.join('\n') + acL('\n\n¿Crear la ficha igualmente?', '\n\nCrear la fitxa igualment?'))){ fin(); return; }
-    }
-  } catch(e){}
+  // v264: ¿Ya existe? (por DNI/NIE o teléfono) → aviso claro con «Abrir su ficha» (no se crea otra)
+  { const dec = await apYaExiste(nombre, telefono, dni); if(dec !== 'crear'){ fin(); return; } }
   // Foto/PDF del papel (privado, bucket «documentos»)
   let ruta = null;
   const f = (document.getElementById('app-archivo') || {}).files; const file = f && f[0];
@@ -6945,7 +7007,7 @@ async function histVerConsentimiento(ruta){
   window.open(data.signedUrl, '_blank', 'noopener');
 }
 function renderAltaPresencial(){
-  window.__histActivarId = null;
+  window.__histActivarId = null; window.__apOtraPersona = false;
   const esCA = LANG_I === 'ca';
   document.getElementById('altapresencial-content').innerHTML = `
     <div class="panel-card" style="background:var(--gold-soft);border-color:var(--gold);margin-bottom:16px;">
@@ -6958,8 +7020,9 @@ function renderAltaPresencial(){
     <div class="panel-card">
       <h3>${esCA ? 'Dades de la persona' : 'Datos de la persona'}</h3>
       <div class="field"><label>${esCA ? 'Nom i cognoms' : 'Nombre y apellidos'} *</label><input type="text" id="ap-nombre"></div>
-      <div class="field"><label>${esCA ? 'Telèfon' : 'Teléfono'} *</label><input type="tel" id="ap-telefono"></div>
-      <div class="field"><label>DNI/NIE *</label><input type="text" id="ap-dni"></div>
+      <div class="field"><label>${esCA ? 'Telèfon' : 'Teléfono'} *</label><input type="tel" id="ap-telefono" onblur="apAvisoExiste()"></div>
+      <div class="field"><label>DNI/NIE *</label><input type="text" id="ap-dni" onblur="apAvisoExiste()"></div>
+      <div id="ap-ya-aviso"></div>
       <div class="field">
         <label>${esCA ? 'Correu electrònic (opcional)' : 'Correo electrónico (opcional)'}</label>
         <input type="email" id="ap-email">
@@ -7025,6 +7088,7 @@ async function apFirmaMovilAbrir(){
   const esCA = LANG_I === 'ca';
   const nombre = ((document.getElementById('ap-nombre') || {}).value || '').trim();
   if(!nombre){ alert(esCA ? 'Escriu primer el nom de la persona.' : 'Escribe primero el nombre de la persona.'); document.getElementById('ap-nombre').focus(); return; }
+  if(!window.__histActivarId){ const dec = await apYaExiste(nombre, ((document.getElementById('ap-telefono') || {}).value || '').trim(), ((document.getElementById('ap-dni') || {}).value || '').trim(), true); if(dec !== 'crear') return; }
   if(typeof qrcode === 'undefined'){ alert(esCA ? 'No s\'ha pogut carregar el generador de QR. Recarrega la pàgina.' : 'No se ha podido cargar el generador de QR. Recarga la página.'); return; }
   const b = new Uint8Array(24); crypto.getRandomValues(b); const token = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
   try { sb.rpc('firmas_remotas_limpiar'); } catch(e){}
@@ -7153,6 +7217,8 @@ async function guardarAltaPresencial(){
     return;
   }
 
+  // v264: si ya tiene cuenta, no se crea otra: se abre su ficha
+  if(!window.__histActivarId && !window.__apOtraPersona){ const dec = await apYaExiste(nombre, telefono, dni, true); if(dec !== 'crear') return; }
   const btn = document.getElementById('ap-btn-guardar');
   btn.disabled = true;
   btn.textContent = esCA ? 'Creant…' : 'Creando…';
@@ -19069,7 +19135,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-16 · v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-16 · v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
