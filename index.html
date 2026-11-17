@@ -119,6 +119,29 @@
   .sv-ap{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 10px;}
   .sv-det textarea,#sv-cuerpo textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font-family:var(--font-body);font-size:13.5px;line-height:1.5;color:var(--ink);background:var(--paper);resize:vertical;}
   .sv-res{border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 10px;background:var(--paper);}
+  .mf-nav{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;}
+  .mf-sem{font-size:14.5px;text-align:center;flex:1;min-width:160px;}
+  .mf-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:0 0 12px;}
+  .mf-kpi{background:var(--paper);border:1.5px solid var(--line);border-top:3px solid var(--gold);border-radius:14px;padding:10px 12px;}
+  .mf-kpi b{display:block;font-size:21px;font-family:var(--font-display);line-height:1.15;color:var(--ink);}
+  .mf-kpi span{font-size:12px;color:var(--ink-soft);}
+  .mf-tabla{width:100%;border-collapse:collapse;font-size:13.5px;}
+  .mf-tabla th{text-align:left;font-size:11.5px;color:var(--ink-soft);font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:8px 6px;border-bottom:1.5px solid var(--line);}
+  .mf-tabla td{padding:9px 6px;border-bottom:1px solid var(--line);vertical-align:top;}
+  .mf-tabla tfoot td{border-bottom:0;border-top:1.5px solid var(--line);font-size:14.5px;}
+  .mf-tabla tr.mf-hoy td{background:#F4F8FD;}
+  .mf-dia{white-space:nowrap;font-weight:700;}
+  .mf-num{text-align:right;white-space:nowrap;}
+  .mf-tramo{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:2px 9px;margin:0 4px 4px 0;font-size:12.5px;font-variant-numeric:tabular-nums;}
+  .mf-tramo.on{background:#E3F5E8;border-color:#BFE3CB;color:#17663A;font-weight:700;}
+  .mf-barra{display:grid;grid-template-columns:62px 1fr 92px;gap:8px;align-items:center;width:100%;background:none;border:0;padding:4px 2px;cursor:pointer;font-family:var(--font-body);color:var(--ink);border-radius:8px;}
+  .mf-barra:hover,.mf-barra.on{background:#EEF4FC;}
+  .mf-bl{font-size:12px;color:var(--ink-soft);text-align:left;}
+  .mf-bt{position:relative;height:12px;background:var(--bg);border-radius:999px;}
+  .mf-bt i{position:absolute;left:0;top:0;bottom:0;background:var(--navy);border-radius:999px;}
+  .mf-bt em{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ochre);}
+  .mf-bv{font-size:12.5px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;}
+  @media (max-width:600px){ .mf-tabla{font-size:12.5px;} .mf-dia{white-space:normal;} .mf-barra{grid-template-columns:52px 1fr 78px;} }
   @media (max-width:820px){ .sv-grid{grid-template-columns:1fr;} .sv-lista{max-height:none;position:static;} .sv-det{padding:14px;} }
   .imp-filtros{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;}
   .imp-filtros label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;font-weight:700;color:var(--ink-soft);}
@@ -15870,7 +15893,7 @@ async function renderGestionPersonal(tab){
   const subsRH = esRH ? gpRrhhSubs() : [];
   if(t === 'rrhh' && !subsRH.some(x => x[0] === window.__gpSub)) window.__gpSub = (subsRH[0] || [''])[0];
   const mios = [['inicio', '🏠', acL('Resumen', 'Resum')], ['nominas', '🧾', acL('Mis nóminas', 'Les meves nòmines')], ['archivos', '📁', acL('Mis archivos', 'Els meus arxius')],
-    ['formacion', '🎓', acL('Mi formación', 'La meva formació')], ['comunicaciones', '📣', acL('Comunicaciones', 'Comunicacions')], ['misvac', '🌴', acL('Mis vacaciones', 'Les meves vacances')]];
+    ['formacion', '🎓', acL('Mi formación', 'La meva formació')], ['comunicaciones', '📣', acL('Comunicaciones', 'Comunicacions')], ['misvac', '🌴', acL('Mis vacaciones', 'Les meves vacances')], ['misfich', '🕒', acL('Mis fichajes', 'Els meus fitxatges')]];
   const sel = t === 'rrhh' ? 'rh:' + window.__gpSub : t;
   const titulo = t === 'rrhh' ? ((subsRH.find(x => x[0] === window.__gpSub) || [])[1] || 'RR. HH.') : ((mios.find(x => x[0] === t) || mios[0])[1] + ' ' + (mios.find(x => x[0] === t) || mios[0])[2]);
   const nom = CURRENT_USER_NOMBRE || String(CURRENT_USER.email || '').split('@')[0];
@@ -15923,6 +15946,7 @@ async function renderGestionPersonal(tab){
   else if(t === 'formacion') await gpRenderFormacion(cuerpo);
   else if(t === 'comunicaciones') await gpRenderComunicaciones(cuerpo);
   else if(t === 'rrhh' && (IS_RRHH || IS_ADMIN)) await gpRenderRrhh(cuerpo, true);
+  else if(t === 'misfich') await gpRenderMisFichajes(cuerpo);
   else if(t === 'misvac'){ cuerpo.innerHTML = `<div class="panel-card vac-card" id="vac-mias" style="margin:0;"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`; await vacPintarMias(); }
   else await gpRenderInicio(cuerpo);
   setTimeout(gpIrASeccion, 30); setTimeout(gpIrASeccion, 700);   // al terminar de cargar, el título del apartado se queda a la vista
@@ -16002,8 +16026,101 @@ async function gpRenderInicio(cuerpo){
       ${ir('formacion', '🎓', acL('Mi formación', 'La meva formació'), acL('Cursos y certificados', 'Cursos i certificats'))}
       ${ir('comunicaciones', '📣', acL('Comunicaciones', 'Comunicacions'), acL('Avisos de RR. HH. para leer', 'Avisos de RR. HH. per llegir'))}
       ${ir('misvac', '🌴', acL('Mis vacaciones', 'Les meves vacances'), acL('Pedir días y ver si están aprobados', 'Demanar dies i veure si estan aprovats'))}
+      ${ir('misfich', '🕒', acL('Mis fichajes', 'Els meus fitxatges'), acL('Historial y horas de cada semana', 'Historial i hores de cada setmana'))}
     </div>` + `<div class="panel-card"><h3 style="margin-top:0;">🔒 ${acL('Tu información es privada', 'La teva informació és privada')}</h3>
     <p class="subtle" style="margin:0;font-size:13px;line-height:1.55;">${acL('Solo tú ves tus nóminas, tus archivos y tus formaciones; y quien lleva Recursos Humanos para poder gestionarlas. Cada apertura queda anotada.', 'Només tu veus les teves nòmines, els teus arxius i les teves formacions; i qui porta Recursos Humans per poder gestionar-les. Cada obertura queda anotada.')}</p></div>`;
+}
+
+// ---------- v268 · «Mis fichajes»: historial propio con las horas de cada semana sumadas solas ----------
+window.__mf = window.__mf || { off: 0 };
+function mfLunes(off){ const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (hrDiaSemanaJS(d) - 1) + 7 * (off || 0)); return d; }
+function mfMin(f, ahora){ return Math.max(0, Math.round((fichajeFin(f, ahora) - new Date(f.entrada)) / 60000)); }
+function mfHora(iso){ return new Date(iso).toLocaleTimeString(TI[LANG_I].localeFecha, { hour: '2-digit', minute: '2-digit' }); }
+function mfSemanaTxt(l){ const d = new Date(l); d.setDate(d.getDate() + 6); const o = { day: 'numeric', month: 'short' }; return l.toLocaleDateString(TI[LANG_I].localeFecha, o) + ' – ' + d.toLocaleDateString(TI[LANG_I].localeFecha, Object.assign({ year: 'numeric' }, o)); }
+async function gpRenderMisFichajes(cuerpo, off){
+  if(typeof off === 'number') window.__mf.off = Math.min(0, off);
+  const st = window.__mf, yo = String(CURRENT_USER.email || '').toLowerCase(), ahora = new Date();
+  const lunes = mfLunes(st.off), domingoFin = new Date(lunes); domingoFin.setDate(domingoFin.getDate() + 7);
+  const desdeHist = mfLunes(st.off - 11);   // 12 semanas para el historial
+  cuerpo.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
+  const [fr, h] = await Promise.all([
+    sb.from('fichajes').select('*').eq('tecnico_email', CURRENT_USER.email).gte('entrada', desdeHist.toISOString()).lt('entrada', domingoFin.toISOString()).order('entrada', { ascending: true }),
+    (typeof hrHorarioDe === 'function' && HR_OK ? hrHorarioDe(yo).catch(() => null) : Promise.resolve(null))
+  ]);
+  if(fr.error){ cuerpo.innerHTML = gpAviso(escAttr(fr.error.message)); return; }
+  const todos = sinBorrados(fr.data || []);
+  st.datos = todos;
+  const tramos = (h && h.tramos) || [];
+  const previstaDia = dia => tramos.filter(t => t.dia === dia).reduce((s, t) => s + Math.max(0, hrMin(t.hasta) - hrMin(t.desde)), 0);
+  const previstaSemana = [1, 2, 3, 4, 5, 6, 7].reduce((s, d) => s + previstaDia(d), 0);
+  const deSemana = l => { const fin = new Date(l); fin.setDate(fin.getDate() + 7); return todos.filter(f => new Date(f.entrada) >= l && new Date(f.entrada) < fin); };
+  const semana = deSemana(lunes), total = semana.reduce((s, f) => s + mfMin(f, ahora), 0);
+  const esActual = st.off === 0, abierto = semana.find(f => !f.salida);
+  // previstas hasta hoy (solo en la semana en curso) para comparar de forma justa
+  const hoyDia = hrDiaSemanaJS(ahora), minHoy = ahora.getHours() * 60 + ahora.getMinutes();
+  const previstaHastaHoy = esActual ? [1, 2, 3, 4, 5, 6, 7].filter(d => d < hoyDia).reduce((s, d) => s + previstaDia(d), 0) + tramos.filter(t => t.dia === hoyDia).reduce((s, t) => s + Math.max(0, Math.min(hrMin(t.hasta), minHoy) - hrMin(t.desde)), 0) : previstaSemana;
+  const dif = total - previstaHastaHoy;
+  const difTxt = (dif >= 0 ? '+' : '−') + hrTxtMin(Math.abs(dif));
+  const dias = [];
+  for(let i = 0; i < 7; i++){
+    const d = new Date(lunes); d.setDate(d.getDate() + i);
+    const lista = semana.filter(f => { const e = new Date(f.entrada); return e.getFullYear() === d.getFullYear() && e.getMonth() === d.getMonth() && e.getDate() === d.getDate(); });
+    dias.push({ d, lista, min: lista.reduce((s, f) => s + mfMin(f, ahora), 0), prev: previstaDia(i + 1) });
+  }
+  const diasTrab = dias.filter(x => x.min > 0).length;
+  const kpi = (v, t, color) => `<div class="mf-kpi"><b style="${color ? 'color:' + color : ''}">${v}</b><span>${t}</span></div>`;
+  const fila = x => {
+    const nomDia = x.d.toLocaleDateString(TI[LANG_I].localeFecha, { weekday: 'long', day: 'numeric', month: 'short' });
+    const esHoy = x.d.toDateString() === ahora.toDateString();
+    const tramosTxt = x.lista.map(f => `<span class="mf-tramo${!f.salida ? ' on' : ''}">${mfHora(f.entrada)} → ${f.salida ? mfHora(f.salida) : (fichajeFin(f, ahora) < ahora ? acL('sin salida', 'sense sortida') : acL('ahora', 'ara'))}${f.cerrado_automaticamente ? ' ⚠️' : ''}</span>`).join('');
+    const notas = x.lista.map(f => f.nota).filter(Boolean);
+    if(!x.lista.length && !x.prev) return '';
+    return `<tr${esHoy ? ' class="mf-hoy"' : ''}><td class="mf-dia">${escAttr(nomDia.charAt(0).toUpperCase() + nomDia.slice(1))}${esHoy ? ` <span class="chip" style="font-size:10.5px;">${acL('hoy', 'avui')}</span>` : ''}</td>
+      <td>${tramosTxt || `<span class="subtle" style="margin:0;font-size:12.5px;">${x.d > ahora ? '—' : acL('sin fichajes', 'sense fitxatges')}</span>`}${notas.length ? `<div class="subtle" style="font-size:11.5px;margin:3px 0 0;">📝 ${notas.map(escAttr).join(' · ')}</div>` : ''}</td>
+      <td class="mf-num"><strong>${x.min ? hrTxtMin(x.min) : '—'}</strong>${x.prev ? `<div class="subtle" style="font-size:11px;margin:0;">${acL('previstas', 'previstes')} ${hrTxtMin(x.prev)}</div>` : ''}</td></tr>`;
+  };
+  // historial de 12 semanas
+  const hist = [];
+  for(let k = 0; k < 12; k++){ const l = mfLunes(st.off - k); const m = deSemana(l).reduce((s, f) => s + mfMin(f, ahora), 0); hist.push({ l, m, off: st.off - k }); }
+  const maxH = Math.max(previstaSemana, ...hist.map(x => x.m), 60);
+  cuerpo.innerHTML = `
+    <div class="mf-nav">
+      <button class="sv-btn" onclick="gpRenderMisFichajes(document.getElementById('gp-cuerpo'), ${st.off - 1})">← ${acL('Semana anterior', 'Setmana anterior')}</button>
+      <strong class="mf-sem">${esActual ? acL('Esta semana', 'Aquesta setmana') + ' · ' : ''}${escAttr(mfSemanaTxt(lunes))}</strong>
+      <button class="sv-btn" ${esActual ? 'disabled' : ''} onclick="gpRenderMisFichajes(document.getElementById('gp-cuerpo'), ${st.off + 1})">${acL('Siguiente', 'Següent')} →</button>
+    </div>
+    <div class="mf-kpis">
+      ${kpi(hrTxtMin(total), (esActual ? acL('trabajadas esta semana', 'treballades aquesta setmana') : acL('trabajadas esa semana', 'treballades aquella setmana')) + (abierto && esActual ? ' · ' + acL('contando ahora', 'comptant ara') : ''), 'var(--navy)')}
+      ${previstaSemana ? kpi(hrTxtMin(previstaSemana), acL('previstas en tu horario', 'previstes al teu horari')) : ''}
+      ${previstaSemana ? kpi(difTxt, esActual ? acL('frente a lo previsto hasta hoy', 'respecte al previst fins avui') : acL('frente a lo previsto', 'respecte al previst'), dif >= 0 ? '#17663A' : 'var(--alert)') : ''}
+      ${kpi(diasTrab, acL('días con fichaje', 'dies amb fitxatge'))}
+    </div>
+    <div class="panel-card" style="margin:0 0 14px;padding:6px 10px;overflow-x:auto;">
+      <table class="mf-tabla"><thead><tr><th>${acL('Día', 'Dia')}</th><th>${acL('Entrada → salida', 'Entrada → sortida')}</th><th class="mf-num">${acL('Horas', 'Hores')}</th></tr></thead>
+      <tbody>${dias.map(fila).join('') || `<tr><td colspan="3" class="subtle">${acL('Sin fichajes esta semana.', 'Sense fitxatges aquesta setmana.')}</td></tr>`}</tbody>
+      <tfoot><tr><td colspan="2"><strong>${acL('Total de la semana', 'Total de la setmana')}</strong></td><td class="mf-num"><strong>${hrTxtMin(total)}</strong></td></tr></tfoot></table>
+      ${semana.some(f => f.cerrado_automaticamente) ? `<p class="subtle" style="font-size:12px;margin:6px 4px;">⚠️ ${acL('Fichaje cerrado automáticamente porque faltaba la salida. Si las horas no son correctas, avisa a Recursos Humanos.', 'Fitxatge tancat automàticament perquè faltava la sortida. Si les hores no són correctes, avisa Recursos Humans.')}</p>` : ''}
+    </div>
+    <div class="panel-card" style="margin:0 0 14px;">
+      <h3 style="margin:0 0 10px;font-size:15px;">📊 ${acL('Últimas 12 semanas', 'Últimes 12 setmanes')}</h3>
+      ${hist.map(x => `<button class="mf-barra${x.off === st.off ? ' on' : ''}" onclick="gpRenderMisFichajes(document.getElementById('gp-cuerpo'), ${x.off})">
+        <span class="mf-bl">${escAttr(x.l.toLocaleDateString(TI[LANG_I].localeFecha, { day: 'numeric', month: 'short' }))}</span>
+        <span class="mf-bt"><i style="width:${Math.round(x.m / maxH * 100)}%"></i>${previstaSemana ? `<em style="left:${Math.round(previstaSemana / maxH * 100)}%"></em>` : ''}</span>
+        <span class="mf-bv">${x.m ? hrTxtMin(x.m) : '—'}</span></button>`).join('')}
+      ${previstaSemana ? `<p class="subtle" style="font-size:11.5px;margin:6px 0 0;">${acL('La raya marca las horas previstas en tu horario', 'La ratlla marca les hores previstes al teu horari')} (${hrTxtMin(previstaSemana)}).</p>` : ''}
+    </div>
+    <div class="sv-btns"><button class="sv-btn" onclick="mfDescargar()">⬇️ ${acL('Descargar mis fichajes (Excel/CSV)', 'Descarregar els meus fitxatges (Excel/CSV)')}</button></div>
+    <p class="subtle" style="font-size:12px;margin:6px 0 0;">${acL('Las horas se suman solas a partir de tus fichajes de entrada y salida. Solo tú y Recursos Humanos las veis. Para corregir un fichaje, avisa a Recursos Humanos.', 'Les hores se sumen soles a partir dels teus fitxatges d\'entrada i sortida. Només tu i Recursos Humans les veieu. Per corregir un fitxatge, avisa Recursos Humans.')}</p>`;
+}
+function mfDescargar(){
+  const ahora = new Date(), L = (window.__mf.datos || []).slice().sort((a, b) => a.entrada.localeCompare(b.entrada));
+  if(!L.length){ alert(acL('No hay fichajes en este periodo.', 'No hi ha fitxatges en aquest període.')); return; }
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const filas = [[acL('Semana (lunes)', 'Setmana (dilluns)'), acL('Día', 'Dia'), acL('Entrada', 'Entrada'), acL('Salida', 'Sortida'), acL('Minutos', 'Minuts'), acL('Horas', 'Hores'), acL('Nota', 'Nota')]];
+  L.forEach(f => { const e = new Date(f.entrada), l = new Date(e); l.setHours(0, 0, 0, 0); l.setDate(l.getDate() - (hrDiaSemanaJS(l) - 1)); const m = mfMin(f, ahora);
+    filas.push([isoLocal(l), e.toLocaleDateString(TI[LANG_I].localeFecha), mfHora(f.entrada), f.salida ? mfHora(f.salida) : '', m, (m / 60).toFixed(2).replace('.', ','), (f.cerrado_automaticamente ? '[auto] ' : '') + (f.nota || '')]); });
+  const csv = '﻿' + filas.map(r => r.map(q).join(';')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'mis-fichajes.csv'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
 
 // ---------- nóminas ----------
@@ -16771,7 +16888,7 @@ async function hrInfoMiEspacio(email, fichadoAhora){
       aviso = `⏰ ${acL('Tu horario terminó a las', 'El teu horari va acabar a les')} ${ultimo.hasta}. ${acL('Recuerda fichar la salida.', 'Recorda fitxar la sortida.')}`;
     return `<div style="text-align:left;margin:0 0 12px;font-size:13px;line-height:1.6;">
       <div>🕘 <strong>${acL('Tu horario de hoy', 'El teu horari d\'avui')}:</strong> ${hoy.length ? hrTxtTramos(hoy) : acL('hoy no tienes horario', 'avui no tens horari')}${h.propio ? ` <span class="chip" style="font-size:10.5px;">${acL('personal', 'personal')}</span>` : ''}${HR_OK ? ` <button class="link-btn" style="font-size:12px;margin-left:6px;" onclick="showScreen('mihorario');renderMiHorario()">✏️ ${acL('Ajustar mi horario', 'Ajustar el meu horari')}</button>` : ''}</div>
-      <div class="subtle" style="margin:2px 0 0;font-size:12px;">${acL('Esta semana: previstas', 'Aquesta setmana: previstes')} ${hrTxtMin(previstasSemana)} · ${acL('fichadas hasta ahora', 'fitxades fins ara')} ${hrTxtMin(fichados)} ${acL('(previstas hasta ahora', '(previstes fins ara')} ${hrTxtMin(previstasHastaAhora)})</div>
+      <div class="subtle" style="margin:2px 0 0;font-size:12px;">${acL('Esta semana: previstas', 'Aquesta setmana: previstes')} ${hrTxtMin(previstasSemana)} · ${acL('fichadas hasta ahora', 'fitxades fins ara')} ${hrTxtMin(fichados)} ${acL('(previstas hasta ahora', '(previstes fins ara')} ${hrTxtMin(previstasHastaAhora)}) · <span class="link-btn" style="font-size:12px;" onclick="showScreen('gestionpersonal');renderGestionPersonal('misfich')">🕒 ${acL('Mi historial', 'El meu historial')} →</span></div>
       ${aviso ? `<div class="info-box info-box-gold" style="margin:8px 0 0;">${aviso}</div>` : ''}</div>`;
   } catch(e) { return ''; }
 }
@@ -19638,7 +19755,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-17 · v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-17 · v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
