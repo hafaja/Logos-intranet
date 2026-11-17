@@ -19879,7 +19879,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-17 · v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-17 · v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -25811,8 +25811,14 @@ async function estCargarPersonas(){
   const cols = 'id, nombre_completo, sexo, nacionalidad, fecha_nacimiento, municipio, creado_en' + (FECHA_ALTA_OK ? ', fecha_alta' : '') + ', dni_nie';
   const [pr, at, ac] = await Promise.all([
     traerTodoPaginado((a, b) => sb.from('perfiles').select(cols).not('nombre_completo', 'is', null).range(a, b)),
-    traerTodoPaginado((a, b) => sb.from('atenciones').select('usuario_id, nombre_referencia, creado_en').order('creado_en', { ascending: true }).range(a, b)).catch(() => ({ data: [] })),
-    traerTodoPaginado((a, b) => sb.from('actuaciones').select('usuario_id, fecha').not('usuario_id', 'is', null).range(a, b)).catch(() => ({ data: [] }))
+    traerTodoPaginado((a, b) => sb.from('atenciones').select('usuario_id, nombre_referencia, creado_en, prestaciones, tramites_bretxa, emprendeduria, talleres, derivacion_programas').order('creado_en', { ascending: true }).range(a, b))
+      .then(r => r.error ? traerTodoPaginado((a, b) => sb.from('atenciones').select('usuario_id, nombre_referencia, creado_en').order('creado_en', { ascending: true }).range(a, b)) : r).catch(() => ({ data: [] })),
+    traerTodoPaginado((a, b) => sb.from('actuaciones').select('usuario_id, fecha, categoria, proyecto_id').not('usuario_id', 'is', null).range(a, b))
+      .then(r => r.error ? traerTodoPaginado((a, b) => sb.from('actuaciones').select('usuario_id, fecha').not('usuario_id', 'is', null).range(a, b)) : r).catch(() => ({ data: [] }))
+  ]);
+  const [trA, pyA] = await Promise.all([
+    traerTodoPaginado((a, b) => sb.from('tramites').select('usuario_id').not('usuario_id', 'is', null).range(a, b)).catch(() => ({ data: [] })),
+    sb.from('proyectos').select('id, nombre').then(r => r, () => ({ data: [] }))
   ]);
   const perfiles = pr.data || [];
   if(!window.__personasHistUnif) window.__personasHistUnif = histUnificar(perfiles, await histCargarParaLista());
@@ -25836,6 +25842,21 @@ async function estCargarPersonas(){
     const f = x.fechas.sort(); const anios = [...new Set(f.map(d => Number(d.slice(0, 4))))].sort();
     return { origen: 'sinficha', id: 'sf:' + k, sexo: '', tramo: '', nacionalidad: '', municipio: '', anio: anios[0] || null, alta: f[0] || null, anios, fechas: f };
   });
+  // v271 · Áreas (proyectos y servicios) de cada persona
+  try {
+    const nomProy = {}; ((pyA && pyA.data) || []).forEach(x => { nomProy[x.id] = x.nombre; });
+    const ar = {}; const pon = (id, set) => { if(!id || !set || !set.size) return; const s0 = ar[id] = ar[id] || new Set(); set.forEach(x => s0.add(x)); };
+    (at.data || []).forEach(a => pon(a.usuario_id, estAreasDeAtencion(a)));
+    (ac.data || []).forEach(a => { const s1 = estAreasDeTexto(a.categoria); if(a.proyecto_id && nomProy[a.proyecto_id]) estAreasDeTexto(nomProy[a.proyecto_id]).forEach(x => s1.add(x)); if(!s1.size && a.categoria) s1.add(EST_AREA_OTRAS); pon(a.usuario_id, s1); });
+    sinBorrados((trA && trA.data) || []).forEach(t => pon(t.usuario_id, new Set([EST_AREA_TRAMITES])));
+    // registros del histórico ya unidos a una cuenta: sus áreas pasan a la cuenta
+    try { (await histCargarParaLista()).forEach(h => { if(h.perfil_id) pon(h.perfil_id, estAreasDeTexto([h.servicio, h.proyecto, h.tipo].filter(Boolean).join(' · '))); }); } catch(e){}
+    filasCuenta.forEach(f => { f.areas = [...(ar[f.id] || [])]; });
+    filasHist.forEach((f, i) => { const s2 = new Set(); (hist[i].regs || []).forEach(r => estAreasDeTexto(r.txt).forEach(x => s2.add(x))); if(!s2.size && (hist[i].regs || []).some(r => r.txt)) s2.add(EST_AREA_OTRAS); f.areas = [...s2]; });
+    const arSF = {}; (at.data || []).forEach(a => { if(a.usuario_id) return; const k = 'sf:' + estClaveNombre(a.nombre_referencia); const s3 = arSF[k] = arSF[k] || new Set(); estAreasDeAtencion(a).forEach(x => s3.add(x)); });
+    filasSinFicha.forEach(f => { f.areas = [...(arSF[f.id] || [])]; });
+    filasCuenta.concat(filasHist).concat(filasSinFicha).forEach(f => { if(!f.areas.length) f.areas = [EST_AREA_SIN]; });
+  } catch(e){ console.warn('áreas', e); }
   const d = { perfiles, hist, filas: filasCuenta.concat(filasHist).concat(filasSinFicha) };
   window.__estCache = { t: Date.now(), d };
   return d;
@@ -25905,7 +25926,7 @@ function estPintarDatos(caja){
       <label>${esCA ? 'Any' : 'Año'} ${sel('a', [['', esCA ? 'Tots (fins avui)' : 'Todos (hasta hoy)']].concat(anios.map(a => [a, a])), st.anio, "window.__est.anio=this.value;estPintarDatos()")}</label>
       ${st.anio ? `<label>${sel('m', [['alta', esCA ? 'Altes d\'aquell any' : 'Altas de ese año'], ['atendidas', esCA ? 'Ateses aquell any' : 'Atendidas ese año']], st.anioModo || 'alta', "window.__est.anioModo=this.value;estPintarDatos()")}</label>` : ''}
       <span style="flex:1"></span>
-      <button class="link-btn" onclick="estExcel()">⬇️ Excel</button>
+      <button class="link-btn" style="font-weight:700;" onclick="estExcelPro()">⬇️ ${esCA ? 'Excel complet: persones, atencions i àrees (sexe, edat, nacionalitat)' : 'Excel completo: personas, atenciones y áreas (sexo, edad, nacionalidad)'}</button>
       <button class="link-btn" onclick="showScreen('impacto');window.__imp.tab='memoria';renderImpacto('memoria')">📄 ${esCA ? 'Memòria d\'impacte' : 'Memoria de impacto'}</button>
     </div>
     <div class="est-hero"><div><div class="est-big">${T.tot.toLocaleString()}</div><div class="est-sub">${esCA ? 'persones' : 'personas'}${st.anio ? ' · ' + ((st.anioModo === 'atendidas') ? (esCA ? 'ateses el ' : 'atendidas en ') : (esCA ? 'alta el ' : 'alta en ')) + st.anio : (TR.primero ? ' ' + (esCA ? `ateses des de ${TR.primero} fins avui` : `atendidas desde ${TR.primero} hasta hoy`) : '')}</div></div>
@@ -25917,6 +25938,11 @@ function estPintarDatos(caja){
       <div class="panel-card"><h3>🎂 ${esCA ? 'Per edat (en el moment de l\'alta)' : 'Por edad (en el momento del alta)'}</h3>${estBarras(T.edad)}</div>
       <div class="panel-card"><h3>🌍 ${esCA ? 'Per nacionalitat' : 'Por nacionalidad'}</h3>${estBarras(T.origen)}<div style="height:10px"></div>${estBarras(nacTop.concat(nacResto ? [[esCA ? 'Altres' : 'Otras', nacResto, '']] : []))}</div>
       <div class="panel-card"><h3>📍 ${esCA ? 'Per municipi' : 'Por municipio'}</h3>${estBarras(muniTop)}</div>
+      ${(() => { const ars = estAreasLista(filas); if(!ars.length) return ''; const n = a => filas.filter(f => (f.areas || []).includes(a));
+        return `<div class="panel-card est-ancha"><h3>🧩 ${esCA ? 'Per àrea (projectes i serveis)' : 'Por área (proyectos y servicios)'}</h3>
+        <p class="subtle" style="margin:0 0 8px;font-size:12px;">${esCA ? 'Una persona compta una vegada a cada àrea on ha participat (pot ser a més d\'una).' : 'Una persona cuenta una vez en cada área en la que ha participado (puede estar en más de una).'}</p>
+        <div class="imp-tabla-w"><table class="imp-tabla"><thead><tr><th>${esCA ? 'Àrea' : 'Área'}</th><th>${esCA ? 'Persones' : 'Personas'}</th><th>${esCA ? 'Dones' : 'Mujeres'}</th><th>${esCA ? 'Homes' : 'Hombres'}</th><th>${esCA ? 'Altre / no consta' : 'Otro / no consta'}</th><th>${esCA ? 'Altres nacionalitats' : 'Otras nacionalidades'}</th></tr></thead>
+        <tbody>${ars.map(a => { const g = n(a), m = g.filter(f => f.sexo === 'mujer').length, h = g.filter(f => f.sexo === 'hombre').length; return `<tr><td>${escAttr(a)}</td><td><strong>${g.length.toLocaleString()}</strong></td><td>${m.toLocaleString()}</td><td>${h.toLocaleString()}</td><td>${(g.length - m - h).toLocaleString()}</td><td>${g.filter(f => estGrupoNac(f) === 'Otras nacionalidades').length.toLocaleString()}</td></tr>`; }).join('')}</tbody></table></div></div>`; })()}
       <div class="panel-card est-ancha"><h3>📅 ${esCA ? 'Altes per any' : 'Altas por año'}</h3>
         <div class="imp-tabla-w"><table class="imp-tabla"><thead><tr><th>${esCA ? 'Any' : 'Año'}</th><th>${esCA ? 'Total' : 'Total'}</th><th>${esCA ? 'Amb compte' : 'Con cuenta'}</th><th>${esCA ? 'Històric (paper)' : 'Histórico (papel)'}</th><th>${esCA ? 'Sense fitxa' : 'Sin ficha'}</th><th>${esCA ? 'Dones' : 'Mujeres'}</th><th>${esCA ? 'Homes' : 'Hombres'}</th></tr></thead>
         <tbody>${T.anio.map(r => `<tr><td>${r[0]}</td><td><strong>${r[1].toLocaleString()}</strong></td><td>${r[2].toLocaleString()}</td><td>${r[3].toLocaleString()}</td><td>${r[4].toLocaleString()}</td><td>${r[5].toLocaleString()}</td><td>${r[6].toLocaleString()}</td></tr>`).join('')}</tbody></table></div></div>
@@ -25959,6 +25985,271 @@ async function estSexoPoner(origen, id, k, btn){
   if(!r.data || !r.data.length){ alert(acL('No se ha podido guardar (permisos).', 'No s\'ha pogut desar (permisos).')); return; }
   f.sexo = k; window.__personasHistUnif = null; window.__histCacheLista = null;
   const fila = btn.parentElement; fila.querySelectorAll('button').forEach(x => x.classList.remove('pri')); btn.classList.add('pri');
+}
+// ===== v271 · ÁREAS (proyectos y servicios de Logos) para estadísticas y Excel =====
+// Cada persona cuenta UNA vez en cada área en la que ha participado (puede estar en varias áreas).
+const EST_AREA_TRAMITES = 'Bretxa Digital · trámites', EST_AREA_PRESTACIONES = 'Prestaciones y ayudas', EST_AREA_FORMACION = 'Formación y talleres',
+  EST_AREA_EMPRENDE = 'Emprendeduría', EST_AREA_EMPLEO = 'Empleo e inserción', EST_AREA_OTRAS = 'Otras actuaciones', EST_AREA_SIN = 'Sin área registrada';
+const EST_PROG_AREA = { nomes_bretxa: EST_AREA_TRAMITES, convo: 'Mirada Endavant', raices: 'Projecte Arrels: Reconnexió Familiar', la_caixa: 'Futur en Xarxa', job_club: 'JOB CLUB A3', ibercaja: 'Autonomia Digital Activa', red_arana: 'Red Araña (Ruraliza-T / YoEmprendo / Impulsa-T)', cuidem: 'Cuidem en igualtat' };
+function estAreasDeTexto(txt){
+  const out = new Set(), t = ' ' + proyNorm(txt) + ' '; if(t.trim().length < 2) return out;
+  (typeof PROYECTOS_LOGOS !== 'undefined' ? PROYECTOS_LOGOS : []).forEach(n => { const k = proyNorm(n); if(k.length >= 4 && t.includes(' ' + k + ' ')) out.add(n); });
+  if(/ (jovenes|joves) en accio/.test(t)) out.add('Jóvenes en acción');
+  if(/ (red arana|ruraliza|yoemprendo|impulsa t) /.test(t)) out.add(EST_PROG_AREA.red_arana);
+  if(/ (bretxa|tramit|tramite|tramites|cita previa|sepe|seguretat social|seguridad social|certificat digital|certificado digital|idcat|cl@ve|clave|padro|empadron|hisenda|hacienda|renda|extranjeria|estrangeria)/.test(t)) out.add(EST_AREA_TRAMITES);
+  if(/ (formacio|formacion|curs |curso|taller|tic |capacitacio|alfabetitzacio)/.test(t)) out.add(EST_AREA_FORMACION);
+  if(/ (emprend)/.test(t)) out.add(EST_AREA_EMPRENDE);
+  if(/ (prestaci|ajut|ayuda|imv|ingres minim|renda garantida|beca)/.test(t) && !out.has(EST_AREA_TRAMITES)) out.add(EST_AREA_PRESTACIONES);
+  if(/ (ocupaci|empleo|feina|treball|insercio|insercion|curriculum|cv |orientacio laboral|orientacion laboral)/.test(t)) out.add(EST_AREA_EMPLEO);
+  return out;
+}
+function estAreasDeAtencion(a){
+  const out = new Set(), arr = v => Array.isArray(v) ? v.filter(Boolean) : (v ? String(v).split('|').filter(Boolean) : []);
+  if(arr(a.prestaciones).length) out.add(EST_AREA_PRESTACIONES);
+  if(arr(a.tramites_bretxa).length) out.add(EST_AREA_TRAMITES);
+  if(arr(a.emprendeduria).length) out.add(EST_AREA_EMPRENDE);
+  if(arr(a.talleres).length) out.add(EST_AREA_FORMACION);
+  arr(a.derivacion_programas).forEach(c => { if(EST_PROG_AREA[c]) out.add(EST_PROG_AREA[c]); else estAreasDeTexto(c).forEach(x => out.add(x)); });
+  return out;
+}
+function estAreasLista(filas){
+  const c = {}; filas.forEach(f => (f.areas || []).forEach(a => { c[a] = (c[a] || 0) + 1; }));
+  return Object.entries(c).sort((a, b) => (a[0] === EST_AREA_SIN) - (b[0] === EST_AREA_SIN) || (a[0] === EST_AREA_OTRAS) - (b[0] === EST_AREA_OTRAS) || b[1] - a[1]).map(x => x[0]);
+}
+const estGrupoNac = f => !f.nacionalidad ? 'No consta' : f.nacionalidad === 'España' ? 'Española' : 'Otras nacionalidades';
+const estSexoEt = k => k === 'mujer' ? 'Mujer' : k === 'hombre' ? 'Hombre' : k === 'otro' ? 'Otro' : 'No consta';
+
+// Excel profesional: hoja «Datos» (una fila por persona, sin nombres) y todas las tablas calculadas con FÓRMULAS
+// (CONTAR.SI.CONJUNTO / SUMA) sobre esa hoja: todo suma y se puede comprobar, filtrar o ampliar en Excel.
+async function estExcelPro(){
+  if(!window.ExcelJS){ alert(acL('No se ha podido cargar el generador de Excel. Recarga la página.', 'No s\'ha pogut carregar el generador d\'Excel. Recarrega la pàgina.')); return; }
+  const st = window.__est, filas = estFiltrar(window.__estDatos.filas), N = filas.length;
+  if(!N){ alert(acL('No hay personas con este filtro.', 'No hi ha persones amb aquest filtre.')); return; }
+  const areas = estAreasLista(filas), TR = EST_TRAMOS.concat(['No consta']);
+  const ORIG = { cuenta: 'Con cuenta', papel: 'Histórico (papel)', sinficha: 'Atendida sin ficha' };
+  const libro = new window.ExcelJS.Workbook(); libro.creator = 'Logos Intranet'; libro.created = new Date(); libro.title = 'Estadísticas de personas atendidas por área'; libro.calcProperties = { fullCalcOnLoad: true };
+  const AZUL = 'FF1E3F66', AZUL2 = 'FFE8EEF6', ORO = 'FFF2BC2C', GRIS = 'FF5D6B82', BORDE = 'FFC9D6E6', ZEBRA = 'FFF6F8FB';
+  const fino = { style: 'thin', color: { argb: BORDE } }, caja = { top: fino, left: fino, bottom: fino, right: fino };
+  const colL = n => { let s = ''; while(n > 0){ const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+  const nomHoja = t => String(t).replace(/[\\\/\?\*\[\]:']/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 31);
+  const filtroTxt = (st.origen === 'todas' ? 'Todas las personas' : ORIG[st.origen]) + (st.anio ? ' · ' + (st.anioModo === 'atendidas' ? 'atendidas en ' : 'alta en ') + st.anio : ' · hasta hoy');
+
+  // ---------- Hoja «Datos» ----------
+  const D = libro.addWorksheet('Datos', { views: [{ state: 'frozen', ySplit: 1, xSplit: 1 }], properties: { tabColor: { argb: GRIS } } });
+  const cabD = ['Código', 'Origen', 'Año de alta', 'Años atendida', 'Sexo', 'Tramo de edad', 'Nacionalidad', 'Grupo nacionalidad', 'Municipio'].concat(areas);
+  D.addRow(cabD);
+  filas.forEach((f, i) => D.addRow([
+    'P-' + String(i + 1).padStart(5, '0'), ORIG[f.origen] || f.origen, f.anio || '', (f.anios && f.anios.length ? f.anios : (f.anio ? [f.anio] : [])).join(', '),
+    estSexoEt(f.sexo), f.tramo || 'No consta', f.nacionalidad || 'No consta', estGrupoNac(f), f.municipio || 'No consta'
+  ].concat(areas.map(a => (f.areas || []).includes(a) ? 1 : 0))));
+  D.columns.forEach((c, i) => { c.width = i < 9 ? [10, 18, 11, 16, 11, 13, 20, 20, 18][i] : Math.min(26, Math.max(12, String(cabD[i]).length * 0.9)); });
+  D.getRow(1).height = 42;
+  D.getRow(1).eachCell((c, i) => { c.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: i > 9 ? 'FF2E5A8F' : AZUL } }; c.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }; c.border = caja; });
+  for(let r = 2; r <= N + 1; r++){ const row = D.getRow(r); row.eachCell({ includeEmpty: true }, (c, i) => { c.border = caja; c.font = { size: 10 }; if(i > 9 || i === 3) c.alignment = { horizontal: 'center' }; if(r % 2 === 0) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ZEBRA } }; }); }
+  D.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: cabD.length } };
+  const RNG = k => `Datos!$${colL(k)}$2:$${colL(k)}$${N + 1}`;          // columna k (1 = A)
+  const cSexo = RNG(5), cTramo = RNG(6), cNac = RNG(7), cGrupo = RNG(8), cMuni = RNG(9), cArea = a => RNG(10 + areas.indexOf(a));
+  const cuenta = (conds, valor) => ({ formula: 'COUNTIFS(' + conds.map(([r, v]) => r + ',' + (typeof v === 'number' ? v : '"' + String(v).replace(/"/g, '""') + '"')).join(',') + ')', result: valor });
+  let BASE = filas; const real = (pred) => BASE.filter(pred).length;
+  const conArea = (a, f) => !a || (f.areas || []).includes(a);
+
+  // ---------- utilidades de formato ----------
+  const titulo = (h, txt, sub, ancho) => {
+    h.mergeCells(1, 1, 1, ancho); const t = h.getCell(1, 1); t.value = txt; t.font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' } }; t.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: AZUL } }; t.alignment = { vertical: 'middle', indent: 1 }; h.getRow(1).height = 32;
+    h.mergeCells(2, 1, 2, ancho); const s2 = h.getCell(2, 1); s2.value = sub; s2.font = { italic: true, size: 10, color: { argb: GRIS } }; s2.alignment = { indent: 1 };
+    h.getRow(3).height = 4; for(let c = 1; c <= ancho; c++) h.getCell(3, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ORO } };
+  };
+  // Tabla con fórmulas. filasDef = [{ et, conds:[[rango,valor]...], real }]; cols = [{ et, conds, pred }]; añade Total (SUMA) y % sobre el total
+  const tabla = (h, fila0, tituloT, cabPrim, filasDef, cols, conPct) => {
+    h.getCell(fila0, 1).value = tituloT; h.getCell(fila0, 1).font = { bold: true, size: 12, color: { argb: AZUL } };
+    const cab = [cabPrim].concat(cols.map(c => c.et)).concat(['Total']).concat(conPct ? ['% del total'] : []);
+    const rC = fila0 + 1;
+    cab.forEach((t, i) => { const c = h.getCell(rC, i + 1); c.value = t; c.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: AZUL } }; c.alignment = { horizontal: i ? 'center' : 'left', vertical: 'middle', wrapText: true }; c.border = caja; });
+    h.getRow(rC).height = 30;
+    const r1 = rC + 1, nC = cols.length, cTot = nC + 2;
+    filasDef.forEach((fd, k) => {
+      const r = r1 + k; h.getCell(r, 1).value = fd.et;
+      cols.forEach((c, j) => { h.getCell(r, j + 2).value = cuenta(fd.conds.concat(c.conds), real(f => fd.pred(f) && c.pred(f))); });
+      h.getCell(r, cTot).value = { formula: `SUM(${colL(2)}${r}:${colL(nC + 1)}${r})`, result: real(fd.pred) };
+      h.getCell(r, cTot).font = { bold: true, size: 10 };
+      for(let i = 1; i <= cTot + (conPct ? 1 : 0); i++){ const c = h.getCell(r, i); c.border = caja; if(!c.font || !c.font.bold) c.font = { size: 10 }; if(k % 2) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ZEBRA } }; if(i > 1) c.alignment = { horizontal: 'center' }; }
+    });
+    const rT = r1 + filasDef.length;
+    h.getCell(rT, 1).value = 'Total';
+    for(let i = 2; i <= cTot; i++) h.getCell(rT, i).value = { formula: `SUM(${colL(i)}${r1}:${colL(i)}${rT - 1})`, result: i === cTot ? filasDef.reduce((s0, fd) => s0 + real(fd.pred), 0) : filasDef.reduce((s0, fd) => s0 + real(f => fd.pred(f) && cols[i - 2].pred(f)), 0) };
+    if(conPct){
+      for(let r = r1; r <= rT; r++){ const c = h.getCell(r, cTot + 1); c.value = { formula: `IF($${colL(cTot)}$${rT}=0,0,${colL(cTot)}${r}/$${colL(cTot)}$${rT})` }; c.numFmt = '0.0%'; c.alignment = { horizontal: 'center' }; }
+    }
+    for(let i = 1; i <= cTot + (conPct ? 1 : 0); i++){ const c = h.getCell(rT, i); c.font = { bold: true, size: 10, color: { argb: AZUL } }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: AZUL2 } }; c.border = { top: { style: 'medium', color: { argb: AZUL } }, bottom: fino, left: fino, right: fino }; if(i > 1) c.alignment = { horizontal: 'center' }; }
+    return rT + 2;
+  };
+  const SEXOS = [['Mujer', 'mujer'], ['Hombre', 'hombre'], ['Otro', 'otro'], ['No consta', '']];
+  const colsSexo = SEXOS.map(([et, k]) => ({ et: et === 'Mujer' ? 'Mujeres' : et === 'Hombre' ? 'Hombres' : et, conds: [[cSexo, et]], pred: f => k ? f.sexo === k : !['mujer', 'hombre', 'otro'].includes(f.sexo) }));
+  const nacs = estContar(filas, 'nacionalidad').map(x => x[0]).filter(Boolean);
+  const munis = estContar(filas, 'municipio').map(x => x[0]).filter(Boolean);
+  const bloqueArea = (h, a, fila0) => {
+    const base = a ? [[cArea(a), 1]] : [], pb = f => conArea(a, f);
+    let r = fila0;
+    r = tabla(h, r, '1. Por sexo', 'Sexo', [{ et: 'Personas', conds: base, pred: pb }], colsSexo, false);
+    r = tabla(h, r, '2. Por edad y sexo (edad en el momento del alta)', 'Tramo de edad', TR.map(t => ({ et: t === 'No consta' ? 'No consta' : t + ' años', conds: base.concat([[cTramo, t]]), pred: f => pb(f) && (f.tramo || 'No consta') === t })), colsSexo, true);
+    r = tabla(h, r, '3. Por origen y sexo', 'Nacionalidad', ['Española', 'Otras nacionalidades', 'No consta'].map(g => ({ et: g, conds: base.concat([[cGrupo, g]]), pred: f => pb(f) && estGrupoNac(f) === g })), colsSexo, true);
+    const nacA = nacs.filter(n => filas.some(f => pb(f) && f.nacionalidad === n)).concat(filas.some(f => pb(f) && !f.nacionalidad) ? ['No consta'] : []);
+    r = tabla(h, r, '4. Por nacionalidad y sexo', 'Nacionalidad', nacA.map(n => ({ et: n, conds: base.concat([[cNac, n]]), pred: f => pb(f) && (f.nacionalidad || 'No consta') === n })), colsSexo, true);
+    const munA = munis.filter(n => filas.some(f => pb(f) && f.municipio === n)).concat(filas.some(f => pb(f) && !f.municipio) ? ['No consta'] : []);
+    r = tabla(h, r, '5. Por municipio y sexo', 'Municipio', munA.map(n => ({ et: n, conds: base.concat([[cMuni, n]]), pred: f => pb(f) && (f.municipio || 'No consta') === n })), colsSexo, true);
+    return r;
+  };
+  const prep = (h, anchoPrim) => { h.columns = [{ width: anchoPrim }].concat(Array(7).fill({ width: 14 })); h.pageSetup = { orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 } }; h.headerFooter = { oddFooter: '&L&8Associació Logos · Intranet&R&8Página &P de &N' }; };
+
+  // ---------- Hoja «Resumen» ----------
+  const RS = libro.addWorksheet('Resumen', { views: [{ showGridLines: false }], properties: { tabColor: { argb: ORO } } });
+  prep(RS, 34); titulo(RS, 'Personas atendidas · estadísticas por área', `Associació Logos – Projectes Socials · ${filtroTxt} · generado el ${new Date().toLocaleDateString('es-ES')} desde la Intranet`, 7);
+  const kp = [['Personas distintas', { formula: `COUNTA(Datos!$A$2:$A$${N + 1})`, result: N }], ['Mujeres', cuenta([[cSexo, 'Mujer']], real(f => f.sexo === 'mujer'))], ['Hombres', cuenta([[cSexo, 'Hombre']], real(f => f.sexo === 'hombre'))],
+    ['Otras nacionalidades', cuenta([[cGrupo, 'Otras nacionalidades']], real(f => estGrupoNac(f) === 'Otras nacionalidades'))], ['Áreas con actividad', areas.filter(a => a !== EST_AREA_SIN).length]];
+  kp.forEach(([et, v], i) => { const r = 5 + i; RS.getCell(r, 1).value = et; RS.getCell(r, 1).font = { size: 11, color: { argb: GRIS } }; const c = RS.getCell(r, 2); c.value = v; c.font = { bold: true, size: 14, color: { argb: AZUL } }; c.alignment = { horizontal: 'center' }; c.border = { bottom: fino }; RS.getCell(r, 1).border = { bottom: fino }; });
+  let rr = 11;
+  rr = tabla(RS, rr, 'Personas por área y sexo', 'Área', areas.map(a => ({ et: a, conds: [[cArea(a), 1]], pred: f => conArea(a, f) })), colsSexo, false);
+  RS.getCell(rr - 1, 1).value = 'Una persona cuenta una vez en cada área en la que ha participado: como puede estar en varias, la suma de las áreas puede ser mayor que el número de personas distintas.';
+  RS.getCell(rr - 1, 1).font = { italic: true, size: 9, color: { argb: GRIS } };
+  rr += 1;
+  rr = tabla(RS, rr, 'Personas por área y edad', 'Área', areas.map(a => ({ et: a, conds: [[cArea(a), 1]], pred: f => conArea(a, f) })), TR.map(t => ({ et: t === 'No consta' ? 'No consta' : t, conds: [[cTramo, t]], pred: f => (f.tramo || 'No consta') === t })), false);
+  rr = tabla(RS, rr, 'Personas por área y origen', 'Área', areas.map(a => ({ et: a, conds: [[cArea(a), 1]], pred: f => conArea(a, f) })), ['Española', 'Otras nacionalidades', 'No consta'].map(g => ({ et: g, conds: [[cGrupo, g]], pred: f => estGrupoNac(f) === g })), false);
+  RS.columns = [{ width: 40 }].concat(Array(10).fill({ width: 14 }));
+
+  // ---------- Hoja «Todas las personas» (por sexo, edad, nacionalidad y municipio) ----------
+  const TT = libro.addWorksheet('Todas las personas', { views: [{ showGridLines: false }] });
+  prep(TT, 30); titulo(TT, 'Todas las personas atendidas', filtroTxt + ' · cada persona cuenta una sola vez', 7); bloqueArea(TT, null, 5);
+
+  // ---------- Una hoja por área ----------
+  const usados = new Set(['Datos', 'Resumen', 'Todas las personas']);
+  areas.forEach(a => {
+    let nm = nomHoja(a), k = 2; while(usados.has(nm)){ nm = nomHoja(a).slice(0, 28) + ' ' + k++; } usados.add(nm);
+    const h = libro.addWorksheet(nm, { views: [{ showGridLines: false }] });
+    prep(h, 30); titulo(h, a, `${real(f => conArea(a, f)).toLocaleString('es-ES')} personas · ${filtroTxt}`, 7); bloqueArea(h, a, 5);
+  });
+
+  // ---------- v272 · Atenciones, actuaciones y registros del histórico: TODO el detalle ----------
+  const codigo = {}, personaDe = {}; filas.forEach((f, i) => { codigo[f.id] = 'P-' + String(i + 1).padStart(5, '0'); personaDe[f.id] = f; });
+  const [atR, acR, pyR, stR] = await Promise.all([
+    traerTodoPaginado((a, b) => sb.from('atenciones').select('*').order('creado_en', { ascending: true }).range(a, b)).catch(() => ({ data: [] })),
+    traerTodoPaginado((a, b) => sb.from('actuaciones').select('*').order('fecha', { ascending: true }).range(a, b)).catch(() => ({ data: [] })),
+    sb.from('proyectos').select('id, nombre').then(r => r, () => ({ data: [] })),
+    sb.from('staff').select('email, nombre').then(r => r, () => ({ data: [] }))
+  ]);
+  ((stR && stR.data) || []).forEach(x => { if(x.nombre) __mapaNombresTecnicos[x.email] = x.nombre; });
+  const nomProy = {}; ((pyR && pyR.data) || []).forEach(x => { nomProy[x.id] = x.nombre; });
+  const enAnio = iso => !st.anio || String(iso || '').slice(0, 4) === String(st.anio);
+  const mesDe = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  const lst = (arr, opts) => (Array.isArray(arr) ? arr : (arr ? String(arr).split('|') : [])).filter(Boolean).map(v => etiquetaOpt(opts, v)).join(', ');
+  const AT_GENERAL = 'Atención general';
+  const atRows = sinBorrados(atR.data || []).map(a => {
+    const pid = a.usuario_id || ('sf:' + estClaveNombre(a.nombre_referencia)), f = personaDe[pid];
+    if(!f || !a.creado_en || !enAnio(a.creado_en)) return null;
+    const d = new Date(a.creado_en), ar = [...estAreasDeAtencion(a)];
+    return { f, cod: codigo[pid], d, anio: d.getFullYear(), mes: mesDe(d), tec: nombreTecnico(a.creado_por_email) || '', dur: Number(a.duracion_minutos) || 0, areas: ar.length ? ar : [AT_GENERAL],
+      prest: lst(a.prestaciones, PRESTACIONES_OPTS), tram: lst(a.tramites_bretxa, TRAMITES_BRETXA_OPTS), prog: lst(a.derivacion_programas, PROGRAMAS_OPTS), tall: lst(a.talleres, TALLERES_OPTS), empr: lst(a.emprendeduria, EMPRENDEDURIA_OPTS),
+      ethos: a.ethos ? etiquetaOpt(ETHOS_OPTS, a.ethos) : '', deriv: a.derivacion ? etiquetaOpt(DERIVACION_OPTS, a.derivacion) : '', trabajo: a.encontro_trabajo ? String(trabajoEtiqueta(a.encontro_trabajo)).replace('💼 ', '') : '',
+      conocio: a.como_conocio ? etiquetaOpt(COMO_CONOCIO_OPTS, a.como_conocio) : '', necesidades: a.necesidades_no_catalogadas || '', notas: a.notas || '' };
+  }).filter(Boolean);
+  const acRows = sinBorrados(acR.data || []).map(a => {
+    const f = personaDe[a.usuario_id]; if(!f || !a.fecha || !enAnio(a.fecha)) return null;
+    const d = new Date(String(a.fecha).slice(0, 10) + 'T00:00:00'), proy = (a.proyecto_id && nomProy[a.proyecto_id]) || a.categoria || '';
+    const ar = [...estAreasDeTexto([a.categoria, a.proyecto_id ? nomProy[a.proyecto_id] : ''].filter(Boolean).join(' · '))];
+    return { f, cod: codigo[a.usuario_id], d, anio: d.getFullYear(), mes: mesDe(d), tec: nombreTecnico(a.tecnico_email) || '', proy: proy || 'Sin proyecto/servicio', area: ar[0] || (proy ? EST_AREA_OTRAS : EST_AREA_SIN),
+      desc: a.descripcion || '', estado: a.estado || '', revision: a.fecha_proxima_revision ? String(a.fecha_proxima_revision).slice(0, 10) : '' };
+  }).filter(Boolean);
+  const hiRows = [];
+  filas.forEach(f => { if(f.origen !== 'papel') return; (f.regs || []).forEach(r => { if(st.anio && String(r.anio) !== String(st.anio)) return; hiRows.push({ f, cod: codigo[f.id], anio: r.anio || '', txt: r.txt || '', areas: [...estAreasDeTexto(r.txt)].join(', ') || (r.txt ? EST_AREA_OTRAS : EST_AREA_SIN) }); }); });
+
+  // hoja de datos con estilo (para tablas grandes, sin colores celda a celda)
+  const hojaDatos = (nombre, cab, rows, anchos, color) => {
+    const h = libro.addWorksheet(nombre, { views: [{ state: 'frozen', ySplit: 1, xSplit: 2 }], properties: { tabColor: { argb: color || GRIS } } });
+    h.addRow(cab); rows.forEach(r => h.addRow(r));
+    h.columns.forEach((c, i) => { c.width = anchos[i] || 14; });
+    h.getRow(1).height = 36;
+    h.getRow(1).eachCell(c => { c.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: AZUL } }; c.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }; c.border = caja; });
+    const grande = rows.length > 4000;
+    for(let r = 2; r <= rows.length + 1; r++){ const row = h.getRow(r); row.font = { size: 10 }; if(!grande) row.eachCell({ includeEmpty: true }, c => { c.border = caja; c.alignment = { vertical: 'top', wrapText: c.col > 12 }; if(r % 2 === 0) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ZEBRA } }; }); }
+    h.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: cab.length } };
+    h.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+    return h;
+  };
+  const areasAt = [...new Set(atRows.flatMap(r => r.areas))].sort((a, b) => (a === AT_GENERAL) - (b === AT_GENERAL) || a.localeCompare(b));
+  const cabAt = ['Nº', 'Código persona', 'Fecha', 'Año', 'Mes', 'Hora', 'Técnico/a', 'Sexo', 'Tramo de edad', 'Nacionalidad', 'Grupo nacionalidad', 'Municipio', 'Duración (min)', 'Prestaciones', 'Trámites Bretxa', 'Derivación a programas', 'Talleres', 'Emprendeduría', 'Situación residencial (ETHOS)', 'Derivación', 'Ha encontrado trabajo', 'Cómo nos conoció', 'Necesidades no catalogadas', 'Notas'].concat(areasAt);
+  const HAT = hojaDatos('Atenciones', cabAt, atRows.map((r, i) => [i + 1, r.cod, new Date(Date.UTC(r.d.getFullYear(), r.d.getMonth(), r.d.getDate())), r.anio, r.mes, r.d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }), r.tec, estSexoEt(r.f.sexo), r.f.tramo || 'No consta', r.f.nacionalidad || 'No consta', estGrupoNac(r.f), r.f.municipio || 'No consta', r.dur || '',
+    r.prest, r.tram, r.prog, r.tall, r.empr, r.ethos, r.deriv, r.trabajo, r.conocio, r.necesidades, r.notas].concat(areasAt.map(a => r.areas.includes(a) ? 1 : 0))),
+    [6, 12, 11, 7, 9, 7, 20, 10, 12, 16, 18, 14, 10, 30, 30, 26, 22, 18, 22, 18, 16, 18, 28, 50].concat(areasAt.map(() => 13)), 'FF2463B8');
+  HAT.getColumn(3).numFmt = 'dd/mm/yyyy';
+  const cabAc = ['Nº', 'Código persona', 'Fecha', 'Año', 'Mes', 'Técnico/a', 'Sexo', 'Tramo de edad', 'Nacionalidad', 'Grupo nacionalidad', 'Municipio', 'Proyecto / servicio', 'Área', 'Descripción', 'Estado', 'Próxima revisión'];
+  const HAC = hojaDatos('Actuaciones', cabAc, acRows.map((r, i) => [i + 1, r.cod, new Date(Date.UTC(r.d.getFullYear(), r.d.getMonth(), r.d.getDate())), r.anio, r.mes, r.tec, estSexoEt(r.f.sexo), r.f.tramo || 'No consta', r.f.nacionalidad || 'No consta', estGrupoNac(r.f), r.f.municipio || 'No consta', r.proy, r.area, r.desc, r.estado, r.revision]),
+    [6, 12, 11, 7, 9, 20, 10, 12, 16, 18, 14, 30, 24, 60, 12, 13], 'FF1E8A4C');
+  HAC.getColumn(3).numFmt = 'dd/mm/yyyy';
+  if(hiRows.length) hojaDatos('Histórico (registros)', ['Código persona', 'Año', 'Servicio / proyecto / tipo', 'Áreas', 'Sexo', 'Tramo de edad', 'Nacionalidad', 'Grupo nacionalidad', 'Municipio'],
+    hiRows.map(r => [r.cod, r.anio, r.txt, r.areas, estSexoEt(r.f.sexo), r.f.tramo || 'No consta', r.f.nacionalidad || 'No consta', estGrupoNac(r.f), r.f.municipio || 'No consta']), [12, 7, 60, 30, 10, 12, 16, 18, 14], 'FF8A6D1D');
+
+  // ---------- Resúmenes de atenciones y actuaciones (fórmulas sobre esas hojas) ----------
+  const RA = (k, NN) => `Atenciones!$${colL(k)}$2:$${colL(k)}$${Math.max(2, NN + 1)}`;
+  const nAt = atRows.length, aSexo = RA(8, nAt), aMes = RA(5, nAt), aTec = RA(7, nAt), aArea = a => RA(25 + areasAt.indexOf(a), nAt);
+  const esc = t => String(t).replace(/[~*?]/g, '~$&');
+  const sexoCols = (rango, get) => SEXOS.map(([et, k]) => ({ et: et === 'Mujer' ? 'Mujeres' : et === 'Hombre' ? 'Hombres' : et, conds: [[rango, et]], pred: r => k ? get(r) === k : !['mujer', 'hombre', 'otro'].includes(get(r)) }));
+  const RES = libro.addWorksheet('Atenciones · resumen', { views: [{ showGridLines: false }], properties: { tabColor: { argb: 'FF2463B8' } } });
+  prep(RES, 40); titulo(RES, 'Atenciones recibidas', `${nAt.toLocaleString('es-ES')} atenciones · ${filtroTxt}`, 7);
+  BASE = atRows;
+  const kpA = [['Atenciones', { formula: `COUNTA(Atenciones!$B$2:$B$${Math.max(2, nAt + 1)})`, result: nAt }], ['Personas atendidas', new Set(atRows.map(r => r.cod)).size],
+    ['Horas de atención registradas', { formula: `ROUND(SUM(Atenciones!$M$2:$M$${Math.max(2, nAt + 1)})/60,1)`, result: Math.round(atRows.reduce((s0, r) => s0 + r.dur, 0) / 6) / 10 }],
+    ['Atenciones a mujeres', cuenta([[aSexo, 'Mujer']], atRows.filter(r => r.f.sexo === 'mujer').length)], ['Atenciones a hombres', cuenta([[aSexo, 'Hombre']], atRows.filter(r => r.f.sexo === 'hombre').length)]];
+  kpA.forEach(([et, v], i) => { const r = 5 + i; RES.getCell(r, 1).value = et; RES.getCell(r, 1).font = { size: 11, color: { argb: GRIS } }; const c = RES.getCell(r, 2); c.value = v; c.font = { bold: true, size: 14, color: { argb: AZUL } }; c.alignment = { horizontal: 'center' }; RES.getCell(r, 1).border = { bottom: fino }; c.border = { bottom: fino }; });
+  let ra = 11;
+  if(nAt){
+    const cs = sexoCols(aSexo, r => r.f.sexo);
+    ra = tabla(RES, ra, '1. Atenciones por mes y sexo', 'Mes', [...new Set(atRows.map(r => r.mes))].sort().map(m => ({ et: m, conds: [[aMes, m]], pred: r => r.mes === m })), cs, true);
+    ra = tabla(RES, ra, '2. Atenciones por área y sexo', 'Área', areasAt.map(a => ({ et: a, conds: [[aArea(a), 1]], pred: r => r.areas.includes(a) })), cs, false);
+    RES.getCell(ra - 1, 1).value = 'Una atención puede tocar varias áreas: la suma puede ser mayor que el número de atenciones.'; RES.getCell(ra - 1, 1).font = { italic: true, size: 9, color: { argb: GRIS } };
+    ra = tabla(RES, ra + 1, '3. Atenciones por técnico/a y sexo', 'Técnico/a', [...new Set(atRows.map(r => r.tec))].sort().map(t => ({ et: t || 'Sin técnico', conds: [[aTec, t]], pred: r => r.tec === t })), cs, true);
+    let num = 4;
+    [['Prestaciones', 14, PRESTACIONES_OPTS, 'prest'], ['Trámites Bretxa', 15, TRAMITES_BRETXA_OPTS, 'tram'], ['Derivación a programas', 16, PROGRAMAS_OPTS, 'prog'], ['Talleres', 17, TALLERES_OPTS, 'tall'], ['Emprendeduría', 18, EMPRENDEDURIA_OPTS, 'empr']].forEach(([et, col, opts, k]) => {
+      const usados = opts.map(o => o[1]).filter(l => atRows.some(r => String(r[k]).includes(l)));
+      if(!usados.length) return;
+      ra = tabla(RES, ra, `${num++}. ${et}: cuántas atenciones, por sexo`, et, usados.map(l => ({ et: l, conds: [[RA(col, nAt), '*' + esc(l) + '*']], pred: r => String(r[k]).includes(l) })), cs, false);
+    });
+  }
+  const RC = libro.addWorksheet('Actuaciones · resumen', { views: [{ showGridLines: false }], properties: { tabColor: { argb: 'FF1E8A4C' } } });
+  prep(RC, 40); titulo(RC, 'Actuaciones (trámites, proyectos y formaciones)', `${acRows.length.toLocaleString('es-ES')} actuaciones · ${filtroTxt}`, 7);
+  BASE = acRows;
+  if(acRows.length){
+    const RAC = k => `Actuaciones!$${colL(k)}$2:$${colL(k)}$${acRows.length + 1}`, cs2 = sexoCols(RAC(7), r => r.f.sexo);
+    let rc = 5;
+    rc = tabla(RC, rc, '1. Actuaciones por proyecto / servicio y sexo', 'Proyecto / servicio', [...new Set(acRows.map(r => r.proy))].sort().map(pn => ({ et: pn, conds: [[RAC(12), pn]], pred: r => r.proy === pn })), cs2, true);
+    rc = tabla(RC, rc, '2. Actuaciones por área y sexo', 'Área', [...new Set(acRows.map(r => r.area))].sort().map(a => ({ et: a, conds: [[RAC(13), a]], pred: r => r.area === a })), cs2, true);
+    rc = tabla(RC, rc, '3. Actuaciones por mes y sexo', 'Mes', [...new Set(acRows.map(r => r.mes))].sort().map(m => ({ et: m, conds: [[RAC(5), m]], pred: r => r.mes === m })), cs2, true);
+    rc = tabla(RC, rc, '4. Actuaciones por técnico/a y sexo', 'Técnico/a', [...new Set(acRows.map(r => r.tec))].sort().map(t => ({ et: t || 'Sin técnico', conds: [[RAC(6), t]], pred: r => r.tec === t })), cs2, true);
+  } else { RC.getCell(5, 1).value = 'No hay actuaciones con este filtro.'; }
+  BASE = filas;
+  usados.add('Atenciones · resumen'); usados.add('Actuaciones · resumen');
+
+  // ---------- Notas ----------
+  const NT = libro.addWorksheet('Notas', { views: [{ showGridLines: false }] });
+  NT.columns = [{ width: 110 }];
+  ['Cómo se ha hecho este Excel',
+   '• Hoja «Datos»: una fila por persona, sin nombres ni datos de contacto (código P-00001…). Columnas de área: 1 = ha participado, 0 = no.',
+   '• Todas las tablas están calculadas con fórmulas (CONTAR.SI.CONJUNTO y SUMA) sobre la hoja «Datos»: se pueden comprobar, y si se corrige un dato en «Datos», las tablas se recalculan solas.',
+   '• Cada persona cuenta una sola vez en total y una vez en cada área. Una persona puede estar en varias áreas.',
+   '• La edad es la del momento del alta. Las nacionalidades escritas de formas distintas (Marroc, Marruecos…) están agrupadas.',
+   '• Origen: «Con cuenta» = ficha actual de la intranet; «Histórico (papel)» = registros importados o altas con consentimiento en papel; «Atendida sin ficha» = solo hay su nombre en una atención.',
+   '• «Sin área registrada» = personas sin proyecto, servicio ni trámite apuntado. «Otras actuaciones» = actuaciones con un nombre que no corresponde a un proyecto o servicio de la lista.',
+   '• Hojas «Atenciones» y «Actuaciones»: TODO el detalle de cada atención y actuación (fecha, técnico/a, servicios, prestaciones, trámites, derivaciones, talleres, ETHOS, notas…) con el código de la persona; no llevan nombre. Con el código se cruzan con «Datos».',
+   '• «Atenciones · resumen» y «Actuaciones · resumen»: por mes, por área, por técnico/a y por servicio, siempre por sexo, con fórmulas sobre esas hojas.',
+   '• «Histórico (registros)»: lo que consta de cada persona del histórico en cada año (servicio, proyecto, tipo).',
+   '• Con un filtro de año, las atenciones y actuaciones son solo las de ese año.',
+   '• Filtro aplicado: ' + filtroTxt + '.'
+  ].forEach((t, i) => { const c = NT.getCell(i + 1, 1); c.value = t; c.alignment = { wrapText: true, vertical: 'top' }; c.font = i ? { size: 10.5 } : { bold: true, size: 14, color: { argb: AZUL } }; });
+
+  // orden de las pestañas: Resumen, Todas, áreas…, Datos, Notas
+  const orden = ['Resumen', 'Todas las personas', 'Atenciones · resumen', 'Actuaciones · resumen'].concat([...usados].filter(n => !['Datos', 'Resumen', 'Todas las personas', 'Atenciones · resumen', 'Actuaciones · resumen'].includes(n))).concat(['Datos', 'Atenciones', 'Actuaciones', 'Histórico (registros)', 'Notas']);
+  libro._worksheets.filter(Boolean).forEach(w => { w.orderNo = orden.indexOf(w.name) < 0 ? 999 : orden.indexOf(w.name); });
+  libro.views = [{ activeTab: 0 }];
+  const buf = await libro.xlsx.writeBuffer();
+  expDescargarBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'Logos-estadisticas-y-atenciones-' + isoLocal() + '.xlsx');
 }
 async function estExcel(){
   if(!window.ExcelJS){ alert(acL('No se ha podido cargar el generador de Excel. Recarga la página.', 'No s\'ha pogut carregar el generador d\'Excel. Recarrega la pàgina.')); return; }
