@@ -3431,7 +3431,7 @@ function admEquipoHtml(lista, t){
         <div class="eq-id"><strong>${escAttr(nom)}${esYo ? ` <small>(${acL('tú', 'tu')})</small>` : ''}</strong><span>${escAttr(s.email)}</span></div>
         <span class="eq-est ${baja ? 'off' : 'on'}">${baja ? t.inactivoLbl : t.activoLbl}</span></div>
       <div class="eq-chips"><span class="eq-rol" style="background:${r[4]};color:${r[3]};">${r[0]} ${acL(r[1], r[2])}</span>
-        ${s.es_soporte ? `<span class="eq-chip">🛠️ ${acL('Soporte técnico', 'Suport tècnic')}</span>` : ''}${s.gestiona_alertas ? `<span class="eq-chip">🔔 ${acL('Reparte alertas', 'Reparteix alertes')}</span>` : ''}
+        ${s.es_soporte ? `<span class="eq-chip">🛠️ ${acL('Soporte técnico', 'Suport tècnic')}</span>` : ''}${s.movil_permitido ? `<span class="eq-chip">📱 ${acL('Móvil', 'Mòbil')}</span>` : ''}${s.gestiona_alertas ? `<span class="eq-chip">🔔 ${acL('Reparte alertas', 'Reparteix alertes')}</span>` : ''}
         ${('acepta_citas' in s) && !baja && atiendeCitas(s) ? `<span class="eq-chip">📅 ${acL('Atiende citas', 'Atén cites')}</span>` : ''}${s.clave_cambiada === false ? `<span class="eq-chip eq-chip-av">🔑 ${acL('Aún con contraseña inicial', 'Encara amb contrasenya inicial')}</span>` : ''}</div>
       <details class="eq-ges"><summary>⚙️ ${acL('Gestionar', 'Gestionar')}</summary><div class="eq-ges-c">
         ${!baja ? `<div class="eq-blq"><h5>${acL('Qué ve y qué hace', 'Què veu i què fa')}</h5>
@@ -3439,6 +3439,7 @@ function admEquipoHtml(lista, t){
           <div class="eq-sws">
             ${GP_OK ? sw(s.es_rrhh, acL('Recursos Humanos', 'Recursos Humans'), `toggleRRHH('${s.email}', ${!s.es_rrhh})`) : ''}
             ${('es_soporte' in s) ? sw(s.es_soporte, acL('Soporte técnico', 'Suport tècnic'), `toggleSoporte('${s.email}', ${!s.es_soporte})`, acL('Recibe las incidencias de soporte técnico', 'Rep les incidències de suport tècnic')) : ''}
+            ${('movil_permitido' in s) && IS_ADMIN ? sw(!!s.movil_permitido, acL('📱 Puede entrar desde el móvil', '📱 Pot entrar des del mòbil'), `toggleMovil('${s.email}', ${!s.movil_permitido})`, acL('Sin esto, la intranet (y fichar) solo funciona desde el ordenador', 'Sense això, la intranet (i fitxar) només funciona des de l\'ordinador')) : ''}
             ${('acepta_citas' in s) ? sw(atiendeCitas(s), acL('Atiende citas', 'Atén cites'), `toggleAtiendeCitas('${s.email}')`, acL('Sale en la lista de técnicos al pedir cita en Logos Acompanya', 'Surt a la llista de tècnics en demanar cita a Logos Acompanya')) : ''}
             ${(DELEGACION_OK && !s.es_admin && s.ambito !== 'jovenes') ? sw(s.gestiona_alertas, acL('Reparte alertas', 'Reparteix alertes'), `toggleGestorAlertas('${s.email}', ${!s.gestiona_alertas})`) : ''}
           </div></div>` : ''}
@@ -12296,6 +12297,11 @@ async function incGuardar(k){
   }
   renderIncidencias();
 }
+async function toggleMovil(email, valor){
+  let r = await sb.from('staff').update({ movil_permitido: valor }).eq('email', email).select('email');
+  if(r.error || !(r.data || []).length){ const r2 = await staffCambiar(email, { movil_permitido: valor }); if(r2.error){ alert(/movil_permitido/.test((r.error || r2.error).message || '') ? acL('Falta ejecutar el SQL-103 en Supabase.', 'Cal executar l\'SQL-103 a Supabase.') : (r.error || r2.error).message); return; } }
+  renderAdministrador();
+}
 async function toggleSoporte(email, valor){
   let r = await sb.from('staff').update({ es_soporte: valor }).eq('email', email).select('email');
   if(r.error || !(r.data || []).length){ const r2 = await staffCambiar(email, { es_soporte: valor }); if(r2.error){ alert(/es_soporte/.test((r.error || r2.error).message || '') ? acL('Falta ejecutar el SQL 51 en Supabase.', 'Cal executar l\'SQL 51 a Supabase.') : (r.error || r2.error).message); return; } }
@@ -19879,7 +19885,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-17 · v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-18 · v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -27188,7 +27194,12 @@ function esMovilOTableta(){
 }
 function soloOrdenadorBloquea(){
   if(!CURRENT_USER || !IS_STAFF) return false;
-  if(IS_ADMIN || (window.__staffYo || {}).es_soporte) return false;
+  const yo = window.__staffYo || {};
+  if(yo.es_soporte) return false;
+  // v273: con el SQL-103, solo entra desde el móvil quien tenga «📱 Móvil» marcado en Equipo (Luis, David…),
+  // aunque sea administrador. Sin el SQL-103, como antes: administración sí, técnicos no.
+  if('movil_permitido' in yo) return yo.movil_permitido !== true && esMovilOTableta();
+  if(IS_ADMIN) return false;
   return esMovilOTableta();
 }
 function soloOrdenadorPintar(){
