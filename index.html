@@ -119,6 +119,10 @@
   .sv-ap{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 10px;}
   .sv-det textarea,#sv-cuerpo textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font-family:var(--font-body);font-size:13.5px;line-height:1.5;color:var(--ink);background:var(--paper);resize:vertical;}
   .sv-res{border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 10px;background:var(--paper);}
+  #fich-ed-ov label{display:block;}
+  #fich-ed-ov input,#fich-ed-ov select{display:block;width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font-family:var(--font-body);font-size:14px;color:var(--ink);background:var(--paper);}
+  #fich-ed-ov input[type=checkbox]{display:inline-block;width:auto;padding:0;}
+  #est-sx-ov input[type=search]{width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font-size:14px;}
   .mf-nav{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;}
   .mf-sem{font-size:14.5px;text-align:center;flex:1;min-width:160px;}
   .mf-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:0 0 12px;}
@@ -4838,6 +4842,7 @@ async function fichFueraDeHorario(email, ahora){
 // si no se puede, se ficha igual. Sin ventanas ni motivos.
 async function ficharEntrada(){
   if(window.__fichando) return;
+  if(typeof soloOrdenadorBloquea === 'function' && soloOrdenadorBloquea()){ alert(acL('Desde el móvil o la tableta no se puede fichar. Ficha desde el ordenador de la oficina.', 'Des del mòbil o la tauleta no es pot fitxar. Fitxa des de l\'ordinador de l\'oficina.')); return; }
   fichOcupado(true, 'entrada');
   try { await ficharEntradaHacer(); } finally { fichOcupado(false); }
 }
@@ -4886,6 +4891,7 @@ async function ficharSalida(id){
     if(!confirm(acL('¿Seguro que quieres fichar la SALIDA ahora (' + hh + ')?\n\nSi has tocado el botón sin querer, pulsa «Cancelar» y sigue trabajando.',
                     'Segur que vols fitxar la SORTIDA ara (' + hh + ')?\n\nSi has tocat el botó sense voler, prem «Cancel·la» i continua treballant.'))) return; }
   if(window.__fichando) return;
+  if(typeof soloOrdenadorBloquea === 'function' && soloOrdenadorBloquea()){ alert(acL('Desde el móvil o la tableta no se puede fichar. Ficha desde el ordenador de la oficina.', 'Des del mòbil o la tauleta no es pot fitxar. Fitxa des de l\'ordinador de l\'oficina.')); return; }
   fichOcupado(true, 'salida');
   try { await ficharSalidaHacer(id); } finally { fichOcupado(false); }
 }
@@ -6932,6 +6938,7 @@ function apPapelHtml(){
         <div id="app-ya-aviso"></div>
         <div class="field"><label>${acL('Correo (opcional)', 'Correu (opcional)')}</label><input type="email" id="app-email"></div>
         <div class="field"><label>${acL('Municipio', 'Municipi')}</label><input type="text" id="app-municipio" value="Tarragona"></div>
+        <div class="field"><label>${LANG_I === 'ca' ? 'Sexe' : 'Sexo'}</label><select id="app-sexo"><option value="">—</option><option value="mujer">${LANG_I === 'ca' ? 'Dona' : 'Mujer'}</option><option value="hombre">${LANG_I === 'ca' ? 'Home' : 'Hombre'}</option><option value="otro">${LANG_I === 'ca' ? 'Altre' : 'Otro'}</option><option value="prefiero_no_decir">${LANG_I === 'ca' ? 'Prefereix no dir-ho' : 'Prefiere no decirlo'}</option></select></div>
         <div class="field"><label>${acL('¿Qué necesita? (servicio o motivo)', 'Què necessita? (servei o motiu)')}</label><input type="text" id="app-servicio" placeholder="${acL('Ej.: renovación NIE, búsqueda de empleo…', 'Ex.: renovació NIE, cerca de feina…')}"></div>
         <div class="field"><label>${acL('Fecha en que firmó el papel', 'Data en què va signar el paper')} *</label><input type="date" id="app-fecha" value="${hoy}" max="${hoy}"></div>
         <div class="field"><label>📷 ${acL('Foto o PDF del consentimiento firmado (recomendado)', 'Foto o PDF del consentiment signat (recomanat)')}</label><input type="file" id="app-archivo" accept="image/*,application/pdf"><p class="subtle" style="font-size:11.5px;margin:4px 0 0;">${acL('Desde el móvil puedes hacerle una foto al papel. Queda guardado de forma privada; solo lo ve el equipo.', 'Des del mòbil pots fer una foto al paper. Queda desat de manera privada; només el veu l\'equip.')}</p></div>
@@ -7039,6 +7046,16 @@ async function histUnirMismaPersona(dni, uid){
   const ids = (data || []).filter(h => !h.perfil_id && pNormDni(h.dni_nie) === nd).map(h => h.id);
   if(ids.length) await sb.from('personas_historicas').update({ perfil_id: uid }).in('id', ids);
 }
+// v270 · Letra del DNI/NIE: si está mal escrita (p. ej. 60783885Z en vez de 60783885J) la función de alta la rechaza
+function dniNieCheck(v){
+  const s = String(v || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+  const L = 'TRWAGMYFPDXBNJZSQVHLCKE';
+  let m = s.match(/^(\d{8})([A-Z])$/);
+  if(m){ const ok = L[Number(m[1]) % 23]; return { tipo: 'dni', ok: ok === m[2], bueno: m[1] + ok }; }
+  m = s.match(/^([XYZ])(\d{7})([A-Z])$/);
+  if(m){ const n = Number({ X: '0', Y: '1', Z: '2' }[m[1]] + m[2]); const ok = L[n % 23]; return { tipo: 'nie', ok: ok === m[3], bueno: m[1] + m[2] + ok }; }
+  return { tipo: 'otro', ok: true, bueno: s };   // pasaporte u otro documento: no se comprueba
+}
 async function histFichaTrabajo(id){
   const esCA = LANG_I === 'ca';
   let p = __histCache[id];
@@ -7051,9 +7068,25 @@ async function histFichaTrabajo(id){
   if(p.consentimiento_papel === false){ alert(acL('Esta ficha tiene el consentimiento marcado como pendiente. Sin consentimiento firmado no se le puede abrir la ficha de trabajo: dale cita y que firme.', 'Aquesta fitxa té el consentiment marcat com a pendent. Sense consentiment signat no se li pot obrir la fitxa de treball: dona-li cita i que signi.')); return; }
   const nombre = (unif.nombre_completo || p.nombre_completo || '').trim(), tel = (unif.telefono || p.telefono || '').trim(), dni = (unif.dni_nie || p.dni_nie || '').trim();
   // 2) ¿ya tiene cuenta con el mismo DNI/NIE o teléfono? → se une a esa y se abre
+  // ¿ya tiene cuenta con su correo (se registró ella en Logos Acompanya)? → se une a esa
+  { const correo = String(unif.email || p.email || '').trim().toLowerCase();
+    if(correo.includes('@')){ try { const { data: pc } = await sb.from('perfiles').select('id').ilike('email', correo).limit(1);
+      if(pc && pc[0]){ await histVincularPerfil(id, pc[0].id); try { await histUnirMismaPersona(dni, pc[0].id); } catch(e){} window.__personasHistUnif = null; window.__histCacheLista = null; abrir(pc[0].id); return; } } catch(e){} } }
   try { const ex = (await apBuscarExistentes(tel, dni)).find(x => x.tipo === 'cuenta'); if(ex){ await histVincularPerfil(id, ex.id); try { await histUnirMismaPersona(dni, ex.id); } catch(e){} window.__personasHistUnif = null; window.__histCacheLista = null; abrir(ex.id); return; } } catch(e){}
   if(!nombre || !tel || !dni){ alert(acL(`Para abrir la ficha de trabajo hacen falta nombre, teléfono y DNI/NIE, y a esta ficha le falta${!tel ? ' el teléfono' : ''}${!dni ? (!tel ? ' y' : '') + ' el DNI/NIE' : ''}. Pulsa «Activar su cuenta (alta presencial)», complétalo y sigue desde ahí.`, `Per obrir la fitxa de treball calen nom, telèfon i DNI/NIE, i a aquesta fitxa li falta${!tel ? ' el telèfon' : ''}${!dni ? (!tel ? ' i' : '') + ' el DNI/NIE' : ''}. Prem «Activar-li el compte (alta presencial)», completa-ho i continua des d'allà.`)); return; }
   const fecha = unif.consentimiento_fecha || p.consentimiento_fecha || p.fecha_alta;
+  { const chk = dniNieCheck(dni);
+    if(!chk.ok){
+      const nuevo = prompt(acL(`El ${chk.tipo === 'nie' ? 'NIE' : 'DNI'} de esta ficha (${dni}) tiene la letra mal: con esos números la letra es «${chk.bueno.slice(-1)}». Por eso no se podía abrir la ficha de trabajo.\n\nMíralo en su documento y corrígelo aquí (se guarda en su ficha):`, `El ${chk.tipo === 'nie' ? 'NIE' : 'DNI'} d'aquesta fitxa (${dni}) té la lletra malament: amb aquests números la lletra és «${chk.bueno.slice(-1)}». Per això no es podia obrir la fitxa de treball.\n\nMira-ho al seu document i corregeix-ho aquí (es desa a la seva fitxa):`), chk.bueno);
+      if(nuevo === null) return;
+      const n2 = nuevo.toUpperCase().replace(/[^0-9A-Z]/g, ''), c2 = dniNieCheck(n2);
+      if(!c2.ok){ alert(acL('Ese DNI/NIE sigue sin ser válido. Revísalo en su documento.', 'Aquest DNI/NIE continua sense ser vàlid. Revisa-ho al seu document.')); return; }
+      const ids = [...new Set([id].concat(unif.histIds || []))];
+      const { error: eD } = await sb.from('personas_historicas').update({ dni_nie: n2 }).in('id', ids);
+      if(eD){ alert(eD.message); return; }
+      ids.forEach(i => { if(__histCache[i]) __histCache[i].dni_nie = n2; }); unif.dni_nie = n2; p.dni_nie = n2;
+      return histFichaTrabajo(id);
+    } }
   if(!confirm(acL(`Abrir la ficha de trabajo de «${nombre}»\n\nYa firmó el consentimiento en papel${fecha ? ' (' + fechaCorta(fecha) + ')' : ''}, así que NO hace falta que firme otra vez.\n\nSe crea su ficha completa (atenciones, actuaciones, citas) y su ficha del histórico queda unida a ella: no se duplica.\n\n¿Seguimos?`, `Obrir la fitxa de treball de «${nombre}»\n\nJa va signar el consentiment en paper${fecha ? ' (' + fechaCorta(fecha) + ')' : ''}, així que NO cal que torni a signar.\n\nEs crea la seva fitxa completa (atencions, actuacions, cites) i la fitxa de l'històric hi queda unida: no es duplica.\n\nContinuem?`))) return;
   const tapa = document.createElement('div'); tapa.className = 'inact-ov'; tapa.id = 'hist-ft-ov';
   tapa.innerHTML = `<div class="inact-card" style="max-width:380px;"><div class="inact-i">⏳</div><h3>${acL('Abriendo su ficha de trabajo…', 'Obrint la seva fitxa de treball…')}</h3></div>`;
@@ -7066,10 +7099,37 @@ async function histFichaTrabajo(id){
         firma_base64: histSelloPapel(nombre, fecha), cons_cesion: true, cons_contacto: false, cons_imagen: false, consentimiento_papel: true })
     });
     let data = {}; try { data = await res.json(); } catch(e){}
-    if(!res.ok || data.error || !data.usuario_id){ tapa.remove(); alert(acL('No se ha podido abrir la ficha de trabajo: ', 'No s\'ha pogut obrir la fitxa de treball: ') + (data.error || res.status) + '\n\n' + acL('Si dice que el correo ya existe, esa persona ya tiene cuenta con ese correo: búscala en «Personas usuarias».', 'Si diu que el correu ja existeix, aquesta persona ja té compte amb aquest correu: busca-la a «Persones usuàries».')); return; }
+    if((!res.ok || data.error) && (unif.email || p.email) && /correo|email|registered|exist|ya est|already/i.test(String(data.error || ''))){
+      // el correo ya lo usa una cuenta: si es la suya (se registró en Logos Acompanya), se une a esa y se abre
+      const correo = String(unif.email || p.email).trim().toLowerCase();
+      try {
+        const { data: pc } = await sb.from('perfiles').select('id, telefono, dni_nie').ilike('email', correo).limit(1);
+        if(pc && pc[0]){
+          const falta = {}; if(!pc[0].telefono) falta.telefono = tel; if(!pc[0].dni_nie) falta.dni_nie = dni;
+          if(Object.keys(falta).length) { try { await sb.from('perfiles').update(falta).eq('id', pc[0].id); } catch(e){} }
+          try { await histVincularPerfil(id, pc[0].id); } catch(e){} try { await histUnirMismaPersona(dni, pc[0].id); } catch(e){}
+          window.__personasHistUnif = null; window.__histCacheLista = null; tapa.remove();
+          alert(acL('Esta persona ya tenía cuenta en Logos Acompanya con su correo. Se ha unido su ficha del histórico a esa cuenta y se abre ahora.', 'Aquesta persona ja tenia compte a Logos Acompanya amb el seu correu. S\'ha unit la fitxa de l\'històric a aquest compte i s\'obre ara.'));
+          abrir(pc[0].id); return;
+        }
+      } catch(e){}
+      // si no se encuentra esa cuenta: se crea la ficha sin correo (se puede poner después)
+      const r2 = await fetch('https://foxtlpyfedwsvttzorql.supabase.co/functions/v1/alta-presencial', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await tokenParaFunciones()), 'apikey': SUPABASE_KEY },
+        body: JSON.stringify({ nombre_completo: nombre, telefono: tel, dni_nie: dni, email: '', municipio: unif.municipio || p.municipio || '', firma_base64: histSelloPapel(nombre, fecha), cons_cesion: true, cons_contacto: false, cons_imagen: false, consentimiento_papel: true }) });
+      try { data = await r2.json(); } catch(e){ data = {}; }
+      if(r2.ok && data.usuario_id) data.__sinCorreo = true;
+    }
+    if(!data.usuario_id){
+      try { await sb.from('incidencias').insert({ origen: 'intranet', destino: 'tecnica', asunto: 'Ficha de trabajo del histórico: no se ha podido abrir', pantalla: 'personas',
+        texto: `Persona: ${nombre} · tel. ${tel} · DNI/NIE ${dni}${(unif.email || p.email) ? ' · correo ' + (unif.email || p.email) : ''}\nRespuesta de la función alta-presencial: ${res.status} · ${data.error || JSON.stringify(data).slice(0, 300)}`,
+        version: (String(typeof APP_VERSION_INTRANET !== 'undefined' ? APP_VERSION_INTRANET : '').match(/v\d+/) || [''])[0], autor_id: CURRENT_USER.id, autor_email: CURRENT_USER.email, autor_nombre: CURRENT_USER_NOMBRE || CURRENT_USER.email }); } catch(e){}
+      tapa.remove(); alert(acL('No se ha podido abrir la ficha de trabajo: ', 'No s\'ha pogut obrir la fitxa de treball: ') + (data.error || res.status) + '\n\n' + acL('Se ha enviado el aviso a Soporte técnico con el error exacto para arreglarlo.', 'S\'ha enviat l\'avís a Suport tècnic amb l\'error exacte per arreglar-ho.')); return; }
     try { await histVincularPerfil(id, data.usuario_id); } catch(e){}
     try { await histUnirMismaPersona(dni, data.usuario_id); } catch(e){}
     try { await sb.from('perfiles').update({ consentimiento_version: 'papel' }).eq('id', data.usuario_id); } catch(e){}
+    try { const ex = {}; const sx = histSexo(unif.sexo || p.sexo); if(sx) ex.sexo = sx; if(unif.fecha_nacimiento || p.fecha_nacimiento) ex.fecha_nacimiento = unif.fecha_nacimiento || p.fecha_nacimiento; if(unif.nacionalidad || p.nacionalidad) ex.nacionalidad = unif.nacionalidad || p.nacionalidad;
+      if(Object.keys(ex).length) await sb.from('perfiles').update(ex).eq('id', data.usuario_id); } catch(e){}
+    if(data.__sinCorreo) alert(acL('Ficha de trabajo abierta. Su correo ya lo usaba otra cuenta, así que se ha creado sin correo: si hace falta, búscalo en «Personas usuarias».', 'Fitxa de treball oberta. El seu correu ja el feia servir un altre compte, així que s\'ha creat sense correu: si cal, busca\'l a «Persones usuàries».'));
     window.__personasHistUnif = null; window.__histCacheLista = null;
     tapa.remove();
     abrir(data.usuario_id);
@@ -7078,6 +7138,7 @@ async function histFichaTrabajo(id){
 async function apGuardarPapel(){
   const v = id => ((document.getElementById(id) || {}).value || '').trim();
   const nombre = v('app-nombre'), telefono = v('app-telefono'), dni = v('app-dni'), email = v('app-email'), municipio = v('app-municipio'), servicio = v('app-servicio'), fecha = v('app-fecha'), notas = v('app-notas');
+  if(dni && !dniNieCheck(dni).ok){ alert(acL(`El DNI/NIE «${dni}» tiene la letra mal (con esos números es «${dniNieCheck(dni).bueno.slice(-1)}»). Revísalo en su documento.`, `El DNI/NIE «${dni}» té la lletra malament (amb aquests números és «${dniNieCheck(dni).bueno.slice(-1)}»). Revisa-ho al seu document.`)); return; }
   if(!nombre || !telefono || !fecha){ alert(acL('Faltan datos obligatorios: nombre, teléfono y fecha en que firmó.', 'Falten dades obligatòries: nom, telèfon i data en què va signar.')); return; }
   if(!document.getElementById('app-confirmo').checked){ alert(acL('Marca la casilla para confirmar que el consentimiento en papel está firmado y archivado.', 'Marca la casella per confirmar que el consentiment en paper està signat i arxivat.')); return; }
   if(!HISTORICAS_OK){ alert(acL('Las fichas sin cuenta aún no están activadas en la base de datos (SQL del histórico).', 'Les fitxes sense compte encara no estan activades a la base de dades (SQL de l\'històric).')); return; }
@@ -7093,7 +7154,7 @@ async function apGuardarPapel(){
     const { error: eUp } = await sb.storage.from('documentos').upload(ruta, file);
     if(eUp){ ruta = null; if(!confirm(acL('No se pudo subir la foto del consentimiento: ', 'No s\'ha pogut pujar la foto del consentiment: ') + eUp.message + acL('\n\n¿Crear la ficha sin la foto?', '\n\nCrear la fitxa sense la foto?'))){ fin(); return; } }
   }
-  const fila = { nombre_completo: nombre, telefono, dni_nie: dni || null, email: email || null, municipio: municipio || null, servicio: servicio || null,
+  const fila = { nombre_completo: nombre, telefono, dni_nie: dni || null, email: email || null, municipio: municipio || null, servicio: servicio || null, sexo: v('app-sexo') || null,
     notas: [notas, acL('Alta sin la persona delante (consentimiento en papel)', 'Alta sense la persona davant (consentiment en paper)') + ' · ' + (CURRENT_USER_NOMBRE || CURRENT_USER.email)].filter(Boolean).join(' · '),
     anio: new Date().getFullYear(), fecha_alta: isoLocal(), origen: 'Alta con consentimiento en papel', importado_por: CURRENT_USER.email,
     consentimiento_papel: true, consentimiento_fecha: fecha };
@@ -7137,6 +7198,7 @@ function renderAltaPresencial(){
           : 'Si no tiene, se creará un acceso provisional. Podrá añadir su correo más adelante.'}</p>
       </div>
       <div class="field"><label>${esCA ? 'Municipi' : 'Municipio'}</label><input type="text" id="ap-municipio" value="Tarragona"></div>
+      <div class="field"><label>${esCA ? 'Sexe' : 'Sexo'}</label><select id="ap-sexo"><option value="">—</option><option value="mujer">${esCA ? 'Dona' : 'Mujer'}</option><option value="hombre">${esCA ? 'Home' : 'Hombre'}</option><option value="otro">${esCA ? 'Altre' : 'Otro'}</option><option value="prefiero_no_decir">${esCA ? 'Prefereix no dir-ho' : 'Prefiere no decirlo'}</option></select></div>
     </div>
 
     <div class="panel-card">
@@ -7310,6 +7372,10 @@ async function guardarAltaPresencial(){
     alert(esCA ? 'Falten dades obligatòries (nom, telèfon o DNI/NIE).' : 'Faltan datos obligatorios (nombre, teléfono o DNI/NIE).');
     return;
   }
+  if(!dniNieCheck(dni).ok){
+    alert(esCA ? `El DNI/NIE «${dni}» té la lletra malament (amb aquests números és «${dniNieCheck(dni).bueno.slice(-1)}»). Revisa-ho al seu document.` : `El DNI/NIE «${dni}» tiene la letra mal (con esos números es «${dniNieCheck(dni).bueno.slice(-1)}»). Revísalo en su documento.`);
+    return;
+  }
   if(!document.getElementById('ap-leido').checked){
     alert(esCA ? 'La persona ha de llegir el document de consentiment fins al final i confirmar-ho.' : 'La persona debe leer el documento de consentimiento hasta el final y confirmarlo.');
     return;
@@ -7363,6 +7429,7 @@ async function guardarAltaPresencial(){
     }
     try { await sb.from('avisos_espera').insert({ usuario_id: data.usuario_id, clave: 'breve', creado_por_email: CURRENT_USER.email }); } catch(e){}
     try { if(data.usuario_id) await sb.from('perfiles').update({ consentimiento_version: CONSENT_VERSION }).eq('id', data.usuario_id); } catch(e){}
+    try { const sx = (document.getElementById('ap-sexo') || {}).value; if(data.usuario_id && sx) await sb.from('perfiles').update({ sexo: sx }).eq('id', data.usuario_id); } catch(e){}
     if(window.__histActivarId){ const hid = window.__histActivarId; window.__histActivarId = null; try { await histVincularPerfil(hid, data.usuario_id); } catch(e){} }
     if(window.__apUnidaPapel){ mensajeFinal += '\n\n📄 ' + (esCA ? `Ja tenia una fitxa amb consentiment en paper («${window.__apUnidaPapel}»): s'ha unit a aquest compte, no s'ha duplicat.` : `Ya tenía una ficha con consentimiento en papel («${window.__apUnidaPapel}»): se ha unido a esta cuenta, no se ha duplicado.`); window.__apUnidaPapel = null; }
     window.__personasHistUnif = null; window.__histCacheLista = null;
@@ -19812,7 +19879,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-17 · v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-17 · v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -24894,6 +24961,7 @@ function renderFilasFichajes(fichajes, soloLectura){
       <select aria-label="${L('Persona', 'Persona')}" onchange="window.__fichFiltro.persona=this.value;fichRepintar()"><option value="">${L('Todo el equipo', 'Tot l\'equip')}</option>${personas.map(e => `<option value="${escAttr(e)}" ${fl.persona === e ? 'selected' : ''}>${escAttr(nombreTecnico(e))}</option>`).join('')}</select>
       <label><input type="checkbox" ${fl.inc ? 'checked' : ''} onchange="window.__fichFiltro.inc=this.checked;fichRepintar()"> ${L('Solo lo que hay que mirar (fuera, sin ubicación, lejos, salida olvidada)', 'Només el que cal mirar (fora, sense ubicació, lluny, sortida oblidada)')}</label>
       ${(() => { const n = lista.filter(f => porValidar(f).length).length; return n && IS_ADMIN && !soloLectura ? `<button class="link-btn" style="font-weight:700;" onclick="fichValidarVarios()">✅ ${L(`Validar los ${n} que se ven (estaban en la oficina)`, `Validar els ${n} que es veuen (eren a l'oficina)`)}</button>` : ''; })()}
+      ${soloLectura ? '' : `<button class="link-btn" style="font-weight:700;" onclick="fichEditorAbrir(null)">➕ ${L('Añadir un fichaje', 'Afegir un fitxatge')}</button>`}
       <span class="fich-leyenda">✅ ${L('validado por la administración', 'validat per l\'administració')} · 💻 ${L('ordenador de la oficina', 'ordinador de l\'oficina')} · 🏢 ${L('oficina (sala marcada)', 'oficina (sala marcada)')} · 📍 ${L('oficina', 'oficina')} · 🚶 ${L('fuera con motivo', 'fora amb motiu')} · ❓ ${L('sin ubicación', 'sense ubicació')} · ⚠️ ${L('lejos', 'lluny')}</span>
     </div>`;
   if(!lista.length) return filtros + `<div class="empty-note">${fichajes.length ? L('Ningún fichaje con este filtro.', 'Cap fitxatge amb aquest filtre.') : t.sinFichajes}</div>`;
@@ -24907,7 +24975,7 @@ function renderFilasFichajes(fichajes, soloLectura){
       <div class="fich-dur">${f.salida ? duracionFmt(f.entrada, f.salida) : ''}
         ${f.cerrado_automaticamente ? (FICHAJE_MARCA_REVISADO.test(f.nota || '') ? `<span class="chip gold" title="${escAttr(f.nota||'')}">✍️ ${L('Salida indicada por la persona', 'Sortida indicada per la persona')}</span>` : `<span class="chip alert" title="${escAttr(f.nota||'')}">⚠️ ${L('Salida olvidada', 'Sortida oblidada')}</span>`) : ''}</div>
       <div class="fich-acc2">${soloLectura ? '' : `
-        ${f.cerrado_automaticamente && f.salida ? `<button class="link-btn" style="font-size:11.5px;" onclick="fichajeCorregirAdmin('${f.id}', '${f.entrada}')">✏️ ${L('Corregir salida', 'Corregir sortida')}</button>` : ''}
+        <button class="link-btn" style="font-size:11.5px;font-weight:700;" onclick="fichEditorAbrir('${f.id}')">✏️ ${L('Corregir / justificar', 'Corregir / justificar')}</button>
         ${IS_ADMIN && porValidar(f).length ? `<button class="link-btn" style="font-size:11.5px;color:#1E6B3A;font-weight:700;" title="${L('Confirmo que estaba en la oficina', 'Confirmo que era a l\'oficina')}" onclick="fichValidar('${f.id}')">✅ ${L('Validar', 'Validar')}</button>` : ''}
         ${IS_ADMIN ? `<button class="link-btn" style="font-size:11.5px;color:var(--alert);" onclick="borrarFichaje('${f.id}')">${L('Borrar', 'Esborrar')}</button>` : ''}`}
       </div>
@@ -24992,6 +25060,74 @@ async function puestoActivar(id, activar){ const { error } = await sb.from('pues
 async function puestoBorrar(id){
   if(!confirm(acL('¿Quitar este ordenador de la lista? Desde él ya no se fichará «en la oficina».', 'Treure aquest ordinador de la llista? Des d\'aquest ja no es fitxarà «a l\'oficina».'))) return;
   const { error } = await sb.from('puestos_oficina').delete().eq('id', id); if(error){ alert(error.message); return; } fichAjustesPintar();
+}
+
+// v270 · La administración corrige o justifica cualquier fichaje (p. ej. llegó tarde por el transporte) o añade uno que falta.
+// Queda apuntado en la nota quién lo cambió, cuándo, por qué y cuáles eran las horas antes.
+const FICH_CORR_MOTIVOS = [['transporte', 'Retraso por el transporte', 'Retard pel transport'], ['olvido', 'Se olvidó de fichar', 'Es va oblidar de fitxar'], ['sistema', 'Fallo de la intranet o del ordenador', 'Error de la intranet o de l\'ordinador'], ['fuera', 'Trabajo fuera de la oficina (visita, formación…)', 'Feina fora de l\'oficina (visita, formació…)'], ['medico', 'Cita médica o permiso', 'Visita mèdica o permís'], ['otro', 'Otro motivo', 'Un altre motiu']];
+const fichHHMM = d => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+function fichEditorAbrir(id){
+  const f = id ? (__adminFichajesTodos || []).concat(window.__rhFich || []).find(x => String(x.id) === String(id)) : null;
+  if(id && !f) return;
+  const ent = f ? new Date(f.entrada) : new Date(), sal = f && f.salida ? new Date(f.salida) : null;
+  const emails = [...new Set(Object.keys(__mapaNombresTecnicos || {}).concat((__adminFichajesTodos || []).map(x => x.tecnico_email)))].filter(Boolean).sort((a, b) => nombreTecnico(a).localeCompare(nombreTecnico(b)));
+  const ov = document.createElement('div'); ov.className = 'inact-ov'; ov.id = 'fich-ed-ov';
+  ov.innerHTML = `<div class="inact-card" style="max-width:460px;text-align:left;">
+    <h3 style="margin:0 0 4px;">${f ? '✏️ ' + acL('Corregir o justificar el fichaje', 'Corregir o justificar el fitxatge') : '➕ ' + acL('Añadir un fichaje', 'Afegir un fitxatge')}</h3>
+    <p class="subtle" style="font-size:12.5px;margin:0 0 12px;">${f ? escAttr(nombreTecnico(f.tecnico_email)) + ' · ' + ent.toLocaleDateString(TI[LANG_I].localeFecha, { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + acL('ahora:', 'ara:') + ' ' + fichHHMM(ent) + ' → ' + (sal ? fichHHMM(sal) : acL('sin salida', 'sense sortida')) : acL('Para cuando alguien no pudo fichar (olvido, fallo, trabajo fuera…).', 'Per quan algú no va poder fitxar (oblit, error, feina fora…).')}</p>
+    ${f ? '' : `<label class="subtle" style="font-size:12.5px;font-weight:700;margin:0;">${acL('Persona', 'Persona')}</label><select id="fe-persona" style="margin:2px 0 8px;">${emails.map(e => `<option value="${escAttr(e)}">${escAttr(nombreTecnico(e))}</option>`).join('')}</select>
+      <label class="subtle" style="font-size:12.5px;font-weight:700;margin:0;">${acL('Día', 'Dia')}</label><input type="date" id="fe-dia" value="${isoLocal(ent)}" max="${isoLocal()}" style="margin:2px 0 8px;">`}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <label class="subtle" style="font-size:12.5px;font-weight:700;margin:0;">${acL('Entrada', 'Entrada')}<input type="time" id="fe-ent" value="${f ? fichHHMM(ent) : '09:00'}" style="margin-top:2px;"></label>
+      <label class="subtle" style="font-size:12.5px;font-weight:700;margin:0;">${acL('Salida', 'Sortida')}<input type="time" id="fe-sal" value="${sal ? fichHHMM(sal) : (f ? '' : '14:00')}" style="margin-top:2px;"></label>
+    </div>
+    ${f ? `<label class="subtle" style="display:flex;gap:6px;align-items:center;font-size:12.5px;margin:8px 0 0;"><input type="checkbox" id="fe-solo" style="width:auto;margin:0;" onchange="document.getElementById('fe-ent').disabled=this.checked;document.getElementById('fe-sal').disabled=this.checked;"> ${acL('Solo justificar (dejar las horas como están)', 'Només justificar (deixar les hores com estan)')}</label>` : ''}
+    <label class="subtle" style="font-size:12.5px;font-weight:700;margin:10px 0 0;display:block;">${acL('Motivo', 'Motiu')}</label>
+    <select id="fe-motivo" style="margin:2px 0 6px;">${FICH_CORR_MOTIVOS.map(m => `<option value="${m[0]}">${acL(m[1], m[2])}</option>`).join('')}</select>
+    <input type="text" id="fe-det" maxlength="200" placeholder="${acL('Detalle (opcional): p. ej. «el tren llegó con 30 min de retraso»', 'Detall (opcional): p. ex. «el tren va arribar amb 30 min de retard»')}">
+    <p class="subtle" style="font-size:11.5px;margin:8px 0 0;">${acL('Queda apuntado quién lo cambia, cuándo, por qué y las horas de antes. El fichaje sale como «validado».', 'Queda apuntat qui ho canvia, quan, per què i les hores d\'abans. El fitxatge surt com a «validat».')}</p>
+    <div class="sv-btns" style="margin-top:12px;"><button class="primary-btn" style="width:auto;margin:0;" onclick="fichEditorGuardar(${f ? `'${f.id}'` : 'null'})">💾 ${acL('Guardar', 'Desar')}</button><button class="link-btn" onclick="document.getElementById('fich-ed-ov').remove()">${acL('Cancelar', 'Cancel·lar')}</button></div>
+  </div>`;
+  document.body.appendChild(ov);
+}
+async function fichEditorGuardar(id){
+  const v = k => ((document.getElementById(k) || {}).value || '').trim();
+  const f = id ? (__adminFichajesTodos || []).concat(window.__rhFich || []).find(x => String(x.id) === String(id)) : null;
+  const solo = !!(document.getElementById('fe-solo') || {}).checked;
+  const mot = FICH_CORR_MOTIVOS.find(m => m[0] === v('fe-motivo')) || FICH_CORR_MOTIVOS[5];
+  const motivoTxt = mot[1] + (v('fe-det') ? ': ' + v('fe-det') : '');
+  if(mot[0] === 'otro' && !v('fe-det')){ alert(acL('Escribe el motivo en el detalle.', 'Escriu el motiu al detall.')); return; }
+  const base = f ? new Date(f.entrada) : new Date((v('fe-dia') || isoLocal()) + 'T00:00:00');
+  const aFecha = hhmm => { if(!/^\d{1,2}:\d{2}$/.test(hhmm)) return null; const d = new Date(base); const [h, m] = hhmm.split(':').map(Number); d.setHours(h, m, 0, 0); return d; };
+  const quien = (CURRENT_USER_NOMBRE || CURRENT_USER.email) + ' · ' + new Date().toLocaleDateString('es-ES');
+  let upd;
+  if(solo && f){
+    upd = { nota: [f.nota, `✅ Justificado por ${quien}: ${motivoTxt}.`].filter(Boolean).join(' · ').slice(0, 1000), entrada_modo: 'validado', entrada_puesto: quien };
+    if(f.salida) Object.assign(upd, { salida_modo: 'validado', salida_puesto: quien });
+  } else {
+    const e = aFecha(v('fe-ent')), s = v('fe-sal') ? aFecha(v('fe-sal')) : null;
+    if(!e){ alert(acL('Pon la hora de entrada (HH:MM).', 'Posa l\'hora d\'entrada (HH:MM).')); return; }
+    if(s && s <= e){ alert(acL('La salida tiene que ser después de la entrada.', 'La sortida ha de ser després de l\'entrada.')); return; }
+    if(e > new Date()){ alert(acL('La entrada no puede ser en el futuro.', 'L\'entrada no pot ser en el futur.')); return; }
+    const antes = f ? `antes ${fichHHMM(new Date(f.entrada))}–${f.salida ? fichHHMM(new Date(f.salida)) : 'sin salida'}` : 'fichaje añadido';
+    upd = { entrada: e.toISOString(), salida: s ? s.toISOString() : null, nota: [f && f.nota, `✏️ Corregido por ${quien}: ${motivoTxt} (${antes}; ahora ${fichHHMM(e)}–${s ? fichHHMM(s) : 'sin salida'}).`].filter(Boolean).join(' · ').slice(0, 1000),
+      entrada_modo: 'validado', entrada_puesto: quien, salida_modo: s ? 'validado' : null, salida_puesto: s ? quien : null };
+    if(f && f.cerrado_automaticamente && s) upd.cerrado_automaticamente = false;
+    if(!f) upd.tecnico_email = v('fe-persona');
+    if(!f && !upd.tecnico_email){ alert(acL('Elige la persona.', 'Tria la persona.')); return; }
+  }
+  const intentar = async (u) => f ? sb.from('fichajes').update(u).eq('id', f.id).select() : sb.from('fichajes').insert(u).select();
+  let { data, error } = await intentar(upd);
+  if(error && /_modo|_puesto|cerrado_automaticamente|schema cache|column/i.test(error.message || '')){
+    const u2 = Object.assign({}, upd); ['entrada_modo', 'entrada_puesto', 'salida_modo', 'salida_puesto', 'cerrado_automaticamente'].forEach(k => delete u2[k]);
+    ({ data, error } = await intentar(u2));
+  }
+  if(error){ alert(error.message); return; }
+  if(!data || !data.length){ alert(acL('No se ha podido guardar: tu usuario no tiene permiso para cambiar fichajes. Habla con la administración.', 'No s\'ha pogut desar: el teu usuari no té permís per canviar fitxatges. Parla amb l\'administració.')); return; }
+  const ov = document.getElementById('fich-ed-ov'); if(ov) ov.remove();
+  const nuevo = data[0];
+  [__adminFichajesTodos, window.__rhFich].forEach(arr => { if(!Array.isArray(arr)) return; const i = arr.findIndex(x => String(x.id) === String(nuevo.id)); if(i >= 0) arr[i] = nuevo; else if(!f) arr.unshift(nuevo); });
+  fichRepintar();
 }
 
 async function fichajeCorregirAdmin(id, entradaIso){
@@ -25587,7 +25723,7 @@ function histActivarCuenta(id){
   showScreen('altapresencial'); renderAltaPresencial();
   window.__histActivarId = id;
   const pon = (i, v) => { const el = document.getElementById(i); if(el && v) el.value = v; };
-  pon('ap-nombre', unif.nombre_completo); pon('ap-telefono', unif.telefono); pon('ap-dni', unif.dni_nie); pon('ap-email', unif.email); pon('ap-municipio', unif.municipio);
+  pon('ap-nombre', unif.nombre_completo); pon('ap-telefono', unif.telefono); pon('ap-dni', unif.dni_nie); pon('ap-email', unif.email); pon('ap-municipio', unif.municipio); pon('ap-sexo', histSexo(unif.sexo) || '');
   const cont = document.getElementById('altapresencial-content');
   if(cont) cont.insertAdjacentHTML('afterbegin', `<div class="info-box info-box-gold" style="margin-bottom:12px;">📄 ${acL('Estás activando la cuenta de una persona del histórico. Hemos rellenado sus datos; al terminar, su ficha antigua quedará unida a la nueva cuenta (fecha de alta, sexo, nacionalidad…).', 'Estàs activant el compte d\'una persona de l\'històric. Hem omplert les seves dades; en acabar, la fitxa antiga quedarà unida al compte nou (data d\'alta, sexe, nacionalitat…).')}</div>`);
 }
@@ -25660,11 +25796,11 @@ function estSexoTxt(k){ return k === 'mujer' ? acL('Mujeres', 'Dones') : k === '
 // Registro común para estadísticas y memoria: una persona = una fila
 function estPersonaDePerfil(p){
   const alta = p.fecha_alta || p.creado_en || null;
-  return { origen: 'cuenta', id: p.id, sexo: ['mujer', 'hombre', 'otro'].includes(p.sexo) ? p.sexo : '', tramo: estEdad(p.fecha_nacimiento, alta, null),
+  return { origen: 'cuenta', id: p.id, nombre: p.nombre_completo || '', sexo: histSexo(p.sexo) || '', tramo: estEdad(p.fecha_nacimiento, alta, null),
     nacionalidad: estNacionalidad(p.nacionalidad), municipio: estMunicipio(p.municipio), anio: alta ? Number(String(alta).slice(0, 4)) : null, alta: alta ? String(alta).slice(0, 10) : null };
 }
 function estPersonaDeHist(h){
-  return { origen: 'papel', id: h.id, regs: h.regs || [], sexo: histSexo(h.sexo) || '', tramo: estEdad(h.fecha_nacimiento, h.fecha_alta || (h.anio_alta ? h.anio_alta + '-07-01' : null), h.edad_alta),
+  return { origen: 'papel', id: h.id, histIds: h.histIds || [h.id], nombre: h.nombre_completo || '', regs: h.regs || [], sexo: histSexo(h.sexo) || '', tramo: estEdad(h.fecha_nacimiento, h.fecha_alta || (h.anio_alta ? h.anio_alta + '-07-01' : null), h.edad_alta),
     nacionalidad: estNacionalidad(h.nacionalidad), municipio: estMunicipio(h.municipio), anio: h.anio_alta || null, alta: h.fecha_alta ? String(h.fecha_alta).slice(0, 10) : null };
 }
 // TODAS las personas atendidas hasta la fecha: con cuenta + histórico (papel) + atendidas sin ficha (solo nombre en la atención).
@@ -25711,7 +25847,7 @@ function estTrayectoria(filas){
   const por = {}; let repiten = 0, dudosas = 0;
   filas.forEach(f => { const bruto = (f.anios && f.anios.length) ? f.anios : (f.anio ? [f.anio] : []); const an = [...new Set(bruto.map(Number).filter(estAnioOk))];
     if(bruto.length && !an.length) dudosas++; if(an.length > 1) repiten++;
-    an.forEach(a => { const x = por[a] = por[a] || { cuenta: 0, papel: 0, sinficha: 0 }; x[f.origen]++; }); });
+    an.forEach(a => { const x = por[a] = por[a] || { cuenta: 0, papel: 0, sinficha: 0, mujer: 0, hombre: 0 }; x[f.origen]++; if(f.sexo === 'mujer' || f.sexo === 'hombre') x[f.sexo]++; }); });
   const anios = Object.keys(por).map(Number).sort((a, b) => a - b);
   return { anios, por, repiten, dudosas, primero: anios[0] || null, total: filas.length,
     porOrigen: { cuenta: filas.filter(f => f.origen === 'cuenta').length, papel: filas.filter(f => f.origen === 'papel').length, sinficha: filas.filter(f => f.origen === 'sinficha').length } };
@@ -25728,12 +25864,14 @@ function estTablas(filas){
   const pct = n => tot ? (Math.round(n / tot * 1000) / 10).toString().replace('.', ',') + ' %' : '0 %';
   const sexo = estContar(filas, 'sexo', ['mujer', 'hombre', 'otro', '~']).map(([k, n]) => [estSexoTxt(k), n, pct(n)]);
   const edad = estContar(filas, 'tramo', EST_TRAMOS.concat('~')).map(([k, n]) => [k ? k + ' ' + acL('años', 'anys') : acL('No consta', 'No consta'), n, pct(n)]);
-  const nac = estContar(filas, 'nacionalidad').map(([k, n]) => [k || acL('No consta', 'No consta'), n, pct(n)]);
+  const sx = (campo, k) => { const g = filas.filter(f => (f[campo] || '') === k); return [g.filter(f => f.sexo === 'mujer').length, g.filter(f => f.sexo === 'hombre').length]; };
+  const nac = estContar(filas, 'nacionalidad').map(([k, n]) => [k || acL('No consta', 'No consta'), n, pct(n), ...sx('nacionalidad', k)]);
   const conNac = filas.filter(f => f.nacionalidad), esp = conNac.filter(f => f.nacionalidad === 'España').length;
-  const origen = [[acL('Nacionalidad española', 'Nacionalitat espanyola'), esp, pct(esp)], [acL('Otras nacionalidades', 'Altres nacionalitats'), conNac.length - esp, pct(conNac.length - esp)], [acL('No consta', 'No consta'), tot - conNac.length, pct(tot - conNac.length)]].filter((r, i) => i < 2 || r[1] > 0);
-  const muni = estContar(filas, 'municipio').map(([k, n]) => [k || acL('No consta', 'No consta'), n, pct(n)]);
-  const anios = {}; filas.forEach(f => { const a = f.anio || 0; anios[a] = anios[a] || { cuenta: 0, papel: 0, sinficha: 0 }; anios[a][f.origen]++; });
-  const anio = Object.keys(anios).map(Number).sort((a, b) => (a === 0) - (b === 0) || a - b).map(a => [a || acL('Sin fecha', 'Sense data'), anios[a].cuenta + anios[a].papel + anios[a].sinficha, anios[a].cuenta, anios[a].papel, anios[a].sinficha]);
+  const sxG = g => [g.filter(f => f.sexo === 'mujer').length, g.filter(f => f.sexo === 'hombre').length];
+  const origen = [[acL('Nacionalidad española', 'Nacionalitat espanyola'), esp, pct(esp), ...sxG(conNac.filter(f => f.nacionalidad === 'España'))], [acL('Otras nacionalidades', 'Altres nacionalitats'), conNac.length - esp, pct(conNac.length - esp), ...sxG(conNac.filter(f => f.nacionalidad !== 'España'))], [acL('No consta', 'No consta'), tot - conNac.length, pct(tot - conNac.length), ...sxG(filas.filter(f => !f.nacionalidad))]].filter((r, i) => i < 2 || r[1] > 0);
+  const muni = estContar(filas, 'municipio').map(([k, n]) => [k || acL('No consta', 'No consta'), n, pct(n), ...sx('municipio', k)]);
+  const anios = {}; filas.forEach(f => { const a = f.anio || 0; anios[a] = anios[a] || { cuenta: 0, papel: 0, sinficha: 0, mujer: 0, hombre: 0 }; anios[a][f.origen]++; if(f.sexo === 'mujer' || f.sexo === 'hombre') anios[a][f.sexo]++; });
+  const anio = Object.keys(anios).map(Number).sort((a, b) => (a === 0) - (b === 0) || a - b).map(a => [a || acL('Sin fecha', 'Sense data'), anios[a].cuenta + anios[a].papel + anios[a].sinficha, anios[a].cuenta, anios[a].papel, anios[a].sinficha, anios[a].mujer, anios[a].hombre]);
   const cruce = EST_TRAMOS.concat('').map(tr => { const g = filas.filter(f => (f.tramo || '') === tr); return [tr ? tr + ' ' + acL('años', 'anys') : acL('No consta', 'No consta'), g.filter(f => f.sexo === 'mujer').length, g.filter(f => f.sexo === 'hombre').length, g.filter(f => f.sexo !== 'mujer' && f.sexo !== 'hombre').length, g.length]; }).filter(r => r[4] > 0);
   return { tot, sexo, edad, nac, origen, muni, anio, cruce };
 }
@@ -25774,13 +25912,14 @@ function estPintarDatos(caja){
       ${T.sexo.filter(r => r[1]).map(r => `<div><div class="est-big sm">${r[2]}</div><div class="est-sub">${r[0]}</div></div>`).join('')}
       <div><div class="est-big sm">${T.origen[1][2]}</div><div class="est-sub">${esCA ? 'altres nacionalitats' : 'otras nacionalidades'}</div></div></div>
     <div class="est-grid">
-      <div class="panel-card"><h3>👥 ${esCA ? 'Per sexe' : 'Por sexo'}</h3>${estBarras(T.sexo)}</div>
+      <div class="panel-card"><h3>👥 ${esCA ? 'Per sexe' : 'Por sexo'}</h3>${estBarras(T.sexo)}
+        ${(() => { const n = filas.filter(f => !f.sexo && f.origen !== 'sinficha').length; return n ? `<button class="link-btn imp-noprint" style="font-size:12.5px;font-weight:700;margin-top:8px;" onclick="estSexoCompletar()">✏️ ${esCA ? `Completar el sexe que falta (${n.toLocaleString()} persones)` : `Completar el sexo que falta (${n.toLocaleString()} personas)`}</button>` : ''; })()}</div>
       <div class="panel-card"><h3>🎂 ${esCA ? 'Per edat (en el moment de l\'alta)' : 'Por edad (en el momento del alta)'}</h3>${estBarras(T.edad)}</div>
       <div class="panel-card"><h3>🌍 ${esCA ? 'Per nacionalitat' : 'Por nacionalidad'}</h3>${estBarras(T.origen)}<div style="height:10px"></div>${estBarras(nacTop.concat(nacResto ? [[esCA ? 'Altres' : 'Otras', nacResto, '']] : []))}</div>
       <div class="panel-card"><h3>📍 ${esCA ? 'Per municipi' : 'Por municipio'}</h3>${estBarras(muniTop)}</div>
       <div class="panel-card est-ancha"><h3>📅 ${esCA ? 'Altes per any' : 'Altas por año'}</h3>
-        <div class="imp-tabla-w"><table class="imp-tabla"><thead><tr><th>${esCA ? 'Any' : 'Año'}</th><th>${esCA ? 'Total' : 'Total'}</th><th>${esCA ? 'Amb compte' : 'Con cuenta'}</th><th>${esCA ? 'Històric (paper)' : 'Histórico (papel)'}</th><th>${esCA ? 'Sense fitxa' : 'Sin ficha'}</th></tr></thead>
-        <tbody>${T.anio.map(r => `<tr><td>${r[0]}</td><td><strong>${r[1].toLocaleString()}</strong></td><td>${r[2].toLocaleString()}</td><td>${r[3].toLocaleString()}</td><td>${r[4].toLocaleString()}</td></tr>`).join('')}</tbody></table></div></div>
+        <div class="imp-tabla-w"><table class="imp-tabla"><thead><tr><th>${esCA ? 'Any' : 'Año'}</th><th>${esCA ? 'Total' : 'Total'}</th><th>${esCA ? 'Amb compte' : 'Con cuenta'}</th><th>${esCA ? 'Històric (paper)' : 'Histórico (papel)'}</th><th>${esCA ? 'Sense fitxa' : 'Sin ficha'}</th><th>${esCA ? 'Dones' : 'Mujeres'}</th><th>${esCA ? 'Homes' : 'Hombres'}</th></tr></thead>
+        <tbody>${T.anio.map(r => `<tr><td>${r[0]}</td><td><strong>${r[1].toLocaleString()}</strong></td><td>${r[2].toLocaleString()}</td><td>${r[3].toLocaleString()}</td><td>${r[4].toLocaleString()}</td><td>${r[5].toLocaleString()}</td><td>${r[6].toLocaleString()}</td></tr>`).join('')}</tbody></table></div></div>
       <div class="panel-card est-ancha"><h3>🧭 ${esCA ? 'Persones ateses cada any (trajectòria)' : 'Personas atendidas cada año (trayectoria)'}</h3>
         <p class="subtle" style="margin:0 0 8px;font-size:12px;">${esCA ? `Una persona compta en cada any en què se l'ha atès. ${TRf.repiten.toLocaleString()} persones han tornat en més d'un any.` : `Una persona cuenta en cada año en que se la atendió. ${TRf.repiten.toLocaleString()} personas han vuelto en más de un año.`}</p>
         ${estBarras(TRf.anios.slice().reverse().map(a => [a, TRf.por[a].cuenta + TRf.por[a].papel + TRf.por[a].sinficha, '']))}</div>
@@ -25789,6 +25928,37 @@ function estPintarDatos(caja){
         <tbody>${T.cruce.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td><strong>${r[4]}</strong></td></tr>`).join('')}</tbody></table></div></div>
     </div>
     <p class="subtle" style="font-size:12px;">${esCA ? 'Cada persona compta una sola vegada (encara que tingui registres de diversos anys). L\'edat es calcula en el moment de l\'alta. Les nacionalitats escrites de maneres diferents (Marroc, Marruecos…) s\'agrupen.' : 'Cada persona cuenta una sola vez (aunque tenga registros de varios años). La edad se calcula en el momento del alta. Las nacionalidades escritas de formas distintas (Marroc, Marruecos…) se agrupan.'}</p>`;
+}
+// v270 · Completar el sexo que falta (personas con ficha). Lo marca una persona del equipo; nunca se deduce del nombre.
+function estSexoCompletar(){
+  const filas = estFiltrar(window.__estDatos.filas).filter(f => !f.sexo && f.origen !== 'sinficha').sort((a, b) => String(a.nombre).localeCompare(String(b.nombre)));
+  window.__estSx = { filas, pag: 0 };
+  const ov = document.createElement('div'); ov.className = 'inact-ov'; ov.id = 'est-sx-ov';
+  ov.innerHTML = `<div class="inact-card" style="max-width:560px;text-align:left;max-height:88vh;display:flex;flex-direction:column;">
+    <h3 style="margin:0 0 4px;">✏️ ${acL('Completar el sexo que falta', 'Completar el sexe que falta')}</h3>
+    <p class="subtle" style="font-size:12.5px;margin:0 0 8px;">${acL('Marca el sexo que consta en su documento o que la persona indicó. Se guarda al momento en su ficha. Si no lo sabes, déjalo.', 'Marca el sexe que consta al seu document o que la persona va indicar. Es desa al moment a la seva fitxa. Si no ho saps, deixa-ho.')}</p>
+    <input type="search" id="est-sx-q" placeholder="${acL('Buscar por nombre…', 'Cercar per nom…')}" oninput="window.__estSx.pag=0;estSexoLista()" style="margin:0 0 8px;">
+    <div id="est-sx-lista" style="overflow:auto;flex:1;"></div>
+    <div class="sv-btns" style="margin-top:10px;"><button class="primary-btn" style="width:auto;margin:0;" onclick="document.getElementById('est-sx-ov').remove();window.__estCache=null;estPintar(document.getElementById('personas-lista'))">${acL('Hecho', 'Fet')}</button></div></div>`;
+  document.body.appendChild(ov); estSexoLista();
+}
+function estSexoLista(){
+  const st = window.__estSx, q = normTxt((document.getElementById('est-sx-q') || {}).value || '');
+  const lista = st.filas.filter(f => !q || normTxt(f.nombre).includes(q)), POR = 40, ver = lista.slice(0, (st.pag + 1) * POR);
+  const b = (f, k, t) => `<button class="sv-btn${f.sexo === k ? ' pri' : ''}" style="padding:5px 10px;font-size:12.5px;" onclick="estSexoPoner('${f.origen}', '${f.id}', '${k}', this)">${t}</button>`;
+  document.getElementById('est-sx-lista').innerHTML = ver.map(f => `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 2px;border-bottom:1px solid var(--line);flex-wrap:wrap;">
+      <span style="font-size:13.5px;"><strong>${escAttr(f.nombre || '—')}</strong> <span class="subtle" style="font-size:11.5px;margin:0;">${f.origen === 'papel' ? acL('histórico', 'històric') : acL('con cuenta', 'amb compte')}</span></span>
+      <span style="display:flex;gap:4px;">${b(f, 'mujer', acL('Mujer', 'Dona'))}${b(f, 'hombre', acL('Hombre', 'Home'))}${b(f, 'otro', acL('Otro', 'Altre'))}</span></div>`).join('')
+    + (lista.length > ver.length ? `<button class="link-btn" style="margin:8px 0;" onclick="window.__estSx.pag++;estSexoLista()">${acL('Ver más', 'Veure\'n més')} (${(lista.length - ver.length).toLocaleString()})</button>` : '')
+    + (!lista.length ? `<div class="empty-note">${acL('No queda nadie sin sexo.', 'No queda ningú sense sexe.')}</div>` : '');
+}
+async function estSexoPoner(origen, id, k, btn){
+  const f = window.__estSx.filas.find(x => String(x.id) === String(id)); if(!f) return;
+  const r = origen === 'papel' ? await sb.from('personas_historicas').update({ sexo: k }).in('id', (f.histIds && f.histIds.length) ? f.histIds : [id]).select('id') : await sb.from('perfiles').update({ sexo: k }).eq('id', id).select('id');
+  if(r.error){ alert(r.error.message); return; }
+  if(!r.data || !r.data.length){ alert(acL('No se ha podido guardar (permisos).', 'No s\'ha pogut desar (permisos).')); return; }
+  f.sexo = k; window.__personasHistUnif = null; window.__histCacheLista = null;
+  const fila = btn.parentElement; fila.querySelectorAll('button').forEach(x => x.classList.remove('pri')); btn.classList.add('pri');
 }
 async function estExcel(){
   if(!window.ExcelJS){ alert(acL('No se ha podido cargar el generador de Excel. Recarga la página.', 'No s\'ha pogut carregar el generador d\'Excel. Recarrega la pàgina.')); return; }
@@ -25799,10 +25969,11 @@ async function estExcel(){
   const cab = [acL('Categoría', 'Categoria'), acL('Personas', 'Persones'), '%'];
   fichaHoja(libro, acL('Sexo', 'Sexe'), cab, T.sexo);
   fichaHoja(libro, acL('Edad', 'Edat'), cab, T.edad);
-  fichaHoja(libro, acL('Nacionalidad', 'Nacionalitat'), cab, T.origen.concat([['', '', '']]).concat(T.nac));
-  fichaHoja(libro, acL('Municipio', 'Municipi'), cab, T.muni);
-  fichaHoja(libro, acL('Altas por año', 'Altes per any'), [acL('Año', 'Any'), 'Total', acL('Con cuenta', 'Amb compte'), acL('Histórico (papel)', 'Històric (paper)'), acL('Sin ficha', 'Sense fitxa')], T.anio);
-  { const TR = estTrayectoria(estFiltrar(window.__estDatos.filas)); fichaHoja(libro, acL('Atendidas cada año', 'Ateses cada any'), [acL('Año', 'Any'), 'Total', acL('Con cuenta', 'Amb compte'), acL('Histórico (papel)', 'Històric (paper)'), acL('Sin ficha', 'Sense fitxa')], TR.anios.map(a => [a, TR.por[a].cuenta + TR.por[a].papel + TR.por[a].sinficha, TR.por[a].cuenta, TR.por[a].papel, TR.por[a].sinficha])); }
+  const cabS = cab.concat([acL('Mujeres', 'Dones'), acL('Hombres', 'Homes')]);
+  fichaHoja(libro, acL('Nacionalidad', 'Nacionalitat'), cabS, T.origen.concat([['', '', '', '', '']]).concat(T.nac));
+  fichaHoja(libro, acL('Municipio', 'Municipi'), cabS, T.muni);
+  fichaHoja(libro, acL('Altas por año', 'Altes per any'), [acL('Año', 'Any'), 'Total', acL('Con cuenta', 'Amb compte'), acL('Histórico (papel)', 'Històric (paper)'), acL('Sin ficha', 'Sense fitxa'), acL('Mujeres', 'Dones'), acL('Hombres', 'Homes')], T.anio);
+  { const TR = estTrayectoria(estFiltrar(window.__estDatos.filas)); fichaHoja(libro, acL('Atendidas cada año', 'Ateses cada any'), [acL('Año', 'Any'), 'Total', acL('Con cuenta', 'Amb compte'), acL('Histórico (papel)', 'Històric (paper)'), acL('Sin ficha', 'Sense fitxa'), acL('Mujeres', 'Dones'), acL('Hombres', 'Homes')], TR.anios.map(a => [a, TR.por[a].cuenta + TR.por[a].papel + TR.por[a].sinficha, TR.por[a].cuenta, TR.por[a].papel, TR.por[a].sinficha, TR.por[a].mujer, TR.por[a].hombre])); }
   fichaHoja(libro, acL('Sexo x edad', 'Sexe x edat'), [acL('Edad', 'Edat'), acL('Mujeres', 'Dones'), acL('Hombres', 'Homes'), acL('Otro / no consta', 'Altre / no consta'), 'Total'], T.cruce);
   const buf = await libro.xlsx.writeBuffer();
   expDescargarBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'Estadisticas-personas-' + isoLocal() + '.xlsx');
@@ -26717,6 +26888,9 @@ function esMovilOTableta(){
     const ua = navigator.userAgent || '';
     if(/Android|iPhone|iPod|iPad|Mobile|Silk|Kindle|BlackBerry|Opera Mini|IEMobile/i.test(ua)) return true;
     if(/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return true;          // iPad que se presenta como Mac
+    if(navigator.userAgentData && navigator.userAgentData.mobile) return true;
+    // v270: móvil en «versión de escritorio» (o con lápiz, que cuenta como puntero fino): pantalla táctil y pequeña
+    if(navigator.maxTouchPoints > 0 && Math.max(screen.width, screen.height) < 1100) return true;
     const fino = window.matchMedia && matchMedia('(any-pointer: fine)').matches;   // ratón o panel táctil del portátil
     return !fino && Math.min(screen.width, screen.height) < 820;
   } catch(e){ return false; }
