@@ -6964,7 +6964,8 @@ async function apBuscarExistentes(telefono, dni){
   const coincide = x => (nucleo.length >= 6 && limpio(x.dni_nie).includes(nucleo.slice(-7))) || (nt.length >= 9 && String(x.telefono || '').replace(/\D/g, '').endsWith(nt));
   const conCuenta = (a.data || []).filter(coincide).map(x => ({ tipo: 'cuenta', id: x.id, nombre: x.nombre_completo, dni: x.dni_nie, tel: x.telefono }));
   const sinCuenta = (b.data || []).filter(x => coincide(x) && !x.perfil_id).map(x => ({ tipo: 'papel', id: x.id, nombre: x.nombre_completo, dni: x.dni_nie, tel: x.telefono }));
-  return [...conCuenta, ...sinCuenta];
+  const vistos = new Set(), sinCuentaUnicas = sinCuenta.filter(x => { const k = limpio(x.dni).replace(/^[XYZ]/, '').replace(/[A-Z]$/, '') || String(x.tel || '').replace(/\D/g, '').slice(-9); if(vistos.has(k)) return false; vistos.add(k); return true; });
+  return [...conCuenta, ...sinCuentaUnicas];
 }
 function apYaExiste(nombre, telefono, dni, soloCuentas){
   return new Promise(async resolve => {
@@ -6974,7 +6975,7 @@ function apYaExiste(nombre, telefono, dni, soloCuentas){
     if(!lista.length){ resolve('crear'); return; }
     let ov = document.getElementById('ap-ya-ov'); if(ov) ov.remove();
     ov = document.createElement('div'); ov.id = 'ap-ya-ov'; ov.className = 'inact-ov';
-    const fila = (x, i) => `<button type="button" class="primary-btn" style="margin:0 0 8px;text-align:left;display:block;width:100%;" data-i="${i}">📂 ${acL('Abrir la ficha de', 'Obrir la fitxa de')} <strong>${escAttr(x.nombre || '')}</strong><br><small style="font-weight:400;opacity:.9;">${x.tipo === 'cuenta' ? acL('Tiene cuenta', 'Té compte') : acL('Ficha sin cuenta · consentimiento en papel', 'Fitxa sense compte · consentiment en paper')}${x.dni ? ' · ' + escAttr(x.dni) : ''}${x.tel ? ' · ' + escAttr(x.tel) : ''}</small></button>`;
+    const fila = (x, i) => `<button type="button" class="primary-btn" style="margin:0 0 8px;text-align:left;display:block;width:100%;" data-i="${i}">📂 ${x.tipo === 'papel' ? acL('Abrir la ficha de trabajo de', 'Obrir la fitxa de treball de') : acL('Abrir la ficha de', 'Obrir la fitxa de')} <strong>${escAttr(x.nombre || '')}</strong><br><small style="font-weight:400;opacity:.9;">${x.tipo === 'cuenta' ? acL('Tiene cuenta', 'Té compte') : acL('Ficha sin cuenta · consentimiento en papel', 'Fitxa sense compte · consentiment en paper')}${x.dni ? ' · ' + escAttr(x.dni) : ''}${x.tel ? ' · ' + escAttr(x.tel) : ''}</small></button>`;
     ov.innerHTML = `<div class="inact-card" style="max-width:440px;"><div class="inact-i">✋</div>
       <h3>${acL('Esta persona ya está dada de alta', 'Aquesta persona ja està donada d\'alta')}</h3>
       <p style="font-size:14px;">${acL('No hace falta darla de alta otra vez. Abre su ficha y trabaja desde ahí (atención, cita, actuación…).', 'No cal donar-la d\'alta un altre cop. Obre la seva fitxa i treballa des d\'allà (atenció, cita, actuació…).')}</p>
@@ -6991,7 +6992,7 @@ function apYaExiste(nombre, telefono, dni, soloCuentas){
       if(b.dataset.a === 'crear'){ const ok = confirm(acL(`¿Seguro que «${nombre}» es otra persona distinta? Se creará una ficha nueva.`, `Segur que «${nombre}» és una altra persona? Es crearà una fitxa nova.`)); if(ok) window.__apOtraPersona = true; return cerrar(ok ? 'crear' : 'cancelar'); }
       const x = lista[Number(b.dataset.i)]; if(!x) return;
       cerrar('abierta');
-      try { if(x.tipo === 'cuenta'){ showScreen('personas'); verPersonaStaff(x.id, 'personas'); } else { showScreen('personas'); Promise.resolve(renderPersonasScreen()).catch(() => {}).then(() => histVerDesdeCita(x.id)); } } catch(err){}
+      try { if(x.tipo === 'cuenta'){ showScreen('personas'); verPersonaStaff(x.id, 'personas'); } else histFichaTrabajo(x.id); } catch(err){}
     });
   });
 }
@@ -7004,7 +7005,7 @@ async function apAvisoExiste(pre){
   try { lista = await apBuscarExistentes(v('telefono'), v('dni')); } catch(e){ host.innerHTML = ''; return; }
   if(pre === 'ap' && window.__histActivarId) lista = lista.filter(x => !(x.tipo === 'papel' && x.id === window.__histActivarId));
   if(!lista.length){ host.innerHTML = ''; return; }
-  const abrir = x => `<button type="button" class="primary-btn" style="width:auto;margin:6px 8px 0 0;padding:8px 14px;font-size:13px;" onclick="apAbrirExistente('${x.tipo}','${x.id}')">📂 ${acL('Abrir la ficha de', 'Obrir la fitxa de')} ${escAttr(x.nombre || '')}</button>`;
+  const abrir = x => `<button type="button" class="primary-btn" style="width:auto;margin:6px 8px 0 0;padding:8px 14px;font-size:13px;" onclick="apAbrirExistente('${x.tipo}','${x.id}')">📂 ${x.tipo === 'papel' ? acL('Abrir la ficha de trabajo de', 'Obrir la fitxa de treball de') : acL('Abrir la ficha de', 'Obrir la fitxa de')} ${escAttr(x.nombre || '')}</button>`;
   const cuentas = lista.filter(x => x.tipo === 'cuenta'), papel = lista.filter(x => x.tipo === 'papel');
   if(pre === 'ap' && !cuentas.length && papel.length){
     host.innerHTML = `<div class="info-box" style="margin:0 0 12px;background:#E3F5E8;border-color:#1F8A4C;">📄 ${acL(`<strong>${escAttr(papel[0].nombre)}</strong> ya tiene ficha con consentimiento en papel. Si firma ahora, esa ficha se une a su cuenta nueva: <strong>no se duplica</strong>. Puedes seguir.`, `<strong>${escAttr(papel[0].nombre)}</strong> ja té fitxa amb consentiment en paper. Si signa ara, aquesta fitxa s'uneix al seu compte nou: <strong>no es duplica</strong>. Pots continuar.`)}</div>`;
@@ -7014,9 +7015,65 @@ async function apAvisoExiste(pre){
   host.innerHTML = `<div class="info-box info-box-gold" style="margin:0 0 12px;">✋ <strong>${acL('Esta persona ya está dada de alta', 'Aquesta persona ja està donada d\'alta')}</strong>. ${acL('No hace falta que vuelva a firmar: abre su ficha.', 'No cal que torni a signar: obre la seva fitxa.')}<br>${mostrar.map(abrir).join('')}</div>`;
 }
 function apAbrirExistente(tipo, id){
-  showScreen('personas');
-  if(tipo === 'cuenta') verPersonaStaff(id, 'personas');
-  else Promise.resolve(renderPersonasScreen()).catch(() => {}).then(() => histVerDesdeCita(id));
+  if(tipo === 'cuenta'){ showScreen('personas'); verPersonaStaff(id, 'personas'); }
+  else histFichaTrabajo(id);
+}
+// v269 · Persona del histórico con el consentimiento en papel guardado: se le abre su FICHA DE TRABAJO
+// (atenciones, actuaciones, citas…) sin volver a firmar. Por dentro se crea su cuenta con el consentimiento en papel como prueba
+// y la ficha antigua queda unida a ella (no se duplica). Si ya tenía cuenta, se abre esa.
+function histSelloPapel(nombre, fecha){
+  const c = document.createElement('canvas'); c.width = 640; c.height = 220; const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.strokeStyle = '#1B4E95'; g.lineWidth = 3; g.strokeRect(8, 8, c.width - 16, c.height - 16);
+  g.fillStyle = '#1B4E95'; g.font = 'bold 26px Arial'; g.fillText('CONSENTIMIENTO FIRMADO EN PAPEL', 28, 56);
+  g.fillStyle = '#1B2A44'; g.font = '19px Arial';
+  g.fillText(('Persona: ' + (nombre || '')).slice(0, 56), 28, 98);
+  g.fillText('Fecha de la firma en papel: ' + (fecha ? new Date(String(fecha).slice(0, 10) + 'T00:00:00').toLocaleDateString('es-ES') : 'sin fecha'), 28, 130);
+  g.fillText(('Ficha de trabajo abierta por ' + (CURRENT_USER && CURRENT_USER.email || '') + ' el ' + new Date().toLocaleDateString('es-ES')).slice(0, 60), 28, 162);
+  g.fillStyle = '#5D6B82'; g.font = '15px Arial'; g.fillText('El original firmado está archivado en Logos. No es una firma digital.', 28, 194);
+  return c.toDataURL('image/png');
+}
+// Los otros registros del histórico de la misma persona (mismo DNI/NIE, p. ej. 2025 y 2026) también se unen a su cuenta
+async function histUnirMismaPersona(dni, uid){
+  const nd = pNormDni(dni); if(nd.length < 5 || !uid) return;
+  const { data } = await sb.from('personas_historicas').select('id, dni_nie, perfil_id').ilike('dni_nie', '%' + nd.slice(-7) + '%').limit(20);
+  const ids = (data || []).filter(h => !h.perfil_id && pNormDni(h.dni_nie) === nd).map(h => h.id);
+  if(ids.length) await sb.from('personas_historicas').update({ perfil_id: uid }).in('id', ids);
+}
+async function histFichaTrabajo(id){
+  const esCA = LANG_I === 'ca';
+  let p = __histCache[id];
+  if(!p){ const { data } = await sb.from('personas_historicas').select('*').eq('id', id).maybeSingle(); if(!data){ alert(acL('No se ha encontrado la ficha.', 'No s\'ha trobat la fitxa.')); return; } p = __histCache[id] = data; }
+  const unif = (window.__personasHistUnif || []).find(x => x.histIds && x.histIds.includes(id)) || p;
+  const abrir = uid => { histCerrar(); try { const o = document.getElementById('ap-ya-ov'); if(o) o.remove(); } catch(e){} showScreen('personas'); verPersonaStaff(uid, 'personas'); };
+  // 1) ¿ya está unida a una cuenta?
+  const vinc = p.perfil_id || unif.perfil_id || ((unif.histIds || []).map(i => __histCache[i]).find(x => x && x.perfil_id) || {}).perfil_id;
+  if(vinc){ abrir(vinc); return; }
+  if(p.consentimiento_papel === false){ alert(acL('Esta ficha tiene el consentimiento marcado como pendiente. Sin consentimiento firmado no se le puede abrir la ficha de trabajo: dale cita y que firme.', 'Aquesta fitxa té el consentiment marcat com a pendent. Sense consentiment signat no se li pot obrir la fitxa de treball: dona-li cita i que signi.')); return; }
+  const nombre = (unif.nombre_completo || p.nombre_completo || '').trim(), tel = (unif.telefono || p.telefono || '').trim(), dni = (unif.dni_nie || p.dni_nie || '').trim();
+  // 2) ¿ya tiene cuenta con el mismo DNI/NIE o teléfono? → se une a esa y se abre
+  try { const ex = (await apBuscarExistentes(tel, dni)).find(x => x.tipo === 'cuenta'); if(ex){ await histVincularPerfil(id, ex.id); try { await histUnirMismaPersona(dni, ex.id); } catch(e){} window.__personasHistUnif = null; window.__histCacheLista = null; abrir(ex.id); return; } } catch(e){}
+  if(!nombre || !tel || !dni){ alert(acL(`Para abrir la ficha de trabajo hacen falta nombre, teléfono y DNI/NIE, y a esta ficha le falta${!tel ? ' el teléfono' : ''}${!dni ? (!tel ? ' y' : '') + ' el DNI/NIE' : ''}. Pulsa «Activar su cuenta (alta presencial)», complétalo y sigue desde ahí.`, `Per obrir la fitxa de treball calen nom, telèfon i DNI/NIE, i a aquesta fitxa li falta${!tel ? ' el telèfon' : ''}${!dni ? (!tel ? ' i' : '') + ' el DNI/NIE' : ''}. Prem «Activar-li el compte (alta presencial)», completa-ho i continua des d'allà.`)); return; }
+  const fecha = unif.consentimiento_fecha || p.consentimiento_fecha || p.fecha_alta;
+  if(!confirm(acL(`Abrir la ficha de trabajo de «${nombre}»\n\nYa firmó el consentimiento en papel${fecha ? ' (' + fechaCorta(fecha) + ')' : ''}, así que NO hace falta que firme otra vez.\n\nSe crea su ficha completa (atenciones, actuaciones, citas) y su ficha del histórico queda unida a ella: no se duplica.\n\n¿Seguimos?`, `Obrir la fitxa de treball de «${nombre}»\n\nJa va signar el consentiment en paper${fecha ? ' (' + fechaCorta(fecha) + ')' : ''}, així que NO cal que torni a signar.\n\nEs crea la seva fitxa completa (atencions, actuacions, cites) i la fitxa de l'històric hi queda unida: no es duplica.\n\nContinuem?`))) return;
+  const tapa = document.createElement('div'); tapa.className = 'inact-ov'; tapa.id = 'hist-ft-ov';
+  tapa.innerHTML = `<div class="inact-card" style="max-width:380px;"><div class="inact-i">⏳</div><h3>${acL('Abriendo su ficha de trabajo…', 'Obrint la seva fitxa de treball…')}</h3></div>`;
+  document.body.appendChild(tapa);
+  try {
+    const res = await fetch('https://foxtlpyfedwsvttzorql.supabase.co/functions/v1/alta-presencial', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (await tokenParaFunciones()), 'apikey': SUPABASE_KEY },
+      body: JSON.stringify({ nombre_completo: nombre, telefono: tel, dni_nie: dni, email: (unif.email || p.email || '').trim(), municipio: unif.municipio || p.municipio || '',
+        firma_base64: histSelloPapel(nombre, fecha), cons_cesion: true, cons_contacto: false, cons_imagen: false, consentimiento_papel: true })
+    });
+    let data = {}; try { data = await res.json(); } catch(e){}
+    if(!res.ok || data.error || !data.usuario_id){ tapa.remove(); alert(acL('No se ha podido abrir la ficha de trabajo: ', 'No s\'ha pogut obrir la fitxa de treball: ') + (data.error || res.status) + '\n\n' + acL('Si dice que el correo ya existe, esa persona ya tiene cuenta con ese correo: búscala en «Personas usuarias».', 'Si diu que el correu ja existeix, aquesta persona ja té compte amb aquest correu: busca-la a «Persones usuàries».')); return; }
+    try { await histVincularPerfil(id, data.usuario_id); } catch(e){}
+    try { await histUnirMismaPersona(dni, data.usuario_id); } catch(e){}
+    try { await sb.from('perfiles').update({ consentimiento_version: 'papel' }).eq('id', data.usuario_id); } catch(e){}
+    window.__personasHistUnif = null; window.__histCacheLista = null;
+    tapa.remove();
+    abrir(data.usuario_id);
+  } catch(e){ tapa.remove(); alert(acL('Error de conexión. Inténtalo de nuevo.', 'Error de connexió. Torna-ho a provar.')); }
 }
 async function apGuardarPapel(){
   const v = id => ((document.getElementById(id) || {}).value || '').trim();
@@ -19755,7 +19812,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-17 · v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-17 · v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -25473,6 +25530,8 @@ function histVerExtraHtml(p){
     </div>
     ${histContactoHtml(unif || p)}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px;">
+      ${firmado ? `<button class="primary-btn" style="width:100%;margin:0 0 2px;font-size:15px;" onclick="histFichaTrabajo('${p.id}')">📂 ${esCA ? 'Obrir la seva fitxa de treball (atencions, actuacions…)' : 'Abrir su ficha de trabajo (atenciones, actuaciones…)'}</button>
+      <div class="subtle" style="width:100%;font-size:11.5px;margin:0 0 4px;">${esCA ? 'Ja va signar en paper: no cal que torni a signar ni que sigui aquí.' : 'Ya firmó en papel: no hace falta que vuelva a firmar ni que esté aquí.'}</div>` : ''}
       <button class="primary-btn" style="width:auto;margin:0;" onclick="histDarCita('${p.id}')">📅 ${esCA ? 'Donar-li cita' : 'Darle cita'}</button>
       <button class="primary-btn" style="width:auto;margin:0;background:var(--good);" onclick="histActivarCuenta('${p.id}')">🖊️ ${esCA ? 'Activar-li el compte (alta presencial)' : 'Activar su cuenta (alta presencial)'}</button>
     </div>`;
