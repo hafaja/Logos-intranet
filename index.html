@@ -156,6 +156,18 @@
   .sp-borrar{font-size:13px;opacity:.55;}
   .sp-borrar:hover{opacity:1;}
   @media (max-width:600px){ .sl-t th,.sl-t td{padding:9px 8px;} .sp-nav{justify-content:space-between;} .sd-kpis{grid-template-columns:1fr 1fr;} .sd-kpis > div{padding:10px 12px;} }
+  .est-cta{display:flex;gap:16px;align-items:center;flex-wrap:wrap;background:linear-gradient(135deg,#1E3F66,#2E5A8F);color:#fff;border-radius:18px;padding:18px 20px;margin:0 0 16px;box-shadow:0 6px 20px rgba(30,63,102,.22);}
+  .est-cta-t{flex:1;min-width:240px;display:flex;flex-direction:column;gap:4px;}
+  .est-cta-t strong{font-size:18px;}
+  .est-cta-t span{font-size:13.5px;opacity:.9;line-height:1.45;}
+  .est-cta-b{display:flex;gap:10px;flex-wrap:wrap;}
+  .est-cta-btn{border:none;border-radius:999px;padding:12px 20px;font-weight:800;font-size:14.5px;background:#F2BC2C;color:#1E3F66;cursor:pointer;width:auto;margin:0;box-shadow:0 3px 10px rgba(0,0,0,.18);}
+  .est-cta-btn:hover{filter:brightness(1.05);transform:translateY(-1px);}
+  .est-cta-btn.sec{background:rgba(255,255,255,.14);color:#fff;border:1.5px solid rgba(255,255,255,.55);box-shadow:none;}
+  .inf-menu{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px;}
+  .inf-menu-t{width:100%;font-size:13px;color:var(--ink-soft);}
+  .xl-nota{background:#FFF8E6;border:1.5px solid #F2BC2C;border-radius:14px;padding:12px 14px;font-size:13.5px;line-height:1.5;color:#5A3F00;margin:0 0 14px;}
+  .xl-nota .link-btn{color:#1E3F66;}
   .est-cats{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;}
   .est-cat{border:1.5px solid var(--line);background:var(--card,#fff);color:var(--ink);border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:700;cursor:pointer;width:auto;margin:0;}
   .est-cat.on{background:var(--primary,#1E3F66);border-color:var(--primary,#1E3F66);color:#fff;}
@@ -18309,7 +18321,7 @@ async function impRenderPanel(cuerpo){
       + impCoberturaHtml(r) + impSerieHtml(r) + impActividadHtml(act)
       + `<p class="imp-pie">${acL('Periodo', 'Període')}: ${desde ? impFecha(desde) : acL('inicio', 'inici')} – ${impFecha(hasta || new Date().toISOString())} · ${st.programa ? impProg(st.programa) : acL('Todo Logos', 'Tot Logos')}</p></div>`
       + `<div class="imp-seccion">${acL('Atención en Bretxa Logos', 'Atenció a Bretxa Logos')}</div><div id="imp-atencion" class="cards-grid"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`
-      + `<div id="imp-alcance"></div><div id="imp-carga"></div>`;
+      + `<details class="pide" style="margin:12px 0;" ontoggle="if(this.open) activarBarras();"><summary>📅 ${acL('Personas atendidas por año, altas por mes e histórico por servicio', 'Persones ateses per any, altes per mes i històric per servei')}</summary><div id="imp-alcance"></div></details><div id="imp-carga"></div>`;
     impAlcanceTotal(); impResultadosAuto(desde, hasta);
     statsAtencionNuevos(desde, hasta).then(d => { const h = document.getElementById('imp-atencion'); if(h) h.innerHTML = bloqueAtencionNuevos(d); });
     alcancePersonasPintar('imp-alcance');
@@ -18321,7 +18333,7 @@ async function impRenderPanel(cuerpo){
       + impCoberturaHtml(r) + impSerieHtml(r) + impActividadHtml(act)
       + `<p class="imp-pie">${acL('Periodo', 'Període')}: ${desde ? impFecha(desde) : acL('inicio', 'inici')} – ${impFecha(hasta || new Date().toISOString())} · ${st.programa ? impProg(st.programa) : acL('Todo Logos', 'Tot Logos')}</p></div>`
       + `<div class="imp-seccion">${acL('Atención en Bretxa Logos', 'Atenció a Bretxa Logos')}</div><div id="imp-atencion" class="cards-grid"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`
-      + `<div id="imp-alcance"></div><div id="imp-carga"></div>`;
+      + `<details class="pide" style="margin:12px 0;" ontoggle="if(this.open) activarBarras();"><summary>📅 ${acL('Personas atendidas por año, altas por mes e histórico por servicio', 'Persones ateses per any, altes per mes i històric per servei')}</summary><div id="imp-alcance"></div></details><div id="imp-carga"></div>`;
     impAlcanceTotal(); impResultadosAuto(desde, hasta);
     statsAtencionNuevos(desde, hasta).then(d => { const h = document.getElementById('imp-atencion'); if(h) h.innerHTML = bloqueAtencionNuevos(d); });
     alcancePersonasPintar('imp-alcance');
@@ -18333,7 +18345,7 @@ async function impRenderPanel(cuerpo){
     + impDimsHtml(r) + impAntesDespuesHtml(r) + impEmpleoFormacionHtml(r) + impCoberturaHtml(r) + impSerieHtml(r) + impEquidadHtml(r) + impActividadHtml(act)
     + `<p class="imp-pie">${acL('Periodo', 'Període')}: ${desde ? impFecha(desde) : acL('inicio', 'inici')} – ${impFecha(hasta || new Date().toISOString())} · ${st.programa ? impProg(st.programa) : acL('Todo Logos', 'Tot Logos')} · ${acL('Los grupos de menos de 5 personas se ocultan para proteger la privacidad.', 'Els grups de menys de 5 persones s\'oculten per protegir la privadesa.')}</p></div>`
     + `<div class="imp-seccion">${acL('Atención en Bretxa Logos', 'Atenció a Bretxa Logos')}</div><div id="imp-atencion" class="cards-grid"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`
-    + `<div id="imp-alcance"></div><div id="imp-carga"></div>`;
+    + `<details class="pide" style="margin:12px 0;" ontoggle="if(this.open) activarBarras();"><summary>📅 ${acL('Personas atendidas por año, altas por mes e histórico por servicio', 'Persones ateses per any, altes per mes i històric per servei')}</summary><div id="imp-alcance"></div></details><div id="imp-carga"></div>`;
   impAlcanceTotal();
   impResultadosAuto(desde, hasta);
   statsAtencionNuevos(desde, hasta).then(d => { const h = document.getElementById('imp-atencion'); if(h) h.innerHTML = bloqueAtencionNuevos(d); });
@@ -20525,7 +20537,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-18 · v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-19 · v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -22098,13 +22110,17 @@ async function renderInformesScreen(){
 
   setTimeout(() => infRegistroPintar(), 0);
   cont.innerHTML = `
-    <div id="inf-alcance"></div>
-    <p class="subtle" style="margin:10px 0 8px;font-size:13px;">👇 ${acL('Abre solo la categoría que necesites.', 'Obre només la categoria que necessitis.')}</p>
-    <details class="pide inf-cat" ontoggle="if(this.open) activarBarras();"><summary>📋 ${acL('Atenciones y actuaciones (todas las veces)', 'Atencions i actuacions (totes les vegades)')}</summary>
+    ${estadisticasCtaHtml()}
+    <div class="inf-menu" role="tablist" aria-label="${acL('Categorías', 'Categories')}">
+      <span class="inf-menu-t">👇 ${acL('O abre solo la categoría que necesites:', 'O obre només la categoria que necessitis:')}</span>
+      ${[['anio', '📅', 'Por año y por mes', 'Per any i per mes'], ['reg', '📋', 'Atenciones y actuaciones', 'Atencions i actuacions'], ['proy', '📁', 'Proyectos', 'Projectes'], ['form', '🎓', 'Formación', 'Formació'], ['pers', '👥', 'Personas atendidas', 'Persones ateses']].map(([k, ic, es, ca]) => `<button type="button" class="est-cat" data-icat="${k}" onclick="infCat('${k}')">${ic} ${acL(es, ca)}</button>`).join('')}
+    </div>
+    <details class="pide inf-cat" data-icat="anio" ontoggle="if(this.open && !this.dataset.c){ this.dataset.c = 1; alcancePersonasPintar('inf-alcance'); } if(this.open) activarBarras();"><summary>📅 ${acL('Personas atendidas por año, altas por mes e histórico por servicio', 'Persones ateses per any, altes per mes i històric per servei')}</summary><div id="inf-alcance"><div class="placeholder">${TI[LANG_I].cargando}</div></div></details>
+    <details class="pide inf-cat" data-icat="reg" ontoggle="if(this.open) activarBarras();"><summary>📋 ${acL('Atenciones y actuaciones (todas las veces)', 'Atencions i actuacions (totes les vegades)')}</summary>
     <div class="panel-card inf-reg" id="inf-registro" style="margin-bottom:20px;"><div class="placeholder">${t.cargando}</div></div>
     </details>
 
-    <details class="pide inf-cat" ontoggle="if(this.open) activarBarras();"><summary>📁 ${LANG_I==='ca'?'Projectes':'Proyectos'}</summary>
+    <details class="pide inf-cat" data-icat="proy" ontoggle="if(this.open) activarBarras();"><summary>📁 ${LANG_I==='ca'?'Projectes':'Proyectos'}</summary>
     <div class="panel-card" style="margin-bottom:20px;">
       <div class="panel-stat-row"><span>${LANG_I==='ca'?'Projectes actius':'Proyectos activos'}</span><span><strong>${proyectosActivos}</strong> / ${proyectosLista.length}</span></div>
       <div class="panel-stat-row"><span>${LANG_I==='ca'?'Persones diferents en projectes':'Personas distintas en proyectos'}</span><span><strong>${totalBeneficiariosProyectos}</strong></span></div>
@@ -22113,7 +22129,7 @@ async function renderInformesScreen(){
     </div>
     </details>
 
-    <details class="pide inf-cat" ontoggle="if(this.open) activarBarras();"><summary>🎓 ${LANG_I==='ca'?'Formació (Aula Virtual)':'Formación (Aula Virtual)'}</summary>
+    <details class="pide inf-cat" data-icat="form" ontoggle="if(this.open) activarBarras();"><summary>🎓 ${LANG_I==='ca'?'Formació (Aula Virtual)':'Formación (Aula Virtual)'}</summary>
     <div class="cards-grid" style="margin-bottom:20px;">
       <div class="panel-card">
         <div class="panel-stat-row"><span>${LANG_I==='ca'?'Cursos totals':'Cursos totales'}</span><span><strong>${totalCursos}</strong></span></div>
@@ -22131,7 +22147,7 @@ async function renderInformesScreen(){
     </div>
     </details>
 
-    <details class="pide inf-cat" ontoggle="if(this.open) activarBarras();"><summary>👥 ${LANG_I==='ca'?'Persones ateses':'Personas atendidas'}</summary>
+    <details class="pide inf-cat" data-icat="pers" ontoggle="if(this.open) activarBarras();"><summary>👥 ${LANG_I==='ca'?'Persones ateses':'Personas atendidas'}</summary>
     <div id="inf-total"></div>
     <div class="cards-grid" style="margin-bottom:24px;">
       <div class="panel-card" id="inf-sexo"><h3>${t.porSexo}</h3><div class="placeholder">${t.cargando}</div></div>
@@ -22170,9 +22186,24 @@ async function renderInformesScreen(){
     </div>
     </details>
   `;
-  alcancePersonasPintar('inf-alcance');
   activarBarras();
   infPerfilTodas();
+}
+// v283 · Botón destacado que lleva a las estadísticas por categoría (y a los listados con Excel)
+function estadisticasCtaHtml(){
+  return `<div class="est-cta">
+    <div class="est-cta-t"><strong>📊 ${acL('Estadísticas por categoría', 'Estadístiques per categoria')}</strong><span>${acL('Sexo, edad, nacionalidad, municipio, áreas y año. Eliges la categoría y sale solo esa.', 'Sexe, edat, nacionalitat, municipi, àrees i any. Tries la categoria i surt només aquesta.')}</span></div>
+    <div class="est-cta-b"><button class="est-cta-btn" onclick="showScreen('personas');__personasVista='stats';renderPersonasScreen()">📊 ${acL('Ver estadísticas por categoría', 'Veure estadístiques per categoria')} →</button>
+      <button class="est-cta-btn sec" onclick="showScreen('personas');__personasVista='listados';renderPersonasScreen()">📋 ${acL('Listados con nombres y Excel', 'Llistats amb noms i Excel')}</button></div></div>
+  <div class="xl-nota">💡 ${acL('¿Quieres sacar un <strong>Excel por categoría</strong> (por sexo, edad, técnico, nacionalidad…)? Lo encuentras en <strong>Personas usuarias → 📋 Listados</strong>: eliges la categoría en los desplegables y pulsas «Excel» (o «Excel con una hoja por…»).', 'Vols treure un <strong>Excel per categoria</strong> (per sexe, edat, tècnic, nacionalitat…)? El trobes a <strong>Persones usuàries → 📋 Llistats</strong>: tries la categoria als desplegables i prems «Excel» (o «Excel amb un full per…»).')} <button class="link-btn" style="font-weight:800;" onclick="showScreen('personas');__personasVista='listados';renderPersonasScreen()">${acL('Ir a Listados', 'Anar a Llistats')} →</button></div>`;
+}
+// Menú de categorías de «Informes y datos»: abre solo la elegida
+function infCat(k){
+  const ds = [...document.querySelectorAll('#informes-content details.inf-cat')];
+  const d = ds.find(x => x.dataset.icat === k); if(!d) return;
+  const abrir = !d.open; ds.forEach(x => { x.open = false; }); d.open = abrir;
+  document.querySelectorAll('#informes-content .inf-menu .est-cat').forEach(b => b.classList.toggle('on', abrir && b.dataset.icat === k));
+  if(abrir) setTimeout(() => d.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
 }
 // Sexo, edad y nacionalidad de todas las personas atendidas (las mismas cifras que «Estadísticas»)
 async function infPerfilTodas(){
@@ -22182,7 +22213,7 @@ async function infPerfilTodas(){
     const TR = estTrayectoria(per.filas), tot = document.getElementById('inf-total');
     if(tot) tot.innerHTML = `<div class="imp-total" style="margin-bottom:14px;"><div class="imp-total-cab"><div><div class="imp-total-n">${TR.total.toLocaleString()}</div><div>${ca ? `persones ateses${TR.primero ? ' des de ' + TR.primero : ''} fins avui` : `personas atendidas${TR.primero ? ' desde ' + TR.primero : ''} hasta hoy`}</div></div>
       <div class="imp-total-chips"><span>📄 ${TR.porOrigen.papel.toLocaleString()} ${ca ? 'històric' : 'histórico'}</span><span>💻 ${TR.porOrigen.cuenta.toLocaleString()} ${ca ? 'amb compte' : 'con cuenta'}</span>${TR.porOrigen.sinficha ? `<span>📝 ${TR.porOrigen.sinficha.toLocaleString()} ${ca ? 'sense fitxa' : 'sin ficha'}</span>` : ''}<span>🔁 ${TR.repiten.toLocaleString()} ${ca ? 'han tornat un altre any' : 'han vuelto otro año'}</span></div></div>
-      <button class="link-btn" style="color:#fff;font-size:12.5px;padding:0;" onclick="showScreen('personas');__personasVista='stats';renderPersonasScreen()">📊 ${ca ? 'Veure totes les estadístiques (sexe, edat, nacionalitat, municipi, any…)' : 'Ver todas las estadísticas (sexo, edad, nacionalidad, municipio, año…)'} →</button></div>`;
+      <button class="est-cta-btn" style="margin-top:10px;" onclick="showScreen('personas');__personasVista='stats';renderPersonasScreen()">📊 ${ca ? 'Veure estadístiques per categoria (sexe, edat, nacionalitat, municipi, any…)' : 'Ver estadísticas por categoría (sexo, edad, nacionalidad, municipio, año…)'} →</button></div>`;
     // Dependencia, discapacidad y situación familiar: con todas las fichas (no solo las de las atenciones)
     const si = v => v === true || /^(s[ií]|si|yes|true|1)$/i.test(String(v || '').trim());
     const pr = await traerTodoPaginado((a, b) => sb.from('perfiles').select('*').not('nombre_completo', 'is', null).range(a, b));
@@ -26752,6 +26783,7 @@ function estPintarDatos(caja){
       ${T.sexo.filter(r => r[1]).map(r => `<div><div class="est-big sm">${r[2]}</div><div class="est-sub">${r[0]}</div></div>`).join('')}
       <div><div class="est-big sm">${T.origen[1][2]}</div><div class="est-sub">${esCA ? 'altres nacionalitats' : 'otras nacionalidades'}</div></div></div>
     <div class="est-cats imp-noprint" role="tablist">${EST_CATS.map(([k, ic, es, ca]) => `<button type="button" class="est-cat${st.cat === k ? ' on' : ''}" onclick="window.__est.cat=${st.cat === k ? "''" : `'${k}'`};estPintarDatos()">${ic} ${esCA ? ca : es}</button>`).join('')}</div>
+    <div class="xl-nota">💡 ${acL('¿Quieres sacar un <strong>Excel por categoría</strong> (por sexo, edad, técnico, nacionalidad…)? Lo encuentras en <strong>Personas usuarias → 📋 Listados</strong>: eliges la categoría en los desplegables y pulsas «Excel» (o «Excel con una hoja por…»).', 'Vols treure un <strong>Excel per categoria</strong> (per sexe, edat, tècnic, nacionalitat…)? El trobes a <strong>Persones usuàries → 📋 Llistats</strong>: tries la categoria als desplegables i prems «Excel» (o «Excel amb un full per…»).')} <button class="link-btn" style="font-weight:800;" onclick="showScreen('personas');__personasVista='listados';renderPersonasScreen()">${acL('Ir a Listados', 'Anar a Llistats')} →</button></div>
     ${!st.cat ? `<div class="empty-note" style="text-align:center;padding:18px 8px;">👆 ${esCA ? 'Tria quina estadística vols veure. Només surt la que demanes.' : 'Elige qué estadística quieres ver. Solo sale la que pides.'}</div>` : ''}
     <div class="est-grid" data-ver="${st.cat || ''}">
       <div class="panel-card" data-cat="sexo"><h3>👥 ${esCA ? 'Per sexe' : 'Por sexo'}</h3>${estBarras(T.sexo)}
