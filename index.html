@@ -191,6 +191,14 @@
   .ayc-aviso{display:block;width:100%;text-align:left;background:#FFF6DD;border:2px solid #F2BC2C;border-radius:14px;padding:12px 14px;font-size:14px;color:#5A3F00;cursor:pointer;margin:0 0 12px;}
   .ayc-fila{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border:1.5px solid var(--line);border-radius:14px;padding:12px;margin:0 0 8px;}
   .ayc-n{width:30px;height:30px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--navy);flex:none;}
+  .unir-fila{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 8px;background:#fff;}
+  .unir-c{flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .unir-c strong{word-break:break-all;}
+  .unir-c span{font-size:12px;color:var(--ink-soft);}
+  .unir-c span.unir-baja{font-weight:700;color:#8A3B12;}
+  .unir-a{display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:1 1 360px;}
+  .unir-a label{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin:0;}
+  .unir-a select{flex:1;min-width:180px;margin:0;}
   .est-cats{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;}
   .est-cat{border:1.5px solid var(--line);background:var(--card,#fff);color:var(--ink);border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:700;cursor:pointer;width:auto;margin:0;}
   .est-cat.on{background:var(--primary,#1E3F66);border-color:var(--primary,#1E3F66);color:#fff;}
@@ -2708,7 +2716,45 @@ const SUPABASE_KEY = 'sb_publishable_Ght82ml0pvg0_nQvunlXVA_u0WjRscq';
     return r;
   };
 })();
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// v-red · Conexión más fuerte con la base de datos: si una lectura falla por la red o el servidor tarda, se reintenta sola
+// (hasta 3 veces, esperando un poco más cada vez) y nada se queda «colgado» más de 25-40 s. Las escrituras no se repiten.
+function logosEspera(n){ return new Promise(r => setTimeout(r, 700 * (n + 1) * (n + 1))); }
+function fetchLogos(url, opts){
+  opts = opts || {};
+  const metodo = String(opts.method || 'GET').toUpperCase(), u = String(url && url.url ? url.url : url);
+  const largo = /\/storage\/v1\/|\/functions\/v1\//.test(u);   // subidas de archivos y funciones (IA): sin límite de tiempo
+  const lectura = metodo === 'GET' || metodo === 'HEAD';
+  const intentos = lectura ? 3 : 1, limite = lectura ? 25000 : 40000;
+  const uno = n => {
+    const ctrl = new AbortController();
+    if(opts.signal){ if(opts.signal.aborted) ctrl.abort(); else opts.signal.addEventListener('abort', () => ctrl.abort()); }
+    const t = largo ? null : setTimeout(() => ctrl.abort(), limite);
+    return fetch(url, Object.assign({}, opts, { signal: ctrl.signal })).then(r => {
+      if(t) clearTimeout(t);
+      if(lectura && [502, 503, 504, 520, 522, 524].includes(r.status) && n < intentos - 1) return logosEspera(n).then(() => uno(n + 1));
+      return r;
+    }, e => {
+      if(t) clearTimeout(t);
+      if(lectura && n < intentos - 1 && !(opts.signal && opts.signal.aborted)) return logosEspera(n).then(() => uno(n + 1));
+      throw e;
+    });
+  };
+  return uno(0);
+}
+// Aviso discreto cuando el dispositivo se queda sin internet (y cuando vuelve)
+(function(){
+  function barra(on){
+    let b = document.getElementById('red-aviso');
+    if(on){ if(b) b.remove(); return; }
+    if(!b){ b = document.createElement('div'); b.id = 'red-aviso'; b.setAttribute('role', 'status');
+      b.style.cssText = 'position:fixed;left:50%;bottom:86px;transform:translateX(-50%);z-index:2147483000;background:#7A2E0E;color:#fff;padding:10px 16px;border-radius:999px;font:600 14px/1.3 system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.25);max-width:92vw;text-align:center;';
+      document.body.appendChild(b); }
+    b.textContent = (document.documentElement.lang || '').startsWith('ca') ? '📶 Sense connexió a internet. Quan torni, continua tot sol.' : '📶 Sin conexión a internet. Cuando vuelva, sigue solo.';
+  }
+  window.addEventListener('offline', () => barra(false));
+  window.addEventListener('online', () => { barra(true); });
+})();
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { global: { fetch: fetchLogos } });
 // ===== «👁️ Ver como» (solo administración): ver la intranet tal como la ve otra persona, SIN poder guardar nada =====
 let VER_COMO = null;
 function vcBloqueado(){
@@ -12939,24 +12985,33 @@ async function unirPintar(){
   host.innerHTML = `<div class="placeholder">${TI[LANG_I].cargando}</div>`;
   const r = await sb.rpc('staff_correos_huerfanos');
   if(r.error){ host.innerHTML = `<div class="info-box info-box-gold">${/staff_correos_huerfanos|schema cache|could not find/i.test(r.error.message || '') ? acL('Falta ejecutar el SQL-109 en Supabase.', 'Cal executar l\'SQL-109 a Supabase.') : escAttr(r.error.message)}</div>`; return; }
-  const por = {}; (r.data || []).forEach(x => { const p = por[x.email] = por[x.email] || { email: x.email, total: 0, tablas: [] }; p.total += Number(x.registros) || 0; p.tablas.push(x.tabla.split('.')[0] + ' (' + x.registros + ')'); });
+  const EQUIPO_TABLAS = ['fichajes', 'fichajes_sala', 'horas_contrato', 'personal_horarios', 'personal_nominas', 'personal_documentos', 'personal_formaciones', 'vacaciones_solicitudes', 'personal_registro', 'atenciones', 'actuaciones', 'citas', 'familias_asignaciones', 'perfiles_tecnico'];
+  const NOMBRE_T = { fichajes: acL('fichajes', 'fitxatges'), fichajes_sala: acL('salas', 'sales'), horas_contrato: acL('contrato', 'contracte'), personal_horarios: acL('horario', 'horari'), personal_nominas: acL('nóminas', 'nòmines'), personal_documentos: acL('documentos', 'documents'), personal_formaciones: acL('formaciones', 'formacions'), vacaciones_solicitudes: acL('vacaciones', 'vacances'), atenciones: acL('atenciones', 'atencions'), actuaciones: acL('actuaciones', 'actuacions'), citas: acL('citas', 'cites'), familias_asignaciones: acL('familias asignadas', 'famílies assignades') };
+  r.data = (r.data || []).filter(x => EQUIPO_TABLAS.includes(String(x.tabla).split('.')[0]));   // solo registros del equipo (nunca personas usuarias)
+  const por = {}; (r.data || []).forEach(x => { const p = por[x.email] = por[x.email] || { email: x.email, total: 0, tablas: [] }; p.total += Number(x.registros) || 0; p.tablas.push((NOMBRE_T[x.tabla.split('.')[0]] || x.tabla.split('.')[0]) + ' (' + x.registros + ')'); });
   const lista = Object.values(por).sort((a, b) => b.total - a.total);
   const equipo = (window.__staffLista || []).filter(s => s.activo !== false).sort((a, b) => String(a.nombre || a.email).localeCompare(String(b.nombre || b.email)));
-  const pista = e => { const loc = String(e).split('@')[0].toLowerCase().replace(/[^a-z]/g, ''); const s = equipo.find(x => { const n = normTxt(x.nombre || '').split(' ')[0]; return n.length >= 3 && loc.includes(n); }); return s ? s.email : ''; };
-  host.innerHTML = lista.length ? `<p class="subtle" style="font-size:12.5px;margin:0 0 10px;">${acL('Estos correos tienen fichajes u otros registros pero ya no están en el equipo (por ejemplo, una cuenta repetida que se borró). Elige de quién son y pulsa «Unir»: todos sus registros pasan a ese correo. No se borra nada.', 'Aquests correus tenen fitxatges o altres registres però ja no són a l\'equip (per exemple, un compte repetit que es va esborrar). Tria de qui són i prem «Unir»: tots els seus registres passen a aquest correu. No s\'esborra res.')}</p>
-    <div class="imp-tabla-w"><table class="sl-t"><thead><tr><th>${acL('Correo antiguo', 'Correu antic')}</th><th>${acL('Registros', 'Registres')}</th><th>${acL('Es de…', 'És de…')}</th><th></th></tr></thead><tbody>
-    ${lista.map((x, i) => { const g = pista(x.email); return `<tr><td><strong>${escAttr(x.email)}</strong><div class="subtle" style="margin:0;font-size:11.5px;">${escAttr(x.tablas.join(' · '))}</div></td><td class="n">${x.total}</td>
-      <td><select id="unir-${i}" style="margin:0;width:auto;max-width:240px;"><option value="">${acL('— elegir persona —', '— triar persona —')}</option>${equipo.map(s => `<option value="${escAttr(s.email)}"${s.email === g ? ' selected' : ''}>${escAttr(s.nombre || s.email)} · ${escAttr(s.email)}</option>`).join('')}</select></td>
-      <td><button class="sv-btn pri" style="padding:6px 12px;" onclick="unirHacer('${escAttr(x.email)}', document.getElementById('unir-${i}').value)">🔗 ${acL('Unir', 'Unir')}</button></td></tr>`; }).join('')}</tbody></table></div>`
-    : `<div class="empty-note">✅ ${acL('No hay correos antiguos ni repetidos: todos los registros son de personas del equipo.', 'No hi ha correus antics ni repetits: tots els registres són de persones de l\'equip.')}</div>`;
+  const bajas = {}; (window.__staffLista || []).filter(s => s.activo === false).forEach(s => { bajas[String(s.email).toLowerCase()] = s; });
+  const pista = e => { const b = bajas[e], n0 = b ? normTxt(b.nombre || '').split(' ')[0] : '';
+    if(n0.length >= 3){ const s = equipo.find(x => normTxt(x.nombre || '').split(' ')[0] === n0); if(s) return s.email; }
+    const loc = String(e).split('@')[0].toLowerCase().replace(/[^a-z]/g, ''); const s = equipo.find(x => { const n = normTxt(x.nombre || '').split(' ')[0]; return n.length >= 3 && loc.includes(n); }); return s ? s.email : ''; };
+  host.innerHTML = lista.length ? `<p class="subtle" style="font-size:12.5px;margin:0 0 10px;">${acL('Sirve para cuando una persona del equipo tenía <strong>dos cuentas</strong> (dos correos) y una se borró o se dio de baja: sus horarios, fichajes, salas… se quedaron con el correo viejo y por eso sale repetida. Elige de quién es cada correo y pulsa «Unir»: todo pasa a su correo bueno y la cuenta de baja repetida se quita del equipo. No se pierde ningún registro.', 'Serveix per quan una persona de l\'equip tenia <strong>dos comptes</strong> (dos correus) i un es va esborrar o donar de baixa: els seus horaris, fitxatges, sales… es van quedar amb el correu vell i per això surt repetida. Tria de qui és cada correu i prem «Unir»: tot passa al seu correu bo i el compte de baixa repetit es treu de l\'equip. No es perd cap registre.')}</p>
+    ${lista.map((x, i) => { const g = pista(x.email); return `<div class="unir-fila">
+      <div class="unir-c"><strong>${escAttr(x.email)}</strong>${bajas[x.email] ? `<span class="unir-baja">⛔ ${acL('Cuenta de baja', 'Compte de baixa')}: ${escAttr(bajas[x.email].nombre || '')}</span>` : `<span class="unir-baja">${acL('Ya no está en el equipo', 'Ja no és a l\'equip')}</span>`}<span>${x.total} ${acL('registros', 'registres')}: ${escAttr(x.tablas.join(' · '))}</span></div>
+      <div class="unir-a"><label>${acL('Es de…', 'És de…')}</label><select id="unir-${i}"><option value="">${acL('— elegir persona —', '— triar persona —')}</option>${equipo.map(s => `<option value="${escAttr(s.email)}"${s.email === g ? ' selected' : ''}>${escAttr(s.nombre || s.email)} · ${escAttr(s.email)}</option>`).join('')}</select>
+        <button class="sv-btn pri" onclick="unirHacer('${escAttr(x.email)}', document.getElementById('unir-${i}').value)">🔗 ${acL('Unir', 'Unir')}</button></div></div>`; }).join('')}`
+    : `<div class="empty-note">✅ ${acL('No hay correos antiguos ni repetidos del equipo: todo está en orden.', 'No hi ha correus antics ni repetits de l\'equip: tot està en ordre.')}</div>`;
 }
 async function unirHacer(viejo, nuevo){
   if(!nuevo){ alert(acL('Elige de quién es este correo.', 'Tria de qui és aquest correu.')); return; }
   const s = (window.__staffLista || []).find(x => x.email === nuevo);
-  if(!confirm(acL(`¿Pasar todos los registros de\n${viejo}\na ${s ? (s.nombre || s.email) : nuevo} (${nuevo})?\n\nFichajes, salas, atenciones, actuaciones, nóminas… quedarán a su nombre.`, `Passar tots els registres de\n${viejo}\na ${s ? (s.nombre || s.email) : nuevo} (${nuevo})?\n\nFitxatges, sales, atencions, actuacions, nòmines… quedaran al seu nom.`))) return;
-  const r = await sb.rpc('staff_unir_correos', { p_viejo: viejo, p_nuevo: nuevo });
-  if(r.error){ alert(r.error.message); return; }
-  const n = (r.data || []).reduce((t, x) => t + Math.abs(Number(x.cambiados) || 0), 0);
+  if(!confirm(acL(`¿Pasar todos los registros de\n${viejo}\na ${s ? (s.nombre || s.email) : nuevo} (${nuevo})?\n\nHorarios, fichajes, salas, atenciones, actuaciones, nóminas… quedarán a su nombre. Si es una cuenta de baja repetida, se quita del equipo.`, `Passar tots els registres de\n${viejo}\na ${s ? (s.nombre || s.email) : nuevo} (${nuevo})?\n\nFitxatges, sales, atencions, actuacions, nòmines… quedaran al seu nom.`))) return;
+  let r = await sb.rpc('staff_unir_correos', { p_viejo: viejo, p_nuevo: nuevo, p_quitar_vieja: true });
+  if(r.error && /p_quitar_vieja|function .* does not exist|could not find/i.test(r.error.message || '')) r = await sb.rpc('staff_unir_correos', { p_viejo: viejo, p_nuevo: nuevo });
+  if(r.error){ alert(/ACTIVA/.test(r.error.message || '') ? acL('Ese correo es de una cuenta activa. Primero dala de baja en Equipo y después únela.', 'Aquest correu és d\'un compte actiu. Primer dona\'l de baixa a Equip i després uneix-lo.') : r.error.message); return; }
+  const n = (r.data || []).filter(x => !/^staff/.test(x.tabla)).reduce((t, x) => t + Math.abs(Number(x.cambiados) || 0), 0);
+  if((r.data || []).some(x => /^staff/.test(x.tabla))){ window.__staffLista = (window.__staffLista || []).filter(s => String(s.email).toLowerCase() !== String(viejo).toLowerCase()); }
+  window.__eqvDatos = null;
   try { m3Toast('✅ ' + acL(`${n} registros unidos`, `${n} registres units`)); } catch(e){}
   unirPintar();
 }
@@ -20705,7 +20760,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-19 · v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-19 · v290 (unir también las cuentas de baja repetidas —Jana educadora, Ariadna— con sus horarios, y quitarlas del equipo) · antes: v289 («Correos antiguos o repetidos»: solo registros del equipo, nunca personas usuarias; se ve entero sin cortarse) · antes: v288 (conexión más fuerte: reintentos automáticos si falla la red, nada se queda colgado, aviso sin internet) · antes: v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
