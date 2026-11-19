@@ -188,6 +188,9 @@
   .eqv-nom{font-weight:800;text-align:left;padding:0;}
   .eqv-no{color:#B8C2D0;}
   .eqv-baja td{opacity:.6;}
+  .ayc-aviso{display:block;width:100%;text-align:left;background:#FFF6DD;border:2px solid #F2BC2C;border-radius:14px;padding:12px 14px;font-size:14px;color:#5A3F00;cursor:pointer;margin:0 0 12px;}
+  .ayc-fila{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border:1.5px solid var(--line);border-radius:14px;padding:12px;margin:0 0 8px;}
+  .ayc-n{width:30px;height:30px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--navy);flex:none;}
   .est-cats{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;}
   .est-cat{border:1.5px solid var(--line);background:var(--card,#fff);color:var(--ink);border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:700;cursor:pointer;width:auto;margin:0;}
   .est-cat.on{background:var(--primary,#1E3F66);border-color:var(--primary,#1E3F66);color:#fff;}
@@ -9582,6 +9585,64 @@ function personasCambiarVista(v){
   pintarListaPersonas(inp ? inp.value : '');
 }
 
+// ---------- v287 · Personas que no pueden entrar en Logos Acompanya (han olvidado la contraseña y la piden por WhatsApp o SMS) ----------
+async function ayudaClaveAviso(){
+  const hosts = document.querySelectorAll('.ayc-host'); if(!hosts.length) return;
+  const r = await sb.from('ayuda_clave').select('id').eq('estado', 'pendiente').then(x => x, () => ({ data: [] }));
+  const n = ((r && r.data) || []).length;
+  const html = n ? `<button class="ayc-aviso" onclick="ayudaClaveAbrir()">🔑 <strong>${n} ${n === 1 ? acL('persona no puede entrar', 'persona no pot entrar') : acL('personas no pueden entrar', 'persones no poden entrar')}</strong> ${acL('en Logos Acompanya: han olvidado la contraseña. Atender por orden de llegada →', 'a Logos Acompanya: han oblidat la contrasenya. Atendre per ordre d\'arribada →')}</button>` : '';
+  hosts.forEach(h => { h.innerHTML = html; });
+}
+async function ayudaClaveAbrir(){
+  let ov = document.getElementById('ayc-ov'); if(ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'ayc-ov'; ov.className = 'inact-ov'; ov.addEventListener('click', e => { if(e.target === ov) ov.remove(); });
+  ov.innerHTML = `<div class="inact-card" style="max-width:760px;text-align:left;max-height:90vh;overflow:auto;"><div class="placeholder">${TI[LANG_I].cargando}</div></div>`;
+  document.body.appendChild(ov);
+  const r = await sb.from('ayuda_clave').select('*').eq('estado', 'pendiente').order('creado_en', { ascending: true });
+  const L = (r && r.data) || [];
+  const canal = { whatsapp: '🟢 WhatsApp', sms: '📱 SMS', llamada: '📞 ' + acL('Llamada', 'Trucada') };
+  ov.querySelector('.inact-card').innerHTML = `
+    <div style="display:flex;justify-content:space-between;gap:8px;"><h3 style="margin:0;">🔑 ${acL('No pueden entrar en Logos Acompanya', 'No poden entrar a Logos Acompanya')}</h3><button class="link-btn" onclick="document.getElementById('ayc-ov').remove()">✕</button></div>
+    <p class="subtle" style="font-size:12.5px;margin:4px 0 12px;">${acL('Por orden de llegada. «Enviar contraseña provisional» le pone una contraseña nueva y abre WhatsApp o SMS con el mensaje ya escrito: solo hay que enviarlo. Al entrar, la app le pide que elija la suya.', 'Per ordre d\'arribada. «Enviar contrasenya provisional» li posa una contrasenya nova i obre WhatsApp o SMS amb el missatge ja escrit: només cal enviar-lo. En entrar, l\'app li demana que en triï una de seva.')}</p>
+    ${r.error ? `<div class="info-box info-box-gold">${/ayuda_clave|does not exist|schema cache/i.test(r.error.message || '') ? acL('Falta ejecutar el SQL-111 en Supabase.', 'Cal executar l\'SQL-111 a Supabase.') : escAttr(r.error.message)}</div>` : ''}
+    ${L.length ? L.map((x, i) => `<div class="ayc-fila">
+      <div class="ayc-n">${i + 1}</div>
+      <div style="flex:1;min-width:200px;"><strong>${escAttr(x.nombre || acL('Sin nombre', 'Sense nom'))}</strong>
+        <div class="subtle" style="margin:0;font-size:12.5px;">📞 ${escAttr(x.telefono)}${x.email ? ' · ✉️ ' + escAttr(x.email) : ''} · ${canal[x.canal] || x.canal} · ${new Date(x.creado_en).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</div></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="sv-btn pri" onclick="ayudaClaveEnviar(${x.id})">🔑 ${acL('Enviar contraseña provisional', 'Enviar contrasenya provisional')}</button>
+        ${x.email ? `<button class="sv-btn" onclick="ayudaClaveCorreo(${x.id})">📧 ${acL('Enlace por correo', 'Enllaç per correu')}</button>` : ''}
+        <button class="link-btn" style="color:var(--ink-soft);font-size:12px;" onclick="ayudaClaveCerrar(${x.id}, 'descartada')">${acL('Descartar', 'Descartar')}</button></div></div>`).join('')
+      : `<div class="empty-note">✅ ${acL('No hay nadie esperando.', 'No hi ha ningú esperant.')}</div>`}`;
+  window.__aycLista = L;
+}
+function ayudaClaveGenerar(){ const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ', d = '23456789'; let s = 'Logos-'; for(let i = 0; i < 3; i++) s += a[Math.floor(Math.random() * a.length)]; for(let i = 0; i < 3; i++) s += d[Math.floor(Math.random() * d.length)]; return s; }
+async function ayudaClaveEnviar(id){
+  const x = (window.__aycLista || []).find(y => y.id === id); if(!x) return;
+  const clave = ayudaClaveGenerar();
+  const r = await sb.rpc('equipo_clave_usuario', { p_email: x.email || '', p_telefono: x.telefono, p_clave: clave });
+  if(r.error){ alert(/NO_CUENTA/.test(r.error.message || '') ? acL('No hay ninguna cuenta con ese correo ni ese teléfono. Llámale para saber con qué correo se registró, o ayúdale a crear la cuenta.', 'No hi ha cap compte amb aquest correu ni aquest telèfon. Truca-li per saber amb quin correu es va registrar, o ajuda\'l a crear el compte.') : /equipo_clave_usuario|schema cache|could not find/i.test(r.error.message || '') ? acL('Falta ejecutar el SQL-111 en Supabase.', 'Cal executar l\'SQL-111 a Supabase.') : r.error.message); return; }
+  const correo = r.data || x.email || '';
+  const msg = `Hola${x.nombre ? ' ' + String(x.nombre).split(' ')[0] : ''}, te escribimos de Logos. Para entrar en Logos Acompanya (${acompUrl()}):\n\n• Correo: ${correo}\n• Contraseña provisional: ${clave}\n\nAl entrar, la app te pedirá que elijas tu propia contraseña. ¡Gracias!`;
+  const tel = String(x.telefono).replace(/[^\d]/g, ''), tel34 = tel.length === 9 ? '34' + tel : tel;
+  const url = x.canal === 'sms' ? `sms:+${tel34}?&body=${encodeURIComponent(msg)}` : `https://wa.me/${tel34}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank', 'noopener');
+  await ayudaClaveCerrar(id, 'enviada', true);
+  prompt(acL('Contraseña provisional puesta. Si el mensaje no se ha abierto, cópialo de aquí:', 'Contrasenya provisional posada. Si el missatge no s\'ha obert, copia\'l d\'aquí:'), msg.replace(/\n/g, ' '));
+}
+async function ayudaClaveCorreo(id){
+  const x = (window.__aycLista || []).find(y => y.id === id); if(!x || !x.email) return;
+  const { error } = await sb.auth.resetPasswordForEmail(x.email, { redirectTo: acompUrl() });
+  if(error){ alert(error.message); return; }
+  alert(acL('Enlace enviado a ', 'Enllaç enviat a ') + x.email);
+  ayudaClaveCerrar(id, 'enviada');
+}
+async function ayudaClaveCerrar(id, estado, sinRepintar){
+  await sb.from('ayuda_clave').update({ estado, atendido_por: CURRENT_USER.email, atendido_en: new Date().toISOString() }).eq('id', id);
+  ayudaClaveAviso();
+  if(!sinRepintar && document.getElementById('ayc-ov')) ayudaClaveAbrir();
+  else if(document.getElementById('ayc-ov')) setTimeout(ayudaClaveAbrir, 400);
+}
 async function renderPersonasScreen(texto){
   __personasUltimoTexto = texto || '';
   const cont = document.getElementById('personas-content');
@@ -9599,7 +9660,9 @@ async function renderPersonasScreen(texto){
     __personasTodas = res.data.concat(window.__personasHistUnif)
       .sort((a, b) => normTxt(a.nombre_completo).localeCompare(normTxt(b.nombre_completo)));
     if(!__personasVista || (__personasVista === 'fecha' && !FECHA_ALTA_OK) || (__personasVista === 'hist' && !HISTORICAS_OK)) __personasVista = 'aten';
+    setTimeout(ayudaClaveAviso, 0);
     cont.innerHTML = `
+      <div class="ayc-host"></div>
       <div class="per-fija">
       <div class="field"><input type="text" id="personas-buscar" placeholder="${esCA?'Cerca per nom, DNI o telèfon (també a l\'històric)...':'Buscar por nombre, DNI o teléfono (también en el histórico)...'}" value="${escAttr(texto || '')}" oninput="renderPersonasScreen(this.value)"></div>
       <div id="personas-pestanas">${personasPestanasHtml()}</div>
@@ -20642,7 +20705,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-19 · v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-19 · v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -22887,6 +22950,7 @@ async function renderPanelGeneral(){
         </div>
       </div>
       ${rrhhTiraHtml()}
+      <div class="ayc-host"></div>
       <div class="sn-sec-t">${LANG_I==='ca' ? 'Les meves properes cites' : 'Mis próximas citas'}<button onclick="showScreen('agenda');renderAgendaCitas()">${LANG_I==='ca' ? 'Agenda' : 'Agenda'}</button></div>
       <div class="sn-citas" id="sn-mis-citas"><div class="sn-vacio">${t.cargando}</div></div>
       <button class="sn-cta" onclick="abrirNuevaCitaStaff()">${LANG_I==='ca' ? 'Nova cita / Cercar persona' : 'Nueva cita / Buscar persona'}</button>
@@ -22953,7 +23017,7 @@ async function renderPanelGeneral(){
   activarBarras();
   if(!document.getElementById('pg-area')) gpPintarTarjetas(cont);   // ya están dentro de la cabecera («Mi área privada»)
   gestorPintarTarjeta(cont);
-  snIntranetCitas(); snIntranetInteres(); pgAreaPrivada(); incBadge();
+  snIntranetCitas(); snIntranetInteres(); pgAreaPrivada(); incBadge(); ayudaClaveAviso();
   snCarrusel('#panel-content .sn-accesos', 5000); snCarrusel('#sn-stats', 4000);
 }
 
