@@ -1253,6 +1253,37 @@
 .pj-paso small{font-size:12.5px;color:var(--ink-soft);}
 .pj-paso-f{position:absolute;right:12px;top:12px;color:#2463B8;font-weight:800;}
 .pj-ult{margin-top:12px;background:#F7F9FC;border-radius:12px;padding:10px 12px;font-size:13px;}
+/* v292 · proyecto: Excel, asistencia automática, indicadores y actuación para varias personas */
+.pj-btn-xl{background:#fff;color:#1E7A46;box-shadow:inset 0 0 0 2px #BFE3CC;}
+.pj-btn-xl:hover{background:#F0FAF4;}
+.pj-xl-box{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:#F0FAF4;border:1px solid #BFE3CC;border-radius:12px;padding:12px 14px;}
+.pj-xl-box small{display:block;color:#4A5B70;font-size:12px;margin-top:2px;}
+.pj-asis-t{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:12px;}
+.pj-asis-r{display:grid;grid-template-columns:1fr 60px 110px;gap:8px;align-items:center;padding:7px 12px;border-top:1px solid var(--line);font-size:13.5px;}
+.pj-asis-r:nth-child(even){background:#F8FAFC;}
+.pj-asis-r strong{text-align:center;}
+.pj-asis-h{border-top:none;background:#EEF3FA !important;font-weight:700;font-size:12px;color:#33507A;}
+.pj-asis-h span:nth-child(2){text-align:center;}
+.pj-asis-man{border:1px dashed var(--line);border-radius:12px;padding:8px 12px;}
+.pj-asis-man summary{cursor:pointer;font-weight:700;font-size:13px;color:#33507A;}
+.pj-ind{margin-top:12px;border:1px solid #DDE6F2;border-radius:12px;background:#fff;}
+.pj-ind summary{cursor:pointer;padding:10px 12px;font-weight:800;color:#1E3F66;}
+.pj-ind summary small{font-weight:600;color:#6B7A90;}
+.pj-ind-c{padding:0 12px 12px;}
+.pj-ind-k{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:10px;}
+.pj-ind-k div{background:#F4F7FC;border-radius:10px;padding:8px 10px;}
+.pj-ind-k strong{display:block;font-size:20px;color:#1E3F66;}
+.pj-ind-k small{color:#5D6B82;font-size:11.5px;}
+.pj-ind-gs{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;}
+.pj-ind-g{border:1px solid #E6EAF1;border-radius:10px;padding:8px 10px;font-size:13px;}
+.pj-ind-g b{display:block;margin-bottom:4px;color:#1E3F66;}
+.pj-ind-l{display:flex;justify-content:space-between;gap:8px;padding:2px 0;border-top:1px dotted #E6EAF1;}
+.pj-ind-l small{color:#6B7A90;}
+.seg-pers{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 10px;max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:8px;background:#FBFCFE;}
+.seg-pers label{display:flex;gap:6px;align-items:center;font-size:13.5px;font-weight:500;}
+.seg-pers-acc{display:flex;gap:12px;justify-content:flex-end;font-size:12px;margin-bottom:4px;}
+.seg-dos{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media (max-width:560px){ .seg-dos{grid-template-columns:1fr;} .pj-asis-r{grid-template-columns:1fr 46px 90px;font-size:12.5px;} }
 @media (max-width:820px){ .pj-kpis{grid-template-columns:repeat(2,minmax(0,1fr));} .pj-hero-t h2{font-size:21px;} .pj-borrar{margin-left:0;} .pj-cmp{grid-template-columns:1fr !important;} }
 .rh-tira{background:linear-gradient(135deg,#FFF8E1,#FDF0C2);border:1px solid #F2BC2C;border-radius:16px;padding:10px 12px;margin:10px 0 14px;}
 .rh-tira-t{display:flex;align-items:baseline;gap:8px;font-weight:700;font-size:14px;color:#163F7A;margin:0 0 8px;}
@@ -15472,7 +15503,7 @@ function pjlPintar(){
       ${pr.descripcion ? `<p class="pjl-desc">${escAttr(pr.descripcion)}</p>` : ''}
       <div class="pjl-meta"><span>👥 <b>${c.beneficiarios}</b> ${esCA ? 'beneficiaris' : 'beneficiarios'}</span><span>👨‍💼 <b>${c.profesionales}</b> ${esCA ? 'professionals' : 'profesionales'}</span>${(pr.fecha_inicio || pr.fecha_final) ? `<span>📅 ${fecha(pr.fecha_inicio) || '—'} – ${fecha(pr.fecha_final) || '—'}</span>` : ''}</div>
       <div class="pjl-acc"><button class="pj-btn pjl-abrir" onclick="verProyecto('${pr.id}')">${esCA?'Obrir projecte':'Abrir proyecto'} →</button>
-        <button class="link-btn" data-n="${escAttr(pr.nombre)}" onclick="exportarProyectoExcel('${pr.id}', this.dataset.n)">⬇️ Excel</button>
+        <button class="link-btn" data-n="${escAttr(pr.nombre)}" title="${esCA?'Excel complet: dades, actuacions, assistència i indicadors':'Excel completo: datos, actuaciones, asistencia e indicadores'}" onclick="exportarProyectoExcel('${pr.id}', this.dataset.n, this)">⬇️ Excel</button>
         <button class="link-btn" data-n="${escAttr(pr.nombre)}" onclick="exportarProyectoPDF('${pr.id}', this.dataset.n)">⬇️ PDF</button></div>
     </div>`; }).join('')
     : `<div class="empty-note" style="grid-column:1/-1;">${d.lista.length ? (esCA ? 'Cap projecte amb aquest filtre.' : 'Ningún proyecto con este filtro.') : (esCA ? 'Encara no hi ha projectes. Crea el primer amb «➕ Projecte nou».' : 'Todavía no hay proyectos. Crea el primero con «➕ Proyecto nuevo».')}</div>`;
@@ -15508,39 +15539,197 @@ function celdaCSV(valor){
   return `"${texto.replace(/"/g, '""')}"`;
 }
 
-async function obtenerDatosExportProyecto(proyectoId, nombreProyecto){
-  const [{ data: participantes, error }, { data: asistencias }] = await Promise.all([
+// v292 · Todos los datos de un proyecto en una sola carga (Excel, PDF e indicadores)
+// · personas: las de la lista de beneficiarios + las que tienen actuaciones en el proyecto aunque no estén en la lista
+// · días de asistencia: se cuentan SOLOS = días con alguna actuación en el proyecto (individual o grupal) + días marcados a mano
+// · alta en el proyecto: la fecha más antigua entre la inscripción, la primera actuación y la primera asistencia
+async function pjCargarDatos(proyectoId){
+  const [rP, rPart, rAc, rAs] = await Promise.all([
+    sb.from('proyectos').select('*').eq('id', proyectoId).maybeSingle(),
     sb.from('proyecto_participantes').select('*').eq('proyecto_id', proyectoId).then(dedupPart),
-    sb.from('proyecto_asistencias').select('usuario_id').eq('proyecto_id', proyectoId)
+    traerTodoPaginado((a, b) => sb.from('actuaciones').select('*').eq('proyecto_id', proyectoId).order('fecha', { ascending: true }).range(a, b)),
+    traerTodoPaginado((a, b) => sb.from('proyecto_asistencias').select('*').eq('proyecto_id', proyectoId).range(a, b))
   ]);
-  if(error) throw error;
-  if(!participantes || !participantes.length) return null;
+  if(rPart.error) throw rPart.error;
+  const dia = v => String(v || '').slice(0, 10);
+  const proyecto = rP.data || {};
+  const part = rPart.data || [];
+  const acs = sinBorrados(rAc.data || []);
+  const asis = rAs.data || [];
+  const benef = part.filter(p => p.rol === 'beneficiario' && p.usuario_id);
+  const prof = part.filter(p => p.rol === 'profesional');
+  const ids = [...new Set(benef.map(b => b.usuario_id).concat(acs.map(a => a.usuario_id).filter(Boolean)))];
+  const perf = {};
+  for(let i = 0; i < ids.length; i += 150){ const { data } = await sb.from('perfiles').select('*').in('id', ids.slice(i, i + 150)); (data || []).forEach(p => { perf[p.id] = p; }); }
+  const ppPor = {}; benef.forEach(b => { ppPor[b.usuario_id] = b; });
+  const personas = ids.map(id => {
+    const p = perf[id] || { id }; const pp = ppPor[id] || null;
+    const mias = acs.filter(a => a.usuario_id === id).sort((a, b) => dia(a.fecha).localeCompare(dia(b.fecha)));
+    const manual = new Set(asis.filter(a => a.usuario_id === id).map(a => dia(a.fecha)).filter(Boolean));
+    const dias = new Set(manual); mias.forEach(a => { if(a.fecha) dias.add(dia(a.fecha)); });
+    const insc = dia(pp && (pp.creado_en || pp.anadido_en || pp.created_at || pp.fecha_alta));
+    const altaProy = [insc].concat([...dias]).filter(Boolean).sort()[0] || '';
+    const tecs = new Set(mias.map(a => String(a.tecnico_email || '').toLowerCase()).filter(Boolean));
+    return { id, p, pp, enLista: !!pp, acts: mias, dias: [...dias].sort(), manual, altaProy, altaLogos: dia(p.fecha_alta || p.creado_en),
+      nOk: mias.filter(a => a.resultado === 'conseguido').length, nTr: mias.filter(a => a.resultado === 'en_tramite').length, nNo: mias.filter(a => a.resultado === 'no_conseguido').length,
+      primera: dia((mias[0] || {}).fecha), ultima: dia((mias[mias.length - 1] || {}).fecha), tecnicos: [...tecs].map(nombreTecnico) };
+  }).sort((a, b) => String(a.p.nombre_completo || '').localeCompare(String(b.p.nombre_completo || ''), 'es'));
+  const sesiones = [...new Set(personas.flatMap(x => x.dias))].sort();
+  return { proyecto, personas, acs, asis, prof, sesiones };
+}
+const pjResTxt = r => r === 'conseguido' ? 'Conseguido' : r === 'en_tramite' ? 'En trámite' : r === 'no_conseguido' ? 'No conseguido' : '';
+const pjFechaTxt = d => d ? d.split('-').reverse().join('/') : '';
 
-  const conteoAsistencias = {};
-  (asistencias || []).forEach(a => { conteoAsistencias[a.usuario_id] = (conteoAsistencias[a.usuario_id] || 0) + 1; });
-
-  const idsUsuarios = [...new Set(participantes.map(pp => pp.usuario_id).filter(Boolean))];
-  let perfilesPorId = {};
-  if(idsUsuarios.length){
-    const { data: perfilesRes } = await sb.from('perfiles').select('id, nombre_completo, telefono, municipio, dni_nie').in('id', idsUsuarios);
-    (perfilesRes || []).forEach(p => { perfilesPorId[p.id] = p; });
-  }
-
-  const cabecera = ['Nombre', 'Proyecto', 'Rol', 'DNI/NIE', 'Teléfono', 'Municipio', 'Fecha de alta', 'Días de asistencia'];
-  const filas = participantes.map(pp => {
-    const p = perfilesPorId[pp.usuario_id] || {};
-    return [
-      p.nombre_completo || '—',
-      nombreProyecto,
-      pp.rol === 'profesional' ? 'Profesional' : 'Beneficiario',
-      p.dni_nie || '',
-      p.telefono || '',
-      p.municipio || '',
-      pp.creado_en ? new Date(pp.creado_en).toLocaleDateString('es-ES') : '',
-      pp.rol === 'beneficiario' ? (conteoAsistencias[pp.usuario_id] || 0) : ''
-    ];
-  });
+// Para el PDF (una tabla corta)
+async function obtenerDatosExportProyecto(proyectoId, nombreProyecto){
+  const D = await pjCargarDatos(proyectoId);
+  if(!D.personas.length) return null;
+  const cabecera = ['Nombre', 'Sexo', 'Edad', 'Nacionalidad', 'Teléfono', 'Municipio', 'Alta en Logos', 'Alta en el proyecto', 'Actuaciones', 'Días de asistencia'];
+  const filas = D.personas.map(x => [x.p.nombre_completo || '—', personaOpcion(x.p.sexo, PERSONA_SEXO), personaEdad(x.p), x.p.nacionalidad || '', x.p.telefono || '', x.p.municipio || '', pjFechaTxt(x.altaLogos), pjFechaTxt(x.altaProy), x.acts.length, x.dias.length]);
   return { cabecera, filas };
+}
+
+// v292 · Excel COMPLETO del proyecto: Indicadores (con fórmulas) · Participantes (todos los datos de la ficha) · Actuaciones · Asistencia
+async function pjExcel(proyectoId, nombreProyecto, btn){
+  const esCA = LANG_I === 'ca';
+  const txtBtn = btn ? btn.innerHTML : '';
+  if(btn){ btn.disabled = true; btn.innerHTML = '⏳ ' + (esCA ? 'Preparant…' : 'Preparando…'); }
+  try {
+    const D = await pjCargarDatos(proyectoId);
+    nombreProyecto = nombreProyecto || D.proyecto.nombre || 'Proyecto';
+    if(!D.personas.length){ alert(esCA ? 'Aquest projecte encara no té ningú afegit.' : 'Este proyecto todavía no tiene a nadie añadido.'); return; }
+    const nombreArchivo = `${nombreProyecto.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '')}-${isoLocal()}.xlsx`;
+    // columnas de la hoja Participantes
+    const campos = CAMPOS_PERSONA.filter(c => !['consentimiento_fecha'].includes(c[0]));
+    const colsP = [['Nº', (x, i) => i + 1]]
+      .concat(campos.map(c => [c[0] === 'fecha_alta' ? 'Alta en Logos' : c[1], x => c[0] === 'fecha_alta' ? pjFechaTxt(x.altaLogos) : c[3](x.p)]))
+      .concat([
+        ['Tramo de edad', x => estEdad(x.p.fecha_nacimiento, null, null)],
+        ['Nacionalidad (agrupada)', x => estNacionalidad(x.p.nacionalidad) || ''],
+        ['En la lista del proyecto', x => x.enLista ? 'Sí' : 'No'],
+        ['Alta en el proyecto', x => pjFechaTxt(x.altaProy)],
+        ['Días de asistencia', x => x.dias.length],
+        ['Actuaciones', x => x.acts.length],
+        ['Conseguidas', x => x.nOk], ['En trámite', x => x.nTr], ['No conseguidas', x => x.nNo],
+        ['Primera actuación', x => pjFechaTxt(x.primera)], ['Última actuación', x => pjFechaTxt(x.ultima)],
+        ['Técnicos/as', x => x.tecnicos.join(', ')]
+      ]);
+    const filasP = D.personas.map((x, i) => colsP.map(c => { const v = c[1](x, i); return v == null ? '' : v; }));
+    if(!window.ExcelJS){ await descargarXLSX(colsP.map(c => c[0]), filasP, nombreArchivo, 'Participantes'); return; }
+
+    const AZUL = 'FF1E3F66', ORO = 'FFF2BC2C', GRIS = 'FF5D6B82', BORDE = 'FFC9D6E6', ZEBRA = 'FFF6F8FB', AZUL2 = 'FFE8EEF6';
+    const fino = { style: 'thin', color: { argb: BORDE } }, caja = { top: fino, left: fino, bottom: fino, right: fino };
+    const libro = new window.ExcelJS.Workbook(); libro.creator = 'Logos Intranet'; libro.calcProperties = { fullCalcOnLoad: true };
+    const cab = (h, fila, textos) => { textos.forEach((t, i) => { const c = h.getCell(fila, i + 1); c.value = t; c.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: AZUL } }; c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }; c.border = caja; }); h.getRow(fila).height = 32; };
+    const pintarFila = (r, i) => r.eachCell({ includeEmpty: true }, c => { c.border = caja; c.font = { size: 10 }; c.alignment = { vertical: 'top', wrapText: true }; if(i % 2) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ZEBRA } }; });
+    const letra = n => { let s = ''; while(n > 0){ const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+
+    // 1) Indicadores (primera hoja, se rellena al final)
+    const IN = libro.addWorksheet('Indicadores', { views: [{ showGridLines: false }] });
+
+    // 2) Participantes
+    const PA = libro.addWorksheet('Participantes', { views: [{ state: 'frozen', ySplit: 1, xSplit: 2 }] });
+    cab(PA, 1, colsP.map(c => c[0]));
+    filasP.forEach((f, i) => pintarFila(PA.addRow(f), i));
+    colsP.forEach((c, i) => { PA.getColumn(i + 1).width = i === 0 ? 5 : Math.min(40, Math.max(11, String(c[0]).length + 2, ...filasP.slice(0, 200).map(f => String(f[i]).length + 2))); });
+    PA.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: colsP.length } };
+    const nP = filasP.length, colDe = t => colsP.findIndex(c => c[0] === t) + 1;
+    const rango = t => `Participantes!$${letra(colDe(t))}$2:$${letra(colDe(t))}$${nP + 1}`;
+
+    // 3) Actuaciones
+    const AC = libro.addWorksheet('Actuaciones', { views: [{ state: 'frozen', ySplit: 1 }] });
+    const cabAc = ['Fecha', 'Persona', 'Técnico/a', 'Tipo / categoría', 'Objetivo', 'Qué se ha hecho', 'Resultado', 'Derivado a', 'Próximo paso', 'Próxima revisión'];
+    cab(AC, 1, cabAc);
+    const nomPor = {}; D.personas.forEach(x => { nomPor[x.id] = x.p.nombre_completo || '—'; });
+    const acsOrd = D.acs.slice().sort((a, b) => String(a.fecha || '').localeCompare(String(b.fecha || '')));
+    acsOrd.forEach((a, i) => pintarFila(AC.addRow([pjFechaTxt(String(a.fecha || '').slice(0, 10)), nomPor[a.usuario_id] || (a.usuario_id ? '—' : 'Sin persona vinculada'), nombreTecnico(a.tecnico_email), a.categoria || '', a.objetivo || '', a.descripcion || '', pjResTxt(a.resultado), a.derivado_a || '', a.proximo_paso || '', pjFechaTxt(String(a.fecha_proxima_revision || '').slice(0, 10))]), i));
+    [11, 26, 20, 24, 26, 50, 13, 18, 30, 13].forEach((w, i) => { AC.getColumn(i + 1).width = w; });
+    if(acsOrd.length) AC.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: cabAc.length } };
+    const nA = acsOrd.length;
+
+    // 4) Asistencia: una fila por persona y una columna por día (✓). Cuenta sola con las actuaciones.
+    const AS = libro.addWorksheet('Asistencia', { views: [{ state: 'frozen', ySplit: 1, xSplit: 1 }] });
+    const dias = D.sesiones;
+    cab(AS, 1, ['Persona', 'Total días'].concat(dias.map(pjFechaTxt)));
+    D.personas.forEach((x, i) => {
+      const r = AS.addRow([x.p.nombre_completo || '—', null].concat(dias.map(d => x.dias.includes(d) ? '✓' : '')));
+      r.getCell(2).value = dias.length ? { formula: `COUNTIF(C${r.number}:${letra(dias.length + 2)}${r.number},"✓")`, result: x.dias.length } : 0;
+      pintarFila(r, i); r.getCell(2).font = { bold: true, size: 10 }; for(let c = 2; c <= dias.length + 2; c++) r.getCell(c).alignment = { horizontal: 'center' };
+    });
+    if(dias.length){
+      const rt = AS.addRow(['Personas cada día', '']);
+      dias.forEach((d, k) => { const L = letra(k + 3); rt.getCell(k + 3).value = { formula: `COUNTIF(${L}2:${L}${nP + 1},"✓")`, result: D.personas.filter(x => x.dias.includes(d)).length }; });
+      rt.eachCell({ includeEmpty: true }, c => { c.font = { bold: true, color: { argb: AZUL } }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: AZUL2 } }; c.alignment = { horizontal: 'center' }; c.border = { top: { style: 'medium', color: { argb: AZUL } } }; });
+      rt.getCell(1).alignment = { horizontal: 'left' };
+    }
+    AS.getColumn(1).width = 30; AS.getColumn(2).width = 10; dias.forEach((d, k) => { AS.getColumn(k + 3).width = 11; });
+    const nota = AS.getCell(nP + 4, 1); nota.value = 'Un día cuenta como asistencia si la persona tiene ese día alguna actuación en el proyecto (individual o grupal) o si se le marcó a mano en la lista.'; nota.font = { italic: true, size: 9, color: { argb: GRIS } };
+
+    // Indicadores (todas las cifras con fórmula sobre las otras hojas: si se corrige un dato, se recalculan)
+    IN.mergeCells(1, 1, 1, 4); const t1 = IN.getCell(1, 1); t1.value = nombreProyecto + ' · Indicadores'; t1.font = { bold: true, size: 15, color: { argb: 'FFFFFFFF' } }; t1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: AZUL } }; t1.alignment = { vertical: 'middle', indent: 1 }; IN.getRow(1).height = 30;
+    IN.mergeCells(2, 1, 2, 4); const t2 = IN.getCell(2, 1);
+    const periodo = [D.proyecto.fecha_inicio, D.proyecto.fecha_final].some(Boolean) ? ` · ${pjFechaTxt(String(D.proyecto.fecha_inicio || '').slice(0, 10)) || '—'} – ${pjFechaTxt(String(D.proyecto.fecha_final || '').slice(0, 10)) || '—'}` : '';
+    t2.value = `Generado el ${new Date().toLocaleDateString('es-ES')} por ${CURRENT_USER_NOMBRE || CURRENT_USER.email} desde la Intranet de Logos${periodo}`; t2.font = { italic: true, size: 10, color: { argb: GRIS } };
+    for(let c = 1; c <= 4; c++) IN.getCell(3, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ORO } }; IN.getRow(3).height = 4;
+    let fila = 5;
+    const seccion = (titulo) => { fila++; cab(IN, fila, [titulo, 'Número', '% del total', '']); IN.getCell(fila, 1).alignment = { horizontal: 'left', vertical: 'middle', indent: 1 }; IN.getCell(fila, 4).fill = undefined; IN.getCell(fila, 4).border = {}; fila++; };
+    const totRef = '$B$7';
+    const linea = (txt, formula, result, conPct, fmt) => {
+      const r = fila++; IN.getCell(r, 1).value = txt; IN.getCell(r, 2).value = { formula, result };
+      if(conPct) IN.getCell(r, 3).value = { formula: `IF(${totRef}=0,0,B${r}/${totRef})`, result: nP ? result / nP : 0 };
+      for(let c = 1; c <= 3; c++){ const cl = IN.getCell(r, c); cl.border = caja; cl.font = { size: 10.5, bold: c === 2 }; if(c > 1) cl.alignment = { horizontal: 'center' }; }
+      IN.getCell(r, 3).numFmt = '0.0%'; if(fmt) IN.getCell(r, 2).numFmt = fmt;
+      return r;
+    };
+    // Personas
+    seccion('Personas');
+    linea('Personas atendidas en el proyecto', `COUNTA(${rango('Nombre')})`, nP, false);
+    linea('En la lista de beneficiarios', `COUNTIF(${rango('En la lista del proyecto')},"Sí")`, D.personas.filter(x => x.enLista).length, true);
+    linea('Con al menos una actuación', `COUNTIF(${rango('Actuaciones')},">0")`, D.personas.filter(x => x.acts.length).length, true);
+    linea('Profesionales del proyecto', `${D.prof.length}`, D.prof.length, false);
+    // Tablas por categoría (cada valor con COUNTIF sobre Participantes)
+    const tabla = (titulo, colTitulo, valores, orden) => {
+      const cont = {}; D.personas.forEach((x, i) => { const v = String(filasP[i][colDe(colTitulo) - 1] || ''); cont[v] = (cont[v] || 0) + 1; });
+      let ent = Object.keys(cont); if(orden) ent.sort((a, b) => (orden.indexOf(a) + 1 || 99) - (orden.indexOf(b) + 1 || 99)); else ent.sort((a, b) => (a === '') - (b === '') || cont[b] - cont[a]);
+      if(valores) ent = valores.concat(ent.filter(v => !valores.includes(v)));
+      seccion(titulo);
+      ent.forEach(v => linea(v === '' ? 'No consta' : v, v === '' ? `COUNTBLANK(${rango(colTitulo)})` : `COUNTIF(${rango(colTitulo)},"${String(v).replace(/"/g, '""')}")`, cont[v] || 0, true));
+    };
+    tabla('Sexo', 'Sexo', [personaOpcion('mujer', PERSONA_SEXO), personaOpcion('hombre', PERSONA_SEXO)]);
+    tabla('Edad', 'Tramo de edad', null, EST_TRAMOS.concat(''));
+    tabla('Nacionalidad', 'Nacionalidad (agrupada)');
+    tabla('Municipio', 'Municipio');
+    tabla('Situación de regularización', 'Situación de regularización');
+    tabla('Situación laboral', 'Situación laboral');
+    tabla('Nivel de estudios', 'Nivel de estudios');
+    tabla('Discapacidad reconocida', 'Discapacidad reconocida', ['Sí', 'No']);
+    tabla('Hijos a cargo', 'Hijos a cargo', ['Sí', 'No']);
+    tabla('Familia monoparental', 'Familia monoparental', ['Sí', 'No']);
+    // Actuaciones y resultados
+    seccion('Actuaciones y resultados');
+    const rAc = linea('Actuaciones registradas', nA ? `COUNTA(Actuaciones!$A$2:$A$${nA + 1})` : '0', nA, false);
+    const resAc = (t, k) => { const n = acsOrd.filter(a => a.resultado === k).length; const r = fila++; IN.getCell(r, 1).value = t; IN.getCell(r, 2).value = { formula: nA ? `COUNTIF(Actuaciones!$G$2:$G$${nA + 1},"${pjResTxt(k)}")` : '0', result: n }; IN.getCell(r, 3).value = { formula: `IF(B${rAc}=0,0,B${r}/B${rAc})`, result: nA ? n / nA : 0 }; for(let c = 1; c <= 3; c++){ const cl = IN.getCell(r, c); cl.border = caja; cl.font = { size: 10.5, bold: c === 2 }; if(c > 1) cl.alignment = { horizontal: 'center' }; } IN.getCell(r, 3).numFmt = '0.0%'; };
+    resAc('Conseguidas', 'conseguido'); resAc('En trámite', 'en_tramite'); resAc('No conseguidas', 'no_conseguido');
+    { const n = acsOrd.filter(a => !a.resultado).length; const r = fila++; IN.getCell(r, 1).value = 'Sin resultado apuntado'; IN.getCell(r, 2).value = { formula: nA ? `COUNTBLANK(Actuaciones!$G$2:$G$${nA + 1})` : '0', result: n }; IN.getCell(r, 3).value = { formula: `IF(B${rAc}=0,0,B${r}/B${rAc})`, result: nA ? n / nA : 0 }; for(let c = 1; c <= 3; c++){ const cl = IN.getCell(r, c); cl.border = caja; cl.font = { size: 10.5, bold: c === 2 }; if(c > 1) cl.alignment = { horizontal: 'center' }; } IN.getCell(r, 3).numFmt = '0.0%'; }
+    linea('Personas con algún objetivo conseguido', `COUNTIF(${rango('Conseguidas')},">0")`, D.personas.filter(x => x.nOk).length, true);
+    // Asistencia
+    seccion('Asistencia');
+    linea('Días con actividad en el proyecto', `${dias.length}`, dias.length, false);
+    linea('Días de asistencia (suma de todas las personas)', `SUM(${rango('Días de asistencia')})`, D.personas.reduce((t, x) => t + x.dias.length, 0), false);
+    linea('Media de días por persona', `IF(${totRef}=0,0,ROUND(AVERAGE(${rango('Días de asistencia')}),1))`, nP ? Math.round(D.personas.reduce((t, x) => t + x.dias.length, 0) / nP * 10) / 10 : 0, false, '0.0');
+    linea('Personas que han venido 3 días o más', `COUNTIF(${rango('Días de asistencia')},">=3")`, D.personas.filter(x => x.dias.length >= 3).length, true);
+    fila++;
+    const n1 = IN.getCell(fila, 1); n1.value = 'Todas las cifras son fórmulas sobre las hojas «Participantes», «Actuaciones» y «Asistencia». «% del total» = sobre las personas atendidas en el proyecto (o sobre las actuaciones, en su apartado).'; n1.font = { italic: true, size: 9, color: { argb: GRIS } };
+    IN.columns = [{ width: 46 }, { width: 12 }, { width: 13 }, { width: 4 }];
+    [IN, PA, AC, AS].forEach(h => { h.pageSetup = { orientation: h === IN ? 'portrait' : 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 }; });
+
+    const buf = await libro.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    try { await guardarCopiaExportacion(proyectoId, nombreArchivo, blob, blob.type); } catch(e){}
+    descargarBlob(blob, nombreArchivo);
+    try { m3Toast('✅ ' + (esCA ? 'Excel del projecte descarregat' : 'Excel del proyecto descargado')); } catch(e){}
+  } catch(e){ alert((esCA ? 'No s\'ha pogut fer l\'Excel: ' : 'No se ha podido hacer el Excel: ') + (e.message || e)); }
+  finally { if(btn){ btn.disabled = false; btn.innerHTML = txtBtn; } }
 }
 
 async function guardarCopiaExportacion(proyectoId, nombreArchivo, blob, contentType){
@@ -15567,24 +15756,10 @@ function descargarBlob(blob, nombreArchivo){
   URL.revokeObjectURL(url);
 }
 
-async function exportarProyectoExcel(proyectoId, nombreProyecto){
-  const esCA = LANG_I === 'ca';
-  let datos;
-  try { datos = await obtenerDatosExportProyecto(proyectoId, nombreProyecto); }
-  catch(e){ alert(e.message); return; }
-  if(!datos){ alert(esCA ? 'Aquest projecte encara no té ningú afegit.' : 'Este proyecto todavía no tiene a nadie añadido.'); return; }
-
-  const nombreArchivo = `${nombreProyecto.replace(/[^a-zA-Z0-9]+/g, '-')}.xlsx`;
-  const hoja = XLSX.utils.aoa_to_sheet([datos.cabecera, ...datos.filas]);
-  hoja['!cols'] = [{wch:24},{wch:22},{wch:12},{wch:12},{wch:14},{wch:16},{wch:14},{wch:16}];
-  const libro = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(libro, hoja, esCA ? 'Llistat' : 'Listado');
-  const arrayBuffer = XLSX.write(libro, { bookType: 'xlsx', type: 'array' });
-  const blob = new Blob([arrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-  await guardarCopiaExportacion(proyectoId, nombreArchivo, blob, blob.type);
-  descargarBlob(blob, nombreArchivo);
-  if(window.__proyectoActual === proyectoId) verProyecto(proyectoId);
+// El mismo Excel completo desde la lista de proyectos (rápido para la administración) y desde dentro del proyecto
+async function exportarProyectoExcel(proyectoId, nombreProyecto, btn){
+  await pjExcel(proyectoId, nombreProyecto, btn);
+  if(window.__proyectoActual === proyectoId) verProyecto(proyectoId, { silencioso: true });
 }
 
 async function exportarProyectoPDF(proyectoId, nombreProyecto){
@@ -15673,8 +15848,8 @@ function elegirArchivosProyecto(){ const i = document.getElementById('proyecto-d
 const PROY_SECCIONES = [
   ['resumen', '🏠', 'Resumen', 'Resum', 'proyecto-card-resumen'],
   ['benef', '👥', 'Beneficiarios', 'Beneficiaris', 'proyecto-card-beneficiarios'],
+  ['seg', '📝', 'Actuaciones', 'Actuacions', 'proyecto-card-seguimiento'],
   ['asis', '📆', 'Asistencia', 'Assistència', 'proyecto-card-asistencia'],
-  ['seg', '📌', 'Seguimiento', 'Seguiment', 'proyecto-card-seguimiento'],
   ['act', '📋', 'Actividades', 'Activitats', 'proyecto-card-actividades'],
   ['avisos', '📢', 'Avisos', 'Avisos', 'proyecto-card-avisos'],
   ['chat', '💬', 'Mensajes', 'Missatges', 'proyecto-card-chat'],
@@ -15878,6 +16053,16 @@ async function verProyecto(proyectoId, opts){
 
   const beneficiarios = (participantes||[]).filter(pp => pp.rol === 'beneficiario');
   const profesionales = (participantes||[]).filter(pp => pp.rol === 'profesional');
+  // v292 · quien tiene actuaciones en el proyecto entra sola en la lista de beneficiarios (sin tener que añadirla a mano)
+  if(!opts.__auto){
+    const faltanBenef = [...new Set(sinBorrados(seguimientos || []).map(a => a.usuario_id).filter(Boolean))].filter(id => !beneficiarios.some(b => b.usuario_id === id));
+    if(faltanBenef.length){
+      try {
+        const r = await sb.from('proyecto_participantes').insert(faltanBenef.map(id => ({ proyecto_id: proyectoId, rol: 'beneficiario', usuario_id: id, anadido_por_email: CURRENT_USER.email })));
+        if(!r.error) return verProyecto(proyectoId, Object.assign({}, opts, { __auto: true, silencioso: true }));
+      } catch(e){}
+    }
+  }
 
   let nombresBeneficiarios = {};
   const telefonosBenef = {};
@@ -15933,24 +16118,43 @@ async function verProyecto(proyectoId, opts){
             <strong>${uid === '__sin__' ? (esCA?'Sense persona vinculada':'Sin persona vinculada') : escAttr(nombresSeg[uid] || (esCA?'Sense nom':'Sin nombre'))}</strong>
             ${uid !== '__sin__' ? `<button class="link-btn" style="font-size:11px;" onclick="verPersonaDesdeProyecto('${uid}','${proyectoId}')">${esCA?'Veure':'Ver'}</button>` : ''}
           </div>
-          ${lista.map(ac => actuacionLineaHtml(ac, { vincular: !ac.usuario_id })).join('')}
+          ${lista.map(ac => actuacionLineaHtml(ac, { vincular: !ac.usuario_id }).replace(/<\/div>\s*$/, (ac.objetivo ? `<div class="subtle" style="font-size:11.5px;margin:3px 0 0;">🎯 ${escAttr(ac.objetivo)}</div>` : '') + (ac.proximo_paso ? `<div class="subtle" style="font-size:11.5px;margin:3px 0 0;">➡️ ${esCA ? 'Proper pas' : 'Próximo paso'}: ${escAttr(ac.proximo_paso)}</div>` : '') + actBotonesHtml(ac) + '</div>')).join('')}
         </div>`).join('')
-    : `<div class="empty-note">${esCA?'Encara no hi ha seguiments vinculats a aquest projecte.':'Todavía no hay seguimientos vinculados a este proyecto.'}</div>`;
+    : `<div class="empty-note">${esCA?'Encara no hi ha actuacions en aquest projecte.':'Todavía no hay actuaciones en este proyecto.'}</div>`;
 
+  // v292 · ASISTENCIA AUTOMÁTICA: cada día con alguna actuación en el proyecto (individual o grupal) cuenta solo; la lista a mano queda para quien vino sin actuación
   const fechaAsistenciaSel = window.__fechaAsistenciaProyecto || isoLocal();
-  const asistenciasFecha = (asistencias || []).filter(a => a.fecha === fechaAsistenciaSel);
-  const asistioHoy = new Set(asistenciasFecha.map(a => a.usuario_id));
-  const conteoAsistencias = {};
-  (asistencias || []).forEach(a => { conteoAsistencias[a.usuario_id] = (conteoAsistencias[a.usuario_id] || 0) + 1; });
+  const diaDe = v => String(v || '').slice(0, 10);
+  const diasPor = {};
+  const ponDia = (uid, d, tipo) => { if(!uid || !d) return; const x = diasPor[uid] = diasPor[uid] || {}; x[d] = x[d] || tipo; if(tipo === 'act') x[d] = 'act'; };
+  (asistencias || []).forEach(a => ponDia(a.usuario_id, diaDe(a.fecha), 'lista'));
+  sinBorrados(seguimientos || []).forEach(a => ponDia(a.usuario_id, diaDe(a.fecha), 'act'));
+  const conActHoy = new Set(Object.keys(diasPor).filter(uid => diasPor[uid][fechaAsistenciaSel] === 'act'));
+  const asistioHoy = new Set((asistencias || []).filter(a => diaDe(a.fecha) === fechaAsistenciaSel).map(a => a.usuario_id).concat([...conActHoy]));
+  const diasTot = uid => Object.keys(diasPor[uid] || {}).length;
+  const ultDia = uid => Object.keys(diasPor[uid] || {}).sort().pop() || '';
+  const nSesionesAuto = new Set(Object.values(diasPor).flatMap(x => Object.keys(x))).size;
+  const hoyIso = isoLocal(), nHoy = Object.keys(diasPor).filter(uid => diasPor[uid][hoyIso]).length;
 
   const asistenciaHtml = beneficiarios.length
-    ? beneficiarios.map(b => `
+    ? beneficiarios.map(b => conActHoy.has(b.usuario_id) ? `
+        <label class="checkbox-row" title="${esCA ? 'Compta sola: té una actuació aquest dia' : 'Cuenta sola: tiene una actuación ese día'}">
+          <input type="checkbox" id="asisauto-${b.usuario_id}" checked disabled>
+          ${nombresBeneficiarios[b.usuario_id] || (esCA?'Sense nom':'Sin nombre')} <span class="chip good" style="font-size:10.5px;">✓ ${esCA ? 'per actuació' : 'por actuación'}</span>
+          <span class="subtle" style="margin-left:auto;font-size:11px;">${esCA?'total':'total'}: ${diasTot(b.usuario_id)}</span>
+        </label>` : `
         <label class="checkbox-row">
           <input type="checkbox" id="asis-${b.usuario_id}" ${asistioHoy.has(b.usuario_id) ? 'checked' : ''}>
           ${nombresBeneficiarios[b.usuario_id] || (esCA?'Sense nom':'Sin nombre')}
-          <span class="subtle" style="margin-left:auto;font-size:11px;">${esCA?'total':'total'}: ${conteoAsistencias[b.usuario_id] || 0}</span>
+          <span class="subtle" style="margin-left:auto;font-size:11px;">${esCA?'total':'total'}: ${diasTot(b.usuario_id)}</span>
         </label>`).join('')
     : `<div class="empty-note">${esCA?'Encara no hi ha beneficiaris.':'Todavía no hay beneficiarios.'}</div>`;
+  const asistenciaResumenHtml = beneficiarios.length ? `
+    <div class="pj-asis-t">
+      <div class="pj-asis-r pj-asis-h"><span>${esCA ? 'Persona' : 'Persona'}</span><span>${esCA ? 'Dies' : 'Días'}</span><span>${esCA ? 'Última vegada' : 'Última vez'}</span></div>
+      ${beneficiarios.slice().sort((a, b) => diasTot(b.usuario_id) - diasTot(a.usuario_id) || String(nombresBeneficiarios[a.usuario_id] || '').localeCompare(String(nombresBeneficiarios[b.usuario_id] || ''), 'es')).map(b => `
+      <div class="pj-asis-r"><span>${escAttr(nombresBeneficiarios[b.usuario_id] || (esCA?'Sense nom':'Sin nombre'))}</span><strong>${diasTot(b.usuario_id)}</strong><span class="subtle" style="margin:0;">${ultDia(b.usuario_id) ? new Date(ultDia(b.usuario_id) + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha) : '—'}</span></div>`).join('')}
+    </div>` : '';
 
   // Avisos: el general (para todos) + los mensajes personales que se le añaden a cada persona
   const idsAvisos = (avisos || []).map(a => a.id);
@@ -15983,7 +16187,7 @@ async function verProyecto(proyectoId, opts){
       ${avisoDocs.fallos.length ? `<div><strong>⚠️ ${avisoDocs.fallos.length} ${esCA ? 'no s\'han pogut pujar:' : 'no se pudieron subir:'}</strong>${avisoDocs.fallos.map(f => `<div style="font-size:12.5px;">· ${escAttr(f)}</div>`).join('')}</div>` : ''}
     </div>` : '';
 
-  const nSesiones = new Set((asistencias || []).map(a => a.fecha)).size;
+  const nSesiones = nSesionesAuto;
   const estadoTxt = { activo: esCA ? 'Actiu' : 'Activo', pausado: esCA ? 'Pausat' : 'Pausado', finalizado: esCA ? 'Finalitzat' : 'Finalizado' };
   const kpi = (ic, n, t, sec) => `<button class="pj-kpi" onclick="proySec('${sec}')"><span class="pj-kpi-i">${ic}</span><span><strong class="stat-icon-num">${n}</strong><small>${t}</small></span></button>`;
   wrap.innerHTML = `
@@ -16000,11 +16204,13 @@ async function verProyecto(proyectoId, opts){
       </div>
       <div class="pj-kpis">
         ${kpi('👥', beneficiarios.length, esCA ? 'Beneficiaris' : 'Beneficiarios', 'benef')}
-        ${kpi('📌', (seguimientos || []).length, esCA ? 'Seguiments' : 'Seguimientos', 'seg')}
-        ${kpi('📆', nSesiones, esCA ? 'Sessions amb llista' : 'Sesiones con lista', 'asis')}
+        ${kpi('📝', sinBorrados(seguimientos || []).length, esCA ? 'Actuacions' : 'Actuaciones', 'seg')}
+        ${kpi('📆', nSesiones, esCA ? 'Dies amb assistència' : 'Días con asistencia', 'asis')}
         ${kpi('📎', (documentosProyecto || []).length, esCA ? 'Documents' : 'Documentos', 'docs')}
       </div>
       <div class="pj-acc">
+        <button class="pj-btn pj-btn-xl" data-n="${escAttr(proyecto.nombre)}" title="${esCA?'Totes les dades, actuacions, assistència i indicadors':'Todos los datos, actuaciones, asistencia e indicadores'}" onclick="pjExcel('${proyectoId}', this.dataset.n, this)">⬇️ ${esCA?'Excel del projecte':'Excel del proyecto'}</button>
+        <button class="pj-btn" data-n="${escAttr(proyecto.nombre)}" onclick="exportarProyectoPDF('${proyectoId}', this.dataset.n)">⬇️ PDF</button>
         <button class="pj-btn" id="proyecto-btn-subir-arriba" onclick="irASubirDocumentosProyecto()">⬆️ ${esCA?'Pujar documents':'Subir documentos'}</button>
         <label class="pj-sel">${esCA ? 'Estat' : 'Estado'}
           <select onchange="cambiarEstadoProyecto('${proyectoId}', this.value)">
@@ -16022,8 +16228,8 @@ async function verProyecto(proyectoId, opts){
       <div class="pj-pasos">
         ${[
           ['👥', esCA ? 'Afegir beneficiaris' : 'Añadir beneficiarios', beneficiarios.length ? `${beneficiarios.length} ${esCA ? 'persones al projecte' : 'personas en el proyecto'}` : (esCA ? 'Encara no n\'hi ha cap: comença aquí' : 'Aún no hay ninguno: empieza aquí'), 'benef', !beneficiarios.length],
-          ['📆', esCA ? 'Passar llista d\'avui' : 'Pasar lista de hoy', asistioHoy.size ? `${asistioHoy.size} ${esCA ? 'assistents marcats' : 'asistentes marcados'}` : (esCA ? 'Marca qui ha vingut' : 'Marca quién ha venido'), 'asis', false],
-          ['📌', esCA ? 'Registrar seguiment' : 'Registrar seguimiento', esCA ? 'El treballat amb cada persona' : 'Lo trabajado con cada persona', 'seg', false],
+          ['📝', esCA ? 'Tràmit / actuació' : 'Trámite / actuación', esCA ? 'El treballat amb una o diverses persones' : 'Lo trabajado con una o varias personas', 'seg', false],
+          ['📆', esCA ? 'Assistència' : 'Asistencia', nHoy ? `${nHoy} ${esCA ? 'avui · compta sola' : 'hoy · se cuenta sola'}` : (esCA ? 'Es compta sola amb les actuacions' : 'Se cuenta sola con las actuaciones'), 'asis', false],
           ['💬', esCA ? 'Missatges del grup' : 'Mensajes del grupo', esCA ? 'Conversa amb els participants' : 'Conversación con los participantes', 'chat', false],
           ['📢', esCA ? 'Enviar un avís' : 'Enviar un aviso', (avisos || []).length ? `${(avisos || []).length} ${esCA ? 'enviats' : 'enviados'}` : (esCA ? 'A tots els participants' : 'A todos los participantes'), 'avisos', false],
           ['📋', esCA ? 'Activitats' : 'Actividades', (actividades || []).length ? `${(actividades || []).length} ${esCA ? 'registrades' : 'registradas'}` : (esCA ? 'Tallers, sessions, sortides…' : 'Talleres, sesiones, salidas…'), 'act', false],
@@ -16031,6 +16237,10 @@ async function verProyecto(proyectoId, opts){
         ].map(([ic, t, d, sec, dest]) => `<button class="pj-paso${dest ? ' dest' : ''}" onclick="proySec('${sec}')"><span class="pj-paso-i">${ic}</span><strong>${t}</strong><small>${d}</small><span class="pj-paso-f">→</span></button>`).join('')}
         <button class="pj-paso dest" onclick="agAbrirProyecto('${proyectoId}')"><span class="pj-paso-i">🧑‍🤝‍🧑</span><strong>${esCA ? 'Actuació grupal' : 'Actuación grupal'}</strong><small>${esCA ? 'Una fitxa per a tot el grup: compta per a cada persona' : 'Una ficha para todo el grupo: cuenta para cada persona'}</small><span class="pj-paso-f">→</span></button>
       </div>
+      <details class="pj-ind" ontoggle="if(this.open) pjIndicadoresPintar('${proyectoId}', this)">
+        <summary>📊 ${esCA ? 'Indicadors del projecte' : 'Indicadores del proyecto'} <small>${esCA ? '(a petició)' : '(a petición)'}</small></summary>
+        <div class="pj-ind-c"><div class="placeholder">${TI[LANG_I].cargando}</div></div>
+      </details>
       ${(avisos && avisos.length) ? `<div class="pj-ult"><span>📢 ${esCA ? 'Últim avís' : 'Último aviso'}:</span> <strong>${escAttr(avisos[0].titulo)}</strong> · ${new Date(avisos[0].creado_en).toLocaleDateString(TI[LANG_I].localeFecha)}</div>` : ''}
     </section>
 
@@ -16049,26 +16259,41 @@ async function verProyecto(proyectoId, opts){
 
     <div class="panel-card" id="proyecto-card-seguimiento">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
-        <h3 style="margin:0;">📌 ${esCA?'Seguiment del projecte':'Seguimiento del proyecto'}${(seguimientos && seguimientos.length) ? ` (${seguimientos.length})` : ''}</h3>
-        ${beneficiarios.filter(b => b.usuario_id).length ? `<button class="primary-btn" style="width:auto;margin:0;padding:8px 14px;font-size:13px;" onclick="abrirSeguimientoProyecto('${proyectoId}')">➕ ${esCA?'Registrar seguiment':'Registrar seguimiento'}</button>` : ''}
+        <h3 style="margin:0;">📝 ${esCA?'Actuacions del projecte':'Actuaciones del proyecto'}${sinBorrados(seguimientos || []).length ? ` (${sinBorrados(seguimientos || []).length})` : ''}</h3>
+        <span style="display:flex;gap:8px;flex-wrap:wrap;">
+          ${beneficiarios.filter(b => b.usuario_id).length ? `<button class="primary-btn" style="width:auto;margin:0;padding:8px 14px;font-size:13px;" onclick="abrirSeguimientoProyecto('${proyectoId}')">📝 ${esCA?'Tràmit / actuació':'Trámite / actuación'}</button>` : ''}
+          <button class="pj-btn" style="padding:8px 12px;font-size:13px;" onclick="agAbrirProyecto('${proyectoId}')">👥 ${esCA?'Grupal':'Grupal'}</button>
+        </span>
       </div>
-      <p class="subtle" style="margin:0 0 10px;">${esCA?'Cada persona surt una sola vegada, amb el treballat de més antic a més recent. Són les mateixes actuacions del seu expedient: no cal apuntar-les dues vegades.':'Cada persona sale una sola vez, con lo trabajado de más antiguo a más reciente. Son las mismas actuaciones de su expediente: no hay que apuntarlas dos veces.'}</p>
-      ${beneficiarios.filter(b => b.usuario_id).length ? '' : `<p class="subtle" style="margin:0 0 10px;">${esCA?'Afegeix primer beneficiaris al projecte per poder registrar seguiments.':'Añade primero beneficiarios al proyecto para poder registrar seguimientos.'}</p>`}
+      <p class="subtle" style="margin:0 0 10px;">${esCA?'Seguiment i actuacions són el mateix: tot el que s\'apunta aquí surt a l\'expedient de cada persona, i el que s\'apunta a l\'expedient vinculat al projecte surt aquí. Cada actuació compta com a dia d\'assistència.':'Seguimiento y actuaciones son lo mismo: lo que se apunta aquí sale en el expediente de cada persona, y lo que se apunta en el expediente vinculado al proyecto sale aquí. Cada actuación cuenta como día de asistencia.'}</p>
+      ${beneficiarios.filter(b => b.usuario_id).length ? '' : `<p class="subtle" style="margin:0 0 10px;">${esCA?'Afegeix primer beneficiaris al projecte per poder apuntar actuacions.':'Añade primero beneficiarios al proyecto para poder apuntar actuaciones.'}</p>`}
       ${seguimientosHtml}
     </div>
 
     <div class="panel-card" id="proyecto-card-asistencia">
-      <h3>📆 ${esCA?'Assistència':'Asistencia'}</h3>
-      <div class="field">
-        <label>${esCA?'Dia':'Día'}</label>
-        <input type="date" id="asistencia-fecha-input" value="${fechaAsistenciaSel}" onchange="cambiarFechaAsistencia('${proyectoId}', this.value)">
-      </div>
-      ${asistenciaHtml}
-      ${beneficiarios.length ? `<button class="primary-btn" style="margin-top:10px;" onclick="guardarAsistenciaProyecto('${proyectoId}')">💾 ${esCA?'Desar assistència del dia':'Guardar asistencia del día'}</button>` : ''}
+      <h3>📆 ${esCA?'Assistència':'Asistencia'} <small class="subtle" style="font-weight:600;">· ${esCA ? 'es compta sola' : 'se cuenta sola'}</small></h3>
+      <p class="subtle" style="margin:0 0 10px;">${esCA ? 'No cal passar llista: cada dia que una persona té una actuació en aquest projecte (individual o grupal) compta com a dia d\'assistència.' : 'No hace falta pasar lista: cada día que una persona tiene una actuación en este proyecto (individual o grupal) cuenta como día de asistencia.'} <strong>${nSesiones}</strong> ${esCA ? (nSesiones === 1 ? 'dia amb assistència.' : 'dies amb assistència.') : (nSesiones === 1 ? 'día con asistencia.' : 'días con asistencia.')}</p>
+      ${asistenciaResumenHtml}
+      <details class="pj-asis-man"${window.__fechaAsistenciaProyecto ? ' open' : ''}>
+        <summary>✋ ${esCA ? 'Marcar a mà algú que va venir i no té actuació aquell dia' : 'Marcar a mano a alguien que vino y no tiene actuación ese día'}</summary>
+        <div class="field" style="margin-top:8px;">
+          <label>${esCA?'Dia':'Día'}</label>
+          <input type="date" id="asistencia-fecha-input" value="${fechaAsistenciaSel}" onchange="cambiarFechaAsistencia('${proyectoId}', this.value)">
+        </div>
+        ${asistenciaHtml}
+        ${beneficiarios.length ? `<button class="primary-btn" style="margin-top:10px;" onclick="guardarAsistenciaProyecto('${proyectoId}')">💾 ${esCA?'Desar assistència del dia':'Guardar asistencia del día'}</button>` : ''}
+      </details>
     </div>
 
     <div class="panel-card" id="proyecto-card-export">
-      <h3>⬇️ ${esCA?'Exportacions anteriors':'Exportaciones anteriores'}</h3>
+      <h3>⬇️ ${esCA?'Exportacions':'Exportaciones'}</h3>
+      <div class="pj-xl-box">
+        <div><strong>${esCA ? 'Excel complet del projecte' : 'Excel completo del proyecto'}</strong>
+          <small>${esCA ? 'Indicadors (amb fórmules) · totes les dades de cada persona · actuacions · assistència dia a dia' : 'Indicadores (con fórmulas) · todos los datos de cada persona · actuaciones · asistencia día a día'}</small></div>
+        <span style="display:flex;gap:8px;flex-wrap:wrap;"><button class="primary-btn" style="width:auto;margin:0;" data-n="${escAttr(proyecto.nombre)}" onclick="pjExcel('${proyectoId}', this.dataset.n, this)">⬇️ Excel</button>
+          <button class="pj-btn" data-n="${escAttr(proyecto.nombre)}" onclick="exportarProyectoPDF('${proyectoId}', this.dataset.n)">⬇️ PDF</button></span>
+      </div>
+      <h4 style="margin:14px 0 6px;font-size:13.5px;">${esCA?'Exportacions anteriors':'Exportaciones anteriores'}</h4>
       ${(exportaciones && exportaciones.length)
         ? exportaciones.map(ex => `
             <div class="panel-stat-row">
@@ -16159,7 +16384,7 @@ async function verProyecto(proyectoId, opts){
     </div>
   `;
   proyMontarMenu(wrap, proyectoId, {
-    benef: beneficiarios.length, seg: (seguimientos || []).length, docs: (documentosProyecto || []).length,
+    benef: beneficiarios.length, seg: sinBorrados(seguimientos || []).length, docs: (documentosProyecto || []).length,
     prof: profesionales.length, act: (actividades || []).length, avisos: (avisos || []).length, export: (exportaciones || []).length
   });
   pintarWhatsAppAviso();
@@ -16239,7 +16464,8 @@ async function quitarParticipanteDeProyecto(participacionId, proyectoId){
 
 function cerrarSeguimientoOverlay(){ const o = document.getElementById('seg-overlay'); if(o) o.remove(); }
 
-function abrirSeguimientoProyecto(proyectoId){
+// v292 · Seguimiento = actuación: el mismo «Trámite / actuación» del expediente, para una o varias personas del proyecto
+function abrirSeguimientoProyecto(proyectoId, uidInicial){
   const esCA = LANG_I === 'ca'; const t = TI[LANG_I];
   const ctx = window.__proyectoCtx;
   if(!ctx || ctx.id !== proyectoId || !ctx.beneficiarios.length) return;
@@ -16247,17 +16473,34 @@ function abrirSeguimientoProyecto(proyectoId){
   const ov = document.createElement('div');
   ov.id = 'seg-overlay';
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,15,20,.55);z-index:400;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto;';
+  const formaciones = (typeof FORMACIONES_LOGOS !== 'undefined' ? FORMACIONES_LOGOS : []);
   ov.innerHTML = `
-    <div class="panel-card" style="background:var(--paper);width:100%;max-width:480px;margin:auto;opacity:1;transform:none;animation:none;">
-      <h3 style="margin-top:0;">📌 ${esCA?'Registrar seguiment':'Registrar seguimiento'} · ${escAttr(ctx.nombre)}</h3>
-      <div class="field"><label>${esCA?'Persona':'Persona'} *</label>
-        <select id="seg-persona">${ctx.beneficiarios.map(b => `<option value="${b.id}">${escAttr(b.nombre)}</option>`).join('')}</select></div>
-      <div class="field"><label>${esCA?'Data':'Fecha'}</label><input type="date" id="seg-fecha" value="${isoLocal()}"></div>
-      <div class="field"><label>${esCA?'Què s\'ha treballat? *':'¿Qué se ha trabajado? *'}</label><textarea id="seg-descripcion" rows="3" placeholder="${esCA?'En poques paraules':'En pocas palabras'}"></textarea></div>
-      <div class="field"><label>${esCA?'Resultat':'Resultado'}</label>
-        <select id="seg-resultado"><option value="">—</option><option value="conseguido">${t.conseguido}</option><option value="en_tramite">${t.enTramite}</option><option value="no_conseguido">${t.noConseguido}</option></select></div>
-      <div class="field"><label>${esCA?'Proper pas':'Próximo paso'}</label><input type="text" id="seg-proximo"></div>
-      <button class="primary-btn" onclick="guardarSeguimientoProyecto('${proyectoId}')">${esCA?'Desar':'Guardar'}</button>
+    <div class="panel-card" style="background:var(--paper);width:100%;max-width:560px;margin:auto;opacity:1;transform:none;animation:none;">
+      <h3 style="margin-top:0;">📝 ${esCA?'Tràmit / actuació':'Trámite / actuación'} · ${escAttr(ctx.nombre)}</h3>
+      <div class="field"><label>${esCA?'Amb qui? (una o diverses persones)':'¿Con quién? (una o varias personas)'} *</label>
+        <div class="seg-pers-acc"><button type="button" class="link-btn" onclick="document.querySelectorAll('#seg-personas input').forEach(i => i.checked = true)">${esCA?'Totes':'Todas'}</button><button type="button" class="link-btn" onclick="document.querySelectorAll('#seg-personas input').forEach(i => i.checked = false)">${esCA?'Cap':'Ninguna'}</button></div>
+        <div id="seg-personas" class="seg-pers">${ctx.beneficiarios.map(b => `<label><input type="checkbox" value="${escAttr(b.id)}"${b.id === uidInicial || ctx.beneficiarios.length === 1 ? ' checked' : ''}> ${escAttr(b.nombre)}</label>`).join('')}</div></div>
+      <div class="seg-dos">
+        <div class="field"><label>${esCA?'Data':'Fecha'}</label><input type="date" id="seg-fecha" value="${isoLocal()}"></div>
+        <div class="field"><label>${esCA?'Tipus':'Tipo'}</label>
+          <select id="seg-tipo" onchange="document.getElementById('seg-tram-w').style.display = this.value === 'Trámite administrativo' ? '' : 'none'; document.getElementById('seg-otro-w').style.display = this.value === '__otro__' ? '' : 'none';">
+            <option value="">🧩 ${esCA?'Projecte':'Proyecto'}: ${escAttr(ctx.nombre)}</option>
+            <option value="Trámite administrativo">🧾 ${esCA?'Tràmit':'Trámite'}</option>
+            ${formaciones.length ? `<optgroup label="🎓 ${esCA?'Formació':'Formación'}">${formaciones.map(f => `<option value="${escAttr(f)}">${escAttr(f)}</option>`).join('')}</optgroup>` : ''}
+            <option value="__otro__">✏️ ${esCA?'Altre…':'Otro…'}</option>
+          </select></div>
+      </div>
+      <div class="field" id="seg-tram-w" style="display:none;"><label>${esCA?'Quin tràmit?':'¿Qué trámite?'}</label><input type="text" id="seg-tramite" placeholder="${esCA?'Ex.: recerca de feina, empadronament, NIE…':'Ej.: búsqueda de empleo, empadronamiento, NIE…'}"></div>
+      <div class="field" id="seg-otro-w" style="display:none;"><label>${esCA?'Quin?':'¿Cuál?'}</label><input type="text" id="seg-otro"></div>
+      <div class="field"><label>${esCA?'Objectiu (opcional)':'Objetivo (opcional)'}</label><input type="text" id="seg-objetivo" placeholder="${esCA?'Ex.: Recerca de feina':'Ej.: Búsqueda de empleo'}"></div>
+      <div class="field"><label>${esCA?'Què s\'ha fet? *':'¿Qué se ha hecho? *'}</label><textarea id="seg-descripcion" rows="3" placeholder="${esCA?'En poques paraules':'En pocas palabras'}"></textarea></div>
+      <div class="seg-dos">
+        <div class="field"><label>${esCA?'Resultat':'Resultado'}</label>
+          <select id="seg-resultado"><option value="">—</option><option value="conseguido">${t.conseguido}</option><option value="en_tramite">${t.enTramite}</option><option value="no_conseguido">${t.noConseguido}</option></select></div>
+        <div class="field"><label>${esCA?'Proper pas':'Próximo paso'}</label><input type="text" id="seg-proximo"></div>
+      </div>
+      <p class="subtle" style="font-size:12px;margin:0 0 10px;">${esCA?'Es desa a l\'expedient de cada persona marcada i compta com a dia d\'assistència al projecte.':'Se guarda en el expediente de cada persona marcada y cuenta como día de asistencia en el proyecto.'}</p>
+      <button class="primary-btn" id="seg-ok" onclick="guardarSeguimientoProyecto('${proyectoId}')">💾 ${esCA?'Desar l\'actuació':'Guardar actuación'}</button>
       <button class="link-btn" style="display:block;margin:10px auto 0;" onclick="cerrarSeguimientoOverlay()">${esCA?'Cancel·lar':'Cancelar'}</button>
     </div>`;
   document.body.appendChild(ov);
@@ -16267,16 +16510,59 @@ function abrirSeguimientoProyecto(proyectoId){
 async function guardarSeguimientoProyecto(proyectoId){
   const esCA = LANG_I === 'ca';
   const ctx = window.__proyectoCtx;
-  const v = id => document.getElementById(id).value.trim();
-  if(!v('seg-persona') || !v('seg-descripcion')){ alert(esCA ? 'Cal triar la persona i explicar què s\'ha treballat.' : 'Hay que elegir la persona y explicar qué se ha trabajado.'); return; }
-  const { error } = await sb.from('actuaciones').insert({
-    usuario_id: v('seg-persona'), tecnico_email: CURRENT_USER.email, fecha: v('seg-fecha') || isoLocal(),
-    categoria: ctx ? ctx.nombre : null, descripcion: v('seg-descripcion'), resultado: v('seg-resultado') || null,
-    proximo_paso: v('seg-proximo') || null, proyecto_id: proyectoId
-  });
-  if(error){ alert((esCA?'No s\'ha pogut desar: ':'No se pudo guardar: ') + error.message); return; }
+  const v = id => ((document.getElementById(id) || {}).value || '').trim();
+  const personas = [...document.querySelectorAll('#seg-personas input:checked')].map(i => i.value).filter(Boolean);
+  if(!personas.length || !v('seg-descripcion')){ alert(esCA ? 'Cal triar almenys una persona i explicar què s\'ha fet.' : 'Hay que elegir al menos una persona y explicar qué se ha hecho.'); return; }
+  const tipo = v('seg-tipo');
+  if(tipo === '__otro__' && !v('seg-otro')){ alert(esCA ? 'Escriu quin tipus d\'actuació.' : 'Escribe qué tipo de actuación.'); return; }
+  const categoria = tipo === '__otro__' ? v('seg-otro') : (tipo || (ctx ? ctx.nombre : null));
+  const objetivo = v('seg-objetivo') || (tipo === 'Trámite administrativo' && v('seg-tramite') ? (esCA ? 'Tràmit: ' : 'Trámite: ') + v('seg-tramite') : null);
+  const fecha = v('seg-fecha') || isoLocal();
+  const b = document.getElementById('seg-ok'); if(b){ b.disabled = true; b.textContent = '⏳ ' + (esCA ? 'Desant…' : 'Guardando…'); }
+  const filas = personas.map(uid => ({ usuario_id: uid, tecnico_email: CURRENT_USER.email, fecha, categoria, objetivo, descripcion: v('seg-descripcion'), resultado: v('seg-resultado') || null, proximo_paso: v('seg-proximo') || null, proyecto_id: proyectoId }));
+  let { error } = await sb.from('actuaciones').insert(filas);
+  if(error && /objetivo/i.test(error.message || '')){ filas.forEach(f => { if(f.objetivo) f.descripcion = f.objetivo + ' · ' + f.descripcion; delete f.objetivo; }); ({ error } = await sb.from('actuaciones').insert(filas)); }
+  if(error){ if(b){ b.disabled = false; b.textContent = '💾 ' + (esCA ? 'Desar l\'actuació' : 'Guardar actuación'); } alert((esCA?'No s\'ha pogut desar: ':'No se pudo guardar: ') + error.message); return; }
+  // también queda en la lista de asistencia de ese día (para quien la consulte desde otros sitios)
+  try { await sb.from('proyecto_asistencias').upsert(personas.map(uid => ({ proyecto_id: proyectoId, usuario_id: uid, fecha, registrado_por_email: CURRENT_USER.email })), { onConflict: 'proyecto_id,usuario_id,fecha' }); } catch(e){}
+  window.__estCache = null; window.__estDatos = null;
   cerrarSeguimientoOverlay();
+  try { m3Toast('✅ ' + (esCA ? `Actuació desada per a ${personas.length} persona${personas.length === 1 ? '' : 'es'}` : `Actuación guardada para ${personas.length} persona${personas.length === 1 ? '' : 's'}`)); } catch(e){}
   await verProyecto(proyectoId, { silencioso: true });
+}
+
+// v292 · Indicadores del proyecto en pantalla (a petición): los mismos que en la hoja «Indicadores» del Excel
+async function pjIndicadoresPintar(proyectoId, det){
+  const caja = det && det.querySelector('.pj-ind-c'); if(!caja) return;
+  const esCA = LANG_I === 'ca';
+  try {
+    const D = await pjCargarDatos(proyectoId);
+    const n = D.personas.length;
+    const pct = k => n ? Math.round(k / n * 100) + '%' : '0%';
+    const grupo = (titulo, fn) => { const c = {}; D.personas.forEach(x => { const k = fn(x) || 'No consta'; c[k] = (c[k] || 0) + 1; });
+      return `<div class="pj-ind-g"><b>${titulo}</b>${Object.entries(c).sort((a, b) => (a[0] === 'No consta') - (b[0] === 'No consta') || b[1] - a[1]).map(([k, v]) => `<div class="pj-ind-l"><span>${escAttr(k)}</span><span><strong>${v}</strong> <small>${pct(v)}</small></span></div>`).join('')}</div>`; };
+    const nA = D.acs.length, ok = D.acs.filter(a => a.resultado === 'conseguido').length, tr = D.acs.filter(a => a.resultado === 'en_tramite').length, no = D.acs.filter(a => a.resultado === 'no_conseguido').length;
+    const dTot = D.personas.reduce((t, x) => t + x.dias.length, 0);
+    caja.innerHTML = `
+      <div class="pj-ind-k">
+        <div><strong>${n}</strong><small>${esCA ? 'persones' : 'personas'}</small></div>
+        <div><strong>${nA}</strong><small>${esCA ? 'actuacions' : 'actuaciones'}</small></div>
+        <div><strong>${ok}</strong><small>${esCA ? 'aconseguides' : 'conseguidas'}${nA ? ' · ' + Math.round(ok / nA * 100) + '%' : ''}</small></div>
+        <div><strong>${D.sesiones.length}</strong><small>${esCA ? 'dies amb activitat' : 'días con actividad'}</small></div>
+        <div><strong>${n ? (Math.round(dTot / n * 10) / 10).toString().replace('.', ',') : 0}</strong><small>${esCA ? 'dies de mitjana per persona' : 'días de media por persona'}</small></div>
+      </div>
+      <div class="pj-ind-gs">
+        ${grupo(esCA ? 'Sexe' : 'Sexo', x => personaOpcion(x.p.sexo, PERSONA_SEXO))}
+        ${grupo(esCA ? 'Edat' : 'Edad', x => { const tr0 = estEdad(x.p.fecha_nacimiento, null, null); return tr0 ? tr0 + (esCA ? ' anys' : ' años') : ''; })}
+        ${grupo(esCA ? 'Nacionalitat' : 'Nacionalidad', x => estNacionalidad(x.p.nacionalidad))}
+        ${grupo(esCA ? 'Municipi' : 'Municipio', x => x.p.municipio)}
+        ${grupo(esCA ? 'Situació laboral' : 'Situación laboral', x => x.p.situacion_laboral)}
+        ${grupo(esCA ? 'Estudis' : 'Estudios', x => personaOpcion(x.p.nivel_estudios, PERSONA_ESTUDIOS))}
+        <div class="pj-ind-g"><b>${esCA ? 'Resultats de les actuacions' : 'Resultados de las actuaciones'}</b>
+          ${[[TI[LANG_I].conseguido, ok], [TI[LANG_I].enTramite, tr], [TI[LANG_I].noConseguido, no], [esCA ? 'Sense resultat' : 'Sin resultado', nA - ok - tr - no]].map(([k, v]) => `<div class="pj-ind-l"><span>${k}</span><span><strong>${v}</strong> <small>${nA ? Math.round(v / nA * 100) + '%' : '0%'}</small></span></div>`).join('')}</div>
+      </div>
+      <p class="subtle" style="font-size:12px;margin:8px 0 0;">${esCA ? 'Tots aquests indicadors (i més) surten a l\'Excel del projecte, amb fórmules.' : 'Todos estos indicadores (y más) salen en el Excel del proyecto, con fórmulas.'} <button class="link-btn" style="font-size:12px;" onclick="pjExcel('${proyectoId}', null, this)">⬇️ Excel</button></p>`;
+  } catch(e){ caja.innerHTML = `<div class="empty-note">${escAttr(e.message || e)}</div>`; }
 }
 
 // ---------- Avisos de proyecto: mensajes personales que se añaden al aviso general ----------
@@ -20763,7 +21049,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-19 · v291 (corregir o quitar una actuación cuando uno se equivoca, sin crear un trámite nuevo) · antes: v290 (unir también las cuentas de baja repetidas —Jana educadora, Ariadna— con sus horarios, y quitarlas del equipo) · antes: v289 («Correos antiguos o repetidos»: solo registros del equipo, nunca personas usuarias; se ve entero sin cortarse) · antes: v288 (conexión más fuerte: reintentos automáticos si falla la red, nada se queda colgado, aviso sin internet) · antes: v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-20 · v292 (proyectos: Excel completo con todos los datos, actuaciones, asistencia e indicadores, también desde dentro del proyecto; seguimiento y actuaciones unidos; la asistencia se cuenta sola con las actuaciones; fecha de alta en Logos y en el proyecto) · antes: v291 (corregir o quitar una actuación cuando uno se equivoca, sin crear un trámite nuevo) · antes: v290 (unir también las cuentas de baja repetidas —Jana educadora, Ariadna— con sus horarios, y quitarlas del equipo) · antes: v289 («Correos antiguos o repetidos»: solo registros del equipo, nunca personas usuarias; se ve entero sin cortarse) · antes: v288 (conexión más fuerte: reintentos automáticos si falla la red, nada se queda colgado, aviso sin internet) · antes: v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -23274,6 +23560,8 @@ function actEditarAbrir(id){
 }
 async function actRefrescar(ac){
   try {
+    const wPj = document.getElementById('proyecto-detalle-wrap');
+    if(window.__proyectoActual && wPj && wPj.offsetParent && wPj.querySelector('.pj-hero')){ await verProyecto(window.__proyectoActual, { silencioso: true }); return; }
     const enJovenes = !!document.getElementById('jus-ov') || !!(document.getElementById('screen-jovenes') && document.getElementById('screen-jovenes').classList.contains('active'));
     if(!enJovenes && document.getElementById('expediente-lista') && window.__usuarioIdVisto) await verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista);
     else if(document.getElementById('ja-usuarios') && typeof renderJovenesScreen === 'function'){ const o = document.getElementById('jus-ov'); if(o) o.remove(); renderJovenesScreen('usuarios'); }
