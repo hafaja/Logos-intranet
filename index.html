@@ -109,6 +109,22 @@
   .sv-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;}
   .sv-det{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:18px 20px;min-width:0;box-shadow:var(--shadow);}
   .sv-sec{border-top:1px solid var(--line);padding-top:12px;margin-top:14px;}
+  /* v293 · calendario con prioridades, franja de urgencia y acción recomendada */
+  .sv-urg{background:#FDECEE;border:2px solid #E0566B;border-radius:14px;padding:11px 16px;margin:0 0 12px;color:#8A1C2B;font-size:13.5px;line-height:1.5;}
+  .sv-urg .link-btn{color:#8A1C2B;font-size:13.5px;padding:0;text-decoration:underline;}
+  .sv-cal{padding:14px 16px;margin-bottom:14px;}
+  .sv-cal h3{margin:0 0 8px;font-size:15.5px;} .sv-cal h3 small{font-weight:600;color:var(--ink-soft);font-size:11.5px;}
+  .sv-cal-w{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .sv-cal table{width:100%;border-collapse:collapse;font-size:13px;min-width:760px;}
+  .sv-cal th{text-align:left;background:#F3F6FA;color:#4A5B70;font-weight:700;font-size:12px;padding:8px 10px;border-bottom:1px solid var(--line);}
+  .sv-cal td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  .sv-cal tbody tr{cursor:pointer;} .sv-cal tbody tr:hover{background:#F8FAFD;}
+  .sv-pri{display:inline-block;white-space:nowrap;border-radius:8px;padding:3px 8px;font-size:11.5px;font-weight:800;}
+  .sv-pri-p1{background:#FDECEE;color:#B4233A;} .sv-pri-p2{background:#FFF1DE;color:#A35A00;} .sv-pri-p3{background:#E9F1FC;color:#24508F;}
+  .sv-pri-sin{background:#EEF1F5;color:#5D6B82;} .sv-pri-don{background:#E6F6EC;color:#1E7A46;}
+  .sv-r-p1{color:#B4233A;} .sv-r-p2{color:#A35A00;} .sv-r-p3{color:#24508F;}
+  .sv-acc-top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:9px 12px;background:#F7F9FC;border-radius:12px;}
+  .sv-acc-txt{font-weight:700;font-size:13.5px;flex:1;min-width:180px;}
   .sv-sec h4{margin:0 0 8px;font-size:14.5px;}
   .sv-btns{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;}
   .sv-btn{font-family:var(--font-body);font-weight:700;font-size:13px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:10px;padding:8px 12px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
@@ -11545,7 +11561,105 @@ async function subvencionesResumenHtml(){
   return { html: subvAvisosHtml(av), n: av.plazos.length + av.revisar.length };
 }
 // ---------- v266 · Panel de acción de subvenciones (estilo Kizuna) + IA: buscar convocatorias y redactar la solicitud por apartados ----------
-const SUBV_CATEGORIAS = ['Generalitat', 'Estado', 'Europa', 'Diputació y municipios', 'Fundaciones y empresas', 'Premios', 'Otros'];
+const SUBV_CATEGORIAS = ['Generalitat', 'Estado', 'Europa', 'Diputació y municipios', 'Fundaciones y empresas', 'Premios', 'Donaciones en especie', 'Otros'];
+// v293 · Donaciones en especie (ordenadores, móviles, mobiliario): van como una «convocatoria» más, abierta todo el año
+const SUBV_CAT_DON = 'Donaciones en especie';
+function subvEsDon(f){ return (f && f.categoria) === SUBV_CAT_DON; }
+// «80.000 €», «10.000,00 € + espacios», «26000» → número (para sumar lo que está en juego)
+function subvImporteNum(t){ const m = String(t || '').replace(/\u00a0/g, ' ').match(/\d{1,3}(?:[.\s]\d{3})+(?:,\d+)?|\d+(?:,\d+)?/); if(!m) return 0; const n = Number(m[0].replace(/[.\s]/g, '').replace(',', '.')); return isFinite(n) ? n : 0; }
+// Prioridad por plazo: 1 = cierra en 15 días o menos · 2 = en 45 días · 3 = más adelante o fecha prevista · 4 = sin fecha · donaciones = todo el año
+function subvPrioridad(f){
+  if(subvEsDon(f)) return { n: 5, t: acL('Todo el año', 'Tot l\'any'), c: 'don' };
+  const d = subvDias(subvPlazo(f));
+  if(d === null) return { n: 4, t: acL('Sin fecha', 'Sense data'), c: 'sin' };
+  if(d < 0) return { n: 9, t: acL('Vencida', 'Vençuda'), c: 'sin' };
+  if(!f.fecha_limite) return { n: 3, t: acL('Prevista', 'Prevista'), c: 'p3' };
+  if(d <= 15) return { n: 1, t: acL('Prioridad 1', 'Prioritat 1'), c: 'p1' };
+  if(d <= 45) return { n: 2, t: acL('Prioridad 2', 'Prioritat 2'), c: 'p2' };
+  return { n: 3, t: acL('Prioridad 3', 'Prioritat 3'), c: 'p3' };
+}
+// Qué toca hacer ahora con cada una
+function subvAccion(f){
+  if(subvEsDon(f)){
+    if(f.estado === 'presentada') return acL('Esperar respuesta (y llamar si tarda)', 'Esperar resposta (i trucar si triga)');
+    if(f.estado === 'concedida') return acL('Recoger y apuntar lo recibido', 'Recollir i apuntar el que s\'ha rebut');
+    return f.contacto_email ? acL('Enviar la carta de petición (1 clic)', 'Enviar la carta de petició (1 clic)') : acL('Buscar el correo de la entidad', 'Buscar el correu de l\'entitat');
+  }
+  if(f.estado === 'presentada') return acL('Esperar la resolución', 'Esperar la resolució');
+  if(!f.fecha_limite) return acL('Vigilar: aún no se ha publicado', 'Vigilar: encara no s\'ha publicat');
+  const sol = f.solicitud && Array.isArray(f.solicitud.apartados) && f.solicitud.apartados.length;
+  if(!sol) return acL('Preparar la solicitud con IA', 'Preparar la sol·licitud amb IA');
+  const faltan = subvDocs(f).filter(x => !x.ok).length;
+  if(faltan) return acL(`Reunir ${faltan} documento${faltan === 1 ? '' : 's'}`, `Reunir ${faltan} document${faltan === 1 ? '' : 's'}`);
+  if(subvAntes(f).length < SUBV_ANTES.length) return acL('Repasar «Antes de presentar»', 'Repassar «Abans de presentar»');
+  return acL('Presentar y marcarla como presentada', 'Presentar i marcar-la com a presentada');
+}
+// Calendario único con prioridad, tiempo restante y acción recomendada
+function subvCalendarioHtml(conv){
+  const filas = conv.filter(f => f.activo !== false && (['seguimiento', 'abierta'].includes(f.estado) || (subvEsDon(f) && f.estado === 'presentada')))
+    .map(f => ({ f, p: subvPrioridad(f), d: subvDias(subvPlazo(f)) }))
+    .sort((a, b) => a.p.n - b.p.n || (a.d === null ? 9e9 : a.d) - (b.d === null ? 9e9 : b.d));
+  if(!filas.length) return '';
+  const resto = o => { if(subvEsDon(o.f)) return acL('Abierto todo el año', 'Obert tot l\'any'); if(o.d === null) return '—'; if(o.d < 0) return acL('Vencida', 'Vençuda');
+    const t = o.d === 0 ? acL('Hoy', 'Avui') : o.d === 1 ? acL('Mañana', 'Demà') : (o.f.fecha_limite ? '' : '≈ ') + o.d + ' ' + acL('días', 'dies'); return `<b class="sv-r-${o.p.c}">${t}</b>`; };
+  return `<div class="panel-card sv-cal">
+    <h3>📅 ${acL('Calendario y prioridades', 'Calendari i prioritats')} <small>${acL('toca una fila para abrirla', 'toca una fila per obrir-la')}</small></h3>
+    <div class="sv-cal-w"><table>
+      <thead><tr><th>${acL('Prioridad', 'Prioritat')}</th><th>${acL('Convocatoria', 'Convocatòria')}</th><th>${acL('Organismo', 'Organisme')}</th><th>${acL('Importe / qué pedimos', 'Import / què demanem')}</th><th>${acL('Fecha límite', 'Data límit')}</th><th>${acL('Tiempo restante', 'Temps restant')}</th><th>${acL('Acción recomendada', 'Acció recomanada')}</th></tr></thead>
+      <tbody>${filas.map(o => `<tr onclick="subvSel('${o.f.id}');const d=document.getElementById('sv-det');if(d)d.scrollIntoView({behavior:'smooth',block:'start'});">
+        <td><span class="sv-pri sv-pri-${o.p.c}">${o.p.t}</span></td>
+        <td><strong>${escAttr(o.f.titulo)}</strong>${o.f.estado === 'presentada' ? ` <span class="chip" style="font-size:10.5px;">${acL('pedida', 'demanada')}</span>` : ''}</td>
+        <td>${escAttr(o.f.organismo || '')}</td>
+        <td>${escAttr(o.f.importe || '—')}</td>
+        <td>${subvEsDon(o.f) ? '—' : (o.f.fecha_limite ? '<b>' + subvFecha(o.f.fecha_limite) + '</b>' : (o.f.fecha_prevista ? '≈ ' + subvFecha(o.f.fecha_prevista) : '—'))}</td>
+        <td>${resto(o)}</td>
+        <td>${escAttr(subvAccion(o.f))}</td></tr>`).join('')}</tbody>
+    </table></div>
+    <p class="subtle" style="font-size:11.5px;margin:6px 0 0;">${acL('Prioridad 1: cierra en 15 días o menos · Prioridad 2: en 45 días · Prioridad 3: más adelante o con fecha aún prevista. Las fechas salen siempre de la convocatoria oficial.', 'Prioritat 1: tanca en 15 dies o menys · Prioritat 2: en 45 dies · Prioritat 3: més endavant o amb data encara prevista. Les dates surten sempre de la convocatòria oficial.')}</p>
+  </div>`;
+}
+// Franja roja: plazos reales que cierran en 15 días o menos
+function subvUrgentesHtml(conv){
+  const urg = conv.filter(f => !subvEsDon(f) && f.activo !== false && ['seguimiento', 'abierta'].includes(f.estado) && f.fecha_limite).map(f => ({ f, d: subvDias(f.fecha_limite) })).filter(o => o.d >= 0 && o.d <= 15).sort((a, b) => a.d - b.d);
+  if(!urg.length) return '';
+  return `<div class="sv-urg"><span>⚠️ <b>${acL('Atención, plazos:', 'Atenció, terminis:')}</b> ${urg.map(o => `<button class="link-btn" onclick="subvSel('${o.f.id}');document.getElementById('sv-det').scrollIntoView({behavior:'smooth',block:'start'})"><b>${escAttr(o.f.titulo)}</b></button> ${acL('cierra el', 'tanca el')} ${subvFecha(o.f.fecha_limite)} (${o.d === 0 ? acL('¡hoy!', 'avui!') : o.d + ' ' + acL('días', 'dies')})`).join(' · ')}.</span></div>`;
+}
+// Resumen ejecutivo listo para pegar en el formulario en línea
+async function subvResumenEjecutivo(id, btn){
+  const f = subvFila(id); if(!f) return;
+  let perfil = ''; try { perfil = await subvPerfilTexto(); } catch(e){}
+  const aps = f.solicitud && Array.isArray(f.solicitud.apartados) ? f.solicitud.apartados.filter(a => a && a.texto) : [];
+  const corto = (t, n) => { t = String(t || '').replace(/\s+\n/g, '\n').trim(); return t.length > n ? t.slice(0, n - 1).replace(/\s+\S*$/, '') + '…' : t; };
+  const txt = [
+    acL('RESUMEN EJECUTIVO', 'RESUM EXECUTIU') + ' · ' + f.titulo,
+    '',
+    acL('Entidad solicitante: ', 'Entitat sol·licitant: ') + 'Associació Logos - Projectes Socials (Tarragona)',
+    acL('Convocatoria: ', 'Convocatòria: ') + f.titulo + (f.organismo ? ' — ' + f.organismo : ''),
+    f.importe ? acL('Importe solicitado: ', 'Import sol·licitat: ') + f.importe : '',
+    f.fecha_limite ? acL('Plazo de presentación: ', 'Termini de presentació: ') + subvFecha(f.fecha_limite) : '',
+    f.proyecto ? acL('Proyecto: ', 'Projecte: ') + f.proyecto : '',
+    f.linea ? acL('Encaje con la convocatoria: ', 'Encaix amb la convocatòria: ') + f.linea : '',
+    aps.length ? '' : null,
+    ...aps.slice(0, 4).map(a => `${a.titulo}:\n${corto(a.texto, 900)}\n`),
+    perfil ? acL('Sobre la entidad:', 'Sobre l\'entitat:') + '\n' + corto(perfil, 900) : ''
+  ].filter(x => x !== null && x !== '').join('\n');
+  await subvCopiar(txt, btn);
+}
+// Añadir una petición de donación (ordenadores, mobiliario…)
+const SUBV_DON_IDEAS = [
+  { t: 'CaixaBank · programa Reutilízame', o: 'Fundació «la Caixa» / CaixaBank', u: 'https://www.caixabank.com/es/actualidad/noticias/caixabank-impulsa-un-programa-para-canalizar-excedentes-de-material-de-las-empresas-a-entidades-sociales', q: 'Ordenadores y mobiliario de excedentes de empresas' },
+  { t: 'Labdoo', o: 'Labdoo (red solidaria de portátiles)', u: 'https://platform.labdoo.org', q: 'Portátiles reacondicionados para formación' }
+];
+function subvDonIdea(i){ const x = SUBV_DON_IDEAS[i]; if(!x) return; const s0 = (id, v) => { const e = document.getElementById(id); if(e) e.value = v; }; s0('svd-ent', x.t); s0('svd-org', x.o); s0('svd-url', x.u); s0('svd-que', x.q); }
+async function subvAnadirDonacion(){
+  const v = id => ((document.getElementById(id) || {}).value || '').trim();
+  const titulo = v('svd-ent'); if(!titulo){ alert(acL('Escribe la entidad donante.', 'Escriu l\'entitat donant.')); return; }
+  const url = v('svd-url'); if(url && !formacionUrlValida(url)){ alert(acL('El enlace debe empezar por https://', 'L\'enllaç ha de començar per https://')); return; }
+  const fila = { tipo: 'convocatoria', titulo, organismo: v('svd-org') || null, categoria: SUBV_CAT_DON, url: url || null, importe: v('svd-que') || null, notas: v('svd-notas') || null, estado: 'abierta' };
+  if(v('svd-mail')) fila.contacto_email = v('svd-mail');
+  if(await subvInsertarSeguro(fila)) renderSubvencionesScreen();
+}
+
 const SUBV_DOCS_BASICOS = ['Estatutos de la entidad', 'NIF de la entidad', 'Inscripción en el registro de entidades', 'Certificado de estar al corriente con Hacienda (AEAT)', 'Certificado de estar al corriente con la Seguridad Social (TGSS)', 'Certificado de la ATC (Generalitat), si lo piden', 'DNI y acreditación de la persona representante', 'Certificado digital de la entidad o idCAT del representante', 'Memoria del proyecto (formulario oficial)', 'Presupuesto del proyecto', 'Declaración responsable', 'Datos bancarios de la entidad'];
 const SUBV_TEMA_IA = 'Innovación y talento al servicio de la ciudadanía y de las personas vulnerables: inclusión digital, personas mayores y cuidados, acompañamiento, empleo, formación de adultos e IA con control humano.';
 const SUBV_IA_ESTADO = { abierta: ['🟢 Abierta', '🟢 Oberta'], proxima: ['🟡 Se abre pronto', '🟡 S\'obre aviat'], prevista: ['⚪ Prevista', '⚪ Prevista'] };
@@ -11621,9 +11735,13 @@ async function renderSubvencionesScreen(tab){
   const conv = filas.filter(f => f.tipo === 'convocatoria'), red = filas.filter(f => f.tipo === 'entidad');
   const av = subvCalcularAvisos(filas);
   const vivas = conv.filter(f => ['seguimiento', 'abierta'].includes(f.estado));
-  const prox = vivas.map(f => subvDias(subvPlazo(f))).filter(d => d !== null && d >= 0).sort((a, b) => a - b)[0];
+  const prox = vivas.filter(f => !subvEsDon(f)).map(f => subvDias(subvPlazo(f))).filter(d => d !== null && d >= 0).sort((a, b) => a - b)[0];
   const pres = conv.filter(f => ['presentada', 'concedida', 'denegada'].includes(f.estado));
-  const conc = conv.filter(f => f.estado === 'concedida');
+  const conc = conv.filter(f => f.estado === 'concedida' && !subvEsDon(f));
+  // v293 · cifras como el panel de Kizuna: presentadas / total, dinero en juego y donaciones en especie aparte
+  const vivasEco = vivas.filter(f => !subvEsDon(f)), presEco = conv.filter(f => !subvEsDon(f) && ['presentada', 'concedida', 'denegada'].includes(f.estado));
+  const enJuego = vivasEco.concat(conv.filter(f => !subvEsDon(f) && f.estado === 'presentada')).reduce((t, f) => t + subvImporteNum(f.importe), 0);
+  const dons = conv.filter(f => subvEsDon(f) && f.activo !== false && f.estado !== 'cerrada'), donsOk = dons.filter(f => f.estado === 'concedida').length;
   const stat = (n, t) => `<div class="sv-stat"><b>${n}</b><span>${t}</span></div>`;
   const tabs = [['panel', '🎯', acL('Panel de acción', 'Panell d\'acció')], ['buscar', '🔎', acL('Buscar con IA', 'Cercar amb IA')], ['fuentes', '🌐', acL('Páginas que vigilamos', 'Pàgines que vigilem') + ` (${fuentes.length})`], ['red', '🤝', acL('Nuestra red', 'La nostra xarxa') + ` (${red.length})`], ['perfil', '🏛️', acL('Datos de Logos para la IA', 'Dades de Logos per a la IA')]];
   cont.innerHTML = `
@@ -11631,11 +11749,12 @@ async function renderSubvencionesScreen(tab){
     <p class="subtle" style="margin:0 0 12px;">${acL('Para la dirección y Recursos Humanos. Encontrar convocatorias, preparar la solicitud con el formulario oficial y no perder ningún plazo. La IA propone; una persona revisa y presenta.', 'Per a la direcció i Recursos Humans. Trobar convocatòries, preparar la sol·licitud amb el formulari oficial i no perdre cap termini. La IA proposa; una persona revisa i presenta.')}</p>
     ${st.sql100 ? '' : `<div class="auth-error" style="margin-bottom:12px;">${acL('Falta ejecutar el SQL-100 en Supabase: sin él no se guardan los pasos, los documentos ni el borrador de la solicitud.', 'Cal executar l\'SQL-100 a Supabase: sense ell no es desen els passos, els documents ni l\'esborrany de la sol·licitud.')}</div>`}
     <div class="sv-stats">
-      ${stat(vivas.length, acL('convocatorias en marcha', 'convocatòries en marxa'))}
+      ${stat(vivasEco.length, acL('convocatorias en marcha', 'convocatòries en marxa'))}
       ${stat(prox === undefined ? '—' : prox + ' ' + acL('días', 'dies'), acL('al próximo plazo', 'al proper termini'))}
-      ${stat(pres.length, acL('presentadas', 'presentades'))}
-      ${stat(conc.length, acL('concedidas', 'concedides'))}
-      ${stat(subvEur(conc.reduce((s, f) => s + (Number(f.importe_concedido) || 0), 0)), acL('conseguido', 'aconseguit'))}
+      ${stat(presEco.length + ' / ' + (vivasEco.length + presEco.length), acL('presentadas', 'presentades'))}
+      ${stat(`<em style="font-style:normal;color:#1E7A46;">${subvEur(enJuego)}</em>`, acL('en juego (lo que pedimos)', 'en joc (el que demanem)'))}
+      ${stat(subvEur(conc.reduce((s, f) => s + (Number(f.importe_concedido) || 0), 0)), acL('conseguido', 'aconseguit') + ` · ${conc.length} ${acL('concedidas', 'concedides')}`)}
+      ${stat(`<em style="font-style:normal;color:#B3700E;">${dons.length}</em>`, acL('donaciones en especie', 'donacions en espècie') + (donsOk ? ` · ${donsOk} ${acL('conseguidas', 'aconseguides')}` : ''))}
     </div>
     <div class="imp-tabs">${tabs.map(([k, ic, t]) => `<button class="imp-tab${st.tab === k ? ' on' : ''}" onclick="renderSubvencionesScreen('${k}')">${ic} ${t}</button>`).join('')}</div>
     <div id="sv-cuerpo"></div>`;
@@ -11662,6 +11781,8 @@ function subvPanelHtml(conv, av){
     return `<button class="sv-item${f.id === st.sel ? ' on' : ''}" onclick="subvSel('${f.id}')"><b><span class="sv-dot" style="background:${SUBV_DOT[f.estado] || '#9AA6B8'}"></span>${escAttr(f.titulo)}</b><small>${escAttr(f.organismo || '')}${chip}</small></button>`; };
   const sel = visibles.find(f => f.id === st.sel);
   return `
+    ${subvUrgentesHtml(conv)}
+    ${subvCalendarioHtml(conv)}
     ${(av.plazos.length || av.revisar.length) ? `<div class="panel-card" style="border-color:var(--ochre);margin-bottom:14px;padding:14px 18px;"><h3 style="margin:0 0 6px;font-size:15px;">🔔 ${acL('Avisos', 'Avisos')}</h3>${subvAvisosHtml(av)}
       <p class="subtle" style="font-size:12px;margin:8px 0 0;">⏰ ${acL(`Recordatorios por correo 5 meses, 1 mes y 1 semana antes, a ${SUBV_CORREO_AVISOS} y a Recursos Humanos.`, `Recordatoris per correu 5 mesos, 1 mes i 1 setmana abans, a ${SUBV_CORREO_AVISOS} i a Recursos Humans.`)}${IS_ADMIN ? ` <button class="link-btn" id="subv-prueba-btn" style="font-size:12px;" onclick="subvCorreoPrueba()">📧 ${acL('Enviar correo de prueba', 'Enviar correu de prova')}</button>` : ''}</p></div>` : ''}
     <div class="sv-grid">
@@ -11679,6 +11800,17 @@ function subvPanelHtml(conv, av){
             <input type="text" id="sv-importe" placeholder="${acL('Importe (opcional)', 'Import (opcional)')}" style="margin-bottom:6px;">
             <input type="text" id="sv-notas" placeholder="${acL('Notas (opcional)', 'Notes (opcional)')}" style="margin-bottom:8px;">
             <button class="primary-btn" style="width:auto;margin:0;" onclick="subvAnadir()">${acL('Añadir', 'Afegir')}</button></div></details>
+        <details style="margin:4px 6px;"><summary class="link-btn" style="font-size:12.5px;cursor:pointer;">🎁 ${acL('Pedir una donación (ordenadores, mobiliario…)', 'Demanar una donació (ordinadors, mobiliari…)')}</summary>
+          <div style="margin-top:8px;">
+            <div class="subtle" style="font-size:11.5px;margin:0 0 6px;">${acL('Ideas:', 'Idees:')} ${SUBV_DON_IDEAS.map((x, i) => `<button type="button" class="link-btn" style="font-size:11.5px;" onclick="subvDonIdea(${i})">${escAttr(x.t)}</button>`).join(' · ')}</div>
+            <input type="text" id="svd-ent" placeholder="${acL('Entidad o empresa donante', 'Entitat o empresa donant')}" style="margin-bottom:6px;">
+            <input type="text" id="svd-org" placeholder="${acL('Quién es (opcional)', 'Qui és (opcional)')}" style="margin-bottom:6px;">
+            <input type="text" id="svd-que" placeholder="${acL('Qué pedimos: p. ej. 15 ordenadores, 10 mesas y 15 sillas', 'Què demanem: p. ex. 15 ordinadors, 10 taules i 15 cadires')}" style="margin-bottom:6px;">
+            <input type="email" id="svd-mail" placeholder="${acL('Correo de contacto (para la carta)', 'Correu de contacte (per a la carta)')}" style="margin-bottom:6px;">
+            <input type="url" id="svd-url" placeholder="https://… (${acL('web', 'web')})" style="margin-bottom:6px;">
+            <input type="text" id="svd-notas" placeholder="${acL('Notas (opcional)', 'Notes (opcional)')}" style="margin-bottom:8px;">
+            <button class="primary-btn" style="width:auto;margin:0;" onclick="subvAnadirDonacion()">${acL('Añadir', 'Afegir')}</button>
+            <div class="subtle" style="font-size:11.5px;margin:6px 0 0;">${acL('En su ficha sale la carta de petición lista para enviar por correo.', 'A la seva fitxa surt la carta de petició a punt per enviar per correu.')}</div></div></details>
       </aside>
       <section class="sv-det" id="sv-det">${sel ? subvDetalleHtml(sel) : `<div class="empty-note" style="margin:0;">${acL('Elige una convocatoria de la lista.', 'Tria una convocatòria de la llista.')}</div>`}</section>
     </div>`;
@@ -11690,6 +11822,8 @@ function subvSel(id){
   if(f && det){ det.innerHTML = subvDetalleHtml(f); if(window.innerWidth < 820) det.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 }
 function subvMensajeBase(f){
+  if(subvEsDon(f)) return acL(`Buenos días:\n\nOs escribimos desde la Associació Logos - Projectes Socials (Tarragona), entidad sin ánimo de lucro que acompaña a personas en situación de vulnerabilidad: trámites, búsqueda de empleo, formación digital y cuidados.\n\nQueremos ampliar nuestra aula de formación y, por eso, os pedimos si podéis donarnos: ${f.importe || '[ordenadores, móviles, mesas, sillas…]'}.\n\nNos encargamos de la recogida y os enviamos el certificado de donación y una pequeña memoria del uso que les damos.\n\nMuchas gracias por vuestra atención.\n\n${CURRENT_USER_NOMBRE || ''}\nAssociació Logos - Projectes Socials · Tarragona`,
+    `Bon dia,\n\nUs escrivim des de l'Associació Logos - Projectes Socials (Tarragona), entitat sense ànim de lucre que acompanya persones en situació de vulnerabilitat: tràmits, recerca de feina, formació digital i cures.\n\nVolem ampliar la nostra aula de formació i, per això, us demanem si ens podeu donar: ${f.importe || '[ordinadors, mòbils, taules, cadires…]'}.\n\nNosaltres ens encarreguem de la recollida i us enviem el certificat de donació i una petita memòria de l'ús que en fem.\n\nMoltes gràcies per la vostra atenció.\n\n${CURRENT_USER_NOMBRE || ''}\nAssociació Logos - Projectes Socials · Tarragona`);
   return acL(`Buenos días:\n\nOs escribimos desde la Associació Logos - Projectes Socials (Tarragona). Estamos preparando la solicitud para «${f.titulo}» y querríamos confirmar:\n\n- [Escribe aquí la duda: plazo, gastos que se pueden incluir, formulario, documentación…]\n\nMuchas gracias.\n\n${CURRENT_USER_NOMBRE || ''}\nAssociació Logos - Projectes Socials`,
     `Bon dia,\n\nUs escrivim des de l'Associació Logos - Projectes Socials (Tarragona). Estem preparant la sol·licitud per a «${f.titulo}» i voldríem confirmar:\n\n- [Escriu aquí el dubte: termini, despeses que es poden incloure, formulari, documentació…]\n\nMoltes gràcies.\n\n${CURRENT_USER_NOMBRE || ''}\nAssociació Logos - Projectes Socials`);
 }
@@ -11713,6 +11847,12 @@ function subvDetalleHtml(f){
       <select onchange="subvEstado('${f.id}', this.value)" style="width:auto;padding:6px 10px;font-size:13px;">${estadoOpts}</select>
     </div>
     ${f.linea ? `<div style="background:#EEF4FC;border-radius:10px;padding:9px 12px;margin-top:10px;font-size:13.5px;">🎯 <strong>${acL('Encaje con Logos:', 'Encaix amb Logos:')}</strong> ${escAttr(f.linea)}</div>` : ''}
+    <div class="sv-acc-top">
+      <span class="sv-pri sv-pri-${subvPrioridad(f).c}">${subvPrioridad(f).t}</span>
+      <span class="sv-acc-txt">➡️ ${escAttr(subvAccion(f))}</span>
+      ${f.url ? `<a class="sv-btn" href="${escAttr(f.url)}" target="_blank" rel="noopener">🌐 ${subvEsDon(f) ? acL('Web de la entidad', 'Web de l\'entitat') : acL('Abrir la convocatoria', 'Obrir la convocatòria')}</a>` : ''}
+      ${subvEsDon(f) ? '' : `<button class="sv-btn pri" onclick="subvResumenEjecutivo('${f.id}', this)" title="${acL('Datos de la entidad, importe, plazo y los primeros apartados de la solicitud, listos para pegar', 'Dades de l\'entitat, import, termini i els primers apartats de la sol·licitud, a punt per enganxar')}">📋 ${acL('Copiar resumen ejecutivo para el formulario', 'Copiar resum executiu per al formulari')}</button>`}
+    </div>
     ${f.notas ? `<div class="subtle" style="font-size:12.5px;margin:8px 0 0;">📝 ${escAttr(f.notas)}</div>` : ''}
     ${subvEtapasEnviadasTxt(f) ? `<div class="subtle" style="font-size:11.5px;margin:4px 0 0;">${subvEtapasEnviadasTxt(f)}</div>` : ''}
 
@@ -21049,7 +21189,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-20 · v292 (proyectos: Excel completo con todos los datos, actuaciones, asistencia e indicadores, también desde dentro del proyecto; seguimiento y actuaciones unidos; la asistencia se cuenta sola con las actuaciones; fecha de alta en Logos y en el proyecto) · antes: v291 (corregir o quitar una actuación cuando uno se equivoca, sin crear un trámite nuevo) · antes: v290 (unir también las cuentas de baja repetidas —Jana educadora, Ariadna— con sus horarios, y quitarlas del equipo) · antes: v289 («Correos antiguos o repetidos»: solo registros del equipo, nunca personas usuarias; se ve entero sin cortarse) · antes: v288 (conexión más fuerte: reintentos automáticos si falla la red, nada se queda colgado, aviso sin internet) · antes: v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-20 · v293 (subvenciones: cifras arriba —presentadas, dinero en juego, donaciones—, calendario único con prioridad, tiempo restante y acción recomendada, franja roja de plazos, donaciones en especie con carta de petición y «Copiar resumen ejecutivo») · antes: v292 (proyectos: Excel completo con todos los datos, actuaciones, asistencia e indicadores, también desde dentro del proyecto; seguimiento y actuaciones unidos; la asistencia se cuenta sola con las actuaciones; fecha de alta en Logos y en el proyecto) · antes: v291 (corregir o quitar una actuación cuando uno se equivoca, sin crear un trámite nuevo) · antes: v290 (unir también las cuentas de baja repetidas —Jana educadora, Ariadna— con sus horarios, y quitarlas del equipo) · antes: v289 («Correos antiguos o repetidos»: solo registros del equipo, nunca personas usuarias; se ve entero sin cortarse) · antes: v288 (conexión más fuerte: reintentos automáticos si falla la red, nada se queda colgado, aviso sin internet) · antes: v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
