@@ -12681,7 +12681,9 @@ async function renderAulaVirtualScreen(){
       <td style="padding:8px 6px;">${c.docente_nombre || c.docente_email || '—'}</td>
       <td style="padding:8px 6px;">${iconoEstado[c.estado] || '🟢'} ${textoEstado[c.estado] || c.estado}</td>
       <td style="padding:8px 6px;display:flex;gap:8px;flex-wrap:wrap;">
-        ${c.enlace_meet ? `<a href="${c.enlace_meet}" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">${({meet:'🎥 Meet', zoom:'📹 Zoom', teams:'💻 Teams', otro:'🔗'}[c.plataforma] || '🎥')} ${LANG_I==='ca'?'Unir-se':'Unirse'}</a>` : ''}
+        ${c.enlace_meet ? `<a href="${escAttr(c.enlace_meet)}" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;">${({meet:'🎥 Meet', zoom:'📹 Zoom', teams:'💻 Teams', jitsi:'🎥 Jitsi', otro:'🔗'}[c.plataforma] || '🎥')} ${LANG_I==='ca'?'Unir-se':'Unirse'}</a>` : ''}
+        <a href="${escAttr(avGcal(c))}" target="_blank" rel="noopener" class="link-btn" style="font-size:12px;" title="${LANG_I==='ca'?'Afegir al meu Google Calendar':'Añadir a mi Google Calendar'}">📅 Calendar</a>
+        ${c.curso_id && c.estado !== 'cancelada' && c.estado !== 'finalizada' ? `<button class="link-btn" style="font-size:12px;" title="${c.invitacion_enviada_en ? (LANG_I==='ca'?'Invitació enviada el ':'Invitación enviada el ') + new Date(c.invitacion_enviada_en).toLocaleString(t.localeFecha, { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : ''}" onclick="avInvitarClase('${c.id}', 'invitacion', this)">✉️ ${c.invitacion_enviada_en ? (LANG_I==='ca'?'Convidar de nou':'Invitar de nuevo') : (LANG_I==='ca'?'Convidar inscrits':'Invitar inscritos')}</button>` : ''}
         <button class="link-btn" style="font-size:12px;" onclick="verParticipantesClase('${c.id}','${(c.titulo||'').replace(/'/g,"\\'")}')">${LANG_I==='ca'?'Participants':'Participantes'}</button>
         ${c.curso_id ? `<button class="link-btn" style="font-size:12px;" onclick="pasarAsistencia('${c.id}','${c.curso_id}','${(c.titulo||'').replace(/'/g,"\\'")}')">✅ ${LANG_I==='ca'?'Passar assistència':'Pasar asistencia'}</button>` : ''}
         <select style="font-size:11px;padding:2px 4px;" onchange="cambiarEstadoClase('${c.id}', this.value)">
@@ -12846,7 +12848,7 @@ async function renderAulaVirtualScreen(){
 
     <div class="panel-card av-card-crear av-c-verde-b" style="margin-bottom:16px;">
       <h3>🎥 ${LANG_I==='ca' ? 'Crear classe en línia' : 'Crear clase en línea'}</h3>
-      <p class="subtle" style="margin:0 0 8px;font-size:12.5px;">${LANG_I==='ca' ? "Genera l'enllaç a Google Meet o Calendar i enganxa'l aquí." : 'Genera el enlace en Google Meet o Calendar y pégalo aquí.'}</p>
+      <p class="subtle" style="margin:0 0 8px;font-size:12.5px;">${LANG_I==='ca' ? "Enganxa l'enllaç de Teams, Meet o Zoom (o crea una sala gratis amb un clic). Les persones inscrites reben la invitació per correu amb el botó per entrar i per afegir-la al seu calendari." : 'Pega el enlace de Teams, Meet o Zoom (o crea una sala gratis con un clic). Las personas inscritas reciben la invitación por correo con el botón para entrar y para añadirla a su calendario.'}</p>
       <div class="field"><input type="text" id="clase-titulo" placeholder="${LANG_I==='ca'?'Curs (ex: TIC, Orientació, Català, Ocupació)':'Curso (ej: TIC, Orientación, Català, Empleo)'}"></div>
       <div class="field"><input type="text" id="clase-docente" placeholder="${LANG_I==='ca'?'Docent':'Docente'}" value="${CURRENT_USER_NOMBRE || ''}"></div>
       <div class="field">
@@ -12859,6 +12861,7 @@ async function renderAulaVirtualScreen(){
       <div style="display:flex;gap:8px;">
         <div class="field" style="flex:1;"><label>${LANG_I==='ca'?'Data':'Fecha'}</label><input type="date" id="clase-fecha" value="${hoyIso}"></div>
         <div class="field" style="flex:1;"><label>Hora</label><input type="time" id="clase-hora"></div>
+        <div class="field" style="flex:1;"><label>${LANG_I==='ca'?'Durada':'Duración'}</label><select id="clase-duracion"><option value="30">30 min</option><option value="45">45 min</option><option value="60" selected>1 h</option><option value="90">1 h 30</option><option value="120">2 h</option><option value="180">3 h</option></select></div>
       </div>
       <div class="field">
         <label>${LANG_I==='ca'?'Plataforma de videotrucada':'Plataforma de videollamada'}</label>
@@ -12866,11 +12869,14 @@ async function renderAulaVirtualScreen(){
           <option value="meet">Google Meet</option>
           <option value="zoom">Zoom</option>
           <option value="teams">Microsoft Teams</option>
+          <option value="jitsi">Jitsi Meet (${LANG_I==='ca'?'gratis, sense compte':'gratis, sin cuenta'})</option>
           <option value="otro">${LANG_I==='ca'?'Altra':'Otra'}</option>
         </select>
       </div>
-      <div class="field"><label>${LANG_I==='ca'?'Enllaç de la videotrucada':'Enlace de la videollamada'}</label><input type="text" id="clase-meet" placeholder="https://..."></div>
-      <button class="primary-btn" onclick="crearClaseAula()">➕ ${LANG_I==='ca'?'Crear classe':'Crear clase'}</button>
+      <div class="field"><label>${LANG_I==='ca'?'Enllaç de la videotrucada':'Enlace de la videollamada'}</label><input type="text" id="clase-meet" placeholder="https://...">
+        <button type="button" class="link-btn" style="font-size:12px;margin-top:4px;" onclick="avSalaJitsi()">🎥 ${LANG_I==='ca'?'No tinc enllaç: crear una sala gratis (Jitsi)':'No tengo enlace: crear una sala gratis (Jitsi)'}</button></div>
+      <label class="checkbox-row" style="font-size:13px;"><input type="checkbox" id="clase-invitar" checked> ✉️ ${LANG_I==='ca'?'Enviar la invitació per correu a les persones inscrites (amb calendari)':'Enviar la invitación por correo a las personas inscritas (con calendario)'}</label>
+      <button class="primary-btn" onclick="crearClaseAula(this)">➕ ${LANG_I==='ca'?'Crear classe':'Crear clase'}</button>
     </div>
     </div>
     </section>
@@ -14678,7 +14684,39 @@ async function verInscritosCurso(cursoId, nombreCurso){
   wrap.scrollIntoView({ behavior:'smooth' });
 }
 
-async function crearClaseAula(){
+// v295 · Invitación a las clases en línea por correo, con «Añadir a Google Calendar» y archivo .ics (función «avisos-clases», SQL 117)
+function avGcal(c){
+  const p2 = n => String(n).padStart(2, '0');
+  const [y, m, d] = String(c.fecha).split('-').map(Number), [hh, mm] = String(c.hora || '10:00').slice(0, 5).split(':').map(Number);
+  const ini = new Date(y, m - 1, d, hh, mm), fin = new Date(ini.getTime() + (Number(c.duracion_min) || 60) * 60000);
+  const f = x => `${x.getFullYear()}${p2(x.getMonth() + 1)}${p2(x.getDate())}T${p2(x.getHours())}${p2(x.getMinutes())}00`;
+  const det = [c.docente_nombre ? (LANG_I === 'ca' ? 'Docent: ' : 'Docente: ') + c.docente_nombre : '', c.enlace_meet ? (LANG_I === 'ca' ? 'Entrar: ' : 'Entrar: ') + c.enlace_meet : ''].filter(Boolean).join('\n');
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent((c.titulo || 'Clase') + ' · Logos') + '&dates=' + f(ini) + '/' + f(fin) + '&ctz=Europe/Madrid&details=' + encodeURIComponent(det) + '&location=' + encodeURIComponent(c.enlace_meet || 'Aula Virtual de Logos');
+}
+function avSalaJitsi(){
+  const t = (document.getElementById('clase-titulo').value || 'clase').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '').slice(0, 24);
+  const az = Array.from(crypto.getRandomValues(new Uint8Array(5)), b => 'abcdefghjkmnpqrstuvwxyz23456789'[b % 31]).join('');
+  document.getElementById('clase-meet').value = `https://meet.jit.si/Logos-${t || 'Clase'}-${az}`;
+  document.getElementById('clase-plataforma').value = 'jitsi';
+}
+async function avInvitarClase(id, tipo, btn){
+  const ca = LANG_I === 'ca';
+  if(btn){ btn.disabled = true; btn.dataset.t = btn.innerHTML; btn.innerHTML = '⏳'; }
+  let txt = '';
+  try {
+    const { data, error } = await sb.functions.invoke('avisos-clases', { body: { clase_id: id, tipo: tipo || 'invitacion' } });
+    if(error){ let det = error.message || ''; try { const j = await error.context.json(); if(j && j.error) det = j.error; } catch(e){}
+      txt = (ca ? 'No s\'ha pogut enviar el correu: ' : 'No se ha podido enviar el correo: ') + det + (/404|not found|Failed to send/i.test(det) ? (ca ? ' · Falta crear la funció «avisos-clases» a Supabase.' : ' · Falta crear la función «avisos-clases» en Supabase.') : '');
+    } else if(data){
+      txt = data.total ? (ca ? `✉️ ${tipo === 'cancelacion' ? 'Avís de cancel·lació' : 'Invitació'} enviada a ${data.enviados} de ${data.total} persones` : `✉️ ${tipo === 'cancelacion' ? 'Aviso de cancelación' : 'Invitación'} enviada a ${data.enviados} de ${data.total} personas`) + ((data.fallos || []).length ? ' · ' + data.fallos[0] : '')
+        : (ca ? 'Encara no hi ha ningú inscrit al curs: no s\'ha enviat cap correu.' : 'Todavía no hay nadie inscrito en el curso: no se ha enviado ningún correo.');
+    }
+  } catch(e){ txt = e.message || String(e); }
+  if(btn){ btn.disabled = false; btn.innerHTML = btn.dataset.t || btn.innerHTML; }
+  try { m3Toast(txt); } catch(e){ alert(txt); }
+  return txt;
+}
+async function crearClaseAula(btnCrear){
   const titulo = document.getElementById('clase-titulo').value.trim();
   const docente = document.getElementById('clase-docente').value.trim();
   const cursoId = document.getElementById('clase-curso').value || null;
@@ -14687,11 +14725,19 @@ async function crearClaseAula(){
   const plataforma = document.getElementById('clase-plataforma').value;
   const enlace = document.getElementById('clase-meet').value.trim();
   if(!titulo || !fecha || !hora){ alert(LANG_I==='ca' ? 'Omple el curs, la data i l\'hora.' : 'Rellena el curso, la fecha y la hora.'); return; }
-  const { error } = await sb.from('aula_virtual_clases').insert({
-    titulo, docente_nombre: docente || null, docente_email: CURRENT_USER.email,
-    curso_id: cursoId, fecha, hora, plataforma, enlace_meet: enlace || null, creado_por_email: CURRENT_USER.email
-  });
+  if(enlace && !/^https:\/\/\S+$/i.test(enlace)){ alert(LANG_I==='ca' ? 'L\'enllaç ha de començar per https://' : 'El enlace debe empezar por https://'); return; }
+  const duracion = Number((document.getElementById('clase-duracion') || {}).value) || 60;
+  const invitar = !!(document.getElementById('clase-invitar') || {}).checked;
+  if(btnCrear){ btnCrear.disabled = true; }
+  const fila = { titulo, docente_nombre: docente || null, docente_email: CURRENT_USER.email,
+    curso_id: cursoId, fecha, hora, plataforma, enlace_meet: enlace || null, creado_por_email: CURRENT_USER.email, duracion_min: duracion };
+  let { data: nueva, error } = await sb.from('aula_virtual_clases').insert(fila).select().maybeSingle();
+  if(error && /duracion_min/i.test(error.message || '')){ delete fila.duracion_min; ({ data: nueva, error } = await sb.from('aula_virtual_clases').insert(fila).select().maybeSingle()); }
+  if(btnCrear){ btnCrear.disabled = false; }
   if(error){ alert(error.message); return; }
+  if(!nueva || !nueva.id){ try { const r = await sb.from('aula_virtual_clases').select('*').eq('creado_por_email', CURRENT_USER.email).eq('fecha', fecha).eq('titulo', titulo).order('creado_en', { ascending: false }).limit(1); nueva = (r.data || [])[0] || nueva; } catch(e){} }
+  if(invitar && nueva && nueva.id && (cursoId)) await avInvitarClase(nueva.id, 'invitacion');
+  else if(invitar && !cursoId){ try { m3Toast(LANG_I==='ca' ? 'Classe creada. Com que no està vinculada a cap curs, no hi ha a qui enviar la invitació: comparteix l\'enllaç o el botó «Google Calendar».' : 'Clase creada. Como no está vinculada a ningún curso, no hay a quién enviar la invitación: comparte el enlace o el botón «Google Calendar».'); } catch(e){} }
   try { localStorage.setItem('logos_aula_tab', 'clases'); } catch(e){}
   renderAulaVirtualScreen();
 }
@@ -14699,6 +14745,7 @@ async function crearClaseAula(){
 async function cambiarEstadoClase(id, nuevoEstado){
   const { error } = await sb.from('aula_virtual_clases').update({ estado: nuevoEstado }).eq('id', id);
   if(error){ alert(error.message); return; }
+  if(nuevoEstado === 'cancelada' && confirm(LANG_I==='ca' ? 'Vols avisar per correu les persones inscrites que la classe s\'ha cancel·lat?' : '¿Quieres avisar por correo a las personas inscritas de que la clase se ha cancelado?')) await avInvitarClase(id, 'cancelacion');
   renderAulaVirtualScreen();
 }
 
@@ -21237,7 +21284,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-20 · v294 (revisión general del día a día de los técnicos; «Mis fichajes» se descarga en Excel con las horas por semana comparadas con el horario) · antes: v293 (subvenciones: cifras arriba —presentadas, dinero en juego, donaciones—, calendario único con prioridad, tiempo restante y acción recomendada, franja roja de plazos, donaciones en especie con carta de petición y «Copiar resumen ejecutivo») · antes: v292 (proyectos: Excel completo con todos los datos, actuaciones, asistencia e indicadores, también desde dentro del proyecto; seguimiento y actuaciones unidos; la asistencia se cuenta sola con las actuaciones; fecha de alta en Logos y en el proyecto) · antes: v291 (corregir o quitar una actuación cuando uno se equivoca, sin crear un trámite nuevo) · antes: v290 (unir también las cuentas de baja repetidas —Jana educadora, Ariadna— con sus horarios, y quitarlas del equipo) · antes: v289 («Correos antiguos o repetidos»: solo registros del equipo, nunca personas usuarias; se ve entero sin cortarse) · antes: v288 (conexión más fuerte: reintentos automáticos si falla la red, nada se queda colgado, aviso sin internet) · antes: v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-20 · v295 (Aula Virtual: invitación por correo a las clases en línea con «Añadir a Google Calendar» y archivo .ics, recordatorio el día antes, aviso de cancelación, duración y sala Jitsi gratis) · antes: v294 (revisión general del día a día de los técnicos; «Mis fichajes» se descarga en Excel con las horas por semana comparadas con el horario) · antes: v293 (subvenciones: cifras arriba —presentadas, dinero en juego, donaciones—, calendario único con prioridad, tiempo restante y acción recomendada, franja roja de plazos, donaciones en especie con carta de petición y «Copiar resumen ejecutivo») · antes: v292 (proyectos: Excel completo con todos los datos, actuaciones, asistencia e indicadores, también desde dentro del proyecto; seguimiento y actuaciones unidos; la asistencia se cuenta sola con las actuaciones; fecha de alta en Logos y en el proyecto) · antes: v291 (corregir o quitar una actuación cuando uno se equivoca, sin crear un trámite nuevo) · antes: v290 (unir también las cuentas de baja repetidas —Jana educadora, Ariadna— con sus horarios, y quitarlas del equipo) · antes: v289 («Correos antiguos o repetidos»: solo registros del equipo, nunca personas usuarias; se ve entero sin cortarse) · antes: v288 (conexión más fuerte: reintentos automáticos si falla la red, nada se queda colgado, aviso sin internet) · antes: v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
