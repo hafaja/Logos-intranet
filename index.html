@@ -204,7 +204,13 @@
   .eqv-nom{font-weight:800;text-align:left;padding:0;}
   .eqv-no{color:#B8C2D0;}
   .eqv-baja td{opacity:.6;}
+  .ap-hist-datos{background:#E3F5E8;border:1.5px solid #1F8A4C;border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:13px;color:#17663A;}
+  .ap-hd-l{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .ap-hd-l span{background:#fff;border-radius:8px;padding:4px 8px;color:#16233F;font-size:12.5px;} .ap-hd-l small{display:block;color:#5D6B82;font-size:10.5px;}
   .ayc-aviso{display:block;width:100%;text-align:left;background:#FFF6DD;border:2px solid #F2BC2C;border-radius:14px;padding:12px 14px;font-size:14px;color:#5A3F00;cursor:pointer;margin:0 0 12px;}
+  .vac-aviso{background:#FDEEF4;border-color:#D6336C;color:#7A1338;} .vac-aviso-ir{float:right;font-weight:800;}
+  .cie-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:#F7F9FC;border-radius:12px;padding:10px 12px;}
+  .cie-form label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:#4A5B70;flex:1;min-width:140px;}
   .ayc-fila{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border:1.5px solid var(--line);border-radius:14px;padding:12px;margin:0 0 8px;}
   .ayc-n{width:30px;height:30px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--navy);flex:none;}
   .unir-fila{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 8px;background:#fff;}
@@ -3597,7 +3603,8 @@ function aplicarMenuPorRol(){
 function tecPuede(){ return !!(CURRENT_USER && IS_STAFF && (window.__staffYo || {}).es_soporte && !(typeof VER_COMO !== 'undefined' && VER_COMO)); }
 async function vacBadge(){
   const el = document.getElementById('vac-nav-n'); if(!el || !(IS_ADMIN || IS_RRHH || IS_RRHH_SOLO)) return;
-  try { const { count, error } = await sb.from('vacaciones_solicitudes').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente'); const n = error ? 0 : (count || 0); el.textContent = n; el.style.display = n ? '' : 'none'; } catch(e){}
+  try { const { count, error } = await sb.from('vacaciones_solicitudes').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente'); const n = error ? 0 : (count || 0); el.textContent = n; el.style.display = n ? '' : 'none';
+    const sum = document.querySelector('#nav-g-rrhh > summary'); if(sum){ let b = sum.querySelector('.vac-sum-n'); if(!b){ b = document.createElement('span'); b.className = 'cmp-n vac-sum-n'; b.style.cssText = 'margin-left:6px;background:#D6336C;color:#fff;'; sum.appendChild(b); } b.textContent = n; b.style.display = n ? '' : 'none'; b.title = acL('Vacaciones por revisar', 'Vacances per revisar'); } } catch(e){}
 }
 function navMarcar(btn){ if(!btn) return; document.querySelectorAll('.sidebar nav button').forEach(b => b.classList.remove('active')); btn.classList.add('active'); const g = btn.closest('details.nav-grupo'); if(g && !g.open) g.open = true; }
 async function rrhhIr(sub, btn){
@@ -3722,12 +3729,50 @@ function admLayout(cont){
   admSel(info.some(x => x.k === sel) ? sel : (info.some(x => x.k === 'personal') ? 'personal' : info[0].k), true);
 }
 document.addEventListener('toggle', e => { const d = e.target; if(d && d.matches && d.matches('details.carpeta[data-clave="adm-sec:vista"]') && d.open) eqVistaPintar(); }, true);
+document.addEventListener('toggle', e => { const d = e.target; if(d && d.matches && d.matches('details.carpeta[data-clave="adm-sec:cierres"]') && d.open) cierresPintar(); }, true);
+// v296 · Días cerrados al público (festivos, vacaciones de Logos): ese día Logos Acompanya no deja pedir citas, trámites ni ayuda (SQL 118)
+async function cierresPintar(){
+  const host = document.getElementById('cierres-admin'); if(!host) return;
+  const ca = LANG_I === 'ca', hoy = isoLocal();
+  const { data, error } = await sb.from('dias_cerrados').select('*').gte('fecha', hoy).order('fecha', { ascending: true }).limit(200);
+  if(error){ host.innerHTML = `<div class="empty-note">${/dias_cerrados|schema cache|does not exist/i.test(error.message || '') ? acL('Se activa con el SQL-118 en Supabase.', 'S\'activa amb l\'SQL-118 a Supabase.') : escAttr(error.message)}</div>`; return; }
+  const L = data || [];
+  const f = d => new Date(d + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  host.innerHTML = `<p class="subtle" style="margin:0 0 10px;font-size:12.5px;">${acL('Fuera del horario de atención Logos Acompanya ya está cerrado solo (no deja pedir citas, trámites ni ayuda). Aquí se añaden además los días enteros en que la oficina cierra: festivos, puentes, vacaciones de Logos… El equipo puede seguir trabajando en la Intranet.', 'Fora de l\'horari d\'atenció Logos Acompanya ja està tancat sol (no deixa demanar cites, tràmits ni ajuda). Aquí s\'hi afegeixen a més els dies sencers en què l\'oficina tanca: festius, ponts, vacances de Logos… L\'equip pot continuar treballant a la Intranet.')}</p>
+    <div class="cie-form">
+      <label>${acL('Desde', 'Des de')}<input type="date" id="cie-desde" value="${hoy}"></label>
+      <label>${acL('Hasta (opcional)', 'Fins a (opcional)')}<input type="date" id="cie-hasta"></label>
+      <label style="flex:2;">${acL('Motivo', 'Motiu')}<input type="text" id="cie-motivo" maxlength="80" placeholder="${acL('Ej.: festivo local, vacaciones de Navidad', 'Ex.: festiu local, vacances de Nadal')}"></label>
+      <button class="primary-btn" style="width:auto;margin:0;align-self:flex-end;" onclick="cierresAnadir(this)">➕ ${acL('Cerrar', 'Tancar')}</button>
+    </div>
+    <h4 style="margin:14px 0 6px;font-size:13.5px;">${acL('Próximos días cerrados', 'Propers dies tancats')} ${L.length ? `<span class="chip">${L.length}</span>` : ''}</h4>
+    ${L.length ? L.map(x => `<div class="panel-stat-row"><span>🚪 <strong>${f(x.fecha)}</strong>${x.motivo ? ' · ' + escAttr(x.motivo) : ''}</span><button class="link-btn" style="font-size:12px;color:var(--alert);" onclick="cierresQuitar('${x.fecha}')">${acL('Abrir de nuevo', 'Tornar a obrir')}</button></div>`).join('') : `<div class="empty-note">${acL('No hay días cerrados marcados.', 'No hi ha dies tancats marcats.')}</div>`}`;
+}
+async function cierresAnadir(btn){
+  const d = (document.getElementById('cie-desde') || {}).value, h = (document.getElementById('cie-hasta') || {}).value || d, motivo = ((document.getElementById('cie-motivo') || {}).value || '').trim();
+  if(!d || h < d){ alert(acL('Revisa las fechas.', 'Revisa les dates.')); return; }
+  const filas = []; for(let x = new Date(d + 'T12:00:00'); isoLocal(x) <= h && filas.length < 120; x.setDate(x.getDate() + 1)){ const dow = x.getDay(); if(dow !== 0 && dow !== 6) filas.push({ fecha: isoLocal(x), motivo: motivo || null, creado_por: CURRENT_USER.email }); }
+  if(!filas.length){ alert(acL('En esas fechas solo hay fin de semana (ya está cerrado).', 'En aquestes dates només hi ha cap de setmana (ja està tancat).')); return; }
+  if(btn) btn.disabled = true;
+  const { error } = await sb.from('dias_cerrados').upsert(filas, { onConflict: 'fecha' });
+  if(btn) btn.disabled = false;
+  if(error){ alert(error.message); return; }
+  try { m3Toast('🚪 ' + acL(`${filas.length} día${filas.length === 1 ? '' : 's'} cerrado${filas.length === 1 ? '' : 's'} al público`, `${filas.length} dia${filas.length === 1 ? '' : 'es'} tancat${filas.length === 1 ? '' : 's'} al públic`)); } catch(e){}
+  cierresPintar();
+}
+async function cierresQuitar(fecha){
+  if(!confirm(acL('¿Volver a abrir este día al público?', 'Tornar a obrir aquest dia al públic?'))) return;
+  const { error } = await sb.from('dias_cerrados').delete().eq('fecha', fecha);
+  if(error){ alert(error.message); return; }
+  cierresPintar();
+}
 function admSel(k, sinScroll){
   const info = (window.__admInfo || []).find(x => x.k === k); if(!info) return;
   document.querySelectorAll('.adm-main > details.carpeta').forEach(d => { const on = d.dataset.clave === 'adm-sec:' + k; d.classList.toggle('adm-on', on); if(on){ d.open = true; try { carpetaAlternar(d.dataset.clave, true); } catch(e){} } });
   document.querySelectorAll('.adm-menu .cmp-mi').forEach(b => { const on = b.dataset.k === k; b.classList.toggle('on', on); if(on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   const h = document.getElementById('adm-h'); if(h) h.textContent = info.ic + ' ' + info.tit;
   if(k === 'vista') eqVistaPintar();
+  if(k === 'cierres') cierresPintar();
   try { localStorage.setItem('adm-sel', k); } catch(e){}
   if(!sinScroll){ const m = document.querySelector('.adm-main'); if(m && m.getBoundingClientRect().top < 0) m.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 }
@@ -3750,7 +3795,7 @@ function admBuscar(q){
 }
 // Pantalla Administrador: las carpetas se agrupan por a quién le tocan
 const ADM_GRUPOS = [
-  { id: 'dir', ic: '🛡️', es: 'Dirección · solo administración', ca: 'Direcció · només administració', des: ['Equipo, permisos y lo que solo decides tú.', 'Equip, permisos i el que només decideixes tu.'], claves: ['vista', 'personal', 'reparto', 'oficina', 'proyectos', 'historia', 'noticias'] },
+  { id: 'dir', ic: '🛡️', es: 'Dirección · solo administración', ca: 'Direcció · només administració', des: ['Equipo, permisos y lo que solo decides tú.', 'Equip, permisos i el que només decideixes tu.'], claves: ['vista', 'personal', 'reparto', 'cierres', 'oficina', 'proyectos', 'historia', 'noticias'] },
   { id: 'rrhh', ic: '💼', es: 'Recursos Humanos', ca: 'Recursos Humans', des: ['Horarios y fichajes del personal. Nóminas y comunicados están en Recursos Humanos.', 'Horaris i fitxatges del personal. Nòmines i comunicats són a Recursos Humans.'], claves: ['horarios', 'fichajes'], rrhh: true },
   { id: 'per', ic: '🗂️', es: 'Personas atendidas y registros', ca: 'Persones ateses i registres', des: ['Fichas, revisiones y todo lo registrado.', 'Fitxes, revisions i tot el que s\'ha registrat.'], claves: ['proteccion', 'revisiones', 'incompletos', 'historial', 'fuera', 'atenciones', 'actuaciones'] },
   { id: 'esp', ic: '🏢', es: 'Espacios y herramientas', ca: 'Espais i eines', des: ['Salas, reuniones y traductor.', 'Sales, reunions i traductor.'], claves: ['salas', 'traductor'] }
@@ -3976,7 +4021,15 @@ function navIrSeccion(paso){
   b.click();
   try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e){ window.scrollTo(0, 0); }
 }
-function navAtras(){ navIrSeccion(-1); }
+function navAtras(){
+  // v298 · en pantallas que no son un apartado del menú (Configuración, una ficha…) la flecha es «← Volver» a donde estabas
+  const b = document.getElementById('nav-back');
+  if(b && b.dataset.volver === '1'){
+    if(history.state && history.state.logosNav && (history.state.i || 0) > 0){ history.back(); return; }
+    showScreen('panel'); try { renderPanelGeneral(); } catch(e){} return;
+  }
+  navIrSeccion(-1);
+}
 function navAdelante(){ navIrSeccion(1); }
 function navColocar(b, f){
   const a = document.querySelector('.screen.active'); if(!a || !b || !f) return;
@@ -4016,11 +4069,13 @@ function navPintar(){
   const pos = document.getElementById('nav-sec-pos'); if(pos) pos.textContent = i >= 0 ? (i + 1) + ' / ' + lista.length : '';
   if(fila && i >= 0) fila.textContent = navNombre(lista[i]);
   const ca = (typeof LANG_I !== 'undefined' && LANG_I === 'ca');
-  b.disabled = !ant; f.disabled = !sig;
-  const nb = ant ? navNombre(ant) : '', nf = sig ? navNombre(sig) : '';
+  const volver = i < 0 && navPantallaActiva() !== 'panel';
+  b.dataset.volver = volver ? '1' : '';
+  b.disabled = !ant && !volver; f.disabled = !sig;
+  const nb = ant ? navNombre(ant) : (volver ? (ca ? 'Tornar' : 'Volver') : ''), nf = sig ? navNombre(sig) : '';
   document.getElementById('nav-back-txt').textContent = nb;
   document.getElementById('nav-fwd-txt').textContent = nf;
-  b.title = ant ? (ca ? 'Anterior: ' : 'Anterior: ') + nb : ''; b.setAttribute('aria-label', b.title || (ca ? 'Apartat anterior' : 'Apartado anterior'));
+  b.title = ant ? (ca ? 'Anterior: ' : 'Anterior: ') + nb : (volver ? (ca ? 'Tornar a la pantalla anterior' : 'Volver a la pantalla anterior') : ''); b.setAttribute('aria-label', b.title || (ca ? 'Apartat anterior' : 'Apartado anterior'));
   f.title = sig ? (ca ? 'Següent: ' : 'Siguiente: ') + nf : ''; f.setAttribute('aria-label', f.title || (ca ? 'Apartat següent' : 'Apartado siguiente'));
 }
 // Pasos dentro de una misma pantalla (pestañas de «Mi gestión personal», etapas de un proyecto) para que las flechas también los recorran
@@ -4223,7 +4278,7 @@ async function actualizarBadgePanel(){
 function iniciarRefrescoBadge(){
   actualizarBadgePanel();
   clearInterval(__intervaloBadge);
-  __intervaloBadge = setInterval(actualizarBadgePanel, 60000); // cada 60 segundos
+  __intervaloBadge = setInterval(() => { actualizarBadgePanel(); try { if(Date.now() - (window.__vacBadgeT || 0) > 300000){ window.__vacBadgeT = Date.now(); vacBadge(); } } catch(e){} }, 60000); // cada 60 segundos (vacaciones: cada 5 min)
 }
 
 function detenerRefrescoBadge(){
@@ -4430,6 +4485,8 @@ async function entrarIntranet(){
     iniciarRefrescoBadge(); try { vacBadge(); } catch(e){}
     try { tecAlIniciar(); } catch(e){}
     irAPantallaInicial();
+    // v297 · enlace del correo «Revisar y aprobar en la Intranet» → directo a Vacaciones
+    try { const ir = new URLSearchParams(location.search).get('ir'); if(ir === 'vacaciones' && (IS_ADMIN || IS_RRHH || IS_RRHH_SOLO)){ history.replaceState(null, '', location.pathname); setTimeout(() => rrhhIr('vacaciones', null), 300); } } catch(e){}
     avisarClave(); guiaPrimeraVezIntranet();
   } finally { window.__entrando = false; }
 }
@@ -7487,11 +7544,29 @@ async function apAvisoExiste(pre){
   const abrir = x => `<button type="button" class="primary-btn" style="width:auto;margin:6px 8px 0 0;padding:8px 14px;font-size:13px;" onclick="apAbrirExistente('${x.tipo}','${x.id}')">📂 ${x.tipo === 'papel' ? acL('Abrir la ficha de trabajo de', 'Obrir la fitxa de treball de') : acL('Abrir la ficha de', 'Obrir la fitxa de')} ${escAttr(x.nombre || '')}</button>`;
   const cuentas = lista.filter(x => x.tipo === 'cuenta'), papel = lista.filter(x => x.tipo === 'papel');
   if(pre === 'ap' && !cuentas.length && papel.length){
+    try { await apRellenarDesdeHistorico(papel[0].id); } catch(e){}
     host.innerHTML = `<div class="info-box" style="margin:0 0 12px;background:#E3F5E8;border-color:#1F8A4C;">📄 ${acL(`<strong>${escAttr(papel[0].nombre)}</strong> ya tiene ficha con consentimiento en papel. Si firma ahora, esa ficha se une a su cuenta nueva: <strong>no se duplica</strong>. Puedes seguir.`, `<strong>${escAttr(papel[0].nombre)}</strong> ja té fitxa amb consentiment en paper. Si signa ara, aquesta fitxa s'uneix al seu compte nou: <strong>no es duplica</strong>. Pots continuar.`)}</div>`;
     return;
   }
   const mostrar = pre === 'ap' ? cuentas : lista;
   host.innerHTML = `<div class="info-box info-box-gold" style="margin:0 0 12px;">✋ <strong>${acL('Esta persona ya está dada de alta', 'Aquesta persona ja està donada d\'alta')}</strong>. ${acL('No hace falta que vuelva a firmar: abre su ficha.', 'No cal que torni a signar: obre la seva fitxa.')}<br>${mostrar.map(abrir).join('')}</div>`;
+}
+// v299 · Alta presencial de alguien del histórico: el formulario se rellena con lo que ya tenemos y se ve qué pasará a la ficha
+async function apRellenarDesdeHistorico(histId){
+  const { data: h } = await sb.from('personas_historicas').select('*').eq('id', histId).maybeSingle(); if(!h) return;
+  const nd = pNormDni(h.dni_nie);
+  let rows = [h];
+  if(nd.length >= 5){ const { data } = await sb.from('personas_historicas').select('*').ilike('dni_nie', '%' + nd.slice(-7) + '%').limit(30); rows = (data || []).filter(r => !r.perfil_id && pNormDni(r.dni_nie) === nd); if(!rows.length) rows = [h]; }
+  const d = histDatosParaFicha(rows);
+  const pon = (id, v) => { const el = document.getElementById(id); if(el && v && !String(el.value || '').trim()) el.value = v; };
+  pon('ap-nombre', h.nombre_completo);
+  pon('ap-telefono', d.telefono);
+  pon('ap-email', d.email);
+  { const m = document.getElementById('ap-municipio'); if(m && d.municipio && (!m.value || m.value === 'Tarragona')) m.value = d.municipio; }
+  pon('ap-sexo', d.sexo);
+  rows.forEach(r => { __histCache[r.id] = r; });
+  window.__histActivarId = h.id; window.__apUnidaPapel = h.nombre_completo;
+  const box = document.getElementById('ap-hist-datos'); if(box) box.innerHTML = histDatosResumenHtml(d);
 }
 function apAbrirExistente(tipo, id){
   if(tipo === 'cuenta'){ showScreen('personas'); verPersonaStaff(id, 'personas'); }
@@ -7662,6 +7737,7 @@ function renderAltaPresencial(){
       <div class="field"><label>${esCA ? 'Telèfon' : 'Teléfono'} *</label><input type="tel" id="ap-telefono" onblur="apAvisoExiste()"></div>
       <div class="field"><label>DNI/NIE *</label><input type="text" id="ap-dni" onblur="apAvisoExiste()"></div>
       <div id="ap-ya-aviso"></div>
+      <div id="ap-hist-datos"></div>
       <div class="field">
         <label>${esCA ? 'Correu electrònic (opcional)' : 'Correo electrónico (opcional)'}</label>
         <input type="email" id="ap-email">
@@ -7902,11 +7978,15 @@ async function guardarAltaPresencial(){
     try { await sb.from('avisos_espera').insert({ usuario_id: data.usuario_id, clave: 'breve', creado_por_email: CURRENT_USER.email }); } catch(e){}
     try { if(data.usuario_id) await sb.from('perfiles').update({ consentimiento_version: CONSENT_VERSION }).eq('id', data.usuario_id); } catch(e){}
     try { const sx = (document.getElementById('ap-sexo') || {}).value; if(data.usuario_id && sx) await sb.from('perfiles').update({ sexo: sx }).eq('id', data.usuario_id); } catch(e){}
-    if(window.__histActivarId){ const hid = window.__histActivarId; window.__histActivarId = null; try { await histVincularPerfil(hid, data.usuario_id); } catch(e){} }
+    let resHist = null;
+    if(window.__histActivarId){ const hid = window.__histActivarId; window.__histActivarId = null; try { resHist = await histVincularPerfil(hid, data.usuario_id); } catch(e){} }
+    if(resHist && resHist.copiados.length) mensajeFinal += '\n\n✅ ' + (esCA ? `S'han copiat ${resHist.copiados.length} dades del seu històric a la fitxa: ` : `Se han copiado ${resHist.copiados.length} datos de su histórico a la ficha: `) + resHist.copiados.map(k => (HIST_A_FICHA_TXT[k] || [k, k])[esCA ? 1 : 0]).join(', ') + '.';
+    if(resHist && resHist.faltan.length) mensajeFinal += '\n\n✏️ ' + (esCA ? 'Falta completar: ' : 'Falta completar: ') + resHist.faltan.map(k => (HIST_A_FICHA_TXT[k] || [k, k])[esCA ? 1 : 0]).join(', ') + (esCA ? '. S\'obre la fitxa perquè ho completis.' : '. Se abre la ficha para que lo completes.');
     if(window.__apUnidaPapel){ mensajeFinal += '\n\n📄 ' + (esCA ? `Ja tenia una fitxa amb consentiment en paper («${window.__apUnidaPapel}»): s'ha unit a aquest compte, no s'ha duplicat.` : `Ya tenía una ficha con consentimiento en papel («${window.__apUnidaPapel}»): se ha unido a esta cuenta, no se ha duplicado.`); window.__apUnidaPapel = null; }
     window.__personasHistUnif = null; window.__histCacheLista = null;
     alert(mensajeFinal);
-    showScreen('personas'); verPersonaStaff(data.usuario_id, 'personas');
+    showScreen('personas'); await verPersonaStaff(data.usuario_id, 'personas');
+    if(resHist && resHist.faltan.length){ try { setTimeout(() => abrirAtencionEnFicha(), 400); } catch(e){} }
   } catch(e){
     alert(esCA ? 'Error de connexió. Torna-ho a provar.' : 'Error de conexión. Inténtalo de nuevo.');
     btn.disabled = false; btn.textContent = '✅ ' + (esCA ? 'Crear compte i fitxa' : 'Crear cuenta y ficha');
@@ -10184,7 +10264,7 @@ function histFecha(v){
 }
 function histSexo(v){
   const s = normTxt(v).trim(); if(!s) return null;
-  if(/^(mujer|dona|femen|female|woman|f$)/.test(s)) return 'mujer';
+  if(/^(mujer|dona|femen|female|woman|f$|d$)/.test(s)) return 'mujer';
   if(/^(hombre|home|masc|varon|male|man|h$)/.test(s)) return 'hombre';
   if(/(otro|altre|no binar|nobinar)/.test(s)) return 'otro';
   return null;
@@ -18496,10 +18576,40 @@ async function vacPedir(){
   const d = document.getElementById('vac-desde').value, h = document.getElementById('vac-hasta').value, tipo = document.getElementById('vac-tipo').value, motivo = document.getElementById('vac-motivo').value.trim();
   if(!d || !h || h < d){ alert(acL('Elige las fechas (desde y hasta).', 'Tria les dates (des de i fins a).')); return; }
   const fila = { persona_email: String(CURRENT_USER.email).toLowerCase(), persona_nombre: CURRENT_USER_NOMBRE || CURRENT_USER.email, tipo, desde: d, hasta: h, motivo: motivo || null, estado: 'pendiente' };
-  const { error } = await sb.from('vacaciones_solicitudes').insert(fila);
+  const { data: nueva, error } = await sb.from('vacaciones_solicitudes').insert(fila).select().maybeSingle();
   if(error){ alert(error.message); return; }
-  alert('✅ ' + acL(`Solicitud enviada (${vacDiasLab(d, h)} días laborables). Te avisaremos cuando esté revisada.`, `Sol·licitud enviada (${vacDiasLab(d, h)} dies laborables). T'avisarem quan estigui revisada.`));
+  const avisados = await vacAvisarRevisores(fila);
+  // v297 · también por CORREO a administración y RR. HH. (función «avisos-clases», tipo «vacaciones»)
+  try {
+    let id = nueva && nueva.id;
+    if(!id){ const r = await sb.from('vacaciones_solicitudes').select('id').eq('persona_email', fila.persona_email).eq('desde', d).eq('hasta', h).order('creado_en', { ascending: false }).limit(1); id = ((r.data || [])[0] || {}).id; }
+    if(id) sb.functions.invoke('avisos-clases', { body: { tipo: 'vacaciones', solicitud_id: id } }).catch(() => {});
+  } catch(e){}
+  alert('✅ ' + acL(`Solicitud enviada (${vacDiasLab(d, h)} días laborables).`, `Sol·licitud enviada (${vacDiasLab(d, h)} dies laborables).`) + (avisados.length ? ' ' + acL(`Ya le ha llegado el aviso a: ${avisados.join(', ')}.`, `Ja li ha arribat l'avís a: ${avisados.join(', ')}.`) : '') + ' ' + acL('Te avisaremos cuando esté revisada.', 'T\'avisarem quan estigui revisada.'));
   vacPintarMias();
+}
+// v296 · La solicitud llega SOLA a quien la revisa (administración y RR. HH.): mensaje interno + aviso en Inicio + número en el menú
+async function vacAvisarRevisores(fila){
+  try {
+    const yo = String(CURRENT_USER.email || '').toLowerCase();
+    const { data } = await sb.from('staff').select('*').eq('activo', true);
+    const rev = (data || []).filter(x => (x.es_admin || x.es_rrhh || x.ambito === 'rrhh') && String(x.email || '').toLowerCase() !== yo);
+    if(!rev.length) return [];
+    const t = VAC_TIPOS[fila.tipo] || VAC_TIPOS.otro;
+    const asunto = '🌴 ' + acL('Nueva solicitud de días: ', 'Nova sol·licitud de dies: ') + (fila.persona_nombre || fila.persona_email);
+    const mensaje = `${t[0]} ${acL(t[1], t[2])} · ${vacFecha(fila.desde)} → ${vacFecha(fila.hasta)} (${vacDiasLab(fila.desde, fila.hasta)} ${acL('días laborables', 'dies laborables')})${fila.motivo ? '\n«' + fila.motivo + '»' : ''}\n${acL('Para aprobarla: Recursos Humanos → 🌴 Vacaciones (o el aviso de Inicio).', 'Per aprovar-la: Recursos Humans → 🌴 Vacances (o l\'avís d\'Inici).')}`;
+    const { error } = await sb.from('mensajes_internos').insert(rev.map(x => ({ destinatario_email: String(x.email).toLowerCase(), remitente_email: CURRENT_USER.email, asunto, mensaje, leido: false })));
+    return error ? [] : rev.map(x => String(x.nombre || x.email).split(' ')[0]);
+  } catch(e){ return []; }
+}
+async function vacAvisoInicio(){
+  const host = document.getElementById('vac-aviso-host'); if(!host) return;
+  if(!(IS_ADMIN || IS_RRHH || IS_RRHH_SOLO)){ host.innerHTML = ''; return; }
+  try {
+    const { data, error } = await sb.from('vacaciones_solicitudes').select('persona_nombre, persona_email, desde, hasta, tipo').eq('estado', 'pendiente').order('desde', { ascending: true }).limit(20);
+    const L = error ? [] : (data || []);
+    host.innerHTML = L.length ? `<button class="ayc-aviso vac-aviso" onclick="rrhhIr('vacaciones', null)">🌴 <strong>${L.length} ${L.length === 1 ? acL('solicitud de días por revisar', 'sol·licitud de dies per revisar') : acL('solicitudes de días por revisar', 'sol·licituds de dies per revisar')}</strong> · ${L.slice(0, 3).map(v => `${escAttr(String(v.persona_nombre || v.persona_email).split(' ')[0])} (${vacFecha(v.desde)} → ${vacFecha(v.hasta)})`).join(', ')}${L.length > 3 ? '…' : ''} <span class="vac-aviso-ir">${acL('Revisar', 'Revisar')} →</span></button>` : '';
+  } catch(e){ host.innerHTML = ''; }
 }
 async function vacCancelar(id){
   if(!confirm(acL('¿Cancelar esta solicitud?', 'Cancel·lar aquesta sol·licitud?'))) return;
@@ -21284,7 +21394,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-20 · v295 (Aula Virtual: invitación por correo a las clases en línea con «Añadir a Google Calendar» y archivo .ics, recordatorio el día antes, aviso de cancelación, duración y sala Jitsi gratis) · antes: v294 (revisión general del día a día de los técnicos; «Mis fichajes» se descarga en Excel con las horas por semana comparadas con el horario) · antes: v293 (subvenciones: cifras arriba —presentadas, dinero en juego, donaciones—, calendario único con prioridad, tiempo restante y acción recomendada, franja roja de plazos, donaciones en especie con carta de petición y «Copiar resumen ejecutivo») · antes: v292 (proyectos: Excel completo con todos los datos, actuaciones, asistencia e indicadores, también desde dentro del proyecto; seguimiento y actuaciones unidos; la asistencia se cuenta sola con las actuaciones; fecha de alta en Logos y en el proyecto) · antes: v291 (corregir o quitar una actuación cuando uno se equivoca, sin crear un trámite nuevo) · antes: v290 (unir también las cuentas de baja repetidas —Jana educadora, Ariadna— con sus horarios, y quitarlas del equipo) · antes: v289 («Correos antiguos o repetidos»: solo registros del equipo, nunca personas usuarias; se ve entero sin cortarse) · antes: v288 (conexión más fuerte: reintentos automáticos si falla la red, nada se queda colgado, aviso sin internet) · antes: v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-20 · v299 (alta presencial: si la persona está en el histórico, el formulario se rellena solo y su ficha nueva sale con TODOS los datos del histórico; se dice qué falta y se abre para completarlo) · antes: v298 (móvil: «Mi jornada» ya no tapa la flecha de volver; «← Volver» en las pantallas que no son un apartado del menú; más rápida en el móvil) · antes: v297 (las solicitudes de vacaciones llegan también por correo a administración y RR. HH., con botón directo a Vacaciones) · antes: v296 (vacaciones: la solicitud llega sola a administración y RR. HH. —mensaje, aviso en Inicio y número visible en el menú—; días cerrados al público) · antes: v295 (Aula Virtual: invitación por correo a las clases en línea con «Añadir a Google Calendar» y archivo .ics, recordatorio el día antes, aviso de cancelación, duración y sala Jitsi gratis) · antes: v294 (revisión general del día a día de los técnicos; «Mis fichajes» se descarga en Excel con las horas por semana comparadas con el horario) · antes: v293 (subvenciones: cifras arriba —presentadas, dinero en juego, donaciones—, calendario único con prioridad, tiempo restante y acción recomendada, franja roja de plazos, donaciones en especie con carta de petición y «Copiar resumen ejecutivo») · antes: v292 (proyectos: Excel completo con todos los datos, actuaciones, asistencia e indicadores, también desde dentro del proyecto; seguimiento y actuaciones unidos; la asistencia se cuenta sola con las actuaciones; fecha de alta en Logos y en el proyecto) · antes: v291 (corregir o quitar una actuación cuando uno se equivoca, sin crear un trámite nuevo) · antes: v290 (unir también las cuentas de baja repetidas —Jana educadora, Ariadna— con sus horarios, y quitarlas del equipo) · antes: v289 («Correos antiguos o repetidos»: solo registros del equipo, nunca personas usuarias; se ve entero sin cortarse) · antes: v288 (conexión más fuerte: reintentos automáticos si falla la red, nada se queda colgado, aviso sin internet) · antes: v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -23223,6 +23333,7 @@ async function renderPanelGeneral(){
   cont.innerHTML = `<div class="placeholder">${t.cargando}</div>`;
 
   const hoyIso = isoLocal();
+  window.__subvResP = subvencionesResumenHtml().catch(() => ({ html: '', n: 0 }));
   const [total, porSexo, porNacionalidad, depDis, situFam, tramEstado, interesesForm, notifs, satisfaccion, consultasPend, prestaciones, tramitesBretxa, derivacion, emprendeduria, comoConocio, actTotal, actResultado, actCategoria, actDerivado, citasHoyRes, docsRecientesRes, tramitesEnCursoRes, revisionesPendRes, actuacionesLigeroRes, avisosRes, equipoRes] = await Promise.all([
     sb.from('stats_total_personas').select('*').maybeSingle(),
     sb.from('stats_por_sexo').select('*'),
@@ -23396,7 +23507,7 @@ async function renderPanelGeneral(){
   const nombreTopbar = CURRENT_USER_NOMBRE || (CURRENT_USER && CURRENT_USER.email) || '';
   const inicialesTopbar = nombreTopbar.trim().split(/\s+/).map(p=>p[0]).filter(Boolean).slice(0,2).join('').toUpperCase() || '?';
   const notifsCount = (notifs.data || []).length;
-  const subvResumen = await subvencionesResumenHtml();
+  const subvResumen = await window.__subvResP;   // v298 · se pidió al principio, a la vez que lo demás
   window.__pgBandejaDatos = {
     alertas: { titulo: t.alertasNuevas, n: notifsCount, html: `${interruptorAlertas}${notifsHtml}` },
     consultas: { titulo: t.consultasPendientesTitulo, n: (consultasPend.data || []).length, html: consultasHtml }
@@ -23529,7 +23640,7 @@ async function renderPanelGeneral(){
         </div>
       </div>
       ${rrhhTiraHtml()}
-      <div class="ayc-host"></div>
+      <div class="ayc-host"></div><div id="vac-aviso-host"></div>
       <div class="sn-sec-t">${LANG_I==='ca' ? 'Les meves properes cites' : 'Mis próximas citas'}<button onclick="showScreen('agenda');renderAgendaCitas()">${LANG_I==='ca' ? 'Agenda' : 'Agenda'}</button></div>
       <div class="sn-citas" id="sn-mis-citas"><div class="sn-vacio">${t.cargando}</div></div>
       <button class="sn-cta" onclick="abrirNuevaCitaStaff()">${LANG_I==='ca' ? 'Nova cita / Cercar persona' : 'Nueva cita / Buscar persona'}</button>
@@ -23596,7 +23707,7 @@ async function renderPanelGeneral(){
   activarBarras();
   if(!document.getElementById('pg-area')) gpPintarTarjetas(cont);   // ya están dentro de la cabecera («Mi área privada»)
   gestorPintarTarjeta(cont);
-  snIntranetCitas(); snIntranetInteres(); pgAreaPrivada(); incBadge(); ayudaClaveAviso();
+  snIntranetCitas(); snIntranetInteres(); pgAreaPrivada(); incBadge(); ayudaClaveAviso(); vacAvisoInicio();
   snCarrusel('#panel-content .sn-accesos', 5000); snCarrusel('#sn-stats', 4000);
 }
 
@@ -24040,7 +24151,28 @@ async function verPersonaStaff(usuarioId, origen){
   try { m3DatosMontar(); } catch(e){ console.warn('m3', e); }
   try { fichaMarcarFaltan(); } catch(e){}
   // (v220) ya no salta la ventana «Esta ficha está incompleta» al abrir: lo que falta sale en «Qué toca ahora»
+  // v299 · fichas ya creadas que vienen del histórico: se completan solas las casillas vacías (una vez por persona y sesión)
+  if(!yaAbierta) histCompletarFicha(usuarioId, origen).catch(() => {});
   return r;
+}
+async function histCompletarFicha(uid, origen){
+  if(typeof HISTORICAS_OK !== 'undefined' && !HISTORICAS_OK) return;
+  window.__histCompletadas = window.__histCompletadas || new Set();
+  if(window.__histCompletadas.has(uid)) return; window.__histCompletadas.add(uid);
+  const { data: rows, error } = await sb.from('personas_historicas').select('*').eq('perfil_id', uid).limit(40);
+  if(error || !rows || !rows.length) return;
+  const datos = histDatosParaFicha(rows); if(!FECHA_ALTA_OK) delete datos.fecha_alta;
+  const { data: actual } = await sb.from('perfiles').select('*').eq('id', uid).maybeSingle(); if(!actual) return;
+  const vacio = v => v === null || v === undefined || String(v).trim() === '';
+  const cambios = {}; Object.keys(datos).forEach(k => { if(k in actual && vacio(actual[k])) cambios[k] = datos[k]; });
+  if(!Object.keys(cambios).length) return;
+  let copiados = [];
+  const r = await sb.from('perfiles').update(cambios).eq('id', uid);
+  if(r.error){ for(const k of Object.keys(cambios)){ const r1 = await sb.from('perfiles').update({ [k]: cambios[k] }).eq('id', uid); if(!r1.error) copiados.push(k); } } else copiados = Object.keys(cambios);
+  if(!copiados.length) return;
+  const ca = LANG_I === 'ca';
+  try { m3Toast('📄 ' + (ca ? `Completades ${copiados.length} dades des del seu històric: ` : `Completados ${copiados.length} datos desde su histórico: `) + copiados.map(k => (HIST_A_FICHA_TXT[k] || [k, k])[ca ? 1 : 0]).join(', ')); } catch(e){}
+  if(window.__usuarioIdVisto === uid && document.getElementById('screen-persona').classList.contains('active')) verPersonaStaff(uid, origen || window.__origenPersonaVista);
 }
 async function verPersonaStaffInterno(usuarioId, origen){
   window.__usuarioIdVisto = usuarioId;
@@ -25655,6 +25787,10 @@ async function renderAdministrador(){
   __adminTraductorOffset = 0;
   __adminTraductorTodos = [];
 
+  // v298 · lo que no depende de nada se pide ya, a la vez (en el móvil cada espera son ~0,3 s)
+  const __pTrAdm = traerTodoPaginado((x, y) => sb.from('tramites').select('id, usuario_id, nombre_servicio, estado, fecha_inicio').range(x, y)).catch(() => null);
+  const __pHrAdm = hrCargarAdmin().catch(() => {});
+  const __pAlAdm = REPARTO_OK ? sb.from('alertas_tipos').select('*').then(r => r, () => ({ data: [] })) : Promise.resolve({ data: [] });
   await cerrarFichajesCaducados();
   const [primeraPagina, cargaRes, staffRes, fichajesPrimeraPagina, fichajesCountRes, necesidadesRes, revisionesRes, perfilesIncompletosRes, actuacionesPrimeraPagina, actuacionesCountRes, actuacionesLigeroRes, avisosAdminRes, oficinaRes, proyectosAdminRes, proyectoParticipantesAdminRes, salasPrimeraPagina, salasCountRes, traductorPrimeraPagina, traductorCountRes] = await Promise.all([
     sb.from('atenciones').select('*').order('creado_en', { ascending:false }).range(0, ADMIN_PAGE_SIZE - 1),
@@ -25692,7 +25828,7 @@ async function renderAdministrador(){
   const totalActuaciones = actuacionesCountRes.count || 0;
   // Los trámites cuentan como actuaciones (tipo «Trámite») en el registro y en el total
   try {
-    const trAdm = await traerTodoPaginado((x, y) => sb.from('tramites').select('id, usuario_id, nombre_servicio, estado, fecha_inicio').range(x, y));
+    const trAdm = await __pTrAdm;
     window.__adminTramitesExtra = sinBorrados(trAdm && trAdm.data).map(tr => ({ id:'tr-'+tr.id, usuario_id: tr.usuario_id, fecha: tr.fecha_inicio, categoria: LANG_I==='ca'?'Tràmit':'Trámite', descripcion: tr.nombre_servicio + ' (' + (tr.estado==='hecho' ? (LANG_I==='ca'?'tancat':'cerrado') : (LANG_I==='ca'?'en curs':'en curso')) + ')', es_tramite:true }));
   } catch(e){ window.__adminTramitesExtra = []; }
   const totalActuacionesConTramites = totalActuaciones + (window.__adminTramitesExtra || []).length;
@@ -25706,11 +25842,11 @@ async function renderAdministrador(){
   // Carga de trabajo por técnico (sobre TODAS las atenciones, no solo la página cargada)
   const totalAtenciones = cargaRes.count || 0;
 
-  await hrCargarAdmin();
+  await __pHrAdm;
   document.querySelectorAll('#hr-admin-card').forEach(e => { e.innerHTML = ''; e.removeAttribute('id'); });
   window.__hrSoloYo = false; { const o = document.getElementById('hr-mio-ov'); if(o) o.remove(); }
   { const m = document.getElementById('mihorario-content'); if(m) m.innerHTML = ''; }
-  window.__alertasTipos = REPARTO_OK ? ((await sb.from('alertas_tipos').select('*')).data || []) : [];
+  window.__alertasTipos = REPARTO_OK ? (((await __pAlAdm) || {}).data || []) : [];
   const staffHtml = admEquipoHtml(window.__staffLista || [], t);
 
   const necesidadesHtml = (necesidadesRes.data && necesidadesRes.data.length)
@@ -25784,6 +25920,7 @@ async function renderAdministrador(){
   cont.innerHTML = `
     ${carpetaDesplegable({ clave: 'adm-sec:historia', icono: '🏛️', titulo: LANG_I==='ca'?'La nostra història (web)':'Nuestra historia (web)', cuenta: '', cuerpo: '<div id="historia-admin"><div class="placeholder">…</div></div>' })}
 
+    ${carpetaDesplegable({ clave: 'adm-sec:cierres', icono: '🚪', titulo: acL('Días cerrados al público', 'Dies tancats al públic'), cuenta: '', cuerpo: '<div id="cierres-admin"><div class="placeholder">' + t.cargando + '</div></div>' })}
     ${carpetaDesplegable({ clave: 'adm-sec:proyectos', icono: '📁', titulo: LANG_I==='ca'?'Projectes':'Proyectos', cuenta: proyectosAdminLista.length, cuerpo: proyectosAdminHtml })}
 
     ${carpetaAbre({ clave: 'adm-sec:revisiones', icono: '📅', titulo: t.proximasRevisionesPendientes, cuenta: '' })}
@@ -27377,22 +27514,102 @@ async function apBuscarFichaPapel(nombre, telefono, dni){
     || libres.find(h => nt.length >= 9 && pSoloDigitos(h.telefono).slice(-9) === nt && (normTxt(h.nombre_completo).split(/\s+/)[0] || '') === pila)
     || null;
 }
+// v299 · Todos los datos del histórico (columnas y «otros datos del archivo») traducidos a los campos de la ficha
+const HIST_A_FICHA_TXT = { telefono: ['Teléfono', 'Telèfon'], email: ['Correo', 'Correu'], calle: ['Dirección', 'Adreça'], codigo_postal: ['Código postal', 'Codi postal'], municipio: ['Municipio', 'Municipi'], provincia: ['Provincia', 'Província'],
+  sexo: ['Sexo', 'Sexe'], fecha_nacimiento: ['Fecha de nacimiento', 'Data de naixement'], nacionalidad: ['Nacionalidad', 'Nacionalitat'], situacion_regularizacion: ['Situación de regularización', 'Situació de regularització'],
+  personas_hogar: ['Personas en el hogar', 'Persones a la llar'], numero_hijos: ['Número de hijos', 'Nombre de fills'], situacion_laboral: ['Situación laboral', 'Situació laboral'], nivel_estudios: ['Nivel de estudios', 'Nivell d\'estudis'],
+  discapacidad_reconocida: ['Discapacidad reconocida', 'Discapacitat reconeguda'], porcentaje_discapacidad: ['% de discapacidad', '% de discapacitat'], ethos: ['ETHOS', 'ETHOS'], fecha_alta: ['Fecha de alta', 'Data d\'alta'] };
+// Lo que conviene tener en toda ficha (para decir qué falta completar)
+const FICHA_IMPRESCINDIBLES = ['sexo', 'fecha_nacimiento', 'nacionalidad', 'situacion_regularizacion', 'calle', 'codigo_postal', 'municipio', 'personas_hogar', 'numero_hijos', 'situacion_laboral', 'nivel_estudios'];
+function histFechaISO(v){
+  const t = String(v || '').trim(); if(!t) return null;
+  let m = t.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = t.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/); if(m){ let y = Number(m[3]); if(y < 100) y += y > 30 ? 1900 : 2000; const d = `${y}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`; return isNaN(new Date(d + 'T00:00:00')) ? null : d; }
+  return null;
+}
+function histDatosParaFicha(rows){
+  rows = (rows || []).slice().sort((a, b) => String(a.fecha_alta || a.anio || '').localeCompare(String(b.fecha_alta || b.anio || '')));
+  const ult = k => { for(let i = rows.length - 1; i >= 0; i--){ const v = rows[i][k]; if(v !== null && v !== undefined && String(v).trim() !== '') return v; } return null; };
+  const out = {};
+  const pon = (k, v) => { if(v === null || v === undefined || String(v).trim() === '' || out[k] !== undefined) return; out[k] = v; };
+  pon('telefono', ult('telefono'));
+  { const e = String(ult('email') || '').trim(); if(/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) pon('email', e.toLowerCase()); }
+  pon('municipio', ult('municipio') ? estMunicipio(ult('municipio')) : null);
+  pon('codigo_postal', ult('cp') || ult('codigo_postal'));
+  pon('sexo', histSexo(ult('sexo')));
+  pon('fecha_nacimiento', histFechaISO(ult('fecha_nacimiento')));
+  pon('nacionalidad', ult('nacionalidad'));
+  pon('ethos', ult('ethos'));
+  { const f = rows.map(r => histFechaISO(r.fecha_alta)).filter(Boolean).sort()[0]; if(f) pon('fecha_alta', f); }
+  // «Otros datos del archivo» (columnas del Excel importado)
+  const extra = []; rows.forEach(r => { if(r.datos && typeof r.datos === 'object') Object.entries(r.datos).forEach(([k, v]) => extra.push([k, v])); });
+  const n = x => normTxt(String(x == null ? '' : x)).trim();
+  const num = v => { const m = String(v).match(/\d+/); return m ? Number(m[0]) : null; };
+  for(let i = extra.length - 1; i >= 0; i--){
+    const [k0, v0] = extra[i]; const k = n(k0), v = n(v0); if(!v || /^(no consta|nc|n\/c|-|desconocido)$/.test(v)) continue;
+    if(/(direcc|adreca|domicili|calle|carrer|^via$)/.test(k)) pon('calle', String(v0).trim());
+    else if(/(provinc)/.test(k)) pon('provincia', String(v0).trim());
+    else if(/(codi.*postal|codigo.*postal|^c\.?p\.?$)/.test(k)) pon('codigo_postal', String(v0).trim());
+    else if(/(laboral|ocupaci|situacio.*feina|trabaj|emple|feina)/.test(k)) pon('situacion_laboral', String(v0).trim());
+    else if(/(estudi|nivel.*form|formacio.*academ|escolar)/.test(k)){
+      const e = /sin estud|sense estud|^no$|analfab/.test(v) ? 'sin_estudios' : /univers|grau|grado univ|licenc|master|doctor/.test(v) ? 'universitarios' : /bachill|batxill|fp|formacio prof|formacion prof|cicle|ciclo|grado medio|grado superior/.test(v) ? 'bachillerato_fp' : /eso|secundar|graduat escolar|graduado escolar/.test(v) ? 'eso' : /primar/.test(v) ? 'primaria' : null;
+      if(e && PERSONA_ESTUDIOS[e]) pon('nivel_estudios', e);
+    }
+    else if(/(hijo|fill)/.test(k) && num(v0) !== null) pon('numero_hijos', num(v0));
+    else if(/(convivi|hogar|llar|unitat familiar|unidad familiar|membres|miembros|persones a casa|personas en casa)/.test(k) && num(v0) !== null) pon('personas_hogar', num(v0));
+    else if(/(regulari|administrativ|permis|residenc|documentaci)/.test(k)){
+      const r = /irregular|sense papers|sin papeles/.test(v) ? 'irregular' : /tramit|en curs|en curso|pendent|pendiente/.test(v) ? 'en_tramite' : /regular|residen|permis|nie|nacional|dni|arraigo|arrelament|asil|proteccio/.test(v) ? 'regularizada' : null;
+      if(r && PERSONA_REGULARIZACION[r]) pon('situacion_regularizacion', r);
+    }
+    else if(/(discapac|minusval)/.test(k)){
+      const pct = String(v0).match(/(\d{1,3})\s*%/); if(pct) pon('porcentaje_discapacidad', Number(pct[1]));
+      if(/^(si|sí|yes|true|1)\b/.test(v) || pct) pon('discapacidad_reconocida', true); else if(/^(no|false|0)\b/.test(v)) pon('discapacidad_reconocida', false);
+    }
+  }
+  if(out.nivel_estudios && !PERSONA_ESTUDIOS[out.nivel_estudios]) delete out.nivel_estudios;
+  return out;
+}
+function histDatosResumenHtml(datos){
+  const ca = LANG_I === 'ca', ks = Object.keys(datos).filter(k => HIST_A_FICHA_TXT[k]);
+  if(!ks.length) return '';
+  const val = (k, v) => k === 'sexo' ? personaOpcion(v, PERSONA_SEXO) : k === 'nivel_estudios' ? personaOpcion(v, PERSONA_ESTUDIOS) : k === 'situacion_regularizacion' ? personaOpcion(v, PERSONA_REGULARIZACION) : (k === 'fecha_nacimiento' || k === 'fecha_alta') ? new Date(v + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha) : typeof v === 'boolean' ? (v ? (ca ? 'Sí' : 'Sí') : 'No') : String(v);
+  return `<div class="ap-hist-datos"><strong>📄 ${ca ? 'Dades que ja tenim del seu històric · passaran soles a la fitxa nova:' : 'Datos que ya tenemos de su histórico · pasarán solos a la ficha nueva:'}</strong>
+    <div class="ap-hd-l">${ks.map(k => `<span><small>${HIST_A_FICHA_TXT[k][ca ? 1 : 0]}</small>${escAttr(val(k, datos[k]))}</span>`).join('')}</div></div>`;
+}
 async function histVincularPerfil(histId, usuarioId){
   const unif = (window.__personasHistUnif || []).find(x => x.histIds && x.histIds.includes(histId));
-  const p = unif || __histCache[histId]; if(!p || !usuarioId) return;
-  const ids = unif ? unif.histIds : [histId];
+  const p = unif || __histCache[histId]; if(!usuarioId) return null;
+  let ids = unif ? unif.histIds.slice() : [histId];
+  // todas las filas de esa persona en el histórico (mismo DNI), con sus «otros datos»
+  let rows = [];
+  try {
+    const base = p || (await sb.from('personas_historicas').select('*').eq('id', histId).maybeSingle()).data || {};
+    const nd = pNormDni(base.dni_nie);
+    const q = nd.length >= 5 ? sb.from('personas_historicas').select('*').or(`id.in.(${ids.join(',')}),dni_nie.ilike.%${nd.slice(-7)}%`) : sb.from('personas_historicas').select('*').in('id', ids);
+    const { data } = await q; rows = (data || []).filter(r => r.id === histId || ids.includes(r.id) || (nd.length >= 5 && pNormDni(r.dni_nie) === nd));
+    rows = rows.filter(r => !r.perfil_id || r.perfil_id === usuarioId);
+    ids = [...new Set(ids.concat(rows.map(r => r.id)))];
+  } catch(e){ rows = p ? [p] : []; }
   try { await sb.from('personas_historicas').update({ perfil_id: usuarioId }).in('id', ids); } catch(e){}
   window.__histCacheLista = null;
-  const datos = {};
-  const sexo = histSexo(p.sexo); if(sexo) datos.sexo = sexo;
-  if(p.fecha_nacimiento) datos.fecha_nacimiento = p.fecha_nacimiento;
-  if(p.nacionalidad) datos.nacionalidad = p.nacionalidad;
-  if(p.codigo_postal || p.cp) datos.codigo_postal = p.codigo_postal || p.cp;
-  if(FECHA_ALTA_OK && p.fecha_alta) datos.fecha_alta = p.fecha_alta;
-  if(!Object.keys(datos).length) return;
-  let r = await sb.from('perfiles').update(datos).eq('id', usuarioId);
-  if(r.error){ delete datos.fecha_alta; try { await sb.from('perfiles').update(datos).eq('id', usuarioId); } catch(e){} }
+  const datos = histDatosParaFicha(rows.length ? rows : (p ? [p] : []));
+  if(!FECHA_ALTA_OK) delete datos.fecha_alta;
+  // no se pisa nada de lo que ya tiene la ficha (lo escrito en el alta manda)
+  const { data: actual } = await sb.from('perfiles').select('*').eq('id', usuarioId).maybeSingle();
+  const vacio = v => v === null || v === undefined || String(v).trim() === '';
+  const cambios = {}; Object.keys(datos).forEach(k => { if(!actual || !(k in actual) || vacio(actual[k])) cambios[k] = datos[k]; });
+  if(actual && /@(sin-correo|provisional|logos-provisional)|^provisional/i.test(String(actual.email || '')) && datos.email) cambios.email = datos.email;
+  let copiados = [];
+  if(Object.keys(cambios).length){
+    let r = await sb.from('perfiles').update(cambios).eq('id', usuarioId);
+    if(r.error){   // alguna columna no existe en esta base de datos: se prueba campo a campo
+      for(const k of Object.keys(cambios)){ const r1 = await sb.from('perfiles').update({ [k]: cambios[k] }).eq('id', usuarioId); if(!r1.error) copiados.push(k); }
+    } else copiados = Object.keys(cambios);
+  }
+  const final = Object.assign({}, actual || {}, ...copiados.map(k => ({ [k]: cambios[k] })));
+  const faltan = FICHA_IMPRESCINDIBLES.filter(k => vacio(final[k]));
   window.__personasHistUnif = null;
+  return { copiados, faltan, filas: rows.length };
 }
 
 // ---------- 2) ESTADÍSTICAS DE PERSONAS (sexo, edad, nacionalidad, municipio, año) ----------
@@ -29159,6 +29376,8 @@ setInterval(() => { try { jorPintarBoton(); } catch(e){} }, 3000);
 .jor-senal{outline:3px solid #F2BC2C !important;outline-offset:3px;box-shadow:0 0 0 8px rgba(242,188,44,.28) !important;animation:jorLatido 1s ease-in-out 4;border-radius:10px;}
 @keyframes jorLatido{50%{box-shadow:0 0 0 14px rgba(242,188,44,.08) !important;}}
 @media (max-width:900px){ .jor-btn{left:12px;bottom:84px;padding:8px 12px;font-size:13px;} .jor-panel{left:12px;bottom:134px;} }
+/* v298 · en el móvil, «Mi jornada» va encima de la barra de flechas (antes tapaba la flecha de volver) */
+@media (max-width:760px){ body.con-barra-nav .jor-btn{bottom:130px;} body.con-barra-nav .jor-panel{bottom:180px;} }
 @media print{ .jor-btn,.jor-panel{display:none !important;} }
 </style>
 
