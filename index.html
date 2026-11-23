@@ -54,6 +54,41 @@
   .sidebar nav button{text-align:left;background:none;border:none;color:rgba(255,255,255,.75);font-family:var(--font-body);font-weight:700;font-size:12px;padding:8px 12px;border-radius:8px;cursor:pointer;transition:background .15s;width:100%;}
   .nav-grupo{display:flex;flex-direction:column;gap:2px;}
   .rol-oculto{display:none !important;}
+  .mf-wrap{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:24px;align-items:start;}
+  @media (max-width:980px){ .mf-wrap{grid-template-columns:1fr;} }
+  .mf-h{font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:34px;margin:0 0 6px;color:#1B2433;}
+  .mf-tool{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;margin:14px 0 6px;}
+  .mf-vistas{display:flex;border:1px solid #CBD2DC;border-radius:6px;overflow:hidden;}
+  .mf-vistas button{width:44px;border:0;background:#fff;font-size:18px;cursor:pointer;color:#334155;} .mf-vistas button.on{background:#1B2433;color:#fff;}
+  .mf-busca{flex:1;min-width:200px;display:flex;align-items:center;gap:8px;border:1px solid #CBD2DC;border-radius:6px;padding:0 12px;background:#fff;}
+  .mf-busca input{border:0;outline:0;flex:1;font-size:15px;padding:11px 0;background:transparent;}
+  .mf-sel{position:relative;display:flex;flex-direction:column;justify-content:center;border:1px solid #CBD2DC;border-radius:6px;padding:4px 10px;background:#fff;min-width:200px;}
+  .mf-sel small{font-size:11px;color:#5D6B82;} .mf-sel select{border:0;outline:0;font-size:14.5px;background:transparent;padding:2px 0;}
+  .mf-res{font-size:14px;color:#475569;margin:8px 0 10px;}
+  .mf-lista{display:flex;flex-direction:column;gap:14px;}
+  .mf-lista.rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));}
+  .mf-card{background:#fff;border:1px solid #DDE2EA;border-left:8px solid var(--mf-c);border-radius:4px;box-shadow:0 1px 3px rgba(15,23,42,.06);padding:16px 18px;}
+  .mf-card[hidden]{display:none;}
+  .mf-card-top{display:flex;gap:12px;align-items:flex-start;}
+  .mf-card-txt{flex:1;min-width:0;}
+  .mf-cod{font-size:13px;color:#475569;letter-spacing:.02em;}
+  .mf-tit{font-size:17px;font-weight:600;margin:4px 0 8px;color:#1B2433;}
+  .mf-meta{display:flex;flex-wrap:wrap;align-items:center;font-size:13.5px;color:#475569;}
+  .mf-meta > *:not(:last-child)::after{content:'|';margin:0 10px;color:#94A3B8;}
+  .mf-mas{border:0;background:none;color:#1B2433;font:inherit;cursor:pointer;padding:0;} .mf-mas b{display:inline-block;transition:transform .15s;} .mf-mas[aria-expanded="true"] b{transform:rotate(180deg);}
+  .mf-bar{height:5px;background:#EEF1F5;border-radius:4px;overflow:hidden;margin-top:10px;max-width:320px;} .mf-bar i{display:block;height:100%;background:var(--mf-c);}
+  .mf-star{border:0;background:none;font-size:22px;line-height:1;color:#475569;cursor:pointer;padding:2px;} .mf-star.on{color:#E0A526;}
+  .mf-det{margin-top:12px;padding-top:10px;border-top:1px solid #EEF1F5;}
+  .mf-tp{background:#fff;border:1px solid #DDE2EA;border-radius:4px;padding:16px;position:sticky;top:16px;}
+  .mf-tp h3{font-size:16px;margin:0 0 12px;color:#1B2433;} .mf-tp h4{font-size:13.5px;margin:14px 0 6px;color:#334155;}
+  .mf-tp-v{background:#F1F3F6;border-radius:4px;padding:14px;text-align:center;font-size:12.5px;color:#5D6B82;}
+  .mf-tp-i{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;border:1px solid #E3E7EE;border-left:4px solid #E0A526;border-radius:4px;background:#fff;padding:8px 10px;margin-bottom:6px;cursor:pointer;font:inherit;}
+  .mf-tp-i span{font-size:12px;color:#5D6B82;} .mf-tp-i.venc{border-left-color:#D9534F;}
+  .nc-horas2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;}
+  .nc-horas2 input[type=time]{font-size:18px;font-weight:700;padding:10px;}
+  .nc-dia-info{display:flex;flex-direction:column;gap:6px;font-size:13px;padding:10px 12px;background:#F4F7FB;border:1px solid #D5E1F0;border-radius:10px;}
+  .nc-ocu{display:inline-block;padding:2px 8px;border-radius:999px;background:#fff;border:1px solid #CBD5E1;font-variant-numeric:tabular-nums;margin:2px 2px 0 0;}
+  .nc-aviso{background:#FFF7E6;border:1px solid #F2C46D;border-radius:8px;padding:7px 10px;color:#7A4B00;}
   .cta-datos{margin:12px 0 0;border:1px solid #D5E1F0;border-radius:10px;overflow:hidden;}
   .cta-datos div{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;font-size:13.5px;} .cta-datos div+div{border-top:1px solid #E6EDF6;}
   .cta-datos span{color:#5D6B82;} .cta-datos strong{text-align:right;word-break:break-all;}
@@ -9091,7 +9126,7 @@ async function calCitaFin(id, hhmm){
 // ----- «Nueva cita»: hora de fin, color y «otra hora» (fuera de los huecos) -----
 function ncFinPintar(){
   const w = document.getElementById('nc-fin-wrap'); if(!w) return;
-  if(!__NC.fecha){ w.innerHTML = ''; return; }
+  if(!__NC.fecha || ncEsFinde(__NC.fecha)){ w.innerHTML = ''; return; }
   const ca = LANG_I === 'ca';
   if(__NC.horaPref && !__NC.hora){
     const b = [...document.querySelectorAll('#nc-horas button')].find(x => x.textContent.trim().slice(0, 5) === __NC.horaPref && !x.disabled);
@@ -9104,15 +9139,18 @@ function ncFinPintar(){
   w.innerHTML = `
     ${ini != null ? `<div class="nc-fin"><span>⏱️ ${ca ? 'De' : 'De'} <b>${__NC.hora}</b> ${ca ? 'a' : 'a'}</span>
       <select id="nc-hora-fin" onchange="__NC.horaFin=this.value">${opciones.map(o => `<option value="${o}" ${o === __NC.horaFin ? 'selected' : ''}>${o} (${(calMin(o) - ini)} min)</option>`).join('')}</select></div>` : ''}
-    <details class="nc-otra" ${__NC.horaLibre ? 'open' : ''}><summary>🕐 ${ca ? 'Una altra hora (fora dels buits)' : 'Otra hora (fuera de los huecos)'}</summary>
+    <details class="nc-otra" ${(__NC.horaLibre || __NC.diaCerrado) ? 'open' : ''}><summary>🕐 ${ca ? 'Una altra hora (la que vulguis)' : 'Otra hora (la que quieras)'}</summary>
       <div class="cal-g3" style="grid-template-columns:1fr 1fr;margin-top:6px;">
         <div class="field"><label>${ca ? 'Comença' : 'Empieza'}</label><input type="time" id="nc-libre-ini" step="300" value="${__NC.horaLibre ? __NC.hora : ''}"></div>
         <div class="field"><label>${ca ? 'Acaba' : 'Termina'}</label><input type="time" id="nc-libre-fin" step="300" value="${__NC.horaLibre ? (__NC.horaFin || '') : ''}"></div></div>
       <button type="button" class="link-btn" style="font-weight:700;" onclick="ncHoraLibre()">✔️ ${ca ? 'Fer servir aquesta hora' : 'Usar esta hora'}</button>
-      <p class="subtle" style="font-size:11.5px;margin:4px 0 0;">${ca ? 'Per a cites fora de l\'horari habitual. Comprova que no xoqui amb altres cites.' : 'Para citas fuera del horario habitual. Comprueba que no choque con otras citas.'}</p></details>
+      <p class="subtle" style="font-size:11.5px;margin:4px 0 0;">${ca ? 'Qualsevol dia i hora, també fora de l\'horari. Comprova que no xoqui amb altres cites.' : 'Cualquier día y hora, también fuera del horario. Comprueba que no choque con otras citas.'}</p></details>
+    ${__NC.fecha && __NC.fecha < isoLocal() ? `<p class="subtle" style="font-size:12px;margin:6px 0 0;">🕘 ${ca ? 'Aquest dia ja ha passat: la cita quedarà registrada amb aquesta data.' : 'Ese día ya ha pasado: la cita quedará registrada con esa fecha.'}</p>` : ''}
     <div class="field" style="margin-top:10px;"><label>${ca ? 'Color al calendari (opcional)' : 'Color en el calendario (opcional)'}</label>${calColoresHtml('nc-color', __NC.color || '', '__NC.color=this.value')}</div>`;
 }
+const ncEsFinde = f => { if(!f) return false; const d = new Date(f + 'T00:00:00').getDay(); return d === 0 || d === 6; };
 function ncHoraLibre(){
+  if(ncEsFinde(__NC.fecha)){ alert(acL('Sábado y domingo no se pueden dar citas.', 'Dissabte i diumenge no es poden donar cites.')); return; }
   const i = (document.getElementById('nc-libre-ini') || {}).value, f = (document.getElementById('nc-libre-fin') || {}).value;
   if(!i){ alert(acL('Pon la hora de empezar.', 'Posa l\'hora de començar.')); return; }
   if(f && calMin(f) <= calMin(i)){ alert(acL('Tiene que terminar después de empezar.', 'Ha d\'acabar després de començar.')); return; }
@@ -9124,6 +9162,67 @@ function ncHoraLibre(){
   const orig = elegirDiaNuevaCita;
   elegirDiaNuevaCita = async function(fechaIso, mantener){ if(!mantener) { __NC.horaLibre = false; } await orig(fechaIso, mantener); ncFinPintar(); };
 })();
+// v314 · Nueva cita SENCILLA: día (lunes a viernes) + «Empieza» y «Termina». Sin cuadrícula de huecos ni «otra hora»:
+// debajo se ve lo que ya tiene ese día quien atiende, para no pisarse (avisa si choca, pero deja darla).
+elegirDiaNuevaCita = async function(fechaIso, mantener){
+  const cont = document.getElementById('nc-horas'); if(!cont) return;
+  __NC.fecha = fechaIso;
+  if(!mantener && !__NC.horaPref){ /* se conserva la hora escrita al cambiar de día */ }
+  if(!fechaIso){ cont.innerHTML = ''; ncFinPintar(); return; }
+  if(ncEsFinde(fechaIso)){
+    cont.innerHTML = `<div class="empty-note">🌙 ${acL('Sábado y domingo Logos está cerrado: no se pueden dar citas. Elige un día de lunes a viernes.', 'Dissabte i diumenge Logos és tancat: no es poden donar cites. Tria un dia de dilluns a divendres.')}</div>`;
+    const g = document.getElementById('nc-guardar'); if(g) g.disabled = true; ncFinPintar(); return;
+  }
+  if(!__NC.horario){ try { const { data } = await sb.from('horario_atencion').select('*').eq('id', 1).maybeSingle(); __NC.horario = data || null; } catch(e){} }
+  const dur = (__NC.horario && Number(__NC.horario.duracion_cita_minutos)) || 45;
+  if(__NC.horaPref && !__NC.hora){ __NC.hora = __NC.horaPref; __NC.horaPref = ''; }
+  if(__NC.hora && (!__NC.horaFin || calMin(__NC.horaFin) <= calMin(__NC.hora))) __NC.horaFin = calHHMM(calMin(__NC.hora) + dur);
+  cont.innerHTML = `<div class="nc-horas2">
+      <div class="field"><label>🕘 ${acL('Empieza', 'Comença')}</label><input type="time" id="nc-ini" step="300" value="${__NC.hora || ''}" oninput="ncHoraCambia()"></div>
+      <div class="field"><label>🕙 ${acL('Termina', 'Acaba')}</label><input type="time" id="nc-fin" step="300" value="${__NC.horaFin || ''}" oninput="ncHoraCambia(true)"></div>
+    </div>
+    <div id="nc-dia-info" class="nc-dia-info"><span class="subtle">${acL('Mirando lo que hay ese día…', 'Mirant què hi ha aquell dia…')}</span></div>`;
+  const tecSel = String(__NC.tecnico || '').toLowerCase(), tec2 = String(__NC.tecnico2 || '').toLowerCase();
+  let citasDia = [], horDia = {};
+  try {
+    const [r, h] = await Promise.all([sb.from('citas').select('*').eq('fecha', fechaIso), typeof horariosDelDia === 'function' ? horariosDelDia(fechaIso) : Promise.resolve({})]);
+    citasDia = ((r && r.data) || []).filter(x => x.estado !== 'cancelada' && x.id !== __NC.reemplaza); horDia = h || {};
+  } catch(e){}
+  const quien = [tecSel, tec2].filter(Boolean);
+  const suyas = quien.length ? citasDia.filter(x => quien.includes(String(x.tecnico_email || '').toLowerCase()) || quien.includes(String(x.tecnico2_email || '').toLowerCase())) : citasDia;
+  __NC.citasDia = suyas.map(x => { const i = String(x.hora || '').slice(0, 5); const f = x.hora_fin ? String(x.hora_fin).slice(0, 5) : calHHMM(calMin(i) + dur); return { i, f, n: x.nombre_contacto || '' }; }).sort((a, b) => calMin(a.i) - calMin(b.i));
+  const tramos = tecSel && Array.isArray(horDia[tecSel]) ? horDia[tecSel] : null;
+  const info = document.getElementById('nc-dia-info');
+  if(info){
+    const quienTxt = tecSel ? escAttr(equipoNombre(tecSel)) : acL('el equipo', 'l\'equip');
+    info.innerHTML = (tramos && tramos.length ? `<div>🕘 ${acL('Horario de', 'Horari de')} ${quienTxt}: <strong>${tramos.map(t => t[0] + '–' + t[1]).join(' · ')}</strong></div>` : '')
+      + `<div>📅 ${acL('Ese día', 'Aquell dia')} ${quienTxt} ${__NC.citasDia.length ? acL('ya tiene:', 'ja té:') + ' ' + __NC.citasDia.map(c => `<span class="nc-ocu">${c.i}–${c.f}</span>`).join(' ') : `<strong>${acL('no tiene ninguna cita', 'no té cap cita')}</strong>`}</div>
+      <div id="nc-choque"></div>`;
+  }
+  ncHoraCambia(false, true);
+  ncFinPintar();
+};
+function ncHoraCambia(fin, inicial){
+  const iEl = document.getElementById('nc-ini'), fEl = document.getElementById('nc-fin'); if(!iEl || !fEl) return;
+  const dur = (__NC.horario && Number(__NC.horario.duracion_cita_minutos)) || 45;
+  if(!fin && iEl.value && (!fEl.value || calMin(fEl.value) <= calMin(iEl.value) || (!inicial && __NC.finAuto !== false))){ fEl.value = calHHMM(calMin(iEl.value) + dur); __NC.finAuto = true; }
+  if(fin) __NC.finAuto = false;
+  __NC.hora = iEl.value || ''; __NC.horaFin = fEl.value || ''; __NC.horaLibre = true;
+  const ok = !!__NC.hora && (!__NC.horaFin || calMin(__NC.horaFin) > calMin(__NC.hora)) && !ncEsFinde(__NC.fecha);
+  const g = document.getElementById('nc-guardar'); if(g) g.disabled = !ok;
+  const ch = document.getElementById('nc-choque'); if(!ch) return;
+  if(__NC.hora && __NC.horaFin && calMin(__NC.horaFin) <= calMin(__NC.hora)){ ch.innerHTML = `<div class="nc-aviso">⚠️ ${acL('La hora de terminar tiene que ser después de la de empezar.', 'L\'hora d\'acabar ha de ser després de la d\'començar.')}</div>`; return; }
+  const a = calMin(__NC.hora), b = calMin(__NC.horaFin || calHHMM(a + dur));
+  const choca = __NC.hora ? (__NC.citasDia || []).filter(c => calMin(c.i) < b && calMin(c.f) > a) : [];
+  ch.innerHTML = choca.length ? `<div class="nc-aviso">⚠️ ${acL('Coincide con otra cita', 'Coincideix amb una altra cita')} (${choca.map(c => c.i + '–' + c.f).join(', ')}). ${acL('Puedes darla igual si es lo que quieres.', 'La pots donar igual si és el que vols.')}</div>` : '';
+}
+ncFinPintar = function(){
+  const w = document.getElementById('nc-fin-wrap'); if(!w) return;
+  if(!__NC.fecha || ncEsFinde(__NC.fecha)){ w.innerHTML = ''; return; }
+  const ca = LANG_I === 'ca';
+  w.innerHTML = `${__NC.fecha < isoLocal() ? `<p class="subtle" style="font-size:12px;margin:6px 0 0;">🕘 ${ca ? 'Aquest dia ja ha passat: la cita quedarà registrada amb aquesta data.' : 'Ese día ya ha pasado: la cita quedará registrada con esa fecha.'}</p>` : ''}
+    <div class="field" style="margin-top:10px;"><label>${ca ? 'Color al calendari (opcional)' : 'Color en el calendario (opcional)'}</label>${calColoresHtml('nc-color', __NC.color || '', '__NC.color=this.value')}</div>`;
+};
 
 // ================= v258 · MIS PERSONAS (las asignadas a mí y las que he atendido) + por PROYECTOS =================
 window.__misP = window.__misP || { sub: 'personas', ids: null, origen: {}, part: null, proyectos: [] };
@@ -9229,16 +9328,16 @@ function ncTecnicoSelectHtml(){
   const t = (__NC.tecnico || '').toLowerCase(), yo = String(CURRENT_USER.email || '').toLowerCase();
   const ops = eq.slice().sort((a, b) => (b.email === yo) - (a.email === yo));
   return `<label>${acL('¿Quién atiende?', 'Qui l\'atén?')}</label>
-    <select id="nc-tecnico" onchange="__NC.tecnico=this.value;if(String(__NC.tecnico2||'').toLowerCase()===String(this.value||'').toLowerCase()||!this.value)__NC.tecnico2='';const w=document.getElementById('nc-tecnico-wrap');if(w)w.innerHTML=ncTecnicoSelectHtml();if(__NC.fecha){__NC.hora='';elegirDiaNuevaCita(__NC.fecha);}">
+    <select id="nc-tecnico" onchange="__NC.tecnico=this.value;if(String(__NC.tecnico2||'').toLowerCase()===String(this.value||'').toLowerCase()||!this.value)__NC.tecnico2='';const w=document.getElementById('nc-tecnico-wrap');if(w)w.innerHTML=ncTecnicoSelectHtml();if(__NC.fecha){elegirDiaNuevaCita(__NC.fecha);}">
       ${ops.map(x => `<option value="${escAttr(x.email)}" ${x.email === t ? 'selected' : ''}>${escAttr(x.nombre)}${x.email === yo ? ' (' + acL('yo', 'jo') + ')' : ''}</option>`).join('')}
       <option value="" ${!t ? 'selected' : ''}>${acL('Sin asignar (quien esté libre)', 'Sense assignar (qui estigui lliure)')}</option>
     </select>
     ${window.__citas2OK && t ? `<label style="margin-top:10px;">👥 ${acL('Segunda persona (opcional)', 'Segona persona (opcional)')}</label>
-    <select id="nc-tecnico2" onchange="__NC.tecnico2=this.value;if(__NC.fecha){__NC.hora='';elegirDiaNuevaCita(__NC.fecha);}">
+    <select id="nc-tecnico2" onchange="__NC.tecnico2=this.value;if(__NC.fecha){elegirDiaNuevaCita(__NC.fecha, true);}">
       <option value="" ${!__NC.tecnico2 ? 'selected' : ''}>${acL('— Nadie más —', '— Ningú més —')}</option>
       ${ops.filter(x => x.email !== t).map(x => `<option value="${escAttr(x.email)}" ${x.email === String(__NC.tecnico2 || '').toLowerCase() ? 'selected' : ''}>${escAttr(x.nombre)}${x.email === yo ? ' (' + acL('yo', 'jo') + ')' : ''}</option>`).join('')}
     </select>
-    <p class="subtle" style="font-size:11.5px;margin:4px 0 0;">${acL('Solo se ofrecen las horas en que las dos personas están libres.', 'Només s\'ofereixen les hores en què les dues persones són lliures.')}</p>` : ''}`;
+    <p class="subtle" style="font-size:11.5px;margin:4px 0 0;">${acL('Abajo verás lo que ya tienen las dos ese día.', 'A sota veuràs el que ja tenen les dues aquell dia.')}</p>` : ''}`;
 }
 function cerrarNuevaCitaStaff(){ const ov = document.getElementById('nc-ov'); if(ov) ov.style.display = 'none'; }
 function pintarNuevaCitaStaff(){
@@ -9258,13 +9357,12 @@ function pintarNuevaCitaStaff(){
       <h3 style="margin:0;">➕ ${acL('Nueva cita', 'Nova cita')}</h3>
       <button class="link-btn" onclick="cerrarNuevaCitaStaff()">✕</button>
     </div>
-    <div style="margin-top:6px;">${logosEstadoHtml()}</div>
     ${__NC.reemplaza ? `<div class="info-box info-box-gold" style="font-size:12.5px;">🔁 ${acL('Esta cita sustituirá a la de', 'Aquesta cita substituirà la del')} <strong>${escAttr(__NC.antes)}</strong>. ${acL('La anterior se cancelará al crear la nueva.', 'L\'anterior es cancel·larà en crear la nova.')}</div>` : ''}
     <div style="margin-top:4px;">${persona}</div>
     ${(__NC.uid || __NC.hist) ? `
     <div class="field" style="margin-top:12px;" id="nc-tecnico-wrap">${ncTecnicoSelectHtml()}</div>
     <div class="field" style="margin-top:12px;"><label>${acL('Día', 'Dia')}</label>
-      <input type="date" id="nc-fecha" min="${hoy}" value="${__NC.fecha}" onchange="elegirDiaNuevaCita(this.value)"></div>
+      <input type="date" id="nc-fecha" value="${__NC.fecha}" onchange="elegirDiaNuevaCita(this.value)"></div>
     <div id="nc-horas"></div>
     <div id="nc-fin-wrap"></div>
     <div class="field" style="margin-top:12px;"><label>${acL('Motivo (opcional)', 'Motiu (opcional)')}</label>
@@ -9325,7 +9423,9 @@ async function elegirDiaNuevaCita(fechaIso, mantener){
   const iso = d.getDay() === 0 ? 7 : d.getDay();
   // El personal puede dar cita cualquier día de lunes a viernes (también el miércoles), salvo el viernes por la tarde
   const hd = (iso >= 1 && iso <= 5) ? { m:['08:00','14:00'], t: iso === 5 ? null : ['16:00','20:00'], cita:true } : null;
-  if(!hd){ cont.innerHTML = `<div class="empty-note">${acL('Ese día Logos está cerrado. Elige otro.', 'Aquest dia Logos és tancat. Tria\'n un altre.')}</div><p class="subtle" style="font-size:12px;">${logosHorarioTexto()}</p>`; return; }
+  // v313 · De lunes a viernes, cualquier hora. Sábado y domingo NO (el contrato del personal no lo permite).
+  __NC.diaCerrado = false; __NC.finde = !hd;
+  if(!hd){ __NC.hora = ''; cont.innerHTML = `<div class="empty-note">🌙 ${acL('Sábado y domingo Logos está cerrado: no se pueden dar citas. Elige un día de lunes a viernes.', 'Dissabte i diumenge Logos és tancat: no es poden donar cites. Tria un dia de dilluns a divendres.')}</div>`; const g = document.getElementById('nc-guardar'); if(g) g.disabled = true; return; }
 
   const tecSel = (__NC.tecnico || '').toLowerCase();
   const tec2Sel = tecSel && window.__citas2OK ? String(__NC.tecnico2 || '').toLowerCase() : '';
@@ -9358,12 +9458,13 @@ async function elegirDiaNuevaCita(fechaIso, mantener){
     const pasada = esHoy && (Number(s.slice(0, 2)) * 60 + Number(s.slice(3, 5)) <= minAhora);
     if(fueraHorario(s)) return '';   // fuera del horario de la persona que atiende
     const sel = s === __NC.hora;
-    return `<button class="link-btn" style="border:1.5px solid ${sel ? 'var(--primary,#1E3A8A)' : 'var(--line)'};border-radius:10px;padding:6px 12px;${sel ? 'font-weight:800;background:var(--primary-soft,#E8EEFB);' : ''}${(lleno || pasada) ? 'opacity:.4;' : ''}" ${(lleno || pasada) ? 'disabled' : `onclick="__NC.hora='${s}';elegirDiaNuevaCita('${fechaIso}', true);document.getElementById('nc-guardar').disabled=false;"`}>${s}${lleno ? ' ✕' : ''}</button>`;
+    return `<button class="link-btn" style="border:1.5px solid ${sel ? 'var(--primary,#1E3A8A)' : 'var(--line)'};border-radius:10px;padding:6px 12px;${sel ? 'font-weight:800;background:var(--primary-soft,#E8EEFB);' : ''}${(lleno || pasada) ? 'opacity:.55;' : ''}" title="${lleno ? acL('Ya hay cita a esta hora: se puede dar igual', 'Ja hi ha cita a aquesta hora: es pot donar igual') : (pasada ? acL('Hora ya pasada', 'Hora ja passada') : '')}" onclick="__NC.hora='${s}';__NC.horaLibre=false;elegirDiaNuevaCita('${fechaIso}', true);document.getElementById('nc-guardar').disabled=false;">${s}${lleno ? ' ⚠️' : ''}</button>`;
   }).join('') + `</div>` + (tramosTec ? `<p class="subtle" style="font-size:12px;margin:6px 0 0;">🕘 ${acL('Horario de', 'Horari de')} ${escAttr(equipoNombre(tecSel))} ${acL('ese día', 'aquest dia')}: ${tramosTec.map(t => t[0] + '–' + t[1]).join(' · ')}</p>` : '') + (tramosTec2 ? `<p class="subtle" style="font-size:12px;margin:2px 0 0;">🕘 ${acL('Horario de', 'Horari de')} ${escAttr(equipoNombre(tec2Sel))} ${acL('ese día', 'aquest dia')}: ${tramosTec2.map(t => t[0] + '–' + t[1]).join(' · ')}</p>` : '') + ((tramosTec || tramosTec2) && !slots.some(s => !fueraHorario(s)) ? `<div class="empty-note">${tec2Sel ? acL('Ese día no coinciden las dos personas. Elige otro día u otra persona.', 'Aquest dia no coincideixen les dues persones. Tria un altre dia o una altra persona.') : acL('Esa persona no trabaja ese día. Elige otro día u otra persona.', 'Aquesta persona no treballa aquest dia. Tria un altre dia o una altra persona.')}</div>` : '') + (slots.length ? '' : `<div class="empty-note">${acL('Sin horas ese día.', 'Sense hores aquest dia.')}</div>`) + (hd.sinCita ? `<p class="subtle" style="font-size:12px;margin-top:8px;">${acL('Los miércoles de 9 a 13 h se atiende sin cita previa; por eso solo se dan citas fuera de esa franja.', 'Els dimecres de 9 a 13 h s\'atén sense cita prèvia; per això només es donen cites fora d\'aquesta franja.')}</p>` : '');
 }
 async function guardarNuevaCitaStaff(){
   const btn = document.getElementById('nc-guardar'), msg = document.getElementById('nc-msg');
   if((!__NC.uid && !__NC.hist) || !__NC.fecha || !__NC.hora) return;
+  if(ncEsFinde(__NC.fecha)){ msg.innerHTML = `<div class="auth-error">${acL('Sábado y domingo no se pueden dar citas. Elige un día de lunes a viernes.', 'Dissabte i diumenge no es poden donar cites. Tria un dia de dilluns a divendres.')}</div>`; return; }
   btn.disabled = true; msg.innerHTML = '';
   const motivo = (document.getElementById('nc-motivo').value || '').trim();
   const fila = __NC.hist
@@ -13598,20 +13699,87 @@ async function renderMiFormacion(){
         : `<a class="link-btn" style="font-size:12px;" href="https://acompanya.logostgn.cat" target="_blank" rel="noopener">${acL('Hacer en Logos Acompanya ↗', 'Fer a Logos Acompanya ↗')}</a>`}</div>`).join('');
       return `<div style="margin:10px 0 0;"><strong style="font-size:13px;">${acL('Módulo', 'Mòdul')} ${i + 1}. ${escAttr(m.titulo)}</strong>${m.descripcion ? `<p class="subtle" style="margin:2px 0 4px;font-size:12px;">${escAttr(m.descripcion)}</p>` : ''}${filasC}${filasA}${!filasC && !filasA ? `<div class="empty-note">${acL('Todavía sin contenido.', 'Encara sense contingut.')}</div>` : ''}</div>`;
     }).join('') || `<div class="empty-note">${acL('Este curso todavía no tiene módulos.', 'Aquest curs encara no té mòduls.')}</div>`;
-    return `<details class="plegable" ${window.__mfAbiertos[c.id] ? 'open' : ''} ontoggle="window.__mfAbiertos['${c.id}']=this.open">
-      <summary><span>🎓 ${escAttr(c.nombre)}${(c.destinatarios || []).length ? ` <span class="chip" style="background:#F6E7D6;color:#7A4A1F;font-size:10px;">👤 ${(c.destinatarios || []).map(x => String(x).toLowerCase()).includes(String(CURRENT_USER.email || '').toLowerCase()) ? acL('Para ti', 'Per a tu') : (c.destinatarios.length + ' ' + acL('personas', 'persones'))}</span>` : ''}</span><span class="plegable-n">${pct}%</span></summary>
-      <div class="plegable-c">
-        <div style="height:8px;background:#E8EAF0;border-radius:6px;overflow:hidden;margin:2px 0 8px;"><i style="display:block;height:8px;width:${pct}%;background:var(--good);"></i></div>
+    // v315 · tarjeta estilo campus (IEPP): barra de color, código, título, estado · docente · «Más información»
+    const fav = mfFavs().includes(c.id);
+    const estado = c.estado === 'finalizado' ? acL('Finalizado', 'Finalitzat') : c.estado === 'preparacion' ? acL('En preparación', 'En preparació') : acL('Abierto', 'Obert');
+    const codigo = c.codigo || ('LOGOS-' + String(c.id).replace(/-/g, '').slice(0, 4).toUpperCase());
+    window.__mfMeta = window.__mfMeta || {}; window.__mfMeta[c.id] = { nombre: c.nombre || '', docente: c.docente_nombre || '', codigo, pct, fav, fin: pct >= 100 && total > 0, abierto: c.estado !== 'finalizado' };
+    return `<article class="mf-card" data-id="${c.id}" style="--mf-c:${mfColor(c)};">
+      <div class="mf-card-top">
+        <div class="mf-card-txt">
+          <div class="mf-cod">${escAttr(codigo)}</div>
+          <h3 class="mf-tit">${escAttr(c.nombre)}</h3>
+          <div class="mf-meta"><span>${estado}</span>${c.docente_nombre ? `<span>${escAttr(c.docente_nombre)}</span>` : ''}${total ? `<span>${hechos}/${total} · ${pct}%</span>` : ''}
+            <button type="button" class="mf-mas" aria-expanded="${window.__mfAbiertos[c.id] ? 'true' : 'false'}" onclick="mfToggle('${c.id}', this)">${acL('Más información', 'Més informació')} <b>⌄</b></button></div>
+          ${total ? `<div class="mf-bar"><i style="width:${pct}%"></i></div>` : ''}
+        </div>
+        <button type="button" class="mf-star${fav ? ' on' : ''}" title="${acL('Favorito', 'Preferit')}" aria-pressed="${fav}" onclick="mfFav('${c.id}', this)">${fav ? '★' : '☆'}</button>
+      </div>
+      <div class="mf-det" id="mf-det-${c.id}" ${window.__mfAbiertos[c.id] ? '' : 'hidden'}>
         ${c.descripcion ? `<p class="subtle" style="margin:0 0 4px;">${escAttr(c.descripcion)}</p>` : ''}
         <p class="subtle" style="font-size:12px;margin:0;">${total ? `${hechos}/${total} ${acL('completados', 'completats')}` : ''}${c.docente_nombre ? ` · ${acL('Docente', 'Docent')}: ${escAttr(c.docente_nombre)}` : ''}${c.horas_totales ? ` · ${c.horas_totales} h` : ''}</p>
         ${modsHtml}
         <button class="link-btn" style="margin-top:12px;font-size:12.5px;font-weight:800;" data-chat-curso="${c.id}" data-n="${escAttr(c.nombre || '')}" onclick="cursoChatAbrir(this.dataset.chatCurso, this.dataset.n)">💬 ${acL('Mensajes del curso', 'Missatges del curs')}</button>
         ${IS_ADMIN ? `<button class="link-btn" style="margin-top:12px;font-size:12px;" onclick="mfSeguimiento('${c.id}')">📊 ${acL('Ver seguimiento del equipo', 'Veure seguiment de l\'equip')}</button><div id="mf-seg-${c.id}"></div>` : ''}
       </div>
-    </details>`;
+    </article>`;
   };
-  cont.innerHTML = intro + lista.map(tarjeta).join('') + crear;
+  // v315 · Tareas pendientes (actividades con fecha límite que aún no están hechas)
+  const hoyIso = isoLocal(), en7 = isoLocal(new Date(Date.now() + 7 * 864e5));
+  const pend = actividades.filter(a => a.fecha_limite && !actHecha(a)).map(a => {
+    const m = (modulos || []).find(x => x.id === a.modulo_id) || {}; const c = lista.find(x => x.id === m.curso_id) || {};
+    return { t: a.titulo || '', f: String(a.fecha_limite).slice(0, 10), curso: c.nombre || '', cid: c.id };
+  });
+  const grupo = (tit, l, vacio) => `<div class="mf-tp-g"><h4>${tit}</h4>${l.length ? l.map(x => `<button type="button" class="mf-tp-i" onclick="mfIr('${x.cid}')"><strong>${escAttr(x.t)}</strong><span>${escAttr(x.curso)} · ${new Date(x.f + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span></button>`).join('') : `<div class="mf-tp-v">${vacio}</div>`}</div>`;
+  const tareas = `<aside class="mf-tp"><h3>${acL('Tareas pendientes', 'Tasques pendents')}</h3>
+    ${grupo(acL('Vencida', 'Vençuda'), pend.filter(x => x.f < hoyIso), acL('No hay elementos vencidos.', 'No hi ha elements vençuts.')).replace(/class="mf-tp-i"/g, 'class="mf-tp-i venc"')}
+    ${grupo(acL('Vence hoy', 'Venç avui'), pend.filter(x => x.f === hoyIso), acL('No hay elementos pendientes para hoy.', 'No hi ha elements pendents per avui.'))}
+    ${grupo(acL('Vence pronto', 'Venç aviat'), pend.filter(x => x.f > hoyIso && x.f <= en7), acL('No hay elementos pendientes para los próximos 7 días.', 'No hi ha elements pendents per als propers 7 dies.'))}</aside>`;
+  const F = window.__mfFiltro || (window.__mfFiltro = { q: '', f: 'todos', vista: 'lista' });
+  cont.innerHTML = `<div class="mf-wrap">
+    <div class="mf-main">
+      <h2 class="mf-h">${acL('Cursos', 'Cursos')}</h2>
+      ${intro}
+      <div class="mf-tool">
+        <div class="mf-vistas" role="group"><button type="button" class="${F.vista === 'lista' ? 'on' : ''}" title="${acL('Lista', 'Llista')}" onclick="mfVista('lista')">☰</button><button type="button" class="${F.vista === 'rejilla' ? 'on' : ''}" title="${acL('Cuadrícula', 'Quadrícula')}" onclick="mfVista('rejilla')">▦</button></div>
+        <label class="mf-busca"><span>🔍</span><input type="search" id="mf-q" placeholder="${acL('Busque sus cursos', 'Cerqui els seus cursos')}" value="${escAttr(F.q)}" oninput="window.__mfFiltro.q=this.value;mfFiltrar()"></label>
+        <label class="mf-sel"><small>${acL('Filtros', 'Filtres')}</small><select onchange="window.__mfFiltro.f=this.value;mfFiltrar()">
+          ${[['todos', 'Todos los cursos', 'Tots els cursos'], ['curso', 'En curso', 'En curs'], ['hechos', 'Completados', 'Completats'], ['favs', 'Favoritos', 'Preferits']].map(([k, es, cat]) => `<option value="${k}"${F.f === k ? ' selected' : ''}>${acL(es, cat)}</option>`).join('')}</select></label>
+      </div>
+      <div class="mf-res"><span id="mf-n"></span></div>
+      <div id="mf-lista" class="mf-lista${F.vista === 'rejilla' ? ' rejilla' : ''}">${lista.map(tarjeta).join('')}</div>
+      <div id="mf-vacio" class="empty-note" hidden>${acL('Ningún curso coincide con la búsqueda.', 'Cap curs no coincideix amb la cerca.')}</div>
+      ${crear}
+    </div>
+    ${tareas}
+  </div>`;
+  mfFiltrar();
   cursoChatInsignias();
+}
+// v315 · ayudas de «Mi formación» estilo campus
+function mfFavs(){ try { return JSON.parse(localStorage.getItem('mf_favs_' + (CURRENT_USER && CURRENT_USER.id)) || '[]'); } catch(e){ return []; } }
+function mfFav(id, btn){
+  let l = mfFavs(); const on = !l.includes(id); l = on ? l.concat(id) : l.filter(x => x !== id);
+  try { localStorage.setItem('mf_favs_' + (CURRENT_USER && CURRENT_USER.id), JSON.stringify(l)); } catch(e){}
+  if(window.__mfMeta && window.__mfMeta[id]) window.__mfMeta[id].fav = on;
+  btn.classList.toggle('on', on); btn.textContent = on ? '★' : '☆'; btn.setAttribute('aria-pressed', on);
+  mfFiltrar();
+}
+function mfColor(c){ const pal = ['#1F66C1', '#5BC0EB', '#E0A526', '#2E9E6A', '#8E5CC2', '#D9534F', '#14919B', '#C2185B']; let h = 0; String(c.id).split('').forEach(ch => h = (h * 31 + ch.charCodeAt(0)) >>> 0); return c.color || pal[h % pal.length]; }
+function mfToggle(id, btn){ const d = document.getElementById('mf-det-' + id); if(!d) return; const abrir = d.hidden; d.hidden = !abrir; btn.setAttribute('aria-expanded', abrir); window.__mfAbiertos[id] = abrir; }
+function mfVista(v){ window.__mfFiltro.vista = v; const l = document.getElementById('mf-lista'); if(l) l.classList.toggle('rejilla', v === 'rejilla'); document.querySelectorAll('.mf-vistas button').forEach((b, i) => b.classList.toggle('on', (i === 0) === (v === 'lista'))); }
+function mfIr(id){ const card = document.querySelector(`.mf-card[data-id="${id}"]`); if(!card) return; const btn = card.querySelector('.mf-mas'); const d = document.getElementById('mf-det-' + id); if(d && d.hidden && btn) mfToggle(id, btn); card.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+function mfFiltrar(){
+  const F = window.__mfFiltro || { q: '', f: 'todos' }, q = normTxt(F.q || ''), M = window.__mfMeta || {};
+  let n = 0;
+  document.querySelectorAll('#mf-lista .mf-card').forEach(card => {
+    const m = M[card.dataset.id] || {};
+    const okQ = !q || normTxt(m.nombre + ' ' + m.docente + ' ' + m.codigo).includes(q);
+    const okF = F.f === 'todos' || (F.f === 'curso' && m.abierto && !m.fin) || (F.f === 'hechos' && m.fin) || (F.f === 'favs' && m.fav);
+    card.hidden = !(okQ && okF); if(!card.hidden) n++;
+  });
+  const e = document.getElementById('mf-n'); if(e) e.textContent = n + ' ' + acL(n === 1 ? 'resultado' : 'resultados', n === 1 ? 'resultat' : 'resultats');
+  const v = document.getElementById('mf-vacio'); if(v) v.hidden = n > 0;
 }
 async function mfResumenEspacio(){
   const el = document.getElementById('mi-formacion-n'); if(!el) return;
@@ -21490,7 +21658,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-23 · v311 (Ficha: tocar «✅ Consentimiento firmado» lo enseña y deja descargar el PDF; tocar «🔑 Cuenta en Logos Acompanya» enseña con qué correo entra y ayuda a entrar) · antes: v310 (Ficha: tocar una actuación de la línea de tiempo abre «Corregir») · antes: v309 (Corregir actuación y atención: «Con quién la hizo», otros técnicos/as que participaron) · antes: v308 (Atenciones: «✏️ Cambiar» técnico/a al lado del nombre en cada ficha de atención) · antes: v307 (Corregir técnico/a: en la actuación y en la ficha de atención) · antes: v306 (Corregir la actuación: «Era otra persona» para pasarla a la persona correcta) · antes: v305 (LOGOS 360: el calendario marca también los artículos el día que se publican) · antes: v304 (Personas usuarias: carpetas cerradas al entrar y 25 personas por carpeta con «Ver 25 más») · antes: v303 (Expedientes: Hoy · Esta semana · Este mes · Todo; la lista sale solo cuando se pide) · antes: v302 (alta presencial: al cambiar entre «está aquí» y «no está aquí» los datos escritos pasan solos) · antes: v301 (Informes › «📱 Uso de Logos Acompanya»: cuentas, personas que usan la app, qué hacen y qué apartados abren) · antes: v300 (alta presencial: también pasan a su ficha las citas y atenciones apuntadas cuando aún no tenía cuenta) · antes: v299 (alta presencial: si la persona está en el histórico, el formulario se rellena solo y su ficha nueva sale con TODOS los datos del histórico; se dice qué falta y se abre para completarlo) · antes: v298 (móvil: «Mi jornada» ya no tapa la flecha de volver; «← Volver» en las pantallas que no son un apartado del menú; más rápida en el móvil) · antes: v297 (las solicitudes de vacaciones llegan también por correo a administración y RR. HH., con botón directo a Vacaciones) · antes: v296 (vacaciones: la solicitud llega sola a administración y RR. HH. —mensaje, aviso en Inicio y número visible en el menú—; días cerrados al público) · antes: v295 (Aula Virtual: invitación por correo a las clases en línea con «Añadir a Google Calendar» y archivo .ics, recordatorio el día antes, aviso de cancelación, duración y sala Jitsi gratis) · antes: v294 (revisión general del día a día de los técnicos; «Mis fichajes» se descarga en Excel con las horas por semana comparadas con el horario) · antes: v293 (subvenciones: cifras arriba —presentadas, dinero en juego, donaciones—, calendario único con prioridad, tiempo restante y acción recomendada, franja roja de plazos, donaciones en especie con carta de petición y «Copiar resumen ejecutivo») · antes: v292 (proyectos: Excel completo con todos los datos, actuaciones, asistencia e indicadores, también desde dentro del proyecto; seguimiento y actuaciones unidos; la asistencia se cuenta sola con las actuaciones; fecha de alta en Logos y en el proyecto) · antes: v291 (corregir o quitar una actuación cuando uno se equivoca, sin crear un trámite nuevo) · antes: v290 (unir también las cuentas de baja repetidas —Jana educadora, Ariadna— con sus horarios, y quitarlas del equipo) · antes: v289 («Correos antiguos o repetidos»: solo registros del equipo, nunca personas usuarias; se ve entero sin cortarse) · antes: v288 (conexión más fuerte: reintentos automáticos si falla la red, nada se queda colgado, aviso sin internet) · antes: v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-23 · v315 (Mi formación estilo campus: buscador, filtros, lista/cuadrícula, favoritos y tareas pendientes) · antes: v314 (Nueva cita sencilla: día + «Empieza / Termina»; se ve lo que ya tiene ese día y avisa si coincide) · antes: v313 (Nueva cita: de lunes a viernes a cualquier hora, también fuera del horario o con la hora ocupada; sábado y domingo no) · antes: v311 (Ficha: tocar «✅ Consentimiento firmado» lo enseña y deja descargar el PDF; tocar «🔑 Cuenta en Logos Acompanya» enseña con qué correo entra y ayuda a entrar) · antes: v310 (Ficha: tocar una actuación de la línea de tiempo abre «Corregir») · antes: v309 (Corregir actuación y atención: «Con quién la hizo», otros técnicos/as que participaron) · antes: v308 (Atenciones: «✏️ Cambiar» técnico/a al lado del nombre en cada ficha de atención) · antes: v307 (Corregir técnico/a: en la actuación y en la ficha de atención) · antes: v306 (Corregir la actuación: «Era otra persona» para pasarla a la persona correcta) · antes: v305 (LOGOS 360: el calendario marca también los artículos el día que se publican) · antes: v304 (Personas usuarias: carpetas cerradas al entrar y 25 personas por carpeta con «Ver 25 más») · antes: v303 (Expedientes: Hoy · Esta semana · Este mes · Todo; la lista sale solo cuando se pide) · antes: v302 (alta presencial: al cambiar entre «está aquí» y «no está aquí» los datos escritos pasan solos) · antes: v301 (Informes › «📱 Uso de Logos Acompanya»: cuentas, personas que usan la app, qué hacen y qué apartados abren) · antes: v300 (alta presencial: también pasan a su ficha las citas y atenciones apuntadas cuando aún no tenía cuenta) · antes: v299 (alta presencial: si la persona está en el histórico, el formulario se rellena solo y su ficha nueva sale con TODOS los datos del histórico; se dice qué falta y se abre para completarlo) · antes: v298 (móvil: «Mi jornada» ya no tapa la flecha de volver; «← Volver» en las pantallas que no son un apartado del menú; más rápida en el móvil) · antes: v297 (las solicitudes de vacaciones llegan también por correo a administración y RR. HH., con botón directo a Vacaciones) · antes: v296 (vacaciones: la solicitud llega sola a administración y RR. HH. —mensaje, aviso en Inicio y número visible en el menú—; días cerrados al público) · antes: v295 (Aula Virtual: invitación por correo a las clases en línea con «Añadir a Google Calendar» y archivo .ics, recordatorio el día antes, aviso de cancelación, duración y sala Jitsi gratis) · antes: v294 (revisión general del día a día de los técnicos; «Mis fichajes» se descarga en Excel con las horas por semana comparadas con el horario) · antes: v293 (subvenciones: cifras arriba —presentadas, dinero en juego, donaciones—, calendario único con prioridad, tiempo restante y acción recomendada, franja roja de plazos, donaciones en especie con carta de petición y «Copiar resumen ejecutivo») · antes: v292 (proyectos: Excel completo con todos los datos, actuaciones, asistencia e indicadores, también desde dentro del proyecto; seguimiento y actuaciones unidos; la asistencia se cuenta sola con las actuaciones; fecha de alta en Logos y en el proyecto) · antes: v291 (corregir o quitar una actuación cuando uno se equivoca, sin crear un trámite nuevo) · antes: v290 (unir también las cuentas de baja repetidas —Jana educadora, Ariadna— con sus horarios, y quitarlas del equipo) · antes: v289 («Correos antiguos o repetidos»: solo registros del equipo, nunca personas usuarias; se ve entero sin cortarse) · antes: v288 (conexión más fuerte: reintentos automáticos si falla la red, nada se queda colgado, aviso sin internet) · antes: v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
