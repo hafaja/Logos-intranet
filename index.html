@@ -54,6 +54,10 @@
   .sidebar nav button{text-align:left;background:none;border:none;color:rgba(255,255,255,.75);font-family:var(--font-body);font-weight:700;font-size:12px;padding:8px 12px;border-radius:8px;cursor:pointer;transition:background .15s;width:100%;}
   .nav-grupo{display:flex;flex-direction:column;gap:2px;}
   .rol-oculto{display:none !important;}
+  .aed-per-act{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:9px 12px;background:#F4F7FB;border:1px solid #D5E1F0;border-radius:10px;}
+  .aed-per-res{display:flex;flex-direction:column;gap:4px;margin-top:6px;max-height:220px;overflow:auto;}
+  .aed-per-op{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:1px;padding:8px 10px;border:1px solid #D5E1F0;border-radius:9px;background:#fff;cursor:pointer;font:inherit;}
+  .aed-per-op span{font-size:12px;color:#5D6B82;} .aed-per-op:hover,.aed-per-op.on{border-color:#1F66C1;background:#EEF4FC;}
   .per-mas{display:block;width:100%;margin:8px 0 4px;padding:9px;border:1.5px dashed var(--line, #E3DED2);border-radius:10px;background:#fff;color:var(--navy, #16325A);font-weight:600;cursor:pointer;}
   .per-mas:hover{border-color:var(--navy, #16325A);}
   .seg-per{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 10px;}
@@ -1647,6 +1651,8 @@ body.vc-on{padding-top:44px;}
 .canal-cal-g button{border:0;background:#FFF4D6;color:#5C3D00;font-weight:800;cursor:pointer;font:inherit;font-weight:800;}
 .canal-cal-g button i{position:absolute;bottom:4px;width:5px;height:5px;border-radius:50%;background:#E0A526;}
 .canal-cal-g .hoy{outline:2px solid #1F66C1;} .canal-cal-g button.sel{background:#1F66C1;color:#fff;}
+.canal-cal-g button.solo-pub{background:#E6F0FB;color:#16325A;} .canal-cal-g button.solo-pub i{background:#1F66C1;} .canal-cal-g button.solo-pub.sel{background:#1F66C1;color:#fff;}
+.canal-ley{display:inline-flex;gap:4px;align-items:center;margin-right:4px;} .canal-ley i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-left:4px;} .canal-ley i.ev{background:#FFF4D6;border:2px solid #E0A526;} .canal-ley i.pu{background:#E6F0FB;border:2px solid #1F66C1;}
 .canal-ov{position:fixed;inset:0;z-index:9999;background:rgba(15,30,60,.5);display:flex;align-items:flex-start;justify-content:center;padding:20px 12px;overflow:auto;}
 .canal-form{background:#fff;border-radius:20px;max-width:680px;width:100%;padding:18px 20px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
 .canal-form-h{display:flex;justify-content:space-between;align-items:center;} .canal-form-h h3{margin:0;}
@@ -21470,7 +21476,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-23 · v304 (Personas usuarias: carpetas cerradas al entrar y 25 personas por carpeta con «Ver 25 más») · antes: v303 (Expedientes: Hoy · Esta semana · Este mes · Todo; la lista sale solo cuando se pide) · antes: v302 (alta presencial: al cambiar entre «está aquí» y «no está aquí» los datos escritos pasan solos) · antes: v301 (Informes › «📱 Uso de Logos Acompanya»: cuentas, personas que usan la app, qué hacen y qué apartados abren) · antes: v300 (alta presencial: también pasan a su ficha las citas y atenciones apuntadas cuando aún no tenía cuenta) · antes: v299 (alta presencial: si la persona está en el histórico, el formulario se rellena solo y su ficha nueva sale con TODOS los datos del histórico; se dice qué falta y se abre para completarlo) · antes: v298 (móvil: «Mi jornada» ya no tapa la flecha de volver; «← Volver» en las pantallas que no son un apartado del menú; más rápida en el móvil) · antes: v297 (las solicitudes de vacaciones llegan también por correo a administración y RR. HH., con botón directo a Vacaciones) · antes: v296 (vacaciones: la solicitud llega sola a administración y RR. HH. —mensaje, aviso en Inicio y número visible en el menú—; días cerrados al público) · antes: v295 (Aula Virtual: invitación por correo a las clases en línea con «Añadir a Google Calendar» y archivo .ics, recordatorio el día antes, aviso de cancelación, duración y sala Jitsi gratis) · antes: v294 (revisión general del día a día de los técnicos; «Mis fichajes» se descarga en Excel con las horas por semana comparadas con el horario) · antes: v293 (subvenciones: cifras arriba —presentadas, dinero en juego, donaciones—, calendario único con prioridad, tiempo restante y acción recomendada, franja roja de plazos, donaciones en especie con carta de petición y «Copiar resumen ejecutivo») · antes: v292 (proyectos: Excel completo con todos los datos, actuaciones, asistencia e indicadores, también desde dentro del proyecto; seguimiento y actuaciones unidos; la asistencia se cuenta sola con las actuaciones; fecha de alta en Logos y en el proyecto) · antes: v291 (corregir o quitar una actuación cuando uno se equivoca, sin crear un trámite nuevo) · antes: v290 (unir también las cuentas de baja repetidas —Jana educadora, Ariadna— con sus horarios, y quitarlas del equipo) · antes: v289 («Correos antiguos o repetidos»: solo registros del equipo, nunca personas usuarias; se ve entero sin cortarse) · antes: v288 (conexión más fuerte: reintentos automáticos si falla la red, nada se queda colgado, aviso sin internet) · antes: v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-23 · v307 (Corregir técnico/a: en la actuación y en la ficha de atención) · antes: v306 (Corregir la actuación: «Era otra persona» para pasarla a la persona correcta) · antes: v305 (LOGOS 360: el calendario marca también los artículos el día que se publican) · antes: v304 (Personas usuarias: carpetas cerradas al entrar y 25 personas por carpeta con «Ver 25 más») · antes: v303 (Expedientes: Hoy · Esta semana · Este mes · Todo; la lista sale solo cuando se pide) · antes: v302 (alta presencial: al cambiar entre «está aquí» y «no está aquí» los datos escritos pasan solos) · antes: v301 (Informes › «📱 Uso de Logos Acompanya»: cuentas, personas que usan la app, qué hacen y qué apartados abren) · antes: v300 (alta presencial: también pasan a su ficha las citas y atenciones apuntadas cuando aún no tenía cuenta) · antes: v299 (alta presencial: si la persona está en el histórico, el formulario se rellena solo y su ficha nueva sale con TODOS los datos del histórico; se dice qué falta y se abre para completarlo) · antes: v298 (móvil: «Mi jornada» ya no tapa la flecha de volver; «← Volver» en las pantallas que no son un apartado del menú; más rápida en el móvil) · antes: v297 (las solicitudes de vacaciones llegan también por correo a administración y RR. HH., con botón directo a Vacaciones) · antes: v296 (vacaciones: la solicitud llega sola a administración y RR. HH. —mensaje, aviso en Inicio y número visible en el menú—; días cerrados al público) · antes: v295 (Aula Virtual: invitación por correo a las clases en línea con «Añadir a Google Calendar» y archivo .ics, recordatorio el día antes, aviso de cancelación, duración y sala Jitsi gratis) · antes: v294 (revisión general del día a día de los técnicos; «Mis fichajes» se descarga en Excel con las horas por semana comparadas con el horario) · antes: v293 (subvenciones: cifras arriba —presentadas, dinero en juego, donaciones—, calendario único con prioridad, tiempo restante y acción recomendada, franja roja de plazos, donaciones en especie con carta de petición y «Copiar resumen ejecutivo») · antes: v292 (proyectos: Excel completo con todos los datos, actuaciones, asistencia e indicadores, también desde dentro del proyecto; seguimiento y actuaciones unidos; la asistencia se cuenta sola con las actuaciones; fecha de alta en Logos y en el proyecto) · antes: v291 (corregir o quitar una actuación cuando uno se equivoca, sin crear un trámite nuevo) · antes: v290 (unir también las cuentas de baja repetidas —Jana educadora, Ariadna— con sus horarios, y quitarlas del equipo) · antes: v289 («Correos antiguos o repetidos»: solo registros del equipo, nunca personas usuarias; se ve entero sin cortarse) · antes: v288 (conexión más fuerte: reintentos automáticos si falla la red, nada se queda colgado, aviso sin internet) · antes: v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
@@ -22161,7 +22167,7 @@ async function renderCanal(){
         <div class="canal-filtros" role="tablist">${[['todas', acL('Todas', 'Totes')], ['vivo', acL('Publicadas', 'Publicades')], ['evento', acL('Agenda', 'Agenda')], ['articulo', acL('Blog', 'Blog')], ['publicidad', acL('Publicidad', 'Publicitat')], ['borrador', acL('Borradores', 'Esborranys')], ['revisar', '✨ ' + acL('Por revisar', 'Per revisar') + ' (' + L.filter(canalPorRevisar).length + ')'], ['retirado', acL('Retiradas y pasadas', 'Retirades i passades')]].map(([k, t]) => `<button role="tab" aria-selected="${st.filtro === k}" class="${st.filtro === k ? 'on' : ''}" onclick="window.__canal.filtro='${k}';canalPintarLista()">${t}</button>`).join('')}</div>
         <div id="canal-lista"></div>
       </div>
-      <aside class="canal-cal-box"><h3>🗓️ ${acL('Calendario', 'Calendari')}</h3><div id="canal-cal"></div><p class="subtle" style="font-size:12px;margin:8px 0 0;">${acL('Los días con evento salen marcados. Tócalos para verlos.', 'Els dies amb esdeveniment surten marcats. Toca\'ls per veure\'ls.')}</p></aside>
+      <aside class="canal-cal-box"><h3>🗓️ ${acL('Calendario', 'Calendari')}</h3><div id="canal-cal"></div><p class="subtle" style="font-size:12px;margin:8px 0 0;"><span class="canal-ley"><i class="ev"></i> ${acL('evento', 'esdeveniment')} <i class="pu"></i> ${acL('artículo o publicación', 'article o publicació')}</span> ${acL('Toca un día para ver lo de ese día.', 'Toca un dia per veure el d\'aquell dia.')}</p></aside>
     </div>`;
   canalPintarLista(); canalPintarCal();
 }
@@ -22177,7 +22183,7 @@ function canalPintarLista(){
   else if(st.filtro === 'publicidad') L = L.filter(x => x.tipo === 'publicidad');
   else if(st.filtro === 'articulo') L = L.filter(x => x.tipo === 'articulo');
   else if(st.filtro === 'retirado') L = L.filter(x => ['retirado', 'caducada'].includes(canalEstado(x)[0]));
-  if(st.dia) L = L.filter(x => x.fecha_evento && x.fecha_evento <= st.dia && (x.fecha_fin || x.fecha_evento) >= st.dia);
+  if(st.dia) L = L.filter(x => (x.fecha_evento && x.estado !== 'retirado' && x.fecha_evento <= st.dia && (x.fecha_fin || x.fecha_evento) >= st.dia) || canalDiaPub(x) === st.dia);
   const yo = String(CURRENT_USER.email || '').toLowerCase();
   host.innerHTML = (st.dia ? `<div class="canal-dia">📅 ${new Date(st.dia + 'T00:00:00').toLocaleDateString(TI[LANG_I].localeFecha, { weekday: 'long', day: 'numeric', month: 'long' })} <button class="link-btn" onclick="window.__canal.dia=null;canalPintarLista();canalPintarCal()">✕ ${acL('Quitar filtro', 'Treure filtre')}</button></div>` : '')
     + (L.map(x => {
@@ -22199,6 +22205,12 @@ function canalPintarLista(){
           </div>` : ''}
         </div></article>`; }).join('') || `<div class="empty-note">${acL('No hay publicaciones aquí todavía.', 'Encara no hi ha publicacions aquí.')}</div>`);
 }
+// v305 · El calendario marca también los artículos, anuncios y publicaciones en el día que se publican (no solo los eventos)
+function canalDiaPub(x){
+  if(!x || x.fecha_evento || x.estado === 'borrador' || x.estado === 'retirado') return null;
+  const f = x.publicar_desde || x.publicado_en || x.creado_en; if(!f) return null;
+  const d = new Date(f); return isNaN(d) ? String(f).slice(0, 10) : isoLocal(d);
+}
 function canalPintarCal(){
   const st = window.__canal, host = document.getElementById('canal-cal'); if(!host) return;
   const base = st.mes ? new Date(st.mes + '-01T00:00:00') : new Date(); base.setDate(1);
@@ -22210,8 +22222,8 @@ function canalPintarCal(){
   const mov = k => { const d = new Date(y, m + k, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
   let celdas = ''; for(let i = 0; i < ini; i++) celdas += '<span></span>';
   for(let d = 1; d <= dias; d++){
-    const f = iso(d), n = ev.filter(x => x.fecha_evento <= f && (x.fecha_fin || x.fecha_evento) >= f);
-    celdas += n.length ? `<button class="${f === hoy ? 'hoy ' : ''}con${st.dia === f ? ' sel' : ''}" title="${escAttr(n.map(x => x.titulo).join(' · '))}" aria-label="${d}: ${escAttr(n.map(x => x.titulo).join(', '))}" onclick="window.__canal.dia='${f}';window.__canal.filtro='todas';canalPintarLista();canalPintarCal()">${d}<i></i></button>` : `<span class="${f === hoy ? 'hoy' : ''}">${d}</span>`;
+    const f = iso(d), nEv = ev.filter(x => x.fecha_evento <= f && (x.fecha_fin || x.fecha_evento) >= f), nPub = st.lista.filter(x => canalDiaPub(x) === f), n = nEv.concat(nPub);
+    celdas += n.length ? `<button class="${f === hoy ? 'hoy ' : ''}con${nEv.length ? '' : ' solo-pub'}${st.dia === f ? ' sel' : ''}" title="${escAttr(n.map(x => x.titulo).join(' · '))}" aria-label="${d}: ${escAttr(n.map(x => x.titulo).join(', '))}" onclick="window.__canal.dia='${f}';window.__canal.filtro='todas';canalPintarLista();canalPintarCal()">${d}<i></i></button>` : `<span class="${f === hoy ? 'hoy' : ''}">${d}</span>`;
   }
   const sem = LANG_I === 'ca' ? ['dl', 'dt', 'dc', 'dj', 'dv', 'ds', 'dg'] : ['lu', 'ma', 'mi', 'ju', 'vi', 'sá', 'do'];
   host.innerHTML = `<div class="canal-cal-h"><button class="link-btn" aria-label="${acL('Mes anterior', 'Mes anterior')}" onclick="window.__canal.mes='${mov(-1)}';canalPintarCal()">‹</button><strong>${escAttr(contaMayus(nom))}</strong><button class="link-btn" aria-label="${acL('Mes siguiente', 'Mes següent')}" onclick="window.__canal.mes='${mov(1)}';canalPintarCal()">›</button></div>
@@ -24041,14 +24053,33 @@ function actBotonesHtml(ac){
   window.__actPorId = window.__actPorId || {}; window.__actPorId[ac.id] = ac;
   return `<div class="act-acc"><button type="button" class="link-btn" onclick="event.stopPropagation();actEditarAbrir('${escAttr(ac.id)}')">✏️ ${acL('Corregir', 'Corregir')}</button><button type="button" class="link-btn act-quitar" onclick="event.stopPropagation();actQuitar('${escAttr(ac.id)}')">🗑️ ${acL('Quitar', 'Treure')}</button></div>`;
 }
-function actEditarAbrir(id){
+// v307 · Elegir técnico/a (equipo activo + quien ya estaba apuntado, aunque ya no esté)
+function tecOpcionesHtml(actual){
+  const yo = String(actual || '').toLowerCase();
+  const eq = (window.__staffLista || []).filter(x => x.activo !== false || String(x.email).toLowerCase() === yo);
+  if(yo && !eq.some(x => String(x.email).toLowerCase() === yo)) eq.push({ email: actual });
+  return eq.sort((a, b) => String(a.nombre || a.email).localeCompare(String(b.nombre || b.email), 'es'))
+    .map(x => `<option value="${escAttr(x.email)}"${String(x.email).toLowerCase() === yo ? ' selected' : ''}>${escAttr(x.nombre || nombreTecnico(x.email) || x.email)}</option>`).join('');
+}
+async function tecAsegurarLista(){
+  if((window.__staffLista || []).length) return;
+  try { const r = await sb.from('staff').select('email, nombre, activo, sala_fija'); if(!r.error) window.__staffLista = r.data || []; } catch(e){}
+}
+async function actEditarAbrir(id){
   const ac = (window.__actPorId || {})[id]; if(!ac) return;
+  await tecAsegurarLista();
   const t = TI[LANG_I], v = x => escAttr(x == null ? '' : x);
   const cats = [...new Set([].concat(proyectosLogosParaElegir(), FORMACIONES_LOGOS, ['Trámite administrativo', 'Jóvenes en acción'], ac.categoria ? [ac.categoria] : []))];
   const ov = document.createElement('div'); ov.className = 'inact-ov'; ov.id = 'act-ed-ov'; ov.addEventListener('click', e => { if(e.target === ov) ov.remove(); });
   ov.innerHTML = `<div class="inact-card" style="max-width:560px;text-align:left;max-height:90vh;overflow:auto;">
     <div style="display:flex;justify-content:space-between;gap:8px;"><h3 style="margin:0;">✏️ ${acL('Corregir la actuación', 'Corregir l\'actuació')}</h3><button class="link-btn" onclick="document.getElementById('act-ed-ov').remove()">✕</button></div>
     <p class="subtle" style="font-size:12.5px;margin:4px 0 12px;">${acL('Cambia lo que esté mal y guarda. No hace falta crear un trámite nuevo.', 'Canvia el que estigui malament i desa. No cal crear un tràmit nou.')}</p>
+    <div class="field aed-per"><label>👤 ${acL('Persona', 'Persona')}</label>
+      <div class="aed-per-act"><strong id="aed-per-nom">${ac.usuario_id ? acL('Cargando…', 'Carregant…') : acL('Sin persona vinculada', 'Sense persona vinculada')}</strong>
+        <button type="button" class="link-btn" style="font-size:12.5px;" onclick="aedPerCambiar()">🔁 ${acL('Era otra persona', 'Era una altra persona')}</button></div>
+      <div id="aed-per-bus" style="display:none;"><input type="text" id="aed-per-q" placeholder="${acL('Escribe el nombre o el teléfono de la persona correcta…', 'Escriu el nom o el telèfon de la persona correcta…')}" oninput="aedPerBuscar(this.value)" autocomplete="off"><div id="aed-per-res" class="aed-per-res"></div></div>
+      <input type="hidden" id="aed-per-id" value="${v(ac.usuario_id)}"></div>
+    <div class="field"><label>🧑‍💼 ${acL('Técnico/a que la hizo', 'Tècnic/a que la va fer')}</label><select id="aed-tec">${tecOpcionesHtml(ac.tecnico_email)}</select></div>
     <div class="field"><label>${t.fechaLbl}</label><input type="date" id="aed-fecha" value="${v(String(ac.fecha || '').slice(0, 10))}"></div>
     <div class="field"><label>${t.proyectoTramiteFormacion}</label><select id="aed-cat"><option value="">—</option>${cats.map(c => `<option value="${v(c)}"${c === ac.categoria ? ' selected' : ''}>${escAttr(c)}</option>`).join('')}</select></div>
     <div class="field"><label>${t.objetivoLbl}</label><input type="text" id="aed-obj" value="${v(ac.objetivo)}"></div>
@@ -24062,6 +24093,73 @@ function actEditarAbrir(id){
       <span style="display:flex;gap:10px;"><button class="sv-btn" onclick="document.getElementById('act-ed-ov').remove()">${acL('Cancelar', 'Cancel·lar')}</button><button class="sv-btn pri" id="aed-ok" onclick="actEditarGuardar('${escAttr(id)}')">💾 ${acL('Guardar cambios', 'Desar canvis')}</button></span>
     </div></div>`;
   document.body.appendChild(ov);
+  if(ac.usuario_id) aedPerNombre(ac.usuario_id).then(n => { const e = document.getElementById('aed-per-nom'); if(e) e.textContent = n || acL('Persona sin nombre', 'Persona sense nom'); });
+}
+// v306 · Si la actuación se apuntó a la persona equivocada, se pasa a la correcta aquí mismo (sin borrarla ni volver a escribirla)
+async function aedPerNombre(uid){
+  const l = (window.__personasTodas || []).find(p => p.id === uid); if(l) return l.nombre_completo;
+  try { const { data } = await sb.from('perfiles').select('nombre_completo').eq('id', uid).maybeSingle(); return data && data.nombre_completo; } catch(e){ return null; }
+}
+function aedPerCambiar(){ const b = document.getElementById('aed-per-bus'); if(!b) return; b.style.display = ''; const q = document.getElementById('aed-per-q'); if(q) q.focus(); }
+let __aedPerT = null, __aedPerTurno = 0;
+function aedPerBuscar(q){
+  clearTimeout(__aedPerT);
+  __aedPerT = setTimeout(async () => {
+    const res = document.getElementById('aed-per-res'); if(!res) return;
+    const txt = String(q || '').trim(); if(txt.length < 2){ res.innerHTML = ''; return; }
+    const turno = ++__aedPerTurno, n = normTxt(txt), tel = txt.replace(/\D/g, '');
+    let lista = (window.__personasTodas || []).filter(p => !p.__hist && p.id && (normTxt(p.nombre_completo).includes(n) || (tel.length >= 4 && String(p.telefono || '').replace(/\D/g, '').includes(tel))));
+    if(!lista.length){
+      const s = txt.replace(/[,()*%\\]/g, ' ').trim();
+      try { const { data } = await sb.from('perfiles').select('id, nombre_completo, telefono, municipio').or(`nombre_completo.ilike.%${s}%${tel.length >= 4 ? `,telefono.ilike.%${tel}%` : ''}`).limit(8); lista = data || []; } catch(e){ lista = []; }
+    }
+    if(turno !== __aedPerTurno) return;
+    const actual = (document.getElementById('aed-per-id') || {}).value;
+    res.innerHTML = lista.slice(0, 8).map(p => `<button type="button" class="aed-per-op${p.id === actual ? ' on' : ''}" onclick="aedPerElegir('${escAttr(p.id)}', this)"><strong>${escAttr(p.nombre_completo || '—')}</strong><span>${escAttr([p.telefono, p.municipio].filter(Boolean).join(' · '))}</span></button>`).join('')
+      || `<div class="subtle" style="font-size:12.5px;padding:6px 2px;">${acL('No se encuentra. Prueba con otra parte del nombre.', 'No es troba. Prova amb una altra part del nom.')}</div>`;
+  }, 250);
+}
+function aedPerElegir(uid, btn){
+  document.getElementById('aed-per-id').value = uid;
+  const nom = btn.querySelector('strong').textContent;
+  document.getElementById('aed-per-nom').innerHTML = `${escAttr(nom)} <span class="chip gold" style="font-size:10.5px;">${acL('se cambiará al guardar', 'es canviarà en desar')}</span>`;
+  document.getElementById('aed-per-bus').style.display = 'none';
+}
+// v307 · Ficha de atención: si se guardó a nombre de otro técnico/a, se cambia aquí
+function atPuedeEditar(a){
+  const yo = String((CURRENT_USER && CURRENT_USER.email) || '').toLowerCase();
+  return !!a && !!a.id && (IS_ADMIN || IS_RRHH || String(a.creado_por_email || '').toLowerCase() === yo || String(a.actualizado_por_email || '').toLowerCase() === yo);
+}
+function atTecBotonHtml(a){
+  if(!atPuedeEditar(a)) return '';
+  window.__atPorId = window.__atPorId || {}; window.__atPorId[a.id] = a;
+  return `<div style="margin-top:8px;"><button type="button" class="link-btn" style="font-size:12.5px;" onclick="atTecAbrir('${escAttr(a.id)}')">✏️ ${acL('Corregir el técnico/a de esta atención', 'Corregir el tècnic/a d\'aquesta atenció')}</button></div>`;
+}
+async function atTecAbrir(id){
+  const a = (window.__atPorId || {})[id]; if(!a) return;
+  await tecAsegurarLista();
+  document.getElementById('at-tec-ov')?.remove();
+  const ov = document.createElement('div'); ov.className = 'inact-ov'; ov.id = 'at-tec-ov'; ov.addEventListener('click', e => { if(e.target === ov) ov.remove(); });
+  ov.innerHTML = `<div class="inact-card" style="max-width:460px;text-align:left;">
+    <div style="display:flex;justify-content:space-between;gap:8px;"><h3 style="margin:0;">✏️ ${acL('Técnico/a de la atención', 'Tècnic/a de l\'atenció')}</h3><button class="link-btn" onclick="document.getElementById('at-tec-ov').remove()">✕</button></div>
+    <p class="subtle" style="font-size:12.5px;margin:4px 0 12px;">${acL('Atención del', 'Atenció del')} ${escAttr(new Date(a.creado_en).toLocaleDateString('es-ES'))}. ${acL('Elige quién la hizo de verdad. No cambia nada más.', 'Tria qui la va fer de veritat. No canvia res més.')}</p>
+    <div class="field"><label>🧑‍💼 ${acL('Técnico/a', 'Tècnic/a')}</label><select id="att-tec">${tecOpcionesHtml(a.creado_por_email)}</select></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px;"><button class="sv-btn" onclick="document.getElementById('at-tec-ov').remove()">${acL('Cancelar', 'Cancel·lar')}</button><button class="sv-btn pri" id="att-ok" onclick="atTecGuardar('${escAttr(id)}')">💾 ${acL('Guardar', 'Desar')}</button></div></div>`;
+  document.body.appendChild(ov);
+}
+async function atTecGuardar(id){
+  const a = (window.__atPorId || {})[id]; if(!a) return;
+  const nuevo = document.getElementById('att-tec').value;
+  if(!nuevo || String(nuevo).toLowerCase() === String(a.creado_por_email || '').toLowerCase()){ document.getElementById('at-tec-ov').remove(); return; }
+  const b = document.getElementById('att-ok'); if(b) b.disabled = true;
+  const { data, error } = await sb.from('atenciones').update({ creado_por_email: nuevo }).eq('id', id).select('id');
+  if(b) b.disabled = false;
+  if(error || !(data || []).length){ alert(error ? error.message : acL('No se ha podido cambiar: tu usuario no tiene permiso para corregir esta atención. Pídeselo a la administración.', 'No s\'ha pogut canviar: el teu usuari no té permís per corregir aquesta atenció. Demana-ho a l\'administració.')); return; }
+  a.creado_por_email = nuevo;
+  document.getElementById('at-tec-ov').remove();
+  try { m3Toast('✅ ' + acL('Técnico/a corregido', 'Tècnic/a corregit')); } catch(e){}
+  window.__estCache = null; window.__estDatos = null;
+  try { if(window.__usuarioIdVisto) await verPersonaStaff(window.__usuarioIdVisto, window.__origenPersonaVista); } catch(e){}
 }
 async function actRefrescar(ac){
   try {
@@ -24075,14 +24173,16 @@ async function actRefrescar(ac){
 async function actEditarGuardar(id){
   const ac = (window.__actPorId || {})[id]; if(!ac) return;
   const g = x => (document.getElementById(x).value || '').trim() || null;
-  const cambios = { fecha: g('aed-fecha') || ac.fecha, categoria: g('aed-cat'), objetivo: g('aed-obj'), descripcion: g('aed-desc'), resultado: g('aed-res'), derivado_a: g('aed-der'), proximo_paso: g('aed-paso'), fecha_proxima_revision: g('aed-rev') };
+  const nuevoUid = (document.getElementById('aed-per-id') || {}).value || null, cambiaPersona = !!nuevoUid && nuevoUid !== ac.usuario_id;
+  const nuevoTec = (document.getElementById('aed-tec') || {}).value || null, cambiaTec = !!nuevoTec && String(nuevoTec).toLowerCase() !== String(ac.tecnico_email || '').toLowerCase();
+  const cambios = { ...(cambiaPersona ? { usuario_id: nuevoUid } : {}), ...(cambiaTec ? { tecnico_email: nuevoTec } : {}), fecha: g('aed-fecha') || ac.fecha, categoria: g('aed-cat'), objetivo: g('aed-obj'), descripcion: g('aed-desc'), resultado: g('aed-res'), derivado_a: g('aed-der'), proximo_paso: g('aed-paso'), fecha_proxima_revision: g('aed-rev') };
   const b = document.getElementById('aed-ok'); if(b) b.disabled = true;
   const { data, error } = await sb.from('actuaciones').update(cambios).eq('id', id).select('id');
   if(b) b.disabled = false;
   if(error || !(data || []).length){ alert(error ? error.message : acL('No se ha podido guardar: falta ejecutar el SQL-115 en Supabase (permiso para corregir actuaciones).', 'No s\'ha pogut desar: cal executar l\'SQL-115 a Supabase (permís per corregir actuacions).')); return; }
   Object.assign(ac, cambios);
   document.getElementById('act-ed-ov').remove();
-  try { m3Toast('✅ ' + acL('Actuación corregida', 'Actuació corregida')); } catch(e){}
+  try { m3Toast('✅ ' + (cambiaPersona ? acL('Actuación pasada a la persona correcta', 'Actuació passada a la persona correcta') : acL('Actuación corregida', 'Actuació corregida'))); } catch(e){}
   window.__estCache = null; window.__estDatos = null;
   actRefrescar(ac);
 }
@@ -25293,7 +25393,7 @@ function m4FichaAtencionHtml(p, atenciones){
       (a.ethos ? m4Fila(L('Situación residencial', 'Situació residencial'), etiquetaOpt(ETHOS_OPTS, a.ethos), false) : '') +
       (a.derivacion ? m4Fila(L('Derivación', 'Derivació'), etiquetaOpt(DERIVACION_OPTS, a.derivacion), false) : '') +
       (a.como_conocio ? m4Fila(L('Cómo nos conoció', 'Com ens va conèixer'), etiquetaOpt(COMO_CONOCIO_OPTS, a.como_conocio), false) : '') +
-      (a.notas ? `<p class="m4-nota">📝 ${escAttr(a.notas)}</p>` : '')) : `<div class="m4-vacio-c"><p>${L('Esta persona aún no tiene ficha de atención. Es lo primero que hay que hacer: después ya se pueden apuntar actuaciones.', 'Aquesta persona encara no té fitxa d\'atenció. És el primer que cal fer: després ja es poden apuntar actuacions.')}</p><button class="m4-btn m4-btn-pri" onclick="abrirAtencionEnFicha()">➕ ${L('Hacer la ficha de atención', 'Fer la fitxa d\'atenció')}</button></div>`}
+      (a.notas ? `<p class="m4-nota">📝 ${escAttr(a.notas)}</p>` : '') + atTecBotonHtml(a)) : `<div class="m4-vacio-c"><p>${L('Esta persona aún no tiene ficha de atención. Es lo primero que hay que hacer: después ya se pueden apuntar actuaciones.', 'Aquesta persona encara no té fitxa d\'atenció. És el primer que cal fer: després ja es poden apuntar actuacions.')}</p><button class="m4-btn m4-btn-pri" onclick="abrirAtencionEnFicha()">➕ ${L('Hacer la ficha de atención', 'Fer la fitxa d\'atenció')}</button></div>`}
   </section>`;
 }
 function m4ActuacionesHtml(p, actuaciones, tramites){
