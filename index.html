@@ -89,7 +89,14 @@
   .mf-tp h3{font-size:16px;margin:0 0 12px;color:#1B2433;} .mf-tp h4{font-size:13.5px;margin:14px 0 6px;color:#334155;}
   .mf-tp-v{background:#F1F3F6;border-radius:4px;padding:14px;text-align:center;font-size:12.5px;color:#5D6B82;}
   .mf-tp-i{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;border:1px solid #E3E7EE;border-left:4px solid #E0A526;border-radius:4px;background:#fff;padding:8px 10px;margin-bottom:6px;cursor:pointer;font:inherit;}
-  .mf-tp-i span{font-size:12px;color:#5D6B82;} .mf-tp-i.venc{border-left-color:#D9534F;}
+  .eqv-in{width:100%;min-width:150px;padding:6px 8px;border:1px solid #C9D6E6;border-radius:6px;font:inherit;font-size:13px;background:#FFFDF4;}
+  .eqv-in:focus{outline:2px solid #1F66C1;border-color:#1F66C1;background:#fff;} .eqv-in.ok{border-color:#2E9E6A;background:#EEFBF3;} .eqv-in.err{border-color:#D9534F;background:#FDECEC;}
+  .mf-tp-i span{font-size:12px;color:#5D6B82;}
+  .mf-cl{border:1px solid #E3E7EE;border-left:4px solid #2E9E6A;border-radius:4px;padding:9px 10px;margin-bottom:8px;font-size:13px;}
+  .mf-cl.vivo{background:#EEFBF3;border-color:#2E9E6A;}
+  .mf-cl-n small{display:block;color:#5D6B82;font-size:12px;} .mf-cl-vivo{color:#1E7D4F;font-weight:700;font-size:12px;}
+  .mf-cl-acc{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:6px;font-size:12.5px;} .mf-cl-acc a{color:#1F66C1;font-weight:600;text-decoration:none;}
+  .mf-cl-entrar{background:#2E9E6A;color:#fff !important;padding:5px 10px;border-radius:6px;} .mf-tp-i.venc{border-left-color:#D9534F;}
   .nc-horas2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;}
   .nc-horas2 input[type=time]{font-size:18px;font-weight:700;padding:10px;}
   .nc-dia-info{display:flex;flex-direction:column;gap:6px;font-size:13px;padding:10px 12px;background:#F4F7FB;border:1px solid #D5E1F0;border-radius:10px;}
@@ -2855,6 +2862,73 @@ const SUPABASE_KEY = 'sb_publishable_Ght82ml0pvg0_nQvunlXVA_u0WjRscq';
       }
     } catch(e){}
     return r;
+  };
+})();
+// v319 · Funciones del servidor (alta presencial, IA, avisos…) con la sesión SIEMPRE al día.
+// Antes, si el pase de la sesión había caducado (ordenador encendido desde hace horas, suspensión, red caída un momento),
+// se enviaba la clave pública y la función respondía «No autorizado. Inicia sesión como personal de Logos»: la persona
+// ya había firmado y había que empezar de nuevo. Ahora: 1) antes de enviar, si al pase le queda menos de 2 min, se renueva;
+// 2) si la función dice «no autorizado», se renueva la sesión y se repite UNA vez; 3) si no se puede renovar, sale una
+// ventanita para volver a escribir la contraseña AQUÍ MISMO, sin salir de la pantalla: el formulario y la firma no se pierden.
+(function(){
+  const fBase = window.fetch;
+  const esFuncion = u => /\.supabase\.co\/functions\/v1\//.test(u);
+  const tokenDe = o => { const h = o && o.headers; if(!h) return ''; const v = h.get ? (h.get('Authorization') || h.get('authorization')) : (h.Authorization || h.authorization); return String(v || '').replace(/^Bearer\s+/i, ''); };
+  const conToken = (o, t) => { const n = Object.assign({}, o); const h = o.headers; if(h && h.get){ const hh = new Headers(h); hh.set('Authorization', 'Bearer ' + t); n.headers = hh; } else { n.headers = Object.assign({}, h || {}); delete n.headers.authorization; n.headers.Authorization = 'Bearer ' + t; } return n; };
+  async function sesionViva(forzar){
+    try {
+      let { data } = await sb.auth.getSession(); let s = data && data.session;
+      const quedan = s && s.expires_at ? s.expires_at * 1000 - Date.now() : 0;
+      if(!s || forzar || quedan < 120000){ const r = await sb.auth.refreshSession(); if(r && r.data && r.data.session) s = r.data.session; else if(forzar || !s || quedan <= 0) s = null; }
+      return s && s.access_token ? s.access_token : null;
+    } catch(e){ return null; }
+  }
+  window.sesionViva = sesionViva;
+  function pedirClave(){
+    return new Promise(resolve => {
+      let correo = ''; try { correo = (CURRENT_USER && CURRENT_USER.email) || ''; } catch(e){}
+      const ov = document.createElement('div'); ov.className = 'inact-ov'; ov.style.zIndex = '10050';
+      ov.innerHTML = `<div class="inact-card" style="max-width:400px;text-align:left;"><div class="inact-i" style="text-align:center;">🔐</div>
+        <h3 style="text-align:center;">${acL('Tu sesión ha caducado', 'La teva sessió ha caducat')}</h3>
+        <p style="margin:0 0 12px;">${acL('Escribe tu contraseña para seguir. <b>No se pierde nada</b> de lo que estabas haciendo (datos y firma siguen aquí).', 'Escriu la teva contrasenya per continuar. <b>No es perd res</b> del que estaves fent (dades i signatura continuen aquí).')}</p>
+        <label style="font-size:14px;">${acL('Correo', 'Correu')}</label><input id="sv-mail" type="email" autocomplete="username" value="${escAttr(correo)}" style="width:100%;margin:4px 0 10px;padding:10px;border:1px solid #ccc;border-radius:10px;">
+        <label style="font-size:14px;">${acL('Contraseña', 'Contrasenya')}</label><input id="sv-clave" type="password" autocomplete="current-password" style="width:100%;margin:4px 0 6px;padding:10px;border:1px solid #ccc;border-radius:10px;">
+        <div id="sv-err" class="auth-error" style="display:none;margin:6px 0;"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;"><button type="button" class="link-btn" id="sv-no">${acL('Cancelar', 'Cancel·lar')}</button><button type="button" class="primary-btn" id="sv-si">${acL('Seguir', 'Continuar')}</button></div></div>`;
+      document.body.appendChild(ov);
+      const fin = v => { ov.remove(); resolve(v); };
+      const ir = async () => {
+        const email = ov.querySelector('#sv-mail').value.trim(), password = ov.querySelector('#sv-clave').value;
+        if(!email || !password) return;
+        const b = ov.querySelector('#sv-si'); b.disabled = true;
+        try {
+          const { data, error } = await sb.auth.signInWithPassword({ email, password });
+          if(error || !data || !data.session){ const e = ov.querySelector('#sv-err'); e.style.display = ''; e.textContent = acL('No se ha podido entrar: ', 'No s\'ha pogut entrar: ') + ((error && error.message) || ''); b.disabled = false; return; }
+          try { actMarcar(); } catch(e){}
+          fin(data.session.access_token);
+        } catch(e){ b.disabled = false; }
+      };
+      ov.querySelector('#sv-si').onclick = ir; ov.querySelector('#sv-no').onclick = () => fin(null);
+      ov.querySelector('#sv-clave').addEventListener('keydown', e => { if(e.key === 'Enter') ir(); });
+      setTimeout(() => { try { ov.querySelector(correo ? '#sv-clave' : '#sv-mail').focus(); } catch(e){} }, 50);
+    });
+  }
+  const noAutorizado = async r => {
+    if(r.status === 401) return true;
+    if(r.ok && r.status !== 403) return false;
+    try { const t = await r.clone().text(); return /no autorizado|unauthori[sz]ed|invalid jwt|jwt expired|inicia sesi/i.test(t); } catch(e){ return false; }
+  };
+  window.fetch = async function(input, init){
+    const url = typeof input === 'string' ? input : (input && input.url) || '';
+    if(typeof input !== 'string' || !esFuncion(url) || !init || !init.headers) return fBase.apply(this, arguments);
+    let o = init; const t0 = tokenDe(o);
+    { const t = await sesionViva(false); if(t && t !== t0) o = conToken(o, t); }
+    let r = await fBase(input, o);
+    if(!(await noAutorizado(r))) return r;
+    let t = await sesionViva(true);
+    if(!t) t = await pedirClave();
+    if(!t) return r;
+    return fBase(input, conToken(o, t));
   };
 })();
 // v-red · Conexión más fuerte con la base de datos: si una lectura falla por la red o el servidor tarda, se reintenta sola
@@ -13423,7 +13497,7 @@ function eqVistaFilas(){
 }
 function eqVistaTabla(){
   const host = document.getElementById('eq-vista'); if(!host || !window.__eqvDatos) return;
-  const st = window.__eqv, L = eqVistaFilas(), si = b => b ? '✅' : '<span class="eqv-no">—</span>';
+  const st = window.__eqv, L = eqVistaFilas(), si = b => b ? '✅' : '<span class="eqv-no">—</span>', ED = !!(st.edit && eqvPuedeEditar());
   const fh = iso => iso ? new Date(iso).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
   host.innerHTML = `
     <div class="eqv-barra">
@@ -13432,8 +13506,10 @@ function eqVistaTabla(){
       <span style="flex:1"></span>
       <button class="link-btn" onclick="document.getElementById('eq-vista').classList.toggle('eqv-full');document.body.classList.toggle('eqv-abierta')">⛶ ${acL('Pantalla completa', 'Pantalla completa')}</button>
       <button class="link-btn" onclick="eqVistaPintar(true)">🔄 ${acL('Actualizar', 'Actualitzar')}</button>
+      ${eqvPuedeEditar() ? `<button class="sv-btn${st.edit ? ' pri' : ''}" onclick="window.__eqv.edit=!window.__eqv.edit;eqVistaTabla()">${st.edit ? '✅ ' + acL('Terminar de editar', 'Acabar d\'editar') : '✏️ ' + acL('Editar teléfonos y correos', 'Editar telèfons i correus')}</button>` : ''}
       <button class="sv-btn pri" onclick="eqVistaExcel()">⬇️ Excel</button>
     </div>
+    ${st.edit && eqvPuedeEditar() ? `<div class="info-box" style="margin:0 0 8px;font-size:12.5px;">✏️ ${acL('Escribe el teléfono o el correo personal y sal de la casilla (o pulsa Intro): se guarda solo. El <strong>correo de la intranet</strong> es el de entrar y no se cambia aquí.', 'Escriu el telèfon o el correu personal i surt de la casella (o prem Intro): es desa sol. El <strong>correu de la intranet</strong> és el d\'entrar i no es canvia aquí.')}</div>` : ''}
     <p class="subtle" style="font-size:12px;margin:0 0 8px;">${L.length} ${acL('personas', 'persones')} · ${acL('Desliza la tabla a la derecha para ver todas las columnas. Pulsa un nombre para abrir su ficha completa.', 'Llisca la taula a la dreta per veure totes les columnes. Prem un nom per obrir-ne la fitxa completa.')}</p>
     <div class="eqv-w"><table class="sl-t eqv-t"><thead><tr>
       <th>${acL('Nombre y apellidos', 'Nom i cognoms')}</th><th>${acL('Teléfono', 'Telèfon')}</th><th>${acL('Correo de la intranet', 'Correu de la intranet')}</th><th>${acL('Correo personal', 'Correu personal')}</th><th>${acL('Rol', 'Rol')}</th>
@@ -13442,12 +13518,26 @@ function eqVistaTabla(){
       <th class="n">${acL('Nóminas', 'Nòmines')}</th><th class="n">${acL('Documentos', 'Documents')}</th><th class="n">${acL('Formaciones', 'Formacions')}</th><th class="n">${acL('Vacaciones pendientes', 'Vacances pendents')}</th><th>${acL('Contraseña', 'Contrasenya')}</th><th>${acL('Estado', 'Estat')}</th></tr></thead>
     <tbody>${L.map(x => { const s = x.s; return `<tr${s.activo === false ? ' class="eqv-baja"' : ''}>
       <td><button class="link-btn eqv-nom" onclick="eqFichaAbrir('${escAttr(s.email)}')">${escAttr(s.nombre || s.email)}</button></td>
-      <td>${s.telefono ? `<a href="tel:${escAttr(String(s.telefono).replace(/[^\d+]/g, ''))}">${escAttr(s.telefono)}</a>` : '—'}</td><td>${escAttr(s.email)}</td><td>${escAttr(s.correo_personal || '—')}</td><td>${escAttr(x.rol)}</td>
+      ${ED ? `<td><input class="eqv-in" type="tel" inputmode="tel" value="${escAttr(s.telefono || '')}" placeholder="${acL('Teléfono', 'Telèfon')}" onkeydown="if(event.key==='Enter')this.blur()" onchange="eqVistaCampo('${escAttr(s.email)}','telefono',this)"></td>` : `<td>${s.telefono ? `<a href="tel:${escAttr(String(s.telefono).replace(/[^\d+]/g, ''))}">${escAttr(s.telefono)}</a>` : '—'}</td>`}<td>${escAttr(s.email)}</td>${ED ? `<td><input class="eqv-in" type="email" value="${escAttr(s.correo_personal || '')}" placeholder="${acL('correo@personal', 'correu@personal')}" onkeydown="if(event.key==='Enter')this.blur()" onchange="eqVistaCampo('${escAttr(s.email)}','correo_personal',this)"></td>` : `<td>${escAttr(s.correo_personal || '—')}</td>`}<td>${escAttr(x.rol)}</td>
       <td class="c">${si(s.es_admin)}</td><td class="c">${si(s.es_rrhh || s.ambito === 'rrhh')}</td><td class="c">${si(s.es_soporte)}</td><td class="c">${si(s.movil_permitido)}</td><td class="c">${si(typeof atiendeCitas === 'function' ? atiendeCitas(s) : s.acepta_citas)}</td><td>${escAttr(s.sala_fija || '—')}</td>
       <td class="n">${x.contrato ? x.contrato + ' h' : '—'}</td><td class="eqv-hor">${escAttr(x.horario || '—')}</td><td class="n"><strong>${hrFmtMin(x.f.mes)}</strong></td><td class="n">${x.f.diasMes.size}</td><td class="n">${hrFmtMin(x.f.anio)}</td><td>${fh(x.f.ult)}</td><td class="n">${x.f.olv || '—'}</td>
       <td class="n">${x.nom || '—'}</td><td class="n">${x.doc || '—'}</td><td class="n">${x.frm || '—'}</td><td class="n">${x.vac ? `<span class="chip gold">${x.vac}</span>` : '—'}</td>
       <td>${s.clave_cambiada === false ? `<span class="chip gold">${acL('provisional', 'provisional')}</span>` : acL('propia', 'pròpia')}</td><td>${s.activo === false ? `<span class="chip off">${acL('de baja', 'de baixa')}</span>` : `<span class="chip good">${acL('activa', 'activa')}</span>`}</td></tr>`; }).join('')}</tbody></table></div>
     <p class="subtle" style="font-size:11.5px;margin:8px 0 0;">🔒 ${acL('Las contraseñas están cifradas: nadie puede verlas. «Provisional» = aún usa la que le puso la administración.', 'Les contrasenyes estan xifrades: ningú no les pot veure. «Provisional» = encara fa servir la que li va posar l\'administració.')}</p>`;
+}
+// v320 · Administración puede escribir teléfonos y correos personales del equipo directamente en la tabla
+function eqvPuedeEditar(){ try { return !!IS_ADMIN && !VER_COMO; } catch(e){ return false; } }
+async function eqVistaCampo(email, campo, inp){
+  const v = String(inp.value || '').trim();
+  if(campo === 'correo_personal' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ inp.classList.add('err'); alert(acL('El correo no parece correcto.', 'El correu no sembla correcte.')); inp.focus(); return; }
+  if(campo === 'telefono' && v && v.replace(/[^\d]/g, '').length < 9){ inp.classList.add('err'); alert(acL('El teléfono parece incompleto (mínimo 9 cifras).', 'El telèfon sembla incomplet (mínim 9 xifres).')); inp.focus(); return; }
+  inp.classList.remove('err', 'ok'); inp.disabled = true;
+  const err = await staffAdminCambiar(email, campo, v);
+  inp.disabled = false;
+  if(err){ inp.classList.add('err'); alert(err); return; }
+  inp.classList.add('ok');
+  [window.__eqvDatos && window.__eqvDatos.staff, window.__staffLista].forEach(l => { const x = (l || []).find(p => p.email === email); if(x) x[campo] = v || null; });
+  try { m3Toast('✅ ' + acL('Guardado', 'Desat')); } catch(e){}
 }
 async function eqVistaExcel(){
   const L = eqVistaFilas(); if(!L.length) return;
@@ -13760,6 +13850,9 @@ async function renderMiFormacion(){
       </div>
     </article>`;
   };
+  // v318 · Clases en directo de mis cursos: enlace para entrar + «A mi calendario»
+  let clasesMF = [];
+  try { const r = await sb.from('aula_virtual_clases').select('*').in('curso_id', ids).gte('fecha', isoLocal()).order('fecha', { ascending: true }).order('hora', { ascending: true }).limit(20); clasesMF = ((r && r.data) || []).filter(x => x.estado !== 'cancelada'); } catch(e){}
   // v315 · Tareas pendientes (actividades con fecha límite que aún no están hechas)
   const hoyIso = isoLocal(), en7 = isoLocal(new Date(Date.now() + 7 * 864e5));
   const pend = actividades.filter(a => a.fecha_limite && !actHecha(a)).map(a => {
@@ -13770,7 +13863,10 @@ async function renderMiFormacion(){
   const tareas = `<aside class="mf-tp"><h3>${acL('Tareas pendientes', 'Tasques pendents')}</h3>
     ${grupo(acL('Vencida', 'Vençuda'), pend.filter(x => x.f < hoyIso), acL('No hay elementos vencidos.', 'No hi ha elements vençuts.')).replace(/class="mf-tp-i"/g, 'class="mf-tp-i venc"')}
     ${grupo(acL('Vence hoy', 'Venç avui'), pend.filter(x => x.f === hoyIso), acL('No hay elementos pendientes para hoy.', 'No hi ha elements pendents per avui.'))}
-    ${grupo(acL('Vence pronto', 'Venç aviat'), pend.filter(x => x.f > hoyIso && x.f <= en7), acL('No hay elementos pendientes para los próximos 7 días.', 'No hi ha elements pendents per als propers 7 dies.'))}</aside>`;
+    ${grupo(acL('Vence pronto', 'Venç aviat'), pend.filter(x => x.f > hoyIso && x.f <= en7), acL('No hay elementos pendientes para los próximos 7 días.', 'No hi ha elements pendents per als propers 7 dies.'))}
+    <h3 style="margin-top:20px;">🟢 ${acL('Clases en directo', 'Classes en directe')}</h3>
+    ${clasesMF.length ? clasesMF.map(cl => mfClaseHtml(cl, lista)).join('') : `<div class="mf-tp-v">${acL('No hay clases programadas.', 'No hi ha classes programades.')}</div>`}
+    <p class="subtle" style="font-size:11.5px;margin:8px 0 0;">${acL('También te llega por correo una invitación con el enlace y un recordatorio el día antes.', 'També et arriba per correu una invitació amb l\'enllaç i un recordatori el dia abans.')}</p></aside>`;
   const F = window.__mfFiltro || (window.__mfFiltro = { q: '', f: 'todos', vista: 'lista' });
   cont.innerHTML = formSwitchHtml('alumno') + `<div class="mf-wrap">
     <div class="mf-main">
@@ -13798,6 +13894,21 @@ function formSwitchHtml(actual){
     ${b('alumno', '🎓', acL('Mi formación', 'La meva formació'), acL('Los cursos que hago yo, como alumno/a', 'Els cursos que faig jo, com a alumne/a'), "showScreen('miformacion');renderMiFormacion()")}
     ${b('docente', '👨‍🏫', acL('Preparar cursos', 'Preparar cursos'), acL('Crear y gestionar los cursos que imparto', 'Crear i gestionar els cursos que imparteixo'), "showScreen('aulavirtual');renderAulaVirtualScreen()")}
   </nav>`;
+}
+// v318 · Una clase en directo en «Mi formación»: día, hora, curso, «Entrar» (resaltado cuando empieza) y «A mi calendario»
+function mfClaseHtml(cl, cursos){
+  const c = (cursos || []).find(x => x.id === cl.curso_id) || {};
+  const [y, m, d] = String(cl.fecha).split('-').map(Number), [hh, mm] = String(cl.hora || '00:00').slice(0, 5).split(':').map(Number);
+  const ini = new Date(y, m - 1, d, hh, mm), fin = new Date(ini.getTime() + (Number(cl.duracion_min) || 60) * 60000), ahora = new Date();
+  const enDirecto = ahora >= new Date(ini.getTime() - 15 * 60000) && ahora <= fin;
+  const hoy = String(cl.fecha) === isoLocal();
+  const fTxt = hoy ? acL('Hoy', 'Avui') : ini.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+  return `<div class="mf-cl${enDirecto ? ' vivo' : ''}">
+    <div class="mf-cl-t"><strong>${fTxt} · ${String(cl.hora || '').slice(0, 5)}</strong>${enDirecto ? ` <span class="mf-cl-vivo">● ${acL('En directo', 'En directe')}</span>` : ''}</div>
+    <div class="mf-cl-n">${escAttr(cl.titulo || c.nombre || '')}${cl.titulo && c.nombre ? `<small>${escAttr(c.nombre)}</small>` : ''}</div>
+    <div class="mf-cl-acc">${cl.enlace_meet ? `<a class="mf-cl-entrar" href="${escAttr(cl.enlace_meet)}" target="_blank" rel="noopener">▶ ${acL('Entrar a la clase', 'Entrar a la classe')}</a>` : `<span class="subtle" style="font-size:12px;margin:0;">${acL('El enlace saldrá aquí', 'L\'enllaç sortirà aquí')}</span>`}
+      <a href="${escAttr(avGcal(Object.assign({ docente_nombre: c.docente_nombre }, cl)))}" target="_blank" rel="noopener">📅 ${acL('A mi calendario', 'Al meu calendari')}</a></div>
+  </div>`;
 }
 // v315 · ayudas de «Mi formación» estilo campus
 function mfFavs(){ try { return JSON.parse(localStorage.getItem('mf_favs_' + (CURRENT_USER && CURRENT_USER.id)) || '[]'); } catch(e){ return []; } }
@@ -21701,7 +21812,7 @@ async function renderEquipoScreen(){
   `;
 }
 
-const APP_VERSION_INTRANET = '2026-11-23 · v317 (Formación: dos puertas claras, «Mi formación» como alumno/a y «Preparar cursos» como docente) · antes: v316 (Aula Virtual: los estados son botones con número, filtran y explican qué ve la gente) · antes: v315 (Mi formación estilo campus: buscador, filtros, lista/cuadrícula, favoritos y tareas pendientes) · antes: v314 (Nueva cita sencilla: día + «Empieza / Termina»; se ve lo que ya tiene ese día y avisa si coincide) · antes: v313 (Nueva cita: de lunes a viernes a cualquier hora, también fuera del horario o con la hora ocupada; sábado y domingo no) · antes: v311 (Ficha: tocar «✅ Consentimiento firmado» lo enseña y deja descargar el PDF; tocar «🔑 Cuenta en Logos Acompanya» enseña con qué correo entra y ayuda a entrar) · antes: v310 (Ficha: tocar una actuación de la línea de tiempo abre «Corregir») · antes: v309 (Corregir actuación y atención: «Con quién la hizo», otros técnicos/as que participaron) · antes: v308 (Atenciones: «✏️ Cambiar» técnico/a al lado del nombre en cada ficha de atención) · antes: v307 (Corregir técnico/a: en la actuación y en la ficha de atención) · antes: v306 (Corregir la actuación: «Era otra persona» para pasarla a la persona correcta) · antes: v305 (LOGOS 360: el calendario marca también los artículos el día que se publican) · antes: v304 (Personas usuarias: carpetas cerradas al entrar y 25 personas por carpeta con «Ver 25 más») · antes: v303 (Expedientes: Hoy · Esta semana · Este mes · Todo; la lista sale solo cuando se pide) · antes: v302 (alta presencial: al cambiar entre «está aquí» y «no está aquí» los datos escritos pasan solos) · antes: v301 (Informes › «📱 Uso de Logos Acompanya»: cuentas, personas que usan la app, qué hacen y qué apartados abren) · antes: v300 (alta presencial: también pasan a su ficha las citas y atenciones apuntadas cuando aún no tenía cuenta) · antes: v299 (alta presencial: si la persona está en el histórico, el formulario se rellena solo y su ficha nueva sale con TODOS los datos del histórico; se dice qué falta y se abre para completarlo) · antes: v298 (móvil: «Mi jornada» ya no tapa la flecha de volver; «← Volver» en las pantallas que no son un apartado del menú; más rápida en el móvil) · antes: v297 (las solicitudes de vacaciones llegan también por correo a administración y RR. HH., con botón directo a Vacaciones) · antes: v296 (vacaciones: la solicitud llega sola a administración y RR. HH. —mensaje, aviso en Inicio y número visible en el menú—; días cerrados al público) · antes: v295 (Aula Virtual: invitación por correo a las clases en línea con «Añadir a Google Calendar» y archivo .ics, recordatorio el día antes, aviso de cancelación, duración y sala Jitsi gratis) · antes: v294 (revisión general del día a día de los técnicos; «Mis fichajes» se descarga en Excel con las horas por semana comparadas con el horario) · antes: v293 (subvenciones: cifras arriba —presentadas, dinero en juego, donaciones—, calendario único con prioridad, tiempo restante y acción recomendada, franja roja de plazos, donaciones en especie con carta de petición y «Copiar resumen ejecutivo») · antes: v292 (proyectos: Excel completo con todos los datos, actuaciones, asistencia e indicadores, también desde dentro del proyecto; seguimiento y actuaciones unidos; la asistencia se cuenta sola con las actuaciones; fecha de alta en Logos y en el proyecto) · antes: v291 (corregir o quitar una actuación cuando uno se equivoca, sin crear un trámite nuevo) · antes: v290 (unir también las cuentas de baja repetidas —Jana educadora, Ariadna— con sus horarios, y quitarlas del equipo) · antes: v289 («Correos antiguos o repetidos»: solo registros del equipo, nunca personas usuarias; se ve entero sin cortarse) · antes: v288 (conexión más fuerte: reintentos automáticos si falla la red, nada se queda colgado, aviso sin internet) · antes: v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
+const APP_VERSION_INTRANET = '2026-11-26 · v320 (Administración: teléfonos y correos personales del equipo editables en «Datos de todo el equipo») · antes: v319 (si la sesión ha caducado, el alta presencial y las demás funciones la renuevan solas o piden la contraseña sin perder los datos ni la firma) · antes: v318 (Mi formación: «Clases en directo» con «Entrar a la clase» y «A mi calendario») · antes: v317 (Formación: dos puertas claras, «Mi formación» como alumno/a y «Preparar cursos» como docente) · antes: v316 (Aula Virtual: los estados son botones con número, filtran y explican qué ve la gente) · antes: v315 (Mi formación estilo campus: buscador, filtros, lista/cuadrícula, favoritos y tareas pendientes) · antes: v314 (Nueva cita sencilla: día + «Empieza / Termina»; se ve lo que ya tiene ese día y avisa si coincide) · antes: v313 (Nueva cita: de lunes a viernes a cualquier hora, también fuera del horario o con la hora ocupada; sábado y domingo no) · antes: v311 (Ficha: tocar «✅ Consentimiento firmado» lo enseña y deja descargar el PDF; tocar «🔑 Cuenta en Logos Acompanya» enseña con qué correo entra y ayuda a entrar) · antes: v310 (Ficha: tocar una actuación de la línea de tiempo abre «Corregir») · antes: v309 (Corregir actuación y atención: «Con quién la hizo», otros técnicos/as que participaron) · antes: v308 (Atenciones: «✏️ Cambiar» técnico/a al lado del nombre en cada ficha de atención) · antes: v307 (Corregir técnico/a: en la actuación y en la ficha de atención) · antes: v306 (Corregir la actuación: «Era otra persona» para pasarla a la persona correcta) · antes: v305 (LOGOS 360: el calendario marca también los artículos el día que se publican) · antes: v304 (Personas usuarias: carpetas cerradas al entrar y 25 personas por carpeta con «Ver 25 más») · antes: v303 (Expedientes: Hoy · Esta semana · Este mes · Todo; la lista sale solo cuando se pide) · antes: v302 (alta presencial: al cambiar entre «está aquí» y «no está aquí» los datos escritos pasan solos) · antes: v301 (Informes › «📱 Uso de Logos Acompanya»: cuentas, personas que usan la app, qué hacen y qué apartados abren) · antes: v300 (alta presencial: también pasan a su ficha las citas y atenciones apuntadas cuando aún no tenía cuenta) · antes: v299 (alta presencial: si la persona está en el histórico, el formulario se rellena solo y su ficha nueva sale con TODOS los datos del histórico; se dice qué falta y se abre para completarlo) · antes: v298 (móvil: «Mi jornada» ya no tapa la flecha de volver; «← Volver» en las pantallas que no son un apartado del menú; más rápida en el móvil) · antes: v297 (las solicitudes de vacaciones llegan también por correo a administración y RR. HH., con botón directo a Vacaciones) · antes: v296 (vacaciones: la solicitud llega sola a administración y RR. HH. —mensaje, aviso en Inicio y número visible en el menú—; días cerrados al público) · antes: v295 (Aula Virtual: invitación por correo a las clases en línea con «Añadir a Google Calendar» y archivo .ics, recordatorio el día antes, aviso de cancelación, duración y sala Jitsi gratis) · antes: v294 (revisión general del día a día de los técnicos; «Mis fichajes» se descarga en Excel con las horas por semana comparadas con el horario) · antes: v293 (subvenciones: cifras arriba —presentadas, dinero en juego, donaciones—, calendario único con prioridad, tiempo restante y acción recomendada, franja roja de plazos, donaciones en especie con carta de petición y «Copiar resumen ejecutivo») · antes: v292 (proyectos: Excel completo con todos los datos, actuaciones, asistencia e indicadores, también desde dentro del proyecto; seguimiento y actuaciones unidos; la asistencia se cuenta sola con las actuaciones; fecha de alta en Logos y en el proyecto) · antes: v291 (corregir o quitar una actuación cuando uno se equivoca, sin crear un trámite nuevo) · antes: v290 (unir también las cuentas de baja repetidas —Jana educadora, Ariadna— con sus horarios, y quitarlas del equipo) · antes: v289 («Correos antiguos o repetidos»: solo registros del equipo, nunca personas usuarias; se ve entero sin cortarse) · antes: v288 (conexión más fuerte: reintentos automáticos si falla la red, nada se queda colgado, aviso sin internet) · antes: v287 (Personas usuarias: aviso «X personas no pueden entrar en Logos Acompanya» y envío de contraseña provisional por WhatsApp o SMS) · antes: v286 (Listados: el Excel lleva atenciones, actuaciones e histórico de cada persona y una hoja con el detalle; la lista larga se abre a petición) · antes: v285 (Administración: «Datos de todo el equipo», todos los datos de todas las personas en una sola tabla, con Excel) · antes: v284 (nota: el Excel por categoría está en Personas usuarias → Listados) · antes: v283 (Informes y datos: todo en una página por categorías, a petición, con botón destacado a las estadísticas por categoría) · antes: v282 (Equipo: unir los registros de correos antiguos o repetidos al correo bueno; horas por persona sin duplicados) · antes: v281 (Salas: vista del día más clara y registro completo por semana o por mes, a petición, con Excel) · antes: v280 (Jóvenes en acción: dar de alta jóvenes desde la intranet, uno o en grupo, y apuntar trabajo a un grupo) · antes: v279 (Jóvenes en acción: «Mis usuarios» con el trabajo hecho con cada joven, y los jóvenes suman en Personas usuarias, Estadísticas y Listados) · antes: v278 (menos información a la vista: estadísticas por categoría a petición; menú con los grupos cerrados y uno abierto a la vez; Inicio con lo esencial y «Ver más») · antes: v277 (se quita «Carga de trabajo»; Excel del mes con horas de cada técnico por semanas, a la vista; la administración edita nombre, teléfono y correos del equipo; aviso para nombrar administración suplente) · antes: v276 (peticiones de Luis: Listados por sexo/edad/técnico con Excel; salas por día con gráfico y resumen; plaza fija; dar «Administración» desde Equipo; ficha completa de cada persona del equipo; listado mensual de fichajes con Excel; lo secundario se abre a petición) · antes: v275 (fichaje: un portátil con pantalla táctil y zoom de Windows ya no se toma por móvil; el aviso de bloqueo muestra los datos del aparato para Soporte) · antes: v274 (atención: nuevo trámite dentro de Bretxa Logos «Construir un futur») · antes: v273 (móvil: solo entra quien tenga «📱 Puede entrar desde el móvil» en Equipo, aunque sea administrador; SQL-103) · antes: v272 (Excel por áreas completo: también TODO el detalle de atenciones y actuaciones, registros del histórico y resúmenes por mes, área, técnico/a y servicio, por sexo) · antes: v271 (estadísticas: «Excel por áreas» profesional — una hoja por área con sexo, edad, nacionalidad y municipio, todo con fórmulas que suman sobre la hoja Datos; tabla «Por área» en pantalla) · antes: v270 (ficha de trabajo del histórico: comprueba la letra del DNI/NIE y reintenta sin correo; corregir/justificar/añadir fichajes por la administración; no se ficha desde el móvil; sexo en las altas y en estadísticas/Excel, con «Completar el sexo que falta») · antes: v269 (histórico con consentimiento en papel: «Abrir su ficha de trabajo» sin volver a firmar; el aviso «ya está dada de alta» abre esa ficha y no la del histórico) · antes: v268 (Mi gestión personal → «Mis fichajes»: historial propio por semanas con las horas sumadas solas, comparación con el horario, 12 semanas y descarga) · antes: v267 (subvenciones: fecha prevista con avisos, la IA vigila cada lunes y confirma las fechas, Google Calendar / .ics, plazos en la agenda y lista «Antes de presentar») · antes: v266 (subvenciones: panel de acción tipo Kizuna, búsqueda de convocatorias con IA empezando por el SOC y solicitud redactada por apartados según el formulario oficial) · antes: v265 (alta: el aviso «ya está dada de alta» sale al escribir el DNI o el teléfono, antes de firmar y antes del QR) · antes: v264 (alta de una persona: si ya está dada de alta (cuenta o ficha en papel), aviso claro con «Abrir su ficha» en vez de duplicarla) · antes: v263 (la sesión se cierra tras 1 hora sin usar la intranet, antes 25 min) · antes: v262 (Ariadna y Jana (Jóvenes en acción): «Mi horario» de trabajo propio en el menú, sin la parte de citas) · antes: v261 (LOGOS 360 vuelve a la intranet: centro editorial con IA, «Por revisar», idiomas FR/EN/AR, programación semanal y correo de los lunes; Familias asignadas y evaluación de impacto; con todo lo de la v260: fichar más rápido, calendario, «Mis personas»)';
 const COLORES_FONDO_DISPONIBLES_INTRANET = [
   { id:'gris', nombre: LANG_I==='ca'?'Gris (original)':'Gris (original)', valor:'#F7F7F5' },
   { id:'blanco', nombre:'Blanco', valor:'#FFFFFF' },
